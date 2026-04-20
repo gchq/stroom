@@ -18,13 +18,15 @@ package stroom.annotation.shared;
 
 
 import stroom.docref.DocRef;
+import stroom.docref.HasUuid;
+import stroom.util.shared.HasId;
 
 import java.util.Objects;
 
 /**
  * Simply an Annotation's {@link DocRef} and its database ID value.
  */
-public class AnnotationIdentity {
+public class AnnotationIdentity implements HasId, HasUuid {
 
     private final String uuid;
     private final long id;

@@ -69,7 +69,6 @@ import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -228,7 +227,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     private Predicate<String> getViewPermissionPredicate() {
         if (securityContext.isAdmin()) {
-            return uuid -> true;
+            return ignored -> true;
         }
         return uuid -> securityContext
                 .hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW);
@@ -237,21 +236,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private UserRef getCurrentUser() {
         return securityContext.getUserRef();
     }
-
-//    AnnotationDetail getDetailById(final long annotationId) {
-//        final List<DocRef> list = annotationDao.idListToDocRefs(Collections.singletonList(annotationId));
-//        if (list.isEmpty()) {
-//            return null;
-//        }
-//        final DocRef annotationRef = list.getFirst();
-//        return getDetailByRef(annotationRef);
-//    }
-//
-//    AnnotationDetail getDetailByRef(final DocRef annotationRef) {
-//        checkAppPermission();
-//        checkViewPermission(annotationRef);
-//        return annotationDao.getDetail(annotationRef).orElse(null);
-//    }
 
     private void checkViewPermission(final DocRef annotationRef) {
         if (annotationRef == null) {
@@ -308,20 +292,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 parentGroups.forEach(group ->
                         documentPermissionService.setPermission(docRef, group, DocumentPermission.OWNER));
             }
-
-//            // Copy feed permissions to the annotation.
-//            if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-//                final EventId eventId = request.getLinkedEvents().getFirst();
-//                final Meta meta = metaServiceProvider.get().getMeta(eventId.getStreamId());
-//                if (meta != null) {
-//                    final List<DocRef> docRefs = docRefInfoServiceProvider.get()
-//                            .findByName(FeedDoc.TYPE, meta.getFeedName(), false);
-//                    if (!docRefs.isEmpty()) {
-//                        final DocRef feedDocRef = docRefs.getFirst();
-//                        documentPermissionService.addDocumentPermissions(feedDocRef, docRef);
-//                    }
-//                }
-//            }
         });
 
         fireEntityEvent(EntityAction.CREATE, annotation.asDocRef(), annotation.getId());
@@ -433,35 +403,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return result;
     }
 
-
-//    public List<String> getStatus(final String filter) {
-//        final boolean admin = securityContext.isAdmin();
-//        final List<String> values = annotationConfigProvider.get().getStatusValues();
-//        final List<String> filtered = new ArrayList<>();
-//        final Map<String, Boolean> cache = new HashMap<>();
-//        if (values != null) {
-//            for (final String value : values) {
-//                final int index = value.indexOf(":");
-//                if (index == -1) {
-//                    filtered.add(value);
-//                } else {
-//                    final String group = value.substring(0, index);
-//                    final String status = value.substring(index + 1);
-//                    if (admin) {
-//                        filtered.add(status);
-//                    } else {
-//                        final boolean include = cache.computeIfAbsent(group, securityContext::inGroup);
-//                        if (include) {
-//                            filtered.add(status);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        return filterValues(filtered, filter);
-//    }
-
     private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
         if (allValues == null || allValues.isEmpty()) {
             return allValues;
@@ -487,7 +428,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
         clusterLockService.tryLock(LOCK_NAME, () -> {
             // First mark annotations as deleted if they haven't been updated since their data retention time.
-            final LongList logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
+            final List<AnnotationIdentity> logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
 
             if (NullSafe.hasItems(logicallyDeletedIds)) {
                 fireEntityDeleteEvents(logicallyDeletedIds, batchSize);
@@ -496,7 +437,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             // Now delete items that have been deleted longer than the max deletion age.
             final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
             final Instant age = Instant.now().minus(physicalDeleteAge);
-            final LongList physicallyDeletedIds = annotationDao.physicallyDelete(age);
+            final List<AnnotationIdentity> physicallyDeletedIds = annotationDao.physicallyDelete(age);
             if (NullSafe.hasItems(physicallyDeletedIds)) {
                 fireEntityDeleteEvents(physicallyDeletedIds, batchSize);
             }
@@ -506,9 +447,10 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         });
     }
 
-    private void fireEntityDeleteEvents(final LongList ids, final int batchSize) {
+    private void fireEntityDeleteEvents(final List<AnnotationIdentity> annotationIdentities,
+                                        final int batchSize) {
         // Limit the size of the event batches so we are not sending massive requests
-        final int count = ids.size();
+        final int count = annotationIdentities.size();
         int fromIdxInc = 0;
         while (true) {
             final int remaining = count - fromIdxInc;
@@ -517,12 +459,11 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             }
             final int thisBatchSize = Math.min(batchSize, remaining);
             final int toIdxExc = fromIdxInc + thisBatchSize;
-            final LongList batchIds = ids.subList(fromIdxInc, toIdxExc);
-            final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(batchIds);
+            final List<AnnotationIdentity> batchIds = annotationIdentities.subList(fromIdxInc, toIdxExc);
             final int finalFromIdxInc = fromIdxInc;
             LOGGER.debug(() -> LogUtil.message(
                     "fireEntityChangeEvents() - fromIdxInc: {}, toIdxExc: {}, ids: {}, batchIds: {}, docRefs: {}",
-                    finalFromIdxInc, toIdxExc, ids.size(), batchIds.size(), annotationIdentities.size()));
+                    finalFromIdxInc, toIdxExc, annotationIdentities.size(), batchIds.size(), batchIds.size()));
             fireEntityChangeEvents(EntityAction.DELETE, annotationIdentities);
             fromIdxInc += batchSize;
         }

@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationEventLinkCache.class);
-    private static final String DOC_REF_TYPE = Annotation.TYPE;
 
     private final AtomicReference<MapWrapper> mapWrapper;
 

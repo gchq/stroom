@@ -58,8 +58,8 @@ class TestAnnotationService {
 
     @Test
     void performDataRetention() {
-        final LongList logicallyDeletedIds = createLongList(0, 100);
-        final LongList physicallyDeletedIds = createLongList(1000, 100);
+        final List<AnnotationIdentity> logicallyDeletedIds = createLongList(0, 100);
+        final List<AnnotationIdentity> physicallyDeletedIds = createLongList(1000, 100);
         Mockito.when(mockAnnotationDao.markDeletedByDataRetention())
                 .thenReturn(logicallyDeletedIds);
         Mockito.when(mockAnnotationConfig.getPhysicalDeleteAge())
@@ -71,12 +71,10 @@ class TestAnnotationService {
         Mockito.when(mockAnnotationDao.idListToDocRefs(Mockito.any()))
                 .thenAnswer(invocation -> {
                     final LongList ids = invocation.getArgument(0, LongList.class);
-                    final List<AnnotationIdentity> annotationIdentities = ids.longStream()
+                    return ids.longStream()
                             .boxed()
                             .map(id -> new AnnotationIdentity(String.valueOf(id), id))
                             .collect(Collectors.toList());
-
-                    return annotationIdentities;
                 });
 
         final AnnotationService annotationService = new AnnotationService(
@@ -119,8 +117,8 @@ class TestAnnotationService {
 
     @Test
     void performDataRetention_noChanges() {
-        final LongList logicallyDeletedIds = LongList.of();
-        final LongList physicallyDeletedIds = LongList.of();
+        final List<AnnotationIdentity> logicallyDeletedIds = List.of();
+        final List<AnnotationIdentity> physicallyDeletedIds = List.of();
         Mockito.when(mockAnnotationDao.markDeletedByDataRetention())
                 .thenReturn(logicallyDeletedIds);
         Mockito.when(mockAnnotationConfig.getPhysicalDeleteAge())
@@ -149,10 +147,10 @@ class TestAnnotationService {
                 .fire(entityEventBatchArgumentCaptor.capture());
     }
 
-    private LongList createLongList(final int fromInc, final int count) {
+    private List<AnnotationIdentity> createLongList(final int fromInc, final int count) {
         return LongStream.range(fromInc, fromInc + count)
-                .collect(LongArrayList::new,
-                        LongArrayList::add,
-                        LongArrayList::addAll);
+                .boxed()
+                .map(id -> new AnnotationIdentity("uuid-" + id, id))
+                .toList();
     }
 }

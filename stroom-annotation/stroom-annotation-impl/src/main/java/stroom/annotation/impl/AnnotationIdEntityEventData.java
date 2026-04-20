@@ -17,7 +17,13 @@
 package stroom.annotation.impl;
 
 
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationIdentity;
+import stroom.docref.DocRef;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.EntityEventData;
+import stroom.util.entityevent.EntityEventBus;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,4 +49,15 @@ public class AnnotationIdEntityEventData implements EntityEventData {
                '}';
     }
 
+    public static void fireEvent(final EntityEventBus entityEventBus,
+                                 final EntityAction entityAction,
+                                 final AnnotationIdentity annotationId) {
+        if (entityEventBus != null) {
+            entityEventBus.fire(
+                    new EntityEvent(
+                            new DocRef(Annotation.TYPE, annotationId.getUuid()),
+                            entityAction,
+                            new AnnotationIdEntityEventData(annotationId.getId())));
+        }
+    }
 }

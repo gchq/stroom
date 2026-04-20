@@ -16,7 +16,20 @@
 
 package stroom.util.shared;
 
+import java.util.Collections;
+import java.util.List;
+
 public interface HasId {
 
     long getId();
+
+    static List<Long> asIdList(final List<? extends HasId> hasIds) {
+        if (NullSafe.hasItems(hasIds)) {
+            return hasIds.stream()
+                    .map(HasId::getId)
+                    .toList();
+        } else {
+            return Collections.emptyList();
+        }
+    }
 }

@@ -31,8 +31,6 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
-import it.unimi.dsi.fastutil.longs.LongList;
-
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -81,7 +79,7 @@ public interface AnnotationDao {
      *
      * @return
      */
-    LongList markDeletedByDataRetention();
+    List<AnnotationIdentity> markDeletedByDataRetention();
 
     /**
      * Physically delete annotations that have been marked as deleted since before the provided age.
@@ -89,7 +87,7 @@ public interface AnnotationDao {
      * @param age Anything older than this age will be deleted.
      * @return
      */
-    LongList physicallyDelete(Instant age);
+    List<AnnotationIdentity> physicallyDelete(Instant age);
 
     AnnotationEntry fetchAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId);
 

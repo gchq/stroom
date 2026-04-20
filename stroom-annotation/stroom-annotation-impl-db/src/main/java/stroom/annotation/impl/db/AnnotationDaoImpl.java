@@ -19,6 +19,7 @@ package stroom.annotation.impl.db;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.AnnotationEventLinks;
+import stroom.annotation.impl.AnnotationIdEntityEventData;
 import stroom.annotation.impl.AnnotationValues;
 import stroom.annotation.impl.db.AnnotationEventLinkCache.AnnotationEventLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
@@ -99,8 +100,6 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -133,6 +132,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -463,6 +463,15 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .fetchOptional(ANNOTATION.ID);
     }
 
+    private Optional<DocRef> getAnnotationRef(final DSLContext context, final long id) {
+        return context
+                .select(ANNOTATION.UUID)
+                .from(ANNOTATION)
+                .where(ANNOTATION.ID.eq(id))
+                .fetchOptional(ANNOTATION.UUID)
+                .map(uuid -> new DocRef(Annotation.TYPE, uuid));
+    }
+
     @Override
     public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request,
                                                   final Predicate<Annotation> viewPredicate) {
@@ -558,9 +567,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     final String uuid = rec.get(ANNOTATION.UUID);
                     final long id = rec.get(ANNOTATION.ID);
                     return new AnnotationIdentity(uuid, id);
-                })
-                .peek(annotationIdentity -> {
-                    LOGGER.info("annotationIdentity: {}", annotationIdentity);
                 })
                 .toList();
     }
@@ -1765,37 +1771,49 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     @Override
     public boolean logicalDelete(final DocRef annotationRef,
                                  final UserRef currentUser) {
+        Objects.requireNonNull(annotationRef);
         final String userUuid = currentUser.getUuid();
         final String userName = currentUser.toDisplayString();
         final Instant now = Instant.now();
         final Optional<Long> optionalId = getId(annotationRef);
-        return optionalId.map(id ->
-                        logicalDelete(id, userName, userUuid, now, "Deleted by user"))
+        return optionalId.map(
+                        id -> {
+                            final AnnotationIdentity annotationIdentity = new AnnotationIdentity(annotationRef, id);
+                            return logicalDelete(
+                                    annotationIdentity,
+                                    userName,
+                                    userUuid,
+                                    now,
+                                    true,
+                                    "Deleted by user");
+                        })
                 .orElse(false);
     }
 
     @Override
-    public LongList markDeletedByDataRetention() {
+    public List<AnnotationIdentity> markDeletedByDataRetention() {
         return markDeletedByDataRetention(BATCH_SIZE);
     }
 
     @SuppressWarnings("SameParameterValue")
-    LongList markDeletedByDataRetention(final int batchSize) {
+    List<AnnotationIdentity> markDeletedByDataRetention(final int batchSize) {
         final Instant now = Instant.now();
         LOGGER.debug("markDeletedByDataRetention() - now: {}", now);
         boolean keepGoing = true;
-        final LongList deletedIds = new LongArrayList(batchSize);
+        final List<AnnotationIdentity> deletedIds = new ArrayList<>(batchSize);
         while (keepGoing) {
-            final LongList ids = getAnnotationsPastRetention(now, batchSize);
+            final List<AnnotationIdentity> ids = getAnnotationsPastRetention(now, batchSize);
             LOGGER.debug(() -> LogUtil.message("markDeletedByDataRetention() - now: {}, batchSize, ids.size: {}",
                     now, batchSize, ids.size()));
             keepGoing = ids.size() == batchSize;
             ids.forEach(id -> {
+                // Don't fire the event as the caller will fire a batch event for all deleted items
                 final boolean didDelete = logicalDelete(
                         id,
                         DATA_RETENTION_USER_NAME,
                         DATA_RETENTION_USER_NAME,  // Using a username for a UUID, not ideal
                         now,
+                        false,
                         "Deleted by data retention");
                 if (didDelete) {
                     deletedIds.add(id);
@@ -1807,34 +1825,39 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private LongList getAnnotationsPastRetention(final Instant now,
-                                                 final int batchSize) {
-        final LongList ids = JooqUtil.contextResult(connectionProvider, context -> {
-            try {
-                return JooqUtil.fetchIds(batchSize, () ->
-                        context.select(ANNOTATION.ID)
-                                .from(ANNOTATION)
-                                .where(ANNOTATION.DELETED.isFalse())
-                                .and(ANNOTATION.RETAIN_UNTIL_MS.isNotNull())
-                                .and(ANNOTATION.RETAIN_UNTIL_MS.lt(now.toEpochMilli()))
-                                .limit(batchSize)
-                                .fetchLazy());
-            } catch (final Exception e) {
-                throw new RuntimeException(LogUtil.message("Error fetching annotations past retention," +
-                                                           "now: {}, batchSize: {} - {}",
-                        now, batchSize, LogUtil.exceptionMessage(e)), e);
-            }
-        });
+    private List<AnnotationIdentity> getAnnotationsPastRetention(final Instant now,
+                                                                 final int batchSize) {
+        final List<AnnotationIdentity> ids = JooqUtil.contextResult(
+                        connectionProvider,
+                        context -> {
+                            try {
+                                return context.select(ANNOTATION.ID, ANNOTATION.UUID)
+                                        .from(ANNOTATION)
+                                        .where(ANNOTATION.DELETED.isFalse())
+                                        .and(ANNOTATION.RETAIN_UNTIL_MS.isNotNull())
+                                        .and(ANNOTATION.RETAIN_UNTIL_MS.lt(now.toEpochMilli()))
+                                        .limit(batchSize)
+                                        .fetch();
+                            } catch (final Exception e) {
+                                throw new RuntimeException(LogUtil.message(
+                                        "Error fetching annotations past retention, now: {}, batchSize: {} - {}",
+                                        now, batchSize, LogUtil.exceptionMessage(e)), e);
+                            }
+                        })
+                .map(rec -> new AnnotationIdentity(
+                        rec.get(ANNOTATION.UUID),
+                        rec.get(ANNOTATION.ID)));
         LOGGER.debug(() -> LogUtil.message("getAnnotationsPastRetention() - now: {}, batchSize: {}, ids.size: {}",
                 now, batchSize, ids.size()));
         return ids;
     }
 
     @NullMarked
-    private boolean logicalDelete(final long annotationId,
+    private boolean logicalDelete(final AnnotationIdentity annotationId,
                                   final String userName,
                                   final String userUuid,
                                   final Instant now,
+                                  final boolean fireEvent,
                                   @Nullable final String message) {
         return JooqUtil.transactionResult(connectionProvider, context -> {
             final int count = context
@@ -1842,90 +1865,95 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     .set(ANNOTATION.DELETED, true)
                     .set(ANNOTATION.UPDATE_USER, userName)
                     .set(ANNOTATION.UPDATE_TIME_MS, now.toEpochMilli())
-                    .where(ANNOTATION.ID.eq(annotationId))
+                    .where(ANNOTATION.ID.eq(annotationId.getId()))
                     .and(ANNOTATION.DELETED.eq(false))
                     .execute();
 
             // Remember that this annotation was marked deleted.
             if (count > 0) {
                 createEntry(context,
-                        annotationId,
+                        annotationId.getId(),
                         userUuid,
                         now,
                         AnnotationEntryType.DELETE,
                         message);
             }
 
-            // Invalidate the annotation value cache for this annotation.
-            // TODO : The cache currently doesn't listen to cluster events to invalidate items.
-            annotationValCache.invalidate(annotationId);
-
+            AnnotationIdEntityEventData.fireEvent(entityEventBus, EntityAction.DELETE, annotationId);
 
             return count > 0;
         });
     }
 
     @Override
-    public LongList physicallyDelete(final Instant age) {
+    public List<AnnotationIdentity> physicallyDelete(final Instant age) {
         return physicallyDelete(age, BATCH_SIZE);
     }
 
-    LongList physicallyDelete(final Instant age, final int batchSize) {
+    List<AnnotationIdentity> physicallyDelete(final Instant age, final int batchSize) {
         LOGGER.debug("physicallyDelete() - age: {}, batchSize: {}", age, batchSize);
         // We may delete more than batchSize, but it will do as a starting size
-        final LongList deletedIds = new LongArrayList(batchSize);
+        final List<AnnotationIdentity> deletedIds = new ArrayList<>(batchSize);
 
         JooqUtil.transaction(connectionProvider, txnContext -> {
 
             // Lambda to fetch a batch of anno IDs to delete
-            final Supplier<LongList> batchSupplier = () -> JooqUtil.fetchIds(
-                    batchSize,
-                    () -> txnContext.select(ANNOTATION.ID)
+            final Supplier<List<AnnotationIdentity>> batchSupplier = () ->
+                    txnContext.select(ANNOTATION.UUID, ANNOTATION.ID)
                             .from(ANNOTATION)
                             .where(ANNOTATION.DELETED.eq(true))
                             .and(ANNOTATION.UPDATE_TIME_MS.lt(age.toEpochMilli()))
                             .limit(batchSize)
-                            .fetchLazy());
+                            .fetch()
+                            .map(rec -> new AnnotationIdentity(
+                                    rec.get(ANNOTATION.UUID),
+                                    rec.get(ANNOTATION.ID)));
 
             // Lambda to do delete records from 4 tables where the id is in the batch
-            final Consumer<LongList> batchConsumer = ids -> {
-                // Saves us unboxing 4 times. Jooq doesn't support
-                final List<Long> boxedIds = new ArrayList<>(ids);
-                final int linkCount = txnContext.deleteFrom(ANNOTATION_DATA_LINK)
-                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.in(boxedIds))
-                        .execute();
-                final int entryCount = txnContext.deleteFrom(ANNOTATION_ENTRY)
-                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.in(boxedIds))
-                        .execute();
-                final int tagLinkCount = txnContext.deleteFrom(ANNOTATION_TAG_LINK)
-                        .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.in(boxedIds))
-                        .execute();
-                final int annoLinkCount = txnContext.deleteFrom(ANNOTATION_LINK)
-                        .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.in(boxedIds))
-                        .or(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(boxedIds))
-                        .execute();
-                final int annoCount = txnContext.deleteFrom(ANNOTATION)
-                        .where(ANNOTATION.ID.in(boxedIds))
-                        .execute();
+            final BiConsumer<List<Long>, List<AnnotationIdentity>> batchConsumer =
+                    (ids, annotationIds) -> {
+                        // Saves us unboxing 4 times. Jooq doesn't support
+                        final int count = ids.size();
+                        LOGGER.debug("physicallyDelete() - age: {}, batchSize: {}, consuming {} ids",
+                                age, batchSize, count);
 
-                // MySQL can't do returning from a delete stmt, so ensure we deleted the expected number.
-                if (annoCount != boxedIds.size()) {
-                    throw new RuntimeException(LogUtil.message(
-                            "Expecting to have deleted {} annotation records, actually deleted {}",
-                            annoCount, boxedIds.size()));
-                }
-                final LongList batchDeletedIds = new LongArrayList(boxedIds);
-                LOGGER.debug(() -> LogUtil.message(
-                        "physicallyDelete() - age: {}, batchSize: {}, ids.size: {}, linkCount: {}, " +
-                        "entryCount: {}, tagLinkCount: {}, annoLinkCount: {}, batchProcessById.size: {}",
-                        age, batchSize, ids.size(), linkCount, entryCount,
-                        tagLinkCount, annoLinkCount, batchDeletedIds.size()));
+                        final int linkCount = txnContext.deleteFrom(ANNOTATION_DATA_LINK)
+                                .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.in(ids))
+                                .execute();
+                        final int entryCount = txnContext.deleteFrom(ANNOTATION_ENTRY)
+                                .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.in(ids))
+                                .execute();
+                        final int tagLinkCount = txnContext.deleteFrom(ANNOTATION_TAG_LINK)
+                                .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.in(ids))
+                                .execute();
+                        final int annoLinkCount = txnContext.deleteFrom(ANNOTATION_LINK)
+                                .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.in(ids))
+                                .or(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(ids))
+                                .execute();
+                        final int annoCount = txnContext.deleteFrom(ANNOTATION)
+                                .where(ANNOTATION.ID.in(ids))
+                                .execute();
 
-                deletedIds.addAll(batchDeletedIds);
-            };
+                        // MySQL can't do returning from a DELETE stmt, so ensure we deleted the expected number.
+                        if (annoCount != count) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Expecting to have deleted {} annotation records, actually deleted {}",
+                                    annoCount, count));
+                        }
+                        LOGGER.debug(() -> LogUtil.message(
+                                "physicallyDelete() - age: {}, batchSize: {}, ids.size: {}, linkCount: {}, " +
+                                "entryCount: {}, tagLinkCount: {}, annoLinkCount: {}, batchProcessById.size: {}",
+                                age, batchSize, ids.size(), linkCount, entryCount,
+                                tagLinkCount, annoLinkCount, count));
 
-            JooqUtil.batchProcessById(batchSize, batchSupplier, batchConsumer);
+                        deletedIds.addAll(annotationIds);
+                    };
+
+            JooqUtil.batchProcessByHasId(batchSize, batchSupplier, batchConsumer);
         });
+
+        LOGGER.debug(() -> LogUtil.message("physicallyDelete() - age: {}, batchSize: {}, returning {} ids",
+                age, batchSize, deletedIds.size()));
         return deletedIds;
     }
 
