@@ -63,7 +63,7 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
         return cache.get(annotationIdentity.getId(), ignored -> new AnnotationValues(annotationIdentity));
     }
 
-    public void invalidate(final long id) {
+    private void invalidate(final long id) {
         cache.invalidate(id);
     }
 

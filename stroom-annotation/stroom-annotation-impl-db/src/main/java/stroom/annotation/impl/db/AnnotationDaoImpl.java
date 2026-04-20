@@ -402,22 +402,28 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_CREATED_ON_FIELD,
                 ANNOTATION.CREATE_TIME_MS,
                 ValDate::create);
+        // TODO intern this low cardinality value as we are caching them
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_CREATED_BY_FIELD,
                 ANNOTATION.CREATE_USER,
                 ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_UPDATED_ON_FIELD,
                 ANNOTATION.UPDATE_TIME_MS,
                 ValDate::create);
+        // TODO intern this low cardinality value as we are caching them
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_UPDATED_BY_FIELD,
                 ANNOTATION.UPDATE_USER,
                 ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
+        // TODO intern this low cardinality value as we are caching them
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_STATUS_FIELD, STATUS_FIELD, ValString::create);
+        // TODO intern this low cardinality value as we are caching them
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD,
                 ANNOTATION.ASSIGNED_TO_UUID,
                 this::mapUserUuidToValString);
+        // TODO intern this low cardinality value as we are caching them
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, LABEL_FIELD, ValString::create);
+        // TODO intern this low cardinality value as we are caching them
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, COLLECTION_FIELD, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_COMMENT_FIELD, COMMENT_FIELD, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_HISTORY_FIELD, HISTORY_FIELD, ValString::create);
