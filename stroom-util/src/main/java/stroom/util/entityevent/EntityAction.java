@@ -49,13 +49,22 @@ public enum EntityAction implements HasDisplayValue {
     /**
      * Fired on:
      * <UL>
-     *     <LI>Bulk move, after the move</LI>
-     *     <LI>Rename of a node - twice</LI>
-     *     <LI>Update of tags</LI>
+     * <LI>Bulk move, after the move</LI>
+     * <LI>Rename of a node - twice</LI>
+     * <LI>Update of tags</LI>
      * </UL>
      */
     UPDATE_EXPLORER_NODE("Update Explorer Node"),
-    DELETE_EXPLORER_NODE("Delete Explorer Node");
+    DELETE_EXPLORER_NODE("Delete Explorer Node"),
+    /**
+     * Fired when a link between an annotation and an event is made
+     */
+    LINK("Link"),
+    /**
+     * Fired when a link between an annotation and an event is removed
+     */
+    UNLINK("Unlink"),
+    ;
 
     private final String displayValue;
 

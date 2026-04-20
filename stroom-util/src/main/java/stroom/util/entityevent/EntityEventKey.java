@@ -28,7 +28,10 @@ public final class EntityEventKey {
     private final @Nullable EntityAction action;
     private final @NonNull String type;
 
-
+    /**
+     * @param action The event action
+     * @param type   The type of the {@link stroom.docref.DocRef} in the event.
+     */
     public EntityEventKey(@Nullable final EntityAction action,
                           @NonNull final String type) {
         Objects.requireNonNull(type);

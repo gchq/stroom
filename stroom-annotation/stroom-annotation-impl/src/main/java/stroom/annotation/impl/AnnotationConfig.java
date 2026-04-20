@@ -46,6 +46,8 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     private final StroomDuration physicalDeleteAge;
     private final CacheConfig annotationTagCache;
     private final CacheConfig annotationFeedCache;
+    private final CacheConfig annotationValCache;
+    private final CacheConfig annotationValStringCache;
 
     public AnnotationConfig() {
         dbConfig = new AnnotationDBConfig();
@@ -61,6 +63,14 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        annotationValCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        // No TTL/TTE as ValStrings are immutable
+        annotationValStringCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .build();
     }
 
     @SuppressWarnings("unused")
@@ -71,7 +81,9 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                             @JsonProperty("defaultRetentionPeriod") final String defaultRetentionPeriod,
                             @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge,
                             @JsonProperty("annotationTagCache") final CacheConfig annotationTagCache,
-                            @JsonProperty("annotationFeedCache") final CacheConfig annotationFeedCache) {
+                            @JsonProperty("annotationFeedCache") final CacheConfig annotationFeedCache,
+                            @JsonProperty("annotationValCache") final CacheConfig annotationValCache,
+                            @JsonProperty("annotationValStringCache") final CacheConfig annotationValStringCache) {
         this.dbConfig = dbConfig;
         this.standardComments = standardComments;
         this.createText = createText;
@@ -79,6 +91,8 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
         this.physicalDeleteAge = physicalDeleteAge;
         this.annotationTagCache = annotationTagCache;
         this.annotationFeedCache = annotationFeedCache;
+        this.annotationValCache = annotationValCache;
+        this.annotationValStringCache = annotationValStringCache;
     }
 
     @Override
@@ -120,6 +134,21 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     public CacheConfig getAnnotationFeedCache() {
         return annotationFeedCache;
     }
+
+    @JsonPropertyDescription("Cache config for annotation values used for query result decoration")
+    public CacheConfig getAnnotationValCache() {
+        return annotationValCache;
+    }
+
+    @JsonPropertyDescription("Cache config for low cardinality annotation string values used for query " +
+                             "result decoration")
+    public CacheConfig getAnnotationValStringCache() {
+        return annotationValStringCache;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @BootStrapConfig
     public static class AnnotationDBConfig extends AbstractDbConfig {
