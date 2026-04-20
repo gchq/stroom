@@ -36,7 +36,6 @@ import org.jspecify.annotations.NonNull;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -71,13 +70,13 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     void reload(final Collection<AnnotationEventLink> annotationEventLinks) {
         LOGGER.debug(() -> LogUtil.message("reload() - annotationEventLinks.size", annotationEventLinks.size()));
         if (NullSafe.hasItems(annotationEventLinks)) {
-            final Map<EventId, Set<CachedAnnotationIdentity>> newMap = new ConcurrentHashMap<>();
+            final Map<EventId, Set<CacheValue>> newMap = new ConcurrentHashMap<>();
             annotationEventLinks.forEach(annotationEventLink -> {
-                final CachedAnnotationIdentity cachedAnnotationIdentity = new CachedAnnotationIdentity(
+                final CacheValue cacheValue = new CacheValue(
                         annotationEventLink.annotationId,
                         annotationEventLink.annotationUuid);
-                newMap.computeIfAbsent(annotationEventLink.eventId, ignored -> new HashSet<>())
-                        .add(cachedAnnotationIdentity);
+                newMap.computeIfAbsent(annotationEventLink.eventId, ignored -> ConcurrentHashMap.newKeySet())
+                        .add(cacheValue);
             });
             final Instant now = Instant.now();
             mapWrapper.set(new MapWrapper(newMap, now));
@@ -93,9 +92,15 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 eventId, annotationUuid, annotationId);
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(annotationUuid);
-        mapWrapper.get().annotationEventIdCache.computeIfAbsent(
-                        eventId, ignored -> new HashSet<>())
-                .add(new CachedAnnotationIdentity(annotationId, annotationUuid));
+        // Use compute rather than computeIfAbsent so we are sure we are the only thread working on this eventId
+        mapWrapper.get().annotationEventIdCache.compute(
+                eventId,
+                (ignored, cachedAnnotationIdentities) -> {
+                    final Set<CacheValue> set = Objects.requireNonNullElseGet(
+                            cachedAnnotationIdentities, ConcurrentHashMap::newKeySet);
+                    set.add(new CacheValue(annotationId, annotationUuid));
+                    return set;
+                });
     }
 
     void removeLink(final EventId eventId, final String annotationUuid, final long annotationId) {
@@ -106,8 +111,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
         mapWrapper.get().annotationEventIdCache.compute(
                 eventId, (ignored, cachedAnnotationIdentities) -> {
                     if (cachedAnnotationIdentities != null) {
-                        cachedAnnotationIdentities.remove(
-                                new CachedAnnotationIdentity(annotationId, annotationUuid));
+                        cachedAnnotationIdentities.remove(new CacheValue(annotationId, annotationUuid));
                         if (cachedAnnotationIdentities.isEmpty()) {
                             return null;
                         } else {
@@ -121,13 +125,13 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     public @NonNull Set<AnnotationIdentity> getLinkedAnnotations(@NonNull final EventId eventId) {
         Objects.requireNonNull(eventId);
-        final Set<CachedAnnotationIdentity> values = mapWrapper.get().annotationEventIdCache.get(eventId);
+        final Set<CacheValue> values = mapWrapper.get().annotationEventIdCache.get(eventId);
         final Set<AnnotationIdentity> result;
         if (NullSafe.isEmptyCollection(values)) {
             result = Collections.emptySet();
         } else {
             result = values.stream()
-                    .map(CachedAnnotationIdentity::getAnnotationIdentity)
+                    .map(CacheValue::getAnnotationIdentity)
                     .collect(Collectors.toUnmodifiableSet());
         }
 
@@ -136,18 +140,6 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 result.size(), eventId));
 
         return result;
-    }
-
-    public boolean hasAnnotationLinks(final EventId eventId) {
-        Objects.requireNonNull(eventId);
-        final Set<CachedAnnotationIdentity> values = mapWrapper.get().annotationEventIdCache.get(eventId);
-        return NullSafe.hasItems(values);
-    }
-
-    public void invalidate(final EventId eventId) {
-        LOGGER.debug("invalidate() - eventId: {}", eventId);
-        Objects.requireNonNull(eventId);
-        mapWrapper.get().annotationEventIdCache.remove(eventId);
     }
 
     @Override
@@ -159,8 +151,9 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 || event.hasDataClass(AnnotationIdEntityEventData.class)) {
                 final EntityAction action = event.getAction();
                 switch (action) {
-                    // TODO the event data could include the change type so that we only
-                    //  need to clear one entry inside AnnotationValues rather than bin the whole lot
+                    // TODO For link/unlink we probably ought to hit the db to get the full list of
+                    //  events that are linked to the anno. Then we can make an idempotent change to
+                    //  the cache.
                     case LINK -> link(event);
                     case UNLINK -> unlink(event);
                     case DELETE -> deleteAnnotation(event);
@@ -215,13 +208,27 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     private void deleteAnnotation(final EntityEvent entityEvent) {
         final AnnotationIdEntityEventData annotationIdEventData = getAnnotationIdEventData(entityEvent);
         if (annotationIdEventData != null) {
-            final CachedAnnotationIdentity cachedAnnotationIdentity = new CachedAnnotationIdentity(
+            final CacheValue cacheValue = new CacheValue(
                     annotationIdEventData.getAnnotationId(),
                     entityEvent.getDocRef().getUuid());
 
-            final Map<EventId, Set<CachedAnnotationIdentity>> cache = mapWrapper.get().annotationEventIdCache();
-            cache.values().forEach(cacheValues ->
-                    cacheValues.remove(cachedAnnotationIdentity));
+            // It is possible that a reload may happen while we are iterating, in which case
+            // all our changes will be against the redundant map, however, the reload should
+            // have swapped in a fresh snapshot
+            final Map<EventId, Set<CacheValue>> cache = mapWrapper.get().annotationEventIdCache();
+            cache.keySet().forEach(eventId ->
+                    cache.compute(eventId, (ignored, cacheValues) -> {
+                        if (cacheValues != null) {
+                            cacheValues.remove(cacheValue);
+                            if (cacheValues.isEmpty()) {
+                                return null;
+                            } else {
+                                return cacheValues;
+                            }
+                        } else {
+                            return null;
+                        }
+                    }));
         }
     }
 
@@ -229,7 +236,10 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     // --------------------------------------------------------------------------------
 
 
-    private record MapWrapper(Map<EventId, Set<CachedAnnotationIdentity>> annotationEventIdCache,
+    /**
+     * Allows us to swap out the map and the lastEventIdLoad time as an atomic operation.
+     */
+    private record MapWrapper(Map<EventId, Set<CacheValue>> annotationEventIdCache,
                               Instant lastEventIdLoad) {
 
     }
@@ -240,29 +250,21 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     /**
      * Use {@link UUID} rather than {@link String} to use less memory
      */
-    private record CachedAnnotationIdentity(long id,
-                                            UUID uuid) {
+    private record CacheValue(long annotationId,
+                              UUID annotationUuid) {
 
-        private CachedAnnotationIdentity(final long id, final UUID uuid) {
-            this.id = id;
-            this.uuid = uuid;
+        @SuppressWarnings("RedundantRecordConstructor")
+        private CacheValue(final long annotationId, final UUID annotationUuid) {
+            this.annotationId = annotationId;
+            this.annotationUuid = annotationUuid;
         }
 
-        private CachedAnnotationIdentity(final long id, final String uuid) {
-            this(id, UUID.fromString(Objects.requireNonNull(uuid)));
-        }
-
-        private CachedAnnotationIdentity(final AnnotationIdentity annotationIdentity) {
-            this(Objects.requireNonNull(annotationIdentity).getId(),
-                    UUID.fromString(annotationIdentity.getUuid()));
-        }
-
-        private String getUuidAsString() {
-            return uuid.toString();
+        private CacheValue(final long annotationId, final String annotationUuid) {
+            this(annotationId, UUID.fromString(Objects.requireNonNull(annotationUuid)));
         }
 
         private AnnotationIdentity getAnnotationIdentity() {
-            return new AnnotationIdentity(uuid.toString(), id);
+            return new AnnotationIdentity(annotationUuid.toString(), annotationId);
         }
     }
 
@@ -270,6 +272,9 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Defines a link between an annotation and an event
+     */
     record AnnotationEventLink(EventId eventId, String annotationUuid, long annotationId) {
 
         AnnotationEventLink {
