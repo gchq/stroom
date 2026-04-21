@@ -29,6 +29,10 @@ import stroom.svg.shared.SvgImage;
 import jakarta.inject.Inject;
 import org.xml.sax.XMLReader;
 
+/**
+ * This is the JSON parser pipe element that makes use of the underlying
+ * {@link stroom.pipeline.xml.converter.json.JSONParser} class to do the parsing.
+ */
 @ConfigurableElement(
         type = "JSONParser",
         category = Category.PARSER,

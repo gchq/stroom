@@ -36,6 +36,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This is the JSON streaming parser that parses JSON and emits XML SAX events.
+ * It is used by the {@link stroom.pipeline.parser.JSONParser} pipe element and the
+ * JsonToXml XSLT func.
+ */
 public class JSONParser extends AbstractParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JSONParser.class);
