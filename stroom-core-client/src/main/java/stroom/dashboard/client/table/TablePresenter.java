@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationTagNameChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
@@ -417,8 +418,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
-        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
-                onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
     }
 
     private void onAnnotationChange() {

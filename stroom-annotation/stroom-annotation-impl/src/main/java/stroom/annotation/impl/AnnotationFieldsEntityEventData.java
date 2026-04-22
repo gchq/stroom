@@ -30,30 +30,32 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Set;
 
 /**
- * Used for changes to one or more fields on an annotation
+ * Used for changes to one or more fields on a specified annotation, or
  */
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class AnnotationFieldsEntityEventData implements EntityEventData {
 
+    public static final String DUMMY_UUID = "DUMMY";
     @JsonProperty
-    private final long annotationId;
+    private final Long annotationId;
     @JsonProperty
     private final Set<String> changedFields;
 
     @JsonCreator
-    public AnnotationFieldsEntityEventData(@JsonProperty("annotationId") final long annotationId,
+    public AnnotationFieldsEntityEventData(@JsonProperty("annotationId") final Long annotationId,
                                            @JsonProperty("changedFields") final Set<String> changedFields) {
         this.annotationId = annotationId;
         this.changedFields = changedFields;
     }
 
-    public long getAnnotationId() {
+    public @Nullable Long getAnnotationId() {
         return annotationId;
     }
 
@@ -69,9 +71,9 @@ public class AnnotationFieldsEntityEventData implements EntityEventData {
                '}';
     }
 
-    public static EntityEvent createEntityEvent(final EntityAction entityAction,
-                                                final AnnotationIdentity annotationId,
-                                                final Set<String> changedFields) {
+    public static EntityEvent createSingleAnnotationEvent(final EntityAction entityAction,
+                                                          final AnnotationIdentity annotationId,
+                                                          final Set<String> changedFields) {
         Objects.requireNonNull(annotationId);
         return new EntityEvent(
                 new DocRef(Annotation.TYPE, annotationId.getUuid()),
@@ -79,12 +81,20 @@ public class AnnotationFieldsEntityEventData implements EntityEventData {
                 new AnnotationFieldsEntityEventData(annotationId.getId(), changedFields));
     }
 
+    public static EntityEvent createAllAnnotationsEvent(final EntityAction entityAction,
+                                                        final Set<String> changedFields) {
+        return new EntityEvent(
+                new DocRef(Annotation.TYPE, DUMMY_UUID),
+                entityAction,
+                new AnnotationFieldsEntityEventData(null, changedFields));
+    }
+
     public static void fireEvent(final EntityEventBus entityEventBus,
                                  final EntityAction entityAction,
                                  final AnnotationIdentity annotationId,
                                  final Set<String> changedFields) {
         if (entityEventBus != null) {
-            final EntityEvent entityEvent = createEntityEvent(entityAction, annotationId, changedFields);
+            final EntityEvent entityEvent = createSingleAnnotationEvent(entityAction, annotationId, changedFields);
             entityEventBus.fire(entityEvent);
         }
     }

@@ -42,6 +42,9 @@ public enum EntityAction implements HasDisplayValue {
      * May be fired more than once.
      */
     DELETE("Delete"),
+    /**
+     * Clear a whole cache.
+     */
     CLEAR_CACHE("Clear Cache"),
     // Separate events for an explorer tree node update as the tree doesn't care about an update to the document
     // itself but does care about updates to the properties of the node, e.g. tags

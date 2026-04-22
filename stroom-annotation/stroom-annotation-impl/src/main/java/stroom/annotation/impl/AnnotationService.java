@@ -495,12 +495,33 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
         checkAppPermission();
-        return annotationTagDao.updateAnnotationTag(annotationTag);
+        final AnnotationTag annotationTag2 = annotationTagDao.updateAnnotationTag(annotationTag);
+        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
+        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                EntityAction.UPDATE,
+                Set.of(fieldName)));
+
+        return annotationTag2;
     }
 
     public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
+        Objects.requireNonNull(annotationTag);
         checkAppPermission();
-        return annotationTagDao.deleteAnnotationTag(annotationTag);
+        final Boolean didDelete = annotationTagDao.deleteAnnotationTag(annotationTag);
+
+        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
+        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                EntityAction.DELETE,
+                Set.of(fieldName)));
+        return didDelete;
+    }
+
+    private String getFieldNameFromTagType(final AnnotationTagType tagType) {
+        return switch (tagType) {
+            case LABEL -> AnnotationDecorationFields.ANNOTATION_LABEL;
+            case STATUS -> AnnotationDecorationFields.ANNOTATION_STATUS;
+            case COLLECTION -> AnnotationDecorationFields.ANNOTATION_COLLECTION;
+        };
     }
 
     public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
@@ -553,7 +574,10 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             case final RemoveTag removeTag -> getChangedFieldNames(removeTag);
             case final SetTag setTag -> getChangedFieldNames(setTag);
             case final ChangeAssignedTo ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO);
-            case final ChangeComment ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_COMMENT);
+            // History is history of old comments
+            case final ChangeComment ignored -> Set.of(
+                    AnnotationDecorationFields.ANNOTATION_COMMENT,
+                    AnnotationDecorationFields.ANNOTATION_HISTORY);
             case final ChangeDescription ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_DESCRIPTION);
             case final ChangeRetentionPeriod ignored -> null;
             case final LinkEvents ignored -> null;

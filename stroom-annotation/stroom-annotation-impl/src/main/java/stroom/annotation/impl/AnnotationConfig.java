@@ -67,9 +67,11 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        // No TTL/TTE as ValStrings are immutable
+        // ValStrings are immutable, but if annotation tags change we want to old
+        // ones to be aged-off. Use 5 days to allow for long weekends.
         annotationValStringCache = CacheConfig.builder()
                 .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofDays(5))
                 .build();
     }
 

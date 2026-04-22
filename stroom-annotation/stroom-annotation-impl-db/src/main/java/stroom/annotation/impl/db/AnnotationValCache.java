@@ -40,6 +40,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -132,19 +133,27 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
         cache.invalidate(id);
     }
 
-    private void invalidateFields(final AnnotationIdentity annotationIdentity, final Set<String> fieldNames) {
-        LOGGER.debug("invalidateFields() - annotationIdentity: {}, fieldNames: {}", annotationIdentity, fieldNames);
-        cache.compute(annotationIdentity.getId(), (ignored, annotationValues) -> {
-            if (annotationValues == null) {
-                annotationValues = createNewAnnotationValues(annotationIdentity);
-            }
-            if (NullSafe.hasItems(fieldNames)) {
+    private void invalidateFields(final long annotationId, final Set<String> fieldNames) {
+        LOGGER.debug("invalidateFields() - annotationId: {}, fieldNames: {}", annotationId, fieldNames);
+        cache.compute(annotationId, (ignored, annotationValues) -> {
+            if (annotationValues != null && NullSafe.hasItems(fieldNames)) {
                 for (final String fieldName : fieldNames) {
                     annotationValues.clear(fieldName);
                 }
             }
             return annotationValues;
         });
+    }
+
+    private void invalidateFields(final Set<String> fieldNames) {
+        LOGGER.debug("invalidateFields() - fieldNames: {}", fieldNames);
+        // Take a copy so we are protected from other threads modifying the cache entry iteration
+        final Set<Long> keys = new HashSet<>(cache.keySet());
+        for (final Long id : keys) {
+            if (id != null) {
+                invalidateFields(id, fieldNames);
+            }
+        }
     }
 
     @Override
@@ -161,41 +170,79 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
             if (action == EntityAction.CLEAR_CACHE) {
                 clear();
             } else if (event.hasDataClass(AnnotationIdEntityEventData.class)) {
-                final AnnotationIdEntityEventData idEventData = event.getDataObject(
-                        AnnotationIdEntityEventData.class);
-                if (idEventData != null) {
-                    switch (action) {
-                        // No changed field info, so have to invalidate the whole anno
-                        case UPDATE -> invalidate(idEventData.getAnnotationId());
-                        case DELETE -> markDeleted(getIdentity(event, idEventData.getAnnotationId()));
-                    }
-                } else {
-                    LOGGER.debug("onChange() - Ignoring event with no entityEventData, event: {}", event);
-                }
+                handleIdOnlyEvent(event, action);
             } else if (event.hasDataClass(AnnotationFieldsEntityEventData.class)) {
-                final AnnotationFieldsEntityEventData fieldsEventData = event.getDataObject(
-                        AnnotationFieldsEntityEventData.class);
-
-                if (action == EntityAction.UPDATE) {
-                    final Set<String> changedFields = fieldsEventData.getChangedFields();
-                    if (NullSafe.hasItems(changedFields)) {
-                        // We know which fields have been changed so remove only those fields from
-                        // the cached value
-                        invalidateFields(getIdentity(event, fieldsEventData.getAnnotationId()), changedFields);
-                    } else {
-                        // No field names, so no choice but to clear the whole anno
-                        invalidate(fieldsEventData.getAnnotationId());
-                        LOGGER.warn("UPDATE event fired with an empty set of fields. " +
-                                    "Invalidating whole annotation. event: {}", event);
-                    }
-                } else {
-                    LOGGER.error("Unexpected action, event: {}", event);
-                }
+                handleFieldEvent(event, action);
             } else {
                 LOGGER.debug("Ignoring unexpected entityEventData type, event: {}", event);
             }
         } else {
             LOGGER.debug("onChange() - Ignoring null event");
+        }
+    }
+
+    private void handleFieldEvent(final EntityEvent event, final EntityAction action) {
+        final AnnotationFieldsEntityEventData fieldsEventData = event.getDataObject(
+                AnnotationFieldsEntityEventData.class);
+
+        final Long annotationId = fieldsEventData.getAnnotationId();
+        if (action == EntityAction.UPDATE) {
+            if (annotationId != null) {
+                handleSingleAnnotationsFieldEvent(event, annotationId, fieldsEventData);
+            } else {
+                handleAllAnnotationsFieldEvent(event, fieldsEventData);
+            }
+        } else if (action == EntityAction.DELETE) {
+            if (annotationId != null) {
+                LOGGER.error("Not expecting a DELETE event with an annotationId and fields, event: {}", event);
+            } else {
+                handleAllAnnotationsFieldEvent(event, fieldsEventData);
+            }
+        } else {
+            LOGGER.error("Unexpected action, event: {}", event);
+        }
+    }
+
+    private void handleSingleAnnotationsFieldEvent(final EntityEvent event,
+                                                   final long annotationId,
+                                                   final AnnotationFieldsEntityEventData fieldsEventData) {
+        final Set<String> changedFields = fieldsEventData.getChangedFields();
+        if (NullSafe.hasItems(changedFields)) {
+            // We know which fields have been changed so remove only those fields
+            invalidateFields(annotationId, changedFields);
+        } else {
+            // No field names, so no choice but to clear the whole anno
+            invalidate(annotationId);
+            LOGGER.warn("UPDATE event fired with an empty set of fields. " +
+                        "Invalidating whole annotation. event: {}", event);
+        }
+    }
+
+    private void handleAllAnnotationsFieldEvent(final EntityEvent event,
+                                                final AnnotationFieldsEntityEventData fieldsEventData) {
+        final Set<String> changedFields = fieldsEventData.getChangedFields();
+        if (NullSafe.hasItems(changedFields)) {
+            // We know which fields have been changed so remove only those fields
+            invalidateFields(changedFields);
+        } else {
+            // No field names, or anno id, so clear the whole cache
+            clear();
+            LOGGER.warn("UPDATE event fired with an empty set of fields and no annotationId. " +
+                        "Invalidating whole cache. event: {}", event);
+        }
+    }
+
+    private void handleIdOnlyEvent(final EntityEvent event, final EntityAction action) {
+        final AnnotationIdEntityEventData idEventData = event.getDataObject(
+                AnnotationIdEntityEventData.class);
+        if (idEventData != null) {
+            switch (action) {
+                // No changed field info, so have to invalidate the whole anno
+                case UPDATE -> invalidate(idEventData.getAnnotationId());
+                case DELETE -> markDeleted(getIdentity(event, idEventData.getAnnotationId()));
+            }
+        } else {
+            LOGGER.debug("onChange() - Ignoring event with no entityEventData, event: {}", event);
         }
     }
 
