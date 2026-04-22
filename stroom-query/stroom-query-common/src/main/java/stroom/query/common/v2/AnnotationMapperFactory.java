@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 public interface AnnotationMapperFactory {
 
-    AnnotationMapperFactory NO_OP = valueReferenceIndex -> Stream::of;
+    AnnotationMapperFactory NO_OP = ignored -> Stream::of;
 
     StoredValueMapper createMapper(ValueReferenceIndex valueReferenceIndex);
 }

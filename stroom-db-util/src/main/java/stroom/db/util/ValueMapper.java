@@ -24,10 +24,12 @@ import org.jooq.Field;
 import org.jooq.Record;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,7 +43,8 @@ public class ValueMapper {
         mappers.put(dataSourceField.getFldName(), new Mapper<>(field, handler));
     }
 
-    public List<Field<?>> getDbFieldsByName(final String[] fieldNames) {
+    public List<Field<?>> getDbFieldsByNameAsList(final String[] fieldNames) {
+        Objects.requireNonNull(fieldNames);
         return Arrays
                 .stream(fieldNames)
                 .map(fieldNameMap::get)
@@ -49,13 +52,53 @@ public class ValueMapper {
                 .collect(Collectors.toList());
     }
 
+    public Set<Field<?>> getDbFieldsByNameAsSet(final String[] fieldNames) {
+        Objects.requireNonNull(fieldNames);
+        return Arrays
+                .stream(fieldNames)
+                .map(fieldNameMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    public List<Field<?>> getDbFieldsByNameAsList(final Collection<String> fieldNames) {
+        Objects.requireNonNull(fieldNames);
+        return fieldNames.stream()
+                .map(fieldNameMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public Set<Field<?>> getDbFieldsByNameAsSet(final Collection<String> fieldNames) {
+        Objects.requireNonNull(fieldNames);
+        return fieldNames.stream()
+                .map(fieldNameMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
     public Mapper<?>[] getMappersForFieldNames(final String[] fieldNames) {
+        Objects.requireNonNull(fieldNames);
         final Mapper<?>[] handlers = new Mapper[fieldNames.length];
         for (int i = 0; i < fieldNames.length; i++) {
             handlers[i] = mappers.get(fieldNames[i]);
         }
         return handlers;
     }
+
+    public Mapper<?>[] getMappersForFieldNames(final List<String> fieldNames) {
+        Objects.requireNonNull(fieldNames);
+        final int count = fieldNames.size();
+        final Mapper<?>[] handlers = new Mapper[count];
+        for (int i = 0; i < count; i++) {
+            handlers[i] = mappers.get(fieldNames.get(i));
+        }
+        return handlers;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Mapper<T> {
 

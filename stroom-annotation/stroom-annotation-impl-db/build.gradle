@@ -46,6 +46,7 @@ dependencies {
     implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.slf4j.api
+    implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java
 

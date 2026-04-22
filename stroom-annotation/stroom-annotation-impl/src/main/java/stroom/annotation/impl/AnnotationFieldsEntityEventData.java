@@ -26,45 +26,65 @@ import stroom.util.entityevent.EntityEvent.EntityEventData;
 import stroom.util.entityevent.EntityEventBus;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
+import java.util.Set;
 
 /**
- * Used for changes to the whole annotation, rather than a single field on it.
+ * Used for changes to one or more fields on an annotation
  */
-public class AnnotationIdEntityEventData implements EntityEventData {
+@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
+public class AnnotationFieldsEntityEventData implements EntityEventData {
 
     @JsonProperty
     private final long annotationId;
+    @JsonProperty
+    private final Set<String> changedFields;
 
     @JsonCreator
-    public AnnotationIdEntityEventData(@JsonProperty("annotationId") final long annotationId) {
+    public AnnotationFieldsEntityEventData(@JsonProperty("annotationId") final long annotationId,
+                                           @JsonProperty("changedFields") final Set<String> changedFields) {
         this.annotationId = annotationId;
+        this.changedFields = changedFields;
     }
 
     public long getAnnotationId() {
         return annotationId;
     }
 
+    public Set<String> getChangedFields() {
+        return changedFields;
+    }
+
     @Override
     public String toString() {
-        return "AnnotationEntityEventData{" +
+        return "AnnotationFieldsEntityEventData{" +
                "annotationId=" + annotationId +
+               ", changedFields=" + changedFields +
                '}';
     }
 
     public static EntityEvent createEntityEvent(final EntityAction entityAction,
-                                                final AnnotationIdentity annotationId) {
+                                                final AnnotationIdentity annotationId,
+                                                final Set<String> changedFields) {
+        Objects.requireNonNull(annotationId);
         return new EntityEvent(
                 new DocRef(Annotation.TYPE, annotationId.getUuid()),
                 entityAction,
-                new AnnotationIdEntityEventData(annotationId.getId()));
+                new AnnotationFieldsEntityEventData(annotationId.getId(), changedFields));
     }
 
     public static void fireEvent(final EntityEventBus entityEventBus,
                                  final EntityAction entityAction,
-                                 final AnnotationIdentity annotationId) {
+                                 final AnnotationIdentity annotationId,
+                                 final Set<String> changedFields) {
         if (entityEventBus != null) {
-            final EntityEvent entityEvent = createEntityEvent(entityAction, annotationId);
+            final EntityEvent entityEvent = createEntityEvent(entityAction, annotationId, changedFields);
             entityEventBus.fire(entityEvent);
         }
     }

@@ -25,9 +25,12 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.StoredValueMapper;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -41,6 +44,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationMapperFactoryImpl.class);
 
     private final Provider<AnnotationService> annotationServiceProvider;
 
@@ -56,7 +61,11 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         final int eventIdIndex = getFieldValIndex(valueReferenceIndex,
                 SpecialColumns.RESERVED_EVENT_ID, IndexConstants.EVENT_ID);
 
+        LOGGER.debug("createMapper() - streamIdIndex: {}, eventIdIndex: {}", streamIdIndex, eventIdIndex);
+
         if (streamIdIndex == -1 || eventIdIndex == -1) {
+            LOGGER.debug("createMapper() - Either streamIdIndex: {}, eventIdIndex: {} or is -1, returning no-op",
+                    streamIdIndex, eventIdIndex);
             return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
@@ -75,8 +84,12 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                 .filter(Objects::nonNull)
                 .toList();
 
+        LOGGER.debug(() -> LogUtil.message("createMapper() - requiredAnnotationFields: {}",
+                LogUtil.toCsv(requiredAnnotationFields, QueryField::getFldName)));
+
         // Don't do any annotation decoration if we were not asked for any annotation fields.
         if (mutators.isEmpty()) {
+            LOGGER.debug("createMapper() - No mutators, returning no-op");
             return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
@@ -87,19 +100,24 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         //  that was the only field present here.
         if (requiredAnnotationFields.size() == 1 &&
             requiredAnnotationFields.contains(AnnotationDecorationFields.ANNOTATION_ID_FIELD)) {
+            LOGGER.debug("createMapper() - Only col is anno ID, returning no-op");
             return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
         final List<Mutator> allMutators;
 
         // Add annotation id if needed.
-        final int annotationIdIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ANNOTATION_ID,
+        final int annotationIdIndex = getFieldValIndex(
+                valueReferenceIndex,
+                SpecialColumns.RESERVED_ANNOTATION_ID,
                 AnnotationDecorationFields.ANNOTATION_ID);
+        LOGGER.debug("createMapper() - annotationIdIndex: {}", annotationIdIndex);
         if (annotationIdIndex != -1) {
-            allMutators = new ArrayList<>(mutators);
-            allMutators.add((storedValues, annotationValues) -> storedValues.set(
-                    annotationIdIndex,
-                    ValLong.create(annotationValues.getAnnotationIdentity().getId())));
+            allMutators = new ArrayList<>(mutators.size() + 1);
+            allMutators.addAll(mutators);
+            final Mutator mutator = (storedValues, annotationValues) ->
+                    storedValues.set(annotationIdIndex, annotationValues.getAnnotationIdAsVal());
+            allMutators.add(mutator);
         } else {
             allMutators = mutators;
         }
@@ -128,11 +146,17 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                                          Set<QueryField> requiredAnnotationFields,
                                          List<Mutator> mutators) implements StoredValueMapper {
 
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredValueMapperImpl.class);
+
         @Override
         public Stream<StoredValues> create(final StoredValues storedValues) {
             final Val streamId = (Val) storedValues.get(streamIdIndex);
             final Val eventId = (Val) storedValues.get(eventIdIndex);
+            LOGGER.trace(() -> LogUtil.message("create() - streamId: {}, eventId: {}",
+                    LogUtil.typedValue(streamId), LogUtil.typedValue(eventId)));
+
             if (streamId == null || !streamId.type().isNumber() || eventId == null || !eventId.type().isNumber()) {
+                LOGGER.trace("create() - streamId or eventId not the correct type, returning unchanged values");
                 return Stream.of(storedValues);
             }
 
@@ -140,37 +164,49 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             final Collection<AnnotationIdentity> idList = annotationService
                     .getAnnotationIdListForEvent(new EventId(streamId.toLong(), eventId.toLong()));
 
+            LOGGER.trace(() -> LogUtil.message("create() - streamId: {}, eventId: {}, idList: {}",
+                    streamId,
+                    eventId,
+                    LogUtil.getSample(
+                            idList, 10, annoId -> Long.toString(annoId.getId()))));
+
             // If we get no ids then just return.
             if (idList.isEmpty()) {
+                LOGGER.trace("create() - Empty idList, returning unchanged values");
                 return Stream.of(storedValues);
             }
 
             // Get requested annotation fields for the ids.
             final Collection<AnnotationValues> valueList = annotationService.getAnnotationValues(
                     idList, requiredAnnotationFields);
+            LOGGER.trace(() -> LogUtil.message("create() - valueList.size: {}", NullSafe.size(valueList)));
 
             // If we can not resolve any annotation fields (possibly due to permissions) then just return.
             if (valueList.isEmpty()) {
+                LOGGER.trace("create() - Empty valueList, returning unchanged values");
                 return Stream.of(storedValues);
             }
 
             // If we have id's then turn them into the values we need.
             if (valueList.size() == 1) {
+                final AnnotationValues annotationValues = valueList.iterator().next();
                 for (final Mutator mutator : mutators) {
-                    mutator.mutate(storedValues, valueList.iterator().next());
+                    mutator.mutate(storedValues, annotationValues);
                 }
                 return Stream.of(storedValues);
             }
 
-            return valueList.stream().map(annotationValues -> {
-                final StoredValues copy = storedValues.copy();
-                copy.setPeriod(storedValues.getPeriod());
-                for (final Mutator mutator : mutators) {
-                    mutator.mutate(copy, annotationValues);
-                }
-
-                return copy;
-            });
+            // Multiple annos linked to this event, so create a duplicate of the data
+            // for each anno, and mutate each copy.
+            return valueList.stream()
+                    .map(annotationValues -> {
+                        final StoredValues copy = storedValues.copy();
+                        copy.setPeriod(storedValues.getPeriod());
+                        for (final Mutator mutator : mutators) {
+                            mutator.mutate(copy, annotationValues);
+                        }
+                        return copy;
+                    });
         }
     }
 

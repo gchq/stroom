@@ -1040,7 +1040,7 @@ public class MetaDaoImpl implements MetaDao {
                             // add the join to meta_processor
                             final Table<?> tableClause = rulesUsePipelineField
                                     ? META_M.leftOuterJoin(META_PROCESSOR_P)
-                                    .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
+                                      .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
                                     : META_M;
 
                             // We might want to do this delete using a temp table like we do for
@@ -1118,7 +1118,7 @@ public class MetaDaoImpl implements MetaDao {
                                     // add the join to meta_processor
                                     final Table<?> fromClause = includesMetaProcessorTbl
                                             ? META_M.straightJoin(META_PROCESSOR_P)
-                                            .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
+                                              .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
                                             : META_M;
 
                                     final Table<?> orderedFullSet = context
@@ -1305,7 +1305,7 @@ public class MetaDaoImpl implements MetaDao {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
-        final List<Field<?>> dbFields = valueMapper.getDbFieldsByName(fieldNames);
+        final List<Field<?>> dbFields = valueMapper.getDbFieldsByNameAsList(fieldNames);
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         // Deal with extended fields.
