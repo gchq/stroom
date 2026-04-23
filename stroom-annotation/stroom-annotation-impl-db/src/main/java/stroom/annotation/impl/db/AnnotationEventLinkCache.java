@@ -22,6 +22,9 @@ import stroom.annotation.impl.AnnotationIdEntityEventData;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.EventId;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.StroomCache;
+import stroom.node.api.NodeInfo;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -29,7 +32,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PropertyPath;
+import stroom.util.shared.cache.CacheInfo;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 
@@ -41,10 +47,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -55,35 +66,36 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationEventLinkCache.class);
     private static final Duration MAX_CACHE_AGE = Duration.ofMinutes(10);
-    public static final long MIN_EPOCH_MS = 0L;
+    public static final String CACHE_NAME = "Annotation Event Link Cache";
 
     private final AtomicReference<MapWrapper> atomicRef;
+    private final NodeInfo nodeInfo;
 
-    public AnnotationEventLinkCache() {
+    @Inject
+    public AnnotationEventLinkCache(final CacheManager cacheManager,
+                                    final NodeInfo nodeInfo) {
         this.atomicRef = new AtomicReference<>(createMapWrapper());
+        this.nodeInfo = nodeInfo;
+        cacheManager.registerCache(CACHE_NAME, new CacheFacade());
     }
 
+    /**
+     * @return True if the data in the cache is too old
+     */
     public boolean isExpired() {
         return atomicRef.get().isExpired();
     }
 
-//    public Instant getLastLoadTime() {
-//        final Instant lastEventIdLoad = Objects.requireNonNullElse(atomicRef.get().lastEventIdLoad(), Instant.MIN);
-//        LOGGER.trace("getLastLoadTime: {}", lastEventIdLoad);
-//        return lastEventIdLoad;
-//    }
+    private void clear() {
+        LOGGER.debug(() -> LogUtil.message("clear() - current entries: {}, current link count: {}",
+                size(), getLinkCount()));
 
-    private void clear(final Instant time) {
-        LOGGER.debug(() -> LogUtil.message("clear() - size: {}", size()));
-        this.atomicRef.set(createMapWrapper(time));
+        this.atomicRef.set(createMapWrapper());
     }
 
     private MapWrapper createMapWrapper() {
-        return createMapWrapper(Instant.EPOCH);
-    }
-
-    private MapWrapper createMapWrapper(final Instant time) {
-        return new MapWrapper(new ConcurrentHashMap<>(), time);
+        // EPOCH will force a reload on next use of the cache
+        return new MapWrapper(new ConcurrentHashMap<>(), Instant.EPOCH);
     }
 
     private int size() {
@@ -139,11 +151,10 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                     newMap.computeIfAbsent(linkHolder.eventId, ignored -> ConcurrentHashMap.newKeySet())
                             .add(linkHolder.cacheValue));
             atomicRef.set(new MapWrapper(newMap, now));
-            LOGGER.debug(() -> LogUtil.message(
-                    "reload() - Swapped mapWrapper, entry count: {}, link count: {}, now: {}",
-                    newMap.size(), annotationEventLinks.size(), now));
+            LOGGER.info(() -> LogUtil.message("Reloaded {}, entry count: {}, link count: {}",
+                    CACHE_NAME, newMap.size(), annotationEventLinks.size()));
         } else {
-            clear(Instant.now());
+            clear();
         }
     }
 
@@ -218,7 +229,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                     case LINK -> link(event);
                     case UNLINK -> unlink(event);
                     case DELETE -> deleteAnnotation(event);
-                    case CLEAR_CACHE -> clear(Instant.now());
+                    case CLEAR_CACHE -> clear();
                 }
             } else {
                 LOGGER.debug("onChange() - Ignoring unexpected dataClassName, event: {}", event);
@@ -332,14 +343,14 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        public boolean equals(final Object obj) {
             if (obj == this) {
                 return true;
             }
             if (obj == null || obj.getClass() != this.getClass()) {
                 return false;
             }
-            var that = (MapWrapper) obj;
+            final MapWrapper that = (MapWrapper) obj;
             return Objects.equals(this.annotationEventIdCache, that.annotationEventIdCache) &&
                    this.lastEventIdLoad == that.lastEventIdLoad;
         }
@@ -403,5 +414,114 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     record LinkHolder(EventId eventId, CacheValue cacheValue) {
 
+    }
+
+    private class CacheFacade implements StroomCache<EventId, Set<CacheValue>> {
+
+        @Override
+        public String name() {
+            return CACHE_NAME;
+        }
+
+        @Override
+        public PropertyPath getBasePropertyPath() {
+            return PropertyPath.blank();
+        }
+
+        @Override
+        public Set<CacheValue> get(final EventId key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Set<CacheValue>> getIfPresent(final EventId key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<CacheValue> get(final EventId key, final Function<EventId, Set<CacheValue>> valueProvider) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void put(final EventId key, final Set<CacheValue> value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<CacheValue> compute(final EventId key,
+                                       final BiFunction<EventId, Set<CacheValue>, Set<CacheValue>> remappingFunction) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean containsKey(final EventId key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<EventId> keySet() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Collection<Set<CacheValue>> values() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Map<EventId, Set<CacheValue>> asMap() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void forEach(final BiConsumer<EventId, Set<CacheValue>> entryConsumer) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void invalidate(final EventId key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void invalidateEntries(final BiPredicate<EventId, Set<CacheValue>> entryPredicate) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void remove(final EventId key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void evictExpiredElements() {
+            // Called by CacheManager
+            // no-op as we are in charge of keeping it up to date
+        }
+
+        @Override
+        public long size() {
+            return getCurrentMap().size();
+        }
+
+        @Override
+        public void rebuild() {
+            AnnotationEventLinkCache.this.clear();
+        }
+
+        @Override
+        public void clear() {
+            AnnotationEventLinkCache.this.clear();
+        }
+
+        @Override
+        public CacheInfo getCacheInfo() {
+            return new CacheInfo(
+                    CACHE_NAME,
+                    PropertyPath.blank(),
+                    Map.of(CacheInfo.ENTRIES_CACHE_INFO_KEY, String.valueOf(size())),
+                    nodeInfo.getThisNodeName());
+        }
     }
 }

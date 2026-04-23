@@ -51,7 +51,7 @@ public class SingleAnnotationChangeRequest {
 
     public SingleAnnotationChangeRequest(final AnnotationIdentity annotationIdentity,
                                          final AbstractAnnotationChange change) {
-        this(Objects.requireNonNull(annotationIdentity).getDocRef(),
+        this(Objects.requireNonNull(annotationIdentity).asDocRef(),
                 annotationIdentity.getId(),
                 change);
     }

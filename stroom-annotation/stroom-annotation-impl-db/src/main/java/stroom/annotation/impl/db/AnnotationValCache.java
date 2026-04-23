@@ -186,15 +186,10 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
                 AnnotationFieldsEntityEventData.class);
 
         final Long annotationId = fieldsEventData.getAnnotationId();
-        if (action == EntityAction.UPDATE) {
+        // Whether it is a delete or update, we have to invalidate the fields or whole anno
+        if (action == EntityAction.UPDATE || action == EntityAction.DELETE) {
             if (annotationId != null) {
                 handleSingleAnnotationsFieldEvent(event, annotationId, fieldsEventData);
-            } else {
-                handleAllAnnotationsFieldEvent(event, fieldsEventData);
-            }
-        } else if (action == EntityAction.DELETE) {
-            if (annotationId != null) {
-                LOGGER.error("Not expecting a DELETE event with an annotationId and fields, event: {}", event);
             } else {
                 handleAllAnnotationsFieldEvent(event, fieldsEventData);
             }

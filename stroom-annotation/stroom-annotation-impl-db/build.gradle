@@ -28,6 +28,7 @@ dependencies {
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')

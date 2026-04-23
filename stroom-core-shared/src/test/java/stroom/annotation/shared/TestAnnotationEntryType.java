@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.annotation.shared;
 
-import stroom.docref.DocRef;
-import stroom.docref.HasName;
-import stroom.docref.HasType;
-import stroom.docref.HasUuid;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public interface Document extends HasType, HasUuid, HasName, HasAuditInfo {
+class TestAnnotationEntryType {
 
-    default DocRef asDocRef() {
-        return new DocRef(getType(), getUuid(), getName());
+    @Test
+    void test() {
+        AnnotationEntryType.GROUPED_TYPES.forEach((key, set) ->
+                Assertions.assertThat(set).contains(key));
     }
 }

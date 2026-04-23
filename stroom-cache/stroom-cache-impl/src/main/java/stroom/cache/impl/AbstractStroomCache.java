@@ -356,7 +356,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         // Local copy in case rebuild is called
         final CacheHolder<K, V> localCacheHolder = this.cacheHolder;
         final Cache<K, V> cache = localCacheHolder.getCache();
-        map.put("Entries", String.valueOf(cache.estimatedSize()));
+        map.put(CacheInfo.ENTRIES_CACHE_INFO_KEY, String.valueOf(cache.estimatedSize()));
         // The lock covers cacheBuilder too
         addEntries(map, getCacheBuilder().toString());
         addEntries(map, cache.stats().toString());
