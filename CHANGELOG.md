@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.10] - 2026-04-23
+
+* Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
+
+* Bug : Fix annotation dash/query columns not updating when status/label/collection names are deleted/modified.
+
+* Bug : Fix annotation decorations in dash/query columns showing deleted annotation entries.
+
+* Bug : Fix annotation Comment and History columns not updating when entries are added/updated/deleted.
+
+
 ## [v7.11.9] - 2026-04-20
 
 * Bug **#5508** : Improve annotation decoration performance.
@@ -2108,7 +2119,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.10...HEAD
+[v7.11.10]: https://github.com/gchq/stroom/compare/v7.11.9...v7.11.10
 [v7.11.9]: https://github.com/gchq/stroom/compare/v7.11.8...v7.11.9
 [v7.11.8]: https://github.com/gchq/stroom/compare/v7.11.7...v7.11.8
 [v7.11.7]: https://github.com/gchq/stroom/compare/v7.11.6...v7.11.7
