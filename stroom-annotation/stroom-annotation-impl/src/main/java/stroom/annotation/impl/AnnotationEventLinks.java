@@ -26,6 +26,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Used for changes to the events that are linked to an annotation
+ */
 public class AnnotationEventLinks implements EntityEventData {
 
     @JsonProperty
@@ -46,6 +49,9 @@ public class AnnotationEventLinks implements EntityEventData {
         return annotationId;
     }
 
+    /**
+     * @return The collection of events impacted by this event, e.g. a list of added events
+     */
     public Collection<EventId> getEventIds() {
         return eventIds;
     }

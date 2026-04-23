@@ -281,6 +281,10 @@ public class EntityEvent {
 
     public interface Handler {
 
+        /**
+         * Handle an {@link EntityEvent}.
+         * Any exceptions thrown within this method will be swallowed and logged at ERROR.
+         */
         void onChange(EntityEvent event);
     }
 

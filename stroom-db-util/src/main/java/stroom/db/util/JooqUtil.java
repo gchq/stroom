@@ -357,6 +357,20 @@ public final class JooqUtil {
         return record;
     }
 
+    public static <R extends UpdatableRecord<R>> R create(final DSLContext context, final R record) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(record);
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record:\n" + record);
+        try {
+            record.attach(context.configuration());
+            final int count = record.store();
+            LOGGER.debug("create() - count: {}, record: {}", count, record);
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
     /**
      * See {@link JooqUtil#tryCreate(DataSource, UpdatableRecord, TableField, TableField, TableField, Consumer)}
      */

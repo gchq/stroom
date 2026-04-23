@@ -89,7 +89,7 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
     annotationValStringCache:
-      expireAfterAccess: null
+      expireAfterAccess: "P5D"
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.query.common.v2;
+package stroom.annotation.shared;
 
-import stroom.query.language.functions.ref.ValueReferenceIndex;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.stream.Stream;
+class TestAnnotationEntryType {
 
-public interface AnnotationMapperFactory {
-
-    AnnotationMapperFactory NO_OP = ignored -> Stream::of;
-
-    StoredValueMapper createMapper(ValueReferenceIndex valueReferenceIndex);
+    @Test
+    void test() {
+        AnnotationEntryType.GROUPED_TYPES.forEach((key, set) ->
+                Assertions.assertThat(set).contains(key));
+    }
 }

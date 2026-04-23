@@ -878,7 +878,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getDbFieldsByName(fieldNames));
+        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getDbFieldsByNameAsList(fieldNames));
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         JooqUtil.context(processorDbConnProvider, context -> {

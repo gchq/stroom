@@ -38,7 +38,7 @@ public class Annotation extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_DOCUMENT_TYPE;
 
     @JsonProperty
-    private final Long id;
+    private final long id;
     @JsonProperty
     private final String subject;
     @JsonProperty
@@ -68,7 +68,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
-                      @JsonProperty("id") final Long id,
+                      @JsonProperty("id") final long id,
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final AnnotationTag status,
                       @JsonProperty("assignedTo") final UserRef assignedTo,
@@ -93,7 +93,7 @@ public class Annotation extends AbstractDoc {
         this.retainUntilTimeMs = retainUntilTimeMs;
     }
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
@@ -138,6 +138,13 @@ public class Annotation extends AbstractDoc {
     }
 
     /**
+     * @return This {@link Annotation} represented by a {@link AnnotationIdentity}.
+     */
+    public AnnotationIdentity asAnnotationIdentity() {
+        return new AnnotationIdentity(getUuid(), id);
+    }
+
+    /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
@@ -172,6 +179,10 @@ public class Annotation extends AbstractDoc {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
 
         private Long id;
@@ -204,7 +215,7 @@ public class Annotation extends AbstractDoc {
             this.retainUntilTimeMs = doc.retainUntilTimeMs;
         }
 
-        public Builder id(final Long id) {
+        public Builder id(final long id) {
             this.id = id;
             return self();
         }

@@ -21,6 +21,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.StreamFeedProvider;
+import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
@@ -48,6 +49,7 @@ public class TestModule extends AbstractModule {
         install(new DbTestModule());
         install(new MockTaskModule());
         install(new CacheModule());
+        install(new MockNodeServiceModule());
 
         bind(UserRefLookup.class).toInstance((userUuid, context) ->
                 Optional.of(UserRef.forUserUuid(userUuid)));

@@ -28,6 +28,9 @@ import stroom.util.entityevent.EntityEventBus;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Used for changes to the whole annotation, rather than a single field on it.
+ */
 public class AnnotationIdEntityEventData implements EntityEventData {
 
     @JsonProperty

@@ -23,6 +23,7 @@ import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntryType;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
@@ -150,6 +151,7 @@ public class AnnotationEditPresenter
     private final Provider<CommentEditPresenter> commentEditPresenterProvider;
 
     private DocRef annotationRef;
+    private AnnotationIdentity annotationIdentity;
     private AnnotationPresenter parent;
 
     private AnnotationTag currentStatus;
@@ -626,7 +628,7 @@ public class AnnotationEditPresenter
         final IconMenuItem deleteItem = new IconMenuItem.Builder()
                 .text("Delete Entry")
                 .icon(SvgImage.DELETE)
-                .command(() -> deleteEntry(id))
+                .command(() -> deleteEntry(id, entryType))
                 .build();
         menuItems.add(deleteItem);
 
@@ -639,10 +641,9 @@ public class AnnotationEditPresenter
     }
 
     private void editComment(final long id) {
-        final FetchAnnotationEntryRequest request =
-                new FetchAnnotationEntryRequest(annotationRef, id);
-        annotationResourceClient.fetchAnnotationEntry(request, result -> {
-            if (result.getEntryValue() instanceof final StringEntryValue value) {
+        final FetchAnnotationEntryRequest request = new FetchAnnotationEntryRequest(annotationRef, id);
+        annotationResourceClient.fetchAnnotationEntry(request, annotationEntry -> {
+            if (annotationEntry.getEntryValue() instanceof final StringEntryValue value) {
                 final CommentEditPresenter commentEditPresenter = commentEditPresenterProvider.get();
                 commentEditPresenter.setText(value.getValue());
                 final PopupSize popupSize = PopupSize.resizable(600, 600);
@@ -653,7 +654,10 @@ public class AnnotationEditPresenter
                         .onShow(e -> commentEditPresenter.focus())
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                changeComment(id, commentEditPresenter.getText(), e);
+                                changeComment(id,
+                                        commentEditPresenter.getText(),
+                                        annotationEntry.getEntryType(),
+                                        e);
                             } else {
                                 e.hide();
                             }
@@ -665,31 +669,39 @@ public class AnnotationEditPresenter
 
     private void changeComment(final long id,
                                final String text,
+                               final AnnotationEntryType annotationEntryType,
                                final HidePopupRequestEvent e) {
         final ChangeAnnotationEntryRequest request = new ChangeAnnotationEntryRequest(
-                annotationRef,
+                annotationIdentity,
                 id,
+                annotationEntryType,
                 text);
         annotationResourceClient.changeAnnotationEntry(
                 request,
-                res -> afterChangeComment(e),
-                error -> new DefaultErrorHandler(this, e::reset),
+                ignored -> afterChangeComment(e),
+                ignored -> new DefaultErrorHandler(this, e::reset),
                 this);
     }
 
     private void afterChangeComment(final HidePopupRequestEvent e) {
         try {
+            AnnotationChangeEvent.fire(this, annotationRef);
             updateHistory();
         } finally {
             e.hide();
         }
     }
 
-    private void deleteEntry(final long id) {
+    private void deleteEntry(final long id, final AnnotationEntryType annotationEntryType) {
         ConfirmEvent.fire(this, "Are you sure you want to delete this entry?", ok -> {
             if (ok) {
-                final DeleteAnnotationEntryRequest request = new DeleteAnnotationEntryRequest(annotationRef, id);
-                annotationResourceClient.deleteAnnotationEntry(request, result -> updateHistory(), this);
+                final DeleteAnnotationEntryRequest request = new DeleteAnnotationEntryRequest(
+                        annotationIdentity, annotationEntryType, id);
+                annotationResourceClient.deleteAnnotationEntry(
+                        request, result -> {
+                            AnnotationChangeEvent.fire(this, annotationRef);
+                            updateHistory();
+                        }, this);
             }
         });
     }
@@ -1297,6 +1309,7 @@ public class AnnotationEditPresenter
     @Override
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
         this.annotationRef = annotation.asDocRef();
+        this.annotationIdentity = annotation.asAnnotationIdentity();
         this.currentStatus = annotation.getStatus();
         this.currentAssignedTo = annotation.getAssignedTo();
 
@@ -1440,6 +1453,10 @@ public class AnnotationEditPresenter
                                         List<AnnotationEntry> entries) {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface AnnotationEditView extends View, Focus, HasUiHandlers<AnnotationEditUiHandlers> {
 

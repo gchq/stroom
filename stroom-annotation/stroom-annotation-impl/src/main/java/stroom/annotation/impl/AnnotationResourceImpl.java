@@ -233,7 +233,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     public Boolean deleteAnnotation(final DocRef annotationRef) {
         final AnnotationService annotationService = annotationServiceProvider.get();
         final Boolean success;
-        LOGGER.debug("Deleting annotation {}", annotationRef);
+        LOGGER.debug("deleteAnnotation() - annotationRef: {}", annotationRef);
         try {
             success = annotationService.deleteAnnotation(annotationRef);
             documentEventLog.get().delete(annotationRef, null);
@@ -278,6 +278,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
         final AnnotationService annotationService = annotationServiceProvider.get();
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
         AnnotationEntry before = AnnotationEntry.builder()
                 .id(request.getAnnotationEntryId())
                 .build();
@@ -285,11 +286,11 @@ class AnnotationResourceImpl implements AnnotationResource {
         LOGGER.debug("Changing annotation entry {}", request);
         try {
             before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
-                    request.getAnnotationRef(),
+                    annotationRef,
                     request.getAnnotationEntryId()));
             final Boolean success = annotationService.changeAnnotationEntry(request);
             after = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
-                    request.getAnnotationRef(),
+                    annotationRef,
                     request.getAnnotationEntryId()));
             documentEventLog.get().update(before, after, null);
             return success;
@@ -305,10 +306,10 @@ class AnnotationResourceImpl implements AnnotationResource {
         AnnotationEntry before = AnnotationEntry.builder()
                 .id(request.getAnnotationEntryId())
                 .build();
-        LOGGER.debug("Deleting annotation entry {}", request);
+        LOGGER.debug("deleteAnnotationEntry() - request: {}", request);
         try {
             before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
-                    request.getAnnotationRef(),
+                    request.getAnnotationIdentity().asDocRef(),
                     request.getAnnotationEntryId()));
             final Boolean success = annotationServiceProvider.get().deleteAnnotationEntry(request);
             documentEventLog.get().delete(before, null);

@@ -21,18 +21,28 @@ import stroom.docref.DocRef;
 import stroom.docref.HasUuid;
 import stroom.util.shared.HasId;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 /**
  * Simply an Annotation's {@link DocRef} and its database ID value.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class AnnotationIdentity implements HasId, HasUuid {
 
+    @JsonProperty
     private final String uuid;
+    @JsonProperty
     private final long id;
 
-    public AnnotationIdentity(final String uuid,
-                              final long id) {
+    @JsonCreator
+    public AnnotationIdentity(@JsonProperty("uuid") final String uuid,
+                              @JsonProperty("id") final long id) {
         this.uuid = Objects.requireNonNull(uuid);
         this.id = id;
     }
@@ -40,9 +50,15 @@ public class AnnotationIdentity implements HasId, HasUuid {
     public AnnotationIdentity(final DocRef docRef,
                               final long id) {
         this(Objects.requireNonNull(docRef).getUuid(), id);
+        if (!Objects.equals(docRef.getType(), Annotation.TYPE)) {
+            throw new IllegalArgumentException("Unsupported document type: " + docRef + ", id: " + id);
+        }
     }
 
-    public DocRef getDocRef() {
+    /**
+     * @return This {@link AnnotationIdentity} represented as a {@link DocRef}.
+     */
+    public DocRef asDocRef() {
         return new DocRef(Annotation.TYPE, uuid);
     }
 

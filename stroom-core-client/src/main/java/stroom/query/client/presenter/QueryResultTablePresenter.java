@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationTagNameChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
@@ -368,8 +369,12 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
-                onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
     }
 
     private void onAnnotationChange() {
