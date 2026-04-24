@@ -1687,7 +1687,8 @@ class TestNullSafe {
                         NullSafe.asSet(testCase.getInput()))
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptySet())
-                .addCase(new String[]{}, Collections.emptySet())
+                .addCase(new String[0], Collections.emptySet())
+                .addCase(new String[]{"foo"}, Set.of("foo"))
                 .addCase(new String[]{"foo", "bar"}, Set.of("foo", "bar"))
                 .build();
     }

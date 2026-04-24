@@ -16,36 +16,32 @@
 
 package stroom.annotation.client;
 
-import stroom.docref.DocRef;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 
-public class AnnotationChangeEvent extends GwtEvent<AnnotationChangeEvent.Handler> {
+/**
+ * When there has been a change to an existing annotation tag (collection/status/label), i.e.
+ * UPDATE/DELETE. Don't care about CREATE at the moment.
+ */
+public class AnnotationTagNameChangeEvent extends GwtEvent<AnnotationTagNameChangeEvent.Handler> {
 
-    private static Type<AnnotationChangeEvent.Handler> TYPE;
+    private static Type<AnnotationTagNameChangeEvent.Handler> TYPE;
 
-    private final DocRef annotationRef;
-
-    private AnnotationChangeEvent(final DocRef annotationRef) {
-        this.annotationRef = annotationRef;
-    }
-
-    public static void fire(final HasHandlers source, final DocRef annotationRef) {
-        source.fireEvent(new AnnotationChangeEvent(annotationRef));
+    public static void fire(final HasHandlers source) {
+        source.fireEvent(new AnnotationTagNameChangeEvent());
     }
 
     /**
      * Let the UI know the annotation has changed but not until we have shown the annotation
      * (hence deferred by timer).
      */
-    public static void fireDeferred(final HasHandlers source, final DocRef annotationRef) {
+    public static void fireDeferred(final HasHandlers source) {
         new Timer() {
             @Override
             public void run() {
-                source.fireEvent(new AnnotationChangeEvent(annotationRef));
+                source.fireEvent(new AnnotationTagNameChangeEvent());
             }
         }.schedule(1000);
     }
@@ -67,16 +63,12 @@ public class AnnotationChangeEvent extends GwtEvent<AnnotationChangeEvent.Handle
         handler.onChange(this);
     }
 
-    public DocRef getAnnotationRef() {
-        return annotationRef;
-    }
-
 
     // --------------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {
 
-        void onChange(AnnotationChangeEvent event);
+        void onChange(AnnotationTagNameChangeEvent event);
     }
 }

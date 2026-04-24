@@ -373,7 +373,7 @@ public final class LogUtil {
         if (value == null) {
             return null;
         } else {
-            return value.getClass().getSimpleName() + " " + value;
+            return "(" + value.getClass().getSimpleName() + ") " + value;
         }
     }
 
@@ -565,17 +565,28 @@ public final class LogUtil {
     public static <T> String getSample(final Collection<T> collection,
                                        final int sampleSize,
                                        final Function<T, String> toStringFunction) {
-        if (collection == null) {
-            return null;
-        } else {
-            final Function<T, String> func = Objects.requireNonNullElse(
-                    toStringFunction,
-                    Objects::toString);
-            final String str = NullSafe.stream(collection)
-                    .limit(sampleSize)
-                    .map(func)
-                    .collect(Collectors.joining(", "));
-            return "[" + str + "]";
+        try {
+            if (collection == null) {
+                return null;
+            } else if (sampleSize <= 0) {
+                return "";
+            } else {
+                final Function<T, String> func = Objects.requireNonNullElse(
+                        toStringFunction,
+                        Objects::toString);
+                final int size = collection.size();
+                final String str = NullSafe.stream(collection)
+                        .limit(sampleSize)
+                        .map(func)
+                        .collect(Collectors.joining(", "));
+                final String truncatedPart = sampleSize < size
+                        ? ", ..."
+                        : "";
+                return "[" + str + truncatedPart + "]";
+            }
+        } catch (final Exception e) {
+            LOGGER.error("Error in getSample - {}", LogUtil.exceptionMessage(e), e);
+            return "?";
         }
     }
 }

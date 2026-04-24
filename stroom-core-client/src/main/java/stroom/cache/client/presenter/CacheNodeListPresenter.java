@@ -137,17 +137,30 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                 });
     }
 
+    private Set<String> getCacheInfoKeys() {
+        return cacheInfoKeys;
+    }
+
+    private boolean doesCacheHaveHitRatio() {
+        final Set<String> cacheInfoKeys = getCacheInfoKeys();
+        return cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
+               && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT);
+    }
+
     private void addStatColumns() {
         final List<String> sortedCacheKeys = new ArrayList<>(cacheInfoKeys);
-        sortedCacheKeys.add(HIT_RATIO_KEY);
+        // Hit ratio is a derived col, so need to make sure this cache
+        // has the two underlying columns for us to make it
+        final boolean doesCacheHaveHitRatio = doesCacheHaveHitRatio();
+        if (doesCacheHaveHitRatio) {
+            sortedCacheKeys.add(HIT_RATIO_KEY);
+        }
         sortedCacheKeys.sort(Comparator.naturalOrder());
 
         for (final String cacheInfoKey : sortedCacheKeys) {
             final String name = convertUpperCamelToHuman(cacheInfoKey);
 
-            if (HIT_RATIO_KEY.equals(cacheInfoKey)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
+            if (HIT_RATIO_KEY.equals(cacheInfoKey)) {
                 addStatColumn("Hit Ratio", -1, row ->
                         getCacheHitRatio(row.getMap()));
             } else {

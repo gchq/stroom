@@ -18,6 +18,11 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
+import stroom.annotation.impl.AnnotationEventLinks;
+import stroom.annotation.impl.AnnotationIdEntityEventData;
+import stroom.annotation.impl.AnnotationValues;
+import stroom.annotation.impl.AnnotationValues.FieldValueEntry;
+import stroom.annotation.impl.db.AnnotationEventLinkCache.AnnotationEventLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
@@ -30,6 +35,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntryType;
 import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
@@ -80,6 +86,9 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -92,8 +101,6 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -108,6 +115,7 @@ import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -125,6 +133,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -158,6 +167,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     private static final int BATCH_SIZE = 1000;
 
+    private static final byte STATUS_TYPE_ID_BYTE = AnnotationTagType.STATUS.getPrimitiveValue();
+    private static final byte LABEL_TYPE_ID_BYTE = AnnotationTagType.LABEL.getPrimitiveValue();
+    private static final byte COLLECTION_TYPE_ID_BYTE = AnnotationTagType.COLLECTION.getPrimitiveValue();
+    private static final byte COMMENT_TYPE_ID_BYTE = AnnotationEntryType.COMMENT.getPrimitiveValue();
+
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationTag STATUS =
             ANNOTATION_TAG.as("status");
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationTag LABEL =
@@ -169,15 +183,24 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationEntry HISTORY =
             ANNOTATION_ENTRY.as("history");
 
+    public static final String SEPARATOR = "|";
     private static final Field<String> STATUS_FIELD =
-            DSL.groupConcatDistinct(STATUS.NAME).orderBy(STATUS.NAME.asc()).separator("|");
+            DSL.groupConcatDistinct(STATUS.NAME)
+                    .orderBy(STATUS.NAME.asc())
+                    .separator(SEPARATOR);
     private static final Field<String> LABEL_FIELD =
-            DSL.groupConcatDistinct(LABEL.NAME).orderBy(LABEL.NAME.asc()).separator("|");
+            DSL.groupConcatDistinct(LABEL.NAME)
+                    .orderBy(LABEL.NAME.asc())
+                    .separator(SEPARATOR);
     private static final Field<String> COLLECTION_FIELD =
-            DSL.groupConcatDistinct(COLLECTION.NAME).orderBy(COLLECTION.NAME.asc()).separator("|");
+            DSL.groupConcatDistinct(COLLECTION.NAME)
+                    .orderBy(COLLECTION.NAME.asc())
+                    .separator(SEPARATOR);
     private static final Field<String> COMMENT_FIELD = COMMENT.DATA;
     private static final Field<String> HISTORY_FIELD =
-            DSL.groupConcatDistinct(HISTORY.DATA).orderBy(HISTORY.ENTRY_TIME_MS.asc()).separator("|");
+            DSL.groupConcatDistinct(HISTORY.DATA)
+                    .orderBy(HISTORY.ENTRY_TIME_MS.asc())
+                    .separator(SEPARATOR);
     private static final String DATA_RETENTION_USER_NAME = "Data Retention";
 
     /**
@@ -187,7 +210,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             .select(ANNOTATION_ENTRY.DATA)
             .from(ANNOTATION_ENTRY)
             .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-            .and(ANNOTATION_ENTRY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+            .and(ANNOTATION_ENTRY.TYPE_ID.eq(COMMENT_TYPE_ID_BYTE))
+            .and(ANNOTATION_ENTRY.DELETED.isFalse())
             .orderBy(ANNOTATION_ENTRY.ID.desc())
             .limit(1)
             .asField("latest_comment");
@@ -198,9 +222,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private static final Field<String> COMMENT_HISTORY_FIELD = DSL.field(
                     "(SELECT GROUP_CONCAT(data ORDER BY id SEPARATOR '|') " +
                     "FROM annotation_entry " +
-                    "WHERE fk_annotation_id = annotation.id AND type_id = ?)",
+                    "WHERE fk_annotation_id = annotation.id " +
+                    "AND deleted = 0 " + // 0 == false
+                    "AND type_id = ?)",
                     String.class,
-                    AnnotationEntryType.COMMENT.getPrimitiveValue())
+                    COMMENT_TYPE_ID_BYTE)
             .as("comment_history");
 
     /**
@@ -211,8 +237,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                             .from(ANNOTATION_TAG_LINK)
                             .join(ANNOTATION_TAG)
                             .on(ANNOTATION_TAG.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID))
-                            .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID)))
+                            .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                            .and(ANNOTATION_TAG.DELETED.isFalse()))
             .as("tags");
+    public static final int SAMPLE_SIZE = 10;
+    public static final int INITIAL_VERSION = 1;
 
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
@@ -224,6 +253,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private final StreamFeedProvider streamFeedProvider;
     private final AnnotationFeedNameToIdCache annotationFeedNameToIdCache;
     private final AnnotationFeedIdToNameCache annotationFeedIdToNameCache;
+    private final AnnotationValCache annotationValCache;
+    private final EntityEventBus entityEventBus;
+    private final AnnotationEventLinkCache annotationEventLinkCache;
+    private final AnnotationValStringCache annotationValStringCache;
 
     @Inject
     AnnotationDaoImpl(final AnnotationDbConnProvider connectionProvider,
@@ -234,17 +267,32 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                       final AnnotationTagDaoImpl annotationTagDao,
                       final StreamFeedProvider streamFeedProvider,
                       final AnnotationFeedNameToIdCache annotationFeedNameToIdCache,
-                      final AnnotationFeedIdToNameCache annotationFeedIdToNameCache) {
+                      final AnnotationFeedIdToNameCache annotationFeedIdToNameCache,
+                      final AnnotationValCache annotationValCache,
+                      final EntityEventBus entityEventBus,
+                      final AnnotationEventLinkCache annotationEventLinkCache,
+                      final AnnotationValStringCache annotationValStringCache) {
         this.connectionProvider = connectionProvider;
         this.userRefLookup = userRefLookup;
+        this.entityEventBus = entityEventBus;
+        this.annotationValStringCache = annotationValStringCache;
         this.valueMapper = createValueMapper();
         this.annotationConfigProvider = annotationConfigProvider;
         this.annotationTagDao = annotationTagDao;
         this.streamFeedProvider = streamFeedProvider;
         this.annotationFeedNameToIdCache = annotationFeedNameToIdCache;
         this.annotationFeedIdToNameCache = annotationFeedIdToNameCache;
+        this.annotationValCache = annotationValCache;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory, userRefLookup);
         this.termHandlerFactory = termHandlerFactory;
+        this.annotationEventLinkCache = annotationEventLinkCache;
+    }
+
+    /**
+     * Only use this for fields that have expected low cardinality
+     */
+    private Val toInternedValString(@NonNull final String string) {
+        return annotationValStringCache.getAndIntern(string);
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
@@ -386,21 +434,22 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 ValDate::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_CREATED_BY_FIELD,
                 ANNOTATION.CREATE_USER,
-                ValString::create);
+                this::toInternedValString);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_UPDATED_ON_FIELD,
                 ANNOTATION.UPDATE_TIME_MS,
                 ValDate::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_UPDATED_BY_FIELD,
                 ANNOTATION.UPDATE_USER,
-                ValString::create);
+                this::toInternedValString);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
-        valueMapper.map(AnnotationDecorationFields.ANNOTATION_STATUS_FIELD, STATUS_FIELD, ValString::create);
+        valueMapper.map(AnnotationDecorationFields.ANNOTATION_STATUS_FIELD, STATUS_FIELD, this::toInternedValString);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD,
                 ANNOTATION.ASSIGNED_TO_UUID,
-                this::mapUserUuidToValString);
-        valueMapper.map(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, LABEL_FIELD, ValString::create);
-        valueMapper.map(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, COLLECTION_FIELD, ValString::create);
+                this::mapUserUuidToInternedValString);
+        valueMapper.map(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, LABEL_FIELD, this::toInternedValString);
+        valueMapper.map(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, COLLECTION_FIELD,
+                this::toInternedValString);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_COMMENT_FIELD, COMMENT_FIELD, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_HISTORY_FIELD, HISTORY_FIELD, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_DESCRIPTION_FIELD,
@@ -411,15 +460,16 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         valueMapper.map(AnnotationFields.ID_FIELD, ANNOTATION.ID, ValLong::create);
         valueMapper.map(AnnotationFields.UUID_FIELD, ANNOTATION.UUID, ValString::create);
         valueMapper.map(AnnotationFields.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValDate::create);
-        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
+        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, this::toInternedValString);
         valueMapper.map(AnnotationFields.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValDate::create);
-        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, ValString::create);
+        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, this::toInternedValString);
         valueMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
         valueMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
-        valueMapper.map(AnnotationFields.STATUS_FIELD, STATUS_FIELD, ValString::create);
-        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID, this::mapUserUuidToValString);
-        valueMapper.map(AnnotationFields.LABEL_FIELD, LABEL_FIELD, ValString::create);
-        valueMapper.map(AnnotationFields.COLLECTION_FIELD, COLLECTION_FIELD, ValString::create);
+        valueMapper.map(AnnotationFields.STATUS_FIELD, STATUS_FIELD, this::toInternedValString);
+        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID,
+                this::mapUserUuidToInternedValString);
+        valueMapper.map(AnnotationFields.LABEL_FIELD, LABEL_FIELD, this::toInternedValString);
+        valueMapper.map(AnnotationFields.COLLECTION_FIELD, COLLECTION_FIELD, this::toInternedValString);
         valueMapper.map(AnnotationFields.COMMENT_FIELD, COMMENT_FIELD, ValString::create);
         valueMapper.map(AnnotationFields.HISTORY_FIELD, HISTORY_FIELD, ValString::create);
         valueMapper.map(AnnotationFields.DESCRIPTION_FIELD, ANNOTATION.DESCRIPTION, ValString::create);
@@ -431,9 +481,16 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         return valueMapper;
     }
 
-    private Optional<Long> getId(final DocRef docRef) {
+    @Override
+    public Optional<Long> getId(final DocRef docRef) {
         return JooqUtil.contextResult(connectionProvider, context ->
                 getId(context, docRef));
+    }
+
+    @Override
+    public long getIdOrThrow(final DocRef docRef) {
+        return getId(docRef)
+                .orElseThrow(() -> new RuntimeException("No Annotation record found with docRef " + docRef));
     }
 
     private Optional<Long> getId(final DSLContext context, final DocRef docRef) {
@@ -442,6 +499,15 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .from(ANNOTATION)
                 .where(ANNOTATION.UUID.eq(docRef.getUuid()))
                 .fetchOptional(ANNOTATION.ID);
+    }
+
+    private Optional<DocRef> getAnnotationRef(final DSLContext context, final long id) {
+        return context
+                .select(ANNOTATION.UUID)
+                .from(ANNOTATION)
+                .where(ANNOTATION.ID.eq(id))
+                .fetchOptional(ANNOTATION.UUID)
+                .map(uuid -> new DocRef(Annotation.TYPE, uuid));
     }
 
     @Override
@@ -528,14 +594,18 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     @Override
-    public List<DocRef> idListToDocRefs(final Collection<Long> idList) {
+    public List<AnnotationIdentity> idListToDocRefs(final Collection<Long> idList) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                        .select(ANNOTATION.UUID)
+                        .select(ANNOTATION.UUID, ANNOTATION.ID)
                         .from(ANNOTATION)
                         .where(ANNOTATION.ID.in(idList))
-                        .fetch(ANNOTATION.UUID))
+                        .fetch())
                 .stream()
-                .map(uuid -> Annotation.buildDocRef().uuid(uuid).build())
+                .map(rec -> {
+                    final String uuid = rec.get(ANNOTATION.UUID);
+                    final long id = rec.get(ANNOTATION.ID);
+                    return new AnnotationIdentity(uuid, id);
+                })
                 .toList();
     }
 
@@ -572,17 +642,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 })
                 .filter(entry -> !entry.isDeleted())
                 .toList();
-    }
-
-    @Override
-    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
-        return JooqUtil.contextResult(connectionProvider, context -> commonSelect(context)
-                .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-                .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
-                        .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId())))
-                .and(ANNOTATION.DELETED.isFalse())
-                .fetch()
-                .map(this::mapToAnnotation));
     }
 
     private AnnotationEntry mapToAnnotationEntry(final Record record) {
@@ -637,6 +696,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final String history = record.get(COMMENT_HISTORY_FIELD);
 
         return Annotation.builder()
+                .id(record.get(ANNOTATION.ID))
                 .uuid(record.get(ANNOTATION.UUID))
                 .name(record.get(ANNOTATION.TITLE))
                 .version("" + record.get(ANNOTATION.VERSION))
@@ -644,7 +704,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .createUser(record.get(ANNOTATION.CREATE_USER))
                 .updateTimeMs(record.get(ANNOTATION.UPDATE_TIME_MS))
                 .updateUser(record.get(ANNOTATION.UPDATE_USER))
-                .id(record.get(ANNOTATION.ID))
                 .subject(record.get(ANNOTATION.SUBJECT))
                 .status(status)
                 .assignedTo(getUserRef(record.get(ANNOTATION.ASSIGNED_TO_UUID)))
@@ -679,37 +738,20 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     @Override
     public Annotation createAnnotation(final CreateAnnotationRequest request,
                                        final UserRef currentUser) {
-        final String userUuid = currentUser.getUuid();
-        final String userName = currentUser.toDisplayString();
+        final String currentUserUuid = currentUser.getUuid();
         final Instant now = Instant.now();
-        final long nowMs = now.toEpochMilli();
-
-        final AnnotationTag statusTag = annotationTagDao
-                .findAnnotationTag(AnnotationTagType.STATUS, request.getStatus())
+        final AnnotationTag statusTag = annotationTagDao.findAnnotationTag(
+                        AnnotationTagType.STATUS, request.getStatus())
                 .orElse(null);
-        final SimpleDuration retentionPeriod = getDefaultRetentionPeriod();
-        final Long retainUntilTimeMs = calculateRetainUntilTimeMs(retentionPeriod, nowMs);
 
         // Check assignment is allowed to the supplied user.
-        final String assignedToUuid = NullSafe
-                .get(request.getAssignTo(), UserRef::getUuid);
+        final String assignedToUuid = NullSafe.get(request.getAssignTo(), UserRef::getUuid);
         validateAssignedToUser(assignedToUuid);
 
         return JooqUtil.transactionResult(connectionProvider, context -> {
-            Annotation annotation = Annotation.builder()
-                    .uuid(UUID.randomUUID().toString())
-                    .createTimeMs(nowMs)
-                    .createUser(userName)
-                    .updateTimeMs(nowMs)
-                    .updateUser(userName)
-                    .name(request.getTitle())
-                    .subject(request.getSubject())
-                    .status(statusTag)
-                    .assignedTo(request.getAssignTo())
-                    .retentionPeriod(retentionPeriod)
-                    .retainUntilTimeMs(retainUntilTimeMs)
-                    .build();
-            annotation = create(context, annotation);
+
+            // Create the main annotation record first
+            final Annotation annotation = create(context, request, now, currentUser);
             final long annotationId = annotation.getId();
 
             // Create default entries.
@@ -718,23 +760,32 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 addTag(context, annotationId, statusTag);
 
                 // Create history entry.
-                createEntry(context, annotationId, userUuid, now, AnnotationEntryType.STATUS, statusTag.getName());
+                createEntry(context,
+                        annotationId,
+                        currentUserUuid,
+                        now,
+                        AnnotationEntryType.STATUS,
+                        statusTag.getName());
             }
 
             if (assignedToUuid != null) {
                 // Create history entry.
-                createEntry(context, annotationId, userUuid, now, AnnotationEntryType.ASSIGNED, assignedToUuid);
+                createEntry(context, annotationId, currentUserUuid, now, AnnotationEntryType.ASSIGNED, assignedToUuid);
             }
 
-            if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-                createEventLinks(context, userUuid, now, annotationId, request.getLinkedEvents());
+            if (NullSafe.hasItems(request.getLinkedEvents())) {
+                createEventLinks(context,
+                        currentUserUuid,
+                        now,
+                        annotation.asAnnotationIdentity(),
+                        request.getLinkedEvents());
             }
 
             if (request.getTable() != null) {
                 createEntry(
                         context,
                         annotationId,
-                        userUuid,
+                        currentUserUuid,
                         now,
                         AnnotationEntryType.ADD_TABLE_DATA,
                         JsonUtil.writeValueAsString(request.getTable()));
@@ -758,14 +809,15 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     public boolean change(final SingleAnnotationChangeRequest request, final UserRef currentUser) {
         try {
             final Instant now = Instant.now();
+            final DocRef annotationRef = request.getAnnotationRef();
+            final long annotationId = Objects.requireNonNullElseGet(
+                    request.getAnnotationId(),
+                    () -> getIdOrThrow(annotationRef));
+            final AnnotationIdentity annotationIdentity = new AnnotationIdentity(
+                    annotationRef.getUuid(),
+                    annotationId);
 
             // Update parent if we need to.
-            final Optional<Long> optionalId = getId(request.getAnnotationRef());
-            if (optionalId.isEmpty()) {
-                throw new RuntimeException("Unable to create entry for unknown annotation");
-            }
-
-            final long annotationId = optionalId.get();
             final String userUuid = currentUser.getUuid();
             final AbstractAnnotationChange change = request.getChange();
 
@@ -784,9 +836,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         changeDescription(changeDescription, currentUser, annotationId, now);
                 case final ChangeRetentionPeriod changeRetentionPeriod ->
                         changeRetentionPeriod(changeRetentionPeriod, currentUser, annotationId, now);
-                case final LinkEvents linkEvents -> linkEvents(userUuid, now, annotationId, linkEvents.getEvents());
+                case final LinkEvents linkEvents ->
+                        linkEvents(userUuid, now, annotationIdentity, linkEvents.getEvents());
                 case final UnlinkEvents unlinkEvents ->
-                        unlinkEvents(userUuid, now, annotationId, unlinkEvents.getEvents());
+                        unlinkEvents(userUuid, now, annotationIdentity, unlinkEvents.getEvents());
                 case final LinkAnnotations linkAnnotations ->
                         linkAnnotations(userUuid, now, annotationId, linkAnnotations.getAnnotations());
                 case final UnlinkAnnotations unlinkAnnotations ->
@@ -1052,8 +1105,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                 context
                                         .select(ANNOTATION_TAG.ID)
                                         .from(ANNOTATION_TAG)
-                                        .where(ANNOTATION_TAG.TYPE_ID.eq(
-                                                annotationTagType.getPrimitiveValue())))
+                                        .where(ANNOTATION_TAG.TYPE_ID.eq(annotationTagType.getPrimitiveValue())))
                         )).execute();
     }
 
@@ -1149,57 +1201,94 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         return insertStep.execute();
     }
 
-    private Annotation create(final DSLContext context, final Annotation annotation) {
-        final String userUuid = getUserUuid(annotation.getAssignedTo());
-        final Long retentionTime = NullSafe.get(
-                annotation.getRetentionPeriod(),
-                SimpleDuration::getTime);
+    private Annotation create(final DSLContext context,
+                              final CreateAnnotationRequest request,
+                              final Instant now,
+                              final UserRef currentUser) {
+
+        final long nowMs = now.toEpochMilli();
+        final String currentUserName = currentUser.toDisplayString();
+        final SimpleDuration retentionPeriod = getDefaultRetentionPeriod();
+        final Long retainUntilTimeMs = calculateRetainUntilTimeMs(retentionPeriod, nowMs);
+        final Long retentionTime = NullSafe.get(retentionPeriod, SimpleDuration::getTime);
         final Byte retentionTimeUnit = NullSafe.get(
-                annotation.getRetentionPeriod(),
+                retentionPeriod,
                 SimpleDuration::getTimeUnit,
                 TimeUnit::getPrimitiveValue);
 
-        final Optional<Long> optional = context
-                .insertInto(ANNOTATION,
-                        ANNOTATION.UUID,
-                        ANNOTATION.VERSION,
-                        ANNOTATION.CREATE_USER,
-                        ANNOTATION.CREATE_TIME_MS,
-                        ANNOTATION.UPDATE_USER,
-                        ANNOTATION.UPDATE_TIME_MS,
-                        ANNOTATION.TITLE,
-                        ANNOTATION.SUBJECT,
-                        ANNOTATION.ASSIGNED_TO_UUID,
-                        ANNOTATION.DESCRIPTION,
-                        ANNOTATION.RETENTION_TIME,
-                        ANNOTATION.RETENTION_UNIT,
-                        ANNOTATION.RETAIN_UNTIL_MS)
-                .values(
-                        annotation.getUuid(),
-                        1,
-                        annotation.getCreateUser(),
-                        annotation.getCreateTimeMs(),
-                        annotation.getUpdateUser(),
-                        annotation.getUpdateTimeMs(),
-                        annotation.getName(),
-                        annotation.getSubject(),
-                        userUuid,
-                        annotation.getDescription(),
-                        retentionTime,
-                        retentionTimeUnit,
-                        annotation.getRetainUntilTimeMs())
-                .returning(ANNOTATION.ID)
-                .fetchOptional()
-                .map(AnnotationRecord::getId);
+        final AnnotationRecord annotationRec = new AnnotationRecord();
+        annotationRec.setUuid(UUID.randomUUID().toString());
+        annotationRec.setVersion(INITIAL_VERSION);
+        annotationRec.setCreateTimeMs(nowMs);
+        annotationRec.setCreateUser(currentUserName);
+        annotationRec.setUpdateTimeMs(nowMs);
+        annotationRec.setUpdateUser(currentUserName);
+        annotationRec.setTitle(request.getTitle());
+        annotationRec.setSubject(request.getSubject());
+        annotationRec.setAssignedToUuid(NullSafe.get(request.getAssignTo(), UserRef::getUuid));
+        annotationRec.setRetentionTime(retentionTime);
+        annotationRec.setRetentionUnit(retentionTimeUnit);
+        annotationRec.setRetainUntilMs(retainUntilTimeMs);
 
-        return optional
-                .map(id -> annotation.copy().id(id).version("1").build())
-                .orElse(null);
+        LOGGER.debug("create() - annotationRec: {}", annotationRec);
+
+        // Insert the annotation and update annotationRec with the ID
+        JooqUtil.create(context, annotationRec);
+        final long id = Objects.requireNonNull(annotationRec.getId());
+
+        final Annotation annotation = Annotation.builder()
+                .id(id)
+                .uuid(annotationRec.getUuid())
+                .name(annotationRec.getTitle())
+                .version(String.valueOf(annotationRec.getVersion()))
+                .createTimeMs(annotationRec.getCreateTimeMs())
+                .createUser(annotationRec.getCreateUser())
+                .updateTimeMs(annotationRec.getUpdateTimeMs())
+                .updateUser(annotationRec.getUpdateUser())
+                .subject(annotationRec.getSubject())
+                .assignedTo(request.getAssignTo())
+                .description(annotationRec.getDescription())
+                .retentionPeriod(retentionPeriod)
+                .retainUntilTimeMs(retainUntilTimeMs)
+                .build();
+        LOGGER.debug("create() - Returning annotation {}: {}", id, annotation);
+        return annotation;
+//
+//        final Optional<Long> optional = context
+//                .insertInto(ANNOTATION,
+//                        ANNOTATION.UUID,
+//                        ANNOTATION.VERSION,
+//                        ANNOTATION.CREATE_USER,
+//                        ANNOTATION.CREATE_TIME_MS,
+//                        ANNOTATION.UPDATE_USER,
+//                        ANNOTATION.UPDATE_TIME_MS,
+//                        ANNOTATION.TITLE,
+//                        ANNOTATION.SUBJECT,
+//                        ANNOTATION.ASSIGNED_TO_UUID,
+//                        ANNOTATION.RETENTION_TIME,
+//                        ANNOTATION.RETENTION_UNIT,
+//                        ANNOTATION.RETAIN_UNTIL_MS)
+//                .values(
+//                        uuid,
+//                        INITIAL_VERSION,
+//                        annotationRec.createUser,
+//                        annotationRec.timeMs,
+//                        annotationRec.createUser,
+//                        annotationRec.timeMs,
+//                        annotationRec.title,
+//                        annotationRec.subject,
+//                        assignedToUserUuid,
+//                        annotationRec.getRetentionTime(),
+//                        annotationRec.getRetentionTimeUnit(),
+//                        annotationRec.retainUntilTimeMs)
+//                .returning(ANNOTATION.ID)
+//                .fetchOptional()
+//                .map(AnnotationRecord::getId);
     }
 
     private void linkEvents(final String userUuid,
                             final Instant now,
-                            final long annotationId,
+                            final AnnotationIdentity annotationId,
                             final List<EventId> eventIds) {
         JooqUtil.transaction(connectionProvider, context ->
                 createEventLinks(context, userUuid, now, annotationId, eventIds));
@@ -1208,7 +1297,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private void createEventLinks(final DSLContext context,
                                   final String userUuid,
                                   final Instant now,
-                                  final long annotationId,
+                                  final AnnotationIdentity identity,
                                   final List<EventId> eventIds) {
         // If we have been given an empty list then exit.
         if (NullSafe.isEmptyCollection(eventIds)) {
@@ -1219,7 +1308,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final Map<Long, String> streamToFeed = new HashMap<>();
         final Map<String, Integer> feedNameToId = new HashMap<>();
 
-        // Resolve all feed named and IDs.
+        // Resolve all feed names and IDs
         for (final EventId eventId : eventIds) {
             final String feedName = streamToFeed
                     .computeIfAbsent(eventId.getStreamId(), streamFeedProvider::getFeedName);
@@ -1247,7 +1336,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final Set<EventId> existingLinks = context
                     .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                     .from(ANNOTATION_DATA_LINK)
-                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(identity.getId()))
                     .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                             .in(batch.stream()
                                     .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
@@ -1276,14 +1365,19 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     final String feedName = streamToFeed.get(eventId.getStreamId());
                     final Integer feedId = feedNameToId.get(feedName);
                     insertStep = insertStep.values(
-                            annotationId,
+                            identity.getId(),
                             feedId,
                             eventId.getStreamId(),
                             eventId.getEventId()
                     );
 
                     // Remember the entry to add.
-                    entries.add(new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.LINK_EVENT,
+                    entries.add(new Entry(now,
+                            userUuid,
+                            now,
+                            userUuid,
+                            identity.getId(),
+                            AnnotationEntryType.LINK_EVENT,
                             eventId.toString()));
                 }
 
@@ -1302,21 +1396,24 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 }
             }
         });
-    }
 
+        // Notify all nodes about the added links
+        final AnnotationEventLinks eventData = new AnnotationEventLinks(identity.getId(), validEventIds);
+        EntityEvent.fire(entityEventBus, identity.asDocRef(), EntityAction.LINK, eventData);
+    }
 
     private void unlinkEvents(final String userUuid,
                               final Instant now,
-                              final long annotationId,
+                              final AnnotationIdentity annotationIdentity,
                               final List<EventId> eventIds) {
         JooqUtil.transaction(connectionProvider, context ->
-                removeEventLinks(context, userUuid, now, annotationId, eventIds));
+                removeEventLinks(context, userUuid, now, annotationIdentity, eventIds));
     }
 
     private void removeEventLinks(final DSLContext context,
                                   final String userUuid,
                                   final Instant now,
-                                  final long annotationId,
+                                  final AnnotationIdentity annotationIdentity,
                                   final List<EventId> eventIds) {
         // If we have been given an empty list then exit.
         if (NullSafe.isEmptyCollection(eventIds)) {
@@ -1328,7 +1425,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final Set<EventId> existingLinks = context
                     .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                     .from(ANNOTATION_DATA_LINK)
-                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationIdentity.getId()))
                     .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                             .in(batch.stream()
                                     .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
@@ -1348,7 +1445,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 // Remove links.
                 final int result = context
                         .deleteFrom(ANNOTATION_DATA_LINK)
-                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationIdentity.getId()))
                         .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                                 .in(existingIds.stream()
                                         .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
@@ -1358,12 +1455,21 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 if (result > 0) {
                     // Create history entries for successful deletes
                     final List<Entry> entries = existingIds.stream().map(eventId ->
-                            new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.UNLINK_EVENT,
+                            new Entry(now,
+                                    userUuid,
+                                    now,
+                                    userUuid,
+                                    annotationIdentity.getId(),
+                                    AnnotationEntryType.UNLINK_EVENT,
                                     eventId.toString())).toList();
                     createEntries(context, entries);
                 }
             }
         });
+
+        // Notify all nodes about the added links
+        final AnnotationEventLinks eventData = new AnnotationEventLinks(annotationIdentity.getId(), eventIds);
+        EntityEvent.fire(entityEventBus, annotationIdentity.asDocRef(), EntityAction.UNLINK, eventData);
     }
 
     @Override
@@ -1579,7 +1685,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final Condition condition = expressionMapper.apply(criteria.getExpression())
                 .and(ANNOTATION.DELETED.isFalse());
 
-        final Set<Field<?>> dbFields = new HashSet<>(valueMapper.getDbFieldsByName(fieldNames));
+        final Set<Field<?>> dbFields = valueMapper.getDbFieldsByNameAsSet(fieldNames);
         final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
         dbFields.add(ANNOTATION.UUID);
 
@@ -1621,7 +1727,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 select = select
                         .leftOuterJoin(STATUS)
                         .on(STATUS.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
-                                .and(STATUS.TYPE_ID.eq(AnnotationTagType.STATUS.getPrimitiveValue())));
+                                .and(STATUS.TYPE_ID.eq(STATUS_TYPE_ID_BYTE)));
             }
 
             // Label join.
@@ -1630,7 +1736,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 select = select
                         .leftOuterJoin(LABEL)
                         .on(LABEL.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
-                                .and(LABEL.TYPE_ID.eq(AnnotationTagType.LABEL.getPrimitiveValue())));
+                                .and(LABEL.TYPE_ID.eq(LABEL_TYPE_ID_BYTE)));
             }
 
             // Collection join.
@@ -1639,7 +1745,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 select = select
                         .leftOuterJoin(COLLECTION)
                         .on(COLLECTION.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
-                                .and(COLLECTION.TYPE_ID.eq(AnnotationTagType.COLLECTION.getPrimitiveValue())));
+                                .and(COLLECTION.TYPE_ID.eq(COLLECTION_TYPE_ID_BYTE)));
             }
 
             // Comment join.
@@ -1651,8 +1757,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                         .select(ANNOTATION_ENTRY.ID)
                                         .from(ANNOTATION_ENTRY)
                                         .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-                                        .and(ANNOTATION_ENTRY.TYPE_ID
-                                                .eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+                                        .and(ANNOTATION_ENTRY.TYPE_ID.eq(COMMENT_TYPE_ID_BYTE))
                                         .and(ANNOTATION_ENTRY.DELETED.isFalse())
                                         .orderBy(ANNOTATION_ENTRY.ID.desc())
                                         .limit(1)));
@@ -1664,7 +1769,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 select = select
                         .leftOuterJoin(HISTORY)
                         .on(HISTORY.FK_ANNOTATION_ID.eq(ANNOTATION.ID)
-                                .and(HISTORY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue())));
+                                .and(HISTORY.TYPE_ID.eq(COMMENT_TYPE_ID_BYTE)));
             }
 
             try (final Cursor<?> cursor = select
@@ -1703,7 +1808,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .map(this::mapToAnnotation));
     }
 
-    private Val mapUserUuidToValString(final String userUuid) {
+    private Val mapUserUuidToInternedValString(final String userUuid) {
         if (userUuid == null) {
             return ValNull.INSTANCE;
         } else if (NullSafe.isBlankString(userUuid)) {
@@ -1713,53 +1818,57 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                             userUuid,
                             this::getUserRef,
                             UserRef::toDisplayString,
-                            value -> (Val) ValString.create(value))
+                            value -> (Val) annotationValStringCache.getAndIntern(value))
                     .orElse(ValNull.INSTANCE);
-        }
-    }
-
-    private String getUserUuid(final UserRef userRef) {
-        if (userRef == null) {
-            return null;
-        } else {
-            return userRef.getUuid();
         }
     }
 
     @Override
     public boolean logicalDelete(final DocRef annotationRef,
                                  final UserRef currentUser) {
+        Objects.requireNonNull(annotationRef);
         final String userUuid = currentUser.getUuid();
         final String userName = currentUser.toDisplayString();
         final Instant now = Instant.now();
         final Optional<Long> optionalId = getId(annotationRef);
-        return optionalId.map(id ->
-                        logicalDelete(id, userName, userUuid, now, "Deleted by user"))
+        return optionalId.map(
+                        id -> {
+                            final AnnotationIdentity annotationIdentity = new AnnotationIdentity(annotationRef, id);
+                            return logicalDelete(
+                                    annotationIdentity,
+                                    userName,
+                                    userUuid,
+                                    now,
+                                    true,
+                                    "Deleted by user");
+                        })
                 .orElse(false);
     }
 
     @Override
-    public LongList markDeletedByDataRetention() {
+    public List<AnnotationIdentity> markDeletedByDataRetention() {
         return markDeletedByDataRetention(BATCH_SIZE);
     }
 
     @SuppressWarnings("SameParameterValue")
-    LongList markDeletedByDataRetention(final int batchSize) {
+    List<AnnotationIdentity> markDeletedByDataRetention(final int batchSize) {
         final Instant now = Instant.now();
         LOGGER.debug("markDeletedByDataRetention() - now: {}", now);
         boolean keepGoing = true;
-        final LongList deletedIds = new LongArrayList(batchSize);
+        final List<AnnotationIdentity> deletedIds = new ArrayList<>(batchSize);
         while (keepGoing) {
-            final LongList ids = getAnnotationsPastRetention(now, batchSize);
+            final List<AnnotationIdentity> ids = getAnnotationsPastRetention(now, batchSize);
             LOGGER.debug(() -> LogUtil.message("markDeletedByDataRetention() - now: {}, batchSize, ids.size: {}",
                     now, batchSize, ids.size()));
             keepGoing = ids.size() == batchSize;
             ids.forEach(id -> {
+                // Don't fire the event as the caller will fire a batch event for all deleted items
                 final boolean didDelete = logicalDelete(
                         id,
                         DATA_RETENTION_USER_NAME,
                         DATA_RETENTION_USER_NAME,  // Using a username for a UUID, not ideal
                         now,
+                        false,
                         "Deleted by data retention");
                 if (didDelete) {
                     deletedIds.add(id);
@@ -1771,34 +1880,39 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private LongList getAnnotationsPastRetention(final Instant now,
-                                                 final int batchSize) {
-        final LongList ids = JooqUtil.contextResult(connectionProvider, context -> {
-            try {
-                return JooqUtil.fetchIds(batchSize, () ->
-                        context.select(ANNOTATION.ID)
-                                .from(ANNOTATION)
-                                .where(ANNOTATION.DELETED.isFalse())
-                                .and(ANNOTATION.RETAIN_UNTIL_MS.isNotNull())
-                                .and(ANNOTATION.RETAIN_UNTIL_MS.lt(now.toEpochMilli()))
-                                .limit(batchSize)
-                                .fetchLazy());
-            } catch (final Exception e) {
-                throw new RuntimeException(LogUtil.message("Error fetching annotations past retention," +
-                                                           "now: {}, batchSize: {} - {}",
-                        now, batchSize, LogUtil.exceptionMessage(e)), e);
-            }
-        });
+    private List<AnnotationIdentity> getAnnotationsPastRetention(final Instant now,
+                                                                 final int batchSize) {
+        final List<AnnotationIdentity> ids = JooqUtil.contextResult(
+                        connectionProvider,
+                        context -> {
+                            try {
+                                return context.select(ANNOTATION.ID, ANNOTATION.UUID)
+                                        .from(ANNOTATION)
+                                        .where(ANNOTATION.DELETED.isFalse())
+                                        .and(ANNOTATION.RETAIN_UNTIL_MS.isNotNull())
+                                        .and(ANNOTATION.RETAIN_UNTIL_MS.lt(now.toEpochMilli()))
+                                        .limit(batchSize)
+                                        .fetch();
+                            } catch (final Exception e) {
+                                throw new RuntimeException(LogUtil.message(
+                                        "Error fetching annotations past retention, now: {}, batchSize: {} - {}",
+                                        now, batchSize, LogUtil.exceptionMessage(e)), e);
+                            }
+                        })
+                .map(rec -> new AnnotationIdentity(
+                        rec.get(ANNOTATION.UUID),
+                        rec.get(ANNOTATION.ID)));
         LOGGER.debug(() -> LogUtil.message("getAnnotationsPastRetention() - now: {}, batchSize: {}, ids.size: {}",
                 now, batchSize, ids.size()));
         return ids;
     }
 
     @NullMarked
-    private boolean logicalDelete(final long annotationId,
+    private boolean logicalDelete(final AnnotationIdentity annotationId,
                                   final String userName,
                                   final String userUuid,
                                   final Instant now,
+                                  final boolean fireEvent,
                                   @Nullable final String message) {
         return JooqUtil.transactionResult(connectionProvider, context -> {
             final int count = context
@@ -1806,85 +1920,95 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     .set(ANNOTATION.DELETED, true)
                     .set(ANNOTATION.UPDATE_USER, userName)
                     .set(ANNOTATION.UPDATE_TIME_MS, now.toEpochMilli())
-                    .where(ANNOTATION.ID.eq(annotationId))
+                    .where(ANNOTATION.ID.eq(annotationId.getId()))
                     .and(ANNOTATION.DELETED.eq(false))
                     .execute();
 
             // Remember that this annotation was marked deleted.
             if (count > 0) {
                 createEntry(context,
-                        annotationId,
+                        annotationId.getId(),
                         userUuid,
                         now,
                         AnnotationEntryType.DELETE,
                         message);
             }
 
+            AnnotationIdEntityEventData.fireEvent(entityEventBus, EntityAction.DELETE, annotationId);
+
             return count > 0;
         });
     }
 
     @Override
-    public LongList physicallyDelete(final Instant age) {
+    public List<AnnotationIdentity> physicallyDelete(final Instant age) {
         return physicallyDelete(age, BATCH_SIZE);
     }
 
-    LongList physicallyDelete(final Instant age, final int batchSize) {
+    List<AnnotationIdentity> physicallyDelete(final Instant age, final int batchSize) {
         LOGGER.debug("physicallyDelete() - age: {}, batchSize: {}", age, batchSize);
         // We may delete more than batchSize, but it will do as a starting size
-        final LongList deletedIds = new LongArrayList(batchSize);
+        final List<AnnotationIdentity> deletedIds = new ArrayList<>(batchSize);
 
         JooqUtil.transaction(connectionProvider, txnContext -> {
 
             // Lambda to fetch a batch of anno IDs to delete
-            final Supplier<LongList> batchSupplier = () -> JooqUtil.fetchIds(
-                    batchSize,
-                    () -> txnContext.select(ANNOTATION.ID)
+            final Supplier<List<AnnotationIdentity>> batchSupplier = () ->
+                    txnContext.select(ANNOTATION.UUID, ANNOTATION.ID)
                             .from(ANNOTATION)
                             .where(ANNOTATION.DELETED.eq(true))
                             .and(ANNOTATION.UPDATE_TIME_MS.lt(age.toEpochMilli()))
                             .limit(batchSize)
-                            .fetchLazy());
+                            .fetch()
+                            .map(rec -> new AnnotationIdentity(
+                                    rec.get(ANNOTATION.UUID),
+                                    rec.get(ANNOTATION.ID)));
 
             // Lambda to do delete records from 4 tables where the id is in the batch
-            final Consumer<LongList> batchConsumer = ids -> {
-                // Saves us unboxing 4 times. Jooq doesn't support
-                final List<Long> boxedIds = new ArrayList<>(ids);
-                final int linkCount = txnContext.deleteFrom(ANNOTATION_DATA_LINK)
-                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.in(boxedIds))
-                        .execute();
-                final int entryCount = txnContext.deleteFrom(ANNOTATION_ENTRY)
-                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.in(boxedIds))
-                        .execute();
-                final int tagLinkCount = txnContext.deleteFrom(ANNOTATION_TAG_LINK)
-                        .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.in(boxedIds))
-                        .execute();
-                final int annoLinkCount = txnContext.deleteFrom(ANNOTATION_LINK)
-                        .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.in(boxedIds))
-                        .or(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(boxedIds))
-                        .execute();
-                final int annoCount = txnContext.deleteFrom(ANNOTATION)
-                        .where(ANNOTATION.ID.in(boxedIds))
-                        .execute();
+            final BiConsumer<List<Long>, List<AnnotationIdentity>> batchConsumer =
+                    (ids, annotationIds) -> {
+                        // Saves us unboxing 4 times. Jooq doesn't support
+                        final int count = ids.size();
+                        LOGGER.debug("physicallyDelete() - age: {}, batchSize: {}, consuming {} ids",
+                                age, batchSize, count);
 
-                // MySQL can't do returning from a delete stmt, so ensure we deleted the expected number.
-                if (annoCount != boxedIds.size()) {
-                    throw new RuntimeException(LogUtil.message(
-                            "Expecting to have deleted {} annotation records, actually deleted {}",
-                            annoCount, boxedIds.size()));
-                }
-                final LongList batchDeletedIds = new LongArrayList(boxedIds);
-                LOGGER.debug(() -> LogUtil.message(
-                        "physicallyDelete() - age: {}, batchSize: {}, ids.size: {}, linkCount: {}, " +
-                        "entryCount: {}, tagLinkCount: {}, annoLinkCount: {}, batchProcessById.size: {}",
-                        age, batchSize, ids.size(), linkCount, entryCount,
-                        tagLinkCount, annoLinkCount, batchDeletedIds.size()));
+                        final int linkCount = txnContext.deleteFrom(ANNOTATION_DATA_LINK)
+                                .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.in(ids))
+                                .execute();
+                        final int entryCount = txnContext.deleteFrom(ANNOTATION_ENTRY)
+                                .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.in(ids))
+                                .execute();
+                        final int tagLinkCount = txnContext.deleteFrom(ANNOTATION_TAG_LINK)
+                                .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.in(ids))
+                                .execute();
+                        final int annoLinkCount = txnContext.deleteFrom(ANNOTATION_LINK)
+                                .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.in(ids))
+                                .or(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(ids))
+                                .execute();
+                        final int annoCount = txnContext.deleteFrom(ANNOTATION)
+                                .where(ANNOTATION.ID.in(ids))
+                                .execute();
 
-                deletedIds.addAll(batchDeletedIds);
-            };
+                        // MySQL can't do returning from a DELETE stmt, so ensure we deleted the expected number.
+                        if (annoCount != count) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Expecting to have deleted {} annotation records, actually deleted {}",
+                                    annoCount, count));
+                        }
+                        LOGGER.debug(() -> LogUtil.message(
+                                "physicallyDelete() - age: {}, batchSize: {}, ids.size: {}, linkCount: {}, " +
+                                "entryCount: {}, tagLinkCount: {}, annoLinkCount: {}, batchProcessById.size: {}",
+                                age, batchSize, ids.size(), linkCount, entryCount,
+                                tagLinkCount, annoLinkCount, count));
 
-            JooqUtil.batchProcessById(batchSize, batchSupplier, batchConsumer);
+                        deletedIds.addAll(annotationIds);
+                    };
+
+            JooqUtil.batchProcessByHasId(batchSize, batchSupplier, batchConsumer);
         });
+
+        LOGGER.debug(() -> LogUtil.message("physicallyDelete() - age: {}, batchSize: {}, returning {} ids",
+                age, batchSize, deletedIds.size()));
         return deletedIds;
     }
 
@@ -1922,9 +2046,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                          final UserRef currentUser,
                                          final long entryId,
                                          final String data) {
-        final Optional<Long> optionalId = getId(annotationRef);
-        final long annotationId = optionalId.orElseThrow(() ->
-                new RuntimeException("Unable to change entry for unknown annotation"));
+        final long annotationId = getIdOrThrow(annotationRef);
 
         // Get the entry first.
         return JooqUtil.transactionResult(connectionProvider, context -> {
@@ -2010,6 +2132,307 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             batchProcessor.accept(batch);
         }
     }
+
+    @Override
+    public Collection<AnnotationIdentity> getAnnotationIdsForEvent(final EventId eventId) {
+        reloadEventLinkCacheIfOld();
+        final Set<AnnotationIdentity> annotationIds = annotationEventLinkCache.getLinkedAnnotations(eventId);
+        if (LOGGER.isTraceEnabled()) {
+            if (NullSafe.hasItems(annotationIds)) {
+                LOGGER.trace("getAnnotationIdsForEvent() - eventId: {}, annotationIds: {}",
+                        eventId, getAnnoIdSample(annotationIds));
+            }
+        }
+        return annotationIds;
+    }
+
+    private void reloadEventLinkCacheIfOld() {
+        if (annotationEventLinkCache.isExpired()) {
+            synchronized (annotationEventLinkCache) {
+                if (annotationEventLinkCache.isExpired()) {
+                    // TODO : items are added and removed from the cache elsewhere in here so we need to make sure
+                    //  those changes are reflected in the map as they may occur during map load.
+                    reloadEventIdCache();
+                }
+            }
+        }
+    }
+
+    private void reloadEventIdCache() {
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            final List<AnnotationEventLink> eventLinks = new ArrayList<>();
+            JooqUtil.contextResult(connectionProvider, context -> context
+                            .select(ANNOTATION_DATA_LINK.STREAM_ID,
+                                    ANNOTATION_DATA_LINK.EVENT_ID,
+                                    ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
+                                    ANNOTATION.UUID)
+                            .from(ANNOTATION_DATA_LINK)
+                            .join(ANNOTATION)
+                            .on(ANNOTATION.ID.eq(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID))
+                            .where(ANNOTATION.DELETED.eq(false))
+                            .fetch())
+                    .forEach(r -> {
+                        final long id = r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID);
+                        final String uuid = r.get(ANNOTATION.UUID);
+                        final EventId eventId = new EventId(
+                                r.get(ANNOTATION_DATA_LINK.STREAM_ID),
+                                r.get(ANNOTATION_DATA_LINK.EVENT_ID));
+                        eventLinks.add(new AnnotationEventLink(eventId, uuid, id));
+                    });
+            // It's possible that an event link is added/removed in the UI between the fetch above and
+            // the swapping of the map in reload().
+            annotationEventLinkCache.reload(eventLinks);
+            return eventLinks.size();
+        }, count -> LogUtil.message("reloadEventIdCache (event link count: {})", count));
+    }
+
+    @Override
+    public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,
+                                                            final Set<QueryField> requiredAnnotationFields) {
+        Objects.requireNonNull(idList);
+        Objects.requireNonNull(requiredAnnotationFields);
+
+        // ID and UUID are always present so do not request them.
+        requiredAnnotationFields.remove(AnnotationDecorationFields.ANNOTATION_ID_FIELD);
+        requiredAnnotationFields.remove(AnnotationDecorationFields.ANNOTATION_UUID_FIELD);
+
+        LOGGER.trace(() -> LogUtil.message("getAnnotationValues() - idList: {}, requiredAnnotationFields: {}",
+                getAnnoIdSample(idList),
+                LogUtil.toCsv(requiredAnnotationFields, QueryField::getFldName)));
+
+        // First try to get existing values from the cache and see if any additional values need loading.
+        final int annotationCount = idList.size();
+        final List<AnnotationValues> annotationValuesList = new ArrayList<>(annotationCount);
+        Map<Long, AnnotationValues> annotationValuesToLoad = null;
+
+        // NOTE: If anno 1 only needs to load field X and anno 2 only needs to load field Y then we
+        // will actually fire a single SQL query to get fields X AND Y for both annos.
+        // We could fire a custom SQL query for each anno, but given that not many events will have >1
+        // anno it is probably best to have one more complicated query than two possibly less complicated.
+        // If both annos needed field X then the query would be the same for each anyway.
+        final List<QueryField> fieldsToLoad = new ArrayList<>(requiredAnnotationFields.size());
+
+        // annotationValCache may already hold the values for zero-many of the fields we are interested in,
+        // so check each field that we are after to see if it is cached.
+        // If all the fields we want are cached, happy days, nothing to do.
+        // If >1 field is not cached then we can just hit the db for those uncached fields.
+        for (final AnnotationIdentity annotationIdentity : idList) {
+            final AnnotationValues annotationValues = annotationValCache.getOrCreate(annotationIdentity);
+
+            // Determine if we need to load this annotation.
+            if (!annotationValues.isDeleted()) {
+                // If we don't have a uuid then we need to load it.
+                boolean needsLoad = false;
+                for (final QueryField requiredAnnotationField : requiredAnnotationFields) {
+                    // ID and UUID are always present so do not request them.
+                    if (!annotationValues.containsKey(requiredAnnotationField)) {
+                        needsLoad = true;
+                        fieldsToLoad.add(requiredAnnotationField);
+                    }
+                }
+                if (needsLoad) {
+                    if (annotationValuesToLoad == null) {
+                        annotationValuesToLoad = new HashMap<>(annotationCount);
+                    }
+                    annotationValuesToLoad.put(annotationIdentity.getId(), annotationValues);
+                } else {
+                    // No load needed, so just use the one straight from the cache
+                    annotationValuesList.add(annotationValues);
+                }
+            }
+            // If it's deleted, we don't return it
+        }
+
+        // Do any need loading.
+        if (NullSafe.hasEntries(annotationValuesToLoad)) {
+            final Map<Long, AnnotationValues> annotationValuesToLoadFinal = annotationValuesToLoad;
+            final List<String> fieldNames = fieldsToLoad.stream()
+                    .map(QueryField::getFldName)
+                    .toList();
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("getAnnotationValues() - idList: {}, load from DB required, ids to load: {}, " +
+                             "fieldsToLoad: {}",
+                        getAnnoIdSample(idList), getIdSample(annotationValuesToLoad.keySet()), fieldsToLoad);
+            }
+
+            final Set<Field<?>> dbFields = valueMapper.getDbFieldsByNameAsSet(fieldNames);
+            final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
+            dbFields.add(ANNOTATION.ID);
+            dbFields.add(ANNOTATION.UUID);
+
+            final Set<Field<?>> groupBy = new HashSet<>(dbFields);
+            groupBy.remove(STATUS_FIELD);
+            groupBy.remove(COLLECTION_FIELD);
+            groupBy.remove(LABEL_FIELD);
+            groupBy.remove(HISTORY_FIELD);
+
+            JooqUtil.context(connectionProvider, context -> {
+
+                SelectJoinStep<Record> select = context
+                        .select(dbFields)
+                        .from(ANNOTATION);
+
+                if (dbFields.contains(STATUS_FIELD)
+                    || dbFields.contains(LABEL_FIELD)
+                    || dbFields.contains(COLLECTION_FIELD)) {
+                    select = addAnnotationTagLinkJoin(select);
+                }
+                if (dbFields.contains(STATUS_FIELD)) {
+                    select = addStatusJoin(select);
+                }
+                if (dbFields.contains(LABEL_FIELD)) {
+                    select = addLabelJoin(select);
+                }
+                if (dbFields.contains(COLLECTION_FIELD)) {
+                    select = addCollectionJoin(select);
+                }
+                if (dbFields.contains(COMMENT_FIELD)) {
+                    select = addCommentJoin(context, select);
+                }
+                if (dbFields.contains(HISTORY_FIELD)) {
+                    select = addHistoryJoin(select);
+                }
+
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("getAnnotationValues() - idList: {}, ids in IN clause: {}, sql:\n{}",
+                            getAnnoIdSample(idList), getIdSample(annotationValuesToLoadFinal.keySet()), select);
+                }
+
+                try (final Cursor<?> cursor = select
+                        .where(ANNOTATION.ID.in(annotationValuesToLoadFinal.keySet()))
+                        .and(ANNOTATION.DELETED.eq(false))
+                        .groupBy(groupBy)
+                        .fetchLazy()) {
+
+                    while (cursor.hasNext()) {
+                        final Result<?> result = cursor.fetchNext(BATCH_SIZE);
+                        result.forEach(rec -> {
+                            final long id = rec.get(ANNOTATION.ID);
+                            final String uuid = rec.get(ANNOTATION.UUID);
+                            final AnnotationIdentity annotationId = new AnnotationIdentity(uuid, id);
+                            annotationValuesToLoadFinal.remove(id);
+                            final List<FieldValueEntry> fieldValueEntries = new ArrayList<>();
+
+                            for (int i = 0; i < fieldsToLoad.size(); i++) {
+                                final QueryField queryField = fieldsToLoad.get(i);
+                                final Mapper<?> mapper = mappers[i];
+                                final Val val = mapper != null
+                                        ? mapper.map(rec)
+                                        : ValNull.INSTANCE;
+                                fieldValueEntries.add(new FieldValueEntry(queryField, val));
+                            }
+                            // Load all our values into the cache in case the cached object is newer
+                            final AnnotationValues updatedAnnotationValues = annotationValCache.put(
+                                    annotationId, fieldValueEntries);
+                            // Add our mutated annotationValues object for return
+                            annotationValuesList.add(updatedAnnotationValues);
+                        });
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error("Error executing sql for {} annotation IDs:\n{}",
+                            annotationValuesToLoadFinal.size(), select, e);
+                    throw e;
+                }
+            });
+
+            // Any we couldn't load are likely deleted so mark them as so in the cache
+            annotationValuesToLoad.values()
+                    .forEach(notFoundAnnotationValues ->
+                            annotationValCache.markDeleted(notFoundAnnotationValues.getAnnotationIdentity()));
+        } else {
+            LOGGER.trace(() -> LogUtil.message("getAnnotationValues() - idList: {}, nothing to load.",
+                    getAnnoIdSample(idList)));
+        }
+        LOGGER.trace(() -> LogUtil.message("getAnnotationValues() - idList: {}, returning annotationValues.size: {}",
+                getAnnoIdSample(idList),
+                annotationValuesList.size()));
+        return annotationValuesList;
+    }
+
+    private static @NonNull SelectJoinStep<Record> addHistoryJoin(SelectJoinStep<Record> select) {
+        // History is a concatenation of all comment entries except the most recent
+        // and ignoring any deleted ones
+        select = select
+                .leftOuterJoin(HISTORY)
+                .on(HISTORY.FK_ANNOTATION_ID.eq(ANNOTATION.ID)
+                        .and(HISTORY.DELETED.isFalse())
+                        .and(HISTORY.TYPE_ID.eq(COMMENT_TYPE_ID_BYTE)));
+        return select;
+    }
+
+    private static @NonNull SelectJoinStep<Record> addCommentJoin(final DSLContext context,
+                                                                  SelectJoinStep<Record> select) {
+        select = select
+                .leftOuterJoin(COMMENT).on(
+                        COMMENT.ID.eq(context
+                                .select(ANNOTATION_ENTRY.ID)
+                                .from(ANNOTATION_ENTRY)
+                                .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                                .and(ANNOTATION_ENTRY.TYPE_ID.eq(COMMENT_TYPE_ID_BYTE))
+                                .and(ANNOTATION_ENTRY.DELETED.isFalse())
+                                .orderBy(ANNOTATION_ENTRY.ID.desc())
+                                .limit(1)));
+        return select;
+    }
+
+    private static @NonNull SelectJoinStep<Record> addCollectionJoin(SelectJoinStep<Record> select) {
+        // TODO why do we logically delete tags?
+        select = select
+                .leftOuterJoin(COLLECTION)
+                .on(COLLECTION.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
+                        .and(COLLECTION.DELETED.isFalse())
+                        .and(COLLECTION.TYPE_ID.eq(COLLECTION_TYPE_ID_BYTE)));
+        return select;
+    }
+
+    private static @NonNull SelectJoinStep<Record> addLabelJoin(SelectJoinStep<Record> select) {
+        // TODO why do we logically delete tags?
+        select = select
+                .leftOuterJoin(LABEL)
+                .on(LABEL.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
+                        .and(LABEL.DELETED.isFalse())
+                        .and(LABEL.TYPE_ID.eq(LABEL_TYPE_ID_BYTE)));
+        return select;
+    }
+
+    private static @NonNull SelectJoinStep<Record> addStatusJoin(SelectJoinStep<Record> select) {
+        // TODO why do we logically delete tags?
+        select = select
+                .leftOuterJoin(STATUS)
+                .on(STATUS.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
+                        .and(STATUS.DELETED.isFalse())
+                        .and(STATUS.TYPE_ID.eq(STATUS_TYPE_ID_BYTE)));
+        return select;
+    }
+
+    private static @NonNull SelectJoinStep<Record> addAnnotationTagLinkJoin(SelectJoinStep<Record> select) {
+        select = select
+                .leftOuterJoin(ANNOTATION_TAG_LINK)
+                .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID));
+        return select;
+    }
+
+    /**
+     * Intended for logging purposes only
+     */
+    private static String getAnnoIdSample(final Collection<AnnotationIdentity> annotationIds) {
+        return LogUtil.getSample(
+                annotationIds,
+                SAMPLE_SIZE,
+                annoId -> String.valueOf(annoId.getId()));
+    }
+
+    /**
+     * Intended for logging purposes only
+     */
+    private static String getIdSample(final Collection<Long> annotationIds) {
+        return LogUtil.getSample(annotationIds, SAMPLE_SIZE, String::valueOf);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record Entry(
             Instant entryTime,

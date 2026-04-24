@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.annotation.shared;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public interface HasId {
+class TestAnnotationEntryType {
 
-    long getId();
-
-    static List<Long> asIdList(final List<? extends HasId> hasIds) {
-        if (NullSafe.hasItems(hasIds)) {
-            return hasIds.stream()
-                    .map(HasId::getId)
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
+    @Test
+    void test() {
+        AnnotationEntryType.GROUPED_TYPES.forEach((key, set) ->
+                Assertions.assertThat(set).contains(key));
     }
 }

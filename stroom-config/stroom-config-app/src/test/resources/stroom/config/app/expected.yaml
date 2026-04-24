@@ -82,6 +82,18 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    annotationValCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    annotationValStringCache:
+      expireAfterAccess: "P5D"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     createText: "Create Annotation"
     db:
       connection:
@@ -702,7 +714,7 @@ appConfig:
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
-    path: "${stroom.home}/planb"
+    path: "planb"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null

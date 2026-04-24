@@ -266,7 +266,7 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : Optional.empty());
     }
 
@@ -277,9 +277,9 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : (val3 != null
-                                ? Optional.of(val3)
+                           ? Optional.of(val3)
                                 : Optional.empty()));
     }
 
@@ -293,11 +293,11 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : (val3 != null
-                                ? Optional.of(val3)
+                           ? Optional.of(val3)
                                 : (val4 != null
-                                        ? Optional.of(val4)
+                                   ? Optional.of(val4)
                                         : Optional.empty())));
     }
 
@@ -799,10 +799,9 @@ public class NullSafe {
      * @return A non-null unmodifiable set of items.
      */
     public static <T> Set<T> asSet(final T... items) {
-        //noinspection Java9CollectionFactory
         return items == null || items.length == 0
                 ? Collections.emptySet()
-                : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(items)));
+                : Set.of(items);
     }
 
     /**
@@ -835,10 +834,9 @@ public class NullSafe {
         } else if (list.stream().allMatch(Objects::nonNull)) {
             return Collections.unmodifiableList(list);
         } else {
-            //noinspection SimplifyStreamApiCallChains // cos GWT
             return list.stream()
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toUnmodifiableList());
+                    .toList();
         }
     }
 
@@ -1858,7 +1856,7 @@ public class NullSafe {
         return predicate != null
                 ? predicate
                 : (defaultOutcome
-                        ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
+                   ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
                         : (Predicate<T>) ALWAYS_FALSE_PREDICATE);
 //        return requireNonNullElseGet(predicate, () -> ignored -> defaultOutcome);
 

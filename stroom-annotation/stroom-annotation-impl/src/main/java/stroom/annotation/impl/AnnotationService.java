@@ -16,20 +16,40 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.AbstractAnnotationChange;
+import stroom.annotation.shared.AbstractAnnotationChange.HasAnnotationTag;
+import stroom.annotation.shared.AddAnnotationTable;
+import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationEntryType;
 import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.ChangeAnnotationEntryRequest;
+import stroom.annotation.shared.ChangeAssignedTo;
+import stroom.annotation.shared.ChangeComment;
+import stroom.annotation.shared.ChangeDescription;
+import stroom.annotation.shared.ChangeRetentionPeriod;
+import stroom.annotation.shared.ChangeSubject;
+import stroom.annotation.shared.ChangeTitle;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.LinkAnnotations;
+import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
+import stroom.annotation.shared.RemoveTag;
+import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.annotation.shared.UnlinkAnnotations;
+import stroom.annotation.shared.UnlinkEvents;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -52,6 +72,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEvent.EntityEventData;
 import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.LambdaLogger;
@@ -65,11 +86,12 @@ import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -151,13 +173,24 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
     }
 
-    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
-        final List<Annotation> list = annotationDao.getAnnotationsForEvents(eventId);
-        return list
-                .stream()
-                .filter(annotation ->
-                        securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW))
-                .toList();
+    public Collection<AnnotationIdentity> getAnnotationIdListForEvent(final EventId eventId) {
+        return annotationDao.getAnnotationIdsForEvent(eventId);
+    }
+
+    public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,
+                                                            final Set<QueryField> requiredAnnotationFields) {
+        return LOGGER.logDurationIfTraceEnabled(() -> {
+            // Filter the annotations by user permission.
+            final Collection<AnnotationIdentity> filtered = idList.stream()
+                    .filter(annotationIdentity ->
+                            securityContext.hasDocumentPermission(annotationIdentity.asDocRef(),
+                                    DocumentPermission.VIEW))
+                    .toList();
+
+            // Get annotation values from the cache or DB if required.
+            return annotationDao.getAnnotationValues(filtered, requiredAnnotationFields);
+        }, collection ->
+                LogUtil.message("getAnnotationValues() - count: {}", collection.size()));
     }
 
     @Override
@@ -215,7 +248,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     private Predicate<String> getViewPermissionPredicate() {
         if (securityContext.isAdmin()) {
-            return uuid -> true;
+            return ignored -> true;
         }
         return uuid -> securityContext
                 .hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW);
@@ -224,21 +257,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private UserRef getCurrentUser() {
         return securityContext.getUserRef();
     }
-
-//    AnnotationDetail getDetailById(final long annotationId) {
-//        final List<DocRef> list = annotationDao.idListToDocRefs(Collections.singletonList(annotationId));
-//        if (list.isEmpty()) {
-//            return null;
-//        }
-//        final DocRef annotationRef = list.getFirst();
-//        return getDetailByRef(annotationRef);
-//    }
-//
-//    AnnotationDetail getDetailByRef(final DocRef annotationRef) {
-//        checkAppPermission();
-//        checkViewPermission(annotationRef);
-//        return annotationDao.getDetail(annotationRef).orElse(null);
-//    }
 
     private void checkViewPermission(final DocRef annotationRef) {
         if (annotationRef == null) {
@@ -295,56 +313,63 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 parentGroups.forEach(group ->
                         documentPermissionService.setPermission(docRef, group, DocumentPermission.OWNER));
             }
-
-//            // Copy feed permissions to the annotation.
-//            if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-//                final EventId eventId = request.getLinkedEvents().getFirst();
-//                final Meta meta = metaServiceProvider.get().getMeta(eventId.getStreamId());
-//                if (meta != null) {
-//                    final List<DocRef> docRefs = docRefInfoServiceProvider.get()
-//                            .findByName(FeedDoc.TYPE, meta.getFeedName(), false);
-//                    if (!docRefs.isEmpty()) {
-//                        final DocRef feedDocRef = docRefs.getFirst();
-//                        documentPermissionService.addDocumentPermissions(feedDocRef, docRef);
-//                    }
-//                }
-//            }
         });
 
-        fireEntityChangeEvent(annotation.asDocRef());
+        fireEntityEvent(EntityAction.CREATE, annotation.asDocRef(), annotation.getId());
         return annotation;
     }
 
     public boolean change(final SingleAnnotationChangeRequest request) {
+        Objects.requireNonNull(request);
         checkAppPermission();
         checkEditPermission(request.getAnnotationRef());
+        final AbstractAnnotationChange change = request.getChange();
         final boolean result = annotationDao.change(request, getCurrentUser());
-        fireEntityChangeEvent(request.getAnnotationRef());
+        final DocRef annotationRef = request.getAnnotationRef();
+        final long annotationId = Objects.requireNonNullElseGet(
+                request.getAnnotationId(),
+                () -> getIdOrThrow(annotationRef));
+
+        switch (change) {
+            case final LinkEvents ignored -> LOGGER.debug("change() - Skipping linkEvents, handled by DAO");
+            case final UnlinkEvents ignored -> LOGGER.debug("change() - Skipping unlinkEvents, handled by DAO");
+            default -> createEntityEvent(change, EntityAction.UPDATE, annotationRef, annotationId)
+                    .ifPresent(entityEventBus::fire);
+        }
         return result;
     }
 
+    private long getIdOrThrow(final DocRef annotationRef) {
+        Objects.requireNonNull(annotationRef);
+        return annotationDao.getIdOrThrow(annotationRef);
+    }
+
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
-        final List<DocRef> refs = getRefsForEdit(request.getAnnotationIdList());
-        for (final DocRef ref : refs) {
-            final SingleAnnotationChangeRequest singleAnnotationChangeRequest =
-                    new SingleAnnotationChangeRequest(ref, request.getChange());
+        final List<AnnotationIdentity> annotationIdentities = getRefsForEdit(request.getAnnotationIdList());
+
+        for (final AnnotationIdentity annotationIdentity : annotationIdentities) {
+            final SingleAnnotationChangeRequest singleAnnotationChangeRequest = new SingleAnnotationChangeRequest(
+                    annotationIdentity, request.getChange());
             annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
         }
 
-        if (!refs.isEmpty()) {
-            fireEntityChangeEvents(refs);
+        if (!annotationIdentities.isEmpty()) {
+            final AbstractAnnotationChange change = request.getChange();
+            if (change instanceof UnlinkEvents || change instanceof LinkEvents) {
+                LOGGER.debug("batchChange() - Skipping linkEvents/unlinkEvents, handled by DAO");
+            } else {
+                fireUpdateEvents(change, annotationIdentities);
+            }
         }
-
-        return refs.size();
+        return annotationIdentities.size();
     }
 
-    private List<DocRef> getRefsForEdit(final List<Long> annotationIdList) {
+    private List<AnnotationIdentity> getRefsForEdit(final List<Long> annotationIdList) {
         checkAppPermission();
-        final List<DocRef> annotationRefs = annotationDao.idListToDocRefs(annotationIdList);
-        for (final DocRef annotationRef : annotationRefs) {
-            checkEditPermission(annotationRef);
-        }
-        return annotationRefs;
+        final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(annotationIdList);
+        annotationIdentities.forEach(annotationIdentity ->
+                checkEditPermission(annotationIdentity.asDocRef()));
+        return annotationIdentities;
     }
 
     List<EventId> getLinkedEvents(final DocRef annotationRef) {
@@ -387,42 +412,17 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     }
 
     public Boolean deleteAnnotation(final DocRef annotationRef) {
+        Objects.requireNonNull(annotationRef);
         checkAppPermission();
         checkDeletePermission(annotationRef);
 
-        documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotationRef);
+        documentPermissionServiceProvider.get()
+                .removeAllDocumentPermissions(annotationRef);
+        final long id = annotationDao.getIdOrThrow(annotationRef);
         final Boolean result = annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
-        fireEntityChangeEvent(annotationRef);
+        fireEntityEvent(EntityAction.DELETE, annotationRef, id);
         return result;
     }
-
-//    public List<String> getStatus(final String filter) {
-//        final boolean admin = securityContext.isAdmin();
-//        final List<String> values = annotationConfigProvider.get().getStatusValues();
-//        final List<String> filtered = new ArrayList<>();
-//        final Map<String, Boolean> cache = new HashMap<>();
-//        if (values != null) {
-//            for (final String value : values) {
-//                final int index = value.indexOf(":");
-//                if (index == -1) {
-//                    filtered.add(value);
-//                } else {
-//                    final String group = value.substring(0, index);
-//                    final String status = value.substring(index + 1);
-//                    if (admin) {
-//                        filtered.add(status);
-//                    } else {
-//                        final boolean include = cache.computeIfAbsent(group, securityContext::inGroup);
-//                        if (include) {
-//                            filtered.add(status);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        return filterValues(filtered, filter);
-//    }
 
     private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
         if (allValues == null || allValues.isEmpty()) {
@@ -445,18 +445,18 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
         clusterLockService.tryLock(LOCK_NAME, () -> {
             // First mark annotations as deleted if they haven't been updated since their data retention time.
-            final LongList logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
+            final List<AnnotationIdentity> logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
 
             if (NullSafe.hasItems(logicallyDeletedIds)) {
-                fireEntityChangeEvents(logicallyDeletedIds, batchSize);
+                fireEntityDeleteEvents(logicallyDeletedIds, batchSize);
             }
 
             // Now delete items that have been deleted longer than the max deletion age.
             final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
             final Instant age = Instant.now().minus(physicalDeleteAge);
-            final LongList physicallyDeletedIds = annotationDao.physicallyDelete(age);
+            final List<AnnotationIdentity> physicallyDeletedIds = annotationDao.physicallyDelete(age);
             if (NullSafe.hasItems(physicallyDeletedIds)) {
-                fireEntityChangeEvents(physicallyDeletedIds, batchSize);
+                fireEntityDeleteEvents(physicallyDeletedIds, batchSize);
             }
             LOGGER.info(() -> LogUtil.message(
                     "Annotation data retention - logically deleted count: {}, physically deleted count: {}",
@@ -464,9 +464,10 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         });
     }
 
-    private void fireEntityChangeEvents(final LongList ids, final int batchSize) {
+    private void fireEntityDeleteEvents(final List<AnnotationIdentity> annotationIdentities,
+                                        final int batchSize) {
         // Limit the size of the event batches so we are not sending massive requests
-        final int count = ids.size();
+        final int count = annotationIdentities.size();
         int fromIdxInc = 0;
         while (true) {
             final int remaining = count - fromIdxInc;
@@ -475,13 +476,12 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             }
             final int thisBatchSize = Math.min(batchSize, remaining);
             final int toIdxExc = fromIdxInc + thisBatchSize;
-            final LongList batchIds = ids.subList(fromIdxInc, toIdxExc);
-            final List<DocRef> docRefs = annotationDao.idListToDocRefs(batchIds);
+            final List<AnnotationIdentity> batchIds = annotationIdentities.subList(fromIdxInc, toIdxExc);
             final int finalFromIdxInc = fromIdxInc;
             LOGGER.debug(() -> LogUtil.message(
                     "fireEntityChangeEvents() - fromIdxInc: {}, toIdxExc: {}, ids: {}, batchIds: {}, docRefs: {}",
-                    finalFromIdxInc, toIdxExc, ids.size(), batchIds.size(), docRefs.size()));
-            fireEntityChangeEvents(docRefs);
+                    finalFromIdxInc, toIdxExc, annotationIdentities.size(), batchIds.size(), batchIds.size()));
+            fireDeleteEvents(batchIds);
             fromIdxInc += batchSize;
         }
     }
@@ -493,12 +493,36 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
         checkAppPermission();
-        return annotationTagDao.updateAnnotationTag(annotationTag);
+        final AnnotationTag annotationTag2 = annotationTagDao.updateAnnotationTag(annotationTag);
+        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
+        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                EntityAction.UPDATE,
+                Set.of(fieldName)));
+
+        return annotationTag2;
     }
 
     public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
+        Objects.requireNonNull(annotationTag);
         checkAppPermission();
-        return annotationTagDao.deleteAnnotationTag(annotationTag);
+        final Boolean didDelete = annotationTagDao.deleteAnnotationTag(annotationTag);
+
+        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
+        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                EntityAction.DELETE,
+                Set.of(fieldName)));
+        return didDelete;
+    }
+
+    private static @Nullable String getFieldNameFromTagType(final AnnotationTagType tagType) {
+        return switch (tagType) {
+            case LABEL -> AnnotationDecorationFields.ANNOTATION_LABEL;
+            case STATUS -> AnnotationDecorationFields.ANNOTATION_STATUS;
+            case COLLECTION -> AnnotationDecorationFields.ANNOTATION_COLLECTION;
+            // Comment tags are a set of standard comment for use in annotation entries, so
+            // not a decoration column in their own right.
+            case COMMENT -> null;
+        };
     }
 
     public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
@@ -518,41 +542,153 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
         checkAppPermission();
-        checkEditPermission(request.getAnnotationRef());
-        return annotationDao.changeAnnotationEntry(
-                request.getAnnotationRef(),
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
+        checkEditPermission(annotationRef);
+        final boolean didDelete = annotationDao.changeAnnotationEntry(
+                annotationRef,
                 securityContext.getUserRef(),
                 request.getAnnotationEntryId(),
                 request.getData());
+
+        final Set<String> fieldNames = getFieldNamesForEntityEvent(request.getAnnotationEntryType());
+        if (NullSafe.hasItems(fieldNames)) {
+            entityEventBus.fire(AnnotationFieldsEntityEventData.createSingleAnnotationEvent(
+                    EntityAction.UPDATE,
+                    request.getAnnotationIdentity(),
+                    fieldNames));
+        }
+        return didDelete;
+    }
+
+    private Set<String> getFieldNamesForEntityEvent(final AnnotationEntryType annotationEntryType) {
+
+        // Only expecting COMMENT changes at the moment
+        return switch (annotationEntryType) {
+            case TITLE -> Set.of(AnnotationDecorationFields.ANNOTATION_TITLE);
+            case SUBJECT -> Set.of(AnnotationDecorationFields.ANNOTATION_SUBJECT);
+            case STATUS -> Set.of(AnnotationDecorationFields.ANNOTATION_STATUS);
+            case ASSIGNED -> Set.of(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO);
+            case COMMENT -> Set.of(
+                    AnnotationDecorationFields.ANNOTATION_COMMENT,
+                    AnnotationDecorationFields.ANNOTATION_HISTORY);
+            case DESCRIPTION -> Set.of(AnnotationDecorationFields.ANNOTATION_DESCRIPTION);
+            case ADD_TO_COLLECTION,
+                 REMOVE_FROM_COLLECTION -> Set.of(AnnotationDecorationFields.ANNOTATION_COLLECTION);
+            case ADD_LABEL,
+                 REMOVE_LABEL -> Set.of(AnnotationDecorationFields.ANNOTATION_LABEL);
+            case LINK_EVENT,
+                 UNLINK_EVENT,
+                 RETENTION_PERIOD,
+                 ADD_TABLE_DATA,
+                 LINK_ANNOTATION,
+                 UNLINK_ANNOTATION,
+                 DELETE -> Set.of();
+        };
     }
 
     public Boolean deleteAnnotationEntry(final DeleteAnnotationEntryRequest request) {
         checkAppPermission();
-        checkDeletePermission(request.getAnnotationRef());
-        return annotationDao.logicalDeleteEntry(
-                request.getAnnotationRef(),
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
+        checkDeletePermission(annotationRef);
+        final boolean didDelete = annotationDao.logicalDeleteEntry(
+                annotationRef,
                 securityContext.getUserRef(),
                 request.getAnnotationEntryId());
+
+        final Set<String> fieldNames = getFieldNamesForEntityEvent(request.getAnnotationEntryType());
+        if (NullSafe.hasItems(fieldNames)) {
+            entityEventBus.fire(AnnotationFieldsEntityEventData.createSingleAnnotationEvent(
+                    EntityAction.DELETE,
+                    request.getAnnotationIdentity(),
+                    fieldNames));
+        }
+        return didDelete;
     }
 
-    private void fireEntityChangeEvents(final List<DocRef> annotationRefs) {
-        final List<EntityEvent> events = NullSafe.stream(annotationRefs)
+
+    private Optional<EntityEvent> createEntityEvent(final AbstractAnnotationChange change,
+                                                    final EntityAction entityAction,
+                                                    final DocRef annotationRef,
+                                                    final long id) {
+        Objects.requireNonNull(change);
+        Objects.requireNonNull(entityAction);
+        Objects.requireNonNull(annotationRef);
+        // Null means no change needed, empty set means treat the whole anno as changed
+        final Set<String> fieldNames = switch (change) {
+            case final ChangeTitle ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_TITLE);
+            case final ChangeSubject ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_SUBJECT);
+            case final AddTag addTag -> getChangedFieldNames(addTag);
+            case final RemoveTag removeTag -> getChangedFieldNames(removeTag);
+            case final SetTag setTag -> getChangedFieldNames(setTag);
+            case final ChangeAssignedTo ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO);
+            // History is a history of old comments, so any comment change impacts the comment and history fields
+            case final ChangeComment ignored -> Set.of(
+                    AnnotationDecorationFields.ANNOTATION_COMMENT,
+                    AnnotationDecorationFields.ANNOTATION_HISTORY);
+            case final ChangeDescription ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_DESCRIPTION);
+            case final ChangeRetentionPeriod ignored -> null;
+            case final LinkEvents ignored -> null;
+            case final UnlinkEvents ignored -> null;
+            case final LinkAnnotations ignored -> null;
+            case final UnlinkAnnotations ignored -> null;
+            case final AddAnnotationTable ignored -> null;
+        };
+
+        if (fieldNames != null) {
+            final EntityEventData entityEventData;
+            if (fieldNames.isEmpty()) {
+                entityEventData = new AnnotationIdEntityEventData(id);
+            } else {
+                entityEventData = new AnnotationFieldsEntityEventData(id, fieldNames);
+            }
+            return Optional.of(new EntityEvent(annotationRef, null, entityAction, entityEventData));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private static Set<String> getChangedFieldNames(final HasAnnotationTag change) {
+        Objects.requireNonNull(change);
+        final AnnotationTagType tagType = NullSafe.get(change.getTag(), AnnotationTag::getType);
+        final String fieldName = getFieldNameFromTagType(tagType);
+        return NullSafe.asSet(fieldName);
+    }
+
+    private void fireUpdateEvents(final AbstractAnnotationChange change,
+                                  final List<AnnotationIdentity> annotationIdentities) {
+        final List<EntityEvent> events = NullSafe.stream(annotationIdentities)
                 .filter(Objects::nonNull)
-                .peek(docRef -> {
-                    if (!Annotation.TYPE.equals(docRef.getType())) {
-                        throw new RuntimeException("Unexpected document type: " + docRef.getType());
-                    }
-                })
-                .map(docRef -> new EntityEvent(docRef, EntityAction.UPDATE))
+                .map(annotationIdentity ->
+                        createEntityEvent(
+                                change,
+                                EntityAction.UPDATE,
+                                annotationIdentity.asDocRef(),
+                                annotationIdentity.getId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+        if (NullSafe.hasItems(events)) {
+            final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
+            entityEventBus.fire(entityEventBatch);
+        }
+    }
+
+    private void fireEntityEvent(final EntityAction entityAction, final DocRef annotationRef, final long id) {
+        EntityEvent.fire(
+                entityEventBus,
+                Objects.requireNonNull(annotationRef),
+                null,
+                Objects.requireNonNull(entityAction),
+                new AnnotationIdEntityEventData(id));
+    }
+
+    private void fireDeleteEvents(final List<AnnotationIdentity> annotationIdentities) {
+        final List<EntityEvent> events = NullSafe.stream(annotationIdentities)
+                .filter(Objects::nonNull)
+                .map(annotationIdentity ->
+                        AnnotationIdEntityEventData.createEntityEvent(EntityAction.DELETE, annotationIdentity))
                 .toList();
         final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
         entityEventBus.fire(entityEventBatch);
-    }
-
-    private void fireEntityChangeEvent(final DocRef annotation) {
-        EntityEvent.fire(
-                entityEventBus,
-                annotation,
-                EntityAction.UPDATE);
     }
 }

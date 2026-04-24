@@ -55,4 +55,12 @@ public abstract sealed class AbstractAnnotationChange permits
         UnlinkAnnotations,
         AddAnnotationTable {
 
+
+    // --------------------------------------------------------------------------------
+
+
+    public sealed interface HasAnnotationTag permits AddTag, RemoveTag, SetTag {
+
+        AnnotationTag getTag();
+    }
 }
