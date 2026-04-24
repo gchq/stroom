@@ -109,7 +109,10 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         return caches.containsKey(name);
     }
 
+    @Override
     public void registerCache(final String name, final StroomCache<?, ?> cache) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(cache);
         if (exists(name)) {
             throw new CacheExistsException(name);
         }

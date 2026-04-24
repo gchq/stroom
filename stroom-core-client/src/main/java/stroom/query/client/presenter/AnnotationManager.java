@@ -380,7 +380,9 @@ public class AnnotationManager implements HasHandlers {
         if (NullSafe.isEmptyCollection(eventIdList)) {
             runnable.run();
         } else {
-            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotation.asDocRef(),
+                    annotation.getId(),
                     new LinkEvents(eventIdList));
             annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
         }
@@ -392,7 +394,9 @@ public class AnnotationManager implements HasHandlers {
         if (NullSafe.isEmptyCollection(annotationIdList)) {
             runnable.run();
         } else {
-            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotation.asDocRef(),
+                    annotation.getId(),
                     new LinkAnnotations(annotationIdList));
             annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
         }
@@ -404,7 +408,9 @@ public class AnnotationManager implements HasHandlers {
         if (table == null) {
             runnable.run();
         } else {
-            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotation.asDocRef(),
+                    annotation.getId(),
                     new AddAnnotationTable(table));
             annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
         }

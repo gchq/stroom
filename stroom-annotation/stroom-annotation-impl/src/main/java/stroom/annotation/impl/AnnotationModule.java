@@ -67,6 +67,8 @@ public class AnnotationModule extends AbstractModule {
                         .description("Delete annotations that exceed the retention period " +
                                      "specified by data retention policy")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
+
+
     }
 
 

@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -178,6 +179,11 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         }
     }
 
+    /**
+     * When cache config is changed a new cache is built and wrapped in a new {@link CacheHolder}.
+     * The cacheHolder reference is then swapped over.
+     * All access to the cache must be via this method.
+     */
     protected Cache<K, V> getCache() {
         return cacheHolder.getCache();
     }
@@ -240,6 +246,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         return Optional.ofNullable(getCache().getIfPresent(key));
     }
 
+    @Override
+    public V compute(final K key, final BiFunction<K, V, V> remappingFunction) {
+        return getCache().asMap().compute(key, remappingFunction);
+    }
 
     @Override
     public boolean containsKey(final K key) {
@@ -346,7 +356,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         // Local copy in case rebuild is called
         final CacheHolder<K, V> localCacheHolder = this.cacheHolder;
         final Cache<K, V> cache = localCacheHolder.getCache();
-        map.put("Entries", String.valueOf(cache.estimatedSize()));
+        map.put(CacheInfo.ENTRIES_CACHE_INFO_KEY, String.valueOf(cache.estimatedSize()));
         // The lock covers cacheBuilder too
         addEntries(map, getCacheBuilder().toString());
         addEntries(map, cache.stats().toString());

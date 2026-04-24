@@ -30,6 +30,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class CacheInfo {
 
+    public static final String ENTRIES_CACHE_INFO_KEY = "Entries";
+
     @JsonProperty
     private final String name;
     @JsonProperty

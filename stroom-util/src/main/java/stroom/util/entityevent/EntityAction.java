@@ -42,6 +42,9 @@ public enum EntityAction implements HasDisplayValue {
      * May be fired more than once.
      */
     DELETE("Delete"),
+    /**
+     * Clear a whole cache.
+     */
     CLEAR_CACHE("Clear Cache"),
     // Separate events for an explorer tree node update as the tree doesn't care about an update to the document
     // itself but does care about updates to the properties of the node, e.g. tags
@@ -49,13 +52,22 @@ public enum EntityAction implements HasDisplayValue {
     /**
      * Fired on:
      * <UL>
-     *     <LI>Bulk move, after the move</LI>
-     *     <LI>Rename of a node - twice</LI>
-     *     <LI>Update of tags</LI>
+     * <LI>Bulk move, after the move</LI>
+     * <LI>Rename of a node - twice</LI>
+     * <LI>Update of tags</LI>
      * </UL>
      */
     UPDATE_EXPLORER_NODE("Update Explorer Node"),
-    DELETE_EXPLORER_NODE("Delete Explorer Node");
+    DELETE_EXPLORER_NODE("Delete Explorer Node"),
+    /**
+     * Fired when a link between an annotation and an event is made
+     */
+    LINK("Link"),
+    /**
+     * Fired when a link between an annotation and an event is removed
+     */
+    UNLINK("Unlink"),
+    ;
 
     private final String displayValue;
 

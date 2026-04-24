@@ -31,6 +31,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
 
@@ -96,8 +97,15 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
 
     private void edit(final AnnotationTag annotationTag) {
         final AnnotationTagEditPresenter editor = editProvider.get();
+        final String name = annotationTag.getName();
         final String caption = "Edit " + annotationTagType.getDisplayValue() + " - " + annotationTag.getName();
-        editor.open(annotationTag, caption, result -> refresh());
+
+        editor.open(annotationTag, caption, newAnnotationTag -> {
+            if (!Objects.equals(name, newAnnotationTag.getName())) {
+                AnnotationTagNameChangeEvent.fire(this);
+            }
+            refresh();
+        });
     }
 
     private void delete() {
@@ -111,7 +119,13 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
                         if (result) {
                             annotationTagListPresenter.getSelectionModel().clear();
                             for (final AnnotationTag group : list) {
-                                annotationResourceClient.deleteAnnotationGroup(group, response -> refresh(), this);
+                                annotationResourceClient.deleteAnnotationGroup(
+                                        group,
+                                        ignored -> {
+                                            AnnotationTagNameChangeEvent.fire(this);
+                                            refresh();
+                                        },
+                                        this);
                             }
                         }
                     });

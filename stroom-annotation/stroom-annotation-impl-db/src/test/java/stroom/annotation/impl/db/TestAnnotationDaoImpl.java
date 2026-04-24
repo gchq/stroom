@@ -19,6 +19,7 @@ package stroom.annotation.impl.db;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.ChangeAssignedTo;
@@ -57,7 +58,6 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
 import com.google.inject.Guice;
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.BeforeEach;
@@ -593,26 +593,50 @@ class TestAnnotationDaoImpl {
         // Sleep a wee bit to ensure the annotations have aged off
         ThreadUtil.sleepIgnoringInterrupts(100);
 
+        dumpAnnotationTable(annotationDbConnProvider);
+
         annotationDao.markDeletedByDataRetention(batchSize);
 
         allAnnotations = getAllAnnotations();
-        assertThat(allAnnotations).hasSize(count / 2);
+        assertThat(allAnnotations)
+                .hasSize(count / 2);
 
         for (int i = 0; i < count; i++) {
             final boolean expectedDeletedState = !(i % 2 == 0);
             final Annotation annotation = annotations.get(i);
-            assertThat(isDeleted(annotation.asDocRef())).isEqualTo(expectedDeletedState);
+            assertThat(isDeleted(annotation.asDocRef()))
+                    .isEqualTo(expectedDeletedState);
         }
 
-        final LongList deletedIds = annotationDao.physicallyDelete(Instant.now(), batchSize);
-        assertThat(deletedIds.size()).isEqualTo(count / 2);
+        dumpAnnotationTable(annotationDbConnProvider);
+
+        final List<AnnotationIdentity> deletedIds = annotationDao.physicallyDelete(Instant.now(), batchSize);
+        assertThat(deletedIds.size())
+                .isEqualTo(count / 2);
+
+        dumpAnnotationTable(annotationDbConnProvider);
 
         final int tableCount = JooqUtil.contextResult(annotationDbConnProvider, context ->
                 context.selectCount()
                         .from(ANNOTATION)
                         .fetchOptional(0, int.class)
                         .orElseThrow());
-        assertThat(tableCount).isEqualTo(count / 2);
+        assertThat(tableCount)
+                .isEqualTo(count / 2);
+    }
+
+    static void dumpAnnotationTable(final AnnotationDbConnProvider annotationDbConnProvider) {
+        JooqUtil.context(annotationDbConnProvider, context ->
+                LOGGER.debug("annotations:\n{}", JooqUtil.toAsciiTable(context.select(
+                                ANNOTATION.ID,
+                                ANNOTATION.UUID,
+                                ANNOTATION.DELETED,
+                                ANNOTATION.TITLE,
+                                ANNOTATION.CREATE_TIME_MS,
+                                ANNOTATION.UPDATE_TIME_MS)
+                        .from(ANNOTATION)
+                        .orderBy(ANNOTATION.ID)
+                        .fetch(), false)));
     }
 
     @NullMarked

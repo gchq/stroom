@@ -18,11 +18,14 @@ package stroom.annotation.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     TITLE("Title", "title", 0),
@@ -46,36 +49,34 @@ public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     public static final PrimitiveValueConverter<AnnotationEntryType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AnnotationEntryType.class, AnnotationEntryType.values());
 
-    public static final Map<AnnotationEntryType, Set<AnnotationEntryType>> GROUPED_TYPES = new HashMap<>();
-
-    static {
-        GROUPED_TYPES.put(AnnotationEntryType.ASSIGNED,
-                Set.of(AnnotationEntryType.ASSIGNED));
-        GROUPED_TYPES.put(AnnotationEntryType.LINK_EVENT,
-                Set.of(AnnotationEntryType.LINK_EVENT, AnnotationEntryType.UNLINK_EVENT));
-        GROUPED_TYPES.put(AnnotationEntryType.UNLINK_EVENT,
-                Set.of(AnnotationEntryType.LINK_EVENT, AnnotationEntryType.UNLINK_EVENT));
-        GROUPED_TYPES.put(AnnotationEntryType.RETENTION_PERIOD,
-                Set.of(AnnotationEntryType.RETENTION_PERIOD));
-        GROUPED_TYPES.put(AnnotationEntryType.DESCRIPTION,
-                Set.of(AnnotationEntryType.DESCRIPTION));
-        GROUPED_TYPES.put(AnnotationEntryType.ADD_TO_COLLECTION,
-                Set.of(AnnotationEntryType.ADD_TO_COLLECTION, AnnotationEntryType.REMOVE_FROM_COLLECTION));
-        GROUPED_TYPES.put(AnnotationEntryType.REMOVE_FROM_COLLECTION,
-                Set.of(AnnotationEntryType.ADD_TO_COLLECTION, AnnotationEntryType.REMOVE_FROM_COLLECTION));
-        GROUPED_TYPES.put(AnnotationEntryType.ADD_LABEL,
-                Set.of(AnnotationEntryType.ADD_LABEL, AnnotationEntryType.REMOVE_LABEL));
-        GROUPED_TYPES.put(AnnotationEntryType.REMOVE_LABEL,
-                Set.of(AnnotationEntryType.ADD_LABEL, AnnotationEntryType.REMOVE_LABEL));
-        GROUPED_TYPES.put(AnnotationEntryType.ADD_TABLE_DATA,
-                Set.of(AnnotationEntryType.ADD_TABLE_DATA));
-        GROUPED_TYPES.put(AnnotationEntryType.LINK_ANNOTATION,
-                Set.of(AnnotationEntryType.LINK_ANNOTATION, AnnotationEntryType.UNLINK_ANNOTATION));
-        GROUPED_TYPES.put(AnnotationEntryType.UNLINK_ANNOTATION,
-                Set.of(AnnotationEntryType.LINK_ANNOTATION, AnnotationEntryType.UNLINK_ANNOTATION));
-        GROUPED_TYPES.put(AnnotationEntryType.DELETE,
-                Set.of(AnnotationEntryType.DELETE));
-    }
+    // e.g.
+    // LINK_EVENT => (LINK_EVENT, UNLINK_EVENT)
+    // UNLINK_EVENT => (LINK_EVENT, UNLINK_EVENT)
+    // etc.
+    public static final Map<AnnotationEntryType, Set<AnnotationEntryType>> GROUPED_TYPES = Stream.of(
+                    Set.of(ASSIGNED),
+                    Set.of(LINK_EVENT, UNLINK_EVENT),
+                    Set.of(RETENTION_PERIOD),
+                    Set.of(DESCRIPTION),
+                    Set.of(ADD_TO_COLLECTION, REMOVE_FROM_COLLECTION),
+                    Set.of(ADD_LABEL, REMOVE_LABEL),
+                    Set.of(ADD_TABLE_DATA),
+                    Set.of(LINK_ANNOTATION, UNLINK_ANNOTATION),
+                    Set.of(DELETE))
+            .flatMap(set -> {
+                if (NullSafe.isEmptyCollection(set)) {
+                    return Stream.empty();
+                } else if (set.size() == 1) {
+                    final AnnotationEntryType type = set.iterator().next();
+                    return Stream.of(Map.entry(type, Set.of(type)));
+                } else {
+                    // Each item in the group is made into a key that maps to all others in the group
+                    // including itself
+                    return set.stream()
+                            .map(type -> Map.entry(type, set));
+                }
+            })
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
     private final String displayValue;
     private final String actionText;

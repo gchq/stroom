@@ -16,6 +16,7 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.AbstractAnnotationChange;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
@@ -43,6 +44,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.List;
+import java.util.Objects;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {
@@ -151,8 +153,8 @@ class AnnotationResourceImpl implements AnnotationResource {
             if (before == null) {
                 throw new RuntimeException("Unable to find annotation");
             }
-
-            success = annotationService.change(request);
+            final long id = Objects.requireNonNull(before.getId());
+            success = annotationService.change(request.withAnnotationId(id));
             if (success) {
                 after = annotationService.getAnnotationByRef(annotationRef)
                         .orElse(null);
@@ -172,6 +174,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
         int count = 0;
         final AnnotationService annotationService = annotationServiceProvider.get();
+        final AbstractAnnotationChange change = request.getChange();
         for (final long id : request.getAnnotationIdList()) {
             Annotation before = null;
             Annotation after = null;
@@ -183,8 +186,11 @@ class AnnotationResourceImpl implements AnnotationResource {
                 }
 
                 final DocRef docRef = before.asDocRef();
-                final boolean success = annotationService.change(new SingleAnnotationChangeRequest(docRef,
-                        request.getChange()));
+                final SingleAnnotationChangeRequest singleRequest = new SingleAnnotationChangeRequest(
+                        docRef,
+                        id,
+                        change);
+                final boolean success = annotationService.change(singleRequest);
                 if (success) {
                     after = annotationService.getAnnotationByRef(docRef).orElse(null);
                     count++;
@@ -227,7 +233,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     public Boolean deleteAnnotation(final DocRef annotationRef) {
         final AnnotationService annotationService = annotationServiceProvider.get();
         final Boolean success;
-        LOGGER.debug("Deleting annotation {}", annotationRef);
+        LOGGER.debug("deleteAnnotation() - annotationRef: {}", annotationRef);
         try {
             success = annotationService.deleteAnnotation(annotationRef);
             documentEventLog.get().delete(annotationRef, null);
@@ -272,6 +278,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
         final AnnotationService annotationService = annotationServiceProvider.get();
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
         AnnotationEntry before = AnnotationEntry.builder()
                 .id(request.getAnnotationEntryId())
                 .build();
@@ -279,11 +286,11 @@ class AnnotationResourceImpl implements AnnotationResource {
         LOGGER.debug("Changing annotation entry {}", request);
         try {
             before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
-                    request.getAnnotationRef(),
+                    annotationRef,
                     request.getAnnotationEntryId()));
             final Boolean success = annotationService.changeAnnotationEntry(request);
             after = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
-                    request.getAnnotationRef(),
+                    annotationRef,
                     request.getAnnotationEntryId()));
             documentEventLog.get().update(before, after, null);
             return success;
@@ -299,10 +306,10 @@ class AnnotationResourceImpl implements AnnotationResource {
         AnnotationEntry before = AnnotationEntry.builder()
                 .id(request.getAnnotationEntryId())
                 .build();
-        LOGGER.debug("Deleting annotation entry {}", request);
+        LOGGER.debug("deleteAnnotationEntry() - request: {}", request);
         try {
             before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
-                    request.getAnnotationRef(),
+                    request.getAnnotationIdentity().asDocRef(),
                     request.getAnnotationEntryId()));
             final Boolean success = annotationServiceProvider.get().deleteAnnotationEntry(request);
             documentEventLog.get().delete(before, null);
