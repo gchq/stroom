@@ -1,0 +1,240 @@
+@startuml file-queue-components
+
+title Stroom Proxy - File Queue Component Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+skinparam wrapWidth 220
+skinparam maxMessageSize 220
+
+legend right
+  |= Symbol |= Meaning |
+  | --> | Runtime dependency / delegates to |
+  | ==> | Data/file-group flow |
+  | ..> | Configuration / lifecycle wiring |
+  | [Queue] | Filesystem-backed DirQueue |
+endlegend
+
+package "Application Bootstrap" as bootstrap {
+  component "App\nDropwizard entry point" as App
+  component "ProxyModule\nTop-level Guice module" as ProxyModule
+  component "ProxyCoreModule\nCore bindings" as ProxyCoreModule
+  component "ForwarderModule\nDestination factory bindings" as ForwarderModule
+  component "ProxyLifecycle\nManaged service" as ProxyLifecycle
+  component "ProxyServices\nExecutor lifecycle" as ProxyServices
+  component "ReceiverFactoryProvider\nBuilds runtime pipeline" as ReceiverFactoryProvider
+}
+
+package "Ingress Adapters" as ingress {
+  component "ReceiveDataServlet\nHTTP /datafeed" as ReceiveDataServlet
+  component "EventResourceImpl\nEvent REST API" as EventResourceImpl
+  component "SqsConnector\nSQS polling" as SqsConnector
+  component "ZipDirScanner\nScans filesystem for proxy zips" as ZipDirScanner
+  component "EventStore\nRolls event files\nand forwards into pipeline" as EventStore
+}
+
+package "Receive Request Handling" as receive {
+  component "ProxyRequestHandler\nRequestHandler implementation" as ProxyRequestHandler
+  component "RequestAuthenticatorImpl\nAuthentication" as RequestAuthenticator
+  component "ProxyReceiptIdGenerator\nReceipt IDs" as ReceiptIdGenerator
+  component "DataReceiptPolicyAttributeMapFilterFactoryImpl\nReceive/drop/reject policy" as ReceiptPolicy
+  component "RemoteReceiveDataRuleSetServiceImpl\nRemote receive rules" as ReceiveRules
+  component "RemoteFeedStatusService\nRemote feed status" as FeedStatus
+  component "ReceiverFactory\nSelects receiver" as ReceiverFactory
+}
+
+package "File Group Normalisation" as normalise {
+  component "StoringReceiverFactory\nChooses simple or zip receiver" as StoringReceiverFactory
+  component "SimpleReceiver\nPlain/gzip/simple input\n-> proxy file group" as SimpleReceiver
+  component "ZipReceiver\nProxy zip input\nvalidate/normalise/split" as ZipReceiver
+  component "ZipSplitter\nSplit multi-feed zips" as ZipSplitter
+  component "DropReceiver\nDrop accepted-by-policy drops" as DropReceiver
+  component "FileGroup\nproxy.zip\nproxy.meta\nproxy.entries" as FileGroup
+}
+
+package "Queue Infrastructure" as queues {
+  component "DirQueueFactory\nCreates named queues" as DirQueueFactory
+  component "DirQueueTransfer\nPulls queue item\nand calls consumer" as DirQueueTransfer
+  component "QueueMonitors\nQueue metrics and positions" as QueueMonitors
+  component "FileStores\nStore size/count metrics" as FileStores
+
+  queue "02_split_zip_input_queue\nDirQueue" as SplitZipQueue
+  queue "20_pre_aggregate_input_queue\nDirQueue" as PreAggregateInputQueue
+  queue "30_aggregate_input_queue\nDirQueue" as AggregateInputQueue
+  queue "40_forwarding_input_queue\nDirQueue" as ForwardingInputQueue
+}
+
+package "Aggregation Processing" as aggregation {
+  component "PreAggregator\nGroup by feed/type\nsplit/close aggregates" as PreAggregator
+  component "Aggregator\nMerge closed groups\ninto forwardable file group" as Aggregator
+  component "AggregatorConfig\nAggregation limits" as AggregatorConfig
+}
+
+package "Forwarding" as forwarding {
+  component "Forwarder\nConsumes forwarding input queue" as Forwarder
+  component "MultiForwardDestination\nFan-out to multiple destinations" as MultiForwardDestination
+  component "RetryingForwardDestination\nForward/retry/failure queues" as RetryingForwardDestination
+  component "ForwardHttpPostDestination\nHTTP destination" as ForwardHttpPostDestination
+  component "HttpSender\nHTTP POST/liveness" as HttpSender
+  component "ForwardFileDestinationImpl\nFile destination" as ForwardFileDestination
+  component "InstantForwardHttpPost\nDirect HTTP instant mode" as InstantForwardHttpPost
+  component "InstantForwardFile\nDirect file instant mode" as InstantForwardFile
+
+  queue "50_forwarding/<destination>/01_forward\nDestination forward queue" as DestinationForwardQueue
+  queue "50_forwarding/<destination>/02_retry\nDestination retry queue" as DestinationRetryQueue
+  folder "50_forwarding/<destination>/03_failure\nDestination failure store" as DestinationFailureStore
+}
+
+package "Cleanup and Observability" as ops {
+  component "CleanupDirQueue\nMove to deleting area\nthen recursive delete" as CleanupDirQueue
+  component "LogStream\nreceive/send/drop/error CSV logs" as LogStream
+  component "ProgressLog\nProgress logging" as ProgressLog
+  component "ProxyQueueMonitoringServlet\nAdmin queue/store view" as ProxyQueueMonitoringServlet
+}
+
+App --> ProxyModule
+ProxyModule --> ProxyCoreModule
+ProxyModule --> ForwarderModule
+ProxyModule --> ProxyLifecycle
+ProxyCoreModule --> ReceiverFactoryProvider
+ProxyCoreModule --> ProxyRequestHandler
+ProxyCoreModule --> EventStore
+ProxyCoreModule --> DirQueueFactory
+ForwarderModule --> Forwarder
+ProxyLifecycle --> ProxyServices
+ProxyLifecycle --> EventStore
+ProxyLifecycle --> ZipDirScanner
+ProxyLifecycle --> SqsConnector
+
+ProxyServices --> DirQueueTransfer
+ProxyServices --> "ParallelExecutor"
+ProxyServices --> "FrequencyExecutor"
+
+ReceiveDataServlet --> ProxyRequestHandler
+ProxyRequestHandler --> RequestAuthenticator
+ProxyRequestHandler --> ReceiptIdGenerator
+ProxyRequestHandler --> ReceiptPolicy
+ReceiptPolicy --> ReceiveRules
+ReceiptPolicy --> FeedStatus
+ProxyRequestHandler --> ReceiverFactory
+
+EventResourceImpl ==> EventStore
+SqsConnector ==> EventStore
+EventStore ==> ReceiverFactory
+ZipDirScanner ==> ZipReceiver
+
+ReceiverFactoryProvider --> ReceiverFactory
+ReceiverFactoryProvider --> StoringReceiverFactory
+ReceiverFactoryProvider --> DirQueueFactory
+ReceiverFactoryProvider --> Forwarder
+ReceiverFactoryProvider --> PreAggregator
+ReceiverFactoryProvider --> Aggregator
+ReceiverFactoryProvider --> InstantForwardHttpPost
+ReceiverFactoryProvider --> InstantForwardFile
+ReceiverFactoryProvider ..> AggregatorConfig
+
+ReceiverFactory --> StoringReceiverFactory
+StoringReceiverFactory --> SimpleReceiver
+StoringReceiverFactory --> ZipReceiver
+SimpleReceiver --> ReceiptPolicy
+ZipReceiver --> ReceiptPolicy
+SimpleReceiver ==> FileGroup
+ZipReceiver ==> FileGroup
+ZipReceiver ==> ZipSplitter
+DropReceiver --> LogStream
+
+DirQueueFactory --> SplitZipQueue
+DirQueueFactory --> PreAggregateInputQueue
+DirQueueFactory --> AggregateInputQueue
+DirQueueFactory --> ForwardingInputQueue
+DirQueueFactory --> QueueMonitors
+DirQueueFactory --> FileStores
+
+ZipSplitter ==> SplitZipQueue
+SplitZipQueue ==> DirQueueTransfer
+DirQueueTransfer ==> ZipSplitter
+
+FileGroup ==> PreAggregateInputQueue : aggregation enabled
+FileGroup ==> ForwardingInputQueue : aggregation disabled
+
+PreAggregateInputQueue ==> DirQueueTransfer
+DirQueueTransfer ==> PreAggregator
+PreAggregator ==> AggregateInputQueue
+PreAggregator --> CleanupDirQueue
+
+AggregateInputQueue ==> DirQueueTransfer
+DirQueueTransfer ==> Aggregator
+Aggregator ==> ForwardingInputQueue
+Aggregator --> CleanupDirQueue
+
+ForwardingInputQueue ==> DirQueueTransfer
+DirQueueTransfer ==> Forwarder
+
+Forwarder --> MultiForwardDestination
+Forwarder --> RetryingForwardDestination
+MultiForwardDestination --> RetryingForwardDestination
+MultiForwardDestination --> CleanupDirQueue
+
+RetryingForwardDestination ==> DestinationForwardQueue
+DestinationForwardQueue ==> RetryingForwardDestination
+RetryingForwardDestination ==> DestinationRetryQueue
+DestinationRetryQueue ==> RetryingForwardDestination
+RetryingForwardDestination ==> DestinationFailureStore
+
+RetryingForwardDestination --> ForwardHttpPostDestination
+RetryingForwardDestination --> ForwardFileDestination
+ForwardHttpPostDestination --> HttpSender
+ForwardHttpPostDestination --> CleanupDirQueue
+ForwardFileDestination --> CleanupDirQueue
+HttpSender --> LogStream
+
+ProxyQueueMonitoringServlet --> QueueMonitors
+ProxyQueueMonitoringServlet --> FileStores
+
+note right of ReceiverFactoryProvider
+  Pipeline variants:
+  1. Instant mode:
+     ReceiverFactory -> InstantForwardHttpPost/File
+     Bypasses normal DirQueue pipeline.
+
+  2. Non-aggregating mode:
+     SimpleReceiver/ZipReceiver
+       -> 40_forwarding_input_queue
+       -> Forwarder.
+
+  3. Aggregating mode:
+     SimpleReceiver/ZipReceiver
+       -> 20_pre_aggregate_input_queue
+       -> PreAggregator
+       -> 30_aggregate_input_queue
+       -> Aggregator
+       -> 40_forwarding_input_queue
+       -> Forwarder.
+end note
+
+note bottom of FileGroup
+  Normal proxy file-group contract:
+  - proxy.zip
+  - proxy.meta
+  - proxy.entries
+
+  Forward/retry/failure areas may also contain:
+  - error.log
+  - retry state
+end note
+
+note bottom of queues
+  DirQueue is the main architectural boundary.
+
+  Before queues:
+  protocol handling, authentication, policy,
+  receipt IDs, zip validation, normalisation.
+
+  After queues:
+  durable processing, aggregation,
+  forwarding, retry, failure, cleanup.
+end note
+
+@enduml

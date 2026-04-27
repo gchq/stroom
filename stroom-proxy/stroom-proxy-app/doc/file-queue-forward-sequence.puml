@@ -1,0 +1,121 @@
+@startuml
+title Stroom Proxy - File Queue Forwarding Sequence
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+actor "Upstream receive path\n(SimpleReceiver / ZipReceiver /\nAggregator / EventStore / Scanner)" as Producer
+
+box "Queue boundary" #LightYellow
+participant "DirQueue\n40_forwarding_input_queue" as ForwardInputQueue
+participant "DirQueueTransfer\nForwarding queue transfer" as QueueTransfer
+end box
+
+box "Forward orchestration" #LightBlue
+participant "Forwarder" as Forwarder
+participant "MultiForwardDestination\n(optional)" as MultiForward
+participant "RetryingForwardDestination\nper destination" as RetryDest
+end box
+
+box "Destination adapters" #LightGreen
+participant "ForwardHttpPostDestination" as HttpDest
+participant "HttpSender" as HttpSender
+participant "ForwardFileDestinationImpl" as FileDest
+end box
+
+box "Cleanup / failure state" #LightPink
+participant "CleanupDirQueue" as Cleanup
+collections "50_forwarding/<destination>\n01_forward / 02_retry / 03_failure" as DestQueues
+end box
+
+== Producer publishes a complete file group ==
+
+Producer -> ForwardInputQueue : add(fileGroupDir)
+note right of ForwardInputQueue
+The file group directory is moved atomically
+into the numbered filesystem queue.
+
+Typical file group contents:
+- proxy.zip
+- proxy.meta
+- proxy.entries
+end note
+
+== Queue worker consumes the forwarding input queue ==
+
+QueueTransfer -> ForwardInputQueue : next()
+ForwardInputQueue --> QueueTransfer : queued Dir
+QueueTransfer -> Forwarder : add(dir.path)
+
+== Forwarder chooses fan-out strategy ==
+
+alt Single enabled destination
+    Forwarder -> RetryDest : add(fileGroupDir)
+else Multiple enabled destinations
+    Forwarder -> MultiForward : add(fileGroupDir)
+    MultiForward -> MultiForward : copy source once per destination
+    loop for each configured destination
+        MultiForward -> RetryDest : add(destinationCopyDir)
+    end
+end
+
+== Retry wrapper owns destination delivery ==
+
+RetryDest -> DestQueues : move to 01_forward
+RetryDest -> RetryDest : attempt delivery
+
+alt HTTP destination
+    RetryDest -> HttpDest : add(fileGroupDir)
+    HttpDest -> HttpDest : read proxy.meta
+    HttpDest -> HttpDest : locate proxy.zip
+    HttpDest -> HttpSender : send(attributeMap, zipStream)
+    HttpSender -> HttpSender : POST downstream\nwith allowed metadata headers
+
+    alt HTTP send succeeds
+        HttpSender --> HttpDest : success
+        HttpDest -> Cleanup : add(fileGroupDir)
+        RetryDest -> DestQueues : remove forward/retry state
+    else Recoverable HTTP failure
+        HttpSender --> HttpDest : recoverable error
+        HttpDest --> RetryDest : throw recoverable failure
+        RetryDest -> DestQueues : move to 02_retry\nupdate RetryState / error.log
+    else Non-recoverable HTTP failure
+        HttpSender --> HttpDest : non-recoverable error
+        HttpDest --> RetryDest : throw non-recoverable failure
+        RetryDest -> DestQueues : move to 03_failure\nwrite error.log
+    end
+
+else File destination
+    RetryDest -> FileDest : add(fileGroupDir)
+    FileDest -> FileDest : resolve destination path\nand optional sub-path template
+    FileDest -> FileDest : move file group to output store
+
+    alt File move succeeds
+        FileDest --> RetryDest : success
+        RetryDest -> DestQueues : remove forward/retry state
+    else File destination unavailable / failed
+        FileDest --> RetryDest : throw failure
+        RetryDest -> DestQueues : move to 02_retry or 03_failure\naccording to retry policy
+    end
+end
+
+== Multi-destination source cleanup ==
+
+alt Multiple destinations and all destination copies succeeded
+    MultiForward -> Cleanup : add(originalSourceDir)
+else Multiple destinations and any destination failed
+    MultiForward -> MultiForward : retain failure state for failed destination
+    note right of MultiForward
+Original source is only cleaned up once all
+configured destinations have accepted their copy.
+end note
+end
+
+== Cleanup ==
+
+Cleanup -> Cleanup : move to 99_deleting
+Cleanup -> Cleanup : recursively delete directory
+
+@enduml

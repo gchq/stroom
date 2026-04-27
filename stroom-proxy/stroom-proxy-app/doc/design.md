@@ -1,6 +1,8 @@
 # Introduction
 Stroom proxy can be configured to operate in various ways to meet certain use cases.
 
+For the current filesystem queue based runtime architecture, including receive-side components, `DirQueue` boundaries, aggregation, forwarding, retry handling, and UML diagrams, see [File Queue Pipeline Design](file-queue-pipeline-design.md).
+
 # Use Cases
 The use cases include but may not be limited to the following:
 

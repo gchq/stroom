@@ -1,0 +1,161 @@
+@startuml
+title Stroom Proxy receive path to file queues
+
+autonumber
+
+actor "Source System\nor Upstream Proxy" as Source
+participant "ReceiveDataServlet" as Servlet
+participant "ProxyRequestHandler" as Handler
+participant "RequestAuthenticator" as Auth
+participant "ReceiptIdGenerator" as Receipt
+participant "ReceiverFactory" as ReceiverFactory
+participant "StoringReceiverFactory" as StoringFactory
+participant "SimpleReceiver" as SimpleReceiver
+participant "ZipReceiver" as ZipReceiver
+participant "Receive Policy\nAttributeMapFilter" as Policy
+participant "ZipSplitter" as ZipSplitter
+queue "02_split_zip_input_queue\nDirQueue" as SplitQueue
+queue "20_pre_aggregate_input_queue\nDirQueue" as PreAggQueue
+queue "40_forwarding_input_queue\nDirQueue" as ForwardQueue
+participant "InstantForwardHttpPost\nor InstantForwardFile" as InstantForwarder
+
+== HTTP receive ==
+
+Source -> Servlet : POST/PUT /datafeed\nheaders + body
+Servlet -> Handler : handle(request, response)
+
+Handler -> Receipt : generate receipt id
+Receipt --> Handler : receipt id
+
+Handler -> Handler : create AttributeMap\nfrom request headers
+Handler -> Auth : authenticate(request, AttributeMap)
+Auth --> Handler : authenticated identity / attributes
+
+Handler -> Handler : validate request\ncompression, size, metadata
+Handler -> ReceiverFactory : get(AttributeMap)
+
+ReceiverFactory -> StoringFactory : select receiver by Compression
+
+alt Compression is ZIP
+    StoringFactory --> Handler : ZipReceiver
+else Compression is plain/gzip/simple
+    StoringFactory --> Handler : SimpleReceiver
+end
+
+== Simple receive path ==
+
+alt SimpleReceiver selected
+    Handler -> SimpleReceiver : receive(AttributeMap, InputStream)
+
+    SimpleReceiver -> Policy : filter(AttributeMap)
+    alt policy rejects
+        Policy --> SimpleReceiver : reject
+        SimpleReceiver --> Handler : throw reject response
+        Handler --> Servlet : error response
+        Servlet --> Source : reject/error
+    else policy drops
+        Policy --> SimpleReceiver : drop
+        SimpleReceiver -> SimpleReceiver : consume/drop body\nlog drop
+        SimpleReceiver --> Handler : dropped
+        Handler --> Servlet : success with receipt id
+        Servlet --> Source : 200 + receipt id
+    else policy receives
+        Policy --> SimpleReceiver : receive
+        SimpleReceiver -> SimpleReceiver : write proxy file group\n01_receiving_simple\nproxy.zip + proxy.meta + proxy.entries
+
+        alt aggregation enabled
+            SimpleReceiver -> PreAggQueue : add(file-group dir)\natomic move
+        else aggregation disabled
+            SimpleReceiver -> ForwardQueue : add(file-group dir)\natomic move
+        else instant forwarding enabled
+            SimpleReceiver -> InstantForwarder : forward directly
+        end
+
+        SimpleReceiver --> Handler : received
+        Handler --> Servlet : success with receipt id
+        Servlet --> Source : 200 + receipt id
+    end
+end
+
+== ZIP receive path ==
+
+alt ZipReceiver selected
+    Handler -> ZipReceiver : receive(AttributeMap, InputStream)
+
+    ZipReceiver -> ZipReceiver : write staged zip\n01_receiving_zip
+    ZipReceiver -> ZipReceiver : inspect zip entries\nnormalise metadata\ncalculate entry groups
+
+    alt zip contains multiple feeds or needs splitting
+        ZipReceiver -> SplitQueue : add(staged zip dir)
+        SplitQueue -> ZipSplitter : next()
+        ZipSplitter -> Policy : filter(per feed/type AttributeMap)
+
+        alt split item rejected
+            Policy --> ZipSplitter : reject
+            ZipSplitter -> ZipSplitter : record failure / log
+        else split item dropped
+            Policy --> ZipSplitter : drop
+            ZipSplitter -> ZipSplitter : drop split item / log
+        else split item received
+            Policy --> ZipSplitter : receive
+            ZipSplitter -> ZipSplitter : write split file group\n03_split_zip_splits\nproxy.zip + proxy.meta + proxy.entries
+
+            alt aggregation enabled
+                ZipSplitter -> PreAggQueue : add(split file-group dir)\natomic move
+            else aggregation disabled
+                ZipSplitter -> ForwardQueue : add(split file-group dir)\natomic move
+            end
+        end
+
+        ZipSplitter --> ZipReceiver : split complete
+    else zip is already normal proxy file group
+        ZipReceiver -> Policy : filter(AttributeMap)
+
+        alt policy rejects
+            Policy --> ZipReceiver : reject
+            ZipReceiver --> Handler : throw reject response
+            Handler --> Servlet : error response
+            Servlet --> Source : reject/error
+        else policy drops
+            Policy --> ZipReceiver : drop
+            ZipReceiver -> ZipReceiver : consume/drop body\nlog drop
+            ZipReceiver --> Handler : dropped
+            Handler --> Servlet : success with receipt id
+            Servlet --> Source : 200 + receipt id
+        else policy receives
+            Policy --> ZipReceiver : receive
+            ZipReceiver -> ZipReceiver : write proxy file group\n01_receiving_zip\nproxy.zip + proxy.meta + proxy.entries
+
+            alt aggregation enabled
+                ZipReceiver -> PreAggQueue : add(file-group dir)\natomic move
+            else aggregation disabled
+                ZipReceiver -> ForwardQueue : add(file-group dir)\natomic move
+            else instant forwarding enabled
+                ZipReceiver -> InstantForwarder : forward directly
+            end
+
+            ZipReceiver --> Handler : received
+            Handler --> Servlet : success with receipt id
+            Servlet --> Source : 200 + receipt id
+        end
+    end
+end
+
+note over PreAggQueue
+Receivers publish here when aggregation is enabled.
+A DirQueueTransfer worker later passes items to PreAggregator.
+end note
+
+note over ForwardQueue
+Receivers publish here when aggregation is disabled.
+Aggregator also publishes here after aggregation.
+A DirQueueTransfer worker later passes items to Forwarder.
+end note
+
+note over InstantForwarder
+Instant forwarding is a separate mode.
+It bypasses the durable file queue pipeline and supports
+exactly one enabled instant destination.
+end note
+
+@enduml
