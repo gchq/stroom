@@ -2159,6 +2159,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     private void reloadEventIdCache() {
+        final AnnotationConfig config = annotationConfigProvider.get();
+        final int limit = config.getEventLinkCacheSizeLimit() + 1;
         LOGGER.logDurationIfInfoEnabled(() -> {
             final List<AnnotationEventLink> eventLinks = new ArrayList<>();
             JooqUtil.contextResult(connectionProvider, context -> context
@@ -2170,6 +2172,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                             .join(ANNOTATION)
                             .on(ANNOTATION.ID.eq(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID))
                             .where(ANNOTATION.DELETED.eq(false))
+                            .limit(limit)
                             .fetch())
                     .forEach(r -> {
                         final long id = r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID);
@@ -2182,7 +2185,15 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             // It's possible that an event link is added/removed in the UI between the fetch above and
             // the swapping of the map in reload().
             annotationEventLinkCache.reload(eventLinks);
-            return eventLinks.size();
+            final int count = eventLinks.size();
+            if (count >= limit) {
+                throw new RuntimeException(LogUtil.message(
+                        "Too many annotation to event links ({}), consider increasing property {} if you have " +
+                        "sufficient memory.",
+                        count, config.getFullPathStr(AnnotationConfig.EVENT_LINK_CACHE_SIZE_LIMIT_PROP_NAME)));
+            }
+
+            return count;
         }, count -> LogUtil.message("reloadEventIdCache (event link count: {})", count));
     }
 
