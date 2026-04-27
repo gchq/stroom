@@ -91,7 +91,7 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
             LOGGER.debug("createNewAnnotationValues() - annotationIdentity: {}", annotationIdentity);
             return new AnnotationValues(annotationIdentity);
         } catch (final Exception e) {
-            LOGGER.error("Error creating AnnotationValues for annotationIdentity: {}", annotationIdentity, e);
+            LOGGER.error("Error creating AnnotationValues for annotationIdentity: {}", annotationIdentity);
             throw e;
         }
     }
