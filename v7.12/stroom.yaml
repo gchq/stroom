@@ -9438,6 +9438,14 @@ components:
           format: int64
         updateUser:
           $ref: "#/components/schemas/UserRef"
+    AnnotationIdentity:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
     AnnotationTable:
       type: object
       allOf:
@@ -10127,8 +10135,28 @@ components:
         annotationEntryId:
           type: integer
           format: int64
-        annotationRef:
-          $ref: "#/components/schemas/DocRef"
+        annotationEntryType:
+          type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK_EVENT
+          - UNLINK_EVENT
+          - RETENTION_PERIOD
+          - DESCRIPTION
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
+          - DELETE
+        annotationIdentity:
+          $ref: "#/components/schemas/AnnotationIdentity"
         data:
           type: string
     ChangeAssignedTo:
@@ -11290,8 +11318,28 @@ components:
         annotationEntryId:
           type: integer
           format: int64
-        annotationRef:
-          $ref: "#/components/schemas/DocRef"
+        annotationEntryType:
+          type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK_EVENT
+          - UNLINK_EVENT
+          - RETENTION_PERIOD
+          - DESCRIPTION
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
+          - DELETE
+        annotationIdentity:
+          $ref: "#/components/schemas/AnnotationIdentity"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -12168,6 +12216,12 @@ components:
           - CREATE_EXPLORER_NODE
           - UPDATE_EXPLORER_NODE
           - DELETE_EXPLORER_NODE
+          - LINK
+          - UNLINK
+        data:
+          type: string
+        dataClassName:
+          type: string
         docRef:
           $ref: "#/components/schemas/DocRef"
         oldDocRef:
@@ -18263,6 +18317,9 @@ components:
     SingleAnnotationChangeRequest:
       type: object
       properties:
+        annotationId:
+          type: integer
+          format: int64
         annotationRef:
           $ref: "#/components/schemas/DocRef"
         change:

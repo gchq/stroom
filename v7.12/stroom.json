@@ -13697,6 +13697,18 @@
           }
         }
       },
+      "AnnotationIdentity" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "AnnotationTable" : {
         "type" : "object",
         "allOf" : [ {
@@ -14473,8 +14485,12 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "annotationRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "annotationEntryType" : {
+            "type" : "string",
+            "enum" : [ "TITLE", "SUBJECT", "STATUS", "ASSIGNED", "COMMENT", "LINK_EVENT", "UNLINK_EVENT", "RETENTION_PERIOD", "DESCRIPTION", "ADD_TO_COLLECTION", "REMOVE_FROM_COLLECTION", "ADD_LABEL", "REMOVE_LABEL", "ADD_TABLE_DATA", "LINK_ANNOTATION", "UNLINK_ANNOTATION", "DELETE" ]
+          },
+          "annotationIdentity" : {
+            "$ref" : "#/components/schemas/AnnotationIdentity"
           },
           "data" : {
             "type" : "string"
@@ -16041,8 +16057,12 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "annotationRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "annotationEntryType" : {
+            "type" : "string",
+            "enum" : [ "TITLE", "SUBJECT", "STATUS", "ASSIGNED", "COMMENT", "LINK_EVENT", "UNLINK_EVENT", "RETENTION_PERIOD", "DESCRIPTION", "ADD_TO_COLLECTION", "REMOVE_FROM_COLLECTION", "ADD_LABEL", "REMOVE_LABEL", "ADD_TABLE_DATA", "LINK_ANNOTATION", "UNLINK_ANNOTATION", "DELETE" ]
+          },
+          "annotationIdentity" : {
+            "$ref" : "#/components/schemas/AnnotationIdentity"
           }
         }
       },
@@ -16910,7 +16930,13 @@
         "properties" : {
           "action" : {
             "type" : "string",
-            "enum" : [ "CREATE", "POST_CREATE", "UPDATE", "PRE_DELETE", "DELETE", "CLEAR_CACHE", "CREATE_EXPLORER_NODE", "UPDATE_EXPLORER_NODE", "DELETE_EXPLORER_NODE" ]
+            "enum" : [ "CREATE", "POST_CREATE", "UPDATE", "PRE_DELETE", "DELETE", "CLEAR_CACHE", "CREATE_EXPLORER_NODE", "UPDATE_EXPLORER_NODE", "DELETE_EXPLORER_NODE", "LINK", "UNLINK" ]
+          },
+          "data" : {
+            "type" : "string"
+          },
+          "dataClassName" : {
+            "type" : "string"
           },
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
@@ -24705,6 +24731,10 @@
       "SingleAnnotationChangeRequest" : {
         "type" : "object",
         "properties" : {
+          "annotationId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "annotationRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
