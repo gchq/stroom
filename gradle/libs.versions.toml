@@ -6,7 +6,7 @@ stroomStats = "1.0-alpha.6"
 # ------------3rd-party------------
 aws = "2.31.68"
 commons-io = "2.19.0"
-dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
+dropwizard = "5.0.1" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.2.1"
 flyway = "12.0.0"
 guice = "7.0.0"
@@ -23,6 +23,7 @@ openai = "4.3.0"
 poi = "5.4.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.42"
+wiremock = "3.13.2" 
 
 [libraries]
 #------Stroom-libs---------------
@@ -102,7 +103,7 @@ jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datat
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" } # version controlled by dropwizard-dependencies
 jakarta-activation = { module = "jakarta.activation:jakarta.activation-api" } # version controlled by dropwizard-dependencies
 jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" } # version controlled by dropwizard-dependencies
-jakarta-el = { module = "org.glassfish:jakarta.el" } # version controlled by dropwizard-dependencies
+jakarta-el = { module = "jakarta.el:jakarta.el-api", version = "5.0.1" }
 jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version = "2.0.1" }
 jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" } # version controlled by dropwizard-dependencies
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" } # version controlled by dropwizard-dependencies
@@ -125,8 +126,9 @@ jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version
 jersey-test-framework-grizzly2 = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2" } # version controlled by dropwizard-dependencies
 jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by dropwizard-dependencies
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
-jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version controlled by dropwizard-dependencies
-jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
+# The ee10 part needs to correspond to the version pulled in by dropwizard-jetty
+jetty-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet" } # version controlled by dropwizard-dependencies
+jetty-servlets = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlets" } # version controlled by dropwizard-dependencies
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
 jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.8.2" }
@@ -181,7 +183,8 @@ swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
 swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
 vavr = { module = "io.vavr:vavr", version = "0.10.4" }
-wiremock = { module = "org.wiremock:wiremock", version = "3.3.1" }
+# Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12
+wiremock = { module = "org.wiremock:wiremock-jetty12", version.ref = "wiremock" }
 ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled by dropwizard-dependencies
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
@@ -238,3 +241,4 @@ common-test-runtime = [
     "log4j-over-slf4j",
     "logback-classic",
     "logback-core"]
+

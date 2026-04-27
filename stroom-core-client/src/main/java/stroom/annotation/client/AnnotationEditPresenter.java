@@ -222,11 +222,11 @@ public class AnnotationEditPresenter
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
             annotationResourceClient.findAnnotationTags(criteria, values -> {
-                if (values != null) {
-                    consumer.accept(values.getValues());
-                }
-            },
-                new DefaultErrorHandler(this, null), this);
+                        if (values != null) {
+                            consumer.accept(values.getValues());
+                        }
+                    },
+                    new DefaultErrorHandler(this, null), this);
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
@@ -1454,9 +1454,51 @@ public class AnnotationEditPresenter
         this.parent = parent;
     }
 
-    private record AnnotationEntryGroup(long id, AnnotationEntryType annotationEntryType,
-                                        List<AnnotationEntry> entries) {
 
+    // --------------------------------------------------------------------------------
+
+
+    @SuppressWarnings("ClassCanBeRecord") // GWT moans if this is a record
+    private static final class AnnotationEntryGroup {
+
+        private final long id;
+        private final AnnotationEntryType annotationEntryType;
+        private final List<AnnotationEntry> entries;
+
+        private AnnotationEntryGroup(final long id,
+                                     final AnnotationEntryType annotationEntryType,
+                                     final List<AnnotationEntry> entries) {
+            this.id = id;
+            this.annotationEntryType = annotationEntryType;
+            this.entries = entries;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj == null || obj.getClass() != this.getClass()) {
+                return false;
+            }
+            final AnnotationEntryGroup that = (AnnotationEntryGroup) obj;
+            return this.id == that.id &&
+                   Objects.equals(this.annotationEntryType, that.annotationEntryType) &&
+                   Objects.equals(this.entries, that.entries);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, annotationEntryType, entries);
+        }
+
+        @Override
+        public String toString() {
+            return "AnnotationEntryGroup[" +
+                   "id=" + id + ", " +
+                   "annotationEntryType=" + annotationEntryType + ", " +
+                   "entries=" + entries + ']';
+        }
     }
 
 

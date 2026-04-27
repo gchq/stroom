@@ -49,7 +49,7 @@ dependencies {
     implementation libs.dropwizard.metrics.core
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jakarta.el
+    //implementation libs.jakarta.el
     implementation libs.jakarta.inject
     implementation libs.saxon.he
     implementation libs.slf4j.api

@@ -22,7 +22,6 @@ import stroom.bytebuffer.impl6.ByteBufferPoolImpl7;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import org.eclipse.jetty.io.MappedByteBufferPool;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -345,7 +344,7 @@ class TestByteBufferPool {
         byteBufferPools.add(new ByteBufferPoolImpl5());
         byteBufferPools.add(new ByteBufferPoolImpl6(ByteBufferPoolConfig::new));
         byteBufferPools.add(new ByteBufferPoolImpl7(new ByteBufferFactoryImpl()));
-        byteBufferPools.add(new JettyByteBufferPool());
+//        byteBufferPools.add(new JettyByteBufferPool());
 
         final int threads = 10;
         // Set to true for profiling in visualvm
@@ -412,7 +411,7 @@ class TestByteBufferPool {
         final ByteBufferPool byteBufferPool3 = new ByteBufferPoolImpl3();
         final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(ByteBufferPoolConfig::new);
         final ByteBufferPool byteBufferPool5 = new ByteBufferPoolImpl5();
-        final ByteBufferPool jettyByteBufferPool = new JettyByteBufferPool();
+//        final ByteBufferPool jettyByteBufferPool = new JettyByteBufferPool();
 
         final List<String> results = new ArrayList<>();
 
@@ -426,7 +425,7 @@ class TestByteBufferPool {
 //                doPerfTest(results, testRound, iterations, byteBufferPool3, executorService);
                 doPerfTest(results, testRound, iterations, byteBufferPool4, executorService);
 //                doPerfTest(results, testRound, iterations, byteBufferPool5, executorService);
-                doPerfTest(results, testRound, iterations, jettyByteBufferPool, executorService);
+//                doPerfTest(results, testRound, iterations, jettyByteBufferPool, executorService);
 //                doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService);
 
                 LOGGER.info("---------------------------------------------------------");
@@ -597,42 +596,45 @@ class TestByteBufferPool {
     // --------------------------------------------------------------------------------
 
 
-    private static final class JettyByteBufferPool implements ByteBufferPool {
+    // Jetty has changed to returning a RetainableByteBuffer from its pool which doesn't fit with
+    // PooledByteBuffer, so commenting out for now
 
-        private final org.eclipse.jetty.io.ByteBufferPool delegatePool = new MappedByteBufferPool();
-
-        private ByteBuffer getBuffer(final int minCapacity) {
-            final ByteBuffer byteBuffer = delegatePool.acquire(minCapacity, true);
-
-            // Jetty is meant to set the limit but doesn't seem to
-            byteBuffer.limit(byteBuffer.capacity());
-            return byteBuffer;
-        }
-
-        @Override
-        public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-            return new PooledByteBufferImpl(
-                    () ->
-                            getBuffer(minCapacity),
-                    delegatePool::release);
-        }
-
-        @Override
-        public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-            return new PooledByteBufferPairImpl(
-                    delegatePool::release,
-                    getBuffer(minKeyCapacity),
-                    getBuffer(minKeyCapacity));
-        }
-
-        @Override
-        public int getCurrentPoolSize() {
-            return -1;
-        }
-
-        @Override
-        public SystemInfoResult getSystemInfo() {
-            return null;
-        }
-    }
+//    private static final class JettyByteBufferPool implements ByteBufferPool {
+//
+//        private final org.eclipse.jetty.io.ByteBufferPool delegatePool = new ArrayByteBufferPool();
+//
+//        private RetainableByteBuffer getBuffer(final int minCapacity) {
+//            final RetainableByteBuffer byteBuffer = delegatePool.acquire(minCapacity, true);
+//
+//            // Jetty is meant to set the limit but doesn't seem to
+//            byteBuffer.limit(byteBuffer.capacity());
+//            return byteBuffer;
+//        }
+//
+//        @Override
+//        public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
+//            return new PooledByteBufferImpl(
+//                    () ->
+//                            getBuffer(minCapacity),
+//                    delegatePool::release);
+//        }
+//
+//        @Override
+//        public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
+//            return new PooledByteBufferPairImpl(
+//                    delegatePool::release,
+//                    getBuffer(minKeyCapacity),
+//                    getBuffer(minKeyCapacity));
+//        }
+//
+//        @Override
+//        public int getCurrentPoolSize() {
+//            return -1;
+//        }
+//
+//        @Override
+//        public SystemInfoResult getSystemInfo() {
+//            return null;
+//        }
+//    }
 }

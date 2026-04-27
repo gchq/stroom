@@ -76,10 +76,10 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
+import jakarta.servlet.ServletContext;
 import jakarta.validation.ValidatorFactory;
+import org.eclipse.jetty.ee10.servlet.SessionHandler;
 import org.eclipse.jetty.http.HttpCookie;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.session.SessionHandler;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -405,7 +405,7 @@ public class App extends Application<Config> {
     private void configureSessionCookie(final Environment environment,
                                         final SessionCookieConfig sessionCookieConfig) {
         // Ensure the session cookie that provides JSESSIONID is secure.
-        final ContextHandler.Context context = environment
+        final ServletContext context = environment
                 .getApplicationContext()
                 .getServletContext();
 
@@ -414,7 +414,7 @@ public class App extends Application<Config> {
         servletSessionCookieConfig.setSecure(sessionCookieConfig.isSecure());
         servletSessionCookieConfig.setHttpOnly(sessionCookieConfig.isHttpOnly());
         context.setAttribute(
-                HttpCookie.SAME_SITE_DEFAULT_ATTRIBUTE,
+                HttpCookie.SAME_SITE_ATTRIBUTE,
                 sessionCookieConfig.getSameSite().getAttributeValue());
     }
 

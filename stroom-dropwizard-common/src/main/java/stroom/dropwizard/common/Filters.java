@@ -23,8 +23,8 @@ import jakarta.inject.Inject;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

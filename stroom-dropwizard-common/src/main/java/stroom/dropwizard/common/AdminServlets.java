@@ -26,8 +26,8 @@ import io.vavr.Tuple3;
 import jakarta.inject.Inject;
 import jakarta.servlet.Servlet;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

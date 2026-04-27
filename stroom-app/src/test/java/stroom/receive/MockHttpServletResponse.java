@@ -84,6 +84,10 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
+    public void sendRedirect(final String location, final int sc, final boolean clearBuffer) throws IOException {
+    }
+
+    @Override
     public void setDateHeader(final String arg0, final long arg1) {
     }
 
