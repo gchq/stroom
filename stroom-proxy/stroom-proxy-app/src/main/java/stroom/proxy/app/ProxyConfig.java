@@ -23,6 +23,7 @@ import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
+import stroom.proxy.app.pipeline.ProxyPipelineConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.ReceiveDataConfig;
@@ -76,6 +77,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
+    public static final String PROP_NAME_PIPELINE = "pipeline";
 
     protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
     protected static final String DEFAULT_CONTENT_DIR = "content";
@@ -98,6 +100,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final ThreadConfig threadConfig;
     private final ProxySecurityConfig proxySecurityConfig;
     private final List<SqsConnectorConfig> sqsConnectors;
+    private final ProxyPipelineConfig pipelineConfig;
 
     public ProxyConfig() {
         this(DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE,
@@ -116,7 +119,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new FeedStatusConfig(),
                 new ThreadConfig(),
                 new ProxySecurityConfig(),
-                new ArrayList<>());
+                new ArrayList<>(),
+                new ProxyPipelineConfig());
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -138,7 +142,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
-            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
+            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors,
+            @JsonProperty(PROP_NAME_PIPELINE) final ProxyPipelineConfig pipelineConfig) {
 
         this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(
                 haltBootOnConfigValidationFailure, DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);
@@ -158,6 +163,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.threadConfig = Objects.requireNonNullElseGet(threadConfig, ThreadConfig::new);
         this.proxySecurityConfig = Objects.requireNonNullElseGet(proxySecurityConfig, ProxySecurityConfig::new);
         this.sqsConnectors = NullSafe.list(sqsConnectors);
+        this.pipelineConfig = Objects.requireNonNullElseGet(pipelineConfig, ProxyPipelineConfig::new);
     }
 
     @AssertTrue(
@@ -260,6 +266,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;
+    }
+
+    @JsonProperty(PROP_NAME_PIPELINE)
+    public ProxyPipelineConfig getPipelineConfig() {
+        return pipelineConfig;
     }
 
     @JsonIgnore
@@ -414,6 +425,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
         private final List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
+        private ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig();
 
         private Builder() {
 
@@ -520,6 +532,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder pipelineConfig(final ProxyPipelineConfig pipelineConfig) {
+            this.pipelineConfig = pipelineConfig;
+            return this;
+        }
+
         public ProxyConfig build() {
             return new ProxyConfig(
                     haltBootOnConfigValidationFailure,
@@ -538,7 +555,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     feedStatusConfig,
                     threadConfig,
                     proxySecurityConfig,
-                    sqsConnectors);
+                    sqsConnectors,
+                    pipelineConfig);
         }
     }
 }
