@@ -150,36 +150,49 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
 
         @Override
         public Stream<StoredValues> create(final StoredValues storedValues) {
-            final Val streamId = (Val) storedValues.get(streamIdIndex);
-            final Val eventId = (Val) storedValues.get(eventIdIndex);
+            final Val streamIdVal = (Val) storedValues.get(streamIdIndex);
+            final Val eventIdVal = (Val) storedValues.get(eventIdIndex);
             LOGGER.trace(() -> LogUtil.message("create() - streamId: {}, eventId: {}",
-                    LogUtil.typedValue(streamId), LogUtil.typedValue(eventId)));
+                    LogUtil.typedValue(streamIdVal), LogUtil.typedValue(eventIdVal)));
 
-            if (streamId == null || !streamId.type().isNumber() || eventId == null || !eventId.type().isNumber()) {
-                LOGGER.trace("create() - streamId or eventId not the correct type, returning unchanged values");
+            if (streamIdVal == null || eventIdVal == null) {
+                LOGGER.trace("create() - streamId or eventId is null, returning unchanged values");
+                return Stream.of(storedValues);
+            }
+            // The index may not hold the evtId/strmId as a ValLong. If it can't be converted to
+            // a long, this will return null.
+            final Long streamId = streamIdVal.toLong();
+            final Long eventId = eventIdVal.toLong();
+
+            if (streamId == null || eventId == null) {
+                LOGGER.trace(() -> LogUtil.message(
+                        "create() - streamId '{}' or eventId '{}' can't be converted into a long",
+                        LogUtil.typedValue(streamIdVal), LogUtil.typedValue(eventIdVal)));
                 return Stream.of(storedValues);
             }
 
             // Start by getting a list of annotation ids.
-            final Collection<AnnotationIdentity> idList = annotationService
-                    .getAnnotationIdListForEvent(new EventId(streamId.toLong(), eventId.toLong()));
+            final EventId eventIdObj = new EventId(streamId, eventId);
+            final Collection<AnnotationIdentity> idList = annotationService.getAnnotationIdListForEvent(eventIdObj);
 
-            LOGGER.trace(() -> LogUtil.message("create() - streamId: {}, eventId: {}, idList: {}",
-                    streamId,
-                    eventId,
+            LOGGER.trace(() -> LogUtil.message("create() - eventIdObj: {}, idList: {}",
+                    eventIdObj,
                     LogUtil.getSample(
                             idList, 10, annoId -> Long.toString(annoId.getId()))));
 
             // If we get no ids then just return.
             if (idList.isEmpty()) {
-                LOGGER.trace("create() - Empty idList, returning unchanged values");
+                LOGGER.trace("create() - Empty idList, for eventIdObj: {}, returning unchanged values", eventIdObj);
                 return Stream.of(storedValues);
             }
 
             // Get requested annotation fields for the ids.
             final Collection<AnnotationValues> valueList = annotationService.getAnnotationValues(
                     idList, requiredAnnotationFields);
-            LOGGER.trace(() -> LogUtil.message("create() - valueList.size: {}", NullSafe.size(valueList)));
+            LOGGER.trace(() -> LogUtil.message("create() - eventIdObj: {}, idList: {}, valueList.size: {}",
+                    eventIdObj,
+                    LogUtil.getSample(idList, 10, annoId -> Long.toString(annoId.getId())),
+                    NullSafe.size(valueList)));
 
             // If we can not resolve any annotation fields (possibly due to permissions) then just return.
             if (valueList.isEmpty()) {
