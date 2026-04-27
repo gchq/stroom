@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.11] - 2026-04-27
+
+* Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
+
+* Feature : Add config prop `stroom.annotation.eventLinkCacheSizeLimit` (default 1,000,000) to protect Stroom from caching too many annotation to event links. If this limit is exceeded, the query will error.
+
+
 ## [v7.11.10] - 2026-04-23
 
 * Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
@@ -2119,7 +2126,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.11...HEAD
+[v7.11.11]: https://github.com/gchq/stroom/compare/v7.11.10...v7.11.11
 [v7.11.10]: https://github.com/gchq/stroom/compare/v7.11.9...v7.11.10
 [v7.11.9]: https://github.com/gchq/stroom/compare/v7.11.8...v7.11.9
 [v7.11.8]: https://github.com/gchq/stroom/compare/v7.11.7...v7.11.8
