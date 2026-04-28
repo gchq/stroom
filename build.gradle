@@ -197,6 +197,7 @@ subprojects {
             implementation platform(libs.dropwizard.dependencies)
             implementation platform(libs.dropwizard.bom)
             implementation platform(libs.aws.bom)
+            implementation platform(libs.jackson.bom)
 
             testImplementation platform(libs.junit.bom)
         }

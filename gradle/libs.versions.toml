@@ -93,13 +93,26 @@ hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
 jBCrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
-jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by dropwizard-dependencies
+
+# Dropwiz 5.0.1 still pulls in jackson 2 but they have different manven coords
+# and package names so can be used together.
+# -jdk8 and -jsr310 are now included in -databind in v3
+# https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
+jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.1.2" }
+# jackson-annotations is an exception as it still uses the old v2 maven coords
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by jackson-bom
+jackson-core = { module = "tools.jackson.core:jackson-core" } # version controlled by jackson-bom
+jackson-databind = { module = "tools.jackson.core:jackson-databind" } # version controlled by jackson-bom
+jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by jackson-bom
+
+
 #jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version = "2.9.10" } # version controlled by dropwizard-dependencies
-jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by dropwizard-dependencies
-jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by dropwizard-dependencies # files('libs/jackson-databind-2.10.5.1.jar'),#
-jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by dropwizard-dependencies
-jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8" } # version controlled by dropwizard-dependencies
-jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" } # version controlled by dropwizard-dependencies
+#jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by dropwizard-dependencies
+#jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by dropwizard-dependencies # files('libs/jackson-databind-2.10.5.1.jar'),#
+#jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by dropwizard-dependencies
+#jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8" } # version controlled by dropwizard-dependencies
+#jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" } # version controlled by dropwizard-dependencies
+
 jakarta-activation = { module = "jakarta.activation:jakarta.activation-api" } # version controlled by dropwizard-dependencies
 jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" } # version controlled by dropwizard-dependencies
 jakarta-el = { module = "jakarta.el:jakarta.el-api", version = "5.0.1" }
