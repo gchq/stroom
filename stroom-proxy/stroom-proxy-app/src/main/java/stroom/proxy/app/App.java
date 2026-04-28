@@ -62,7 +62,7 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
 import jakarta.validation.ValidatorFactory;
-import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.ee10.servlet.SessionHandler;
 
 import java.io.IOException;
 import java.nio.file.Path;

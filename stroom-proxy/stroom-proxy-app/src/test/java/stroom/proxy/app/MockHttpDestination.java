@@ -96,8 +96,10 @@ public class MockHttpDestination {
     private final ThreadLocal<Long> responseTimes = new ThreadLocal<>();
     private final AtomicInteger count = new AtomicInteger();
 
+    private WireMockExtension wireMockExtension;
+
     public WireMockExtension createExtension() {
-        return WireMockExtension.newInstance()
+        this.wireMockExtension = WireMockExtension.newInstance()
                 .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
                 .options(WireMockConfiguration.wireMockConfig().extensions(new ServeEventListener() {
                     @Override
@@ -137,6 +139,7 @@ public class MockHttpDestination {
                     }
                 }))
                 .build();
+        return wireMockExtension;
     }
 
     public void setupLivenessEndpoint(final boolean isLive) {
@@ -152,7 +155,7 @@ public class MockHttpDestination {
 
     private void setupLivenessEndpoint(final Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
         final String path = getStatusPath();
-        WireMock.stubFor(livenessBuilderFunc.apply(WireMock.get(path)));
+        wireMockExtension.stubFor(livenessBuilderFunc.apply(WireMock.get(path)));
     }
 
     public void setupStroomStubs(final Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
@@ -166,7 +169,7 @@ public class MockHttpDestination {
             throw new RuntimeException("Error creating json for " + feedStatusResponse);
         }
 
-        WireMock.stubFor(WireMock.post(feedStatusPath)
+        wireMockExtension.stubFor(WireMock.post(feedStatusPath)
                 .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody(responseJson)));
@@ -174,17 +177,17 @@ public class MockHttpDestination {
 
         final String apiKeyVerificationPath = getApiKeyVerificationPath();
 
-        WireMock.stubFor(WireMock.post(apiKeyVerificationPath)
+        wireMockExtension.stubFor(WireMock.post(apiKeyVerificationPath)
                 .willReturn(WireMock.aResponse()
                         .withStatus(Status.NO_CONTENT.getStatusCode())
                         .withHeader("Content-Type", "application/json")));
         LOGGER.info("Setup WireMock POST stub for {}", apiKeyVerificationPath);
 
         final String datafeedPath = getDataFeedPath();
-        WireMock.stubFor(datafeedBuilderFunc.apply(WireMock.post(datafeedPath)));
+        wireMockExtension.stubFor(datafeedBuilderFunc.apply(WireMock.post(datafeedPath)));
         LOGGER.info("Setup WireMock POST stub for {}", datafeedPath);
 
-        WireMock.stubFor(WireMock.options(UrlPattern.ANY)
+        wireMockExtension.stubFor(WireMock.options(UrlPattern.ANY)
                 .willReturn(
                         WireMock.aResponse()
                                 .withHeader("Allow", "POST")));
@@ -299,7 +302,7 @@ public class MockHttpDestination {
     }
 
     private void dumpAllWireMockEvents() {
-        WireMock.getAllServeEvents().forEach(this::dumpWireMockEvent);
+        wireMockExtension.getAllServeEvents().forEach(this::dumpWireMockEvent);
     }
 
     private static String getRequestBodyAsString(final LoggedRequest loggedRequest) {
@@ -357,11 +360,11 @@ public class MockHttpDestination {
     }
 
     List<LoggedRequest> getPostsToStroomDataFeed() {
-        return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getDataFeedPath())));
+        return wireMockExtension.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getDataFeedPath())));
     }
 
     private List<GetFeedStatusRequestV2> getPostsToFeedStatusCheck() {
-        return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getFeedStatusPath())))
+        return wireMockExtension.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getFeedStatusPath())))
                 .stream()
                 .map(req -> extractContent(req, GetFeedStatusRequestV2.class))
                 .toList();
@@ -557,7 +560,7 @@ public class MockHttpDestination {
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
-        WireMock.verify(expectedRequestCount, WireMock.postRequestedFor(
+        wireMockExtension.verify(expectedRequestCount, WireMock.postRequestedFor(
                 WireMock.urlPathEqualTo(getDataFeedPath())));
     }
 

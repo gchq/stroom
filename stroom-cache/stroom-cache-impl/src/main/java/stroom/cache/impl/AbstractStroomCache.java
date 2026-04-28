@@ -40,7 +40,6 @@ import com.github.benmanes.caffeine.cache.stats.ConcurrentStatsCounter;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
 import io.dropwizard.metrics.caffeine3.MetricsStatsCounter;
 import jakarta.inject.Provider;
-import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -463,31 +462,31 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         }
 
         @Override
-        public void recordHits(@NonNegative final int count) {
+        public void recordHits(final int count) {
             concurrentStatsCounter.recordHits(count);
             metricsStatsCounter.recordHits(count);
         }
 
         @Override
-        public void recordMisses(@NonNegative final int count) {
+        public void recordMisses(final int count) {
             concurrentStatsCounter.recordMisses(count);
             metricsStatsCounter.recordMisses(count);
         }
 
         @Override
-        public void recordLoadSuccess(@NonNegative final long loadTime) {
+        public void recordLoadSuccess(final long loadTime) {
             concurrentStatsCounter.recordLoadSuccess(loadTime);
             metricsStatsCounter.recordLoadSuccess(loadTime);
         }
 
         @Override
-        public void recordLoadFailure(@NonNegative final long loadTime) {
+        public void recordLoadFailure(final long loadTime) {
             concurrentStatsCounter.recordLoadFailure(loadTime);
             metricsStatsCounter.recordLoadFailure(loadTime);
         }
 
         @Override
-        public void recordEviction(@NonNegative final int weight, final RemovalCause cause) {
+        public void recordEviction(final int weight, final RemovalCause cause) {
             concurrentStatsCounter.recordEviction(weight, cause);
             metricsStatsCounter.recordEviction(weight, cause);
         }
