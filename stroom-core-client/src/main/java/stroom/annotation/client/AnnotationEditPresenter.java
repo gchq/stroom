@@ -221,7 +221,9 @@ public class AnnotationEditPresenter
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values -> {
+            annotationResourceClient.findAnnotationTags(
+                    criteria,
+                    values -> {
                         if (values != null) {
                             consumer.accept(values.getValues());
                         }
