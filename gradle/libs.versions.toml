@@ -23,7 +23,6 @@ openai = "4.3.0"
 poi = "5.4.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.42"
-wiremock = "3.13.2" 
 
 [libraries]
 #------Stroom-libs---------------
@@ -183,8 +182,9 @@ swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
 swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
 vavr = { module = "io.vavr:vavr", version = "0.10.4" }
-# Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12
-wiremock = { module = "org.wiremock:wiremock-jetty12", version.ref = "wiremock" }
+# Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12, so we have to use
+# wiremock-jetty12
+wiremock = { module = "org.wiremock:wiremock-jetty12", version = "3.13.2" }
 ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled by dropwizard-dependencies
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
