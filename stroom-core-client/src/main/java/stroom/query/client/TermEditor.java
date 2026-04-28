@@ -173,13 +173,6 @@ public class TermEditor extends Composite {
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
-    public void update(final Term term) {
-        final String value = term.getValue();
-        write(term);
-        term.setValue(value);
-        read(term);
-    }
-
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
@@ -204,13 +197,24 @@ public class TermEditor extends Composite {
     private void read(final Term term) {
         reading = true;
 
-        // Select the current value.
-        conditionListBox.setValue(null);
-        changeField(null, null, false);
-        fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
-            fieldListBox.setValue(fieldInfo);
-            changeField(fieldInfo, term.getCondition(), false);
-        });
+        // See if the field is the same, if so then do not bother fetching field info from the server.
+        if (term.getField() != null && Objects.equals(
+                NullSafe.get(fieldListBox, BaseSelectionBox::getValue, QueryField::getFldName),
+                term.getField())) {
+            changeField(fieldListBox.getValue(), term.getCondition(), false);
+        } else if (term.getField() == null) {
+            // If the field is null then set the field box to null and update the other controls.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+        } else {
+            // If the field is not null then go and fetch the field info and do a full update.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+            fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
+                fieldListBox.setValue(fieldInfo);
+                changeField(fieldInfo, term.getCondition(), false);
+            });
+        }
 
         reading = false;
     }
@@ -303,6 +307,8 @@ public class TermEditor extends Composite {
             fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
+            fieldTypeLabel.setText("");
+            fieldTypeLabel.setTitle("");
             fieldTypeLabel.setVisible(false);
         }
     }
@@ -332,29 +338,29 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS,
-                        NOT_EQUALS,
-                        LESS_THAN,
-                        LESS_THAN_OR_EQUAL_TO,
-                        GREATER_THAN,
-                        GREATER_THAN_OR_EQUAL_TO:
+                     NOT_EQUALS,
+                     LESS_THAN,
+                     LESS_THAN_OR_EQUAL_TO,
+                     GREATER_THAN,
+                     GREATER_THAN_OR_EQUAL_TO:
                     enterTextOrDateMode(indexFieldType);
                     break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
                     break;
                 case IN_DICTIONARY,
-                        IN_FOLDER,
-                        IS_DOC_REF,
-                        OF_DOC_REF:
+                     IN_FOLDER,
+                     IS_DOC_REF,
+                     OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
-                        USER_HAS_PERM,
-                        USER_HAS_OWNER,
-                        USER_HAS_DELETE,
-                        USER_HAS_EDIT,
-                        USER_HAS_VIEW,
-                        USER_HAS_USE:
+                     USER_HAS_PERM,
+                     USER_HAS_OWNER,
+                     USER_HAS_DELETE,
+                     USER_HAS_EDIT,
+                     USER_HAS_VIEW,
+                     USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
                 default:
