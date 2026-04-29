@@ -23,6 +23,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Factory for logical file-group queues.
@@ -33,6 +34,7 @@ public class FileGroupQueueFactory {
 
     private final Map<String, QueueDefinition> queueDefinitions;
     private final PathCreator pathCreator;
+    private final Map<String, FileGroupQueue> queueCache = new ConcurrentHashMap<>();
 
     public FileGroupQueueFactory(final ProxyPipelineConfig pipelineConfig,
                                  final PathCreator pathCreator) {
@@ -56,7 +58,7 @@ public class FileGroupQueueFactory {
                                                + nonBlankQueueName + "");
         }
 
-        return createQueue(nonBlankQueueName, definition);
+        return queueCache.computeIfAbsent(nonBlankQueueName, ignored -> createQueue(nonBlankQueueName, definition));
     }
 
     public boolean hasQueue(final String queueName) {
