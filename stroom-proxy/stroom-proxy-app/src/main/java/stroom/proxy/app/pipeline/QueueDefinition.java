@@ -206,8 +206,6 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
                ", queueUrl='" + queueUrl + '\'' +
                ", visibilityTimeout=" + visibilityTimeout +
                ", waitTime=" + waitTime +
-               ", streamName='" + streamName + '\'' +
-               ", applicationName='" + applicationName + '\'' +
                '}';
     }
 }

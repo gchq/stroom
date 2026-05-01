@@ -405,8 +405,6 @@ class TestProxyPipelineConfigValidator {
                         null,
                         null,
                         null,
-                        null,
-                        null,
                         null)),
                 new PipelineStagesConfig(),
                 defaultFileStores());
@@ -427,8 +425,6 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 Map.of("sqsQueue", new QueueDefinition(
                         QueueType.SQS,
-                        null,
-                        null,
                         null,
                         null,
                         null,
@@ -466,8 +462,6 @@ class TestProxyPipelineConfigValidator {
                         null,
                         null,
                         null,
-                        null,
-                        null,
                         null)),
                 new PipelineStagesConfig(),
                 Map.of(ProxyPipelineConfig.RECEIVE_STORE, new FileStoreDefinition()));
@@ -492,8 +486,6 @@ class TestProxyPipelineConfigValidator {
                         null,
                         "proxy-topic",
                         "localhost:9092",
-                        null,
-                        null,
                         null,
                         null,
                         null,

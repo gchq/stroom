@@ -43,20 +43,32 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     public static final String PRE_AGGREGATE_STORE = "preAggregateStore";
     public static final String AGGREGATE_STORE = "aggregateStore";
 
+    private final boolean enabled;
     private final Map<String, QueueDefinition> queues;
     private final PipelineStagesConfig stages;
     private final Map<String, FileStoreDefinition> fileStores;
 
     public ProxyPipelineConfig() {
-        this(defaultQueues(), new PipelineStagesConfig(), defaultFileStores());
+        this(false, defaultQueues(), new PipelineStagesConfig(), defaultFileStores());
+    }
+
+    /**
+     * Convenience constructor for tests that don't need to set the enabled flag.
+     */
+    public ProxyPipelineConfig(final Map<String, QueueDefinition> queues,
+                               final PipelineStagesConfig stages,
+                               final Map<String, FileStoreDefinition> fileStores) {
+        this(false, queues, stages, fileStores);
     }
 
     @JsonCreator
     public ProxyPipelineConfig(
+            @JsonProperty("enabled") final Boolean enabled,
             @JsonProperty("queues") final Map<String, QueueDefinition> queues,
             @JsonProperty("stages") final PipelineStagesConfig stages,
             @JsonProperty("fileStores") final Map<String, FileStoreDefinition> fileStores) {
 
+        this.enabled = enabled != null && enabled;
         this.queues = queues == null || queues.isEmpty()
                 ? defaultQueues()
                 : Map.copyOf(queues);
@@ -64,6 +76,11 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
         this.fileStores = fileStores == null || fileStores.isEmpty()
                 ? defaultFileStores()
                 : Map.copyOf(fileStores);
+    }
+
+    @JsonProperty
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Valid
