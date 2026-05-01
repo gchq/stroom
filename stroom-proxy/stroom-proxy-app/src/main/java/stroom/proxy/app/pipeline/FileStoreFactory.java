@@ -98,9 +98,24 @@ public class FileStoreFactory {
                                                + fileStoreName);
         }
 
-        return new LocalFileStore(
-                fileStoreName,
-                getLocalFilesystemFileStorePath(fileStoreName, definition));
+        return switch (definition.getType()) {
+            case LOCAL_FILESYSTEM -> new LocalFileStore(
+                    fileStoreName,
+                    getLocalFilesystemFileStorePath(fileStoreName, definition));
+            case S3 -> new S3FileStore(
+                    fileStoreName,
+                    definition,
+                    getS3LocalRoot(fileStoreName, definition));
+        };
+    }
+
+    private Path getS3LocalRoot(final String fileStoreName,
+                                final FileStoreDefinition definition) {
+        final String configuredPath = definition.getLocalCachePath();
+        final String path = configuredPath == null
+                ? DEFAULT_FILE_STORE_ROOT + "/s3-" + fileStoreName
+                : configuredPath;
+        return pathCreator.toAppPath(path);
     }
 
     private Path getLocalFilesystemFileStorePath(final String fileStoreName,

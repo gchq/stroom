@@ -54,6 +54,8 @@ public class ProxyPipelineConfigValidator {
     public static final String CODE_LOCAL_QUEUE_PATH_BLANK = "LOCAL_QUEUE_PATH_BLANK";
     public static final String CODE_EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE =
             "EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE";
+    public static final String CODE_S3_FILE_STORE_MISSING_BUCKET = "S3_FILE_STORE_MISSING_BUCKET";
+    public static final String CODE_S3_FILE_STORE_MISSING_REGION = "S3_FILE_STORE_MISSING_REGION";
 
     public PipelineValidationResult validate(final ProxyPipelineConfig pipelineConfig) {
         final List<PipelineValidationIssue> issues = new ArrayList<>();
@@ -155,8 +157,30 @@ public class ProxyPipelineConfigValidator {
                         fileStoreName,
                         CODE_FILE_STORE_DEFINITION_NULL,
                         "File store definition must not be null"));
+                return;
             }
+
+            validateFileStoreDefinition(fileStoreName, fileStoreDefinition, issues);
         });
+    }
+
+    private void validateFileStoreDefinition(final String fileStoreName,
+                                             final FileStoreDefinition definition,
+                                             final List<PipelineValidationIssue> issues) {
+        if (definition.getType() == FileStoreType.S3) {
+            if (isBlank(definition.getBucket())) {
+                issues.add(PipelineValidationIssue.errorForFileStore(
+                        fileStoreName,
+                        CODE_S3_FILE_STORE_MISSING_BUCKET,
+                        "S3 file store '" + fileStoreName + "' must have a bucket"));
+            }
+            if (isBlank(definition.getRegion())) {
+                issues.add(PipelineValidationIssue.errorForFileStore(
+                        fileStoreName,
+                        CODE_S3_FILE_STORE_MISSING_REGION,
+                        "S3 file store '" + fileStoreName + "' must have a region"));
+            }
+        }
     }
 
     private void validateStages(final ProxyPipelineConfig pipelineConfig,
