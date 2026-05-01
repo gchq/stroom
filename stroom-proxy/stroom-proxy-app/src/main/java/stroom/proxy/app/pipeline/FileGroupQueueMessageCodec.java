@@ -32,7 +32,7 @@ import java.util.Objects;
  * <p>
  * Queue implementations should use this codec to serialise and deserialise
  * {@link FileGroupQueueMessage} instances so the on-wire/on-disk message format
- * is consistent across local filesystem, Kafka, SQS, and Kinesis queue types.
+ * is consistent across local filesystem, Kafka, and SQS queue types.
  * </p>
  */
 public class FileGroupQueueMessageCodec {

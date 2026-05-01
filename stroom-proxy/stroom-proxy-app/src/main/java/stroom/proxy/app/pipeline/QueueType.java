@@ -38,10 +38,5 @@ public enum QueueType {
     /**
      * An AWS SQS-backed queue where each logical queue maps to an SQS queue.
      */
-    SQS,
-
-    /**
-     * an AWS Kinesis-backed queue where each logical queue maps to a Kinesis stream.
-     */
-    KINESIS
+    SQS
 }

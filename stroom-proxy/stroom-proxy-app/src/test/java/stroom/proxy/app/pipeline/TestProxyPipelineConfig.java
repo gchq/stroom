@@ -137,8 +137,6 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 consumerConfig,
                 null,
                 null,
-                null,
-                null,
                 null);
 
         assertThat(queueDefinition.getType()).isEqualTo(QueueType.KAFKA);
@@ -159,8 +157,6 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 null,
                 null,
                 null,
-                null,
-                null,
                 null).isKafkaConfigValid())
                 .isTrue();
 
@@ -169,8 +165,6 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 null,
                 null,
                 "localhost:9092",
-                null,
-                null,
                 null,
                 null,
                 null,
@@ -187,23 +181,7 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 null,
                 "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy",
                 null,
-                null,
-                null,
                 null).isSqsConfigValid())
-                .isTrue();
-
-        assertThat(new QueueDefinition(
-                QueueType.KINESIS,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                "proxy-stream",
-                "proxy-app").isKinesisConfigValid())
                 .isTrue();
     }
 
@@ -212,8 +190,6 @@ class TestProxyPipelineConfig extends StroomUnitTest {
         final QueueDefinition queueDefinition = new QueueDefinition(
                 QueueType.LOCAL_FILESYSTEM,
                 "queues/pre-aggregate",
-                null,
-                null,
                 null,
                 null,
                 null,
@@ -277,32 +253,7 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 .hasMessageContaining("queueName");
     }
 
-    @Test
-    void testFileGroupQueueFactoryReportsKinesisAsNotImplementedYet() {
-        final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
-                Map.of("kinesisQueue", new QueueDefinition(
-                        QueueType.KINESIS,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        "proxy-stream",
-                        "proxy-app")),
-                new PipelineStagesConfig(),
-                Map.of());
-        final FileGroupQueueFactory factory = new FileGroupQueueFactory(
-                pipelineConfig,
-                new TestPathCreator(getCurrentTestDir()));
 
-        assertThatThrownBy(() -> factory.getQueue("kinesisQueue"))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("KINESIS")
-                .hasMessageContaining("kinesisQueue");
-    }
 
     private static final class TestPathCreator implements PathCreator {
 

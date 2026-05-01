@@ -451,34 +451,8 @@ class TestProxyPipelineConfigValidator {
                 .containsExactly("sqsQueue");
     }
 
-    @Test
-    void testKinesisQueueDefinitionRequiresStreamNameAndApplicationName() {
-        final ProxyPipelineConfig config = new ProxyPipelineConfig(
-                Map.of("kinesisQueue", new QueueDefinition(
-                        QueueType.KINESIS,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        "proxy-stream",
-                        null)),
-                new PipelineStagesConfig(),
-                defaultFileStores());
 
-        final PipelineValidationResult result = validator.validate(config);
 
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.getErrors())
-                .extracting(PipelineValidationIssue::code)
-                .containsExactly(ProxyPipelineConfigValidator.CODE_QUEUE_DEFINITION_INVALID);
-        assertThat(result.getErrors())
-                .extracting(PipelineValidationIssue::queueName)
-                .containsExactly("kinesisQueue");
-    }
 
     @Test
     void testExternalQueueProducesSharedFileStoreWarningForUnspecifiedStorePath() {

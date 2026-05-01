@@ -133,14 +133,6 @@ public class ProxyPipelineConfigValidator {
                             "SQS queue definitions must set queueUrl"));
                 }
             }
-            case KINESIS -> {
-                if (!queueDefinition.isKinesisConfigValid()) {
-                    issues.add(PipelineValidationIssue.errorForQueue(
-                            queueName,
-                            CODE_QUEUE_DEFINITION_INVALID,
-                            "Kinesis queue definitions must set both streamName and applicationName"));
-                }
-            }
         }
     }
 

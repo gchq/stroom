@@ -60,14 +60,9 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
     private final StroomDuration visibilityTimeout;
     private final StroomDuration waitTime;
 
-    private final String streamName;
-    private final String applicationName;
-
     public QueueDefinition() {
         this(
                 DEFAULT_TYPE,
-                null,
-                null,
                 null,
                 null,
                 null,
@@ -88,9 +83,7 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("consumer") final Map<String, String> consumerConfig,
             @JsonProperty("queueUrl") final String queueUrl,
             @JsonProperty("visibilityTimeout") final StroomDuration visibilityTimeout,
-            @JsonProperty("waitTime") final StroomDuration waitTime,
-            @JsonProperty("streamName") final String streamName,
-            @JsonProperty("applicationName") final String applicationName) {
+            @JsonProperty("waitTime") final StroomDuration waitTime) {
 
         this.type = Objects.requireNonNullElse(type, DEFAULT_TYPE);
         this.path = normaliseOptional(path);
@@ -107,9 +100,6 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
         this.queueUrl = normaliseOptional(queueUrl);
         this.visibilityTimeout = visibilityTimeout;
         this.waitTime = waitTime;
-
-        this.streamName = normaliseOptional(streamName);
-        this.applicationName = normaliseOptional(applicationName);
     }
 
     @JsonPropertyDescription("The queue implementation type. Defaults to LOCAL_FILESYSTEM.")
@@ -168,17 +158,7 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
         return waitTime;
     }
 
-    @JsonPropertyDescription("AWS Kinesis stream name.")
-    @JsonProperty
-    public String getStreamName() {
-        return streamName;
-    }
 
-    @JsonPropertyDescription("AWS Kinesis application name.")
-    @JsonProperty
-    public String getApplicationName() {
-        return applicationName;
-    }
 
     @JsonIgnore
     @SuppressWarnings("unused")
@@ -201,16 +181,7 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
         return isNonBlank(queueUrl);
     }
 
-    @JsonIgnore
-    @SuppressWarnings("unused")
-    @ValidationMethod(message = "Kinesis queue definitions must set both streamName and applicationName.")
-    public boolean isKinesisConfigValid() {
-        if (type != QueueType.KINESIS) {
-            return true;
-        }
-        return isNonBlank(streamName)
-               && isNonBlank(applicationName);
-    }
+
 
     private static String normaliseOptional(final String value) {
         if (value == null || value.isBlank()) {

@@ -85,8 +85,6 @@ public class FileGroupQueueFactory {
                     queueName,
                     definition,
                     new FileGroupQueueMessageCodec());
-            case KINESIS -> throw new UnsupportedOperationException(
-                    "Queue type KINESIS is not implemented yet for queue " + queueName);
         };
     }
 

@@ -18,7 +18,6 @@ A secondary goal is to allow queue-separated stages, outside direct/simple/insta
 2. Introduce queue implementations:
    - local filesystem message queue,
    - Kafka queue,
-   - Kinesis queue,
    - SQS queue.
 3. Ensure every queue implementation carries the same logical message contract:
    - message ID,
@@ -40,10 +39,10 @@ A secondary goal is to allow queue-separated stages, outside direct/simple/insta
 
 ## Non-goals
 
-1. Do not move zip/file-group payloads into Kafka, Kinesis, SQS, or local filesystem queue messages.
+1. Do not move zip/file-group payloads into Kafka, SQS, or local filesystem queue messages.
 2. Do not require all deployments to use remote queues.
 3. Do not make simple/instant forwarding distributed; direct modes can remain direct.
-4. Do not require Kafka, Kinesis, SQS, or a distributed filesystem for single-node deployments.
+4. Do not require Kafka, SQS, or a distributed filesystem for single-node deployments.
 5. Do not redesign the proxy zip/file-group format in this work.
 
 ## Current design summary
@@ -82,16 +81,15 @@ The desired future architecture separates two concepts:
    - Examples:
      - local filesystem message file containing a path,
      - Kafka message containing a path,
-     - Kinesis record containing a path,
      - SQS message containing a path.
 
 All queue implementations enqueue messages that contain the location of already-complete data in a `FileStore`. They do not move the referenced data.
 
 The fact that queues do not move data does not mean source data is retained forever. Data ownership transfers at processing boundaries. A consuming stage owns its input directory while processing it. Once it has successfully written its onward output to a new `FileStore` location and published the onward queue message, it may delete the input directory. The final forwarder similarly owns its source directory and may delete it after successful forwarding.
 
-Each logical queue should be treated as a topic-like stream of work. Kafka maps naturally to a topic, Kinesis maps to a stream, SQS maps to a queue, and the local filesystem implementation maps to a directory of sequential message files. These logical queues/topics are defined in configuration and referenced by stages by name.
+Each logical queue should be treated as a topic-like stream of work. Kafka maps naturally to a topic, SQS maps to a queue, and the local filesystem implementation maps to a directory of sequential message files. These logical queues/topics are defined in configuration and referenced by stages by name.
 
-For external queues such as Kafka, Kinesis, or SQS, referenced locations must be on storage visible to every producer and consumer executable, normally a shared filesystem such as NFS, CephFS/Ceph, or an equivalent shared/cluster filesystem.
+For external queues such as Kafka or SQS, referenced locations must be on storage visible to every producer and consumer executable, normally a shared filesystem such as NFS, CephFS/Ceph, or an equivalent shared/cluster filesystem.
 
 ## Architectural principle
 
@@ -110,11 +108,11 @@ For final forwarding, the forwarder owns its source directory. After the data ha
 
 For multi-destination forwarding, a single source directory must not be handed directly to multiple destructive forwarders. The forward stage must first fan out by copying the source file group into one destination-owned source directory per destination and then queueing or forwarding those copies. Each destination forwarder can then delete its own source directory after successful forwarding without affecting other destinations.
 
-For all queue implementations, including local filesystem, Kafka, Kinesis, and SQS, work transfer is implemented by publishing a reference message and acknowledging that message after successful processing.
+For all queue implementations, including local filesystem, Kafka, and SQS, work transfer is implemented by publishing a reference message and acknowledging that message after successful processing.
 
 ## Proposed queue abstraction
 
-Introduce a small interface that publishes and consumes queue messages containing references to `FileStore` locations. The interface is intentionally independent of the queue transport so a named logical queue can be backed by Kafka, Kinesis, SQS, or local filesystem message files.
+Introduce a small interface that publishes and consumes queue messages containing references to `FileStore` locations. The interface is intentionally independent of the queue transport so a named logical queue can be backed by Kafka, SQS, or local filesystem message files.
 
 Suggested interface name:
 
@@ -181,7 +179,7 @@ Recommended final names:
 | Local filesystem message queue implementation | `LocalFileGroupQueue` |
 | Kafka implementation | `KafkaFileGroupQueue` |
 | SQS implementation | `SqsFileGroupQueue` |
-| Kinesis implementation | `KinesisFileGroupQueue` |
+
 | Queue factory | `FileGroupQueueFactory` |
 | Transfer worker | `FileGroupQueueTransfer` |
 | Stable data storage abstraction | `FileStore` |
@@ -211,7 +209,7 @@ The local filesystem queue should use a global sequence file per queue. This is 
 
 Pros:
 
-- same message/reference model as Kafka, Kinesis, and SQS,
+- same message/reference model as Kafka and SQS,
 - no external queue dependency,
 - persisted across restarts using message files,
 - simple local operational model,
@@ -220,7 +218,7 @@ Pros:
 Cons:
 
 - local filesystem based,
-- less suitable for high-scale distributed deployments than Kafka/Kinesis/SQS,
+- less suitable for high-scale distributed deployments than Kafka/SQS,
 - needs explicit message ack/failure handling,
 - needs strategy for stuck/in-flight records.
 
@@ -283,30 +281,6 @@ Cons:
 - visibility timeout must exceed processing time or be extended,
 - message size limits require references only.
 
-### 4. Kinesis queue
-
-Kinesis records contain file-group references.
-
-Producer:
-
-- writes a file group or directory to a `FileStore` location visible to the consumer stage,
-- writes a reference record to Kinesis.
-
-Consumer:
-
-- reads shard records,
-- checkpoints after processing success.
-
-Pros:
-
-- high-throughput ordered shard processing,
-- useful where Kinesis is the standard event stream.
-
-Cons:
-
-- checkpoint and retry semantics are more complex,
-- less naturally queue-like than SQS,
-- consumers must handle replay and idempotency.
 
 ## Queue message contract
 
@@ -346,7 +320,7 @@ A future routing model should include fields such as:
 
 | Field | Purpose |
 | --- | --- |
-| `partitionKey` | Queue implementation key used for Kafka record key, Kinesis partition key, SQS FIFO message group ID, etc. |
+| `partitionKey` | Queue implementation key used for Kafka record key, SQS FIFO message group ID, etc. |
 | `groupingKey` | Logical grouping key for related work. |
 | `aggregationKey` | Stage-specific key used to group items for aggregation, normally based on feed/type. |
 | `routingStrategy` | Strategy used to construct the key, e.g. `FEED_TYPE`, `FEED_TYPE_SHARDED`, `CUSTOM`. |
@@ -358,7 +332,7 @@ Queue implementations should use this metadata where the underlying transport su
 | Queue implementation | Routing use |
 | --- | --- |
 | Kafka | Use `partitionKey` as the Kafka record key. |
-| Kinesis | Use `partitionKey` as the Kinesis partition key. |
+
 | SQS FIFO | Use `partitionKey` or `groupingKey` as the message group ID. |
 | SQS standard | Store routing metadata as message attributes; strict grouping is not guaranteed. |
 | Local filesystem | Store routing metadata in the message; initial implementation may ignore it. |
@@ -371,7 +345,7 @@ All queue implementations only carry references. This means producers and consum
 
 For local filesystem queue deployments, the referenced `FileStore` locations may be on local disk.
 
-For independently executable distributed deployments using Kafka, Kinesis, or SQS, referenced locations must point to a shared filesystem, for example NFS, CephFS/Ceph, or another shared filesystem mounted consistently by all participating stage executables.
+For independently executable distributed deployments using Kafka or SQS, referenced locations must point to a shared filesystem, for example NFS, CephFS/Ceph, or another shared filesystem mounted consistently by all participating stage executables.
 
 Supported reference types should be explicit:
 
@@ -384,7 +358,7 @@ Supported reference types should be explicit:
 | future S3 URI | `s3://bucket/prefix/file-group-id/` | Future object-store reference. Requires an object-store `FileStore` implementation and a file-group representation for object prefixes/manifests. |
 | future object URI | `azure://container/prefix`, `gs://bucket/prefix` | Not part of the initial implementation, but the message contract should remain URI based so these can be added later. |
 
-Initial implementation should require `file` paths only. When those paths are used with Kafka, Kinesis, SQS, or any other external queue, they must refer to storage visible to every stage executable that needs to resolve them. For independently executable deployments this normally means a shared filesystem, a consistently mounted block-backed filesystem, or an equivalent shared/cluster filesystem. Object storage can be added later by extending the `FileStore` abstraction while keeping queue messages as URI-based references.
+Initial implementation should require `file` paths only. When those paths are used with Kafka, SQS, or any other external queue, they must refer to storage visible to every stage executable that needs to resolve them. For independently executable deployments this normally means a shared filesystem, a consistently mounted block-backed filesystem, or an equivalent shared/cluster filesystem. Object storage can be added later by extending the `FileStore` abstraction while keeping queue messages as URI-based references.
 
 ## Required file-group stability and ownership-transfer rule
 
@@ -442,7 +416,7 @@ The exact storage layout is a `FileStore` concern. It may use:
 
 There is no single shared stable directory prefix in this design. Each stage defines the `FileStore` location or locations it needs.
 
-This is important because Kafka/SQS/Kinesis queues cannot safely point at a temporary directory that the producer will clean up.
+This is important because Kafka/SQS queues cannot safely point at a temporary directory that the producer will clean up.
 
 ## Future `FileStoreLocation`, backend types, and object-store support
 
@@ -546,7 +520,7 @@ On error:
 3. call `item.close()`,
 4. rethrow or swallow according to worker policy.
 
-This gives Kafka/SQS/Kinesis implementations a clear hook for commit/delete/checkpoint/failure.
+This gives Kafka/SQS implementations a clear hook for commit/delete/failure.
 
 ## Acknowledgement mapping
 
@@ -555,7 +529,7 @@ This gives Kafka/SQS/Kinesis implementations a clear hook for commit/delete/chec
 | local filesystem message queue | delete/mark queue message processed | release record, increment attempts, move to failed/in-flight-expired area |
 | Kafka | commit offset after processing | do not commit, or publish to retry/dead-letter topic according to policy |
 | SQS | delete message | do not delete; optionally change visibility or send to DLQ |
-| Kinesis | checkpoint after processing | do not checkpoint; optionally publish failure record |
+
 
 ## Idempotency requirements
 
@@ -622,7 +596,7 @@ Thread configuration should be owned by each stage rather than being global. A q
 | aggregate | `consumerThreads`, optional `maxInFlightBytes` |
 | forward | `consumerThreads`, plus destination-specific send/retry threads |
 
-Queue transport configuration may also contain queue-specific polling or batching settings, for example Kafka `maxPollRecords`, SQS `maxMessagesPerPoll`, Kinesis `maxRecords`, or local filesystem scan settings. These transport settings are separate from stage processing thread counts.
+Queue transport configuration may also contain queue-specific polling or batching settings, for example Kafka `maxPollRecords`, SQS `maxMessagesPerPoll`, or local filesystem scan settings. These transport settings are separate from stage processing thread counts.
 
 Pre-aggregation thread configuration must be compatible with future routing and aggregation-key ownership. In particular, concurrent processing must not corrupt open aggregate state for the same aggregation key.
 
@@ -806,7 +780,7 @@ Fields:
 
 Add a top-level queue/pipeline config to `ProxyConfig`.
 
-Queues are defined separately as named logical queues/topics, then stages reference those queues by name for their inputs and outputs. This keeps queue transport configuration independent from stage behaviour. For example, the `preAggregateInput` logical queue may be backed by a local filesystem message queue in a single-node deployment, a Kafka topic in a distributed deployment, an SQS queue, or a Kinesis stream.
+Queues are defined separately as named logical queues/topics, then stages reference those queues by name for their inputs and outputs. This keeps queue transport configuration independent from stage behaviour. For example, the `preAggregateInput` logical queue may be backed by a local filesystem message queue in a single-node deployment, a Kafka topic in a distributed deployment, or an SQS queue.
 
 Suggested structure:
 
@@ -937,27 +911,7 @@ proxy:
         path: "/mnt/proxy-shared/store/aggregate"
 ~~~
 
-For Kinesis, the configured queue name maps to a Kinesis stream and the referenced `fileStore` path must also be on a shared filesystem, such as NFS or CephFS/Ceph, because the Kinesis record only contains the file-group location:
 
-~~~yaml
-proxy:
-  pipeline:
-    queues:
-      forwardingInput:
-        type: KINESIS
-        streamName: "proxy-forwarding-input"
-        applicationName: "proxy-forwarder"
-    stages:
-      forward:
-        enabled: true
-        inputQueue: forwardingInput
-        threads:
-          consumerThreads: 4
-
-    fileStores:
-      forwardingStore:
-        path: "/mnt/proxy-shared/store/forwarding"
-~~~
 
 Example future block-backed filesystem file-store configuration:
 
@@ -1016,7 +970,7 @@ Suggested queue types:
 | `LOCAL_FILESYSTEM` | Local filesystem queue containing sequential path-reference message files. |
 | `KAFKA` | Kafka topic containing path-reference messages. |
 | `SQS` | SQS queue containing path-reference messages. |
-| `KINESIS` | Kinesis stream containing path-reference records. |
+
 
 ## Config compatibility
 
@@ -1029,7 +983,7 @@ If no explicit queue config is supplied, the new default should be:
 - define stage `FileStore` paths under the proxy data directory,
 - enable the standard all-in-one set of stages.
 
-The default should still be easy to run locally, but it should use the same reference-message queue model as Kafka, SQS, and Kinesis.
+The default should still be easy to run locally, but it should use the same reference-message queue model as Kafka and SQS.
 
 ## Required validation
 
@@ -1039,7 +993,7 @@ Add config validation for:
 2. Required fields for queue type are present.
 3. Each stage references configured input and output queues by name.
 4. Each stage that writes data references a configured `FileStore` by name.
-5. Kafka/Kinesis/SQS-backed stages use `FileStore` paths on a shared filesystem, e.g. NFS, CephFS/Ceph, or equivalent shared storage visible to all relevant stage executables.
+5. Kafka/SQS-backed stages use `FileStore` paths on a shared filesystem, e.g. NFS, CephFS/Ceph, or equivalent shared storage visible to all relevant stage executables.
 6. Each enabled stage has all required input/output queues.
 7. Enabled receive stages cannot output to a queue that is not configured.
 8. Enabled split zip stages require `splitZipInput` and a configured output queue.
@@ -1048,7 +1002,7 @@ Add config validation for:
 11. Enabled forward stages require `forwardingInput` and at least one enabled destination.
 12. Instant forwarding is not compatible with distributed queue-backed stage combinations.
 13. Referenced `FileStore` paths are valid for the running process.
-14. Kafka/Kinesis/SQS dependencies/config are present when selected.
+14. Kafka/SQS dependencies/config are present when selected.
 15. Queue names/topics are unique where required.
 16. Consumer group/application names are set for remote queue consumers.
 17. Visibility timeout/checkpoint/retry settings are compatible with stage processing times.
@@ -1138,7 +1092,6 @@ Each edge can use:
 
 - Kafka,
 - SQS,
-- Kinesis,
 - filesystem reference queue,
 - filesystem move queue if shared filesystem queue directories are used.
 
@@ -1197,7 +1150,6 @@ Queue implementation may be:
 - LOCAL_FILESYSTEM
 - KAFKA
 - SQS
-- KINESIS
 end note
 
 @enduml
@@ -1221,7 +1173,7 @@ Important unresolved production wiring:
 
 1. Existing receive, split zip, pre-aggregate, aggregate, and forward production code is not yet converted to the new reference-message pipeline.
 2. `ReceiverFactoryProvider` and the existing `DirQueue` runtime assembly still represent the current production flow.
-3. Kafka, SQS, and Kinesis queue implementations are not implemented.
+3. Kafka and SQS queue implementations are not implemented.
 4. Thread lifecycle/running of `FileGroupQueueWorker`s is not implemented.
 5. End-to-end cleanup/delete support on `FileStore` is not implemented.
 6. Idempotency and duplicate suppression are not complete.
@@ -1256,7 +1208,7 @@ Stages can write complete files/file groups to a stable stage-defined `FileStore
 
 ### Objective
 
-Create the universal message format used by local filesystem, Kafka, SQS, and Kinesis queues.
+Create the universal message format used by local filesystem, Kafka, and SQS queues.
 
 ### Tasks
 
@@ -1427,38 +1379,7 @@ Add SQS as a queue implementation.
 
 Stages can communicate through SQS by passing `FileStore` location messages.
 
-## Phase 8: Kinesis queue
 
-### Objective
-
-Add Kinesis as a queue implementation.
-
-### Tasks
-
-1. Add Kinesis config:
-   - stream name,
-   - application name,
-   - region,
-   - initial position,
-   - checkpoint policy.
-2. Implement producer:
-   - put record with queue message JSON.
-3. Implement consumer:
-   - use Kinesis client/consumer library appropriate to existing dependencies.
-4. Implement `acknowledge()`:
-   - checkpoint after successful processing.
-5. Implement `fail(error)`:
-   - do not checkpoint,
-   - optionally write failure event.
-6. Add metrics:
-   - records produced,
-   - records consumed,
-   - iterator age,
-   - checkpoint failures.
-
-### Expected result
-
-Stages can communicate through Kinesis by passing `FileStore` location records.
 
 ## Phase 9: Monitoring and operations
 
@@ -1518,7 +1439,7 @@ Prepare for production use.
 5. Document operational deployment patterns.
 6. Document storage requirements for independent executables.
 7. Document queue-specific tuning.
-8. Add deployment guide for local filesystem, Kafka, SQS, and Kinesis queue modes.
+8. Add deployment guide for local filesystem, Kafka, and SQS queue modes.
 9. Add warnings for unsafe configs, e.g. external queue with non-shared local path.
 
 ## Future phase: queue routing and partitioning
@@ -1541,7 +1462,7 @@ This phase should be implemented after the initial pluggable queue architecture 
    - structured key components.
 3. Update queue implementations:
    - Kafka uses the partition key as the record key,
-   - Kinesis uses the partition key as the partition key,
+
    - SQS FIFO uses the partition/grouping key as the message group ID,
    - SQS standard stores routing metadata as attributes,
    - local filesystem stores routing metadata in the message.
@@ -1738,7 +1659,7 @@ Each independently executable stage should have duplicate-message tests.
 
 ## At-least-once is the baseline
 
-Local filesystem, Kafka, SQS, and Kinesis queues should be treated as at-least-once delivery mechanisms.
+Local filesystem, Kafka, and SQS queues should be treated as at-least-once delivery mechanisms.
 
 The pipeline must therefore assume:
 
@@ -1800,7 +1721,7 @@ Likely impacted classes include:
 
 | Area | Classes |
 | --- | --- |
-| Queue abstraction | `FileGroupQueue`, `FileGroupQueueItem`, `FileGroupQueueMessage`, `FileGroupQueueFactory`, `FileGroupQueueTransfer`, `LocalFileGroupQueue`, Kafka/SQS/Kinesis implementations |
+| Queue abstraction | `FileGroupQueue`, `FileGroupQueueItem`, `FileGroupQueueMessage`, `FileGroupQueueFactory`, `FileGroupQueueTransfer`, `LocalFileGroupQueue`, Kafka/SQS implementations |
 | File stores and ownership | `FileStore`, `FileStoreWrite`, `FileStoreLocation`, `LocalFileStore`, `FileStoreFactory`, `FileStoreRegistry`, future delete/release API |
 | Pipeline assembly | `ReceiverFactoryProvider`, `ProxyLifecycle`, `ProxyServices`, `ProxyPipelineRuntime`, future runtime runner |
 | Receive producers | `SimpleReceiver`, `ZipReceiver`, `ZipSplitter` |
@@ -1819,7 +1740,7 @@ This is a new proxy queueing flavour with no backwards compatibility requirement
 3. Use named queues/topics in config.
 4. Use stage-defined `FileStore` locations in config.
 5. Support the simple all-in-one runtime shape by enabling all standard stages in one process.
-6. Use the same reference-message queue contract for local filesystem, Kafka, SQS, and Kinesis.
+6. Use the same reference-message queue contract for local filesystem, Kafka, and SQS.
 7. Convert receiver/aggregator/forwarder code to write to `FileStore` then publish queue messages.
 
 ## Risks and mitigations
@@ -1833,7 +1754,7 @@ This is a new proxy queueing flavour with no backwards compatibility requirement
 | Output succeeds but ack fails | Make stage processing idempotent; allow safe replay. |
 | SQS visibility timeout expires mid-processing | Add visibility extension or require timeout > max processing time. |
 | Kafka poison message blocks partition | Add retry/dead-letter strategy. |
-| Kinesis replay repeats large ranges | Checkpoint only after success; idempotent processing. |
+
 | Cleanup deletes files still referenced | Introduce ownership/retention model; avoid aggressive deletion in the unified queue model initially. |
 | Blast radius grows due to API changes | Introduce `FileStore`, queue message, and queue interfaces first; migrate stage by stage within the new queueing flavour. |
 
@@ -1881,7 +1802,7 @@ Remaining handover checklist:
 9. Make receive/pre-aggregate/aggregate/forward independently runnable using local filesystem message queues.
 10. Add Kafka implementation.
 11. Add SQS implementation.
-12. Add Kinesis implementation.
+
 13. Extend monitoring, health checks, and documentation.
 14. Harden idempotency, cleanup, retention, and crash recovery.
 15. Add explicit file-store backend types and configuration validation for local filesystem, shared filesystem, mounted block-backed filesystem, S3, and future object stores.
@@ -1918,8 +1839,8 @@ The key design change is to separate queueing from physical data movement:
 - each stage owns its input source directory while processing and may delete it after successful durable onward handoff,
 - final forwarders own their source directory and may delete or move it after successful forwarding,
 - multi-destination forwarding creates one destination-owned source directory per destination before destructive forwarding,
-- local filesystem, Kafka, Kinesis, and SQS all use the same message contract,
-- when queues are external systems such as Kafka, Kinesis, or SQS, referenced `FileStore` locations are expected to be on storage visible to the consuming executable, such as NFS, CephFS/Ceph, safely mounted block-backed storage, S3, or equivalent shared/object storage once the relevant `FileStore` backend is implemented.
+- local filesystem, Kafka, and SQS all use the same message contract,
+- when queues are external systems such as Kafka or SQS, referenced `FileStore` locations are expected to be on storage visible to the consuming executable, such as NFS, CephFS/Ceph, safely mounted block-backed storage, S3, or equivalent shared/object storage once the relevant `FileStore` backend is implemented.
 
 To support external queues and independent stage executables, the proxy also needs:
 
@@ -1941,4 +1862,4 @@ The safest path is incremental:
 6. make each stage delete its input only after successful durable onward handoff,
 7. add independent stage execution,
 8. complete forwarding fan-out and destination-owned source handling,
-9. then add Kafka/SQS/Kinesis implementations.
+9. then add Kafka/SQS implementations.

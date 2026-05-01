@@ -277,40 +277,8 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                 .hasMessageContaining("unknownQueue");
     }
 
-    @Test
-    void testFromConfigPropagatesUnsupportedQueueTypesReferencedByEnabledStages() {
-        final ProxyPipelineConfig config = new ProxyPipelineConfig(
-                Map.of("kinesisQueue", new QueueDefinition(
-                        QueueType.KINESIS,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        "proxy-stream",
-                        "proxy-app")),
-                new PipelineStagesConfig(
-                        new PipelineStageConfig(
-                                true,
-                                null,
-                                "kinesisQueue",
-                                null,
-                                ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        null,
-                        null,
-                        null,
-                        null),
-                defaultFileStores());
 
-        assertThatThrownBy(() -> createRuntime(config))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("KINESIS")
-                .hasMessageContaining("kinesisQueue");
-    }
+
 
     @Test
     void testRuntimeQueueAndFileStoreLookup() {
