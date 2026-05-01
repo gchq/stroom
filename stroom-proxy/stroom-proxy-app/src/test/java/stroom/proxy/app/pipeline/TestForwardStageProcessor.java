@@ -387,6 +387,86 @@ class TestForwardStageProcessor extends StroomUnitTest {
                 .hasMessageContaining("At least one forward destination");
     }
 
+    @Test
+    void testForwardFanOutDeletesOriginalSourceWhenInputStoreProvided() throws Exception {
+        final LocalFileStore sourceFileStore = new LocalFileStore(
+                STORE_NAME,
+                getCurrentTestDir().resolve("aggregate-store-del"),
+                "source-writer");
+        final FileStoreLocation sourceLocation = writeFileGroup(sourceFileStore);
+        final FileGroupQueueMessage sourceMessage = createMessage(sourceLocation);
+        final Path sourcePath = sourceFileStore.resolve(sourceLocation);
+
+        // Confirm source exists before fan-out.
+        assertThat(sourcePath).exists().isDirectory();
+
+        final LocalFileStore destinationStore = new LocalFileStore(
+                "forwardStoreDel",
+                getCurrentTestDir().resolve("forward-store-del"),
+                "destination-writer");
+        final LocalFileGroupQueue destinationQueue = new LocalFileGroupQueue(
+                "forwardQueueDel",
+                getCurrentTestDir().resolve("forward-queue-del"));
+
+        // Provide inputFileStore so fan-out deletes the original source.
+        final ForwardStageFanOutForwarder fanOutForwarder = new ForwardStageFanOutForwarder(
+                List.of(new ForwardStageFanOutForwarder.Destination(
+                        "destination",
+                        destinationStore,
+                        destinationQueue)),
+                sourceFileStore,
+                "proxy-node-1");
+
+        fanOutForwarder.forward(sourceMessage, sourcePath);
+
+        // Original source should have been deleted by the fan-out forwarder.
+        assertThat(sourcePath).doesNotExist();
+
+        // But the destination copy should still exist.
+        assertThat(destinationQueue.getApproximatePendingCount()).isOne();
+        try (final FileGroupQueueItem item = destinationQueue.next().orElseThrow()) {
+            final Path destPath = destinationStore.resolve(item.getMessage().fileStoreLocation());
+            assertThat(destPath).exists().isDirectory();
+            assertThat(destPath.resolve("proxy.meta")).hasContent("meta");
+            assertThat(destPath.resolve("proxy.zip")).hasContent("zip");
+            assertThat(destPath.resolve("proxy.entries")).hasContent("entries");
+            item.acknowledge();
+        }
+    }
+
+    @Test
+    void testForwardFanOutKeepsOriginalSourceWhenNoInputStore() throws Exception {
+        final LocalFileStore sourceFileStore = new LocalFileStore(
+                STORE_NAME,
+                getCurrentTestDir().resolve("aggregate-store-keep"),
+                "source-writer");
+        final FileStoreLocation sourceLocation = writeFileGroup(sourceFileStore);
+        final FileGroupQueueMessage sourceMessage = createMessage(sourceLocation);
+        final Path sourcePath = sourceFileStore.resolve(sourceLocation);
+
+        final LocalFileStore destinationStore = new LocalFileStore(
+                "forwardStoreKeep",
+                getCurrentTestDir().resolve("forward-store-keep"),
+                "destination-writer");
+        final LocalFileGroupQueue destinationQueue = new LocalFileGroupQueue(
+                "forwardQueueKeep",
+                getCurrentTestDir().resolve("forward-queue-keep"));
+
+        // No inputFileStore — original source should be kept.
+        final ForwardStageFanOutForwarder fanOutForwarder = new ForwardStageFanOutForwarder(
+                List.of(new ForwardStageFanOutForwarder.Destination(
+                        "destination",
+                        destinationStore,
+                        destinationQueue)),
+                "proxy-node-1");
+
+        fanOutForwarder.forward(sourceMessage, sourcePath);
+
+        // Original source should still exist — no inputFileStore provided.
+        assertThat(sourcePath).exists().isDirectory();
+        assertThat(sourcePath.resolve("proxy.meta")).hasContent("meta");
+    }
+
     private FileStoreLocation writeFileGroup(final FileStore fileStore) throws IOException {
         return writeFileGroup(fileStore, true, true, true);
     }

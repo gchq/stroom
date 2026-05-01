@@ -16,7 +16,6 @@
 
 package stroom.proxy.app.pipeline;
 
-import stroom.test.common.util.test.StroomUnitTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +29,13 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TestLocalFileGroupQueue extends StroomUnitTest {
+class TestLocalFileGroupQueue extends AbstractFileGroupQueueContractTest {
+
+    @Override
+    protected FileGroupQueue createQueue(final String name) throws IOException {
+        final Path queueRoot = getCurrentTestDir().resolve("contract-queue-" + name);
+        return new LocalFileGroupQueue(name, queueRoot);
+    }
 
     @Test
     void testPublishStoresMessageFileAndDoesNotMoveReferencedData() throws IOException {

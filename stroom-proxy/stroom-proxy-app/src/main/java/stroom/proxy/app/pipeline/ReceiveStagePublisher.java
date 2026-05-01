@@ -132,15 +132,71 @@ public class ReceiveStagePublisher implements Consumer<Path> {
      * Determine whether the received file group should go to the split-zip
      * queue or the primary output queue.
      * <p>
-     * For now, all received files go to the primary output queue. Future
-     * logic could inspect the file group to determine if it needs splitting
-     * (e.g. multi-entry zips) and route to {@code splitZipQueue} instead.
+     * If a split-zip queue is configured and the received file group contains
+     * entries from multiple feeds (determined by inspecting
+     * {@code proxy.entries}), the file group is routed to the split-zip queue
+     * so that {@link SplitZipStageProcessor} can separate the entries by feed.
+     * Single-feed file groups go directly to the primary output queue.
      * </p>
      */
     private FileGroupQueue resolveTargetQueue(final Path receivedDir) {
-        // TODO: Add split-zip routing logic based on file group content.
-        //       For now, always use the primary output queue.
+        if (splitZipQueue == null) {
+            return outputQueue;
+        }
+
+        if (requiresSplitting(receivedDir)) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Routing received file group {} to split-zip queue {}",
+                    receivedDir,
+                    splitZipQueue.getName()));
+            return splitZipQueue;
+        }
+
         return outputQueue;
+    }
+
+    /**
+     * Check whether the received file group contains entries from more than
+     * one feed. If so it needs splitting before aggregation.
+     * <p>
+     * The check reads {@code proxy.entries} and counts distinct feed values.
+     * If the entries file is missing or unreadable, no splitting is assumed.
+     * </p>
+     */
+    private boolean requiresSplitting(final Path receivedDir) {
+        final Path entriesFile = receivedDir.resolve("proxy.entries");
+        if (!Files.isRegularFile(entriesFile)) {
+            return false;
+        }
+
+        try {
+            final long distinctFeeds = Files.lines(entriesFile)
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .map(ReceiveStagePublisher::extractFeedFromEntry)
+                    .distinct()
+                    .limit(2) // Only need to know if > 1.
+                    .count();
+            return distinctFeeds > 1;
+        } catch (final IOException e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Cannot read proxy.entries in {}, assuming no split required",
+                    receivedDir), e);
+            return false;
+        }
+    }
+
+    /**
+     * Extract the feed name from a proxy.entries line. The entries file
+     * format is typically {@code feed:type} or just {@code feed}. This
+     * method returns the feed portion.
+     */
+    private static String extractFeedFromEntry(final String entryLine) {
+        final int colonIndex = entryLine.indexOf(':');
+        if (colonIndex >= 0) {
+            return entryLine.substring(0, colonIndex);
+        }
+        return entryLine;
     }
 
     private static void copyDirectoryContents(final Path source,

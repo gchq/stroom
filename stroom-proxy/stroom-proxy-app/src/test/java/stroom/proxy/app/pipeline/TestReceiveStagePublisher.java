@@ -161,6 +161,72 @@ class TestReceiveStagePublisher extends StroomUnitTest {
                 .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void testMultiFeedEntriesRouteToSplitZipQueue() throws IOException {
+        final LocalFileStore fileStore = createFileStore("receive-store-split");
+        final LocalFileGroupQueue outputQueue = createQueue("output-queue-split");
+        final LocalFileGroupQueue splitZipQueue = createQueue("split-zip-queue");
+
+        final ReceiveStagePublisher publisher = new ReceiveStagePublisher(
+                fileStore, outputQueue, splitZipQueue, "test-node");
+
+        // Create a file group with entries from two different feeds.
+        final Path receivedDir = createMultiFeedFileGroup("received-multi-feed",
+                "FEED_A:Raw Events\nFEED_B:Raw Events");
+
+        publisher.accept(receivedDir);
+
+        // Should be routed to the split-zip queue, not the primary queue.
+        assertThat(outputQueue.next()).isEmpty();
+        final FileGroupQueueItem splitItem = splitZipQueue.next().orElse(null);
+        assertThat(splitItem).isNotNull();
+        assertThat(splitItem.getMessage().queueName()).isEqualTo("split-zip-queue");
+        splitItem.acknowledge();
+    }
+
+    @Test
+    void testSingleFeedEntriesRouteToOutputQueue() throws IOException {
+        final LocalFileStore fileStore = createFileStore("receive-store-single");
+        final LocalFileGroupQueue outputQueue = createQueue("output-queue-single");
+        final LocalFileGroupQueue splitZipQueue = createQueue("split-zip-queue-single");
+
+        final ReceiveStagePublisher publisher = new ReceiveStagePublisher(
+                fileStore, outputQueue, splitZipQueue, "test-node");
+
+        // Create a file group with entries from a single feed.
+        final Path receivedDir = createMultiFeedFileGroup("received-single-feed",
+                "FEED_A:Raw Events\nFEED_A:Raw Events");
+
+        publisher.accept(receivedDir);
+
+        // Should go to the primary output queue, not split-zip.
+        assertThat(splitZipQueue.next()).isEmpty();
+        final FileGroupQueueItem item = outputQueue.next().orElse(null);
+        assertThat(item).isNotNull();
+        assertThat(item.getMessage().queueName()).isEqualTo("output-queue-single");
+        item.acknowledge();
+    }
+
+    @Test
+    void testNoSplitZipQueueAlwaysRoutesToOutput() throws IOException {
+        final LocalFileStore fileStore = createFileStore("receive-store-nosplit");
+        final LocalFileGroupQueue outputQueue = createQueue("output-queue-nosplit");
+
+        // No splitZipQueue configured.
+        final ReceiveStagePublisher publisher = new ReceiveStagePublisher(
+                fileStore, outputQueue, null, "test-node");
+
+        final Path receivedDir = createMultiFeedFileGroup("received-nosplit",
+                "FEED_A:Raw Events\nFEED_B:Raw Events");
+
+        publisher.accept(receivedDir);
+
+        // Even though multi-feed, without a split-zip queue it goes to output.
+        final FileGroupQueueItem item = outputQueue.next().orElse(null);
+        assertThat(item).isNotNull();
+        item.acknowledge();
+    }
+
     // --- helpers ---
 
     private LocalFileStore createFileStore(final String name) {
@@ -190,6 +256,16 @@ class TestReceiveStagePublisher extends StroomUnitTest {
         Files.writeString(dir.resolve("proxy.meta"), "meta-content");
         Files.writeString(dir.resolve("proxy.zip"), "zip-content");
         Files.writeString(dir.resolve("proxy.entries"), "entries-content");
+        return dir;
+    }
+
+    private Path createMultiFeedFileGroup(final String name,
+                                           final String entriesContent) throws IOException {
+        final Path dir = getCurrentTestDir().resolve("receiving").resolve(name);
+        Files.createDirectories(dir);
+        Files.writeString(dir.resolve("proxy.meta"), "meta-content");
+        Files.writeString(dir.resolve("proxy.zip"), "zip-content");
+        Files.writeString(dir.resolve("proxy.entries"), entriesContent);
         return dir;
     }
 }

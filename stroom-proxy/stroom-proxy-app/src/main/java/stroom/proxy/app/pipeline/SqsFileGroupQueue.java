@@ -16,6 +16,10 @@
 
 package stroom.proxy.app.pipeline;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
@@ -29,6 +33,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AWS SQS-backed implementation of {@link FileGroupQueue}.
@@ -43,8 +52,16 @@ import java.util.Optional;
  * to zero, making the message immediately available for retry (at-least-once
  * semantics).
  * </p>
+ * <p>
+ * A background heartbeat periodically extends the visibility timeout of
+ * in-flight items. This prevents long-running stage processing from exceeding
+ * the visibility timeout and causing duplicate delivery. The heartbeat runs
+ * at two-thirds of the configured visibility timeout interval.
+ * </p>
  */
 public class SqsFileGroupQueue implements FileGroupQueue {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsFileGroupQueue.class);
 
     static final int DEFAULT_VISIBILITY_TIMEOUT_SECONDS = 1800; // 30 minutes
     static final int DEFAULT_WAIT_TIME_SECONDS = 20; // SQS long-poll maximum
@@ -55,6 +72,10 @@ public class SqsFileGroupQueue implements FileGroupQueue {
     private final int waitTimeSeconds;
     private final SqsClient sqsClient;
     private final FileGroupQueueMessageCodec codec;
+
+    // Visibility heartbeat infrastructure.
+    private final ScheduledExecutorService heartbeatScheduler;
+    private final Map<String, ScheduledFuture<?>> heartbeatTasks = new ConcurrentHashMap<>();
 
     /**
      * Create an SQS queue from a {@link QueueDefinition}.
@@ -90,6 +111,13 @@ public class SqsFileGroupQueue implements FileGroupQueue {
         this.waitTimeSeconds = waitTimeSeconds;
         this.sqsClient = Objects.requireNonNull(sqsClient, "sqsClient");
         this.codec = Objects.requireNonNull(codec, "codec");
+
+        this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            final Thread thread = new Thread(runnable);
+            thread.setName("sqs-heartbeat-" + name);
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     @Override
@@ -144,12 +172,68 @@ public class SqsFileGroupQueue implements FileGroupQueue {
         final Message sqsMessage = response.messages().get(0);
         final FileGroupQueueMessage message = codec.fromJson(sqsMessage.body());
 
-        return Optional.of(new SqsFileGroupQueueItem(sqsMessage, message));
+        final SqsFileGroupQueueItem item = new SqsFileGroupQueueItem(sqsMessage, message);
+        startHeartbeat(item);
+
+        return Optional.of(item);
     }
 
     @Override
     public void close() {
+        heartbeatScheduler.shutdownNow();
+        heartbeatTasks.clear();
         sqsClient.close();
+    }
+
+    /**
+     * @return The number of items currently receiving visibility heartbeats.
+     */
+    int getActiveHeartbeatCount() {
+        return heartbeatTasks.size();
+    }
+
+    private void startHeartbeat(final SqsFileGroupQueueItem item) {
+        // Extend visibility at 2/3 of the timeout period.  This gives
+        // comfortable headroom: even if one extension call is slow, the
+        // next one fires before the timeout expires.
+        final long intervalSeconds = Math.max(1, (visibilityTimeoutSeconds * 2L) / 3);
+
+        final ScheduledFuture<?> future = heartbeatScheduler.scheduleAtFixedRate(
+                () -> extendVisibility(item),
+                intervalSeconds,
+                intervalSeconds,
+                TimeUnit.SECONDS);
+
+        heartbeatTasks.put(item.receiptHandle(), future);
+    }
+
+    private void stopHeartbeat(final SqsFileGroupQueueItem item) {
+        final ScheduledFuture<?> future = heartbeatTasks.remove(item.receiptHandle());
+        if (future != null) {
+            future.cancel(false);
+        }
+    }
+
+    private void extendVisibility(final SqsFileGroupQueueItem item) {
+        try {
+            sqsClient.changeMessageVisibility(ChangeMessageVisibilityRequest.builder()
+                    .queueUrl(queueUrl)
+                    .receiptHandle(item.receiptHandle())
+                    .visibilityTimeout(visibilityTimeoutSeconds)
+                    .build());
+
+            LOGGER.debug(() -> LogUtil.message(
+                    "Extended visibility for SQS message {} on queue {} by {} seconds",
+                    item.sqsMessageId(),
+                    name,
+                    visibilityTimeoutSeconds));
+
+        } catch (final Exception e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Failed to extend visibility for SQS message {} on queue {}",
+                    item.sqsMessageId(),
+                    name), e);
+        }
     }
 
     private static int resolveVisibilityTimeout(final QueueDefinition definition) {
@@ -189,6 +273,14 @@ public class SqsFileGroupQueue implements FileGroupQueue {
             this.message = Objects.requireNonNull(message, "message");
         }
 
+        String receiptHandle() {
+            return sqsMessage.receiptHandle();
+        }
+
+        String sqsMessageId() {
+            return sqsMessage.messageId();
+        }
+
         @Override
         public String getId() {
             return sqsMessage.messageId();
@@ -216,6 +308,8 @@ public class SqsFileGroupQueue implements FileGroupQueue {
                 return;
             }
 
+            stopHeartbeat(this);
+
             try {
                 sqsClient.deleteMessage(DeleteMessageRequest.builder()
                         .queueUrl(queueUrl)
@@ -233,6 +327,8 @@ public class SqsFileGroupQueue implements FileGroupQueue {
             if (completed) {
                 return;
             }
+
+            stopHeartbeat(this);
 
             try {
                 // Set visibility timeout to 0 to make the message immediately
@@ -252,7 +348,7 @@ public class SqsFileGroupQueue implements FileGroupQueue {
 
         @Override
         public void close() {
-            // No per-item resources to release.
+            stopHeartbeat(this);
         }
     }
 }
