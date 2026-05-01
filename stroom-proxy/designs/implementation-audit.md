@@ -171,7 +171,7 @@ These are **valuable additions** that support the plan's idempotency requirement
 | Writes to receive output FileStore | ✅ | `ReceiveStagePublisher.accept()` → `receiveStore.newWrite()` |
 | Publishes reference message after commit | ✅ | `targetQueue.publish(message)` after `write.commit()` |
 | Deletes temp receive dir after publish | ✅ | `deleteRecursively(receivedDir)` |
-| Split-zip routing | ⚠️ Stubbed | `resolveTargetQueue()` always returns primary queue — TODO comment in code |
+| Split-zip routing | ✅ Fixed | `resolveTargetQueue()` now inspects `proxy.entries` for distinct feeds; routes to `splitZipQueue` when configured |
 
 ### Split Zip (Plan lines 628–644)
 
@@ -182,6 +182,7 @@ These are **valuable additions** that support the plan's idempotency requirement
 | Publishes onward messages after commit | ✅ |
 | Deletes consumed input after handoff | ✅ |
 
+
 ### Pre-Aggregate (Plan lines 646–667)
 
 | Requirement | Status |
@@ -189,6 +190,7 @@ These are **valuable additions** that support the plan's idempotency requirement
 | Resolves input to source file group | ✅ |
 | Delegates to PreAggregator.addDir() | ✅ |
 | Open aggregate state owned by stage | ✅ (via `PreAggregateFunction`) |
+| Deletes consumed input after processing | ✅ Fixed | Processor explicitly calls `inputStore.delete()` after `addDir()` returns |
 
 ### Aggregate (Plan lines 669–688)
 
@@ -196,6 +198,7 @@ These are **valuable additions** that support the plan's idempotency requirement
 |-------------|--------|
 | Resolves input to source aggregate | ✅ |
 | Delegates to Aggregator.addDir() | ✅ |
+| Deletes consumed input after processing | ✅ Fixed | Processor explicitly calls `inputStore.delete()` after `addDir()` returns |
 
 ### Forward (Plan lines 690–708)
 
@@ -205,10 +208,16 @@ These are **valuable additions** that support the plan's idempotency requirement
 | Single-destination forwarding | ✅ |
 | Multi-destination fan-out to per-dest stores | ✅ `ForwardStageFanOutForwarder` |
 | Each dest forwarder owns its copy | ✅ |
-| Deletes original after all dest handoffs | ⚠️ **Not explicit** — the fan-out forwarder doesn't delete the original source. Plan says "after all destination-owned copies have been durably created and queued, forward may delete the original input source directory." The worker acks the item, but source deletion relies on `FileGroupQueueWorker` or the input store's own lifecycle. |
+| Deletes consumed input after forwarding | ✅ Fixed | `ForwardStageProcessor` explicitly calls `inputStore.delete()` after the forwarder returns successfully |
 
-> [!IMPORTANT]
-> The `ForwardStageFanOutForwarder` correctly creates per-destination copies but **does not delete the original source** after all copies are committed. Its Javadoc explicitly says "Original source cleanup should be handled by the lifecycle policy for the upstream file store." This is a deliberate deferral but it **deviates from the plan's ownership-transfer rule** which says the forward stage should delete the original after successful fan-out.
+> [!NOTE]
+> All stage processors now follow a uniform ownership-transfer contract:
+> 1. Resolve input from the source FileStore
+> 2. Process data (delegate to function / write to output store / publish to output queue)
+> 3. **Delete consumed input** from the source FileStore via `inputStore.delete()`
+> 4. Worker acks the input queue message
+>
+> The `ForwardStageFanOutForwarder` no longer performs deletion — that responsibility belongs to `ForwardStageProcessor`, keeping a clean separation between "copy+publish" and "delete consumed input".
 
 ---
 

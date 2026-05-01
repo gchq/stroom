@@ -388,7 +388,7 @@ class TestForwardStageProcessor extends StroomUnitTest {
     }
 
     @Test
-    void testForwardFanOutDeletesOriginalSourceWhenInputStoreProvided() throws Exception {
+    void testForwardStageProcessorDeletesInputAfterSuccessfulForwarding() throws Exception {
         final LocalFileStore sourceFileStore = new LocalFileStore(
                 STORE_NAME,
                 getCurrentTestDir().resolve("aggregate-store-del"),
@@ -397,7 +397,7 @@ class TestForwardStageProcessor extends StroomUnitTest {
         final FileGroupQueueMessage sourceMessage = createMessage(sourceLocation);
         final Path sourcePath = sourceFileStore.resolve(sourceLocation);
 
-        // Confirm source exists before fan-out.
+        // Confirm source exists before processing.
         assertThat(sourcePath).exists().isDirectory();
 
         final LocalFileStore destinationStore = new LocalFileStore(
@@ -408,18 +408,19 @@ class TestForwardStageProcessor extends StroomUnitTest {
                 "forwardQueueDel",
                 getCurrentTestDir().resolve("forward-queue-del"));
 
-        // Provide inputFileStore so fan-out deletes the original source.
-        final ForwardStageFanOutForwarder fanOutForwarder = new ForwardStageFanOutForwarder(
-                List.of(new ForwardStageFanOutForwarder.Destination(
-                        "destination",
-                        destinationStore,
-                        destinationQueue)),
-                sourceFileStore,
-                "proxy-node-1");
+        // Wire ForwardStageProcessor with a fan-out forwarder.
+        final ForwardStageProcessor processor = new ForwardStageProcessor(
+                new FileStoreRegistry().register(sourceFileStore),
+                new ForwardStageFanOutForwarder(
+                        List.of(new ForwardStageFanOutForwarder.Destination(
+                                "destination",
+                                destinationStore,
+                                destinationQueue)),
+                        "proxy-node-1"));
 
-        fanOutForwarder.forward(sourceMessage, sourcePath);
+        processor.process(new TestQueueItem(sourceMessage));
 
-        // Original source should have been deleted by the fan-out forwarder.
+        // Original source should have been deleted by the processor.
         assertThat(sourcePath).doesNotExist();
 
         // But the destination copy should still exist.
@@ -435,36 +436,28 @@ class TestForwardStageProcessor extends StroomUnitTest {
     }
 
     @Test
-    void testForwardFanOutKeepsOriginalSourceWhenNoInputStore() throws Exception {
+    void testForwardStageProcessorDeletesInputAfterSingleDestForwarding() throws Exception {
         final LocalFileStore sourceFileStore = new LocalFileStore(
                 STORE_NAME,
-                getCurrentTestDir().resolve("aggregate-store-keep"),
+                getCurrentTestDir().resolve("aggregate-store-single-del"),
                 "source-writer");
         final FileStoreLocation sourceLocation = writeFileGroup(sourceFileStore);
         final FileGroupQueueMessage sourceMessage = createMessage(sourceLocation);
         final Path sourcePath = sourceFileStore.resolve(sourceLocation);
 
-        final LocalFileStore destinationStore = new LocalFileStore(
-                "forwardStoreKeep",
-                getCurrentTestDir().resolve("forward-store-keep"),
-                "destination-writer");
-        final LocalFileGroupQueue destinationQueue = new LocalFileGroupQueue(
-                "forwardQueueKeep",
-                getCurrentTestDir().resolve("forward-queue-keep"));
-
-        // No inputFileStore — original source should be kept.
-        final ForwardStageFanOutForwarder fanOutForwarder = new ForwardStageFanOutForwarder(
-                List.of(new ForwardStageFanOutForwarder.Destination(
-                        "destination",
-                        destinationStore,
-                        destinationQueue)),
-                "proxy-node-1");
-
-        fanOutForwarder.forward(sourceMessage, sourcePath);
-
-        // Original source should still exist — no inputFileStore provided.
         assertThat(sourcePath).exists().isDirectory();
-        assertThat(sourcePath.resolve("proxy.meta")).hasContent("meta");
+
+        // Simple single-destination forwarder — just records call, does nothing.
+        final ForwardStageProcessor processor = new ForwardStageProcessor(
+                new FileStoreRegistry().register(sourceFileStore),
+                (msg, fileGroupDir) -> {
+                    // Simulates successful forwarding.
+                });
+
+        processor.process(new TestQueueItem(sourceMessage));
+
+        // Processor should delete the input after the forwarder returns.
+        assertThat(sourcePath).doesNotExist();
     }
 
     private FileStoreLocation writeFileGroup(final FileStore fileStore) throws IOException {

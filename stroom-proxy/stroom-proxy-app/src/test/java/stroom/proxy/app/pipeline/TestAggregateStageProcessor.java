@@ -35,15 +35,21 @@ class TestAggregateStageProcessor extends StroomUnitTest {
     private static final String INPUT_STORE = "preAggStore";
 
     @Test
-    void testDelegatesToAggregateFunction() throws Exception {
+    void testDelegatesToAggregateFunctionAndDeletesInput() throws Exception {
         final LocalFileStore inputStore = createFileStore(INPUT_STORE, "input-store");
         final FileStoreRegistry registry = new FileStoreRegistry(List.of(inputStore));
 
         final FileStoreLocation inputLocation = writeAggregateDir(inputStore);
+        final Path resolvedPath = inputStore.resolve(inputLocation);
 
-        // Capture which directory is passed to the aggregate function.
-        final AtomicReference<Path> capturedDir = new AtomicReference<>();
-        final AggregateStageProcessor.AggregateFunction stubFunction = capturedDir::set;
+        // Verify the input exists before processing.
+        assertThat(resolvedPath).exists().isDirectory();
+
+        // Capture the state as seen by the aggregate function during execution.
+        final java.util.ArrayList<Boolean> dirExistedDuringCall = new java.util.ArrayList<>();
+        final AggregateStageProcessor.AggregateFunction stubFunction = dir -> {
+            dirExistedDuringCall.add(Files.isDirectory(dir));
+        };
 
         final AggregateStageProcessor processor = new AggregateStageProcessor(
                 registry, stubFunction);
@@ -51,9 +57,11 @@ class TestAggregateStageProcessor extends StroomUnitTest {
         final FileGroupQueueItem item = createItem("agg-queue", inputLocation);
         processor.process(item);
 
-        // The function should have been called with the resolved path.
-        assertThat(capturedDir.get()).isNotNull();
-        assertThat(capturedDir.get()).isDirectory();
+        // The function should have been called with a valid directory.
+        assertThat(dirExistedDuringCall).containsExactly(true);
+
+        // After processing, the input should be deleted (ownership transfer).
+        assertThat(resolvedPath).doesNotExist();
     }
 
     @Test

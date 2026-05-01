@@ -45,12 +45,11 @@ import java.util.Objects;
  * any other destination.
  * </p>
  * <p>
- * After all destination copies have been durably written and queued, the
- * forwarder deletes the original source from the input {@link FileStore}
- * (if one was supplied at construction). This implements the plan's
- * ownership-transfer rule: the original input source directory may be
- * deleted once all destination-owned copies have been durably created.
- * Queue acknowledgement remains owned by {@link FileGroupQueueWorker}.
+ * This class performs only the durable fan-out handoff. It does not delete the
+ * original input source — that responsibility belongs to the enclosing
+ * {@link ForwardStageProcessor}, which deletes the input from the source
+ * {@link FileStore} after the forwarder returns successfully. Queue
+ * acknowledgement remains owned by {@link FileGroupQueueWorker}.
  * </p>
  * <p>
  * Publication is at-least-once. If copying/publishing succeeds for one
@@ -67,27 +66,18 @@ public final class ForwardStageFanOutForwarder implements ForwardStageProcessor.
     public static final String DEFAULT_PRODUCING_STAGE = "forwardFanOut";
 
     private final List<Destination> destinations;
-    private final FileStore inputFileStore;
     private final String producerId;
     private final String producingStage;
 
     public ForwardStageFanOutForwarder(final List<Destination> destinations,
                                        final String producerId) {
-        this(destinations, null, producerId, DEFAULT_PRODUCING_STAGE);
+        this(destinations, producerId, DEFAULT_PRODUCING_STAGE);
     }
 
     public ForwardStageFanOutForwarder(final List<Destination> destinations,
-                                       final FileStore inputFileStore,
-                                       final String producerId) {
-        this(destinations, inputFileStore, producerId, DEFAULT_PRODUCING_STAGE);
-    }
-
-    public ForwardStageFanOutForwarder(final List<Destination> destinations,
-                                       final FileStore inputFileStore,
                                        final String producerId,
                                        final String producingStage) {
         this.destinations = List.copyOf(Objects.requireNonNull(destinations, "destinations"));
-        this.inputFileStore = inputFileStore; // Nullable — source cleanup is optional.
         this.producerId = requireNonBlank(producerId, "producerId");
         this.producingStage = requireNonBlank(producingStage, "producingStage");
 
@@ -109,13 +99,6 @@ public final class ForwardStageFanOutForwarder implements ForwardStageProcessor.
 
         for (final Destination destination : destinations) {
             fanOutToDestination(message, sourceDir, destination);
-        }
-
-        // All destination copies have been durably written and queued.
-        // Delete the original source from the input file store per the
-        // ownership-transfer rule.
-        if (inputFileStore != null) {
-            inputFileStore.delete(message.fileStoreLocation());
         }
     }
 

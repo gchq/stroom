@@ -117,11 +117,19 @@ public class AggregateStageProcessor implements FileGroupQueueItemProcessor {
         //    - Single-child pass-through (no merge needed)
         //    - Multi-child zip merge with common header combination
         //    - Passing result to destination callback
-        //    - Source directory cleanup via CleanupDirQueue
         aggregateFunction.addDir(sourceDir);
 
+        // 3. Delete the consumed input from the source file store.
+        //    At this point the data has been merged into the aggregator's
+        //    output. The input file group is no longer needed and must be
+        //    deleted to fulfil the ownership-transfer contract.
+        final FileStore inputStore = fileStoreRegistry.requireFileStore(
+                message.fileStoreLocation().storeName());
+        inputStore.delete(message.fileStoreLocation());
+
         LOGGER.debug(() -> LogUtil.message(
-                "Aggregate stage completed processing message {}",
-                message.messageId()));
+                "Aggregate stage completed processing message {} and deleted input from {}",
+                message.messageId(),
+                message.fileStoreLocation().storeName()));
     }
 }

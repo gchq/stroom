@@ -36,15 +36,23 @@ class TestPreAggregateStageProcessor extends StroomUnitTest {
     private static final String INPUT_STORE = "splitStore";
 
     @Test
-    void testDelegatesToPreAggregateFunction() throws Exception {
+    void testDelegatesToPreAggregateFunctionAndDeletesInput() throws Exception {
         final LocalFileStore inputStore = createFileStore(INPUT_STORE, "input-store");
         final FileStoreRegistry registry = new FileStoreRegistry(List.of(inputStore));
 
         final FileStoreLocation inputLocation = writeFileGroup(inputStore, "test-data");
+        final Path resolvedPath = inputStore.resolve(inputLocation);
 
-        // Capture which directory is passed to the pre-aggregate function.
-        final AtomicReference<Path> capturedDir = new AtomicReference<>();
-        final PreAggregateStageProcessor.PreAggregateFunction stubFunction = capturedDir::set;
+        // Verify the input exists before processing.
+        assertThat(resolvedPath).exists().isDirectory();
+
+        // Capture the state as seen by the pre-aggregate function during execution.
+        final List<Boolean> dirExistedDuringCall = new ArrayList<>();
+        final List<Boolean> metaExistedDuringCall = new ArrayList<>();
+        final PreAggregateStageProcessor.PreAggregateFunction stubFunction = dir -> {
+            dirExistedDuringCall.add(Files.isDirectory(dir));
+            metaExistedDuringCall.add(Files.isRegularFile(dir.resolve("proxy.meta")));
+        };
 
         final PreAggregateStageProcessor processor = new PreAggregateStageProcessor(
                 registry, stubFunction);
@@ -52,11 +60,12 @@ class TestPreAggregateStageProcessor extends StroomUnitTest {
         final FileGroupQueueItem item = createItem("queue", inputLocation);
         processor.process(item);
 
-        // The function should have been called with the resolved path.
-        assertThat(capturedDir.get()).isNotNull();
-        assertThat(capturedDir.get()).isDirectory();
-        assertThat(capturedDir.get().resolve("proxy.meta")).exists();
-        assertThat(capturedDir.get().resolve("proxy.zip")).exists();
+        // The function should have been called with a valid directory.
+        assertThat(dirExistedDuringCall).containsExactly(true);
+        assertThat(metaExistedDuringCall).containsExactly(true);
+
+        // After processing, the input should be deleted (ownership transfer).
+        assertThat(resolvedPath).doesNotExist();
     }
 
     @Test

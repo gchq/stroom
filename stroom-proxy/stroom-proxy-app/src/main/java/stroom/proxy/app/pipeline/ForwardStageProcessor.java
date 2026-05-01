@@ -71,7 +71,17 @@ public class ForwardStageProcessor implements FileGroupQueueItemProcessor {
         final Path sourceDir = fileStoreRegistry.resolve(message);
         validateFileGroup(message, sourceDir);
 
+        // 1. Forward the data (single-dest or fan-out).
         fileGroupForwarder.forward(message, sourceDir);
+
+        // 2. Delete the consumed input from the source file store.
+        //    At this point the forwarder has durably handed off the data
+        //    (copied to destination stores + published to destination queues).
+        //    The input file group is no longer needed and must be deleted
+        //    to fulfil the ownership-transfer contract.
+        final FileStore inputStore = fileStoreRegistry.requireFileStore(
+                message.fileStoreLocation().storeName());
+        inputStore.delete(message.fileStoreLocation());
     }
 
     private static void validateFileGroup(final FileGroupQueueMessage message,

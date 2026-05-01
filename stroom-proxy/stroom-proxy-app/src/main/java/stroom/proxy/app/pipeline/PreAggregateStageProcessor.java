@@ -119,11 +119,19 @@ public class PreAggregateStageProcessor implements FileGroupQueueItemProcessor {
         //    - Accumulating into open aggregates (with feed-key striped locking)
         //    - Splitting oversized inputs
         //    - Closing completed aggregates via the destination callback
-        //    - Deleting consumed sources
         preAggregateFunction.addDir(sourceDir);
 
+        // 3. Delete the consumed input from the source file store.
+        //    At this point the data has been absorbed into the aggregator's
+        //    internal state. The input file group is no longer needed and
+        //    must be deleted to fulfil the ownership-transfer contract.
+        final FileStore inputStore = fileStoreRegistry.requireFileStore(
+                message.fileStoreLocation().storeName());
+        inputStore.delete(message.fileStoreLocation());
+
         LOGGER.debug(() -> LogUtil.message(
-                "Pre-aggregate stage completed processing message {}",
-                message.messageId()));
+                "Pre-aggregate stage completed processing message {} and deleted input from {}",
+                message.messageId(),
+                message.fileStoreLocation().storeName()));
     }
 }
