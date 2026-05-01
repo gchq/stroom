@@ -278,30 +278,30 @@ class TestProxyPipelineConfig extends StroomUnitTest {
     }
 
     @Test
-    void testFileGroupQueueFactoryReportsExternalQueueTypesAsNotImplementedYet() {
+    void testFileGroupQueueFactoryReportsKinesisAsNotImplementedYet() {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
-                Map.of("kafkaQueue", new QueueDefinition(
-                        QueueType.KAFKA,
-                        null,
-                        "proxy-topic",
-                        "localhost:9092",
+                Map.of("kinesisQueue", new QueueDefinition(
+                        QueueType.KINESIS,
                         null,
                         null,
                         null,
                         null,
                         null,
                         null,
-                        null)),
+                        null,
+                        null,
+                        "proxy-stream",
+                        "proxy-app")),
                 new PipelineStagesConfig(),
                 Map.of());
         final FileGroupQueueFactory factory = new FileGroupQueueFactory(
                 pipelineConfig,
                 new TestPathCreator(getCurrentTestDir()));
 
-        assertThatThrownBy(() -> factory.getQueue("kafkaQueue"))
+        assertThatThrownBy(() -> factory.getQueue("kinesisQueue"))
                 .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("KAFKA")
-                .hasMessageContaining("kafkaQueue");
+                .hasMessageContaining("KINESIS")
+                .hasMessageContaining("kinesisQueue");
     }
 
     private static final class TestPathCreator implements PathCreator {

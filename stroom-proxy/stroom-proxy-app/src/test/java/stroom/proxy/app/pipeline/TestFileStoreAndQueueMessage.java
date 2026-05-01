@@ -179,4 +179,122 @@ class TestFileStoreAndQueueMessage extends StroomUnitTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("file URI");
     }
+
+    @Test
+    void testDeleteRemovesCommittedFileGroup() throws IOException {
+        final LocalFileStore fileStore = new LocalFileStore(
+                "receiveStore",
+                getCurrentTestDir().resolve("receive-store"),
+                "writer-1");
+
+        final FileStoreLocation location;
+        try (final FileStoreWrite write = fileStore.newWrite()) {
+            Files.writeString(write.getPath().resolve("proxy.meta"), "meta");
+            Files.writeString(write.getPath().resolve("proxy.zip"), "zip");
+            location = write.commit();
+        }
+
+        final Path stablePath = fileStore.resolve(location);
+        assertThat(stablePath).exists().isDirectory();
+
+        fileStore.delete(location);
+
+        assertThat(stablePath).doesNotExist();
+    }
+
+    @Test
+    void testDeleteIsIdempotentForAlreadyDeletedLocation() throws IOException {
+        final LocalFileStore fileStore = new LocalFileStore(
+                "receiveStore",
+                getCurrentTestDir().resolve("receive-store"),
+                "writer-1");
+
+        final FileStoreLocation location;
+        try (final FileStoreWrite write = fileStore.newWrite()) {
+            Files.writeString(write.getPath().resolve("proxy.meta"), "meta");
+            location = write.commit();
+        }
+
+        // Delete once.
+        fileStore.delete(location);
+        assertThat(fileStore.resolve(location)).doesNotExist();
+
+        // Delete again — should be a no-op, not an error.
+        fileStore.delete(location);
+    }
+
+    @Test
+    void testDeleteRejectsLocationForDifferentStore() {
+        final LocalFileStore fileStore = new LocalFileStore(
+                "receiveStore",
+                getCurrentTestDir().resolve("receive-store"),
+                "writer-1");
+        final FileStoreLocation otherStoreLocation = FileStoreLocation.localFileSystem(
+                "aggregateStore",
+                getCurrentTestDir().resolve("receive-store/writer-1/0000000001"));
+
+        assertThatThrownBy(() -> fileStore.delete(otherStoreLocation))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("aggregateStore")
+                .hasMessageContaining("receiveStore");
+    }
+
+    @Test
+    void testDeleteDoesNotAffectOtherLocations() throws IOException {
+        final LocalFileStore fileStore = new LocalFileStore(
+                "receiveStore",
+                getCurrentTestDir().resolve("receive-store"),
+                "writer-1");
+
+        // Commit two separate file groups.
+        final FileStoreLocation locationA;
+        try (final FileStoreWrite write = fileStore.newWrite()) {
+            Files.writeString(write.getPath().resolve("proxy.meta"), "meta-A");
+            locationA = write.commit();
+        }
+
+        final FileStoreLocation locationB;
+        try (final FileStoreWrite write = fileStore.newWrite()) {
+            Files.writeString(write.getPath().resolve("proxy.meta"), "meta-B");
+            locationB = write.commit();
+        }
+
+        // Delete only A.
+        fileStore.delete(locationA);
+
+        assertThat(fileStore.resolve(locationA)).doesNotExist();
+        assertThat(fileStore.resolve(locationB)).exists().isDirectory();
+        assertThat(fileStore.resolve(locationB).resolve("proxy.meta")).hasContent("meta-B");
+    }
+
+    @Test
+    void testDeleteDoesNotRemoveWriterRootOrStoreRoot() throws IOException {
+        final Path storeRoot = getCurrentTestDir().resolve("receive-store");
+        final LocalFileStore fileStore = new LocalFileStore(
+                "receiveStore",
+                storeRoot,
+                "writer-1");
+
+        // Craft a location that points directly at the store root.
+        final FileStoreLocation storeRootLocation = FileStoreLocation.localFileSystem(
+                "receiveStore",
+                storeRoot);
+
+        assertThatThrownBy(() -> fileStore.delete(storeRootLocation))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("store-level directory");
+
+        // Craft a location that points at the writer root.
+        final FileStoreLocation writerRootLocation = FileStoreLocation.localFileSystem(
+                "receiveStore",
+                storeRoot.resolve("writer-1"));
+
+        assertThatThrownBy(() -> fileStore.delete(writerRootLocation))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("store-level directory");
+
+        // Both directories should still exist.
+        assertThat(storeRoot).exists().isDirectory();
+        assertThat(storeRoot.resolve("writer-1")).exists().isDirectory();
+    }
 }

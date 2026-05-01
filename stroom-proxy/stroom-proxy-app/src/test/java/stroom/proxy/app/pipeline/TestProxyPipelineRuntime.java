@@ -280,23 +280,23 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
     @Test
     void testFromConfigPropagatesUnsupportedQueueTypesReferencedByEnabledStages() {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
-                Map.of("kafkaQueue", new QueueDefinition(
-                        QueueType.KAFKA,
-                        null,
-                        "proxy-topic",
-                        "localhost:9092",
+                Map.of("kinesisQueue", new QueueDefinition(
+                        QueueType.KINESIS,
                         null,
                         null,
                         null,
                         null,
                         null,
                         null,
-                        null)),
+                        null,
+                        null,
+                        "proxy-stream",
+                        "proxy-app")),
                 new PipelineStagesConfig(
                         new PipelineStageConfig(
                                 true,
                                 null,
-                                "kafkaQueue",
+                                "kinesisQueue",
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new PipelineStageThreadsConfig()),
@@ -304,12 +304,12 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                         null,
                         null,
                         null),
-                Map.of(ProxyPipelineConfig.RECEIVE_STORE, new FileStoreDefinition("/mnt/shared/receive")));
+                defaultFileStores());
 
         assertThatThrownBy(() -> createRuntime(config))
                 .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("KAFKA")
-                .hasMessageContaining("kafkaQueue");
+                .hasMessageContaining("KINESIS")
+                .hasMessageContaining("kinesisQueue");
     }
 
     @Test
@@ -555,12 +555,21 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
 
         assertThatThrownBy(runtime::close)
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("preAggregate close failure")
-                .satisfies(error ->
-                        assertThat(error.getSuppressed())
-                                .hasSize(1)
-                                .extracting(Throwable::getMessage)
-                                .containsExactly("splitZip close failure"));
+                .satisfies(error -> {
+                    // Close order of queues is not guaranteed by Map.copyOf(),
+                    // so either exception could be primary.  Assert both
+                    // messages are present across primary + suppressed.
+                    assertThat(error.getSuppressed()).hasSize(1);
+
+                    final java.util.Set<String> allMessages = new java.util.HashSet<>();
+                    allMessages.add(error.getMessage());
+                    for (final Throwable suppressed : error.getSuppressed()) {
+                        allMessages.add(suppressed.getMessage());
+                    }
+                    assertThat(allMessages).containsExactlyInAnyOrder(
+                            "preAggregate close failure",
+                            "splitZip close failure");
+                });
 
         assertThat(queueFactory.preAggregateInputQueue.closed).isFalse();
         assertThat(queueFactory.splitZipInputQueue.closed).isFalse();

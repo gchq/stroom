@@ -61,5 +61,63 @@ public interface FileStore {
      */
     Path resolve(FileStoreLocation location) throws IOException;
 
+    /**
+     * Delete the file group at the given location.
+     * <p>
+     * This is the ownership-transfer operation: once a stage has durably
+     * written its output and published a downstream queue message, it should
+     * call this method to release the consumed input. The implementation
+     * must remove the file-group directory and its contents but must not
+     * remove the writer root or store root.
+     * </p>
+     * <p>
+     * Deleting a location that has already been deleted (or never existed)
+     * should be treated as a no-op so that at-least-once replay is safe.
+     * </p>
+     *
+     * @param location The location to delete.
+     * @throws IOException If the location belongs to a different store or
+     * cannot be deleted.
+     */
+    void delete(FileStoreLocation location) throws IOException;
+
+    /**
+     * Check whether a file-group location represents a fully committed write.
+     * <p>
+     * A location is considered complete if it exists and contains a
+     * completeness marker written by {@link FileStoreWrite#commit()}.
+     * This is used for idempotency: if a stage's output already exists
+     * and is complete, the stage can skip re-processing and re-publish
+     * the onward queue message instead.
+     * </p>
+     * <p>
+     * A location that does not exist, or that exists but has no completeness
+     * marker, is considered incomplete (e.g. a partial write from a crash).
+     * </p>
+     *
+     * @param location The location to check.
+     * @return {@code true} if the location is fully committed.
+     * @throws IOException If the location cannot be checked.
+     */
+    boolean isComplete(FileStoreLocation location) throws IOException;
+
+    /**
+     * Begin writing a new file group at a deterministic path derived from
+     * the given file-group ID.
+     * <p>
+     * Unlike {@link #newWrite()}, which allocates a sequential path, this
+     * method always resolves the same output path for the same
+     * {@code fileGroupId}. This enables idempotent processing: if the
+     * output already exists and is complete, the caller can skip writing
+     * and use the existing location.
+     * </p>
+     *
+     * @param fileGroupId A stable identifier for the file group
+     *                    (typically the queue message's fileGroupId).
+     * @return A writable file-group handle targeting the deterministic path,
+     *         or a pre-committed handle if the output already exists.
+     * @throws IOException If a writable location cannot be created.
+     */
+    FileStoreWrite newDeterministicWrite(String fileGroupId) throws IOException;
 
 }

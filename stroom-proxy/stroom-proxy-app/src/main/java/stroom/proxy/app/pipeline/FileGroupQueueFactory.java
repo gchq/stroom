@@ -77,8 +77,16 @@ public class FileGroupQueueFactory {
                     throw new UncheckedIOException("Unable to create local filesystem queue " + queueName, e);
                 }
             }
-            case KAFKA, SQS, KINESIS -> throw new UnsupportedOperationException(
-                    "Queue type " + definition.getType() + " is not implemented yet for queue " + queueName);
+            case KAFKA -> new KafkaFileGroupQueue(
+                    queueName,
+                    definition,
+                    new FileGroupQueueMessageCodec());
+            case SQS -> new SqsFileGroupQueue(
+                    queueName,
+                    definition,
+                    new FileGroupQueueMessageCodec());
+            case KINESIS -> throw new UnsupportedOperationException(
+                    "Queue type KINESIS is not implemented yet for queue " + queueName);
         };
     }
 

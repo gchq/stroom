@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 public class LocalFileStore implements FileStore {
 
     private static final String TEMP_DIR_NAME = ".writing";
+    private static final String COMPLETE_MARKER = ".complete";
     private static final int ID_WIDTH = 10;
 
     private final String name;
@@ -113,6 +114,56 @@ public class LocalFileStore implements FileStore {
         }
 
         return path;
+    }
+
+    @Override
+    public void delete(final FileStoreLocation location) throws IOException {
+        // resolve() validates store name, location type, and that the
+        // path is inside the store root.
+        final Path path = resolve(location);
+
+        // Defensive guard: never delete the store root or writer root.
+        if (path.equals(root) || path.equals(writerRoot)) {
+            throw new IOException("Refusing to delete store-level directory: " + path);
+        }
+
+        // Idempotent: treat already-deleted (or never-existed) as success.
+        if (!Files.exists(path)) {
+            return;
+        }
+
+        deleteRecursively(path);
+    }
+
+    @Override
+    public boolean isComplete(final FileStoreLocation location) throws IOException {
+        final Path path = resolve(location);
+        return Files.isDirectory(path) && Files.exists(path.resolve(COMPLETE_MARKER));
+    }
+
+    @Override
+    public FileStoreWrite newDeterministicWrite(final String fileGroupId) throws IOException {
+        Objects.requireNonNull(fileGroupId, "fileGroupId");
+        if (fileGroupId.isBlank()) {
+            throw new IllegalArgumentException("fileGroupId must not be blank");
+        }
+
+        final Path stablePath = writerRoot.resolve(fileGroupId);
+
+        // If the output already exists and is complete, return a pre-committed write.
+        if (Files.isDirectory(stablePath) && Files.exists(stablePath.resolve(COMPLETE_MARKER))) {
+            return new PreCommittedFileStoreWrite(stablePath);
+        }
+
+        // If a partial write exists (no marker), clean it up and start fresh.
+        if (Files.exists(stablePath)) {
+            deleteRecursively(stablePath);
+        }
+
+        // Create the temp write directory.
+        Files.createDirectories(tempRoot);
+        final Path tempPath = Files.createTempDirectory(tempRoot, "write-");
+        return new DeterministicFileStoreWrite(tempPath, stablePath);
     }
 
     private Path nextStablePath() throws IOException {
@@ -225,6 +276,11 @@ public class LocalFileStore implements FileStore {
                 Files.move(tempPath, stablePath);
             }
 
+            // Write completeness marker as the last step.
+            // Use writeString (create-or-truncate) rather than createFile
+            // because a source copy may have already included a .complete file.
+            Files.writeString(stablePath.resolve(COMPLETE_MARKER), "");
+
             complete = true;
             return FileStoreLocation.localFileSystem(name, stablePath);
         }
@@ -239,6 +295,98 @@ public class LocalFileStore implements FileStore {
             if (!complete) {
                 deleteRecursively(tempPath);
             }
+        }
+    }
+
+    /**
+     * A write handle targeting a deterministic (content-addressed) path.
+     * <p>
+     * Unlike {@link LocalFileStoreWrite} which resolves its stable path at
+     * commit time via the monotonic sequence, this write targets a
+     * pre-determined stable path derived from a file-group ID.
+     * </p>
+     */
+    private final class DeterministicFileStoreWrite implements FileStoreWrite {
+
+        private final Path tempPath;
+        private final Path stablePath;
+        private boolean complete;
+
+        private DeterministicFileStoreWrite(final Path tempPath, final Path stablePath) {
+            this.tempPath = Objects.requireNonNull(tempPath, "tempPath");
+            this.stablePath = Objects.requireNonNull(stablePath, "stablePath");
+        }
+
+        @Override
+        public Path getPath() {
+            return tempPath;
+        }
+
+        @Override
+        public FileStoreLocation commit() throws IOException {
+            if (complete) {
+                return FileStoreLocation.localFileSystem(name, stablePath);
+            }
+
+            Files.createDirectories(stablePath.getParent());
+
+            try {
+                Files.move(tempPath, stablePath, StandardCopyOption.ATOMIC_MOVE);
+            } catch (final AtomicMoveNotSupportedException e) {
+                Files.move(tempPath, stablePath);
+            }
+
+            // Write completeness marker as the last step.
+            Files.writeString(stablePath.resolve(COMPLETE_MARKER), "");
+
+            complete = true;
+            return FileStoreLocation.localFileSystem(name, stablePath);
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return complete;
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (!complete) {
+                deleteRecursively(tempPath);
+            }
+        }
+    }
+
+    /**
+     * A pre-committed write handle returned when a deterministic write
+     * target already exists and is complete. This is a no-op handle that
+     * simply returns the existing stable location.
+     */
+    private final class PreCommittedFileStoreWrite implements FileStoreWrite {
+
+        private final Path stablePath;
+
+        private PreCommittedFileStoreWrite(final Path stablePath) {
+            this.stablePath = Objects.requireNonNull(stablePath, "stablePath");
+        }
+
+        @Override
+        public Path getPath() {
+            return stablePath;
+        }
+
+        @Override
+        public FileStoreLocation commit() {
+            return FileStoreLocation.localFileSystem(name, stablePath);
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return true;
+        }
+
+        @Override
+        public void close() {
+            // Nothing to clean up — the data is already committed.
         }
     }
 }
