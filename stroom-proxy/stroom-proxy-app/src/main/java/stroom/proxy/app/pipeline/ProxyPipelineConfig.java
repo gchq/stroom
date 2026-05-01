@@ -72,7 +72,13 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
         this.queues = queues == null || queues.isEmpty()
                 ? defaultQueues()
                 : Map.copyOf(queues);
-        this.stages = Objects.requireNonNullElseGet(stages, PipelineStagesConfig::new);
+        // When pipeline is enabled and no explicit stages block is provided,
+        // automatically wire all 5 stages with standard queue/store references.
+        if (this.enabled && stages == null) {
+            this.stages = defaultFullPipelineStages();
+        } else {
+            this.stages = Objects.requireNonNullElseGet(stages, PipelineStagesConfig::new);
+        }
         this.fileStores = fileStores == null || fileStores.isEmpty()
                 ? defaultFileStores()
                 : Map.copyOf(fileStores);
@@ -99,6 +105,50 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     @JsonProperty
     public Map<String, FileStoreDefinition> getFileStores() {
         return fileStores;
+    }
+
+    /**
+     * @return A fully-wired stages config with all 5 stages enabled and connected
+     * to the standard queue and file-store names. This is used as the default when
+     * {@code pipeline.enabled=true} and no explicit stages block is provided.
+     */
+    public static PipelineStagesConfig defaultFullPipelineStages() {
+        return new PipelineStagesConfig(
+                new PipelineStageConfig(
+                        true,
+                        null,
+                        PRE_AGGREGATE_INPUT_QUEUE,
+                        SPLIT_ZIP_INPUT_QUEUE,
+                        RECEIVE_STORE,
+                        new PipelineStageThreadsConfig()),
+                new PipelineStageConfig(
+                        true,
+                        SPLIT_ZIP_INPUT_QUEUE,
+                        PRE_AGGREGATE_INPUT_QUEUE,
+                        null,
+                        SPLIT_STORE,
+                        new PipelineStageThreadsConfig()),
+                new PipelineStageConfig(
+                        true,
+                        PRE_AGGREGATE_INPUT_QUEUE,
+                        AGGREGATE_INPUT_QUEUE,
+                        null,
+                        PRE_AGGREGATE_STORE,
+                        new PipelineStageThreadsConfig()),
+                new PipelineStageConfig(
+                        true,
+                        AGGREGATE_INPUT_QUEUE,
+                        FORWARDING_INPUT_QUEUE,
+                        null,
+                        AGGREGATE_STORE,
+                        new PipelineStageThreadsConfig()),
+                new PipelineStageConfig(
+                        true,
+                        FORWARDING_INPUT_QUEUE,
+                        null,
+                        null,
+                        null,
+                        new PipelineStageThreadsConfig()));
     }
 
     private static Map<String, QueueDefinition> defaultQueues() {

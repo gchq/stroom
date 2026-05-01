@@ -1,0 +1,82 @@
+# Stroom Proxy — Pipeline Configuration Reference
+#
+# This file documents the full pipeline configuration block for the
+# pluggable queue architecture. When `pipeline.enabled: true` is set
+# and no explicit `stages` block is provided, the proxy automatically
+# wires all 5 stages with the standard queue and file-store names shown
+# below.
+#
+# To use: copy the `pipeline` block into your proxy.yml configuration.
+# The minimal configuration is just:
+#
+#   pipeline:
+#     enabled: true
+#
+# All queues, stores, and stages will use sensible defaults.
+
+pipeline:
+  # Master switch for the new pipeline architecture.
+  # When false (default), the legacy ReceiverFactoryProvider is used.
+  enabled: true
+
+  # Named queues used by pipeline stages. All queues default to
+  # LOCAL_FILESYSTEM type. Override only if you need SQS or Kafka.
+  queues:
+    splitZipInput:
+      type: LOCAL_FILESYSTEM
+      # path: data/pipeline/queues/splitZipInput  # auto-derived if omitted
+    preAggregateInput:
+      type: LOCAL_FILESYSTEM
+    aggregateInput:
+      type: LOCAL_FILESYSTEM
+    forwardingInput:
+      type: LOCAL_FILESYSTEM
+
+  # Named file stores for durable file-group storage.
+  # Paths are auto-derived from the store name if omitted.
+  fileStores:
+    receiveStore:
+      # path: data/pipeline/file-stores/receiveStore
+    splitStore: {}
+    preAggregateStore: {}
+    aggregateStore: {}
+
+  # Stage definitions. When omitted with enabled=true, all 5 stages
+  # are auto-wired with the standard queue/store names above.
+  # Uncomment and modify only if you need to customise thread counts
+  # or disable specific stages.
+  #
+  # stages:
+  #   receive:
+  #     enabled: true
+  #     outputQueue: preAggregateInput
+  #     splitZipQueue: splitZipInput
+  #     fileStore: receiveStore
+  #     threads:
+  #       consumerThreads: 1
+  #   splitZip:
+  #     enabled: true
+  #     inputQueue: splitZipInput
+  #     outputQueue: preAggregateInput
+  #     fileStore: splitStore
+  #     threads:
+  #       consumerThreads: 1
+  #   preAggregate:
+  #     enabled: true
+  #     inputQueue: preAggregateInput
+  #     outputQueue: aggregateInput
+  #     fileStore: preAggregateStore
+  #     threads:
+  #       consumerThreads: 1
+  #   aggregate:
+  #     enabled: true
+  #     inputQueue: aggregateInput
+  #     outputQueue: forwardingInput
+  #     fileStore: aggregateStore
+  #     threads:
+  #       consumerThreads: 1
+  #   forward:
+  #     enabled: true
+  #     inputQueue: forwardingInput
+  #     threads:
+  #       consumerThreads: 1

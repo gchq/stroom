@@ -198,7 +198,7 @@ public class ZipSplitter {
         }
     }
 
-    static List<Path> splitZip(final Path zipFilePath,
+    public static List<Path> splitZip(final Path zipFilePath,
                                final AttributeMap attributeMap,
                                final Map<FeedKey, List<ZipEntryGroup>> allowedEntries,
                                final Path outputParentDir) throws IOException {

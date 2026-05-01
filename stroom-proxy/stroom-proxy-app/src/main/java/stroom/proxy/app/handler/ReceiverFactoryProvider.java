@@ -30,6 +30,19 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 
+/**
+ * Legacy receiver factory provider for the DirQueue-based pipeline.
+ * <p>
+ * This class is superseded by {@code ProxyPipelineAssembler} when
+ * {@code pipeline.enabled=true} in the proxy configuration. It remains
+ * as the default path for backward compatibility.
+ * </p>
+ *
+ * @deprecated Use {@code ProxyPipelineAssembler} via {@code pipeline.enabled=true}.
+ *             This class will be removed once the pluggable pipeline architecture
+ *             is validated in production.
+ */
+@Deprecated(since = "7.7", forRemoval = true)
 @Singleton
 public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 

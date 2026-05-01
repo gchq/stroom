@@ -16,6 +16,8 @@
 
 package stroom.proxy.app.servlet;
 
+import stroom.proxy.app.pipeline.PipelineMonitorProvider;
+import stroom.proxy.app.pipeline.PipelineMonitorSnapshot;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.shared.IsAdminServlet;
@@ -39,12 +41,15 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
 
     private final Provider<QueueMonitors> queueMonitorsProvider;
     private final Provider<FileStores> fileStoresProvider;
+    private final Provider<PipelineMonitorProvider> pipelineMonitorProvider;
 
     @Inject
     public ProxyQueueMonitoringServlet(final Provider<QueueMonitors> queueMonitorsProvider,
-                                       final Provider<FileStores> fileStoresProvider) {
+                                       final Provider<FileStores> fileStoresProvider,
+                                       final Provider<PipelineMonitorProvider> pipelineMonitorProvider) {
         this.queueMonitorsProvider = queueMonitorsProvider;
         this.fileStoresProvider = fileStoresProvider;
+        this.pipelineMonitorProvider = pipelineMonitorProvider;
     }
 
     @Override
@@ -66,9 +71,46 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
         writer.write("<h1>File Stores</h1>");
         writer.write(fileStoresProvider.get().log());
 
+        // Pipeline monitoring section (only shown when pipeline is enabled).
+        writePipelineSection(writer);
+
         writer.write("</body>\n" +
                      "</html>");
         writer.close();
+    }
+
+    private void writePipelineSection(final Writer writer) throws IOException {
+        final PipelineMonitorSnapshot snapshot = pipelineMonitorProvider.get().snapshot();
+        if (!snapshot.pipelineEnabled()) {
+            return;
+        }
+
+        writer.write("<h1>Pipeline Stages</h1>\n<ul>\n");
+        for (final PipelineMonitorSnapshot.StageSnapshot stage : snapshot.stages()) {
+            writer.write("<li>" + escapeHtml(stage.toSummary()) + "</li>\n");
+        }
+        writer.write("</ul>\n");
+
+        writer.write("<h1>Pipeline Queues</h1>\n<ul>\n");
+        for (final PipelineMonitorSnapshot.QueueSnapshot queue : snapshot.queues()) {
+            writer.write("<li>" + escapeHtml(queue.toSummary()) + "</li>\n");
+        }
+        writer.write("</ul>\n");
+
+        writer.write("<h1>Pipeline File Stores</h1>\n<ul>\n");
+        for (final PipelineMonitorSnapshot.FileStoreSnapshot store : snapshot.fileStores()) {
+            writer.write("<li>" + escapeHtml(store.toSummary()) + "</li>\n");
+        }
+        writer.write("</ul>\n");
+    }
+
+    private static String escapeHtml(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;");
     }
 
     private String getURL(final HttpServletRequest request) {
