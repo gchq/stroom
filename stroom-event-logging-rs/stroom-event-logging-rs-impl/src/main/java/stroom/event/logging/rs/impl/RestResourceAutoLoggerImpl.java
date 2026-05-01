@@ -28,7 +28,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -44,6 +43,7 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.message.MessageUtils;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 

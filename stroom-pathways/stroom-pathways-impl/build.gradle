@@ -37,6 +37,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
+    implementation libs.jackson.databind
     implementation libs.jakarta.inject
     implementation libs.jakarta.validation.api
     implementation libs.kryo

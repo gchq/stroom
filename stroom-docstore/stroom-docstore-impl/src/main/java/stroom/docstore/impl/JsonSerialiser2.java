@@ -23,7 +23,7 @@ import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.string.EncodingUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -38,10 +38,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -253,7 +252,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
     }
 
     @Test
-    void testSystemInfo() throws JsonProcessingException {
+    void testSystemInfo() {
         final MetaService mockMetaService = Mockito.mock(MetaService.class);
 
         try (final CacheManager cacheManager = new CacheManagerImpl()) {

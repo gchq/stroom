@@ -28,8 +28,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -325,7 +325,7 @@ public class SetupDevEnv {
             String yamlStr = Files.readString(configFile);
             // Parse the YAML into a map, so we can get the current values to make the
             // string replace a bit more robust
-            final ObjectMapper objectMapper = YamlUtil.getVanillaObjectMapper();
+            final ObjectMapper objectMapper = YamlUtil.getVanillaMapper();
             final Map<String, Object> map = objectMapper.readValue(file, new TypeReference<>() {
             });
             final FileType fileType = getFileType(configFile);

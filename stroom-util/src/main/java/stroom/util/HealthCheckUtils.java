@@ -23,7 +23,6 @@ import stroom.util.shared.NullSafe;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheck.ResultBuilder;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -33,6 +32,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.type.TypeReference;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -87,11 +87,10 @@ public class HealthCheckUtils {
 
             LOGGER.debug("json\n{}", json);
 
-
             try {
                 map = JsonUtil.getMapper().readValue(json, new TypeReference<Map<String, Object>>() {
                 });
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 final String msg = LogUtil.message("Unable to convert object {} of type {}",
                         object, object.getClass().getName());
                 LOGGER.error(msg, e);

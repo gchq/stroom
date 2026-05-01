@@ -39,6 +39,7 @@ public class GenerateS3ClientConfigSchema {
     }
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
+        // Use legacy jackson as JsonSchemaGenerator lib depends on jackson v2
         final ObjectMapper objectMapper = new ObjectMapper();
         final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 

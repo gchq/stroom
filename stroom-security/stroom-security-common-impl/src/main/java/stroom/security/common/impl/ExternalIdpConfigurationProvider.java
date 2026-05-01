@@ -31,9 +31,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -41,6 +38,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -244,15 +244,16 @@ public class ExternalIdpConfigurationProvider
 
     private OpenIdConfigurationResponse parseConfigurationResponse(final String configurationEndpoint,
                                                                    final String msg) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        final JsonMapper jsonMapper = JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
 
         final OpenIdConfigurationResponse openIdConfigurationResponse;
         try {
-            openIdConfigurationResponse = mapper.readValue(
+            openIdConfigurationResponse = jsonMapper.readValue(
                     msg,
                     OpenIdConfigurationResponse.class);
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new AuthenticationException(LogUtil.message("Unable to parse open ID configuration " +
                                                               "from {}. {}", configurationEndpoint, e.getMessage()), e);
         }

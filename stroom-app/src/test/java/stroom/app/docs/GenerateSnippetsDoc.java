@@ -18,6 +18,7 @@ package stroom.app.docs;
 
 import stroom.test.common.docs.StroomDocsUtil;
 import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -25,9 +26,8 @@ import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.classgraph.ScanResult;
+import tools.jackson.core.type.TypeReference;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -77,7 +77,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
     private static final Path MARKDOWN_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("markdown.js");
     private static final Path STROOM_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("stroom_query.js");
 
-    @SuppressWarnings("checkstyle:LineLength")
+    @SuppressWarnings({"checkstyle:LineLength", "checkstyle:LineLength"})
     private static final List<SnippetDefinition> SNIPPETS_FILES = List.of(
             new SnippetDefinition(
                     "XML/XSLT",
@@ -103,25 +103,25 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                     "Stroom Query Language",
                     STROOM_SNIPPETS_FILE,
                     """
-
+                            \s
                             All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
                             They do not currently have `tab` triggers.
                             """,
                     "text")
     );
 
+    // IDE keeps adding trailing white space to the 'blank' lines, then checkstyle moans about it.
+    // Using \s to keep CS happy.
     @SuppressWarnings("checkstyle:LineLength")
     private static final String FOOTER = """
-
+            \s
             ## Dashboard Table Expression Editor Snippets
-
+            \s
             All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
             They do not currently have `tab` triggers.
-
-
+            \s
+            \s
             """; // One of the new lines seems to get lost when written to file
-
-    private final ObjectMapper objectMapper;
 
     @GeneratesDocumentation
     public static void main(final String[] args) {
@@ -131,10 +131,6 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
     @Override
     public void generateAll(final ScanResult scanResult) {
         generateDocs();
-    }
-
-    public GenerateSnippetsDoc() {
-        this.objectMapper = new ObjectMapper();
     }
 
     private void generateDocs() {
@@ -197,12 +193,12 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                     : "```";
 
             final String snippetSection = LogUtil.message("""
-
-
+                            \s
+                            \s
                             ### {} (`{}`)
-
+                            \s
                             **Name**: `{}`, **Tab Trigger**: `{}`
-
+                            \s
                             {}{}
                             {}
                             {}`
@@ -287,7 +283,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
 
             LOGGER.debug("jsonStr3:\n{}", jsonStr3);
 
-            final List<Snippet> snippets = objectMapper.readValue(
+            final List<Snippet> snippets = JsonUtil.getMapper().readValue(
                     jsonStr3,
                     new TypeReference<ArrayList<Snippet>>() {
                     });

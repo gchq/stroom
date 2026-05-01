@@ -67,6 +67,7 @@ public class LazyValue<T> {
      * called once.
      * Use this method if supplier is not idempotent, has side effects or is
      * costly to run.
+     * Once fully initialised, no locking is required on future calls.
      */
     public T getValueWithLocks() {
         if (!isInitialised) {

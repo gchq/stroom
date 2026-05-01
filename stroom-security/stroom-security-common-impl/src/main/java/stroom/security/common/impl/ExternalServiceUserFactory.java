@@ -26,10 +26,10 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.jose4j.jwt.JwtClaims;
+import tools.jackson.databind.ObjectMapper;
 
 public class ExternalServiceUserFactory implements ServiceUserFactory {
 

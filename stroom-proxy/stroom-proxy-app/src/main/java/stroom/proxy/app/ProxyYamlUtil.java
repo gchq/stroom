@@ -22,7 +22,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -32,6 +31,10 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -100,10 +103,9 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        final YAMLMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(outputStream, config);
-
     }
 
     public static void writeConfig(final ProxyConfig proxyConfig, final OutputStream outputStream) throws IOException {
@@ -113,7 +115,7 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(path.toFile(), config);
     }
@@ -122,5 +124,14 @@ public class ProxyYamlUtil {
         final Config config = new Config();
         config.setProxyConfig(proxyConfig);
         writeConfig(config, path);
+    }
+
+    private static YAMLMapper getConsistentOrderYAMLMapper() {
+        return YamlUtil.getVanillaMapper()
+                .rebuild()
+                .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+                .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+                .disable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST)
+                .build();
     }
 }

@@ -17,6 +17,7 @@
 package stroom.pathways.shared.otel.trace;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -90,33 +91,33 @@ public class Span {
                 @JsonProperty("spanId") final String spanId,
                 @JsonProperty("parentSpanId") final String parentSpanId,
                 @JsonProperty("traceState") final String traceState,
-                @JsonProperty("flags") final int flags,
+                @JsonProperty("flags") final Integer flags,
                 @JsonProperty("name") final String name,
                 @JsonProperty("kind") final SpanKind kind,
                 @JsonProperty("startTimeUnixNano") final String startTimeUnixNano,
                 @JsonProperty("endTimeUnixNano") final String endTimeUnixNano,
                 @JsonProperty("attributes") final List<KeyValue> attributes,
-                @JsonProperty("droppedAttributesCount") final int droppedAttributesCount,
+                @JsonProperty("droppedAttributesCount") final Integer droppedAttributesCount,
                 @JsonProperty("events") final List<SpanEvent> events,
-                @JsonProperty("droppedEventsCount") final int droppedEventsCount,
+                @JsonProperty("droppedEventsCount") final Integer droppedEventsCount,
                 @JsonProperty("links") final List<SpanLink> links,
-                @JsonProperty("droppedLinksCount") final int droppedLinksCount,
+                @JsonProperty("droppedLinksCount") final Integer droppedLinksCount,
                 @JsonProperty("status") final SpanStatus status) {
         this.traceId = traceId;
         this.spanId = spanId;
         this.parentSpanId = parentSpanId;
         this.traceState = traceState;
-        this.flags = flags;
+        this.flags = NullSafe.getInt(flags);
         this.name = name;
         this.kind = kind;
         this.startTimeUnixNano = startTimeUnixNano;
         this.endTimeUnixNano = endTimeUnixNano;
         this.attributes = attributes;
-        this.droppedAttributesCount = droppedAttributesCount;
+        this.droppedAttributesCount = NullSafe.getInt(droppedAttributesCount);
         this.events = events;
-        this.droppedEventsCount = droppedEventsCount;
+        this.droppedEventsCount = NullSafe.getInt(droppedEventsCount);
         this.links = links;
-        this.droppedLinksCount = droppedLinksCount;
+        this.droppedLinksCount = NullSafe.getInt(droppedLinksCount);
         this.status = status;
     }
 

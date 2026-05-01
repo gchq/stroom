@@ -16,19 +16,20 @@
 
 package stroom.index.lucene;
 
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.ContentMetadata;
 import dev.langchain4j.rag.content.aggregator.ContentAggregator;
 import dev.langchain4j.rag.query.Query;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import java.util.Map;
 public class OpenAIAdvancedReranker implements ContentAggregator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIAdvancedReranker.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final JsonMapper MAPPER = JsonUtil.getNoIndentMapper();
 
     private final ChatModel scoringModel;
 
@@ -106,7 +107,7 @@ public class OpenAIAdvancedReranker implements ContentAggregator {
             }
 
             return MAPPER.writeValueAsString(root);
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
         }

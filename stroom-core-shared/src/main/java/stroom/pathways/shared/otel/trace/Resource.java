@@ -17,6 +17,7 @@
 package stroom.pathways.shared.otel.trace;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,9 +38,9 @@ public class Resource {
 
     @JsonCreator
     public Resource(@JsonProperty("attributes") final List<KeyValue> attributes,
-                    @JsonProperty("droppedAttributesCount") final int droppedAttributesCount) {
+                    @JsonProperty("droppedAttributesCount") final Integer droppedAttributesCount) {
         this.attributes = attributes;
-        this.droppedAttributesCount = droppedAttributesCount;
+        this.droppedAttributesCount = NullSafe.getInt(droppedAttributesCount);
     }
 
     public List<KeyValue> getAttributes() {
@@ -83,6 +84,10 @@ public class Resource {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder extends AbstractBuilder<Resource, Builder> {
 

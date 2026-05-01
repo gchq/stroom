@@ -54,6 +54,7 @@ public class GenerateXPaths {
 
     @Test
     void name() throws Exception {
+        // TODO using legacy v2 jackson as introspect() is not a thing in v3
         final ObjectMapper objectMapper = new ObjectMapper();
 //        final Events events = new Events();
         final List<String> xPaths = new ArrayList<>();

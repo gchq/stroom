@@ -40,10 +40,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.TimeUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -33,6 +33,8 @@ dependencies {
     testImplementation project(':stroom-test-common')
     testImplementation libs.vavr
     testImplementation libs.guice
+    testImplementation libs.jackson2.core
+    testImplementation libs.jackson2.databind
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

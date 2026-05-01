@@ -19,9 +19,9 @@ package stroom.config.global.shared;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -319,10 +319,7 @@ class TestConfigProperty {
     }
 
     private void doSerdeTest(final ConfigProperty configProperty) throws IOException {
-        final ObjectMapper mapper = JsonUtil.getMapper();
-        assertThat(mapper.canSerialize(ConfigProperty.class)).isTrue();
-        assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
-
+        final JsonMapper mapper = JsonUtil.getMapper();
         final String json = mapper.writeValueAsString(configProperty);
         System.out.println("\n" + json);
 

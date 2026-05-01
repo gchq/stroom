@@ -21,19 +21,23 @@ import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Value;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper.Builder;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.JsonParser;
-import tools.jackson.core.JsonToken;
-import tools.jackson.core.json.JsonFactory;
-import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.cfg.EnumFeature;
-import tools.jackson.databind.json.JsonMapper;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,17 +46,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public final class JsonUtil {
+/**
+ * This is the <strong>legacy</strong> version of {@link JsonUtil} that uses Jackson v2.
+ * It is here for cases where we need to use features only available in Jackson v2 or
+ * where we are using libraries still built on jackson v2.
+ * <p>
+ * It should not be used for any new code.
+ * </p>
+ */
+@Deprecated
+public final class JsonV2Util {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtil.class);
 
-    private static final JsonMapper OBJECT_MAPPER = createMapper(true);
-    private static final JsonMapper NO_INDENT_MAPPER = createMapper(false);
+    private static final ObjectMapper OBJECT_MAPPER = createMapper(true);
+    private static final ObjectMapper NO_INDENT_MAPPER = createMapper(false);
 
     // Make them lazy as they are likely used in tests only
-    private static final LazyValue<JsonMapper> CONSISTENT_ORDER_MAPPER = LazyValue.initialisedBy(() ->
+    private static final LazyValue<ObjectMapper> CONSISTENT_ORDER_MAPPER = LazyValue.initialisedBy(() ->
             createConsistentOrderMapper(true));
-    private static final LazyValue<JsonMapper> NO_INDENT_CONSISTENT_ORDER_MAPPER = LazyValue.initialisedBy(() ->
+    private static final LazyValue<ObjectMapper> NO_INDENT_CONSISTENT_ORDER_MAPPER = LazyValue.initialisedBy(() ->
             createConsistentOrderMapper(false));
 
     public static String writeValueAsString(final Object object) {
@@ -65,25 +78,7 @@ public final class JsonUtil {
         if (object != null) {
             try {
                 json = getMapper(indent).writeValueAsString(object);
-            } catch (final JacksonException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-
-        return json;
-    }
-
-    public static String writeValueAsConsistentString(final Object object) {
-        return writeValueAsConsistentString(object, true);
-    }
-
-    public static String writeValueAsConsistentString(final Object object, final boolean indent) {
-        String json = null;
-
-        if (object != null) {
-            try {
-                json = getConsistentOrderMapper(indent).writeValueAsString(object);
-            } catch (final JacksonException e) {
+            } catch (final JsonProcessingException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }
@@ -99,9 +94,12 @@ public final class JsonUtil {
         Preconditions.checkNotNull(outputFile);
         try {
             getMapper().writeValue(outputFile.toFile(), object);
-        } catch (final JacksonException e) {
-            throw new RuntimeException(String.format("Error serialising object %s to json and writing it to file %s",
-                    object, outputFile.toAbsolutePath()), e);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(String.format("Error serialising object %s to json",
+                    object), e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error writing json to file %s",
+                    outputFile.toAbsolutePath()), e);
         }
     }
 
@@ -110,24 +108,24 @@ public final class JsonUtil {
         Preconditions.checkNotNull(valueType);
         try {
             return getMapper().readValue(content, valueType);
-        } catch (final JacksonException e) {
+        } catch (final JsonProcessingException e) {
             throw new RuntimeException(String.format("Error deserialising object %s %s",
                     content, e.getMessage()), e);
         }
     }
 
-    /**
-     * @return A {@link JsonMapper} that won't fail on unknown properties, includes only non-null
-     * values and is indented.
-     */
-    public static JsonMapper getMapper() {
+    public static ObjectMapper getMapper() {
         return OBJECT_MAPPER;
     }
 
-    public static JsonMapper getMapper(final boolean indent) {
+    public static ObjectMapper getMapper(final boolean indent) {
         return indent
                 ? OBJECT_MAPPER
                 : NO_INDENT_MAPPER;
+    }
+
+    public static ObjectMapper getNoIndentMapper() {
+        return NO_INDENT_MAPPER;
     }
 
     /**
@@ -141,47 +139,37 @@ public final class JsonUtil {
      * for use in tests, see {@link tools.jackson.databind.MapperFeature#SORT_CREATOR_PROPERTIES_FIRST}.
      * </p>
      */
-    public static JsonMapper getConsistentOrderMapper(final boolean indent) {
+    public static ObjectMapper getConsistentOrderMapper(final boolean indent) {
         return indent
                 ? CONSISTENT_ORDER_MAPPER.getValueWithLocks()
                 : NO_INDENT_CONSISTENT_ORDER_MAPPER.getValueWithLocks();
     }
 
-    /**
-     * @return A {@link JsonMapper} that won't fail on unknown properties, includes only non-null
-     * values and is not indented.
-     */
-    public static JsonMapper getNoIndentMapper() {
-        return NO_INDENT_MAPPER;
-    }
+    private static ObjectMapper createMapper(final boolean indent) {
 
-    private static JsonMapper createMapper(final boolean indent) {
-        return JsonMapper.builder()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .configure(SerializationFeature.INDENT_OUTPUT, indent)
-                .changeDefaultPropertyInclusion(incl ->
-                        incl.withValueInclusion(JsonInclude.Include.NON_NULL))
-                .changeDefaultPropertyInclusion(incl ->
-                        incl.withContentInclusion(JsonInclude.Include.NON_NULL))
-                // JacksonV3 changes the default behaviour for enums to use the toString
-                // as the serialised form, so turn that off so we use the name.
-                .disable(EnumFeature.READ_ENUMS_USING_TO_STRING)
-                // JacksonV3 changes the default behaviour for enums to use the toString
-                // as the serialised form, so turn that off so we use the name.
-                .disable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
+        return applyCommonConfig(JsonMapper.builder(), indent)
                 .build();
     }
 
-    private static JsonMapper createConsistentOrderMapper(final boolean indent) {
+    private static ObjectMapper createConsistentOrderMapper(final boolean indent) {
         // Include all the config from our standard JsonMapper
-        return getMapper(indent)
-                .rebuild()
-                .enable(tools.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-                .enable(tools.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+        return applyCommonConfig(JsonMapper.builder(), indent)
+                .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+                .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
                 // With this enabled the props in the ctor always come first (for perf reasons)
-                .disable(tools.jackson.databind.MapperFeature.SORT_CREATOR_PROPERTIES_FIRST)
+                .disable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST)
+                // We want them in alpha order
+                .disable(MapperFeature.SORT_CREATOR_PROPERTIES_BY_DECLARATION_ORDER)
                 .build();
     }
+
+    private static Builder applyCommonConfig(final Builder jsonMapperBuilder, final boolean indent) {
+        return jsonMapperBuilder.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
+                .configure(SerializationFeature.INDENT_OUTPUT, indent)
+                .defaultPropertyInclusion(Value.ALL_NON_NULL);
+    }
+
 
     /**
      * Gets the entries from the passed json that are children of the root object.
@@ -258,10 +246,10 @@ public final class JsonUtil {
                         break;
                     }
 
-                    if (jsonToken == JsonToken.PROPERTY_NAME) {
-                        final String fieldName = jParser.currentName();
+                    if (jsonToken == JsonToken.FIELD_NAME) {
+                        final String fieldName = jParser.getCurrentName();
                         if (remainingFields.contains(fieldName)) {
-                            final String value = jParser.nextStringValue();
+                            final String value = jParser.nextTextValue();
                             if (value != null) {
                                 results.put(fieldName, value);
                                 remainingFields.remove(fieldName);
@@ -284,7 +272,7 @@ public final class JsonUtil {
                         endRootToken = JsonToken.END_OBJECT;
                     }
                 }
-            } catch (final Exception e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error extracting fields '{}' from json:\n{}", keys, json));
             } finally {

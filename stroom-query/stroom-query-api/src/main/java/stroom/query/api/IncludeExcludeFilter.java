@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"includes", "excludes"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
                       "Either or both can be supplied")

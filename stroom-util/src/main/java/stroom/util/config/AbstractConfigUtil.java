@@ -17,14 +17,11 @@
 package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,11 +53,9 @@ public class AbstractConfigUtil {
             final Map<PropertyPath, Object> replacementValueMap) {
 
         final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
-        ;
 
         // Walk the tree to get the object info for each branch
-        buildObjectInfoMap(objectMapper, config, basePath, objectInfoMap);
+        buildObjectInfoMap(config, basePath, objectInfoMap);
         // Take a copy so we can remove items as we go
         final Map<PropertyPath, Object> replacementValueMapCopy = new HashMap<>(replacementValueMap);
 
@@ -87,7 +82,6 @@ public class AbstractConfigUtil {
      * @param config The root config
      */
     public static void buildObjectInfoMap(
-            final ObjectMapper objectMapper,
             final AbstractConfig config,
             final PropertyPath path,
             final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap) {
@@ -95,7 +89,6 @@ public class AbstractConfigUtil {
         config.setBasePath(path);
 
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                objectMapper,
                 path.getPropertyName(),
                 config);
 
@@ -120,7 +113,6 @@ public class AbstractConfigUtil {
                         if (childConfigObject != null) {
                             // Recurse into the child
                             buildObjectInfoMap(
-                                    objectMapper,
                                     childConfigObject,
                                     fullPath,
                                     objectInfoMap);

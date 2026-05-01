@@ -18,11 +18,6 @@ package stroom.pipeline.xml.converter.json;
 
 import stroom.pipeline.xml.converter.AbstractParser;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.JsonTokenId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -31,6 +26,11 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.LocatorImpl;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonTokenId;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.json.JsonReadFeature;
 
 import java.io.IOException;
 import java.util.Map;
@@ -69,22 +69,20 @@ public class JSONParser extends AbstractParser {
         // current read location is.
         reader = new ReaderLocator(input.getCharacterStream());
 
-        final JsonFactory jsonFactory = JSON_FACTORY_MAP.computeIfAbsent(config, k -> {
-            final JsonFactory f = new JsonFactory();
-
-            f.configure(Feature.ALLOW_COMMENTS, config.isAllowComments());
-            f.configure(Feature.ALLOW_YAML_COMMENTS, config.isAllowYamlComments());
-            f.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, config.isAllowUnquotedFieldNames());
-            f.configure(Feature.ALLOW_SINGLE_QUOTES, config.isAllowSingleQuotes());
-            f.configure(Feature.ALLOW_UNQUOTED_CONTROL_CHARS, config.isAllowUnquotedControlChars());
-            f.configure(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, config.isAllowBackslashEscapingAnyCharacter());
-            f.configure(Feature.ALLOW_NUMERIC_LEADING_ZEROS, config.isAllowNumericLeadingZeros());
-            f.configure(Feature.ALLOW_NON_NUMERIC_NUMBERS, config.isAllowNonNumericNumbers());
-            f.configure(Feature.ALLOW_MISSING_VALUES, config.isAllowMissingValues());
-            f.configure(Feature.ALLOW_TRAILING_COMMA, config.isAllowTrailingComma());
-
-            return f;
-        });
+        final JsonFactory jsonFactory = JSON_FACTORY_MAP.computeIfAbsent(config, k ->
+                JsonFactory.builder()
+                        .configure(JsonReadFeature.ALLOW_JAVA_COMMENTS, config.isAllowComments())
+                        .configure(JsonReadFeature.ALLOW_YAML_COMMENTS, config.isAllowYamlComments())
+                        .configure(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES, config.isAllowUnquotedFieldNames())
+                        .configure(JsonReadFeature.ALLOW_SINGLE_QUOTES, config.isAllowSingleQuotes())
+                        .configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS, config.isAllowUnquotedControlChars())
+                        .configure(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER,
+                                config.isAllowBackslashEscapingAnyCharacter())
+                        .configure(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS, config.isAllowNumericLeadingZeros())
+                        .configure(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS, config.isAllowNonNumericNumbers())
+                        .configure(JsonReadFeature.ALLOW_MISSING_VALUES, config.isAllowMissingValues())
+                        .configure(JsonReadFeature.ALLOW_TRAILING_COMMA, config.isAllowTrailingComma())
+                        .build());
 
         final JsonParser jp = jsonFactory.createParser(reader);
 
@@ -97,40 +95,40 @@ public class JSONParser extends AbstractParser {
 
         try {
             while (jp.nextToken() != null) {
-                switch (jp.getCurrentTokenId()) {
+                switch (jp.currentTokenId()) {
                     case JsonTokenId.ID_START_OBJECT:
-                        startElement(XML_ELEMENT_MAP, jp.getCurrentName());
+                        startElement(XML_ELEMENT_MAP, jp.currentName());
                         break;
                     case JsonTokenId.ID_END_OBJECT:
                         endElement(XML_ELEMENT_MAP);
                         break;
                     case JsonTokenId.ID_START_ARRAY:
-                        startElement(XML_ELEMENT_ARRAY, jp.getCurrentName());
+                        startElement(XML_ELEMENT_ARRAY, jp.currentName());
                         break;
                     case JsonTokenId.ID_END_ARRAY:
                         endElement(XML_ELEMENT_ARRAY);
                         break;
                     case JsonTokenId.ID_STRING:
-                        dataElement(XML_ELEMENT_STRING, jp.getCurrentName(), jp.getValueAsString());
+                        dataElement(XML_ELEMENT_STRING, jp.currentName(), jp.getValueAsString());
                         break;
                     case JsonTokenId.ID_NUMBER_INT:
-                        dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
+                        dataElement(XML_ELEMENT_NUMBER, jp.currentName(), jp.getValueAsString());
                         break;
                     case JsonTokenId.ID_NUMBER_FLOAT:
-                        dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
+                        dataElement(XML_ELEMENT_NUMBER, jp.currentName(), jp.getValueAsString());
                         break;
                     case JsonTokenId.ID_FALSE:
-                        dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
+                        dataElement(XML_ELEMENT_BOOLEAN, jp.currentName(), jp.getValueAsString());
                         break;
                     case JsonTokenId.ID_TRUE:
-                        dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
+                        dataElement(XML_ELEMENT_BOOLEAN, jp.currentName(), jp.getValueAsString());
                         break;
                     case JsonTokenId.ID_NULL:
-                        dataElement(XML_ELEMENT_NULL, jp.getCurrentName(), jp.getValueAsString());
+                        dataElement(XML_ELEMENT_NULL, jp.currentName(), jp.getValueAsString());
                         break;
                 }
             }
-        } catch (final JsonParseException e) {
+        } catch (final JacksonException e) {
             final LocatorImpl locator = new LocatorImpl();
             locator.setLineNumber(e.getLocation().getLineNr());
             locator.setColumnNumber(e.getLocation().getColumnNr());

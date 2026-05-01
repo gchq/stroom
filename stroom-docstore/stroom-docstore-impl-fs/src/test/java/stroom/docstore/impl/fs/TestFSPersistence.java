@@ -24,8 +24,8 @@ import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;

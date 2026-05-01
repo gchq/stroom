@@ -36,6 +36,7 @@ import stroom.util.concurrent.CachedValue;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -43,14 +44,13 @@ import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Templator;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -79,7 +79,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     private final RefreshManager refreshManager;
     // Don't change the configuration of this mapper after it is created, else not thread safe
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final IdpType idpType;
 
     public AbstractUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -98,7 +98,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         this.jerseyClientFactory = jerseyClientFactory;
         this.simplePathCreator = simplePathCreator;
         this.refreshManager = refreshManager;
-        this.objectMapper = createObjectMapper();
+        this.jsonMapper = JsonUtil.getNoIndentMapper();
         // Bake this in as a restart is required for this prop
         this.idpType = openIdConfigProvider.get().getIdentityProviderType();
         this.cachedFullNameTemplate = CachedValue.builder()
@@ -266,7 +266,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
 
         final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
-                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
+                tokenEndpoint, openIdConfiguration, jsonMapper, jerseyClientFactory)
                 .withCode(code)
                 .withGrantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                 .withRedirectUri(state.getRedirectUri())
@@ -474,7 +474,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
 
         final TokenResponse newTokenResponse = new OpenIdTokenRequestHelper(
-                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
+                tokenEndpoint, openIdConfiguration, jsonMapper, jerseyClientFactory)
                 .withGrantType(OpenId.GRANT_TYPE__REFRESH_TOKEN)
                 .withRefreshToken(refreshToken)
                 .sendRequest(true);
@@ -484,12 +484,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
 
         return new FetchTokenResult(newTokenResponse, jwtClaims);
-    }
-
-    private ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
     }
 
     private Optional<UserIdentity> createUserIdentity(final HttpServletRequest request,

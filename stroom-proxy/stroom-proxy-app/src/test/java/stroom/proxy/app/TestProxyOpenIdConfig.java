@@ -19,18 +19,17 @@ package stroom.proxy.app;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.test.common.AbstractValidatorTest;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.validation.ConstraintViolation;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,10 +41,9 @@ class TestProxyOpenIdConfig extends AbstractValidatorTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyOpenIdConfig.class);
 
     @TestFactory
-    Stream<DynamicTest> testSerDeSer() throws JsonProcessingException {
+    Stream<DynamicTest> testSerDeSer() {
 
-        final ObjectMapper objectMapper = new ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT);
+        final JsonMapper jsonMapper = JsonUtil.getMapper();
 
         final Map<IdpType, IdpType> typesMaps = new HashMap<>();
         for (final IdpType idpType : IdpType.values()) {
@@ -62,48 +60,44 @@ class TestProxyOpenIdConfig extends AbstractValidatorTest {
                     return DynamicTest.dynamicTest(
                             NullSafe.toStringOrElse(input, "null"),
                             () -> {
-                                doTest(objectMapper, entry.getKey(), expectedOutput);
+                                doTest(jsonMapper, entry.getKey(), expectedOutput);
                             });
                 });
     }
 
-    private void doTest(final ObjectMapper objectMapper,
+    private void doTest(final JsonMapper jsonMapper,
                         final IdpType inputType,
                         final IdpType expectedType) {
-        try {
-            LOGGER.info("idpType: {}", inputType);
+        LOGGER.info("idpType: {}", inputType);
 
-            final ProxyOpenIdConfig proxyOpenIdConfig = new ProxyOpenIdConfig()
-                    .withIdentityProviderType(inputType);
+        final ProxyOpenIdConfig proxyOpenIdConfig = new ProxyOpenIdConfig()
+                .withIdentityProviderType(inputType);
 
-            Assertions.assertThat(proxyOpenIdConfig.getIdentityProviderType())
-                    .isEqualTo(expectedType);
+        Assertions.assertThat(proxyOpenIdConfig.getIdentityProviderType())
+                .isEqualTo(expectedType);
 
-            final String json = objectMapper.writeValueAsString(proxyOpenIdConfig);
+        final String json = jsonMapper.writeValueAsString(proxyOpenIdConfig);
 
-            LOGGER.info("json\n{}", json);
+        LOGGER.info("json\n{}", json);
 
-            final AbstractOpenIdConfig abstractOpenIdConfig2 = objectMapper.readValue(json, ProxyOpenIdConfig.class);
+        final AbstractOpenIdConfig abstractOpenIdConfig2 = jsonMapper.readValue(json, ProxyOpenIdConfig.class);
 
-            Assertions.assertThat(abstractOpenIdConfig2)
-                    .isEqualTo(proxyOpenIdConfig);
+        Assertions.assertThat(abstractOpenIdConfig2)
+                .isEqualTo(proxyOpenIdConfig);
 
-            // Use lower case enum values to make sure we can de-ser them
-            final String json2 = inputType != null
-                    ? json.replace(
-                    inputType.name().toUpperCase(),
-                    inputType.name().toLowerCase())
-                    : json;
+        // Use lower case enum values to make sure we can de-ser them
+        final String json2 = inputType != null
+                ? json.replace(
+                inputType.name().toUpperCase(),
+                inputType.name().toLowerCase())
+                : json;
 
-            LOGGER.info("json2\n{}", json2);
+        LOGGER.info("json2\n{}", json2);
 
-            final AbstractOpenIdConfig abstractOpenIdConfig3 = objectMapper.readValue(json2, ProxyOpenIdConfig.class);
+        final AbstractOpenIdConfig abstractOpenIdConfig3 = jsonMapper.readValue(json2, ProxyOpenIdConfig.class);
 
-            Assertions.assertThat(abstractOpenIdConfig3)
-                    .isEqualTo(proxyOpenIdConfig);
-        } catch (final JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        Assertions.assertThat(abstractOpenIdConfig3)
+                .isEqualTo(proxyOpenIdConfig);
     }
 
     @Test

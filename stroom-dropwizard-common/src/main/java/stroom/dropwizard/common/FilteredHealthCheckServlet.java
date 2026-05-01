@@ -72,6 +72,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     @Inject
     public FilteredHealthCheckServlet(final HealthCheckRegistry healthCheckRegistry) {
         this.healthCheckRegistry = healthCheckRegistry;
+        // Legacy v2 ObjectMapper as HealthCheckModule uses v2
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new HealthCheckModule());
     }
@@ -148,11 +149,11 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
             final Set<String> allowSet = allowListParamVal == null || allowListParamVal.isBlank()
                     ? Collections.emptySet()
                     : Arrays.stream(allowListParamVal.split(","))
-                            .collect(Collectors.toSet());
+                      .collect(Collectors.toSet());
             final Set<String> denySet = denyListParamVal == null || denyListParamVal.isBlank()
                     ? Collections.emptySet()
                     : Arrays.stream(denyListParamVal.split(","))
-                            .collect(Collectors.toSet());
+                      .collect(Collectors.toSet());
 
             validateName(allowSet, PARAM_NAME_ALLOW_LIST);
             validateName(denySet, PARAM_NAME_DENY_LIST);
@@ -177,8 +178,8 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
                 if (!allNames.contains(allowName)) {
                     throw new RuntimeException(
                             "Name '" + allowName
-                                    + "' is not a valid health check name for parameter '"
-                                    + paramName + "'.");
+                            + "' is not a valid health check name for parameter '"
+                            + paramName + "'.");
                 }
             }
         }

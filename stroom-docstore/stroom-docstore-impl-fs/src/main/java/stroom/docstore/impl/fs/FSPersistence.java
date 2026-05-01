@@ -29,11 +29,11 @@ import stroom.util.shared.Clearable;
 import stroom.util.string.EncodingUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.StringReader;

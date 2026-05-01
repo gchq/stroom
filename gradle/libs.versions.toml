@@ -105,13 +105,14 @@ jackson-core = { module = "tools.jackson.core:jackson-core" } # version controll
 jackson-databind = { module = "tools.jackson.core:jackson-databind" } # version controlled by jackson-bom
 jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by jackson-bom
 
-
-#jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version = "2.9.10" } # version controlled by dropwizard-dependencies
-#jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by dropwizard-dependencies
-#jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by dropwizard-dependencies # files('libs/jackson-databind-2.10.5.1.jar'),#
-#jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by dropwizard-dependencies
-#jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8" } # version controlled by dropwizard-dependencies
-#jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" } # version controlled by dropwizard-dependencies
+# This is legacy Jackson v2 for anything that needs the old version, e.g. mbknor-jackson-jsonSchema
+# jackson-annotations is the same for both and is included above
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.2" }
+jackson2-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by jackson-bom
+jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by jackson-bom
+jackson2-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by jackson-bom
+jackson2-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8" } # version controlled by jackson-bom
+jackson2-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" } # version controlled by jackson-bom
 
 jakarta-activation = { module = "jakarta.activation:jakarta.activation-api" } # version controlled by dropwizard-dependencies
 jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" } # version controlled by dropwizard-dependencies

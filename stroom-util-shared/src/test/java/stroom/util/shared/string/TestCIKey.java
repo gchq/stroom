@@ -27,9 +27,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -42,6 +39,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -564,7 +563,7 @@ public class TestCIKey {
     }
 
     @Test
-    void testSerialisation() throws JsonProcessingException {
+    void testSerialisation() {
         final CIKey ciKey1 = CIKey.of("foo");
         final CIKey ciKey2 = CIKey.of("bar");
         String json = JsonUtil.getMapper()
@@ -600,7 +599,7 @@ public class TestCIKey {
     }
 
     @Test
-    void testSerialisation2() throws JsonProcessingException {
+    void testSerialisation2() {
         final SerdeTestClass serdeTestClass = new SerdeTestClass(CIKey.of("foo"), "bar");
 
         final String json = JsonUtil.getMapper()

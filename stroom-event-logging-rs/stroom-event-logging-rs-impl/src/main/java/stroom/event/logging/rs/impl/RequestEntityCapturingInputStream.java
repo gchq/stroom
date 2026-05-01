@@ -18,11 +18,11 @@ package stroom.event.logging.rs.impl;
 
 import stroom.util.logging.LambdaLogger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
