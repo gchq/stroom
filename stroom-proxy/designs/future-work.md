@@ -44,14 +44,10 @@ Custom attempt tracking across three backends with three different retry semanti
 **Priority**: High  
 **Status**: Implemented — `AbstractFileStoreContractTest` provides 14 shared contract tests covering `newWrite`, `commit`, `resolve`, `delete`, `isComplete`, `newDeterministicWrite`, commit idempotency, delete+rewrite cycles, and health checks. Concrete subclasses `TestLocalFileStoreContract` and `TestS3FileStoreContract` (using `StubS3Client`) run the full suite against both implementations. The previous `TestFileStoreIdempotency` was deleted (all tests migrated) and `TestS3FileStore` was trimmed to 3 S3-specific tests only.
 
-### 6. SQS/Kafka Contract Test Migration
+### ~~6. SQS/Kafka Contract Test Migration~~ ✅ DONE
 
-**Priority**: Low
-
-The `AbstractFileGroupQueueContractTest` currently only has `TestLocalFileGroupQueue` as a concrete implementation. The SQS and Kafka tests use mocks and have their own independent test classes. Consider:
-- Adding a LocalStack-based integration test that extends the contract suite for SQS
-- Adding a Testcontainers-based Kafka integration test
-- This would provide stronger confidence that external queues satisfy the same guarantees as local queues
+**Priority**: Low  
+**Status**: Implemented — `TestSqsFileGroupQueueContract` (LocalStack via Testcontainers) and `TestKafkaFileGroupQueueContract` (Testcontainers Kafka) extend the `AbstractFileGroupQueueContractTest` suite. Both use `@Testcontainers(disabledWithoutDocker = true)` and `@Tag("integration")` so they gracefully skip when Docker is unavailable and are excluded from normal `./gradlew test` runs. Run via `./gradlew :stroom-proxy:stroom-proxy-app:integrationTest`. The Kafka subclass overrides `contractAcknowledgePreventsRedelivery` with offset-commit verification to handle Kafka's consumer poll caching semantics.
 
 ### 7. End-to-End Integration Test with Real Queues
 

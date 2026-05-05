@@ -92,10 +92,21 @@ dependencies {
     testImplementation libs.mbknor.jackson.jsonSchema
     testImplementation libs.wiremock
 
+    testImplementation libs.testcontainers.core
+    testImplementation libs.testcontainers.junit.jupiter
+    testImplementation libs.testcontainers.localstack
+    testImplementation libs.testcontainers.kafka
+
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
 
+// Testcontainers LocalStack extends JUnit 4's TestRule. The root build.gradle
+// globally excludes junit:junit via configurations.all — file dependencies
+// bypass module exclusion rules.
+dependencies {
+    testImplementation files('libs/junit-4.13.2.jar')
+}
 jar {
     manifest {
         attributes(
@@ -165,6 +176,22 @@ tasks.register('copyFilesForProxyDockerBuild') {
 }
 
 test {
+    maxParallelForks = 1
+    useJUnitPlatform {
+        excludeTags 'integration'
+    }
+}
+
+// Integration tests requiring Docker (Testcontainers)
+tasks.register('integrationTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    group = 'verification'
+    description = 'Runs integration tests requiring Docker (Testcontainers)'
+    shouldRunAfter test
     maxParallelForks = 1
 }
 
