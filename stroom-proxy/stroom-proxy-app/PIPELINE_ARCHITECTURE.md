@@ -2,11 +2,10 @@
 
 ## Overview
 
-The Stroom Proxy pluggable queue pipeline replaces the legacy `DirQueue`-based
-data flow with a configurable, stage-based architecture. Data flows through
-independently executable stages connected by named queues. Each stage writes
-its output to a named file store and publishes a reference message to the next
-stage's input queue.
+The Stroom Proxy pluggable queue pipeline is the exclusive data flow
+architecture. Data flows through independently executable stages connected
+by named queues. Each stage writes its output to a named file store and
+publishes a reference message to the next stage's input queue.
 
 ```
 HTTP POST
@@ -29,9 +28,10 @@ HTTP POST
 - **At-least-once delivery**: All queue types are treated as at-least-once.
   Stage processors should be idempotent where practical.
 - **Independent stages**: Each stage can be enabled/disabled, scaled
-  independently (thread count), and backed by different queue types.
-- **Opt-in activation**: Controlled by `pipeline.enabled` in config. When
-  disabled, the legacy `ReceiverFactoryProvider` operates unchanged.
+  independently (via per-stage `threads` config), and backed by different queue types.
+- **Always active**: The pipeline is unconditionally wired at startup — no
+  `enabled` toggle. Default configuration wires all 5 stages with local
+  filesystem queues and stores.
 
 ---
 
@@ -49,7 +49,7 @@ HTTP POST
 - **Type**: Queue-consuming
 - **Input**: `splitZipInput` queue
 - **Output**: Writes per-feed splits to `splitStore`, publishes to `preAggregateInput`
-- **Component**: `SplitZipStageProcessor` + `ZipSplitter.splitZip()`
+- **Component**: `SplitZipStageProcessor` + `ZipSplitter.splitZip()` (static utility)
 
 ### Pre-Aggregate
 
@@ -84,7 +84,6 @@ HTTP POST
 |------|-------|----------|
 | `LOCAL_FILESYSTEM` | `LocalFileGroupQueue` | Default. Filesystem-backed with atomic writes. |
 | `SQS` | `SqsFileGroupQueue` | AWS SQS for distributed deployments. |
-| `KAFKA` | `KafkaFileGroupQueue` | Kafka for high-throughput deployments. |
 
 All queue types implement `FileGroupQueue` and carry `FileGroupQueueMessage`
 payloads serialised via `FileGroupQueueMessageCodec`.
@@ -113,19 +112,16 @@ All stores implement `FileStore` with:
 ### Minimal (full pipeline with defaults)
 
 ```yaml
-pipeline:
-  enabled: true
+pipeline: {}
 ```
 
-When `enabled: true` with no `stages` block, all 5 stages are auto-wired
-with standard queue/store names. See `proxy-pipeline.yml` for the full
-reference config.
+With no `stages` block, all 5 stages are auto-wired with standard
+queue/store names. See `proxy-pipeline.yml` for the full reference config.
 
 ### Custom thread counts
 
 ```yaml
 pipeline:
-  enabled: true
   stages:
     forward:
       enabled: true
@@ -138,7 +134,6 @@ pipeline:
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
     splitZipInput:
       type: SQS
@@ -166,7 +161,7 @@ Stage runners use `PipelineStageRunner` with configurable:
 
 ## Monitoring
 
-When the pipeline is enabled, the `/queues` admin endpoint shows:
+When the pipeline is active, the `/queues` admin endpoint shows:
 
 - **Pipeline Stages**: runner status, thread count, poll/process/ack/fail counters
 - **Pipeline Queues**: queue type per named queue
@@ -181,7 +176,7 @@ Counter data comes from `FileGroupQueueWorkerCounters` snapshots exposed via
 
 | Binding | Source |
 |---------|--------|
-| `ReceiverFactory` | `ProxyCoreModule.provideReceiverFactory()` — conditional on `pipeline.enabled` |
+| `ReceiverFactory` | `ProxyCoreModule.provideReceiverFactory()` — always from `ProxyPipelineAssembler` |
 | `ProxyPipelineAssembler` | `ProxyCoreModule.provideProxyPipelineAssembler()` — `@Singleton @Provides` |
 | `ProxyPipelineManagedLifecycle` | `ProxyModule` — `Managed` multibinder |
 
@@ -196,10 +191,9 @@ Counter data comes from `FileGroupQueueWorkerCounters` snapshots exposed via
 
 ---
 
-## Migration from Legacy
+## ZipSplitter
 
-1. Set `pipeline.enabled: true` in proxy YAML
-2. No other config needed — defaults wire all stages
-3. Legacy `DirQueue` path remains active when `enabled: false`
-4. Legacy `ReceiverFactoryProvider` is `@Deprecated(forRemoval = true)`
-5. After production validation, remove legacy code paths
+`ZipSplitter` is a static utility class providing `splitZip()` and
+`splitZipByFeed()` methods. It is used by `SplitZipStageProcessor` within the
+pipeline. `ZipReceiver` no longer depends on `ZipSplitter` — multi-feed zips
+are routed to the split-zip queue via `ReceiveStagePublisher`.

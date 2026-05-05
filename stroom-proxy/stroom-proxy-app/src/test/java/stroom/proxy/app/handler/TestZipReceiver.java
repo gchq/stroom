@@ -41,7 +41,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
+
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -80,8 +80,6 @@ public class TestZipReceiver extends StroomUnitTest {
     private AttributeMapFilterFactory mockAttributeMapFilterFactory;
     @Mock
     private LogStream mockLogStream;
-    @Mock
-    private ZipSplitter mockZipSplitter;
     @Mock
     private ReceiveDataConfig mockReceiveDataConfig;
 
@@ -169,11 +167,9 @@ public class TestZipReceiver extends StroomUnitTest {
 
         final List<Path> destinationPaths = doReceive(fileGroup.getZip(), attributeMap, attrMap -> false);
 
-        // All dropped so nothing goes to splitter or destination
+        // All dropped so nothing goes to destination
         assertThat(destinationPaths)
                 .isEmpty();
-        Mockito.verify(mockZipSplitter, Mockito.never())
-                .add(Mockito.any());
     }
 
     private FileGroup createZip(final AttributeMap attributeMap, final Set<FeedKey> feedKeys) throws IOException {
@@ -209,8 +205,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isInstanceOf(StroomStreamException.class);
 
         // All rejected so nothing passed along
-        Mockito.verify(mockZipSplitter, Mockito.never())
-                .add(Mockito.any());
+
     }
 
     @Test
@@ -239,8 +234,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isInstanceOf(StroomStreamException.class);
 
         // All rejected so nothing passed along
-        Mockito.verify(mockZipSplitter, Mockito.never())
-                .add(Mockito.any());
+
     }
 
     @Test
@@ -286,9 +280,7 @@ public class TestZipReceiver extends StroomUnitTest {
             }
         }
 
-        // Single feed zip so no split needed
-        Mockito.verify(mockZipSplitter, Mockito.never())
-                .add(Mockito.any());
+        // Single feed zip so no split needed — goes to destination directly
     }
 
     @Test
@@ -302,11 +294,6 @@ public class TestZipReceiver extends StroomUnitTest {
         // This also creates an entries file, but we ignore that
         final FileGroup fileGroup = createZip(attributeMap, feedKeys);
 
-        final ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
-        Mockito.doNothing()
-                .when(mockZipSplitter)
-                .add(pathCaptor.capture());
-
         final List<Path> destinationPaths = doReceive(
                 fileGroup.getZip(),
                 attributeMap,
@@ -314,20 +301,16 @@ public class TestZipReceiver extends StroomUnitTest {
                         allowedFeedKey.feed()
                                 .equals(attrMap.get(StandardHeaderArguments.FEED)));
 
-        final List<Path> zipSplitterPaths = pathCaptor.getAllValues();
-
-        // zip needs splitting so not sent to dest
+        // Multi-feed zip goes to destination for pipeline to split
         assertThat(destinationPaths)
-                .hasSize(0);
-        assertThat(zipSplitterPaths)
                 .hasSize(1);
 
-        final Path zipSplitterPath = zipSplitterPaths.getFirst();
-        LOGGER.info("Snapshot of {}\n{}", zipSplitterPath, DirectorySnapshot.of(zipSplitterPath));
-        final FileGroup outputFileGroup = new FileGroup(zipSplitterPath);
+        final Path destPath = destinationPaths.getFirst();
+        LOGGER.info("Snapshot of {}\n{}", destPath, DirectorySnapshot.of(destPath));
+        final FileGroup outputFileGroup = new FileGroup(destPath);
 
         final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(outputFileGroup.getZip());
-        // The dropped entries are still in the zip at this point, ZipSplitter will remove them,
+        // The dropped entries are still in the zip at this point, SplitZipStageProcessor will remove them,
         // but they won't be in the entries file.
         assertThat(proxyZipSnapshot.getItemGroups())
                 .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
@@ -341,7 +324,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isTrue();
 
         // No feed/type in the meta file, as the zip may contain many different feeds
-        final AttributeMap meta = TestDataUtil.getMeta(zipSplitterPath);
+        final AttributeMap meta = TestDataUtil.getMeta(destPath);
         assertThat(meta.get(StandardHeaderArguments.FEED))
                 .isNull();
         assertThat(meta.get(StandardHeaderArguments.TYPE))
@@ -361,11 +344,6 @@ public class TestZipReceiver extends StroomUnitTest {
         // This also creates an entries file, but we ignore that
         final FileGroup fileGroup = createZip(attributeMap, feedKeys);
 
-        final ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
-        Mockito.doNothing()
-                .when(mockZipSplitter)
-                .add(pathCaptor.capture());
-
         final List<Path> destinationPaths = doReceive(
                 fileGroup.getZip(),
                 attributeMap,
@@ -376,20 +354,16 @@ public class TestZipReceiver extends StroomUnitTest {
                     return allowedFeedKeys.contains(feedKey);
                 });
 
-        final List<Path> zipSplitterPaths = pathCaptor.getAllValues();
-
-        // zip needs splitting so not sent to dest
+        // Multi-feed zip goes to destination for pipeline to split
         assertThat(destinationPaths)
-                .hasSize(0);
-        assertThat(zipSplitterPaths)
                 .hasSize(1);
 
-        final Path zipSplitterPath = zipSplitterPaths.getFirst();
-        LOGGER.info("Snapshot of {}\n{}", zipSplitterPath, DirectorySnapshot.of(zipSplitterPath));
-        final FileGroup outputFileGroup = new FileGroup(zipSplitterPath);
+        final Path destPath = destinationPaths.getFirst();
+        LOGGER.info("Snapshot of {}\n{}", destPath, DirectorySnapshot.of(destPath));
+        final FileGroup outputFileGroup = new FileGroup(destPath);
 
         final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(outputFileGroup.getZip());
-        // The dropped entries are still in the zip at this point, ZipSplitter will remove them,
+        // The dropped entries are still in the zip at this point, SplitZipStageProcessor will remove them,
         // but they won't be in the entries file.
         assertThat(proxyZipSnapshot.getItemGroups())
                 .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
@@ -403,7 +377,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isTrue();
 
         // No feed/type in the meta file, as the zip may contain many different feeds
-        final AttributeMap meta = TestDataUtil.getMeta(zipSplitterPath);
+        final AttributeMap meta = TestDataUtil.getMeta(destPath);
         assertThat(meta.get(StandardHeaderArguments.FEED))
                 .isNull();
         assertThat(meta.get(StandardHeaderArguments.TYPE))
@@ -440,7 +414,6 @@ public class TestZipReceiver extends StroomUnitTest {
                 mockAttributeMapFilterFactory,
                 () -> dataDir,
                 mockLogStream,
-                mockZipSplitter,
                 () -> mockReceiveDataConfig);
 
         final List<Path> consumedPaths = new ArrayList<>();

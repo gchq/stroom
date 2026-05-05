@@ -117,8 +117,6 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
         final PipelineMonitorSnapshot snapshot =
                 PipelineMonitorProvider.buildSnapshot(harness.runtime);
 
-        assertThat(snapshot.pipelineEnabled()).isTrue();
-
         // 5 stages (receive + 4 queue-consuming)
         assertThat(snapshot.stages())
                 .as("Snapshot should report all 5 stages")
@@ -186,11 +184,9 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void testDefaultFullPipelineStagesAreUsedWhenEnabledWithoutStages() {
-        // Simulate: pipeline.enabled=true with no stages in YAML (stages == null)
-        final ProxyPipelineConfig config = new ProxyPipelineConfig(true, null, null, null);
-
-        assertThat(config.isEnabled()).isTrue();
+    void testDefaultFullPipelineStagesAreUsedWhenNoStages() {
+        // Simulate: no stages in YAML (stages == null)
+        final ProxyPipelineConfig config = new ProxyPipelineConfig(null, null, null);
 
         // All 5 stages should be enabled
         assertThat(config.getStages().getReceive().isEnabled()).isTrue();
@@ -212,13 +208,13 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
 
     @Test
     void testExplicitStagesPreservedWhenProvided() {
-        // Simulate: pipeline.enabled=true with explicit stages
+        // Simulate: explicit stages provided in YAML
         final PipelineStagesConfig explicitStages = new PipelineStagesConfig(
                 null, null, null, null,
                 new PipelineStageConfig(true, "customInput", null, null, null,
                         new PipelineStageThreadsConfig()));
 
-        final ProxyPipelineConfig config = new ProxyPipelineConfig(true, null, explicitStages, null);
+        final ProxyPipelineConfig config = new ProxyPipelineConfig(null, explicitStages, null);
 
         // The explicit forward stage should be preserved
         assertThat(config.getStages().getForward().isEnabled()).isTrue();
@@ -230,18 +226,16 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
     }
 
     @Test
-    void testDisabledPipelineDoesNotAutoWireStages() {
-        // Simulate: pipeline.enabled=false with no stages
-        final ProxyPipelineConfig config = new ProxyPipelineConfig(false, null, null, null);
+    void testNoArgConstructorDefaultsAllStagesEnabled() {
+        // Default constructor should auto-wire all stages
+        final ProxyPipelineConfig config = new ProxyPipelineConfig();
 
-        assertThat(config.isEnabled()).isFalse();
-
-        // All stages should be disabled (default PipelineStagesConfig)
-        assertThat(config.getStages().getReceive().isEnabled()).isFalse();
-        assertThat(config.getStages().getSplitZip().isEnabled()).isFalse();
-        assertThat(config.getStages().getPreAggregate().isEnabled()).isFalse();
-        assertThat(config.getStages().getAggregate().isEnabled()).isFalse();
-        assertThat(config.getStages().getForward().isEnabled()).isFalse();
+        // All stages should be enabled
+        assertThat(config.getStages().getReceive().isEnabled()).isTrue();
+        assertThat(config.getStages().getSplitZip().isEnabled()).isTrue();
+        assertThat(config.getStages().getPreAggregate().isEnabled()).isTrue();
+        assertThat(config.getStages().getAggregate().isEnabled()).isTrue();
+        assertThat(config.getStages().getForward().isEnabled()).isTrue();
     }
 
     // -------------------------------------------------------------------------
@@ -305,7 +299,7 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
         RuntimeTestHarness(final Path testDir) {
             // Use the new defaultFullPipelineStages() config auto-wiring
             final ProxyPipelineConfig config = new ProxyPipelineConfig(
-                    true, null, null, null);
+                    null, null, null);
 
             final PathCreator pathCreator = new TestPathCreator(testDir);
 

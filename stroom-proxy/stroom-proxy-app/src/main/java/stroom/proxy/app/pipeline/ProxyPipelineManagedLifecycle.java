@@ -16,7 +16,6 @@
 
 package stroom.proxy.app.pipeline;
 
-import stroom.proxy.app.ProxyConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -28,14 +27,10 @@ import jakarta.inject.Singleton;
 /**
  * Dropwizard {@link Managed} adapter for the reference-message pipeline lifecycle.
  * <p>
- * This is a thin wrapper that conditionally starts/stops the pipeline based on
- * the {@code pipeline.enabled} configuration flag. When disabled, start and
- * stop are no-ops.
- * </p>
- * <p>
+ * This is a thin wrapper that starts/stops the pipeline stage workers.
  * The assembler is fetched lazily via a {@link Provider} so that production
  * handlers (PreAggregator, Aggregator, Forwarder, etc.) are only fully wired
- * when the pipeline is actually enabled.
+ * when the application starts.
  * </p>
  */
 @Singleton
@@ -43,27 +38,20 @@ public class ProxyPipelineManagedLifecycle implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyPipelineManagedLifecycle.class);
 
-    private final ProxyConfig proxyConfig;
     private final Provider<ProxyPipelineAssembler> assemblerProvider;
     private volatile ProxyPipelineLifecycle lifecycle;
 
     @Inject
-    public ProxyPipelineManagedLifecycle(final ProxyConfig proxyConfig,
-                                         final Provider<ProxyPipelineAssembler> assemblerProvider) {
-        this.proxyConfig = proxyConfig;
+    public ProxyPipelineManagedLifecycle(final Provider<ProxyPipelineAssembler> assemblerProvider) {
         this.assemblerProvider = assemblerProvider;
     }
 
     @Override
     public void start() {
-        if (proxyConfig.getPipelineConfig().isEnabled()) {
-            LOGGER.info(() -> "Reference-message pipeline is enabled, starting lifecycle...");
-            lifecycle = assemblerProvider.get().getLifecycle();
-            lifecycle.start();
-            LOGGER.info(() -> "Reference-message pipeline lifecycle started");
-        } else {
-            LOGGER.info(() -> "Reference-message pipeline is disabled, skipping lifecycle start");
-        }
+        LOGGER.info(() -> "Starting reference-message pipeline lifecycle...");
+        lifecycle = assemblerProvider.get().getLifecycle();
+        lifecycle.start();
+        LOGGER.info(() -> "Reference-message pipeline lifecycle started");
     }
 
     @Override
@@ -75,3 +63,4 @@ public class ProxyPipelineManagedLifecycle implements Managed {
         }
     }
 }
+

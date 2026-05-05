@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.Valid;
 
 import java.util.Map;
-import java.util.Objects;
+
 
 /**
  * Top-level configuration holder for the reference-message proxy pipeline.
@@ -43,50 +43,32 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     public static final String PRE_AGGREGATE_STORE = "preAggregateStore";
     public static final String AGGREGATE_STORE = "aggregateStore";
 
-    private final boolean enabled;
     private final Map<String, QueueDefinition> queues;
     private final PipelineStagesConfig stages;
     private final Map<String, FileStoreDefinition> fileStores;
 
     public ProxyPipelineConfig() {
-        this(false, defaultQueues(), new PipelineStagesConfig(), defaultFileStores());
+        this(null, null, null);
     }
 
-    /**
-     * Convenience constructor for tests that don't need to set the enabled flag.
-     */
-    public ProxyPipelineConfig(final Map<String, QueueDefinition> queues,
-                               final PipelineStagesConfig stages,
-                               final Map<String, FileStoreDefinition> fileStores) {
-        this(false, queues, stages, fileStores);
-    }
 
     @JsonCreator
     public ProxyPipelineConfig(
-            @JsonProperty("enabled") final Boolean enabled,
             @JsonProperty("queues") final Map<String, QueueDefinition> queues,
             @JsonProperty("stages") final PipelineStagesConfig stages,
             @JsonProperty("fileStores") final Map<String, FileStoreDefinition> fileStores) {
 
-        this.enabled = enabled != null && enabled;
         this.queues = queues == null || queues.isEmpty()
                 ? defaultQueues()
                 : Map.copyOf(queues);
-        // When pipeline is enabled and no explicit stages block is provided,
-        // automatically wire all 5 stages with standard queue/store references.
-        if (this.enabled && stages == null) {
-            this.stages = defaultFullPipelineStages();
-        } else {
-            this.stages = Objects.requireNonNullElseGet(stages, PipelineStagesConfig::new);
-        }
+        // When no explicit stages block is provided, automatically wire
+        // all 5 stages with standard queue/store references.
+        this.stages = stages == null
+                ? defaultFullPipelineStages()
+                : stages;
         this.fileStores = fileStores == null || fileStores.isEmpty()
                 ? defaultFileStores()
                 : Map.copyOf(fileStores);
-    }
-
-    @JsonProperty
-    public boolean isEnabled() {
-        return enabled;
     }
 
     @Valid
@@ -109,8 +91,8 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
 
     /**
      * @return A fully-wired stages config with all 5 stages enabled and connected
-     * to the standard queue and file-store names. This is used as the default when
-     * {@code pipeline.enabled=true} and no explicit stages block is provided.
+     * to the standard queue and file-store names. This is the default when no
+     * explicit stages block is provided in YAML.
      */
     public static PipelineStagesConfig defaultFullPipelineStages() {
         return new PipelineStagesConfig(

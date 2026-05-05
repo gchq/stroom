@@ -16,7 +16,7 @@
 
 package stroom.proxy.app.pipeline;
 
-import stroom.proxy.app.ProxyConfig;
+
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -33,46 +33,29 @@ import java.util.Optional;
 /**
  * Collects pipeline runtime state into an immutable
  * {@link PipelineMonitorSnapshot} for the admin monitoring endpoint.
- * <p>
- * When the pipeline is disabled, returns a snapshot with
- * {@code pipelineEnabled=false} and empty stage/queue/store lists.
- * </p>
  */
 @Singleton
 public class PipelineMonitorProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineMonitorProvider.class);
 
-    private final ProxyConfig proxyConfig;
     private final Provider<ProxyPipelineAssembler> assemblerProvider;
 
     @Inject
-    public PipelineMonitorProvider(final ProxyConfig proxyConfig,
-                                   final Provider<ProxyPipelineAssembler> assemblerProvider) {
-        this.proxyConfig = proxyConfig;
+    public PipelineMonitorProvider(final Provider<ProxyPipelineAssembler> assemblerProvider) {
         this.assemblerProvider = assemblerProvider;
     }
 
     /**
-     * @return A snapshot of the current pipeline state. Returns a disabled
-     * snapshot when the pipeline is not enabled.
+     * @return A snapshot of the current pipeline state.
      */
     public PipelineMonitorSnapshot snapshot() {
-        if (!proxyConfig.getPipelineConfig().isEnabled()) {
-            return new PipelineMonitorSnapshot(
-                    false,
-                    List.of(),
-                    List.of(),
-                    List.of());
-        }
-
         try {
             final ProxyPipelineRuntime runtime = assemblerProvider.get().getRuntime();
             return buildSnapshot(runtime);
         } catch (final Exception e) {
             LOGGER.warn(() -> "Failed to build pipeline monitor snapshot", e);
             return new PipelineMonitorSnapshot(
-                    true,
                     List.of(),
                     List.of(),
                     List.of());
@@ -159,6 +142,6 @@ public class PipelineMonitorProvider {
             fileStores.add(new PipelineMonitorSnapshot.FileStoreSnapshot(name, healthy, healthDetail));
         });
 
-        return new PipelineMonitorSnapshot(true, stages, queues, fileStores);
+        return new PipelineMonitorSnapshot(stages, queues, fileStores);
     }
 }

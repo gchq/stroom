@@ -54,7 +54,7 @@ Every stage follows a strict ordering: **write output → publish message → de
 
 ### 3.3 Stage Independence
 
-Each stage only knows its input queue, output queue, and file store. Stages can be enabled/disabled independently, run in separate processes, scaled independently, and use different queue/store backends.
+Each stage only knows its input queue, output queue, and file store. All stages are enabled by default. For distributed deployments, individual stages can be disabled so that each process runs only the stages it is responsible for. Stages can be run in separate processes, scaled independently, and use different queue/store backends.
 
 ### 3.4 Idempotent Writes
 
@@ -234,7 +234,6 @@ A leased item from a queue with acknowledgement semantics:
 ```mermaid
 classDiagram
     class ProxyPipelineConfig {
-        +boolean enabled
         +Map~String,QueueDefinition~ queues
         +Map~String,FileStoreDefinition~ fileStores
         +PipelineStagesConfig stages
@@ -249,7 +248,7 @@ classDiagram
     }
 
     class PipelineStageConfig {
-        +boolean enabled
+        +boolean enabled = true
         +String inputQueue
         +String outputQueue
         +String splitZipQueue

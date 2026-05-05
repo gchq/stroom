@@ -18,6 +18,7 @@ package stroom.proxy.app.pipeline;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,8 +30,13 @@ import java.util.Objects;
 
 /**
  * Common stage configuration for the reference-message pipeline.
+ * <p>
+ * There are 5 instances of this class in the config tree (one per stage),
+ * so it cannot be injected as a singleton.
+ * </p>
  */
 @JsonPropertyOrder(alphabetic = true)
+@NotInjectableConfig
 public class PipelineStageConfig extends AbstractConfig implements IsProxyConfig {
 
     private final boolean enabled;

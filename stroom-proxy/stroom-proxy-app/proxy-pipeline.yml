@@ -1,26 +1,20 @@
 # Stroom Proxy — Pipeline Configuration Reference
 #
 # This file documents the full pipeline configuration block for the
-# pluggable queue architecture. When `pipeline.enabled: true` is set
-# and no explicit `stages` block is provided, the proxy automatically
-# wires all 5 stages with the standard queue and file-store names shown
-# below.
+# pluggable queue architecture. The pipeline is always active — when no
+# explicit `stages` block is provided, the proxy automatically wires
+# all 5 stages with the standard queue and file-store names shown below.
 #
 # To use: copy the `pipeline` block into your proxy.yml configuration.
 # The minimal configuration is just:
 #
-#   pipeline:
-#     enabled: true
+#   pipeline: {}
 #
 # All queues, stores, and stages will use sensible defaults.
 
 pipeline:
-  # Master switch for the new pipeline architecture.
-  # When false (default), the legacy ReceiverFactoryProvider is used.
-  enabled: true
-
   # Named queues used by pipeline stages. All queues default to
-  # LOCAL_FILESYSTEM type. Override only if you need SQS or Kafka.
+  # LOCAL_FILESYSTEM type. Override only if you need SQS.
   queues:
     splitZipInput:
       type: LOCAL_FILESYSTEM
@@ -41,8 +35,8 @@ pipeline:
     preAggregateStore: {}
     aggregateStore: {}
 
-  # Stage definitions. When omitted with enabled=true, all 5 stages
-  # are auto-wired with the standard queue/store names above.
+  # Stage definitions. When omitted, all 5 stages are auto-wired with
+  # the standard queue/store names above.
   # Uncomment and modify only if you need to customise thread counts
   # or disable specific stages.
   #

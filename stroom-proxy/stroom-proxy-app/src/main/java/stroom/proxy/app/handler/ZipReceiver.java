@@ -99,7 +99,6 @@ public class ZipReceiver implements Receiver {
     private final ReceiveDataConfig receiveDataConfig;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
-    private final ZipSplitter zipSplitter;
     private final LogStream logStream;
     private Consumer<Path> destination;
 
@@ -107,11 +106,9 @@ public class ZipReceiver implements Receiver {
     public ZipReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                        final DataDirProvider dataDirProvider,
                        final LogStream logStream,
-                       final ZipSplitter zipSplitter,
                        final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
-        this.zipSplitter = zipSplitter;
 
         // Make receiving zip dir provider.
         receivingDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVING_ZIP);
@@ -281,13 +278,12 @@ public class ZipReceiver implements Receiver {
                 LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
                 destination.accept(receivingDir);
             } else {
-                // We have more than one feed in the source zip so split the source into a zip file for each feed.
-                // Before we can queue the zip for splitting we need to serialise the attr map, so it is
-                // available for the split process.
+                // We have more than one feed in the source zip or it's not in proper format.
+                // The pipeline's SplitZipStageProcessor will handle splitting.
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
-                LOGGER.debug(() -> LogUtil.message("Pass {} to zipSplitter, isValid: {}, feedGroupCount: {}",
+                LOGGER.debug(() -> LogUtil.message("Pass {} to destination for splitting, isValid: {}, feedGroupCount: {}",
                         receivingDir, receiveResult.valid, feedGroupCount));
-                zipSplitter.add(receivingDir);
+                destination.accept(receivingDir);
             }
         } else {
             LOGGER.debug("No allowed feedKeys, all are dropped");
@@ -708,7 +704,6 @@ public class ZipReceiver implements Receiver {
 
     public void setDestination(final Consumer<Path> destination) {
         this.destination = destination;
-        this.zipSplitter.setDestination(destination);
     }
 
 

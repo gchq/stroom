@@ -305,7 +305,6 @@ class TestProxyPipelineAssembler extends StroomUnitTest {
 
     static ProxyPipelineConfig createFullPipelineConfig() {
         return new ProxyPipelineConfig(
-                true,
                 defaultQueues(),
                 new PipelineStagesConfig(
                         new PipelineStageConfig(

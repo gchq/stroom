@@ -16,7 +16,7 @@
 
 package stroom.proxy.app.pipeline;
 
-import stroom.proxy.app.ProxyConfig;
+
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -33,8 +33,6 @@ import java.util.Map;
  * Aggregated Dropwizard health check for the proxy pipeline.
  * <p>
  * Checks all configured queues and file stores for backend connectivity.
- * When the pipeline is disabled, the health check returns healthy with
- * a message indicating that the pipeline is not enabled.
  * </p>
  */
 @Singleton
@@ -42,25 +40,15 @@ public class PipelineHealthChecks implements HasHealthCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineHealthChecks.class);
 
-    private final ProxyConfig proxyConfig;
     private final Provider<ProxyPipelineAssembler> assemblerProvider;
 
     @Inject
-    public PipelineHealthChecks(final ProxyConfig proxyConfig,
-                                final Provider<ProxyPipelineAssembler> assemblerProvider) {
-        this.proxyConfig = proxyConfig;
+    public PipelineHealthChecks(final Provider<ProxyPipelineAssembler> assemblerProvider) {
         this.assemblerProvider = assemblerProvider;
     }
 
     @Override
     public HealthCheck.Result getHealth() {
-        if (!proxyConfig.getPipelineConfig().isEnabled()) {
-            return HealthCheck.Result.builder()
-                    .healthy()
-                    .withMessage("Pipeline not enabled")
-                    .build();
-        }
-
         try {
             final ProxyPipelineRuntime runtime = assemblerProvider.get().getRuntime();
             return checkRuntime(runtime);

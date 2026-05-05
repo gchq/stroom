@@ -389,10 +389,10 @@ fileStores:
 
 ### Top-Level Structure
 
+The pipeline is **always active**. With no explicit `pipeline` block, all 5 stages are auto-wired with local-filesystem queues and stores — zero configuration required.
+
 ```yaml
 pipeline:
-  enabled: true
-
   queues:
     splitZipInput:     { ... }
     preAggregateInput: { ... }
@@ -419,7 +419,7 @@ Each stage has the following fields:
 
 | Field | Description |
 |-------|-------------|
-| `enabled` | Whether this stage runs in this process (default: `false`) |
+| `enabled` | Whether this stage runs in this process (default: `true`) |
 | `inputQueue` | Logical name of the input queue (references a key in `queues`) |
 | `outputQueue` | Logical name of the output queue |
 | `splitZipQueue` | Logical name of the split-zip queue (receive stage only) |
@@ -434,18 +434,16 @@ Each stage has the following fields:
 
 ### Example 1: Simple Single-Process (All Defaults)
 
-The simplest deployment — all stages run in one process with local filesystem queues and stores. Setting `enabled: true` with no explicit stages configuration automatically wires all five stages.
+The simplest deployment — all stages run in one process with local filesystem queues and stores. **No pipeline configuration is needed at all.** An empty `pipeline` block (or omitting it entirely) auto-wires all five stages.
 
 ```yaml
-pipeline:
-  enabled: true
+pipeline: {}
 ```
 
-This is equivalent to:
+This is equivalent to the following fully-expanded configuration:
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
     splitZipInput:     { type: LOCAL_FILESYSTEM }
     preAggregateInput: { type: LOCAL_FILESYSTEM }
@@ -458,70 +456,46 @@ pipeline:
     aggregateStore:    { type: LOCAL_FILESYSTEM }
   stages:
     receive:
-      enabled: true
       outputQueue: preAggregateInput
       splitZipQueue: splitZipInput
       fileStore: receiveStore
     splitZip:
-      enabled: true
       inputQueue: splitZipInput
       outputQueue: preAggregateInput
       fileStore: splitStore
     preAggregate:
-      enabled: true
       inputQueue: preAggregateInput
       outputQueue: aggregateInput
       fileStore: preAggregateStore
     aggregate:
-      enabled: true
       inputQueue: aggregateInput
       outputQueue: forwardingInput
       fileStore: aggregateStore
     forward:
-      enabled: true
       inputQueue: forwardingInput
 ```
 
 ### Example 2: High-Throughput Single-Process
 
-All stages in one process but with increased parallelism:
+All stages in one process but with increased parallelism. Only the `threads` overrides need to be specified — queue wiring uses the auto-wired defaults:
 
 ```yaml
 pipeline:
-  enabled: true
   stages:
     receive:
-      enabled: true
-      outputQueue: preAggregateInput
-      splitZipQueue: splitZipInput
-      fileStore: receiveStore
       threads:
         maxConcurrentReceives: 20
     splitZip:
-      enabled: true
-      inputQueue: splitZipInput
-      outputQueue: preAggregateInput
-      fileStore: splitStore
       threads:
         consumerThreads: 4
     preAggregate:
-      enabled: true
-      inputQueue: preAggregateInput
-      outputQueue: aggregateInput
-      fileStore: preAggregateStore
       threads:
         consumerThreads: 4
         closeOldAggregatesThreads: 2
     aggregate:
-      enabled: true
-      inputQueue: aggregateInput
-      outputQueue: forwardingInput
-      fileStore: aggregateStore
       threads:
         consumerThreads: 2
     forward:
-      enabled: true
-      inputQueue: forwardingInput
       threads:
         consumerThreads: 8
 ```
@@ -532,14 +506,12 @@ For proxies that only need to receive and forward without aggregation — disabl
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
     forwardingInput: { type: LOCAL_FILESYSTEM }
   fileStores:
     receiveStore: { type: LOCAL_FILESYSTEM }
   stages:
     receive:
-      enabled: true
       outputQueue: forwardingInput
       fileStore: receiveStore
     splitZip:
@@ -549,7 +521,6 @@ pipeline:
     aggregate:
       enabled: false
     forward:
-      enabled: true
       inputQueue: forwardingInput
 ```
 
@@ -561,7 +532,6 @@ Receive and forward run on separate auto-scaling groups. SQS queues enable work 
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
     splitZipInput:
       type: SQS
@@ -579,7 +549,6 @@ pipeline:
       keyPrefix: receive/
   stages:
     receive:
-      enabled: true
       outputQueue: preAggregateInput
       splitZipQueue: splitZipInput
       fileStore: receiveStore
@@ -599,7 +568,6 @@ pipeline:
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
     forwardingInput:
       type: SQS
@@ -621,7 +589,6 @@ pipeline:
     aggregate:
       enabled: false
     forward:
-      enabled: true
       inputQueue: forwardingInput
       threads:
         consumerThreads: 16
@@ -629,49 +596,22 @@ pipeline:
 
 ### Example 5: Mixed Queue Types
 
-You can mix queue types within a single deployment. For example, use local queues for fast intra-process communication between tightly-coupled stages, and SQS for stages that need to scale independently:
+You can mix queue types within a single deployment. For example, use local queues for fast intra-process communication between tightly-coupled stages, and SQS for stages that need to scale independently. Only the non-default queues need to be specified:
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
-    splitZipInput:
-      type: LOCAL_FILESYSTEM
-    preAggregateInput:
-      type: LOCAL_FILESYSTEM
-    aggregateInput:
-      type: LOCAL_FILESYSTEM
     forwardingInput:
       type: SQS
       queueUrl: https://sqs.eu-west-2.amazonaws.com/123/stroom-proxy-fwd
       visibilityTimeout: PT1H
   stages:
-    receive:
-      enabled: true
-      outputQueue: preAggregateInput
-      splitZipQueue: splitZipInput
-      fileStore: receiveStore
-    splitZip:
-      enabled: true
-      inputQueue: splitZipInput
-      outputQueue: preAggregateInput
-      fileStore: splitStore
-    preAggregate:
-      enabled: true
-      inputQueue: preAggregateInput
-      outputQueue: aggregateInput
-      fileStore: preAggregateStore
-    aggregate:
-      enabled: true
-      inputQueue: aggregateInput
-      outputQueue: forwardingInput
-      fileStore: aggregateStore
     forward:
-      enabled: true
-      inputQueue: forwardingInput
       threads:
         consumerThreads: 8
 ```
+
+Queues not explicitly configured default to `LOCAL_FILESYSTEM`. In this example, `splitZipInput`, `preAggregateInput`, and `aggregateInput` all use local filesystem queues, while only `forwardingInput` uses SQS.
 
 ### Example 6: Kafka-Based Distributed Pipeline
 
@@ -679,7 +619,6 @@ Using Kafka for all inter-stage communication:
 
 ```yaml
 pipeline:
-  enabled: true
   queues:
     splitZipInput:
       type: KAFKA
@@ -822,9 +761,7 @@ The pipeline provides built-in monitoring through Dropwizard health checks, Prom
 
 ### 1. Health Checks
 
-The pipeline registers a Dropwizard health check (`PipelineHealthChecks`) on the admin `/healthcheck` endpoint. When the pipeline is disabled, the health check returns healthy with the message "Pipeline not enabled".
-
-When the pipeline is enabled, the health check aggregates the status of all configured queues and file stores:
+The pipeline registers a Dropwizard health check (`PipelineHealthChecks`) on the admin `/healthcheck` endpoint. The health check aggregates the status of all configured queues and file stores:
 
 **Queue health checks:**
 
@@ -974,7 +911,7 @@ MDC values are automatically cleared after processing completes (success or fail
 
 ### 4. Admin Monitoring Endpoint
 
-The existing `/queues` admin endpoint (`ProxyQueueMonitoringServlet`) displays enhanced pipeline information when the pipeline is enabled:
+The existing `/queues` admin endpoint (`ProxyQueueMonitoringServlet`) displays pipeline information:
 
 - **Pipeline Stages:** Shows worker thread count, item/poll counters, and error totals. Stages with errors are highlighted in red.
 - **Pipeline Queues:** Shows queue type, health status (✓/✗), queue depths (for local queues), and SQS heartbeat counters. Unhealthy queues are highlighted in red.

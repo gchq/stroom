@@ -81,9 +81,6 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
 
     private void writePipelineSection(final Writer writer) throws IOException {
         final PipelineMonitorSnapshot snapshot = pipelineMonitorProvider.get().snapshot();
-        if (!snapshot.pipelineEnabled()) {
-            return;
-        }
 
         writer.write("<h1>Pipeline Stages</h1>\n<ul>\n");
         for (final PipelineMonitorSnapshot.StageSnapshot stage : snapshot.stages()) {

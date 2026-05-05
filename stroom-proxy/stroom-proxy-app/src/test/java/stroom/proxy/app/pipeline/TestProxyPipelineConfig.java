@@ -62,14 +62,14 @@ class TestProxyPipelineConfig extends StroomUnitTest {
     }
 
     @Test
-    void testDefaultPipelineConfigHasDisabledStages() {
+    void testDefaultPipelineConfigHasEnabledStages() {
         final ProxyPipelineConfig config = new ProxyPipelineConfig();
 
-        assertThat(config.getStages().getReceive().isEnabled()).isFalse();
-        assertThat(config.getStages().getSplitZip().isEnabled()).isFalse();
-        assertThat(config.getStages().getPreAggregate().isEnabled()).isFalse();
-        assertThat(config.getStages().getAggregate().isEnabled()).isFalse();
-        assertThat(config.getStages().getForward().isEnabled()).isFalse();
+        assertThat(config.getStages().getReceive().isEnabled()).isTrue();
+        assertThat(config.getStages().getSplitZip().isEnabled()).isTrue();
+        assertThat(config.getStages().getPreAggregate().isEnabled()).isTrue();
+        assertThat(config.getStages().getAggregate().isEnabled()).isTrue();
+        assertThat(config.getStages().getForward().isEnabled()).isTrue();
     }
 
     @Test

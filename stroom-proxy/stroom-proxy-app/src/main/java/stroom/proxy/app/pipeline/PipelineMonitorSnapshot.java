@@ -22,12 +22,10 @@ import java.util.Map;
 /**
  * Immutable snapshot of pipeline runtime state for monitoring and diagnostics.
  * <p>
- * Consumed by the admin monitoring servlet to render pipeline queue/stage
- * metrics alongside the legacy DirQueue metrics.
+ * Consumed by the admin monitoring servlet to render pipeline queue/stage metrics.
  * </p>
  */
 public record PipelineMonitorSnapshot(
-        boolean pipelineEnabled,
         List<StageSnapshot> stages,
         List<QueueSnapshot> queues,
         List<FileStoreSnapshot> fileStores) {

@@ -35,25 +35,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestProxyPipelineRuntime extends StroomUnitTest {
 
     @Test
-    void testFromConfigWithDefaultConfigCreatesEmptyRuntime() {
+    void testFromConfigWithDefaultConfigCreatesFullRuntime() {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig();
         final ProxyPipelineRuntime runtime = createRuntime(pipelineConfig);
 
         assertThat(runtime.getTopology()).isNotNull();
-        assertThat(runtime.getStages()).isEmpty();
-        assertThat(runtime.getQueues()).isEmpty();
-        assertThat(runtime.getFileStores()).isEmpty();
+        assertThat(runtime.getStages()).hasSize(5);
+        assertThat(runtime.getQueues()).hasSize(4);
+        assertThat(runtime.getFileStores()).hasSize(4);
 
-        assertThat(runtime.isStageEnabled(PipelineStageName.RECEIVE)).isFalse();
-        assertThat(runtime.isStageEnabled(PipelineStageName.SPLIT_ZIP)).isFalse();
-        assertThat(runtime.isStageEnabled(PipelineStageName.PRE_AGGREGATE)).isFalse();
-        assertThat(runtime.isStageEnabled(PipelineStageName.AGGREGATE)).isFalse();
-        assertThat(runtime.isStageEnabled(PipelineStageName.FORWARD)).isFalse();
+        assertThat(runtime.isStageEnabled(PipelineStageName.RECEIVE)).isTrue();
+        assertThat(runtime.isStageEnabled(PipelineStageName.SPLIT_ZIP)).isTrue();
+        assertThat(runtime.isStageEnabled(PipelineStageName.PRE_AGGREGATE)).isTrue();
+        assertThat(runtime.isStageEnabled(PipelineStageName.AGGREGATE)).isTrue();
+        assertThat(runtime.isStageEnabled(PipelineStageName.FORWARD)).isTrue();
 
-        assertThat(runtime.getStage(PipelineStageName.RECEIVE)).isEmpty();
-        assertThat(runtime.streamStages().toList()).isEmpty();
-        assertThat(runtime.streamQueueValues()).isEmpty();
-        assertThat(runtime.streamFileStoreValues()).isEmpty();
+        assertThat(runtime.getStage(PipelineStageName.RECEIVE)).isPresent();
+        assertThat(runtime.streamStages().toList()).hasSize(5);
     }
 
     @Test

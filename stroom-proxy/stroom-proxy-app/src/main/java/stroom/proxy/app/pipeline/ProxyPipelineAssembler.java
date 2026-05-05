@@ -221,18 +221,20 @@ public class ProxyPipelineAssembler {
         // 5. Wire the receive stage — ReceiveStagePublisher as destination on receivers.
         final FileStore receiveStore = fileStoreFactory.getFileStore(
                 ProxyPipelineConfig.RECEIVE_STORE);
-        // Determine which queue the receive stage should publish to.
-        // If split-zip is enabled, publish to splitZipInput; otherwise preAggregateInput.
-        final FileGroupQueue receiveOutputQueue = runtime
+        // Determine the split-zip queue for multi-feed routing.
+        // If the split-zip stage is enabled, multi-feed file groups are routed to
+        // the splitZipInput queue; single-feed file groups go directly to preAggregateInput.
+        final FileGroupQueue splitZipQueue = runtime
                 .getStage(PipelineStageName.SPLIT_ZIP)
                 .flatMap(ProxyPipelineRuntime.RuntimeStage::getInputQueue)
-                .orElse(preAggregateInputQueue);
+                .orElse(null);
 
         final ReceiveStagePublisher receiveStagePublisher = new ReceiveStagePublisher(
                 receiveStore,
-                receiveOutputQueue,
-                null, // splitZipQueue — not used for routing yet
+                preAggregateInputQueue,
+                splitZipQueue,
                 sourceNodeId);
+
 
         // Set the pipeline publisher as the destination on both receivers.
         simpleReceiver.setDestination(receiveStagePublisher);

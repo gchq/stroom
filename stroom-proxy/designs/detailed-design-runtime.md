@@ -306,7 +306,6 @@ Collects runtime state into an immutable `PipelineMonitorSnapshot` for the admin
 classDiagram
     class PipelineMonitorSnapshot {
         <<record>>
-        +boolean pipelineEnabled
         +List~StageSnapshot~ stages
         +List~QueueSnapshot~ queues
         +List~FileStoreSnapshot~ fileStores
@@ -358,8 +357,7 @@ Aggregated Dropwizard health check implementing `HasHealthCheck`. Registered via
 
 ### 9.1 Behaviour
 
-- When the pipeline is **disabled**: returns healthy with message "Pipeline not enabled"
-- When the pipeline is **enabled**: iterates all queues and file stores from the runtime, calling `healthCheck()` on each
+- Iterates all queues and file stores from the runtime, calling `healthCheck()` on each
 - If **all** components are healthy: returns healthy with a components detail map
 - If **any** component is unhealthy: returns unhealthy with message "One or more pipeline components are unhealthy" and component-level details
 

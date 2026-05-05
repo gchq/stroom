@@ -22,7 +22,6 @@ import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
-import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.app.pipeline.ProxyPipelineConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
@@ -74,7 +73,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
     public static final String PROP_NAME_FEED_STATUS = "feedStatus";
-    public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
     public static final String PROP_NAME_PIPELINE = "pipeline";
@@ -97,7 +95,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
     private final LogStreamConfig logStreamConfig;
     private final FeedStatusConfig feedStatusConfig;
-    private final ThreadConfig threadConfig;
     private final ProxySecurityConfig proxySecurityConfig;
     private final List<SqsConnectorConfig> sqsConnectors;
     private final ProxyPipelineConfig pipelineConfig;
@@ -117,7 +114,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new ArrayList<>(),
                 new LogStreamConfig(),
                 new FeedStatusConfig(),
-                new ThreadConfig(),
                 new ProxySecurityConfig(),
                 new ArrayList<>(),
                 new ProxyPipelineConfig());
@@ -140,7 +136,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
-            @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
             @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors,
             @JsonProperty(PROP_NAME_PIPELINE) final ProxyPipelineConfig pipelineConfig) {
@@ -160,7 +155,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.forwardHttpDestinations = NullSafe.list(forwardHttpDestinations);
         this.logStreamConfig = Objects.requireNonNullElseGet(logStreamConfig, LogStreamConfig::new);
         this.feedStatusConfig = Objects.requireNonNullElseGet(feedStatusConfig, FeedStatusConfig::new);
-        this.threadConfig = Objects.requireNonNullElseGet(threadConfig, ThreadConfig::new);
         this.proxySecurityConfig = Objects.requireNonNullElseGet(proxySecurityConfig, ProxySecurityConfig::new);
         this.sqsConnectors = NullSafe.list(sqsConnectors);
         this.pipelineConfig = Objects.requireNonNullElseGet(pipelineConfig, ProxyPipelineConfig::new);
@@ -252,10 +246,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return feedStatusConfig;
     }
 
-    @JsonProperty(PROP_NAME_THREADS)
-    public ThreadConfig getThreadConfig() {
-        return threadConfig;
-    }
 
     @JsonProperty(PROP_NAME_SECURITY)
     public ProxySecurityConfig getProxySecurityConfig() {
@@ -422,7 +412,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-        private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
         private final List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
         private ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig();
@@ -517,10 +506,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder threadConfig(final ThreadConfig threadConfig) {
-            this.threadConfig = threadConfig;
-            return this;
-        }
 
         public Builder securityConfig(final ProxySecurityConfig proxySecurityConfig) {
             this.proxySecurityConfig = proxySecurityConfig;
@@ -553,7 +538,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     forwardHttpDestinations,
                     logStreamConfig,
                     feedStatusConfig,
-                    threadConfig,
                     proxySecurityConfig,
                     sqsConnectors,
                     pipelineConfig);

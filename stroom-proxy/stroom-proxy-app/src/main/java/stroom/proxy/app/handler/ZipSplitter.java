@@ -19,10 +19,8 @@ package stroom.proxy.app.handler;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.ProxyServices;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -30,8 +28,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.zip.ZipUtil;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
@@ -51,8 +47,8 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * This processor will split an input zip into multiple output zips, grouping entries by {@link FeedKey}
- * (feed and type).
+ * Static utility class for splitting an input zip into multiple output zips,
+ * grouping entries by {@link FeedKey} (feed and type).
  * It is also used to normalise an input zip that is not in the correct proxy zip format into
  * one that is.
  * </p><p>
@@ -81,53 +77,12 @@ import java.util.stream.Collectors;
  * for each set of files in the zip. This data allows us to understand how best to aggregate this data if required.
  * </p>
  */
-@Singleton
-public class ZipSplitter {
+public final class ZipSplitter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipSplitter.class);
-//    private static final String SPLIT_DIR_PREFIX = "split-";
 
-    private final DirQueue splittingQueue;
-    private final NumberedDirProvider splitZipDirProvider;
-    private Consumer<Path> destination;
-
-    @Inject
-    public ZipSplitter(final DataDirProvider dataDirProvider,
-                       final DirQueueFactory dirQueueFactory,
-                       final ProxyServices proxyServices,
-                       final ThreadConfig threadConfig) {
-        // Get or create the split zip dir provider.
-        splitZipDirProvider = createDirProvider(dataDirProvider, DirNames.SPLIT_ZIP);
-        final Path splitZipQueue = dataDirProvider.get().resolve(DirNames.SPLIT_ZIP_QUEUE);
-
-        splittingQueue = dirQueueFactory.create(
-                splitZipQueue,
-                2,
-                "Zip Splitting Input Queue");
-
-        final DirQueueTransfer dirQueueTransfer = new DirQueueTransfer(
-                splittingQueue::next,
-                sourceDir ->
-                        splitZipByFeed(sourceDir, splitZipDirProvider, getDestination()));
-
-        proxyServices.addParallelExecutor(
-                "Zip split by feed input queue transfer",
-                () -> dirQueueTransfer,
-                threadConfig.getZipSplittingInputQueueThreadCount());
-    }
-
-    public void setDestination(final Consumer<Path> destination) {
-        LOGGER.debug("setDestination() - destination {}", destination);
-        this.destination = destination;
-    }
-
-    private Consumer<Path> getDestination() {
-        return destination;
-    }
-
-    public void add(final Path sourceDir) {
-        LOGGER.debug("add() - sourceDir: {}", sourceDir);
-        splittingQueue.add(sourceDir);
+    private ZipSplitter() {
+        // Static utility class — no instances.
     }
 
     /**
@@ -332,20 +287,6 @@ public class ZipSplitter {
         zipWriter.writeStream(outEntryName, new ByteArrayInputStream(bytes));
         return new Entry(outEntryName, bytes.length);
     }
-
-    private NumberedDirProvider createDirProvider(final DataDirProvider dataDirProvider,
-                                                  final String dirName) {
-        // Make dir
-        final Path dir = dataDirProvider.get().resolve(dirName);
-        DirUtil.ensureDirExists(dir);
-
-        // This is a temporary location and can be cleaned completely on startup.
-        if (!FileUtil.deleteContents(dir)) {
-            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(dir));
-        }
-        return new NumberedDirProvider(dir);
-    }
-
 
     private static void deleteDir(final Path path) {
         if (path != null) {

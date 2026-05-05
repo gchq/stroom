@@ -40,12 +40,10 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyReceiptIdGenerator;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.ReceiverFactory;
-import stroom.proxy.app.handler.ReceiverFactoryProvider;
 import stroom.proxy.app.handler.SimpleReceiver;
 import stroom.proxy.app.handler.ZipReceiver;
 import stroom.proxy.app.pipeline.ProxyPipelineAssembler;
 import stroom.proxy.app.pipeline.PipelineMetricsRegistrar;
-import stroom.proxy.app.pipeline.ProxyPipelineConfig;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.jersey.ProxyJerseyModule;
 import stroom.proxy.app.security.ProxySecurityModule;
@@ -119,29 +117,15 @@ public class ProxyCoreModule extends AbstractModule {
     }
 
     /**
-     * Conditionally provides the {@link ReceiverFactory} for HTTP data ingest.
-     * <ul>
-     *     <li>When {@code pipeline.enabled=true}: delegates to the new
-     *         {@link ProxyPipelineAssembler}, which wires production handlers
-     *         to the pluggable queue pipeline.</li>
-     *     <li>When {@code pipeline.enabled=false} (default): uses the legacy
-     *         {@link ReceiverFactoryProvider} backed by DirQueue.</li>
-     * </ul>
-     * <p>
-     * The legacy path should be removed once the pluggable pipeline
-     * architecture has been validated in production.
-     * </p>
+     * Provides the {@link ReceiverFactory} for HTTP data ingest, backed by
+     * the pluggable queue pipeline via {@link ProxyPipelineAssembler}.
      */
     @SuppressWarnings("unused")
     @Provides
     @Singleton
-    ReceiverFactory provideReceiverFactory(final ProxyConfig proxyConfig,
-                                           final ReceiverFactoryProvider legacyProvider,
-                                           final Provider<ProxyPipelineAssembler> pipelineAssemblerProvider) {
-        if (proxyConfig.getPipelineConfig().isEnabled()) {
-            return pipelineAssemblerProvider.get().getReceiverFactory();
-        }
-        return legacyProvider.get();
+    ReceiverFactory provideReceiverFactory(
+            final Provider<ProxyPipelineAssembler> pipelineAssemblerProvider) {
+        return pipelineAssemblerProvider.get().getReceiverFactory();
     }
 
     @SuppressWarnings("unused")
