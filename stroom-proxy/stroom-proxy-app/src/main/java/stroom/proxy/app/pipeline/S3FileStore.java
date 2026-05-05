@@ -156,6 +156,44 @@ public class S3FileStore implements FileStore {
     }
 
     @Override
+    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+        try {
+            // Check S3 bucket accessibility.
+            s3Client.headBucket(software.amazon.awssdk.services.s3.model.HeadBucketRequest.builder()
+                    .bucket(bucket)
+                    .build());
+
+            // Check local staging and cache directories.
+            final boolean stagingOk = java.nio.file.Files.isDirectory(localStagingRoot)
+                                      && java.nio.file.Files.isWritable(localStagingRoot);
+            final boolean cacheOk = java.nio.file.Files.isDirectory(localCacheRoot)
+                                    && java.nio.file.Files.isWritable(localCacheRoot);
+
+            if (!stagingOk || !cacheOk) {
+                return com.codahale.metrics.health.HealthCheck.Result.builder()
+                        .unhealthy()
+                        .withMessage("Local directory check failed: staging=%s, cache=%s",
+                                stagingOk, cacheOk)
+                        .build();
+            }
+
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .healthy()
+                    .withDetail("bucket", bucket)
+                    .withDetail("keyPrefix", keyPrefix)
+                    .withDetail("localStagingWritable", true)
+                    .build();
+
+        } catch (final Exception e) {
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .unhealthy()
+                    .withMessage("S3 health check failed for bucket '%s': %s",
+                            bucket, e.getMessage())
+                    .build();
+        }
+    }
+
+    @Override
     public FileStoreWrite newWrite() throws IOException {
         Files.createDirectories(localStagingRoot);
         final Path tempPath = Files.createTempDirectory(localStagingRoot, "write-");

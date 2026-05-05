@@ -774,3 +774,171 @@ File stores use deterministic write IDs (`newDeterministicWrite(id)`) where poss
 ### 5. At-Least-Once Delivery
 
 The pipeline guarantees at-least-once processing. A message may be processed more than once (e.g. after a crash between step 4 and step 6 of the ownership contract), but it will never be lost. Idempotent writes ensure that duplicate processing is safe.
+
+---
+
+## Monitoring & Observability
+
+The pipeline provides built-in monitoring through Dropwizard health checks, Prometheus metrics, structured logging, and an admin monitoring endpoint.
+
+### 1. Health Checks
+
+The pipeline registers a Dropwizard health check (`PipelineHealthChecks`) on the admin `/healthcheck` endpoint. When the pipeline is disabled, the health check returns healthy with the message "Pipeline not enabled".
+
+When the pipeline is enabled, the health check aggregates the status of all configured queues and file stores:
+
+**Queue health checks:**
+
+| Queue Type | Check Performed | Detail Fields |
+|---|---|---|
+| `LocalFileGroupQueue` | `pending/` and `in-flight/` directories exist and are writable | `pendingCount`, `inFlightCount`, `failedCount` |
+| `SqsFileGroupQueue` | `GetQueueAttributes` call with `ApproximateNumberOfMessages` | `queueUrl`, `approximateMessages`, `approximateInFlight`, `activeHeartbeats` |
+| `KafkaFileGroupQueue` | `AdminClient.describeTopics()` with 5-second timeout | `topic`, `partitions` |
+
+**File store health checks:**
+
+| Store Type | Check Performed | Detail Fields |
+|---|---|---|
+| `LocalFileStore` | Root and writer directories exist and are writable | `root`, `writable` |
+| `S3FileStore` | `headBucket` call + local staging/cache directory writability | `bucket`, `keyPrefix`, `localStagingWritable` |
+
+**Example healthy response (JSON excerpt):**
+
+```json
+{
+  "PipelineHealthChecks": {
+    "healthy": true,
+    "message": null,
+    "components": {
+      "queue.splitZipInput.healthy": true,
+      "queue.preAggregateInput.healthy": true,
+      "queue.aggregateInput.healthy": true,
+      "queue.forwardingInput.healthy": true,
+      "fileStore.receiveStore.healthy": true,
+      "fileStore.splitStore.healthy": true,
+      "fileStore.preAggregateStore.healthy": true,
+      "fileStore.aggregateStore.healthy": true
+    }
+  }
+}
+```
+
+**Example unhealthy response:**
+
+```json
+{
+  "PipelineHealthChecks": {
+    "healthy": false,
+    "message": "One or more pipeline components are unhealthy",
+    "components": {
+      "queue.splitZipInput.healthy": false,
+      "queue.splitZipInput.message": "Directory check failed: pending=false, inFlight=true"
+    }
+  }
+}
+```
+
+> **IAM permissions for SQS health checks:** The SQS health check requires `sqs:GetQueueAttributes` permission. This is the same permission required for CloudWatch metrics and should already be present in most IAM policies.
+
+### 2. Prometheus Metrics
+
+Pipeline metrics are exported via the admin `/metrics` endpoint in Prometheus format. All metrics use Codahale gauges backed by thread-safe `LongAdder` counters. The values are monotonically increasing totals — use Prometheus `rate()` to derive rates.
+
+**Per-stage item counters:**
+
+| Metric Name | Description |
+|---|---|
+| `stroom.proxy.pipeline.<stage>.items.received` | Total items received from queue |
+| `stroom.proxy.pipeline.<stage>.items.processed` | Total items successfully processed |
+| `stroom.proxy.pipeline.<stage>.items.acknowledged` | Total items acknowledged (removed from queue) |
+| `stroom.proxy.pipeline.<stage>.items.failed` | Total items failed and returned to queue |
+
+**Per-stage error counters:**
+
+| Metric Name | Description |
+|---|---|
+| `stroom.proxy.pipeline.<stage>.errors.processor` | Errors during stage processing |
+| `stroom.proxy.pipeline.<stage>.errors.acknowledge` | Errors during queue acknowledgement |
+| `stroom.proxy.pipeline.<stage>.errors.fail` | Errors during fail-and-retry |
+| `stroom.proxy.pipeline.<stage>.errors.close` | Errors during item close |
+
+**Per-stage poll counters:**
+
+| Metric Name | Description |
+|---|---|
+| `stroom.proxy.pipeline.<stage>.polls.total` | Total queue polls |
+| `stroom.proxy.pipeline.<stage>.polls.empty` | Polls that returned no items |
+
+**Per-queue depth gauges (local queues only):**
+
+| Metric Name | Description |
+|---|---|
+| `stroom.proxy.pipeline.queue.<name>.pending` | Approximate pending items |
+| `stroom.proxy.pipeline.queue.<name>.inflight` | Approximate in-flight items |
+| `stroom.proxy.pipeline.queue.<name>.failed` | Approximate failed items |
+
+**Per-queue SQS heartbeat counters:**
+
+| Metric Name | Description |
+|---|---|
+| `stroom.proxy.pipeline.queue.<name>.heartbeat.attempts` | Total heartbeat (visibility extension) attempts |
+| `stroom.proxy.pipeline.queue.<name>.heartbeat.successes` | Successful visibility extensions |
+| `stroom.proxy.pipeline.queue.<name>.heartbeat.failures` | Failed visibility extensions |
+
+**Example Prometheus queries:**
+
+```promql
+# Items processed per second by the forward stage
+rate(stroom_proxy_pipeline_forward_items_processed[5m])
+
+# Error rate for the forward stage
+rate(stroom_proxy_pipeline_forward_errors_processor[5m])
+
+# Current queue depth
+stroom_proxy_pipeline_queue_forwardingInput_pending
+
+# SQS heartbeat failure rate
+rate(stroom_proxy_pipeline_queue_forwardingInput_heartbeat_failures[5m])
+
+# Empty poll ratio (indicates queue saturation)
+rate(stroom_proxy_pipeline_forward_polls_empty[5m])
+  / rate(stroom_proxy_pipeline_forward_polls_total[5m])
+```
+
+> **Note:** Prometheus converts dots in metric names to underscores, so `stroom.proxy.pipeline.forward.items.processed` becomes `stroom_proxy_pipeline_forward_items_processed` in PromQL.
+
+### 3. Structured Logging
+
+The pipeline worker sets MDC (Mapped Diagnostic Context) fields before processing each queue item. These fields are automatically included in structured log output (e.g. logback JSON encoder) and enable log correlation across stages.
+
+| MDC Key | Source | Description |
+|---|---|---|
+| `traceId` | `FileGroupQueueMessage.traceId()` | End-to-end trace ID (may be null) |
+| `fileGroupId` | `FileGroupQueueMessage.fileGroupId()` | Unique file group identifier |
+| `messageId` | `FileGroupQueueMessage.messageId()` | Queue message ID |
+| `stageName` | Queue name / stage name | Pipeline stage being processed |
+
+MDC values are automatically cleared after processing completes (success or failure). If `traceId` is null on the message, the MDC key is not set (no `NullPointerException`).
+
+**Example logback configuration for JSON output:**
+
+```xml
+<appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <includeMdcKeyName>traceId</includeMdcKeyName>
+        <includeMdcKeyName>fileGroupId</includeMdcKeyName>
+        <includeMdcKeyName>messageId</includeMdcKeyName>
+        <includeMdcKeyName>stageName</includeMdcKeyName>
+    </encoder>
+</appender>
+```
+
+### 4. Admin Monitoring Endpoint
+
+The existing `/queues` admin endpoint (`ProxyQueueMonitoringServlet`) displays enhanced pipeline information when the pipeline is enabled:
+
+- **Pipeline Stages:** Shows worker thread count, item/poll counters, and error totals. Stages with errors are highlighted in red.
+- **Pipeline Queues:** Shows queue type, health status (✓/✗), queue depths (for local queues), and SQS heartbeat counters. Unhealthy queues are highlighted in red.
+- **Pipeline File Stores:** Shows health status (✓/✗) for each store. Unhealthy stores are highlighted in red.
+
+This endpoint is unauthenticated and available on the admin port for operational monitoring.

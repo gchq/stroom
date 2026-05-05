@@ -16,6 +16,8 @@
 
 package stroom.proxy.app.pipeline;
 
+import com.codahale.metrics.health.HealthCheck;
+
 import java.io.IOException;
 import java.util.Optional;
 
@@ -62,4 +64,18 @@ public interface FileGroupQueue extends AutoCloseable {
      */
     @Override
     void close() throws IOException;
+
+    /**
+     * Perform a health check on this queue's backend connectivity.
+     * <p>
+     * The default implementation returns healthy. Queue implementations that
+     * depend on external backends (SQS, Kafka) should override this to verify
+     * connectivity and report queue-level status.
+     * </p>
+     *
+     * @return A Dropwizard health check result.
+     */
+    default HealthCheck.Result healthCheck() {
+        return HealthCheck.Result.healthy();
+    }
 }

@@ -16,6 +16,7 @@ classDiagram
         +resolve(FileStoreLocation) Path
         +delete(FileStoreLocation)
         +isComplete(FileStoreLocation) boolean
+        +healthCheck() HealthCheck.Result
     }
 
     class FileStoreWrite {
@@ -207,6 +208,10 @@ graph TD
 - `FileStoreLocation` carries the full absolute path (including writer ID)
 - Consumers resolve any node's data via the complete path in the queue message
 
+### 2.10 Health Check
+
+Overrides `FileStore.healthCheck()` to verify the root and writer directories exist and are writable. Returns healthy with `root` and `writable` detail fields. Returns unhealthy with a diagnostic message if either directory check fails.
+
 ---
 
 ## 3. S3FileStore
@@ -319,6 +324,15 @@ flowchart TD
 ```
 
 For S3-compatible stores (MinIO, LocalStack), set `endpointOverride` which also enables `forcePathStyle(true)`.
+
+### 3.9 Health Check
+
+Overrides `FileStore.healthCheck()` by:
+
+1. Calling `headBucket(bucket)` to verify S3 connectivity
+2. Checking the local staging and cache directories exist and are writable
+
+Returns healthy with `bucket`, `keyPrefix`, and `localStagingWritable` detail fields. Returns unhealthy if the S3 call fails or if local directories are inaccessible.
 
 ---
 

@@ -87,6 +87,27 @@ public class LocalFileStore implements FileStore {
     }
 
     @Override
+    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+        final boolean rootOk = Files.isDirectory(root) && Files.isWritable(root);
+        final boolean writerOk = Files.isDirectory(writerRoot) && Files.isWritable(writerRoot);
+
+        if (!rootOk || !writerOk) {
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .unhealthy()
+                    .withMessage("Directory check failed: root=%s, writerRoot=%s", rootOk, writerOk)
+                    .withDetail("root", root.toString())
+                    .withDetail("writerRoot", writerRoot.toString())
+                    .build();
+        }
+
+        return com.codahale.metrics.health.HealthCheck.Result.builder()
+                .healthy()
+                .withDetail("root", root.toString())
+                .withDetail("writable", true)
+                .build();
+    }
+
+    @Override
     public FileStoreWrite newWrite() throws IOException {
         Files.createDirectories(tempRoot);
         final Path tempPath = Files.createTempDirectory(tempRoot, "write-");

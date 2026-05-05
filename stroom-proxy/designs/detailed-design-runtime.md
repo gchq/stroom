@@ -223,7 +223,7 @@ Threads are daemon threads named `stage-<configName>-<n>`.
 
 ### 6.1 Purpose
 
-Centralises the queue processing contract. All stages use the same worker, which provides consistent at-least-once semantics, error handling, logging, and metrics.
+Centralises the queue processing contract. All stages use the same worker, which provides consistent at-least-once semantics, error handling, structured logging, and metrics.
 
 ### 6.2 Processing Flow
 
@@ -259,7 +259,20 @@ Thread-safe counters using `LongAdder`:
 | `failErrorCount` | `item.fail()` throws |
 | `closeErrorCount` | `item.close()` throws |
 
-### 6.4 Result Types
+### 6.4 MDC Structured Logging
+
+Before calling `processor.process(item)`, the worker sets the following SLF4J MDC keys:
+
+| MDC Key | Source | Description |
+|---|---|---|
+| `traceId` | `message.traceId()` | End-to-end correlation ID (only set if non-null) |
+| `fileGroupId` | `message.fileGroupId()` | Unique file group identifier |
+| `messageId` | `message.messageId()` | Queue message ID |
+| `stageName` | `queue.getName()` | Pipeline stage name |
+
+All MDC keys are cleared in a `finally` block after processing completes (success or failure).
+
+### 6.5 Result Types
 
 ```mermaid
 classDiagram
@@ -310,12 +323,18 @@ classDiagram
     class QueueSnapshot {
         <<record>>
         +String name
-        +String implementationType
+        +String type
+        +boolean healthy
+        +String healthDetail
+        +Map~String,Long~ depths
+        +SqsHeartbeatCounters.Snapshot heartbeatCounters
     }
 
     class FileStoreSnapshot {
         <<record>>
         +String name
+        +boolean healthy
+        +String healthDetail
     }
 
     PipelineMonitorSnapshot --> StageSnapshot
@@ -323,8 +342,45 @@ classDiagram
     PipelineMonitorSnapshot --> FileStoreSnapshot
 ```
 
+The `buildSnapshot()` method now runs `healthCheck()` on each queue and file store, collects queue depths for `LocalFileGroupQueue` instances, and includes `SqsHeartbeatCounters.Snapshot` for SQS queues.
+
 ---
 
 ## 8. ProxyPipelineManagedLifecycle
 
 Dropwizard `Managed` adapter that calls `lifecycle.start()` on startup and `lifecycle.stop()` on shutdown, integrating the pipeline with the Dropwizard application lifecycle.
+
+---
+
+## 9. PipelineHealthChecks
+
+Aggregated Dropwizard health check implementing `HasHealthCheck`. Registered via `HasHealthCheckBinder` in `ProxyModule` and exposed on the admin `/healthcheck` endpoint.
+
+### 9.1 Behaviour
+
+- When the pipeline is **disabled**: returns healthy with message "Pipeline not enabled"
+- When the pipeline is **enabled**: iterates all queues and file stores from the runtime, calling `healthCheck()` on each
+- If **all** components are healthy: returns healthy with a components detail map
+- If **any** component is unhealthy: returns unhealthy with message "One or more pipeline components are unhealthy" and component-level details
+
+### 9.2 Dependencies
+
+Uses `Provider<ProxyPipelineAssembler>` to lazily access the runtime (queues/stores are created dynamically at assembly time, not at injection time).
+
+---
+
+## 10. PipelineMetricsRegistrar
+
+Registers Codahale gauges for the pipeline runtime. Called from `ProxyCoreModule` immediately after assembler construction. Gauges are bridged to Prometheus format by the existing `PrometheusModule`.
+
+### 10.1 Registered Metrics
+
+| Category | Metrics | Source |
+|---|---|---|
+| Per-stage items | `items.received`, `items.processed`, `items.acknowledged`, `items.failed` | `FileGroupQueueWorkerCounters` |
+| Per-stage errors | `errors.processor`, `errors.acknowledge`, `errors.fail`, `errors.close` | `FileGroupQueueWorkerCounters` |
+| Per-stage polls | `polls.total`, `polls.empty` | `FileGroupQueueWorkerCounters` |
+| Per-queue depth | `pending`, `inflight`, `failed` | `LocalFileGroupQueue` only |
+| Per-queue heartbeat | `heartbeat.attempts`, `heartbeat.successes`, `heartbeat.failures` | `SqsHeartbeatCounters` |
+
+All metrics are prefixed with `stroom.proxy.pipeline.`. Stage metrics include the stage config name; queue metrics include the logical queue name.

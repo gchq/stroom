@@ -57,7 +57,7 @@ class TestKafkaFileGroupQueue {
         mockConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         codec = new FileGroupQueueMessageCodec();
 
-        queue = new KafkaFileGroupQueue(QUEUE_NAME, TOPIC, mockProducer, mockConsumer, codec);
+        queue = new KafkaFileGroupQueue(QUEUE_NAME, TOPIC, "localhost:9092", mockProducer, mockConsumer, codec);
     }
 
     @AfterEach

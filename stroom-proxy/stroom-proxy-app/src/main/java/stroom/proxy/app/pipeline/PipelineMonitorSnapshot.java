@@ -64,23 +64,61 @@ public record PipelineMonitorSnapshot(
 
     public record QueueSnapshot(
             String name,
-            String type) {
+            String type,
+            boolean healthy,
+            String healthDetail,
+            Map<String, Long> depths,
+            SqsHeartbeatCounters.Snapshot heartbeatCounters) {
+
+        /**
+         * Backward-compatible constructor used by existing code.
+         */
+        public QueueSnapshot(final String name, final String type) {
+            this(name, type, true, null, null, null);
+        }
 
         /**
          * @return A formatted summary string for diagnostic output.
          */
         public String toSummary() {
-            return name + " (type=" + type + ")";
+            final StringBuilder sb = new StringBuilder(name)
+                    .append(" (type=").append(type);
+            if (!healthy) {
+                sb.append(", UNHEALTHY: ").append(healthDetail);
+            }
+            if (depths != null && !depths.isEmpty()) {
+                sb.append(", pending=").append(depths.getOrDefault("pending", 0L))
+                  .append(", inflight=").append(depths.getOrDefault("inflight", 0L))
+                  .append(", failed=").append(depths.getOrDefault("failed", 0L));
+            }
+            if (heartbeatCounters != null) {
+                sb.append(", heartbeats=").append(heartbeatCounters.attemptCount())
+                  .append("/").append(heartbeatCounters.successCount())
+                  .append("/").append(heartbeatCounters.failureCount());
+            }
+            return sb.append(")").toString();
         }
     }
 
     public record FileStoreSnapshot(
-            String name) {
+            String name,
+            boolean healthy,
+            String healthDetail) {
+
+        /**
+         * Backward-compatible constructor used by existing code.
+         */
+        public FileStoreSnapshot(final String name) {
+            this(name, true, null);
+        }
 
         /**
          * @return A formatted summary string for diagnostic output.
          */
         public String toSummary() {
+            if (!healthy) {
+                return name + " (UNHEALTHY: " + healthDetail + ")";
+            }
             return name;
         }
     }

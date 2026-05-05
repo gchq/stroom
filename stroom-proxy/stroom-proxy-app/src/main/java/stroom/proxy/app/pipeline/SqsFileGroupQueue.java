@@ -76,6 +76,7 @@ public class SqsFileGroupQueue implements FileGroupQueue {
     // Visibility heartbeat infrastructure.
     private final ScheduledExecutorService heartbeatScheduler;
     private final Map<String, ScheduledFuture<?>> heartbeatTasks = new ConcurrentHashMap<>();
+    private final SqsHeartbeatCounters heartbeatCounters = new SqsHeartbeatCounters();
 
     /**
      * Create an SQS queue from a {@link QueueDefinition}.
@@ -192,6 +193,39 @@ public class SqsFileGroupQueue implements FileGroupQueue {
         return heartbeatTasks.size();
     }
 
+    @Override
+    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+        try {
+            final software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse response =
+                    sqsClient.getQueueAttributes(
+                            software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest.builder()
+                                    .queueUrl(queueUrl)
+                                    .attributeNames(
+                                            software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES,
+                                            software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
+                                    .build());
+
+            final String approxMessages = response.attributes().getOrDefault(
+                    software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES, "0");
+            final String approxInFlight = response.attributes().getOrDefault(
+                    software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE, "0");
+
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .healthy()
+                    .withDetail("queueUrl", queueUrl)
+                    .withDetail("approximateMessages", Long.parseLong(approxMessages))
+                    .withDetail("approximateInFlight", Long.parseLong(approxInFlight))
+                    .withDetail("activeHeartbeats", getActiveHeartbeatCount())
+                    .build();
+
+        } catch (final Exception e) {
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .unhealthy()
+                    .withMessage("SQS queue health check failed for %s: %s", queueUrl, e.getMessage())
+                    .build();
+        }
+    }
+
     private void startHeartbeat(final SqsFileGroupQueueItem item) {
         // Extend visibility at 2/3 of the timeout period.  This gives
         // comfortable headroom: even if one extension call is slow, the
@@ -211,16 +245,20 @@ public class SqsFileGroupQueue implements FileGroupQueue {
         final ScheduledFuture<?> future = heartbeatTasks.remove(item.receiptHandle());
         if (future != null) {
             future.cancel(false);
+            heartbeatCounters.incrementCancelledCount();
         }
     }
 
     private void extendVisibility(final SqsFileGroupQueueItem item) {
+        heartbeatCounters.incrementAttemptCount();
         try {
             sqsClient.changeMessageVisibility(ChangeMessageVisibilityRequest.builder()
                     .queueUrl(queueUrl)
                     .receiptHandle(item.receiptHandle())
                     .visibilityTimeout(visibilityTimeoutSeconds)
                     .build());
+
+            heartbeatCounters.incrementSuccessCount();
 
             LOGGER.debug(() -> LogUtil.message(
                     "Extended visibility for SQS message {} on queue {} by {} seconds",
@@ -229,11 +267,19 @@ public class SqsFileGroupQueue implements FileGroupQueue {
                     visibilityTimeoutSeconds));
 
         } catch (final Exception e) {
+            heartbeatCounters.incrementFailureCount();
             LOGGER.warn(() -> LogUtil.message(
                     "Failed to extend visibility for SQS message {} on queue {}",
                     item.sqsMessageId(),
                     name), e);
         }
+    }
+
+    /**
+     * @return The heartbeat counters for monitoring/metrics.
+     */
+    public SqsHeartbeatCounters getHeartbeatCounters() {
+        return heartbeatCounters;
     }
 
     private static int resolveVisibilityTimeout(final QueueDefinition definition) {

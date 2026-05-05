@@ -6,27 +6,16 @@ This document captures recommended improvements and enhancements for the proxy p
 
 ## Operational Hardening
 
-### 1. Health Checks for External Queues
+### ~~1. Health Checks for External Queues~~ ✅ DONE
 
 **Priority**: High  
-**Origin**: Original design plan Phase 9
+**Origin**: Original design plan Phase 9  
+**Status**: Implemented — `FileGroupQueue.healthCheck()` default method with overrides in `LocalFileGroupQueue` (dir writability + approximate counts), `SqsFileGroupQueue` (`GetQueueAttributes`), and `KafkaFileGroupQueue` (lazy `AdminClient.describeTopics`). Aggregated via `PipelineHealthChecks` on the admin `/healthcheck` endpoint. See [user-guide.md §Monitoring & Observability](user-guide.md#monitoring--observability).
 
-When using SQS or Kafka queues, the proxy should expose health check endpoints that verify connectivity to each configured external queue. This allows load balancers and orchestrators to detect unhealthy proxy instances and route traffic accordingly.
+### ~~2. Health Checks for File Stores~~ ✅ DONE
 
-**Suggested approach**:
-- Add a `healthCheck()` method to the `FileGroupQueue` interface
-- Local queues return healthy if the directory exists and is writable
-- SQS queues perform a lightweight `GetQueueAttributes` call
-- Kafka queues perform a `describeTopics` admin call
-- Expose results via the existing Dropwizard health check registry
-
-### 2. Health Checks for File Stores
-
-**Priority**: High
-
-Similar to queue health checks, file stores should verify they are accessible:
-- Local stores: directory exists and is writable
-- S3 stores: perform a `HeadBucket` or `ListObjectsV2` with `maxKeys=1` to verify bucket access
+**Priority**: High  
+**Status**: Implemented — `FileStore.healthCheck()` default method with overrides in `LocalFileStore` (root/writer dir writability) and `S3FileStore` (`headBucket` + local staging checks). Results aggregated in `PipelineHealthChecks` and shown on the admin `/healthcheck` endpoint.
 
 ### 3. Retry Attempt Tracking
 
@@ -40,14 +29,10 @@ Add an `attempt` field to `FileGroupQueueMessage` that is incremented each time 
 - A configurable `maxAttempts` threshold could route items to a dead-letter queue or error store instead of retrying indefinitely
 - Monitoring dashboards could alert on high retry rates
 
-### 4. SQS Heartbeat Monitoring
+### ~~4. SQS Heartbeat Monitoring~~ ✅ DONE
 
-**Priority**: Medium
-
-The `SqsFileGroupQueue` runs a background heartbeat scheduler (`sqs-heartbeat-<name>`) that extends visibility timeouts for in-flight items. In production, this thread pool should be monitored:
-- Expose heartbeat success/failure counts as metrics
-- Alert if heartbeat extensions are consistently failing (indicates SQS connectivity issues)
-- Monitor thread pool saturation under heavy load
+**Priority**: Medium  
+**Status**: Implemented — `SqsHeartbeatCounters` (attempt/success/failure/cancelled) wired into the existing heartbeat lambda in `SqsFileGroupQueue`. Counters exported as Prometheus metrics (`stroom.proxy.pipeline.queue.<name>.heartbeat.*`) via `PipelineMetricsRegistrar`. Heartbeat stats also shown on the admin `/queues` endpoint.
 
 ---
 
@@ -97,19 +82,19 @@ A full pipeline integration test using real (or containerised) external queues w
 
 ### 8. S3 Streaming Reads
 
-**Priority**: Medium
+**Priority**: Low
 
-Currently, `S3FileStore.resolve()` downloads all files in a file group to a local cache directory before returning a `Path`. For large file groups, this creates latency and disk pressure. A streaming approach would allow stage processors to read directly from S3 without a full download.
+Currently, `S3FileStore.resolve()` downloads all files in a file group to a local cache directory before returning a `Path`. The original rationale for streaming was to reduce latency and disk pressure for large file groups.
 
-**Challenges**:
-- The current `FileStoreWrite.getPath()` / `resolve()` contract returns a `Path`, which stage processors use for filesystem operations
-- Streaming would require processors to accept an `InputStream` or `ReadableByteChannel` instead
-- This is a deeper refactoring of the processor interface
+**However, the realistic benefit is minimal.** Every stage processor reads the entire file group — `proxy.meta`, `proxy.zip`, and `proxy.entries` — and passes the complete directory to a production handler (`PreAggregator::addDir`, `Aggregator::addDir`, `Forwarder::add`, `ZipSplitter::splitZip`). There is no partial or selective file access at any stage. Streaming would still download exactly the same bytes; it would just bypass the local cache.
 
-**Incremental approach**:
-- Start with a lazy-download cache that only downloads files as they are accessed
-- Add a size-based eviction policy to the local cache
-- Eventually introduce a streaming `resolve()` variant for processors that can use it
+The local cache is actually **beneficial** for at-least-once delivery: when a message is redelivered after a crash, `resolve()` skips already-downloaded files (`if (!Files.exists(localFile))`), avoiding redundant S3 `GetObject` calls.
+
+**Practical alternative**: The real concern is disk pressure from cached files accumulating. This is better addressed with:
+- A size-based or time-based eviction policy on the local cache directory
+- Cleaning up cache entries after the stage deletes the corresponding `FileStoreLocation`
+
+A streaming API refactoring (changing `resolve()` from `Path` to `InputStream`) would require deep changes to all production handlers for marginal benefit.
 
 ### 9. S3 Multipart Upload for Large File Groups
 
@@ -117,13 +102,15 @@ Currently, `S3FileStore.resolve()` downloads all files in a file group to a loca
 
 For file groups containing very large zip files, S3 multipart upload would improve reliability and throughput. The AWS Transfer Manager already supports this; the `S3FileStore` could enable it via configuration.
 
-### 10. Local Queue Competing Consumers
+### 10. Local Queue Multi-Process Consumers
 
 **Priority**: Low
 
-The `LocalFileGroupQueue` currently supports only a single consumer process (file-based FIFO). For local-queue deployments that want to scale a single stage's throughput beyond one process, consider:
-- File-based locking for multi-process consumption
-- Or an embedded lightweight queue (e.g. SQLite-backed) that supports competing consumers
+The `LocalFileGroupQueue` supports multiple **threads** within a single process — `next()` uses `Files.move(ATOMIC_MOVE)` as a lock-free competing-consumer mechanism, and handles race conditions via `NoSuchFileException` retry loops. However, it does not safely support multiple **processes** (multiple JVMs) consuming from the same queue directory. The startup recovery step (`recoverInFlightMessages`) moves all in-flight items back to pending, which would interfere with items actively being processed by another JVM.
+
+For multi-process deployments that want to scale a single stage's throughput, consider:
+- File-based locking for multi-process consumption (coordinate recovery)
+- Or an embedded lightweight queue (e.g. SQLite-backed) that supports cross-process competing consumers
 
 In practice, most multi-process deployments should use SQS or Kafka instead.
 
@@ -135,20 +122,16 @@ In practice, most multi-process deployments should use SQS or Kafka instead.
 
 **Priority**: Medium
 
-The monitoring servlet provides queue health data, but a visual topology dashboard would make it easier to understand the pipeline at a glance:
+The monitoring servlet now shows queue health status, queue depths, heartbeat stats, and error highlighting (see items 1, 2, 4, 18). A visual topology dashboard would make it even easier to understand the pipeline at a glance:
 - Show all configured stages with enabled/disabled status
-- Show queue types and depths between stages
+- Show queue types and depths between stages (partially done — depths shown for local queues)
 - Show file store types and disk/S3 usage
-- Show per-stage throughput (items/sec) and error rates
+- Show per-stage throughput (items/sec) derived from the Prometheus metrics
 
-### 12. Structured Logging with Trace IDs
+### ~~12. Structured Logging with Trace IDs~~ ✅ DONE
 
-**Priority**: Medium
-
-The `FileGroupQueueMessage` already carries an optional `traceId` field. This could be propagated through structured logging (MDC) so that all log entries for a given data item can be correlated:
-- Set MDC `traceId` at the start of `FileGroupQueueWorker.processItem()`
-- Clear it after acknowledgement
-- Include `traceId`, `fileGroupId`, `messageId`, and `stageName` in structured log output
+**Priority**: Medium  
+**Status**: Implemented — `FileGroupQueueWorker.processItem()` now sets MDC keys (`traceId`, `fileGroupId`, `messageId`, `stageName`) before processing and clears them in a `finally` block. Null `traceId` is handled gracefully. See [user-guide.md §Structured Logging](user-guide.md#3-structured-logging).
 
 ---
 
@@ -210,13 +193,7 @@ If a downstream stage is overwhelmed (e.g. forwarding is slow), upstream stages 
 - Receive stage throttling when downstream queues exceed depth thresholds
 - HTTP 503 responses to data senders when the pipeline is saturated
 
-### 18. Metrics Export
+### ~~18. Metrics Export~~ ✅ DONE
 
-**Priority**: Medium
-
-The `FileGroupQueueWorkerCounters` already track items received, processed, acknowledged, and errored. These should be exported as Prometheus metrics or JMX MBeans:
-- `stroom_proxy_pipeline_items_received_total{stage="forward"}`
-- `stroom_proxy_pipeline_items_processed_total{stage="forward"}`
-- `stroom_proxy_pipeline_processing_duration_seconds{stage="forward"}`
-- `stroom_proxy_pipeline_queue_depth{queue="forwardingInput"}`
-- `stroom_proxy_pipeline_errors_total{stage="forward"}`
+**Priority**: Medium  
+**Status**: Implemented — `PipelineMetricsRegistrar` registers Codahale gauges (bridged to Prometheus via the existing `PrometheusModule`) for all 10 per-stage counters (items received/processed/acknowledged/failed, 4 error types, polls total/empty), 3 per-queue depth gauges (local queues), and 3 SQS heartbeat counters. See [user-guide.md §Prometheus Metrics](user-guide.md#2-prometheus-metrics).

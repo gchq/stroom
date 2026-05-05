@@ -87,19 +87,26 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
 
         writer.write("<h1>Pipeline Stages</h1>\n<ul>\n");
         for (final PipelineMonitorSnapshot.StageSnapshot stage : snapshot.stages()) {
-            writer.write("<li>" + escapeHtml(stage.toSummary()) + "</li>\n");
+            final String errorClass = stage.counters() != null && stage.counters().hasErrors()
+                    ? " style=\"color: red;\""
+                    : "";
+            writer.write("<li" + errorClass + ">" + escapeHtml(stage.toSummary()) + "</li>\n");
         }
         writer.write("</ul>\n");
 
         writer.write("<h1>Pipeline Queues</h1>\n<ul>\n");
         for (final PipelineMonitorSnapshot.QueueSnapshot queue : snapshot.queues()) {
-            writer.write("<li>" + escapeHtml(queue.toSummary()) + "</li>\n");
+            final String healthIcon = queue.healthy() ? "&#10003; " : "&#10007; ";
+            final String itemClass = queue.healthy() ? "" : " style=\"color: red;\"";
+            writer.write("<li" + itemClass + ">" + healthIcon + escapeHtml(queue.toSummary()) + "</li>\n");
         }
         writer.write("</ul>\n");
 
         writer.write("<h1>Pipeline File Stores</h1>\n<ul>\n");
         for (final PipelineMonitorSnapshot.FileStoreSnapshot store : snapshot.fileStores()) {
-            writer.write("<li>" + escapeHtml(store.toSummary()) + "</li>\n");
+            final String healthIcon = store.healthy() ? "&#10003; " : "&#10007; ";
+            final String itemClass = store.healthy() ? "" : " style=\"color: red;\"";
+            writer.write("<li" + itemClass + ">" + healthIcon + escapeHtml(store.toSummary()) + "</li>\n");
         }
         writer.write("</ul>\n");
     }

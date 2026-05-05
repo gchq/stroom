@@ -99,14 +99,65 @@ public class PipelineMonitorProvider {
         });
 
         final List<PipelineMonitorSnapshot.QueueSnapshot> queues = new ArrayList<>();
-        runtime.getQueues().forEach((name, queue) ->
-                queues.add(new PipelineMonitorSnapshot.QueueSnapshot(
-                        name,
-                        queue.getClass().getSimpleName())));
+        runtime.getQueues().forEach((name, queue) -> {
+            // Run health check.
+            boolean healthy = true;
+            String healthDetail = null;
+            try {
+                final com.codahale.metrics.health.HealthCheck.Result result = queue.healthCheck();
+                healthy = result.isHealthy();
+                if (!healthy) {
+                    healthDetail = result.getMessage();
+                }
+            } catch (final Exception e) {
+                healthy = false;
+                healthDetail = e.getMessage();
+            }
+
+            // Get queue depths for local queues.
+            java.util.Map<String, Long> depths = null;
+            if (queue instanceof LocalFileGroupQueue localQueue) {
+                try {
+                    depths = java.util.Map.of(
+                            "pending", localQueue.getApproximatePendingCount(),
+                            "inflight", localQueue.getApproximateInFlightCount(),
+                            "failed", localQueue.getApproximateFailedCount());
+                } catch (final Exception e) {
+                    LOGGER.debug(() -> "Failed to read queue depths for " + name, e);
+                }
+            }
+
+            // Get heartbeat counters for SQS queues.
+            SqsHeartbeatCounters.Snapshot heartbeatSnapshot = null;
+            if (queue instanceof SqsFileGroupQueue sqsQueue) {
+                heartbeatSnapshot = sqsQueue.getHeartbeatCounters().snapshot();
+            }
+
+            queues.add(new PipelineMonitorSnapshot.QueueSnapshot(
+                    name,
+                    queue.getClass().getSimpleName(),
+                    healthy,
+                    healthDetail,
+                    depths,
+                    heartbeatSnapshot));
+        });
 
         final List<PipelineMonitorSnapshot.FileStoreSnapshot> fileStores = new ArrayList<>();
-        runtime.getFileStores().forEach((name, store) ->
-                fileStores.add(new PipelineMonitorSnapshot.FileStoreSnapshot(name)));
+        runtime.getFileStores().forEach((name, store) -> {
+            boolean healthy = true;
+            String healthDetail = null;
+            try {
+                final com.codahale.metrics.health.HealthCheck.Result result = store.healthCheck();
+                healthy = result.isHealthy();
+                if (!healthy) {
+                    healthDetail = result.getMessage();
+                }
+            } catch (final Exception e) {
+                healthy = false;
+                healthDetail = e.getMessage();
+            }
+            fileStores.add(new PipelineMonitorSnapshot.FileStoreSnapshot(name, healthy, healthDetail));
+        });
 
         return new PipelineMonitorSnapshot(true, stages, queues, fileStores);
     }

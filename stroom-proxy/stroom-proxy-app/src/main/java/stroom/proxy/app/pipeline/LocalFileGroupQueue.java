@@ -190,6 +190,38 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         // No open resources are held between operations.
     }
 
+    @Override
+    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+        try {
+            final boolean pendingOk = java.nio.file.Files.isDirectory(pendingDir)
+                                      && java.nio.file.Files.isWritable(pendingDir);
+            final boolean inFlightOk = java.nio.file.Files.isDirectory(inFlightDir)
+                                       && java.nio.file.Files.isWritable(inFlightDir);
+
+            if (!pendingOk || !inFlightOk) {
+                return com.codahale.metrics.health.HealthCheck.Result.builder()
+                        .unhealthy()
+                        .withMessage("Directory check failed: pending=%s, inFlight=%s",
+                                pendingOk, inFlightOk)
+                        .build();
+            }
+
+            final long pending = getApproximatePendingCount();
+            final long inflight = getApproximateInFlightCount();
+            final long failed = getApproximateFailedCount();
+
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .healthy()
+                    .withDetail("pendingCount", pending)
+                    .withDetail("inFlightCount", inflight)
+                    .withDetail("failedCount", failed)
+                    .build();
+
+        } catch (final Exception e) {
+            return com.codahale.metrics.health.HealthCheck.Result.unhealthy(e);
+        }
+    }
+
     public long getApproximatePendingCount() throws IOException {
         return countMessageFiles(pendingDir);
     }

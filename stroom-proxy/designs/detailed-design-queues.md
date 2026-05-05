@@ -14,6 +14,7 @@ classDiagram
         +getType() QueueType
         +publish(FileGroupQueueMessage)
         +next() Optional~FileGroupQueueItem~
+        +healthCheck() HealthCheck.Result
         +close()
     }
 
@@ -37,14 +38,17 @@ classDiagram
         -FileGroupQueueMessageCodec codec
         -ScheduledExecutorService heartbeatScheduler
         -Map heartbeatTasks
+        -SqsHeartbeatCounters heartbeatCounters
     }
 
     class KafkaFileGroupQueue {
         -String name
         -String topic
+        -String bootstrapServers
         -Producer producer
         -Consumer consumer
         -FileGroupQueueMessageCodec codec
+        -AdminClient adminClient
     }
 
     class QueueType {
@@ -172,6 +176,15 @@ On construction, `recoverInFlightMessages()` moves all files from `in-flight/` b
 | `getApproximateFailedCount()` | Count of `.json` files in `failed/` |
 | `getOldestPendingItemTime()` | Last-modified time of oldest pending file |
 
+### 2.8 Health Check
+
+Overrides `FileGroupQueue.healthCheck()` to verify:
+
+1. `pending/` directory exists and is writable
+2. `in-flight/` directory exists and is writable
+
+If both checks pass, the result includes `pendingCount`, `inFlightCount`, and `failedCount` as detail fields. If either directory check fails, the result is unhealthy with a diagnostic message.
+
 ---
 
 ## 3. SqsFileGroupQueue
@@ -252,6 +265,23 @@ sequenceDiagram
 | `fail(error)` | Stops heartbeat, then `changeMessageVisibility(receiptHandle, 0)` — makes message immediately available for retry |
 | `close()` | Stops heartbeat |
 
+### 3.7 SqsHeartbeatCounters
+
+Thread-safe counters (`LongAdder`) tracking heartbeat operations:
+
+| Counter | Incremented When |
+|---|---|
+| `attemptCount` | Each visibility extension attempt |
+| `successCount` | Successful `changeMessageVisibility` call |
+| `failureCount` | Failed visibility extension (exception caught) |
+| `cancelledCount` | Heartbeat cancelled on `acknowledge()`/`fail()`/`close()` |
+
+Accessed via `SqsFileGroupQueue.getHeartbeatCounters()`. Exported as Prometheus metrics by `PipelineMetricsRegistrar`.
+
+### 3.8 Health Check
+
+Overrides `FileGroupQueue.healthCheck()` using `GetQueueAttributes` with `ApproximateNumberOfMessages` and `ApproximateNumberOfMessagesNotVisible`. The result includes `queueUrl`, `approximateMessages`, `approximateInFlight`, and `activeHeartbeats` as detail fields. On failure, returns unhealthy with the exception message.
+
 ---
 
 ## 4. KafkaFileGroupQueue
@@ -285,6 +315,10 @@ Kafka-backed queue for high-throughput distributed deployments with existing Kaf
 | `acknowledge()` | `consumer.commitSync({TopicPartition → offset+1})` |
 | `fail(error)` | No-op (does not commit offset; message redelivered on next poll) |
 | `close()` | No-op |
+
+### 4.5 Health Check
+
+Overrides `FileGroupQueue.healthCheck()` using a lazily-created `AdminClient` (double-checked locking with `volatile` field). Calls `describeTopics(topic)` with a 5-second timeout. The result includes `topic` and `partitions` as detail fields. On timeout or failure, returns unhealthy with a diagnostic message. The `AdminClient` is closed when the queue is closed.
 
 ---
 

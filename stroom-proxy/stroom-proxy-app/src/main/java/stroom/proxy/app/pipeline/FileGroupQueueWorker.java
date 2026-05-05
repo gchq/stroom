@@ -20,6 +20,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import org.slf4j.MDC;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -126,8 +128,17 @@ public class FileGroupQueueWorker {
                             ? message.fileGroupId()
                             : null));
 
-            processor.process(item);
+            // Set MDC context for structured logging — allows log correlation.
+            if (message != null) {
+                if (message.traceId() != null) {
+                    MDC.put("traceId", message.traceId());
+                }
+                MDC.put("fileGroupId", message.fileGroupId());
+                MDC.put("messageId", message.messageId());
+            }
+            MDC.put("stageName", queue.getName());
 
+            processor.process(item);
         } catch (final IOException | RuntimeException e) {
             counters.incrementProcessorErrorCount();
             failItem(item, itemId, message, e);
@@ -147,6 +158,11 @@ public class FileGroupQueueWorker {
                     message,
                     e,
                     durationSince(startTime));
+        } finally {
+            MDC.remove("traceId");
+            MDC.remove("fileGroupId");
+            MDC.remove("messageId");
+            MDC.remove("stageName");
         }
 
         counters.incrementItemProcessedCount();

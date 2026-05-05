@@ -16,6 +16,9 @@
 
 package stroom.proxy.app.pipeline;
 
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -41,6 +44,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Kafka-backed implementation of {@link FileGroupQueue}.
@@ -65,9 +70,13 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
 
     private final String name;
     private final String topic;
+    private final String bootstrapServers;
     private final Producer<String, byte[]> producer;
     private final Consumer<String, byte[]> consumer;
     private final FileGroupQueueMessageCodec codec;
+
+    // Lazy AdminClient for health checks — created on first healthCheck() call.
+    private volatile AdminClient adminClient;
 
     /**
      * Create a Kafka queue from a {@link QueueDefinition}.
@@ -82,6 +91,7 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
         this(
                 name,
                 requireNonBlank(definition.getTopic(), "definition.topic"),
+                requireNonBlank(definition.getBootstrapServers(), "definition.bootstrapServers"),
                 createProducer(definition),
                 createConsumer(name, definition),
                 codec);
@@ -92,11 +102,13 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
      */
     KafkaFileGroupQueue(final String name,
                         final String topic,
+                        final String bootstrapServers,
                         final Producer<String, byte[]> producer,
                         final Consumer<String, byte[]> consumer,
                         final FileGroupQueueMessageCodec codec) {
         this.name = requireNonBlank(name, "name");
         this.topic = requireNonBlank(topic, "topic");
+        this.bootstrapServers = bootstrapServers != null ? bootstrapServers : "";
         this.producer = Objects.requireNonNull(producer, "producer");
         this.consumer = Objects.requireNonNull(consumer, "consumer");
         this.codec = Objects.requireNonNull(codec, "codec");
@@ -159,10 +171,70 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
     @Override
     public void close() throws IOException {
         try {
-            producer.close();
+            final AdminClient ac = adminClient;
+            if (ac != null) {
+                ac.close(java.time.Duration.ofSeconds(5));
+            }
         } finally {
-            consumer.close();
+            try {
+                producer.close();
+            } finally {
+                consumer.close();
+            }
         }
+    }
+
+    @Override
+    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+        try {
+            final AdminClient ac = getOrCreateAdminClient();
+            final Map<String, TopicDescription> result = ac.describeTopics(
+                            Collections.singletonList(topic))
+                    .allTopicNames()
+                    .get(5, TimeUnit.SECONDS);
+
+            final TopicDescription desc = result.get(topic);
+            final int partitions = desc != null
+                    ? desc.partitions().size()
+                    : 0;
+
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .healthy()
+                    .withDetail("topic", topic)
+                    .withDetail("partitions", partitions)
+                    .build();
+
+        } catch (final TimeoutException e) {
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .unhealthy()
+                    .withMessage("Kafka health check timed out for topic '%s'", topic)
+                    .build();
+        } catch (final ExecutionException e) {
+            return com.codahale.metrics.health.HealthCheck.Result.builder()
+                    .unhealthy()
+                    .withMessage("Kafka health check failed for topic '%s': %s",
+                            topic, e.getCause() != null ? e.getCause().getMessage() : e.getMessage())
+                    .build();
+        } catch (final Exception e) {
+            return com.codahale.metrics.health.HealthCheck.Result.unhealthy(e);
+        }
+    }
+
+    private AdminClient getOrCreateAdminClient() {
+        AdminClient ac = adminClient;
+        if (ac == null) {
+            synchronized (this) {
+                ac = adminClient;
+                if (ac == null) {
+                    final Properties props = new Properties();
+                    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+                    props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "5000");
+                    ac = AdminClient.create(props);
+                    adminClient = ac;
+                }
+            }
+        }
+        return ac;
     }
 
     private static KafkaProducer<String, byte[]> createProducer(final QueueDefinition definition) {

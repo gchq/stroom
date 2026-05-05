@@ -44,6 +44,7 @@ import stroom.proxy.app.handler.ReceiverFactoryProvider;
 import stroom.proxy.app.handler.SimpleReceiver;
 import stroom.proxy.app.handler.ZipReceiver;
 import stroom.proxy.app.pipeline.ProxyPipelineAssembler;
+import stroom.proxy.app.pipeline.PipelineMetricsRegistrar;
 import stroom.proxy.app.pipeline.ProxyPipelineConfig;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.jersey.ProxyJerseyModule;
@@ -153,8 +154,9 @@ public class ProxyCoreModule extends AbstractModule {
                                                          final Forwarder forwarder,
                                                          final SimpleReceiver simpleReceiver,
                                                          final ZipReceiver zipReceiver,
-                                                         final PathCreator pathCreator) {
-        return new ProxyPipelineAssembler(
+                                                         final PathCreator pathCreator,
+                                                         final com.codahale.metrics.MetricRegistry metricRegistry) {
+        final ProxyPipelineAssembler assembler = new ProxyPipelineAssembler(
                 proxyConfig.getPipelineConfig(),
                 proxyId,
                 preAggregator,
@@ -163,6 +165,11 @@ public class ProxyCoreModule extends AbstractModule {
                 simpleReceiver,
                 zipReceiver,
                 pathCreator);
+
+        // Register pipeline metrics after assembly.
+        PipelineMetricsRegistrar.register(assembler.getRuntime(), metricRegistry);
+
+        return assembler;
     }
 
     @SuppressWarnings("unused")

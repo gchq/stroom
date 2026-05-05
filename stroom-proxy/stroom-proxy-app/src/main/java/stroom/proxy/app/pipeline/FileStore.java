@@ -16,6 +16,8 @@
 
 package stroom.proxy.app.pipeline;
 
+import com.codahale.metrics.health.HealthCheck;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -119,5 +121,19 @@ public interface FileStore {
      * @throws IOException If a writable location cannot be created.
      */
     FileStoreWrite newDeterministicWrite(String fileGroupId) throws IOException;
+
+    /**
+     * Perform a health check on this file store's backend.
+     * <p>
+     * The default implementation returns healthy. Implementations with
+     * external backends (S3) or filesystem dependencies should override
+     * this to verify accessibility and report store-level status.
+     * </p>
+     *
+     * @return A Dropwizard health check result.
+     */
+    default HealthCheck.Result healthCheck() {
+        return HealthCheck.Result.healthy();
+    }
 
 }

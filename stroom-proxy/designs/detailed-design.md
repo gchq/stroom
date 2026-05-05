@@ -62,7 +62,7 @@ File stores support deterministic write paths (`newDeterministicWrite(id)`) so r
 
 ## 4. Package Structure
 
-All pipeline classes reside in `stroom.proxy.app.pipeline`. The package contains **51 classes** organised into the following layers:
+All pipeline classes reside in `stroom.proxy.app.pipeline`. The package contains **54 classes** organised into the following layers:
 
 ```mermaid
 graph TD
@@ -107,6 +107,12 @@ graph TD
         PPL["ProxyPipelineLifecycle"]
         PSR["PipelineStageRunner"]
         PPT["ProxyPipelineTopology"]
+    end
+
+    subgraph "Observability"
+        PHC["PipelineHealthChecks"]
+        PMR["PipelineMetricsRegistrar"]
+        SQSHC["SqsHeartbeatCounters"]
     end
 
     FGQW --> FGQ
