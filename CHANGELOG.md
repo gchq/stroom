@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.2] - 2026-05-05
+
+* Bug **#5532** : Relax Data Feed Identities validation so salt is optional.
+
+
 ## [v7.12.1] - 2026-04-27
 
 * Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
@@ -2131,7 +2136,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.2...HEAD
+[v7.12.2]: https://github.com/gchq/stroom/compare/v7.12.1...v7.12.2
 [v7.12.1]: https://github.com/gchq/stroom/compare/v7.12.0...v7.12.1
 [v7.12.0]: https://github.com/gchq/stroom/compare/v7.12-beta.2...v7.12.0
 [v7.12-beta.2]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.12-beta.2
