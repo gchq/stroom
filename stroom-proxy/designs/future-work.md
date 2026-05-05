@@ -39,24 +39,10 @@ Custom attempt tracking across three backends with three different retry semanti
 
 ## Testing
 
-### 5. FileStore Contract Test Suite
+### ~~5. FileStore Contract Test Suite~~ ✅ DONE
 
 **Priority**: High  
-**Origin**: Original design plan
-
-Create an `AbstractFileStoreContractTest` analogous to the existing `AbstractFileGroupQueueContractTest`. This would validate the `FileStore` contract (`newWrite`, `commit`, `resolve`, `delete`, `isComplete`, `newDeterministicWrite`) consistently across all implementations.
-
-**Current state**: `TestS3FileStore` (13 tests) and `TestFileStoreIdempotency` exist independently but don't share a common test suite.
-
-**Suggested tests**:
-- Write + commit produces a resolvable location
-- Uncommitted writes are cleaned up on close
-- Delete is idempotent (deleting twice doesn't throw)
-- `isComplete()` returns false before commit, true after
-- Deterministic writes are idempotent (same ID → same location)
-- Deterministic write skips upload if already complete
-- Resolve rejects locations for the wrong store name
-- Concurrent writes from different writers don't interfere
+**Status**: Implemented — `AbstractFileStoreContractTest` provides 14 shared contract tests covering `newWrite`, `commit`, `resolve`, `delete`, `isComplete`, `newDeterministicWrite`, commit idempotency, delete+rewrite cycles, and health checks. Concrete subclasses `TestLocalFileStoreContract` and `TestS3FileStoreContract` (using `StubS3Client`) run the full suite against both implementations. The previous `TestFileStoreIdempotency` was deleted (all tests migrated) and `TestS3FileStore` was trimmed to 3 S3-specific tests only.
 
 ### 6. SQS/Kafka Contract Test Migration
 
