@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  */
 public class LocalFileStore implements FileStore {
 
-    private static final String TEMP_DIR_NAME = ".writing";
+    private static final String TEMP_DIR_NAME = "writing";
     private static final String COMPLETE_MARKER = ".complete";
     private static final int ID_WIDTH = 10;
 

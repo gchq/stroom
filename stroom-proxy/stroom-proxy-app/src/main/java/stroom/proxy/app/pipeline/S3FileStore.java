@@ -80,8 +80,8 @@ public class S3FileStore implements FileStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileStore.class);
 
     private static final String COMMITTED_MARKER = ".committed";
-    private static final String CACHE_DIR_NAME = ".cache";
-    private static final String STAGING_DIR_NAME = ".staging";
+    private static final String CACHE_DIR_NAME = "cache";
+    private static final String STAGING_DIR_NAME = "staging";
     private static final int ID_WIDTH = 10;
 
     private final String name;

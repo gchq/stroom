@@ -47,7 +47,7 @@ Key facts:
 
 ## Confirmed Design Decisions
 
-1. **Staging directory lifecycle** ✅ — **Throwaway temp directory** under the store root's `.cache/` subdirectory, cleaned up on `delete()`. A persistent cache with size-based eviction can be added later if needed.
+1. **Staging directory lifecycle** ✅ — **Throwaway temp directory** under the store root's `cache/` subdirectory, cleaned up on `delete()`. A persistent cache with size-based eviction can be added later if needed.
 
 2. **S3-compatible stores** ✅ — **Supported** via `endpointOverride` (MinIO, Cloudflare R2, LocalStack). The existing `S3ClientConfig.endpointOverride` field handles this — no additional code needed.
 
@@ -161,7 +161,7 @@ S3FileStore
 ├── resolve(location) → Path
 │   1. Parse S3 URI from location
 │   2. List objects under the key prefix
-│   3. Download each to local cache dir: localStagingRoot/.cache/<hash>/
+│   3. Download each to local cache dir: localStagingRoot/cache/<hash>/
 │   4. Return the local cache directory path
 │
 ├── delete(location)

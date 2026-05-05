@@ -85,7 +85,7 @@ Filesystem-based queue for single-process deployments, development, and testing.
 ├── failed/               ← Corrupt or duplicate messages
 │   ├── 00000000000000000004.duplicate-pending.1714842000000.json
 │   └── 00000000000000000004.duplicate-pending.1714842000000.json.error.txt
-└── .tmp/                 ← Temp files during publication
+└── tmp/                  ← Temp files during publication
 ```
 
 ### 2.3 Publish Flow
@@ -98,14 +98,14 @@ sequenceDiagram
 
     P->>Q: publish(message)
     Q->>FS: Lock sequence.txt, read+increment, write, force, unlock
-    Q->>FS: Write JSON to .tmp/<id>-<rand>.json.tmp
+    Q->>FS: Write JSON to tmp/<id>-<rand>.json.tmp
     Q->>FS: Atomic move → pending/<id>.json
     Q->>FS: Delete temp file (finally)
 ```
 
 Key details:
 - **Sequence allocation** uses `FileChannel.lock()` for cross-thread safety
-- **Atomic publish** writes to `.tmp/` first, then uses `Files.move(ATOMIC_MOVE)` to `pending/`
+- **Atomic publish** writes to `tmp/` first, then uses `Files.move(ATOMIC_MOVE)` to `pending/`
 - **Sequence width** is 20 digits, zero-padded (`00000000000000000001`)
 - The queue validates that `message.queueName()` matches the queue's name
 

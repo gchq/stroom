@@ -17,17 +17,18 @@ This document captures recommended improvements and enhancements for the proxy p
 **Priority**: High  
 **Status**: Implemented — `FileStore.healthCheck()` default method with overrides in `LocalFileStore` (root/writer dir writability) and `S3FileStore` (`headBucket` + local staging checks). Results aggregated in `PipelineHealthChecks` and shown on the admin `/healthcheck` endpoint.
 
-### 3. Retry Attempt Tracking
+### ~~3. Retry Attempt Tracking~~ — Not Planned
 
-**Priority**: Medium  
+**Priority**: ~~Medium~~ Not recommended  
 **Origin**: Original design plan (optional)
 
-Add an `attempt` field to `FileGroupQueueMessage` that is incremented each time a message is redelivered after a failure. This provides visibility into retry behaviour and enables dead-letter routing after N attempts.
+Originally proposed adding an `attempt` field to `FileGroupQueueMessage` for retry visibility and dead-letter routing. After review, this adds complexity for minimal value:
 
-**Benefits**:
-- Operators can see which items are stuck in retry loops
-- A configurable `maxAttempts` threshold could route items to a dead-letter queue or error store instead of retrying indefinitely
-- Monitoring dashboards could alert on high retry rates
+- **SQS** already tracks `ApproximateReceiveCount` natively and supports dead-letter queues via redrive policies — this is the idiomatic AWS approach and requires zero application code.
+- **Kafka** has its own retry and DLQ mechanisms (e.g. error topic routing via consumer configuration).
+- **Local queues** are consumed within the same JVM, so persistent failures indicate code bugs rather than transient issues worth retrying with a counter. The existing `failed/` directory with `.last-error.txt` files provides sufficient diagnostics.
+
+Custom attempt tracking across three backends with three different retry semantics would duplicate what the queue infrastructure already provides. Operators should configure retry/DLQ policies at the queue level (SQS redrive policy, Kafka consumer retry config) rather than in the proxy application layer.
 
 ### ~~4. SQS Heartbeat Monitoring~~ ✅ DONE
 
@@ -174,15 +175,17 @@ This would require careful lifecycle management to drain in-flight work before r
 
 ## Architectural Enhancements
 
-### 16. Dead-Letter Queue Support
+### 16. Dead-Letter Queue Documentation
 
-**Priority**: Medium
+**Priority**: Low
 
-Items that fail repeatedly should be routed to a dead-letter queue (DLQ) rather than retrying indefinitely. This requires:
-- The `attempt` field on messages (item 3 above)
-- A configurable `maxAttempts` per queue or stage
-- A DLQ destination (another queue or a dedicated error store)
-- SQS has native DLQ support via redrive policies — this should be documented as an option
+Rather than implementing custom dead-letter routing in the proxy application (see §3 rationale), operators should use the native DLQ mechanisms provided by their queue backend:
+
+- **SQS**: Configure a [redrive policy](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) on each SQS queue with a `maxReceiveCount` and a target DLQ ARN. SQS automatically routes messages that exceed the receive count.
+- **Kafka**: Configure error topic routing via the consumer or use a framework-level DLQ pattern.
+- **Local queues**: Failed items are already moved to the `failed/` directory with `.last-error.txt` error details. Operators can monitor the `failed/` directory count via the existing health checks and Prometheus metrics.
+
+The user guide should document these recommended configurations with examples.
 
 ### 17. Backpressure Between Stages
 
@@ -197,3 +200,54 @@ If a downstream stage is overwhelmed (e.g. forwarding is slow), upstream stages 
 
 **Priority**: Medium  
 **Status**: Implemented — `PipelineMetricsRegistrar` registers Codahale gauges (bridged to Prometheus via the existing `PrometheusModule`) for all 10 per-stage counters (items received/processed/acknowledged/failed, 4 error types, polls total/empty), 3 per-queue depth gauges (local queues), and 3 SQS heartbeat counters. See [user-guide.md §Prometheus Metrics](user-guide.md#2-prometheus-metrics).
+
+### 19. Orphaned File Cleanup
+
+**Priority**: Medium
+
+In normal operation the ownership-transfer contract ensures all files are eventually consumed and deleted. However, a hard crash (e.g. power outage, `kill -9`) at specific points in the processing lifecycle can leave orphaned files on disk or in S3 that are no longer referenced by any queue message.
+
+**Identified orphan scenarios:**
+
+| Location | Cause | What's Left |
+|---|---|---|
+| `LocalFileStore` `writing/` | Crash during `newWrite()` before `commit()` | Uncommitted staging directories (`write-*`) |
+| `LocalFileStore` data dirs | Crash after `commit()` but before queue `publish()` | Committed file group with no queue message referencing it |
+| `S3FileStore` `staging/` | Crash during S3 upload before `commit()` | Local staging files (partial upload may also leave S3 objects) |
+| `S3FileStore` `cache/` | Message routed to DLQ externally; `delete()` never called | Cached downloads from `resolve()` |
+| `S3FileStore` S3 objects | Same as local commit-before-publish scenario | Committed S3 objects with no queue message |
+| `LocalFileGroupQueue` `tmp/` | Hard kill during `publish()` before atomic move | Temporary JSON files |
+| `AggregateClosePublisher` | Crash after output `commit()` + `publish()` but before `deleteRecursively(aggregateDir)` | Source aggregate directory (data is safe — already published) |
+
+**None of these scenarios cause data loss** — the at-least-once guarantee holds because input messages are redelivered and reprocessed. The orphans are wasted disk/S3 space only.
+
+**Proposed strategy — periodic orphan scanner:**
+
+A background `ScheduledExecutorService` task (e.g. hourly) that:
+
+1. **Staging cleanup** (`writing/`, `staging/`, `tmp/`): Delete any staging directory or temp file older than a configurable age threshold (e.g. 1 hour). Since no write operation should take more than a few minutes, anything older than the threshold is safely orphaned. This is the simplest and lowest-risk cleanup — staging dirs are always transient.
+
+2. **Committed file group cleanup** (local data dirs, S3 objects): More complex — requires cross-referencing file store contents against active queue messages. Strategy:
+   - List all committed file groups in the store (those with a `.complete` marker for local, `.committed` for S3)
+   - For each, check whether any queue message references it (requires scanning pending + in-flight message files for local queues, or maintaining a lightweight reference set)
+   - Delete any committed file group older than the threshold that has no referencing message
+   - **Risk**: must ensure the threshold is large enough that a file group committed but not yet published (the window between `commit()` and `publish()`) is not prematurely cleaned
+
+3. **S3 cache cleanup**: Delete any `cache/` entry older than the threshold. Since cached files are re-downloadable from S3 on demand, this is always safe.
+
+**Configuration:**
+
+```yaml
+pipeline:
+  orphanCleanup:
+    enabled: true
+    intervalMinutes: 60
+    maxStagingAgeMinutes: 60
+    maxUnreferencedAgeMinutes: 1440  # 24 hours
+```
+
+**Implementation notes:**
+- Start with (1) staging cleanup only — it's risk-free and addresses the most common orphan type
+- (2) committed file group cleanup can be deferred as it requires more careful implementation
+- The scanner should log every deletion at INFO level for audit trail
+- Add a Prometheus counter (`stroom.proxy.pipeline.orphans.cleaned`) for visibility

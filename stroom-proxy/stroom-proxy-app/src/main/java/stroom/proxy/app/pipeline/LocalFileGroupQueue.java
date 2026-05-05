@@ -66,7 +66,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     private static final String PENDING_DIR_NAME = "pending";
     private static final String IN_FLIGHT_DIR_NAME = "in-flight";
     private static final String FAILED_DIR_NAME = "failed";
-    private static final String TEMP_DIR_NAME = ".tmp";
+    private static final String TEMP_DIR_NAME = "tmp";
     private static final String SEQUENCE_FILE_NAME = "sequence.txt";
     private static final String MESSAGE_FILE_EXTENSION = ".json";
     private static final int SEQUENCE_WIDTH = 20;

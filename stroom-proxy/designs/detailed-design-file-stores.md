@@ -70,7 +70,7 @@ Local/shared filesystem implementation. Supports single-node and multi-node depl
 │   │   └── .complete              ← Completeness marker
 │   ├── 0000000002/
 │   └── ...
-└── .writing/                      ← Staging area
+└── writing/                      ← Staging area
     └── <writerId>/
         └── write-1234567890/      ← In-progress write
 ```
@@ -82,7 +82,7 @@ Local/shared filesystem implementation. Supports single-node and multi-node depl
 | `name` | `String` | Logical store name |
 | `root` | `Path` | Store root directory (absolute, normalised) |
 | `writerRoot` | `Path` | `root/<writerId>/` — this node's write directory |
-| `tempRoot` | `Path` | `root/.writing/<writerId>/` — staging area |
+| `tempRoot` | `Path` | `root/writing/<writerId>/` — staging area |
 | `sequence` | `AtomicLong` | Monotonic counter for sequential IDs |
 
 ### 2.4 Write Flow (Sequential)
@@ -94,7 +94,7 @@ sequenceDiagram
     participant FS as Filesystem
 
     P->>LFS: newWrite()
-    LFS->>FS: createTempDirectory(.writing/<writerId>/write-*)
+    LFS->>FS: createTempDirectory(writing/<writerId>/write-*)
     LFS-->>P: LocalFileStoreWrite(tempPath)
     P->>P: Write files to tempPath
     P->>LFS: write.commit()
@@ -193,7 +193,7 @@ graph TD
         R["storeRoot/"]
         R --> WA["Node A (UUID-a)/"]
         R --> WB["Node B (UUID-b)/"]
-        R --> W[".writing/"]
+        R --> W["writing/"]
         WA --> A1["0000000001/"]
         WA --> A2["0000000002/"]
         WB --> B1["0000000001/"]
@@ -234,10 +234,10 @@ s3://<bucket>/<keyPrefix>/<writerId>/<seqId>/
 
 ```
 <localRoot>/
-├── .staging/                  ← Upload staging
+├── staging/                  ← Upload staging
 │   └── <writerId>/
 │       └── write-*/           ← Files before upload
-└── .cache/                    ← Download cache
+└── cache/                    ← Download cache
     └── <cacheId>/             ← Cached file groups from S3
 ```
 
@@ -264,7 +264,7 @@ sequenceDiagram
     participant S3 as AWS S3
 
     P->>S3FS: newWrite()
-    S3FS->>FS: createTempDirectory(.staging/<writerId>/write-*)
+    S3FS->>FS: createTempDirectory(staging/<writerId>/write-*)
     S3FS-->>P: S3FileStoreWrite(tempPath, fileGroupKey)
     P->>P: Write files to tempPath
     P->>S3FS: write.commit()
@@ -296,7 +296,7 @@ sequenceDiagram
     loop For each object (skip .committed and dirs)
         alt Not in local cache
             S3FS->>S3: getObject(bucket, key)
-            S3->>FS: Download to .cache/<cacheId>/filename
+            S3->>FS: Download to cache/<cacheId>/filename
         end
     end
 

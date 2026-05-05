@@ -295,7 +295,7 @@ fileStores:
 ```
 
 **Write flow**:
-1. `newWrite()` creates a temporary directory in the staging area (`.writing/<writerId>/`)
+1. `newWrite()` creates a temporary directory in the staging area (`writing/<writerId>/`)
 2. Files are written to this temporary directory
 3. `commit()` atomically renames (moves) the directory into the stable area (`<writerId>/<sequenceId>/`) and returns a `FileStoreLocation`
 4. A `.complete` marker file is written as the final step, enabling idempotency checks
@@ -322,7 +322,7 @@ The resulting directory structure looks like this:
 │   ├── 0000000001/                           ← Independent sequence per writer
 │   ├── 0000000002/
 │   └── ...
-└── .writing/                                 ← Temp staging area (per writer)
+└── writing/                                 ← Temp staging area (per writer)
     ├── a1b2c3d4-e5f6-7890-abcd-ef1234567890/
     │   └── write-1234567890/                 ← In-progress write (not yet committed)
     └── f9e8d7c6-b5a4-3210-fedc-ba0987654321/
@@ -330,7 +330,7 @@ The resulting directory structure looks like this:
 
 **Key properties**:
 - Each node has its **own sequence counter** (0000000001, 0000000002, …) scoped to its writer directory. There is no cross-node contention on sequence numbers.
-- The staging area (`.writing/`) is also partitioned by `writerId`, so in-progress writes from different nodes never collide.
+- The staging area (`writing/`) is also partitioned by `writerId`, so in-progress writes from different nodes never collide.
 - The `FileStoreLocation` returned by `commit()` contains the **full absolute path** including the writer directory, so consuming stages resolve the correct file regardless of which node wrote it.
 - Consuming stages can resolve and delete file groups written by any node, because `FileStoreLocation` references are stored in queue messages and carry the complete path.
 
@@ -774,6 +774,45 @@ File stores use deterministic write IDs (`newDeterministicWrite(id)`) where poss
 ### 5. At-Least-Once Delivery
 
 The pipeline guarantees at-least-once processing. A message may be processed more than once (e.g. after a crash between step 4 and step 6 of the ownership contract), but it will never be lost. Idempotent writes ensure that duplicate processing is safe.
+
+### 6. Retry & Dead-Letter Handling
+
+When a stage processor fails, the worker calls `item.fail()` which returns the message to the queue for retry. Each queue backend handles retries and dead-letter routing using its own native mechanisms.
+
+#### Local Queues
+
+Failed items are moved from `in-flight/` back to `pending/` for immediate retry. A `.last-error.txt` file is written alongside the message with the stack trace of the last failure.
+
+If a duplicate already exists in `pending/` (e.g. from a race condition), the item is moved to `failed/` instead. Items in `failed/` are not retried automatically — operators should investigate and either delete them or move them back to `pending/`.
+
+The `failed/` directory count is included in the health check and the `stroom.proxy.pipeline.queue.<name>.failed` Prometheus metric.
+
+#### SQS Queues
+
+Failed items have their visibility timeout set to 0, making them immediately available for retry by any consumer. SQS tracks the number of receives via `ApproximateReceiveCount`.
+
+To prevent infinite retries, configure a **redrive policy** on each SQS queue:
+
+```json
+{
+  "RedrivePolicy": {
+    "deadLetterTargetArn": "arn:aws:sqs:eu-west-2:123456789012:stroom-proxy-dlq",
+    "maxReceiveCount": 5
+  }
+}
+```
+
+After `maxReceiveCount` deliveries, SQS automatically moves the message to the dead-letter queue. Monitor the DLQ depth via CloudWatch or the SQS console.
+
+> **Tip:** Create one DLQ per pipeline queue (e.g. `splitZipInput-dlq`, `forwardingInput-dlq`) so that failed items from different stages don't get mixed together.
+
+#### Kafka Queues
+
+Failed items are retried via offset non-commit — the consumer re-polls the same record on the next iteration. Kafka does not have a built-in receive count, so retry limiting should be configured at the consumer or application level.
+
+For dead-letter routing, consider:
+- Configuring a Kafka Streams or consumer-level error handler to route failed records to a separate error topic
+- Using a framework like Spring Kafka's `DefaultErrorHandler` with `DeadLetterPublishingRecoverer`
 
 ---
 
