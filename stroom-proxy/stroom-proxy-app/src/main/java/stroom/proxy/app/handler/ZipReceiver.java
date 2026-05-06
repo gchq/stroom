@@ -259,27 +259,31 @@ public class ZipReceiver implements Receiver {
 
         // Only keep data for allowed feeds.
         if (!allowedEntries.isEmpty()) {
-            // Write out the allowed entries so the destination knows which entries are in the zip
-            // that are allowed to be used, i.e. so zipSplitter can drop zip entries that have no
-            // corresponding entry in the entries file
+            // Write out the allowed entries — these are used downstream by the
+            // SplitZipStageProcessor to know which zip entries belong to which feed
+            // and should be kept vs dropped.
             writeZipEntryGroups(fileGroup.getEntries(), allowedEntries);
 
-            // If the data we received was for a perfectly formed zip file with data for a single feed then don't
-            // bother to rewrite it in the zipSplitter.
+            // Both branches below pass the received directory to the same destination
+            // (ReceiveStagePublisher). The publisher inspects the entries file to decide
+            // whether to route to the split-zip queue (multi-feed) or directly to the
+            // primary output queue (single-feed). The only difference here is that we can
+            // enrich the top-level meta with feed/type when we know there's exactly one feed.
             final int feedGroupCount = receiveResult.feedGroups.size();
             if (receiveResult.valid && feedGroupCount == 1) {
                 final FeedKey feedKey = allowedEntries.keySet().iterator().next();
 
-                // Write meta. Single feed/type so add them to the attr map
+                // Single feed/type — enrich the top-level attribute map so downstream
+                // stages don't need to parse the entries file to determine the feed.
                 AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
-                // Move receiving dir to destination.
                 LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
                 destination.accept(receivingDir);
             } else {
-                // We have more than one feed in the source zip or it's not in proper format.
-                // The pipeline's SplitZipStageProcessor will handle splitting.
+                // Multi-feed or non-standard zip format — can't add a single feed/type to
+                // the top-level meta. The downstream SplitZipStageProcessor will split
+                // this into per-feed file groups.
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
                 LOGGER.debug(() ->
                         LogUtil.message("Pass {} to destination for splitting, isValid: {}, feedGroupCount: {}",
