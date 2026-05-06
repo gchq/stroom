@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.Valid;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 
 /**
@@ -69,7 +70,7 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
 
         this.queues = queues == null || queues.isEmpty()
                 ? defaultQueues()
-                : Map.copyOf(queues);
+                : new TreeMap<>(queues);
         // When no explicit stages block is provided, automatically wire
         // all 5 stages with standard queue/store references.
         this.stages = stages == null
@@ -77,7 +78,7 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
                 : stages;
         this.fileStores = fileStores == null || fileStores.isEmpty()
                 ? defaultFileStores()
-                : Map.copyOf(fileStores);
+                : new TreeMap<>(fileStores);
     }
 
     @Valid
@@ -136,18 +137,20 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     }
 
     private static Map<String, QueueDefinition> defaultQueues() {
-        return Map.of(
-                SPLIT_ZIP_INPUT_QUEUE, new QueueDefinition(),
-                PRE_AGGREGATE_INPUT_QUEUE, new QueueDefinition(),
-                AGGREGATE_INPUT_QUEUE, new QueueDefinition(),
-                FORWARDING_INPUT_QUEUE, new QueueDefinition());
+        final TreeMap<String, QueueDefinition> map = new TreeMap<>();
+        map.put(SPLIT_ZIP_INPUT_QUEUE, new QueueDefinition());
+        map.put(PRE_AGGREGATE_INPUT_QUEUE, new QueueDefinition());
+        map.put(AGGREGATE_INPUT_QUEUE, new QueueDefinition());
+        map.put(FORWARDING_INPUT_QUEUE, new QueueDefinition());
+        return map;
     }
 
     private static Map<String, FileStoreDefinition> defaultFileStores() {
-        return Map.of(
-                RECEIVE_STORE, new FileStoreDefinition(),
-                SPLIT_STORE, new FileStoreDefinition(),
-                PRE_AGGREGATE_STORE, new FileStoreDefinition(),
-                AGGREGATE_STORE, new FileStoreDefinition());
+        final TreeMap<String, FileStoreDefinition> map = new TreeMap<>();
+        map.put(RECEIVE_STORE, new FileStoreDefinition());
+        map.put(SPLIT_STORE, new FileStoreDefinition());
+        map.put(PRE_AGGREGATE_STORE, new FileStoreDefinition());
+        map.put(AGGREGATE_STORE, new FileStoreDefinition());
+        return map;
     }
 }

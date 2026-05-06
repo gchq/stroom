@@ -123,6 +123,128 @@ proxyConfig:
     data: "data"
     home: null
     temp: null
+  pipeline:
+    fileStores:
+      aggregateStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+      preAggregateStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+      receiveStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+      splitStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+    queues:
+      aggregateInput:
+        bootstrapServers: null
+        consumer: {}
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+      forwardingInput:
+        bootstrapServers: null
+        consumer: {}
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+      preAggregateInput:
+        bootstrapServers: null
+        consumer: {}
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+      splitZipInput:
+        bootstrapServers: null
+        consumer: {}
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+    stages:
+      aggregate:
+        enabled: true
+        fileStore: "aggregateStore"
+        inputQueue: "aggregateInput"
+        outputQueue: "forwardingInput"
+        threads:
+          consumerThreads: 1
+      forward:
+        enabled: true
+        inputQueue: "forwardingInput"
+        threads:
+          consumerThreads: 1
+      preAggregate:
+        enabled: true
+        fileStore: "preAggregateStore"
+        inputQueue: "preAggregateInput"
+        outputQueue: "aggregateInput"
+        threads:
+          closeOldAggregatesThreads: 1
+          consumerThreads: 1
+      receive:
+        enabled: true
+        fileStore: "receiveStore"
+        outputQueue: "preAggregateInput"
+        splitZipQueue: "splitZipInput"
+        threads:
+          maxConcurrentReceives: 5
+      splitZip:
+        enabled: true
+        fileStore: "splitStore"
+        inputQueue: "splitZipInput"
+        outputQueue: "preAggregateInput"
+        threads:
+          consumerThreads: 1
   proxyId: null
   receiptPolicy:
     receiveDataRulesUrl: null
@@ -200,8 +322,3 @@ proxyConfig:
     pollFrequency: "PT10S"
     queueName: null
     queueUrl: null
-  threads:
-    aggregateInputQueueThreadCount: 1
-    forwardingInputQueueThreadCount: 1
-    preAggregateInputQueueThreadCount: 1
-    zipSplittingInputQueueThreadCount: 1

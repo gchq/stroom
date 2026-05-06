@@ -34,7 +34,6 @@ import stroom.proxy.app.handler.RemoteFeedStatusClient;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.metrics.ProxyAppInfoProvider;
 import stroom.proxy.app.pipeline.monitor.PipelineHealthChecks;
-import stroom.proxy.app.pipeline.runtime.ProxyPipelineManagedLifecycle;
 import stroom.proxy.app.security.ProxyApiKeyCheckClient;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
@@ -131,7 +130,6 @@ public class ProxyModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ProxyLifecycle.class)
-                .addBinding(ProxyPipelineManagedLifecycle.class)
                 .addBinding(RemoteFeedStatusService.class)
                 .addBinding(RefreshManager.class);
 
