@@ -19,6 +19,7 @@ package stroom.proxy.app.pipeline.store;
 import stroom.proxy.app.pipeline.queue.AbstractFileGroupQueueContractTest;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import com.codahale.metrics.health.HealthCheck;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -316,7 +317,7 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
 
     @Test
     protected void contractHealthCheckReturnsResult() {
-        final com.codahale.metrics.health.HealthCheck.Result result = store.healthCheck();
+        final HealthCheck.Result result = store.healthCheck();
         assertThat(result).isNotNull();
         assertThat(result.isHealthy()).isTrue();
     }

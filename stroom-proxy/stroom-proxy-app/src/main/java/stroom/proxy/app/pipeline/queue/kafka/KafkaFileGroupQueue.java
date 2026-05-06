@@ -23,6 +23,7 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueDefinition;
 import stroom.proxy.app.pipeline.queue.QueueType;
 
+import com.codahale.metrics.health.HealthCheck;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.TopicDescription;
@@ -180,7 +181,7 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
         try {
             final AdminClient ac = adminClient;
             if (ac != null) {
-                ac.close(java.time.Duration.ofSeconds(5));
+                ac.close(Duration.ofSeconds(5));
             }
         } finally {
             try {
@@ -192,7 +193,7 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
     }
 
     @Override
-    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+    public HealthCheck.Result healthCheck() {
         try {
             final AdminClient ac = getOrCreateAdminClient();
             final Map<String, TopicDescription> result = ac.describeTopics(
@@ -205,25 +206,25 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
                     ? desc.partitions().size()
                     : 0;
 
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return HealthCheck.Result.builder()
                     .healthy()
                     .withDetail("topic", topic)
                     .withDetail("partitions", partitions)
                     .build();
 
         } catch (final TimeoutException e) {
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return HealthCheck.Result.builder()
                     .unhealthy()
                     .withMessage("Kafka health check timed out for topic '%s'", topic)
                     .build();
         } catch (final ExecutionException e) {
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return HealthCheck.Result.builder()
                     .unhealthy()
                     .withMessage("Kafka health check failed for topic '%s': %s",
                             topic, e.getCause() != null ? e.getCause().getMessage() : e.getMessage())
                     .build();
         } catch (final Exception e) {
-            return com.codahale.metrics.health.HealthCheck.Result.unhealthy(e);
+            return HealthCheck.Result.unhealthy(e);
         }
     }
 

@@ -22,6 +22,8 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueType;
 
+import com.codahale.metrics.health.HealthCheck;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -197,15 +199,15 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     }
 
     @Override
-    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+    public HealthCheck.Result healthCheck() {
         try {
-            final boolean pendingOk = java.nio.file.Files.isDirectory(pendingDir)
-                                      && java.nio.file.Files.isWritable(pendingDir);
-            final boolean inFlightOk = java.nio.file.Files.isDirectory(inFlightDir)
-                                       && java.nio.file.Files.isWritable(inFlightDir);
+            final boolean pendingOk = Files.isDirectory(pendingDir)
+                                      && Files.isWritable(pendingDir);
+            final boolean inFlightOk = Files.isDirectory(inFlightDir)
+                                       && Files.isWritable(inFlightDir);
 
             if (!pendingOk || !inFlightOk) {
-                return com.codahale.metrics.health.HealthCheck.Result.builder()
+                return HealthCheck.Result.builder()
                         .unhealthy()
                         .withMessage("Directory check failed: pending=%s, inFlight=%s",
                                 pendingOk, inFlightOk)
@@ -216,7 +218,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             final long inflight = getApproximateInFlightCount();
             final long failed = getApproximateFailedCount();
 
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return HealthCheck.Result.builder()
                     .healthy()
                     .withDetail("pendingCount", pending)
                     .withDetail("inFlightCount", inflight)
@@ -224,7 +226,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                     .build();
 
         } catch (final Exception e) {
-            return com.codahale.metrics.health.HealthCheck.Result.unhealthy(e);
+            return HealthCheck.Result.unhealthy(e);
         }
     }
 

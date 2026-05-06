@@ -27,12 +27,14 @@ import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.codahale.metrics.health.HealthCheck;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -94,7 +96,7 @@ public class PipelineMonitorProvider {
             boolean healthy = true;
             String healthDetail = null;
             try {
-                final com.codahale.metrics.health.HealthCheck.Result result = queue.healthCheck();
+                final HealthCheck.Result result = queue.healthCheck();
                 healthy = result.isHealthy();
                 if (!healthy) {
                     healthDetail = result.getMessage();
@@ -105,10 +107,10 @@ public class PipelineMonitorProvider {
             }
 
             // Get queue depths for local queues.
-            java.util.Map<String, Long> depths = null;
+            Map<String, Long> depths = null;
             if (queue instanceof LocalFileGroupQueue localQueue) {
                 try {
-                    depths = java.util.Map.of(
+                    depths = Map.of(
                             "pending", localQueue.getApproximatePendingCount(),
                             "inflight", localQueue.getApproximateInFlightCount(),
                             "failed", localQueue.getApproximateFailedCount());
@@ -137,7 +139,7 @@ public class PipelineMonitorProvider {
             boolean healthy = true;
             String healthDetail = null;
             try {
-                final com.codahale.metrics.health.HealthCheck.Result result = store.healthCheck();
+                final HealthCheck.Result result = store.healthCheck();
                 healthy = result.isHealthy();
                 if (!healthy) {
                     healthDetail = result.getMessage();

@@ -47,7 +47,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -521,7 +524,7 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                     // messages are present across primary + suppressed.
                     assertThat(error.getSuppressed()).hasSize(1);
 
-                    final java.util.Set<String> allMessages = new java.util.HashSet<>();
+                    final Set<String> allMessages = new HashSet<>();
                     allMessages.add(error.getMessage());
                     for (final Throwable suppressed : error.getSuppressed()) {
                         allMessages.add(suppressed.getMessage());
@@ -629,7 +632,7 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
         }
 
         @Override
-        public java.util.Optional<FileGroupQueueItem> next() {
+        public Optional<FileGroupQueueItem> next() {
             throw new UnsupportedOperationException("next is not used by these tests");
         }
 

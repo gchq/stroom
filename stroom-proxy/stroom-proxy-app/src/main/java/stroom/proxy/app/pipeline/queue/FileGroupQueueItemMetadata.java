@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -108,7 +109,7 @@ public record FileGroupQueueItemMetadata(
         final String nonBlankKey = requireNonBlank(key, "key");
         Objects.requireNonNull(value, "value");
 
-        final Map<String, String> newAttributes = new java.util.HashMap<>(attributes);
+        final Map<String, String> newAttributes = new HashMap<>(attributes);
         newAttributes.put(nonBlankKey, value);
 
         return new FileGroupQueueItemMetadata(

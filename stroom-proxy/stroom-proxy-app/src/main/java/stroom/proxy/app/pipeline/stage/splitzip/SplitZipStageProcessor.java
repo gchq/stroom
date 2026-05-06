@@ -38,6 +38,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Queue item processor for the split-zip pipeline stage.
@@ -140,8 +141,8 @@ public class SplitZipStageProcessor implements FileGroupQueueItemProcessor {
 
             // 4. For each split output, copy to the output file store
             //    and publish an onward queue message.
-            final java.util.concurrent.atomic.AtomicInteger splitCount =
-                    new java.util.concurrent.atomic.AtomicInteger(0);
+            final AtomicInteger splitCount =
+                    new AtomicInteger(0);
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(tempSplitDir)) {
                 for (final Path splitDir : stream) {
                     if (!Files.isDirectory(splitDir)) {

@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -87,7 +89,7 @@ class TestReceiveStagePublisher extends StroomUnitTest {
         }
 
         // Queue should have 3 messages with distinct file-group IDs.
-        final java.util.Set<String> fileGroupIds = new java.util.HashSet<>();
+        final Set<String> fileGroupIds = new HashSet<>();
         for (int i = 0; i < 3; i++) {
             final FileGroupQueueItem item = outputQueue.next().orElse(null);
             assertThat(item).isNotNull();

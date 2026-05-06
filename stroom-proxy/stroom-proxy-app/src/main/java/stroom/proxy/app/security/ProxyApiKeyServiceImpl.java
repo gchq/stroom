@@ -403,7 +403,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
         @JsonIgnore
         public Instant getSnapshotTime() {
-            return java.time.Instant.ofEpochMilli(snapshotTimeEpochMs);
+            return Instant.ofEpochMilli(snapshotTimeEpochMs);
         }
 
         public boolean contains(final VerifiedApiKey verifiedApiKey) {
@@ -413,7 +413,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         @Override
         public String toString() {
             return "VerifiedApiKeys{" +
-                   "snapshotTimeEpochMs=" + java.time.Instant.ofEpochMilli(snapshotTimeEpochMs) +
+                   "snapshotTimeEpochMs=" + Instant.ofEpochMilli(snapshotTimeEpochMs) +
                    ", verifiedApiKeys='" + verifiedApiKeys + '\'' +
                    '}';
         }
@@ -482,12 +482,12 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
         @JsonIgnore
         public Instant getLastVerified() {
-            return java.time.Instant.ofEpochMilli(lastVerifiedEpochMs);
+            return Instant.ofEpochMilli(lastVerifiedEpochMs);
         }
 
         @JsonIgnore
         public boolean isOlderThan(final Duration age) {
-            return getLastVerified().isBefore(java.time.Instant.now().minus(age));
+            return getLastVerified().isBefore(Instant.now().minus(age));
         }
 
         // Don't include lastVerifiedEpochMs
@@ -520,7 +520,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                    ", prefix='" + prefix + '\'' +
                    ", hashedApiKey='" + hashedApiKey + '\'' +
                    ", requiredAppPermissions=" + requiredAppPermissions +
-                   ", lastVerifiedEpochMs=" + java.time.Instant.ofEpochMilli(lastVerifiedEpochMs) +
+                   ", lastVerifiedEpochMs=" + Instant.ofEpochMilli(lastVerifiedEpochMs) +
                    ", userDesc=" + userDesc +
                    '}';
         }

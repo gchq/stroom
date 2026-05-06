@@ -20,6 +20,8 @@ import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.proxy.app.pipeline.store.FileStoreWrite;
 
+import com.codahale.metrics.health.HealthCheck;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -91,12 +93,12 @@ public class LocalFileStore implements FileStore {
     }
 
     @Override
-    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+    public HealthCheck.Result healthCheck() {
         final boolean rootOk = Files.isDirectory(root) && Files.isWritable(root);
         final boolean writerOk = Files.isDirectory(writerRoot) && Files.isWritable(writerRoot);
 
         if (!rootOk || !writerOk) {
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return HealthCheck.Result.builder()
                     .unhealthy()
                     .withMessage("Directory check failed: root=%s, writerRoot=%s", rootOk, writerOk)
                     .withDetail("root", root.toString())
@@ -104,7 +106,7 @@ public class LocalFileStore implements FileStore {
                     .build();
         }
 
-        return com.codahale.metrics.health.HealthCheck.Result.builder()
+        return HealthCheck.Result.builder()
                 .healthy()
                 .withDetail("root", root.toString())
                 .withDetail("writable", true)

@@ -71,6 +71,7 @@ import stroom.util.http.HttpClientFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -139,7 +140,7 @@ public class ProxyCoreModule extends AbstractModule {
                                                          final SimpleReceiver simpleReceiver,
                                                          final ZipReceiver zipReceiver,
                                                          final PathCreator pathCreator,
-                                                         final com.codahale.metrics.MetricRegistry metricRegistry) {
+                                                         final MetricRegistry metricRegistry) {
         final ProxyPipelineAssembler assembler = new ProxyPipelineAssembler(
                 proxyConfig.getPipelineConfig(),
                 proxyId,

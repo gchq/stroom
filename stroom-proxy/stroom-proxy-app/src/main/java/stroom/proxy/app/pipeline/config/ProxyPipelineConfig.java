@@ -17,6 +17,13 @@
 package stroom.proxy.app.pipeline.config;
 
 import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -98,31 +105,31 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
      */
     public static PipelineStagesConfig defaultFullPipelineStages() {
         return new PipelineStagesConfig(
-                new stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig(
+                new ReceiveStageConfig(
                         true,
                         PRE_AGGREGATE_INPUT_QUEUE,
                         SPLIT_ZIP_INPUT_QUEUE,
                         RECEIVE_STORE,
-                        new stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig()),
-                new stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig(
+                        new ReceiveStageThreadsConfig()),
+                new SplitZipStageConfig(
                         true,
                         SPLIT_ZIP_INPUT_QUEUE,
                         PRE_AGGREGATE_INPUT_QUEUE,
                         SPLIT_STORE,
                         new ConsumerStageThreadsConfig()),
-                new stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig(
+                new PreAggregateStageConfig(
                         true,
                         PRE_AGGREGATE_INPUT_QUEUE,
                         AGGREGATE_INPUT_QUEUE,
                         PRE_AGGREGATE_STORE,
-                        new stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig()),
-                new stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig(
+                        new PreAggregateStageThreadsConfig()),
+                new AggregateStageConfig(
                         true,
                         AGGREGATE_INPUT_QUEUE,
                         FORWARDING_INPUT_QUEUE,
                         AGGREGATE_STORE,
                         new ConsumerStageThreadsConfig()),
-                new stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig(
+                new ForwardStageConfig(
                         true,
                         FORWARDING_INPUT_QUEUE,
                         new ConsumerStageThreadsConfig()));

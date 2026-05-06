@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ class TestAggregateStageProcessor extends StroomUnitTest {
         assertThat(resolvedPath).exists().isDirectory();
 
         // Capture the state as seen by the aggregate function during execution.
-        final java.util.ArrayList<Boolean> dirExistedDuringCall = new java.util.ArrayList<>();
+        final ArrayList<Boolean> dirExistedDuringCall = new ArrayList<>();
         final AggregateStageProcessor.AggregateFunction stubFunction = dir -> {
             dirExistedDuringCall.add(Files.isDirectory(dir));
         };

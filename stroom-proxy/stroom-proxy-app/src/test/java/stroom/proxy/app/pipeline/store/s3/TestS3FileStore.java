@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -90,6 +91,6 @@ class TestS3FileStore {
                 STORE_NAME, tempDir.resolve("some-path"));
 
         assertThatThrownBy(() -> s3FileStore.resolve(localLocation))
-                .isInstanceOf(java.io.IOException.class);
+                .isInstanceOf(IOException.class);
     }
 }

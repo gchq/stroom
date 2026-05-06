@@ -40,6 +40,7 @@ import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -121,7 +122,7 @@ class TestKafkaFileGroupQueueContract extends AbstractFileGroupQueueContractTest
 
             verifyConsumer.subscribe(Collections.singletonList(TOPIC));
             // Poll briefly — should get nothing since offset is past the message.
-            final var records = verifyConsumer.poll(java.time.Duration.ofSeconds(2));
+            final var records = verifyConsumer.poll(Duration.ofSeconds(2));
             assertThat(records.count())
                     .as("Acknowledged message should not be redelivered to a new consumer starting from latest")
                     .isZero();
