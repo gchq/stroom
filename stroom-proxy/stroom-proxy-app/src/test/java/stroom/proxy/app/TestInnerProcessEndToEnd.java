@@ -149,7 +149,7 @@ class TestInnerProcessEndToEnd {
                                 homeDir.toAbsolutePath().toString(),
                                 tempDir.toAbsolutePath().toString()))
                         .aggregatorConfig(AggregatorConfig.builder()
-                                .maxItemsPerAggregate(1000)
+                                .maxItemsPerAggregate(10)
                                 .maxUncompressedByteSizeString("1G")
                                 .aggregationFrequency(StroomDuration.ofSeconds(60))
                                 .build())
