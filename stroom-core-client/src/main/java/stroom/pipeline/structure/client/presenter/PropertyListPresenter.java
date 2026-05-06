@@ -53,6 +53,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -166,16 +167,17 @@ public class PropertyListPresenter
                                              !property.getValue().isEmbedded())
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
                 .cellTextFunction(property -> {
-                    if (property == null || property.getValue() == null || property.getValue().getEntity() == null) {
-                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    } else {
-                        final PipelinePropertyValue value = property.getValue();
-                        if (value != null && value.getEntity() != null) {
-                            return SafeHtmlUtils.fromString(value.getEntity()
-                                    .getDisplayValue(DisplayType.AUTO));
+                    final PipelinePropertyValue propertyValue = NullSafe.get(
+                            property, PipelineProperty::getValue);
+                    if (propertyValue != null) {
+                        final DocRef entity = propertyValue.getEntity();
+                        if (entity != null) {
+                            return SafeHtmlUtils.fromString(entity.getDisplayValue(DisplayType.AUTO));
                         } else {
-                            return SafeHtmlUtils.fromString(getVal(property));
+                            return getVal(propertyValue);
                         }
+                    } else {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     }
                 })
                 .docRefFunction(pipelineProperty -> NullSafe.get(
@@ -216,12 +218,8 @@ public class PropertyListPresenter
         return source;
     }
 
-    private String getVal(final PipelineProperty property) {
-        final PipelinePropertyValue value = property.getValue();
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
+    private SafeHtml getVal(final PipelinePropertyValue propertyValue) {
+        return SafeHtmlUtil.getSafeHtml(NullSafe.toString(propertyValue));
     }
 
     private PipelineProperty getActualProperty(final List<PipelineProperty> properties,
@@ -243,7 +241,7 @@ public class PropertyListPresenter
         dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
-                return getSafeHtml(NullSafe.get(
+                return SafeHtmlUtil.getSafeHtml(NullSafe.get(
                         pipelineModel,
                         pm -> pm.getPropertyType(currentElement, property),
                         PipelinePropertyType::getDescription));
@@ -304,14 +302,6 @@ public class PropertyListPresenter
             }
         }
         return className;
-    }
-
-    private SafeHtml getSafeHtml(final String string) {
-        if (string == null) {
-            return SafeHtmlUtils.EMPTY_SAFE_HTML;
-        }
-
-        return SafeHtmlUtils.fromString(string);
     }
 
     private void addEndColumn() {
