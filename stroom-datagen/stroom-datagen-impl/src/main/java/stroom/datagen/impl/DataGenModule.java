@@ -70,6 +70,10 @@ public class DataGenModule extends AbstractModule {
                 .bind(DataGenResourceImpl.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ScheduledDataGenExecutorRunnable extends RunnableWrapper {
 
         @Inject
@@ -78,6 +82,10 @@ public class DataGenModule extends AbstractModule {
             super(() -> scheduledExecutorService.exec(scheduledDataGenExecutor));
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class DataGenExecuteNow implements ExecuteNow {
 

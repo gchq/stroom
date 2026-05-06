@@ -401,9 +401,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private D importDocument(final DocRef docRef,
-                                final D existingDocument,
-                                final String uuid,
-                                final ImportExportDocument convertedImportExportDocument) {
+                             final D existingDocument,
+                             final String uuid,
+                             final ImportExportDocument convertedImportExportDocument) {
         return persistence.getLockFactory().lockResult(uuid, () -> {
             try {
                 // Turn the data map into a document.
@@ -462,16 +462,16 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
         return exportDocument(docRef, omitAuditFields, messageList, d -> d);
     }
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList,
-                                              final Function<D, D> function) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList,
+                                               final Function<D, D> function) {
         ImportExportDocument importExportDocument = new ImportExportDocument();
 
         try {

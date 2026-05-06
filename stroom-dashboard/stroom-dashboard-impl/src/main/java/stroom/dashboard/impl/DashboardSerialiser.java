@@ -24,14 +24,12 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
-import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
 public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
@@ -68,10 +66,8 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
         final DashboardConfig dashboardConfig = document.getDashboardConfig();
         final ImportExportDocument importExportDocument = delegate.write(document.copy().dashboardConfig(null).build());
         if (dashboardConfig != null) {
-            final StringWriter stringWriter = new StringWriter();
-            dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
-            importExportDocument.addExtAsset(
-                    new ByteArrayImportExportAsset(JSON, EncodingUtil.asBytes(stringWriter.toString())));
+            final byte[] jsonBytes = dashboardConfigSerialiser.writeAsBytes(dashboardConfig);
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, jsonBytes));
         }
         return importExportDocument;
     }

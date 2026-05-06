@@ -20,6 +20,7 @@ import stroom.util.concurrent.LazyValue;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.EncodingUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.base.Preconditions;
@@ -73,6 +74,22 @@ public final class JsonUtil {
         return json;
     }
 
+    public static byte[] writeValueAsBytes(final Object object) {
+        return writeValueAsBytes(object, true);
+    }
+
+    public static byte[] writeValueAsBytes(final Object object, final boolean indent) {
+        byte[] jsonBytes = null;
+        if (object != null) {
+            try {
+                jsonBytes = getMapper(indent).writeValueAsBytes(object);
+            } catch (final JacksonException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+        return jsonBytes;
+    }
+
     public static String writeValueAsConsistentString(final Object object) {
         return writeValueAsConsistentString(object, true);
     }
@@ -113,6 +130,17 @@ public final class JsonUtil {
         } catch (final JacksonException e) {
             throw new RuntimeException(String.format("Error deserialising object %s %s",
                     content, e.getMessage()), e);
+        }
+    }
+
+    public static <T> T readValue(final byte[] content, final Class<T> valueType) {
+        Preconditions.checkNotNull(content);
+        Preconditions.checkNotNull(valueType);
+        try {
+            return getMapper().readValue(content, valueType);
+        } catch (final JacksonException e) {
+            throw new RuntimeException(String.format("Error deserialising object %s %s",
+                    EncodingUtil.asString(content), e.getMessage()), e);
         }
     }
 

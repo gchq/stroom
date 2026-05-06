@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({
         "useSnapshotsForLookup",
         "useSnapshotsForGet",
@@ -29,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 @JsonInclude(Include.NON_NULL)
 public class SnapshotSettings {
+
     @JsonProperty
     private final boolean useSnapshotsForLookup;
     @JsonProperty
@@ -61,5 +64,30 @@ public class SnapshotSettings {
 
     public boolean isUseSnapshotsForQuery() {
         return useSnapshotsForQuery;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SnapshotSettings that = (SnapshotSettings) o;
+        return useSnapshotsForLookup == that.useSnapshotsForLookup
+               && useSnapshotsForGet == that.useSnapshotsForGet
+               && useSnapshotsForQuery == that.useSnapshotsForQuery;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(useSnapshotsForLookup, useSnapshotsForGet, useSnapshotsForQuery);
+    }
+
+    @Override
+    public String toString() {
+        return "SnapshotSettings{" +
+               "useSnapshotsForLookup=" + useSnapshotsForLookup +
+               ", useSnapshotsForGet=" + useSnapshotsForGet +
+               ", useSnapshotsForQuery=" + useSnapshotsForQuery +
+               '}';
     }
 }

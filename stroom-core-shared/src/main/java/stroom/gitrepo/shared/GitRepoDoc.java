@@ -255,6 +255,10 @@ public class GitRepoDoc extends AbstractDoc {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder extends AbstractBuilder<GitRepoDoc, Builder> {
 
         private String description = "";

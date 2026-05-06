@@ -82,7 +82,23 @@ public final class JsonV2Util {
                 LOGGER.error(e.getMessage(), e);
             }
         }
+        return json;
+    }
 
+    public static String writeValueAsConsistentString(final Object object) {
+        return writeValueAsConsistentString(object, true);
+    }
+
+    public static String writeValueAsConsistentString(final Object object, final boolean indent) {
+        String json = null;
+
+        if (object != null) {
+            try {
+                json = getConsistentOrderMapper(indent).writeValueAsString(object);
+            } catch (final JsonProcessingException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
         return json;
     }
 
