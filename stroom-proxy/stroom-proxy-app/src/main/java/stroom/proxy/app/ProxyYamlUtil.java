@@ -32,7 +32,6 @@ import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
 import tools.jackson.databind.MapperFeature;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
@@ -115,7 +114,7 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
+        final YAMLMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(path.toFile(), config);
     }

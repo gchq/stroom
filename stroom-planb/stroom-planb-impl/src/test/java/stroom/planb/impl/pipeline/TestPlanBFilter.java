@@ -39,7 +39,6 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedReader;
@@ -68,7 +67,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestPlanBFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPlanBFilter.class);
-    private static final ObjectMapper MAPPER = createMapper(true);
+    private static final JsonMapper MAPPER = createMapper(true);
 
     @Mock
     ShardWriters shardWriters;
@@ -267,8 +266,7 @@ public class TestPlanBFilter {
                           final TraceWriter writer) {
         try (final BufferedReader lineReader = Files.newBufferedReader(path)) {
             final String line = lineReader.readLine();
-            final ExportTraceServiceRequest exportRequest =
-                    MAPPER.readValue(line, ExportTraceServiceRequest.class);
+            final ExportTraceServiceRequest exportRequest = MAPPER.readValue(line, ExportTraceServiceRequest.class);
             for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
                 for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
                     for (final Span span : NullSafe.list(scopeSpans.getSpans())) {

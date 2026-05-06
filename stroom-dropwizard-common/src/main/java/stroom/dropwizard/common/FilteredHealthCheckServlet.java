@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
  * Some of the code in this class is copied from com.codahale.metrics.servlets.HealthCheckServlet
  * which is also licenced under Apache 2.0.
  */
+@Singleton // Because objectMapper
 public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminServlet {
 
     private static final String BASE_PATH_SPEC = "/filteredhealthcheck";

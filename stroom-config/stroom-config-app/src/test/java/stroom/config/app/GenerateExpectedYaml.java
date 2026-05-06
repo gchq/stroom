@@ -16,6 +16,7 @@
 
 package stroom.config.app;
 
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -119,7 +120,7 @@ public class GenerateExpectedYaml {
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
         // Need to use legacy v2 jackson as JsonSchemaGenerator lib needs v2
-        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
         final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 
         // If you want to configure it manually:

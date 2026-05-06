@@ -29,7 +29,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.jose4j.jwt.JwtClaims;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public class ExternalServiceUserFactory implements ServiceUserFactory {
 
@@ -38,7 +38,7 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
     private final JwtContextFactory jwtContextFactory;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     @Inject
     public ExternalServiceUserFactory(final JwtContextFactory jwtContextFactory,
@@ -47,7 +47,7 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
-        objectMapper = createObjectMapper();
+        this.jsonMapper = createObjectMapper();
     }
 
     @Override
@@ -95,7 +95,7 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
 
         // Only need the access token for a client_credentials flow
         final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
-                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
+                tokenEndpoint, openIdConfiguration, jsonMapper, jerseyClientFactory)
                 .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
                 .addScopes(openIdConfiguration.getClientCredentialsScopes())
                 .sendRequest(false);
@@ -107,7 +107,7 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
                         new RuntimeException("Unable to extract JWT claims for service user"));
     }
 
-    private ObjectMapper createObjectMapper() {
+    private JsonMapper createObjectMapper() {
         return JsonUtil.getNoIndentMapper();
     }
 }

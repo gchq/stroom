@@ -16,12 +16,10 @@
 
 package stroom.proxy.app;
 
-import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
@@ -30,7 +28,6 @@ import stroom.util.yaml.YamlUtil;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import jakarta.validation.constraints.NotNull;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -132,26 +129,26 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                         objectMapper.valueToTree(defaultConfig));
     }
 
-    private void dumpYamlDiff(final String path,
-                              final InputStream in,
-                              final ObjectMapper mapper,
-                              final JsonNode rootNode) throws IOException {
-        in.reset();
-        try {
-            final String originalYaml = StreamUtil.streamToString(in);
-            final String newYaml = mapper.writeValueAsString(rootNode);
-            DiffUtil.unifiedDiff(
-                    originalYaml,
-                    newYaml,
-                    true,
-                    3,
-                    diffLines ->
-                            log("Comparing original and modified yaml:\n{}",
-                                    String.join("\n", diffLines)));
-        } catch (final Exception e) {
-            log("Unable to read file " + path, e);
-        }
-    }
+//    private void dumpYamlDiff(final String path,
+//                              final InputStream in,
+//                              final ObjectMapper mapper,
+//                              final JsonNode rootNode) throws IOException {
+//        in.reset();
+//        try {
+//            final String originalYaml = StreamUtil.streamToString(in);
+//            final String newYaml = mapper.writeValueAsString(rootNode);
+//            DiffUtil.unifiedDiff(
+//                    originalYaml,
+//                    newYaml,
+//                    true,
+//                    3,
+//                    diffLines ->
+//                            log("Comparing original and modified yaml:\n{}",
+//                                    String.join("\n", diffLines)));
+//        } catch (final Exception e) {
+//            log("Unable to read file " + path, e);
+//        }
+//    }
 
 
     private void mutateNodes(final JsonNode rootNode,

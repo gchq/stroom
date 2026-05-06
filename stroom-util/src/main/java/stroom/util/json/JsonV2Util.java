@@ -146,7 +146,6 @@ public final class JsonV2Util {
     }
 
     private static ObjectMapper createMapper(final boolean indent) {
-
         return applyCommonConfig(JsonMapper.builder(), indent)
                 .build();
     }

@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
@@ -88,9 +87,9 @@ class TestYamlUtil {
     @Test
     void testMergeYamlNodeTrees_noChange() {
         final ImmutablePojo immutablePojoDefault = new ImmutablePojo();
-        final ObjectMapper yamlObjectMapper = YamlUtil.getMapper();
+        final YAMLMapper yamlMapper = YamlUtil.getMapper();
         // sparse is identical to default
-        final String sparseYaml = yamlObjectMapper.writeValueAsString(immutablePojoDefault);
+        final String sparseYaml = yamlMapper.writeValueAsString(immutablePojoDefault);
 
         doYamlMergeTest(sparseYaml, (defaultPojo, mergedPojo) -> {
             assertThat(mergedPojo)
