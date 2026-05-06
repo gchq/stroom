@@ -16,9 +16,11 @@
 
 package stroom.proxy.app.handler;
 
+import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.DataDirProvider;
+import stroom.proxy.repo.FeedKey;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -32,9 +34,12 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -76,17 +81,19 @@ public class Aggregator {
             // First count all files.
             final long sourceDirCount;
             try (final Stream<Path> stream = Files.list(dir)) {
-                sourceDirCount = stream.count();
+                sourceDirCount = stream.filter(Files::isDirectory).count();
             }
 
             LOGGER.debug(() -> "Aggregating " + sourceDirCount + " items");
 
             if (sourceDirCount == 0) {
-                throw new RuntimeException("Unexpected dir count");
+                throw new RuntimeException(
+                        "Unexpected dir count 0 in " + FileUtil.getCanonicalPath(dir)
+                        + ". The aggregate source directory contains no child directories.");
 
             } else if (sourceDirCount == 1) {
                 // If we only have one source dir then no merging is required, just forward.
-                FileUtil.forEachChild(dir, fileGroupDir -> {
+                FileUtil.forEachChildDir(dir, fileGroupDir -> {
                     LOGGER.debug("Passing {} to destination {} with no merging", fileGroupDir, destination);
                     destination.accept(fileGroupDir);
                 });
@@ -100,9 +107,10 @@ public class Aggregator {
                 final AtomicBoolean doneFirstMeta = new AtomicBoolean();
                 // Get a buffer to help us transfer data.
                 final byte[] buffer = LocalByteBuffer.get();
+                final List<ZipEntryGroup> outputEntryGroups = new ArrayList<>();
 
                 try (final ProxyZipWriter zipWriter = new ProxyZipWriter(outputFileGroup.getZip(), buffer)) {
-                    FileUtil.forEachChild(dir, fileGroupDir -> {
+                    FileUtil.forEachChildDir(dir, fileGroupDir -> {
                         final FileGroup fileGroup = new FileGroup(fileGroupDir);
 
                         // Combine common header keys and values.
@@ -130,11 +138,19 @@ public class Aggregator {
                             throw new UncheckedIOException(e);
                         }
 
+                        // Read source entries to get feed key for each entry group.
+                        final List<ZipEntryGroup> sourceEntryGroups =
+                                Files.isRegularFile(fileGroup.getEntries())
+                                        ? ZipEntryGroup.read(fileGroup.getEntries())
+                                        : List.of();
+
                         try (final ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
                             final Iterator<ZipArchiveEntry> entries = zipFile.getEntries().asIterator();
 
                             String lastBaseName = null;
                             String outputBaseName = null;
+                            long sourceGroupIndex = -1;
+                            ZipEntryGroup currentOutputGroup = null;
                             while (entries.hasNext()) {
                                 final ZipArchiveEntry zipEntry = entries.next();
                                 final String name = zipEntry.getName();
@@ -143,14 +159,38 @@ public class Aggregator {
                                 if (lastBaseName == null || !lastBaseName.equals(baseName)) {
                                     outputBaseName = NumericFileNameUtil.create(count.incrementAndGet());
                                     lastBaseName = baseName;
+                                    sourceGroupIndex++;
+
+                                    // Create output entry group, using feed key from source if available.
+                                    final FeedKey groupFeedKey = sourceGroupIndex < sourceEntryGroups.size()
+                                            ? sourceEntryGroups.get((int) sourceGroupIndex).getFeedKey()
+                                            : null;
+                                    currentOutputGroup = new ZipEntryGroup(groupFeedKey);
+                                    outputEntryGroups.add(currentOutputGroup);
                                 }
 
+                                final String outputEntryName = outputBaseName + "." + fileName.getExtension();
                                 // No need to decompress+recompress the entry as only the name is changing,
                                 // just write the raw compressed data into the new zip. Much faster.
                                 zipWriter.writeRawStream(
                                         zipEntry,
-                                        outputBaseName + "." + fileName.getExtension(),
+                                        outputEntryName,
                                         zipFile.getRawInputStream(zipEntry));
+                                final long entrySize = zipEntry.getSize();
+
+                                // Track the entry in the output group.
+                                final ZipEntryGroup.Entry outputEntry =
+                                        new ZipEntryGroup.Entry(outputEntryName, entrySize);
+                                final StroomZipFileType type =
+                                        StroomZipFileType.fromExtension(fileName.getExtension());
+                                if (currentOutputGroup != null) {
+                                    switch (type) {
+                                        case META -> currentOutputGroup.setMetaEntry(outputEntry);
+                                        case CONTEXT -> currentOutputGroup.setContextEntry(outputEntry);
+                                        case MANIFEST -> currentOutputGroup.setManifestEntry(outputEntry);
+                                        default -> currentOutputGroup.setDataEntry(outputEntry);
+                                    }
+                                }
                             }
                         } catch (final IOException e) {
                             LOGGER.error(e::getMessage, e);
@@ -164,6 +204,14 @@ public class Aggregator {
                     } catch (final IOException e) {
                         LOGGER.error(e::getMessage, e);
                         throw new UncheckedIOException(e);
+                    }
+
+                    // Write the entries file with correctly renumbered output entry names.
+                    try (final Writer entryWriter =
+                                 Files.newBufferedWriter(outputFileGroup.getEntries())) {
+                        for (final ZipEntryGroup group : outputEntryGroups) {
+                            group.write(entryWriter);
+                        }
                     }
                 }
 

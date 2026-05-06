@@ -83,25 +83,7 @@ public interface FileStore {
      */
     void delete(FileStoreLocation location) throws IOException;
 
-    /**
-     * Check whether a file-group location represents a fully committed write.
-     * <p>
-     * A location is considered complete if it exists and contains a
-     * completeness marker written by {@link FileStoreWrite#commit()}.
-     * This is used for idempotency: if a stage's output already exists
-     * and is complete, the stage can skip re-processing and re-publish
-     * the onward queue message instead.
-     * </p>
-     * <p>
-     * A location that does not exist, or that exists but has no completeness
-     * marker, is considered incomplete (e.g. a partial write from a crash).
-     * </p>
-     *
-     * @param location The location to check.
-     * @return {@code true} if the location is fully committed.
-     * @throws IOException If the location cannot be checked.
-     */
-    boolean isComplete(FileStoreLocation location) throws IOException;
+
 
     /**
      * Begin writing a new file group at a deterministic path derived from

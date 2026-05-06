@@ -271,6 +271,18 @@ public class PreAggregator {
             lock.lock();
             try {
                 addDir(dir, fileGroup, feedKey);
+            } catch (final Exception e) {
+                // If addDir failed mid-flight, calculateSplitParts may have
+                // created an AggregateState with partCount==0 as a side-effect.
+                // Remove it so we don't leave orphaned state with a stale
+                // createTime that would cause premature rolling on next item.
+                final AggregateState state = aggregateStateMap.get(feedKey);
+                if (state != null && state.partCount == 0) {
+                    LOGGER.warn("Removing empty aggregate state for feedKey {} after failure", feedKey);
+                    aggregateStateMap.remove(feedKey);
+                    deleteEmptyDir(state.aggregateDir, null);
+                }
+                throw e;
             } finally {
                 lock.unlock();
             }
@@ -527,6 +539,12 @@ public class PreAggregator {
     @NullMarked
     private boolean closeAggregate(final FeedKey feedKey,
                                    final AggregateState aggregateState) {
+        if (aggregateState.partCount == 0) {
+            LOGGER.warn("Refusing to close empty aggregate for feedKey: {}, removing from map", feedKey);
+            aggregateStateMap.remove(feedKey);
+            deleteEmptyDir(aggregateState.aggregateDir, null);
+            return false;
+        }
         LOGGER.debug(() -> LogUtil.message("closeAggregate() - feedKey: {}, {}, waiting for lock",
                 feedKey, aggregateState));
         // We hold the feedKey lock so

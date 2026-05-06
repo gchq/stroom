@@ -87,37 +87,9 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
         assertThat(Files.readString(resolved.resolve("proxy.zip"))).isEqualTo("zip-data");
     }
 
-    // ------------------------------------------------------------------
-    // isComplete
-    // ------------------------------------------------------------------
 
-    @Test
-    protected void contractIsCompleteReturnsFalseBeforeCommit() throws IOException {
-        // Construct a location that was never committed.
-        // Use a deterministic write so we know the path, then abandon it.
-        final Path tempPath;
-        try (final FileStoreWrite write = store.newDeterministicWrite("never-committed")) {
-            tempPath = write.getPath();
-            Files.writeString(tempPath.resolve("data.txt"), "abandoned");
-            // Don't commit — close cleans up.
-        }
 
-        // Create a location as if it had been committed to verify isComplete
-        // returns false for any non-existent location.
-        final FileStoreLocation fakeLoc = createFakeLocation("never-committed-check");
-        assertThat(store.isComplete(fakeLoc)).isFalse();
-    }
 
-    @Test
-    protected void contractIsCompleteReturnsTrueAfterCommit() throws IOException {
-        final FileStoreLocation location;
-        try (final FileStoreWrite write = store.newWrite()) {
-            Files.writeString(write.getPath().resolve("data.txt"), "committed");
-            location = write.commit();
-        }
-
-        assertThat(store.isComplete(location)).isTrue();
-    }
 
     // ------------------------------------------------------------------
     // Uncommitted cleanup
@@ -140,18 +112,21 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    protected void contractDeleteMakesIsCompleteReturnFalse() throws IOException {
+    protected void contractDeleteRemovesData() throws IOException {
         final FileStoreLocation location;
         try (final FileStoreWrite write = store.newWrite()) {
             Files.writeString(write.getPath().resolve("data.txt"), "to-delete");
             location = write.commit();
         }
 
-        assertThat(store.isComplete(location)).isTrue();
+        // Verify data exists before delete.
+        final Path resolved = store.resolve(location);
+        assertThat(resolved).isDirectory();
 
         store.delete(location);
 
-        assertThat(store.isComplete(location)).isFalse();
+        // After deletion, the directory should no longer exist.
+        assertThat(resolved).doesNotExist();
     }
 
     @Test
@@ -180,7 +155,6 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
             location = write.commit();
         }
 
-        assertThat(store.isComplete(location)).isTrue();
         final Path resolved = store.resolve(location);
         assertThat(Files.readString(resolved.resolve("data.txt"))).isEqualTo("deterministic");
     }
@@ -233,7 +207,6 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
 
         final Path resolved = store.resolve(location);
         assertThat(Files.readString(resolved.resolve("fresh.txt"))).isEqualTo("fresh-data");
-        assertThat(store.isComplete(location)).isTrue();
     }
 
     @Test
@@ -292,11 +265,11 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
             Files.writeString(write.getPath().resolve("data.txt"), "v1");
             location1 = write.commit();
         }
-        assertThat(store.isComplete(location1)).isTrue();
+
 
         // Delete.
         store.delete(location1);
-        assertThat(store.isComplete(location1)).isFalse();
+
 
         // Re-write with same ID — should NOT be pre-committed.
         final FileStoreLocation location2;
@@ -308,7 +281,6 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
 
         final Path resolved = store.resolve(location2);
         assertThat(Files.readString(resolved.resolve("data.txt"))).isEqualTo("v2");
-        assertThat(store.isComplete(location2)).isTrue();
     }
 
     // ------------------------------------------------------------------
@@ -322,18 +294,4 @@ public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
         assertThat(result.isHealthy()).isTrue();
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
-
-    /**
-     * Create a fake {@link FileStoreLocation} for testing isComplete on
-     * non-existent locations. Subclasses can override if their store type
-     * requires a specific location format.
-     */
-    protected FileStoreLocation createFakeLocation(final String id) {
-        return FileStoreLocation.localFileSystem(
-                STORE_NAME,
-                getCurrentTestDir().resolve("nonexistent").resolve(id));
-    }
 }

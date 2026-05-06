@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 public class LocalFileStore implements FileStore {
 
     private static final String TEMP_DIR_NAME = "writing";
-    private static final String COMPLETE_MARKER = ".complete";
+
     private static final int ID_WIDTH = 10;
 
     private final String name;
@@ -162,11 +162,7 @@ public class LocalFileStore implements FileStore {
         deleteRecursively(path);
     }
 
-    @Override
-    public boolean isComplete(final FileStoreLocation location) throws IOException {
-        final Path path = resolve(location);
-        return Files.isDirectory(path) && Files.exists(path.resolve(COMPLETE_MARKER));
-    }
+
 
     @Override
     public FileStoreWrite newDeterministicWrite(final String fileGroupId) throws IOException {
@@ -177,12 +173,12 @@ public class LocalFileStore implements FileStore {
 
         final Path stablePath = writerRoot.resolve(fileGroupId);
 
-        // If the output already exists and is complete, return a pre-committed write.
-        if (Files.isDirectory(stablePath) && Files.exists(stablePath.resolve(COMPLETE_MARKER))) {
+        // If the output already exists, return a pre-committed write.
+        if (Files.isDirectory(stablePath)) {
             return new PreCommittedFileStoreWrite(stablePath);
         }
 
-        // If a partial write exists (no marker), clean it up and start fresh.
+        // If something exists at the path but is not a directory, clean it up.
         if (Files.exists(stablePath)) {
             deleteRecursively(stablePath);
         }
@@ -303,11 +299,6 @@ public class LocalFileStore implements FileStore {
                 Files.move(tempPath, stablePath);
             }
 
-            // Write completeness marker as the last step.
-            // Use writeString (create-or-truncate) rather than createFile
-            // because a source copy may have already included a .complete file.
-            Files.writeString(stablePath.resolve(COMPLETE_MARKER), "");
-
             complete = true;
             return FileStoreLocation.localFileSystem(name, stablePath);
         }
@@ -362,9 +353,6 @@ public class LocalFileStore implements FileStore {
             } catch (final AtomicMoveNotSupportedException e) {
                 Files.move(tempPath, stablePath);
             }
-
-            // Write completeness marker as the last step.
-            Files.writeString(stablePath.resolve(COMPLETE_MARKER), "");
 
             complete = true;
             return FileStoreLocation.localFileSystem(name, stablePath);

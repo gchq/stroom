@@ -137,7 +137,7 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     }
 
     private static Map<String, QueueDefinition> defaultQueues() {
-        final TreeMap<String, QueueDefinition> map = new TreeMap<>();
+        final Map<String, QueueDefinition> map = new TreeMap<>();
         map.put(SPLIT_ZIP_INPUT_QUEUE, new QueueDefinition());
         map.put(PRE_AGGREGATE_INPUT_QUEUE, new QueueDefinition());
         map.put(AGGREGATE_INPUT_QUEUE, new QueueDefinition());
@@ -146,7 +146,7 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     }
 
     private static Map<String, FileStoreDefinition> defaultFileStores() {
-        final TreeMap<String, FileStoreDefinition> map = new TreeMap<>();
+        final Map<String, FileStoreDefinition> map = new TreeMap<>();
         map.put(RECEIVE_STORE, new FileStoreDefinition());
         map.put(SPLIT_STORE, new FileStoreDefinition());
         map.put(PRE_AGGREGATE_STORE, new FileStoreDefinition());

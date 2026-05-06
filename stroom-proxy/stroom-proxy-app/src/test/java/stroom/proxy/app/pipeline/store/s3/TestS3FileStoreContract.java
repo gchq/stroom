@@ -18,7 +18,6 @@ package stroom.proxy.app.pipeline.store.s3;
 
 import stroom.proxy.app.pipeline.store.AbstractFileStoreContractTest;
 import stroom.proxy.app.pipeline.store.FileStore;
-import stroom.proxy.app.pipeline.store.FileStoreLocation;
 
 import java.nio.file.Path;
 
@@ -40,11 +39,5 @@ class TestS3FileStoreContract extends AbstractFileStoreContractTest {
                 stub,
                 testRoot.resolve("local-root"),
                 "contract-writer");
-    }
-
-    @Override
-    protected FileStoreLocation createFakeLocation(final String id) {
-        // S3 stores reject local-filesystem locations, so provide an S3 location.
-        return FileStoreLocation.s3("contractStore", BUCKET, "contractStore/nonexistent/" + id);
     }
 }

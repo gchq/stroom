@@ -600,6 +600,25 @@ public class ZipReceiver implements Receiver {
                     size = writeUnchangedEntry(zipWriter, stagingZip, entry);
                     zipEntryGroup.setManifestEntry(new Entry(entryName, size));
                 } else {
+                    // Normalise: if no .meta entry exists for this base name,
+                    // synthesize one from the HTTP request headers. This matches
+                    // the old StroomStreamProcessor behaviour and ensures the
+                    // stored zip always has .meta before .dat, which is required
+                    // by ProxyZipWriter validation during pre-aggregation.
+                    final ZipEntryGroup existingGroup = baseNameToGroupMap.get(baseName);
+                    if (existingGroup == null || existingGroup.getMetaEntry() == null) {
+                        final String metaEntryName = baseName + "."
+                                + StroomZipFileType.META.getExtension();
+                        validator.addEntry(metaEntryName);
+                        writeSyntheticMetaEntry(
+                                attributeMap,
+                                defaultFeedKey,
+                                feedKeyInterner,
+                                zipWriter,
+                                baseNameToGroupMap,
+                                metaEntryName,
+                                baseName);
+                    }
                     size = writeUnchangedEntry(zipWriter, stagingZip, entry);
                     dataEntries.add(new Entry(entryName, size));
                 }
@@ -652,6 +671,43 @@ public class ZipReceiver implements Receiver {
         }
         size = bytes.length;
         zipEntryGroup.setMetaEntry(new Entry(entryName, size));
+        return size;
+    }
+
+    /**
+     * Write a synthetic .meta entry derived from the HTTP request headers.
+     * This is used when the source zip has data entries without corresponding
+     * meta entries — the same normalisation that the old StroomStreamProcessor
+     * used to perform.
+     *
+     * @return The uncompressed size of the synthetic meta entry
+     */
+    private static long writeSyntheticMetaEntry(final AttributeMap attributeMap,
+                                                final FeedKey defaultFeedKey,
+                                                final FeedKeyInterner feedKeyInterner,
+                                                final ZipWriter zipWriter,
+                                                final Map<String, ZipEntryGroup> baseNameToGroupMap,
+                                                final String metaEntryName,
+                                                final String baseName) throws IOException {
+        // Use the HTTP request headers as the meta content — no source meta
+        // to merge with.
+        final FeedKey feedKey = feedKeyInterner.intern(
+                attributeMap.get(StandardHeaderArguments.FEED),
+                attributeMap.get(StandardHeaderArguments.TYPE));
+
+        final byte[] bytes = AttributeMapUtil.toByteArray(attributeMap);
+        zipWriter.writeStream(metaEntryName, new ByteArrayInputStream(bytes));
+
+        final ZipEntryGroup zipEntryGroup = baseNameToGroupMap
+                .computeIfAbsent(baseName, k -> new ZipEntryGroup(
+                        feedKey != null
+                                ? feedKey
+                                : defaultFeedKey));
+        zipEntryGroup.setFeedKey(feedKey != null
+                ? feedKey
+                : defaultFeedKey);
+        final long size = bytes.length;
+        zipEntryGroup.setMetaEntry(new Entry(metaEntryName, size));
         return size;
     }
 

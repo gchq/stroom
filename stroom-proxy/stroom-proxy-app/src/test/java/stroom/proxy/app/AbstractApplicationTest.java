@@ -66,6 +66,7 @@ public abstract class AbstractApplicationTest {
     private HomeDirProvider homeDirProvider;
     private TempDirProvider tempDirProvider;
     private PathCreator pathCreator;
+    private Path tempRoot;
 
     // This is needed by DropwizardExtensionsSupport to fire up the proxy app
     // If we were always using the same config or all config was hot changeable then we could
@@ -96,6 +97,14 @@ public abstract class AbstractApplicationTest {
         System.clearProperty(HomeDirProvider.PROP_STROOM_HOME);
         System.clearProperty(TempDirProvider.PROP_STROOM_TEMP);
 //        MetricsUtil.clearRegistry();
+
+        // Clean up the temp directory created for this test run
+        if (tempRoot != null) {
+            LOGGER.info("Cleaning up temp root: {}", tempRoot);
+            FileUtil.deleteContents(tempRoot);
+            FileUtil.deleteDir(tempRoot);
+            tempRoot = null;
+        }
     }
 
     // Subclasses can override this
@@ -107,6 +116,7 @@ public abstract class AbstractApplicationTest {
         final Path temp;
         try {
             temp = Files.createTempDirectory("stroom-proxy");
+            this.tempRoot = temp;
         } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error creating temp dir"), e);
         }

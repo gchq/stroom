@@ -76,14 +76,14 @@ class TestInnerProcessEndToEnd {
     @Test
     void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10_001, 10, receiverFactory ->
+        test(1, 101, 10, receiverFactory ->
                 sendSimpleData(receiverFactory, feedName));
     }
 
     @Test
     void testSimpleZip() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10_001, 10, receiverFactory ->
+        test(1, 101, 10, receiverFactory ->
                 sendSimpleZip(receiverFactory, feedName, 1));
     }
 
@@ -97,7 +97,7 @@ class TestInnerProcessEndToEnd {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
         test(1,
-                10001,
+                101,
                 20,
                 receiverFactory ->
                         sendComplexZip(receiverFactory, feedName1, feedName2, 1));

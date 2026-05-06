@@ -36,10 +36,8 @@ import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
@@ -76,7 +74,6 @@ import java.util.stream.Stream;
  *       proxy.meta
  *       proxy.zip
  *       proxy.entries
- *       .committed          ← commit marker
  * </pre>
  * </p>
  */
@@ -84,7 +81,7 @@ public class S3FileStore implements FileStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileStore.class);
 
-    private static final String COMMITTED_MARKER = ".committed";
+
     private static final String CACHE_DIR_NAME = "cache";
     private static final String STAGING_DIR_NAME = "staging";
     private static final int ID_WIDTH = 10;
@@ -215,9 +212,9 @@ public class S3FileStore implements FileStore {
 
         final String fileGroupKey = keyPrefix + writerId + "/" + fileGroupId;
 
-        // Check if already committed in S3.
-        if (isCommittedInS3(fileGroupKey)) {
-            LOGGER.debug("Deterministic write for '{}' already committed in S3", fileGroupKey);
+        // Check if already present in S3.
+        if (hasObjectsInS3(fileGroupKey)) {
+            LOGGER.debug("Deterministic write for '{}' already exists in S3", fileGroupKey);
             return new PreCommittedS3FileStoreWrite(fileGroupKey);
         }
 
@@ -262,8 +259,8 @@ public class S3FileStore implements FileStore {
             final String objectKey = s3Object.key();
             // Extract the filename from the full key.
             final String fileName = objectKey.substring(objectKey.lastIndexOf('/') + 1);
-            if (fileName.isEmpty() || COMMITTED_MARKER.equals(fileName)) {
-                continue; // Skip the marker and any "directory" keys.
+            if (fileName.isEmpty()) {
+                continue; // Skip any "directory" keys.
             }
 
             final Path localFile = cacheDir.resolve(fileName);
@@ -319,35 +316,17 @@ public class S3FileStore implements FileStore {
         }
     }
 
-    @Override
-    public boolean isComplete(final FileStoreLocation location) throws IOException {
-        Objects.requireNonNull(location, "location");
-
-        if (!name.equals(location.storeName())) {
-            throw new IOException("File store location is for store '" + location.storeName()
-                                  + "' but this store is '" + name + "'");
-        }
-        if (!location.isS3()) {
-            return false;
-        }
-
-        final String locationKeyPrefix = location.getS3KeyPrefix();
-        return isCommittedInS3(normaliseKeyPrefix(locationKeyPrefix));
-    }
 
     // --- Internal helpers ---
 
-    private boolean isCommittedInS3(final String fileGroupKeyPrefix) {
-        final String markerKey = normaliseKeyPrefix(fileGroupKeyPrefix) + COMMITTED_MARKER;
-        try {
-            s3Client.headObject(HeadObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(markerKey)
-                    .build());
-            return true;
-        } catch (final NoSuchKeyException e) {
-            return false;
-        }
+    private boolean hasObjectsInS3(final String fileGroupKeyPrefix) {
+        final ListObjectsV2Response response = s3Client.listObjectsV2(
+                ListObjectsV2Request.builder()
+                        .bucket(bucket)
+                        .prefix(normaliseKeyPrefix(fileGroupKeyPrefix))
+                        .maxKeys(1)
+                        .build());
+        return response.hasContents() && !response.contents().isEmpty();
     }
 
     private void uploadDirectory(final Path dir, final String targetKeyPrefix) throws IOException {
@@ -367,16 +346,6 @@ public class S3FileStore implements FileStore {
                     });
         }
 
-        // Write the commit marker.
-        final Path markerFile = dir.resolve(COMMITTED_MARKER);
-        Files.writeString(markerFile, "");
-        final String markerKey = normalisedPrefix + COMMITTED_MARKER;
-        s3Client.putObject(
-                PutObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(markerKey)
-                        .build(),
-                markerFile);
     }
 
     private static S3Client buildS3Client(final FileStoreDefinition definition) {
@@ -413,7 +382,9 @@ public class S3FileStore implements FileStore {
         if (prefix == null || prefix.isEmpty()) {
             return "";
         }
-        return prefix.endsWith("/") ? prefix : prefix + "/";
+        return prefix.endsWith("/")
+                ? prefix
+                : prefix + "/";
     }
 
     private static String formatId(final long id) {
@@ -447,7 +418,7 @@ public class S3FileStore implements FileStore {
 
             @Override
             public FileVisitResult postVisitDirectory(final Path dir,
-                                                       final IOException exc) throws IOException {
+                                                      final IOException exc) throws IOException {
                 if (exc != null) {
                     throw exc;
                 }
