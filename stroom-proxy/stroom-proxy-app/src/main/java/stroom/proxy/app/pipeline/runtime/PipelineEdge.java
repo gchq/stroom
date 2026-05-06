@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.store.FileStore;
 import java.util.Objects;
 
 /**
@@ -31,7 +33,7 @@ import java.util.Objects;
  * @param targetStage The stage that consumes messages.
  * @param queueName The logical queue name connecting the stages.
  */
-public record PipelineEdge(
+record PipelineEdge(
         PipelineStageName sourceStage,
         PipelineStageName targetStage,
         String queueName) {
@@ -46,7 +48,7 @@ public record PipelineEdge(
         }
     }
 
-    public static PipelineEdge of(final PipelineStageName sourceStage,
+    static PipelineEdge of(final PipelineStageName sourceStage,
                                   final PipelineStageName targetStage,
                                   final String queueName) {
         return new PipelineEdge(sourceStage, targetStage, queueName);

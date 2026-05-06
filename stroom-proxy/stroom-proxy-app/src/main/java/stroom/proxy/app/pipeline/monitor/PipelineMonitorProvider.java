@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.monitor;
 
 
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.sqs.SqsFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.sqs.SqsHeartbeatCounters;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineAssembler;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -72,7 +79,9 @@ public class PipelineMonitorProvider {
             final FileGroupQueueWorkerCounters.Snapshot counters = worker
                     .map(w -> w.getCounters().snapshot())
                     .orElse(null);
-            final int threadCount = stage.getThreads().getConsumerThreads();
+            final int threadCount = stage.getThreads() != null
+                    ? stage.getThreads().getConsumerThreads()
+                    : 0;
 
             stages.add(new PipelineMonitorSnapshot.StageSnapshot(
                     stage.getConfigName(),

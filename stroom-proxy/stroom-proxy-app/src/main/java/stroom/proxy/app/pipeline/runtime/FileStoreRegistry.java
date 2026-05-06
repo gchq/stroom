@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;

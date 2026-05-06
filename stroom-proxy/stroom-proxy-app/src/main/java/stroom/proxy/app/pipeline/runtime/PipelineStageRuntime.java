@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.store.FileStore;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -39,7 +43,7 @@ import java.util.Optional;
  * that a later runtime runner can use to execute enabled stages.
  * </p>
  */
-public class PipelineStageRuntime {
+class PipelineStageRuntime {
 
     private final PipelineStage stage;
     private final FileGroupQueue inputQueue;
@@ -75,11 +79,11 @@ public class PipelineStageRuntime {
     }
 
     public boolean isEnabled() {
-        return stage.isEnabled();
+        return stage.enabled();
     }
 
-    public PipelineStageThreadsConfig getThreads() {
-        return stage.getThreads();
+    public ConsumerStageThreadsConfig getThreads() {
+        return stage.consumerThreads();
     }
 
     public Optional<FileGroupQueue> getInputQueue() {

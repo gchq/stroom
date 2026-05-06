@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.store.s3;
 
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

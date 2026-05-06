@@ -320,7 +320,7 @@ These are **valuable additions** that support the plan's idempotency requirement
 | 10 | At least one external queue works E2E | ✅ SQS + Kafka both implemented |
 | 11 | Common queue contract test suite | ✅ `AbstractFileGroupQueueContractTest` (10 contract tests) |
 | 12 | Monitoring shows topology + queue health | ✅ Monitoring servlet |
-| 13 | Documentation | ✅ `PIPELINE_ARCHITECTURE.md` |
+| 13 | Documentation | ✅ `designs/detailed-design.md` (consolidated) |
 
 ---
 
@@ -342,7 +342,7 @@ These are **valuable additions** that support the plan's idempotency requirement
 
 6. **`attempt` field on queue messages** — Plan marks as optional but useful for retry visibility.
 
-7. **Deployment documentation** — Plan calls for guides on local/Kafka/SQS modes. `PIPELINE_ARCHITECTURE.md` covers architecture but not operational deployment.
+7. **Deployment documentation** — Plan calls for guides on local/Kafka/SQS modes. `designs/detailed-design.md` covers architecture but not operational deployment.
 
 8. **FileStore contract test suite** — Plan (line 1611) calls for contract tests for FileStore too. `TestS3FileStore` and `TestFileStoreIdempotency` exist but aren't a shared abstract.
 

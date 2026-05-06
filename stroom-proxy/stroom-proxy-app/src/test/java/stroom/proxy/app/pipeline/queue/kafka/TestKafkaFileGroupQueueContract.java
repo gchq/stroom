@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.queue.kafka;
 
+import stroom.proxy.app.pipeline.queue.AbstractFileGroupQueueContractTest;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -89,7 +94,7 @@ class TestKafkaFileGroupQueueContract extends AbstractFileGroupQueueContractTest
      */
     @Override
     @Test
-    void contractAcknowledgePreventsRedelivery() throws IOException {
+    protected void contractAcknowledgePreventsRedelivery() throws IOException {
         final FileGroupQueue queue = createQueue("contractTestQueue");
         final FileGroupQueueMessage message = createMessage("fg-kafka-ack");
         queue.publish(message);

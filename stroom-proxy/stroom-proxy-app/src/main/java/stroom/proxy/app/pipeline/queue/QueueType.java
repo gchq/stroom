@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.queue;
 
+import stroom.proxy.app.pipeline.store.FileStore;
 /**
  * Supported queue implementations for the proxy reference-message pipeline.
  * <p>

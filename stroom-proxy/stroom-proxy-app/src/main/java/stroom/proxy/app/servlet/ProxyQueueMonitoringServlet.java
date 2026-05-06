@@ -16,8 +16,8 @@
 
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.app.pipeline.PipelineMonitorProvider;
-import stroom.proxy.app.pipeline.PipelineMonitorSnapshot;
+import stroom.proxy.app.pipeline.monitor.PipelineMonitorProvider;
+import stroom.proxy.app.pipeline.monitor.PipelineMonitorSnapshot;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.shared.IsAdminServlet;

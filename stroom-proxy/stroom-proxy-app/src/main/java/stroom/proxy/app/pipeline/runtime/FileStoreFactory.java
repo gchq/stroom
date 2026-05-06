@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
+import stroom.proxy.app.pipeline.store.local.LocalFileStore;
+import stroom.proxy.app.pipeline.store.s3.S3FileStore;
 import stroom.util.io.PathCreator;
 
 import java.nio.file.Path;
@@ -28,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * proxy pipeline.
  * <p>
  * Pipeline stages reference file stores by logical name in
- * {@link PipelineStageConfig}. This factory resolves those logical names using
+ * {@link ProxyPipelineConfig}. This factory resolves those logical names using
  * the {@link ProxyPipelineConfig#getFileStores()} map and creates the concrete
  * {@link FileStore} implementation for the definition.
  * </p>

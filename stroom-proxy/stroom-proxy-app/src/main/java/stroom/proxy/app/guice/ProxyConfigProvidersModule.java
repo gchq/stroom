@@ -144,19 +144,19 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.pipeline.ProxyPipelineConfig getProxyPipelineConfig(
+    stroom.proxy.app.pipeline.config.ProxyPipelineConfig getProxyPipelineConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.pipeline.ProxyPipelineConfig.class);
+                stroom.proxy.app.pipeline.config.ProxyPipelineConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.pipeline.PipelineStagesConfig getPipelineStagesConfig(
+    stroom.proxy.app.pipeline.config.PipelineStagesConfig getPipelineStagesConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.pipeline.PipelineStagesConfig.class);
+                stroom.proxy.app.pipeline.config.PipelineStagesConfig.class);
     }
 
 

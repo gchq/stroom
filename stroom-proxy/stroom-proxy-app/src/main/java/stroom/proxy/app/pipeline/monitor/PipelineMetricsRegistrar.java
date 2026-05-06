@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.monitor;
 
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.sqs.SqsFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.sqs.SqsHeartbeatCounters;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

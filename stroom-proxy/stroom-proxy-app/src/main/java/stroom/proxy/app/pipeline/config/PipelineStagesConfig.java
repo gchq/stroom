@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.config;
 
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
@@ -28,15 +33,19 @@ import java.util.Objects;
 
 /**
  * Stage definitions for independently enabled proxy pipeline stages.
+ * <p>
+ * Each stage has its own typed configuration class containing only the
+ * fields relevant to that stage.
+ * </p>
  */
 @JsonPropertyOrder(alphabetic = true)
 public class PipelineStagesConfig extends AbstractConfig implements IsProxyConfig {
 
-    private final PipelineStageConfig receive;
-    private final PipelineStageConfig splitZip;
-    private final PipelineStageConfig preAggregate;
-    private final PipelineStageConfig aggregate;
-    private final PipelineStageConfig forward;
+    private final ReceiveStageConfig receive;
+    private final SplitZipStageConfig splitZip;
+    private final PreAggregateStageConfig preAggregate;
+    private final AggregateStageConfig aggregate;
+    private final ForwardStageConfig forward;
 
     public PipelineStagesConfig() {
         this(null, null, null, null, null);
@@ -44,46 +53,46 @@ public class PipelineStagesConfig extends AbstractConfig implements IsProxyConfi
 
     @JsonCreator
     public PipelineStagesConfig(
-            @JsonProperty("receive") final PipelineStageConfig receive,
-            @JsonProperty("splitZip") final PipelineStageConfig splitZip,
-            @JsonProperty("preAggregate") final PipelineStageConfig preAggregate,
-            @JsonProperty("aggregate") final PipelineStageConfig aggregate,
-            @JsonProperty("forward") final PipelineStageConfig forward) {
+            @JsonProperty("receive") final ReceiveStageConfig receive,
+            @JsonProperty("splitZip") final SplitZipStageConfig splitZip,
+            @JsonProperty("preAggregate") final PreAggregateStageConfig preAggregate,
+            @JsonProperty("aggregate") final AggregateStageConfig aggregate,
+            @JsonProperty("forward") final ForwardStageConfig forward) {
 
-        this.receive = Objects.requireNonNullElseGet(receive, PipelineStageConfig::new);
-        this.splitZip = Objects.requireNonNullElseGet(splitZip, PipelineStageConfig::new);
-        this.preAggregate = Objects.requireNonNullElseGet(preAggregate, PipelineStageConfig::new);
-        this.aggregate = Objects.requireNonNullElseGet(aggregate, PipelineStageConfig::new);
-        this.forward = Objects.requireNonNullElseGet(forward, PipelineStageConfig::new);
+        this.receive = Objects.requireNonNullElseGet(receive, ReceiveStageConfig::new);
+        this.splitZip = Objects.requireNonNullElseGet(splitZip, SplitZipStageConfig::new);
+        this.preAggregate = Objects.requireNonNullElseGet(preAggregate, PreAggregateStageConfig::new);
+        this.aggregate = Objects.requireNonNullElseGet(aggregate, AggregateStageConfig::new);
+        this.forward = Objects.requireNonNullElseGet(forward, ForwardStageConfig::new);
     }
 
     @Valid
     @JsonProperty
-    public PipelineStageConfig getReceive() {
+    public ReceiveStageConfig getReceive() {
         return receive;
     }
 
     @Valid
     @JsonProperty
-    public PipelineStageConfig getSplitZip() {
+    public SplitZipStageConfig getSplitZip() {
         return splitZip;
     }
 
     @Valid
     @JsonProperty
-    public PipelineStageConfig getPreAggregate() {
+    public PreAggregateStageConfig getPreAggregate() {
         return preAggregate;
     }
 
     @Valid
     @JsonProperty
-    public PipelineStageConfig getAggregate() {
+    public AggregateStageConfig getAggregate() {
         return aggregate;
     }
 
     @Valid
     @JsonProperty
-    public PipelineStageConfig getForward() {
+    public ForwardStageConfig getForward() {
         return forward;
     }
 }

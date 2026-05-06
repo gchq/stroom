@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.config;
 
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.proxy.app.pipeline.runtime.PipelineStageName;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
+import stroom.proxy.app.pipeline.store.FileStoreType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -198,9 +210,9 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateReceiveStage(final ProxyPipelineConfig pipelineConfig,
-                                      final PipelineStageConfig stage,
+                                      final ReceiveStageConfig stage,
                                       final List<PipelineValidationIssue> issues) {
-        if (!isEnabled(stage)) {
+        if (stage == null || !stage.isEnabled()) {
             return;
         }
 
@@ -229,9 +241,9 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateSplitZipStage(final ProxyPipelineConfig pipelineConfig,
-                                       final PipelineStageConfig stage,
+                                       final SplitZipStageConfig stage,
                                        final List<PipelineValidationIssue> issues) {
-        if (!isEnabled(stage)) {
+        if (stage == null || !stage.isEnabled()) {
             return;
         }
 
@@ -252,9 +264,9 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validatePreAggregateStage(final ProxyPipelineConfig pipelineConfig,
-                                           final PipelineStageConfig stage,
+                                           final PreAggregateStageConfig stage,
                                            final List<PipelineValidationIssue> issues) {
-        if (!isEnabled(stage)) {
+        if (stage == null || !stage.isEnabled()) {
             return;
         }
 
@@ -276,9 +288,9 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateAggregateStage(final ProxyPipelineConfig pipelineConfig,
-                                        final PipelineStageConfig stage,
+                                        final AggregateStageConfig stage,
                                         final List<PipelineValidationIssue> issues) {
-        if (!isEnabled(stage)) {
+        if (stage == null || !stage.isEnabled()) {
             return;
         }
 
@@ -299,9 +311,9 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateForwardStage(final ProxyPipelineConfig pipelineConfig,
-                                      final PipelineStageConfig stage,
+                                      final ForwardStageConfig stage,
                                       final List<PipelineValidationIssue> issues) {
-        if (!isEnabled(stage)) {
+        if (stage == null || !stage.isEnabled()) {
             return;
         }
 
@@ -398,7 +410,7 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateReceiveThreads(final PipelineStageName stageName,
-                                        final PipelineStageThreadsConfig threads,
+                                        final ReceiveStageThreadsConfig threads,
                                         final List<PipelineValidationIssue> issues) {
         if (threads == null || threads.getMaxConcurrentReceives() < 1) {
             issues.add(PipelineValidationIssue.errorForStage(
@@ -409,7 +421,7 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateConsumerThreads(final PipelineStageName stageName,
-                                         final PipelineStageThreadsConfig threads,
+                                         final ConsumerStageThreadsConfig threads,
                                          final List<PipelineValidationIssue> issues) {
         if (threads == null || threads.getConsumerThreads() < 1) {
             issues.add(PipelineValidationIssue.errorForStage(
@@ -420,7 +432,7 @@ public class ProxyPipelineConfigValidator {
     }
 
     private void validateCloseOldAggregatesThreads(final PipelineStageName stageName,
-                                                   final PipelineStageThreadsConfig threads,
+                                                   final PreAggregateStageThreadsConfig threads,
                                                    final List<PipelineValidationIssue> issues) {
         if (threads == null || threads.getCloseOldAggregatesThreads() < 1) {
             issues.add(PipelineValidationIssue.errorForStage(
@@ -469,9 +481,6 @@ public class ProxyPipelineConfigValidator {
         });
     }
 
-    private static boolean isEnabled(final PipelineStageConfig stageConfig) {
-        return stageConfig != null && stageConfig.isEnabled();
-    }
 
     private static boolean hasQueue(final ProxyPipelineConfig pipelineConfig,
                                     final String queueName) {

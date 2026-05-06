@@ -14,8 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.monitor.PipelineMonitorProvider;
+import stroom.proxy.app.pipeline.monitor.PipelineMonitorSnapshot;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
+import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
 
@@ -211,8 +232,9 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
         // Simulate: explicit stages provided in YAML
         final PipelineStagesConfig explicitStages = new PipelineStagesConfig(
                 null, null, null, null,
-                new PipelineStageConfig(true, "customInput", null, null, null,
-                        new PipelineStageThreadsConfig()));
+                forwardConfig(
+                        true,
+                        "customInput"));
 
         final ProxyPipelineConfig config = new ProxyPipelineConfig(null, explicitStages, null);
 

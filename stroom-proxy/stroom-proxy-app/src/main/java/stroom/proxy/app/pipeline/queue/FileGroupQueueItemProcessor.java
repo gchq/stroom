@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.queue;
 
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 /**
  * Processing contract for a leased {@link FileGroupQueueItem}.
  * <p>

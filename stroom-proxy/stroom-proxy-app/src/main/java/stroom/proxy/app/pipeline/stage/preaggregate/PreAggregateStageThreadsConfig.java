@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.stage.preaggregate;
 
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsProxyConfig;
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,56 +28,32 @@ import jakarta.validation.constraints.Min;
 import java.util.Objects;
 
 /**
- * Per-stage processing thread settings for the reference-message pipeline.
+ * Thread configuration for the pre-aggregate stage.
  * <p>
- * There are 5 instances of this class in the config tree (one per stage),
- * so it cannot be injected as a singleton.
+ * Extends {@link ConsumerStageThreadsConfig} with an additional thread
+ * setting for the background task that closes old aggregates.
  * </p>
  */
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
-public class PipelineStageThreadsConfig extends AbstractConfig implements IsProxyConfig {
+public class PreAggregateStageThreadsConfig extends ConsumerStageThreadsConfig {
 
-    public static final int DEFAULT_MAX_CONCURRENT_RECEIVES = 5;
-    public static final int DEFAULT_CONSUMER_THREADS = 1;
     public static final int DEFAULT_CLOSE_OLD_AGGREGATES_THREADS = 1;
 
-    private final int maxConcurrentReceives;
-    private final int consumerThreads;
     private final int closeOldAggregatesThreads;
 
-    public PipelineStageThreadsConfig() {
-        this(
-                DEFAULT_MAX_CONCURRENT_RECEIVES,
-                DEFAULT_CONSUMER_THREADS,
-                DEFAULT_CLOSE_OLD_AGGREGATES_THREADS);
+    public PreAggregateStageThreadsConfig() {
+        this(null, DEFAULT_CLOSE_OLD_AGGREGATES_THREADS);
     }
 
     @JsonCreator
-    public PipelineStageThreadsConfig(
-            @JsonProperty("maxConcurrentReceives") final Integer maxConcurrentReceives,
+    public PreAggregateStageThreadsConfig(
             @JsonProperty("consumerThreads") final Integer consumerThreads,
             @JsonProperty("closeOldAggregatesThreads") final Integer closeOldAggregatesThreads) {
 
-        this.maxConcurrentReceives = Objects.requireNonNullElse(
-                maxConcurrentReceives, DEFAULT_MAX_CONCURRENT_RECEIVES);
-        this.consumerThreads = Objects.requireNonNullElse(consumerThreads, DEFAULT_CONSUMER_THREADS);
+        super(consumerThreads);
         this.closeOldAggregatesThreads = Objects.requireNonNullElse(
                 closeOldAggregatesThreads, DEFAULT_CLOSE_OLD_AGGREGATES_THREADS);
-    }
-
-    @Min(1)
-    @JsonProperty
-    @JsonPropertyDescription("Maximum concurrent receive requests for the receive stage.")
-    public int getMaxConcurrentReceives() {
-        return maxConcurrentReceives;
-    }
-
-    @Min(1)
-    @JsonProperty
-    @JsonPropertyDescription("Number of worker threads consuming this stage input queue.")
-    public int getConsumerThreads() {
-        return consumerThreads;
     }
 
     @Min(1)

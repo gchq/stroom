@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.stage.splitzip;
 
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -29,77 +30,69 @@ import jakarta.validation.Valid;
 import java.util.Objects;
 
 /**
- * Common stage configuration for the reference-message pipeline.
+ * Configuration for the split-zip pipeline stage.
  * <p>
- * There are 5 instances of this class in the config tree (one per stage),
- * so it cannot be injected as a singleton.
+ * The split-zip stage consumes multi-feed zip file groups from its input
+ * queue, splits them into per-feed file groups, writes the results to a
+ * file store, and publishes onward messages to the output queue.
  * </p>
  */
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
-public class PipelineStageConfig extends AbstractConfig implements IsProxyConfig {
+public class SplitZipStageConfig extends AbstractConfig implements IsProxyConfig {
 
     private final boolean enabled;
     private final String inputQueue;
     private final String outputQueue;
-    private final String splitZipQueue;
     private final String fileStore;
-    private final PipelineStageThreadsConfig threads;
+    private final ConsumerStageThreadsConfig threads;
 
-    public PipelineStageConfig() {
-        this(false, null, null, null, null, new PipelineStageThreadsConfig());
+    public SplitZipStageConfig() {
+        this(false, null, null, null, new ConsumerStageThreadsConfig());
     }
 
     @JsonCreator
-    public PipelineStageConfig(
+    public SplitZipStageConfig(
             @JsonProperty("enabled") final Boolean enabled,
             @JsonProperty("inputQueue") final String inputQueue,
             @JsonProperty("outputQueue") final String outputQueue,
-            @JsonProperty("splitZipQueue") final String splitZipQueue,
             @JsonProperty("fileStore") final String fileStore,
-            @JsonProperty("threads") final PipelineStageThreadsConfig threads) {
+            @JsonProperty("threads") final ConsumerStageThreadsConfig threads) {
 
         this.enabled = Objects.requireNonNullElse(enabled, false);
         this.inputQueue = normaliseOptional(inputQueue);
         this.outputQueue = normaliseOptional(outputQueue);
-        this.splitZipQueue = normaliseOptional(splitZipQueue);
         this.fileStore = normaliseOptional(fileStore);
-        this.threads = Objects.requireNonNullElseGet(threads, PipelineStageThreadsConfig::new);
+        this.threads = Objects.requireNonNullElseGet(threads, ConsumerStageThreadsConfig::new);
     }
 
     @JsonProperty
-    @JsonPropertyDescription("Whether this stage is enabled on this proxy process.")
+    @JsonPropertyDescription("Whether the split-zip stage is enabled on this proxy process.")
     public boolean isEnabled() {
         return enabled;
     }
 
     @JsonProperty
-    @JsonPropertyDescription("Logical input queue name for queue-consuming stages.")
+    @JsonPropertyDescription("Logical input queue name (e.g. splitZipInput).")
     public String getInputQueue() {
         return inputQueue;
     }
 
     @JsonProperty
-    @JsonPropertyDescription("Logical output queue name for stages that publish to another stage.")
+    @JsonPropertyDescription("Logical output queue name (e.g. preAggregateInput).")
     public String getOutputQueue() {
         return outputQueue;
     }
 
     @JsonProperty
-    @JsonPropertyDescription("Logical queue name for split zip work emitted by receive.")
-    public String getSplitZipQueue() {
-        return splitZipQueue;
-    }
-
-    @JsonProperty
-    @JsonPropertyDescription("Named file store used for data written by this stage.")
+    @JsonPropertyDescription("Named file store for data written by the split-zip stage.")
     public String getFileStore() {
         return fileStore;
     }
 
     @Valid
     @JsonProperty
-    public PipelineStageThreadsConfig getThreads() {
+    public ConsumerStageThreadsConfig getThreads() {
         return threads;
     }
 

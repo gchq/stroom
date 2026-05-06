@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.stage;
 
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import org.junit.jupiter.api.Test;

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.queue;
 
+import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;

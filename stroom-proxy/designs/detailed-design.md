@@ -62,57 +62,95 @@ File stores support deterministic write paths (`newDeterministicWrite(id)`) so r
 
 ## 4. Package Structure
 
-All pipeline classes reside in `stroom.proxy.app.pipeline`. The package contains **54 classes** organised into the following layers:
+All pipeline classes reside in `stroom.proxy.app.pipeline`, organised into sub-packages by concern:
 
 ```mermaid
 graph TD
-    subgraph "Stage Processors"
+    subgraph "stage/ (common infra)"
+        FGQW["FileGroupQueueWorker"]
+        FGQIP["FileGroupQueueItemProcessor"]
+        FGQWC["FileGroupQueueWorkerCounters"]
+        PSR["PipelineStageRunner"]
+    end
+
+    subgraph "stage.receive/"
+        RSC["ReceiveStageConfig"]
+        RSTC["ReceiveStageThreadsConfig"]
         RSP["ReceiveStagePublisher"]
+    end
+
+    subgraph "stage.splitzip/"
+        SZSC["SplitZipStageConfig"]
         SZSP["SplitZipStageProcessor"]
+    end
+
+    subgraph "stage.preaggregate/"
+        PASC["PreAggregateStageConfig"]
+        PASTC["PreAggregateStageThreadsConfig"]
         PASP["PreAggregateStageProcessor"]
+    end
+
+    subgraph "stage.aggregate/"
+        ASC["AggregateStageConfig"]
         ASP["AggregateStageProcessor"]
-        FSP["ForwardStageProcessor"]
-        FSFOF["ForwardStageFanOutForwarder"]
         ACP["AggregateClosePublisher"]
     end
 
-    subgraph "Worker Infrastructure"
-        FGQW["FileGroupQueueWorker"]
-        FGQIP["FileGroupQueueItemProcessor"]
-        FGQWR["FileGroupQueueWorkerResult"]
-        FGQWC["FileGroupQueueWorkerCounters"]
+    subgraph "stage.forward/"
+        FSC["ForwardStageConfig"]
+        FSP["ForwardStageProcessor"]
+        FSFOF["ForwardStageFanOutForwarder"]
     end
 
-    subgraph "Queue Layer"
+    subgraph "config/"
+        PPC["ProxyPipelineConfig"]
+        PSC["PipelineStagesConfig"]
+        CSTC["ConsumerStageThreadsConfig"]
+        PPCV["ProxyPipelineConfigValidator"]
+    end
+
+    subgraph "queue/"
         FGQ["FileGroupQueue"]
-        LFGQ["LocalFileGroupQueue"]
-        SQSFGQ["SqsFileGroupQueue"]
-        KFGQ["KafkaFileGroupQueue"]
         FGQM["FileGroupQueueMessage"]
         FGQI["FileGroupQueueItem"]
     end
 
-    subgraph "File Store Layer"
+    subgraph "queue.local/"
+        LFGQ["LocalFileGroupQueue"]
+    end
+
+    subgraph "queue.sqs/"
+        SQSFGQ["SqsFileGroupQueue"]
+    end
+
+    subgraph "queue.kafka/"
+        KFGQ["KafkaFileGroupQueue"]
+    end
+
+    subgraph "store/"
         FS["FileStore"]
-        LFS["LocalFileStore"]
-        S3FS["S3FileStore"]
         FSW["FileStoreWrite"]
         FSL["FileStoreLocation"]
         FSR["FileStoreRegistry"]
     end
 
-    subgraph "Runtime & Lifecycle"
+    subgraph "store.local/"
+        LFS["LocalFileStore"]
+    end
+
+    subgraph "store.s3/"
+        S3FS["S3FileStore"]
+    end
+
+    subgraph "runtime/"
         PPR["ProxyPipelineRuntime"]
         PPA["ProxyPipelineAssembler"]
         PPL["ProxyPipelineLifecycle"]
-        PSR["PipelineStageRunner"]
-        PPT["ProxyPipelineTopology"]
     end
 
-    subgraph "Observability"
+    subgraph "monitor/"
         PHC["PipelineHealthChecks"]
         PMR["PipelineMetricsRegistrar"]
-        SQSHC["SqsHeartbeatCounters"]
     end
 
     FGQW --> FGQ
@@ -123,9 +161,14 @@ graph TD
     PASP --> FSR
     ASP --> FSR
     FSP --> FSR
-    PPR --> PPT
     PPL --> PSR
     PSR --> FGQW
+    PSC --> RSC
+    PSC --> SZSC
+    PSC --> PASC
+    PSC --> ASC
+    PSC --> FSC
+    PASTC -.-> CSTC
 ```
 
 ## 5. Ownership-Transfer Protocol
@@ -231,6 +274,8 @@ A leased item from a queue with acknowledgement semantics:
 
 ## 9. Configuration Model
 
+Each stage has its own typed configuration class with only the fields relevant to that stage.
+
 ```mermaid
 classDiagram
     class ProxyPipelineConfig {
@@ -240,32 +285,87 @@ classDiagram
     }
 
     class PipelineStagesConfig {
-        +PipelineStageConfig receive
-        +PipelineStageConfig splitZip
-        +PipelineStageConfig preAggregate
-        +PipelineStageConfig aggregate
-        +PipelineStageConfig forward
+        +ReceiveStageConfig receive
+        +SplitZipStageConfig splitZip
+        +PreAggregateStageConfig preAggregate
+        +AggregateStageConfig aggregate
+        +ForwardStageConfig forward
     }
 
-    class PipelineStageConfig {
-        +boolean enabled = true
-        +String inputQueue
+    class ReceiveStageConfig {
+        +boolean enabled
         +String outputQueue
         +String splitZipQueue
         +String fileStore
-        +PipelineStageThreadsConfig threads
+        +ReceiveStageThreadsConfig threads
     }
 
-    class PipelineStageThreadsConfig {
-        +int consumerThreads
-        +int maxConcurrentReceives
-        +int closeOldAggregatesThreads
+    class SplitZipStageConfig {
+        +boolean enabled
+        +String inputQueue
+        +String outputQueue
+        +String fileStore
+        +ConsumerStageThreadsConfig threads
+    }
+
+    class PreAggregateStageConfig {
+        +boolean enabled
+        +String inputQueue
+        +String outputQueue
+        +String fileStore
+        +PreAggregateStageThreadsConfig threads
+    }
+
+    class AggregateStageConfig {
+        +boolean enabled
+        +String inputQueue
+        +String outputQueue
+        +String fileStore
+        +ConsumerStageThreadsConfig threads
+    }
+
+    class ForwardStageConfig {
+        +boolean enabled
+        +String inputQueue
+        +ConsumerStageThreadsConfig threads
+    }
+
+    class ConsumerStageThreadsConfig {
+        +int consumerThreads = 1
+    }
+
+    class ReceiveStageThreadsConfig {
+        +int maxConcurrentReceives = 7
+    }
+
+    class PreAggregateStageThreadsConfig {
+        +int consumerThreads = 1
+        +int closeOldAggregatesThreads = 1
     }
 
     ProxyPipelineConfig --> PipelineStagesConfig
-    PipelineStagesConfig --> PipelineStageConfig
-    PipelineStageConfig --> PipelineStageThreadsConfig
+    PipelineStagesConfig --> ReceiveStageConfig
+    PipelineStagesConfig --> SplitZipStageConfig
+    PipelineStagesConfig --> PreAggregateStageConfig
+    PipelineStagesConfig --> AggregateStageConfig
+    PipelineStagesConfig --> ForwardStageConfig
+    ReceiveStageConfig --> ReceiveStageThreadsConfig
+    SplitZipStageConfig --> ConsumerStageThreadsConfig
+    PreAggregateStageConfig --> PreAggregateStageThreadsConfig
+    AggregateStageConfig --> ConsumerStageThreadsConfig
+    ForwardStageConfig --> ConsumerStageThreadsConfig
+    PreAggregateStageThreadsConfig --|> ConsumerStageThreadsConfig
 ```
+
+### Stage-Specific Thread Config
+
+| Stage | Config Class | Fields |
+|-------|-------------|--------|
+| Receive | `ReceiveStageThreadsConfig` | `maxConcurrentReceives` (default: 7) |
+| Split-Zip | `ConsumerStageThreadsConfig` | `consumerThreads` (default: 1) |
+| Pre-Aggregate | `PreAggregateStageThreadsConfig` | `consumerThreads` (default: 1), `closeOldAggregatesThreads` (default: 1) |
+| Aggregate | `ConsumerStageThreadsConfig` | `consumerThreads` (default: 1) |
+| Forward | `ConsumerStageThreadsConfig` | `consumerThreads` (default: 1) |
 
 ## 10. Thread Model
 

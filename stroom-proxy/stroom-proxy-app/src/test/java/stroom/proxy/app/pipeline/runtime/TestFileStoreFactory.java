@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
+import stroom.proxy.app.pipeline.store.FileStoreWrite;
+import stroom.proxy.app.pipeline.store.local.LocalFileStore;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
 

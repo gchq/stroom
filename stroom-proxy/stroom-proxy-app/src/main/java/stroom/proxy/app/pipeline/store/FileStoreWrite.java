@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.store;
 
 import java.io.IOException;
 import java.nio.file.Path;

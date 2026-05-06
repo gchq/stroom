@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.store;
 
+import stroom.proxy.app.pipeline.queue.AbstractFileGroupQueueContractTest;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@link AbstractFileGroupQueueContractTest} for queue implementations.
  * </p>
  */
-abstract class AbstractFileStoreContractTest extends StroomUnitTest {
+public abstract class AbstractFileStoreContractTest extends StroomUnitTest {
 
     private static final String STORE_NAME = "contractStore";
 
@@ -59,7 +60,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
             throws IOException;
 
     @BeforeEach
-    void setUpStore() throws IOException {
+    protected void setUpStore() throws IOException {
         store = createFileStore(STORE_NAME, getCurrentTestDir());
     }
 
@@ -68,7 +69,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractWriteCommitProducesResolvableLocation() throws IOException {
+    protected void contractWriteCommitProducesResolvableLocation() throws IOException {
         final FileStoreLocation location;
         try (final FileStoreWrite write = store.newWrite()) {
             Files.writeString(write.getPath().resolve("proxy.meta"), "Feed:CONTRACT_TEST");
@@ -90,7 +91,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractIsCompleteReturnsFalseBeforeCommit() throws IOException {
+    protected void contractIsCompleteReturnsFalseBeforeCommit() throws IOException {
         // Construct a location that was never committed.
         // Use a deterministic write so we know the path, then abandon it.
         final Path tempPath;
@@ -107,7 +108,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractIsCompleteReturnsTrueAfterCommit() throws IOException {
+    protected void contractIsCompleteReturnsTrueAfterCommit() throws IOException {
         final FileStoreLocation location;
         try (final FileStoreWrite write = store.newWrite()) {
             Files.writeString(write.getPath().resolve("data.txt"), "committed");
@@ -122,7 +123,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractUncommittedWriteCleanedUpOnClose() throws IOException {
+    protected void contractUncommittedWriteCleanedUpOnClose() throws IOException {
         final Path stagingPath;
         try (final FileStoreWrite write = store.newWrite()) {
             stagingPath = write.getPath();
@@ -138,7 +139,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractDeleteMakesIsCompleteReturnFalse() throws IOException {
+    protected void contractDeleteMakesIsCompleteReturnFalse() throws IOException {
         final FileStoreLocation location;
         try (final FileStoreWrite write = store.newWrite()) {
             Files.writeString(write.getPath().resolve("data.txt"), "to-delete");
@@ -153,7 +154,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractDeleteIsIdempotent() throws IOException {
+    protected void contractDeleteIsIdempotent() throws IOException {
         final FileStoreLocation location;
         try (final FileStoreWrite write = store.newWrite()) {
             Files.writeString(write.getPath().resolve("data.txt"), "delete-twice");
@@ -170,7 +171,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractDeterministicWriteNewFileGroup() throws IOException {
+    protected void contractDeterministicWriteNewFileGroup() throws IOException {
         final FileStoreLocation location;
         try (final FileStoreWrite write = store.newDeterministicWrite("det-new-001")) {
             assertThat(write.isCommitted()).isFalse();
@@ -184,7 +185,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractDeterministicWriteSkipsWhenAlreadyComplete() throws IOException {
+    protected void contractDeterministicWriteSkipsWhenAlreadyComplete() throws IOException {
         final String fileGroupId = "det-skip-001";
 
         // First write.
@@ -211,7 +212,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractDeterministicWriteCleansUpPartialOnRetry() throws IOException {
+    protected void contractDeterministicWriteCleansUpPartialOnRetry() throws IOException {
         final String fileGroupId = "det-partial-001";
 
         // Simulate a partial write that left a directory without a completion marker.
@@ -235,7 +236,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractDeterministicWriteUncommittedCleansUp() throws IOException {
+    protected void contractDeterministicWriteUncommittedCleansUp() throws IOException {
         final Path tempPath;
         try (final FileStoreWrite write = store.newDeterministicWrite("det-abandon-001")) {
             tempPath = write.getPath();
@@ -251,7 +252,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractCommitIsIdempotent() throws IOException {
+    protected void contractCommitIsIdempotent() throws IOException {
         try (final FileStoreWrite write = store.newWrite()) {
             Files.writeString(write.getPath().resolve("data.txt"), "commit-twice");
             final FileStoreLocation loc1 = write.commit();
@@ -266,7 +267,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractResolveRejectsMismatchedStoreName() {
+    protected void contractResolveRejectsMismatchedStoreName() {
         // Create a location referencing a different store.
         final FileStoreLocation badLocation = FileStoreLocation.localFileSystem(
                 "wrongStoreName",
@@ -281,7 +282,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractDeleteAndRewriteCycle() throws IOException {
+    protected void contractDeleteAndRewriteCycle() throws IOException {
         final String fileGroupId = "det-cycle-001";
 
         // Write and commit.
@@ -314,7 +315,7 @@ abstract class AbstractFileStoreContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractHealthCheckReturnsResult() {
+    protected void contractHealthCheckReturnsResult() {
         final com.codahale.metrics.health.HealthCheck.Result result = store.healthCheck();
         assertThat(result).isNotNull();
         assertThat(result.isHealthy()).isTrue();

@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +47,7 @@ import java.util.stream.Stream;
  * {@link FileGroupQueueFactory}.
  * </p>
  */
-public class ProxyPipelineTopology {
+class ProxyPipelineTopology {
 
     private final Map<PipelineStageName, PipelineStage> stages;
     private final List<PipelineEdge> edges;
@@ -76,21 +80,11 @@ public class ProxyPipelineTopology {
         final PipelineStagesConfig stagesConfig = nonNullPipelineConfig.getStages();
         final EnumMap<PipelineStageName, PipelineStage> stages = new EnumMap<>(PipelineStageName.class);
 
-        stages.put(
-                PipelineStageName.RECEIVE,
-                new PipelineStage(PipelineStageName.RECEIVE, stagesConfig.getReceive()));
-        stages.put(
-                PipelineStageName.SPLIT_ZIP,
-                new PipelineStage(PipelineStageName.SPLIT_ZIP, stagesConfig.getSplitZip()));
-        stages.put(
-                PipelineStageName.PRE_AGGREGATE,
-                new PipelineStage(PipelineStageName.PRE_AGGREGATE, stagesConfig.getPreAggregate()));
-        stages.put(
-                PipelineStageName.AGGREGATE,
-                new PipelineStage(PipelineStageName.AGGREGATE, stagesConfig.getAggregate()));
-        stages.put(
-                PipelineStageName.FORWARD,
-                new PipelineStage(PipelineStageName.FORWARD, stagesConfig.getForward()));
+        stages.put(PipelineStageName.RECEIVE, PipelineStage.receive(stagesConfig));
+        stages.put(PipelineStageName.SPLIT_ZIP, PipelineStage.splitZip(stagesConfig));
+        stages.put(PipelineStageName.PRE_AGGREGATE, PipelineStage.preAggregate(stagesConfig));
+        stages.put(PipelineStageName.AGGREGATE, PipelineStage.aggregate(stagesConfig));
+        stages.put(PipelineStageName.FORWARD, PipelineStage.forward(stagesConfig));
 
         return new ProxyPipelineTopology(
                 stages,
@@ -113,12 +107,12 @@ public class ProxyPipelineTopology {
 
     public Stream<PipelineStage> streamEnabledStages() {
         return streamStages()
-                .filter(PipelineStage::isEnabled);
+                .filter(PipelineStage::enabled);
     }
 
     public boolean isStageEnabled(final PipelineStageName stageName) {
         return getStage(stageName)
-                .map(PipelineStage::isEnabled)
+                .map(PipelineStage::enabled)
                 .orElse(false);
     }
 
@@ -168,8 +162,8 @@ public class ProxyPipelineTopology {
         final List<PipelineEdge> edges = new ArrayList<>();
 
         for (final PipelineStage fromStage : stages) {
-            addEdgesForQueue(stages, edges, fromStage, fromStage.getOutputQueue());
-            addEdgesForQueue(stages, edges, fromStage, fromStage.getSplitZipQueue());
+            addEdgesForQueue(stages, edges, fromStage, fromStage.getOutputQueueOpt());
+            addEdgesForQueue(stages, edges, fromStage, fromStage.getSplitZipQueueOpt());
         }
 
         return edges;
@@ -182,7 +176,7 @@ public class ProxyPipelineTopology {
         optionalQueueName.ifPresent(queueName ->
                 stages.stream()
                         .filter(toStage -> toStage.name() != fromStage.name())
-                        .filter(toStage -> toStage.getInputQueue()
+                        .filter(toStage -> toStage.getInputQueueOpt()
                                 .filter(queueName::equals)
                                 .isPresent())
                         .map(toStage -> new PipelineEdge(fromStage.name(), toStage.name(), queueName))

@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.config;
 
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.proxy.app.pipeline.runtime.PipelineStageName;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import org.junit.jupiter.api.Test;
+
+import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
 
 import java.util.Map;
 
@@ -51,13 +59,12 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null,
                         null,
                         null,
@@ -75,13 +82,12 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
                                 null,
                                 null,
                                 null,
-                                null,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null,
                         null,
                         null,
@@ -106,13 +112,12 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 "unknownQueue",
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null,
                         null,
                         null,
@@ -135,13 +140,12 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 "unknownSplitQueue",
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null,
                         null,
                         null,
@@ -164,13 +168,12 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 null,
                                 "unknownStore",
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null,
                         null,
                         null,
@@ -193,41 +196,34 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ReceiveStageThreadsConfig()),
+                        splitZipConfig(
                                 true,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.SPLIT_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ConsumerStageThreadsConfig()),
+                        preAggregateConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new PreAggregateStageThreadsConfig()),
+                        aggregateConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ConsumerStageThreadsConfig()),
+                        forwardConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig())),
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
 
         final PipelineValidationResult result = validator.validate(config);
@@ -242,13 +238,11 @@ class TestProxyPipelineConfigValidator {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null,
-                        new PipelineStageConfig(
+                        splitZipConfig(
                                 true,
                                 null,
                                 null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig()),
+                                null),
                         null,
                         null,
                         null),
@@ -275,13 +269,12 @@ class TestProxyPipelineConfigValidator {
                 new PipelineStagesConfig(
                         null,
                         null,
-                        new PipelineStageConfig(
+                        preAggregateConfig(
                                 true,
                                 null,
                                 null,
                                 null,
-                                null,
-                                new PipelineStageThreadsConfig(1, 0, 0)),
+                                new PreAggregateStageThreadsConfig(0, 0)),
                         null,
                         null),
                 defaultFileStores());
@@ -311,13 +304,11 @@ class TestProxyPipelineConfigValidator {
                         null,
                         null,
                         null,
-                        new PipelineStageConfig(
+                        aggregateConfig(
                                 true,
                                 null,
                                 null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig()),
+                                null),
                         null),
                 defaultFileStores());
 
@@ -344,13 +335,9 @@ class TestProxyPipelineConfigValidator {
                         null,
                         null,
                         null,
-                        new PipelineStageConfig(
+                        forwardConfig(
                                 true,
-                                null,
-                                null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig())),
+                                null)),
                 defaultFileStores());
 
         final PipelineValidationResult result = validator.validate(config);
@@ -373,13 +360,9 @@ class TestProxyPipelineConfigValidator {
                         null,
                         null,
                         null,
-                        new PipelineStageConfig(
+                        forwardConfig(
                                 true,
-                                "unknownForwardingQueue",
-                                null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig())),
+                                "unknownForwardingQueue")),
                 defaultFileStores());
 
         final PipelineValidationResult result = validator.validate(config);
@@ -509,13 +492,9 @@ class TestProxyPipelineConfigValidator {
                         null,
                         null,
                         null,
-                        new PipelineStageConfig(
+                        forwardConfig(
                                 true,
-                                null,
-                                null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig())),
+                                null)),
                 defaultFileStores());
 
         assertThatThrownBy(() -> validator.validate(config).throwIfInvalid())
@@ -529,13 +508,12 @@ class TestProxyPipelineConfigValidator {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
                                 null,
                                 null,
                                 null,
-                                null,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null,
                         null,
                         null,

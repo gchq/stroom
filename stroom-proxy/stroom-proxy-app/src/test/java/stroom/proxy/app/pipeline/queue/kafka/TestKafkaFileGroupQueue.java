@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.queue.kafka;
 
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
+import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;

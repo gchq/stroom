@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.queue.kafka.KafkaFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.sqs.SqsFileGroupQueue;
 import stroom.util.io.PathCreator;
 
 import java.io.IOException;

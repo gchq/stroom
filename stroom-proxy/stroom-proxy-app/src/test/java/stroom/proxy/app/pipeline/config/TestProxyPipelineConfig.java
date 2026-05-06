@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.config;
 
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.runtime.FileGroupQueueFactory;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.proxy.app.ProxyConfig;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
+
+import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -88,13 +97,12 @@ class TestProxyPipelineConfig extends StroomUnitTest {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
                 Map.of("customQueue", new QueueDefinition()),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 "customQueue",
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig(7, 2, 1)),
+                                new ReceiveStageThreadsConfig(7)),
                         null,
                         null,
                         null,

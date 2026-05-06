@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.stage;
 
+
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.runtime.FileGroupQueueFactory;
+import stroom.proxy.app.pipeline.runtime.FileStoreFactory;
+import stroom.proxy.app.pipeline.runtime.PipelineStageName;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineLifecycle;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
 
@@ -259,13 +276,12 @@ class TestPipelineStageRunner extends StroomUnitTest {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null, null, null, null),
                 defaultFileStores());
 
@@ -311,38 +327,34 @@ class TestPipelineStageRunner extends StroomUnitTest {
         return new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
-                                true, null,
+                        receiveConfig(
+                                true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ReceiveStageThreadsConfig()),
+                        splitZipConfig(
                                 true,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.SPLIT_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ConsumerStageThreadsConfig()),
+                        preAggregateConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new PreAggregateStageThreadsConfig()),
+                        aggregateConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ConsumerStageThreadsConfig()),
+                        forwardConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null, null, null,
-                                new PipelineStageThreadsConfig())),
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
     }
 

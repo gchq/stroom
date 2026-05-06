@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.stage.PipelineStageRunner;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -56,7 +59,7 @@ public class ProxyPipelineLifecycle implements AutoCloseable {
      * <p>
      * A runner is created for every stage that has a worker. The thread count
      * for each runner is taken from the stage's
-     * {@link PipelineStageThreadsConfig#getConsumerThreads()}.
+     * {@link ConsumerStageThreadsConfig#getConsumerThreads()}.
      * </p>
      *
      * @param runtime The assembled pipeline runtime.

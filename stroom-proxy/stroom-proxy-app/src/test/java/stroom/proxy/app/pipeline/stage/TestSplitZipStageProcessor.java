@@ -14,8 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.stage;
 
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.runtime.FileStoreRegistry;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
+import stroom.proxy.app.pipeline.store.FileStoreWrite;
+import stroom.proxy.app.pipeline.store.local.LocalFileStore;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import org.junit.jupiter.api.Test;

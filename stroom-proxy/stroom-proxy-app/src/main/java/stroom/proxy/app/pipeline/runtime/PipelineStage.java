@@ -14,59 +14,102 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Topology model for a logical pipeline stage.
  * <p>
- * This class adapts the configured stage settings into a small immutable model
- * that can be used by topology building, validation, and later runtime assembly.
- * It deliberately contains only logical references to queues and file stores.
- * Queue construction is owned by {@link FileGroupQueueFactory}; storage
- * construction is owned by the file-store layer.
+ * Adapts stage-specific configuration into a uniform model used by topology
+ * building, validation, and runtime assembly. Each stage config type has
+ * different fields — this class normalises them into a consistent interface.
  * </p>
  */
-public record PipelineStage(
+record PipelineStage(
         PipelineStageName name,
-        PipelineStageConfig config) {
+        boolean enabled,
+        String inputQueue,
+        String outputQueue,
+        String splitZipQueue,
+        String fileStore,
+        ConsumerStageThreadsConfig consumerThreads) {
 
     public PipelineStage {
         name = Objects.requireNonNull(name, "name");
-        config = Objects.requireNonNullElseGet(config, PipelineStageConfig::new);
     }
 
-    public static PipelineStage receive(final PipelineStagesConfig stagesConfig) {
+    // --- Factory methods for each stage ---
+
+    static PipelineStage receive(final PipelineStagesConfig stagesConfig) {
+        final ReceiveStageConfig cfg = Objects.requireNonNull(stagesConfig, "stagesConfig").getReceive();
         return new PipelineStage(
                 PipelineStageName.RECEIVE,
-                Objects.requireNonNull(stagesConfig, "stagesConfig").getReceive());
+                cfg.isEnabled(),
+                null,  // receive has no input queue
+                cfg.getOutputQueue(),
+                cfg.getSplitZipQueue(),
+                cfg.getFileStore(),
+                null); // receive has no consumerThreads
     }
 
-    public static PipelineStage splitZip(final PipelineStagesConfig stagesConfig) {
+    static PipelineStage splitZip(final PipelineStagesConfig stagesConfig) {
+        final SplitZipStageConfig cfg = Objects.requireNonNull(stagesConfig, "stagesConfig").getSplitZip();
         return new PipelineStage(
                 PipelineStageName.SPLIT_ZIP,
-                Objects.requireNonNull(stagesConfig, "stagesConfig").getSplitZip());
+                cfg.isEnabled(),
+                cfg.getInputQueue(),
+                cfg.getOutputQueue(),
+                null,
+                cfg.getFileStore(),
+                cfg.getThreads());
     }
 
-    public static PipelineStage preAggregate(final PipelineStagesConfig stagesConfig) {
+    static PipelineStage preAggregate(final PipelineStagesConfig stagesConfig) {
+        final PreAggregateStageConfig cfg = Objects.requireNonNull(stagesConfig, "stagesConfig").getPreAggregate();
         return new PipelineStage(
                 PipelineStageName.PRE_AGGREGATE,
-                Objects.requireNonNull(stagesConfig, "stagesConfig").getPreAggregate());
+                cfg.isEnabled(),
+                cfg.getInputQueue(),
+                cfg.getOutputQueue(),
+                null,
+                cfg.getFileStore(),
+                cfg.getThreads());
     }
 
-    public static PipelineStage aggregate(final PipelineStagesConfig stagesConfig) {
+    static PipelineStage aggregate(final PipelineStagesConfig stagesConfig) {
+        final AggregateStageConfig cfg = Objects.requireNonNull(stagesConfig, "stagesConfig").getAggregate();
         return new PipelineStage(
                 PipelineStageName.AGGREGATE,
-                Objects.requireNonNull(stagesConfig, "stagesConfig").getAggregate());
+                cfg.isEnabled(),
+                cfg.getInputQueue(),
+                cfg.getOutputQueue(),
+                null,
+                cfg.getFileStore(),
+                cfg.getThreads());
     }
 
-    public static PipelineStage forward(final PipelineStagesConfig stagesConfig) {
+    static PipelineStage forward(final PipelineStagesConfig stagesConfig) {
+        final ForwardStageConfig cfg = Objects.requireNonNull(stagesConfig, "stagesConfig").getForward();
         return new PipelineStage(
                 PipelineStageName.FORWARD,
-                Objects.requireNonNull(stagesConfig, "stagesConfig").getForward());
+                cfg.isEnabled(),
+                cfg.getInputQueue(),
+                null,  // forward has no output queue
+                null,
+                null,  // forward has no file store
+                cfg.getThreads());
     }
+
+    // --- Accessors ---
 
     /**
      * @return The stage name as used in pipeline configuration.
@@ -76,73 +119,59 @@ public record PipelineStage(
     }
 
     /**
-     * @return True if this stage is enabled on this proxy process.
-     */
-    public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    /**
      * @return The configured input queue name, if any.
      */
-    public Optional<String> getInputQueue() {
-        return Optional.ofNullable(config.getInputQueue());
+    public Optional<String> getInputQueueOpt() {
+        return Optional.ofNullable(inputQueue);
     }
 
     /**
      * @return The configured output queue name, if any.
      */
-    public Optional<String> getOutputQueue() {
-        return Optional.ofNullable(config.getOutputQueue());
+    public Optional<String> getOutputQueueOpt() {
+        return Optional.ofNullable(outputQueue);
     }
 
     /**
      * @return The configured split zip queue name, if any.
      */
-    public Optional<String> getSplitZipQueue() {
-        return Optional.ofNullable(config.getSplitZipQueue());
+    public Optional<String> getSplitZipQueueOpt() {
+        return Optional.ofNullable(splitZipQueue);
     }
 
     /**
      * @return The configured file store name, if any.
      */
-    public Optional<String> getFileStore() {
-        return Optional.ofNullable(config.getFileStore());
-    }
-
-    /**
-     * @return The configured per-stage thread settings.
-     */
-    public PipelineStageThreadsConfig getThreads() {
-        return config.getThreads();
+    public Optional<String> getFileStoreOpt() {
+        return Optional.ofNullable(fileStore);
     }
 
     /**
      * @return True if this stage consumes work from a queue.
      */
     public boolean consumesInputQueue() {
-        return getInputQueue().isPresent();
+        return inputQueue != null;
     }
 
     /**
      * @return True if this stage publishes normal work to another queue.
      */
     public boolean publishesOutputQueue() {
-        return getOutputQueue().isPresent();
+        return outputQueue != null;
     }
 
     /**
      * @return True if this stage publishes split zip work to a dedicated queue.
      */
     public boolean publishesSplitZipQueue() {
-        return getSplitZipQueue().isPresent();
+        return splitZipQueue != null;
     }
 
     /**
      * @return True if this stage writes data to a named file store.
      */
     public boolean writesFileStore() {
-        return getFileStore().isPresent();
+        return fileStore != null;
     }
 
     /**
@@ -156,11 +185,11 @@ public record PipelineStage(
     public String toString() {
         return "PipelineStage{" +
                "name=" + name +
-               ", enabled=" + isEnabled() +
-               ", inputQueue=" + getInputQueue().orElse(null) +
-               ", outputQueue=" + getOutputQueue().orElse(null) +
-               ", splitZipQueue=" + getSplitZipQueue().orElse(null) +
-               ", fileStore=" + getFileStore().orElse(null) +
+               ", enabled=" + enabled +
+               ", inputQueue=" + inputQueue +
+               ", outputQueue=" + outputQueue +
+               ", splitZipQueue=" + splitZipQueue +
+               ", fileStore=" + fileStore +
                '}';
     }
 }

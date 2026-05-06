@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.queue;
 
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import org.junit.jupiter.api.AfterEach;
@@ -49,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *         close releases resources.</li>
  * </ol>
  */
-abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
+public abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
 
     private static final String QUEUE_NAME = "contractTestQueue";
 
@@ -73,7 +74,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    protected void tearDown() throws IOException {
         if (queue != null) {
             queue.close();
             queue = null;
@@ -85,7 +86,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractPublishMakesItemAvailableToConsumer() throws IOException {
+    protected void contractPublishMakesItemAvailableToConsumer() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileGroupQueueMessage message = createMessage("fg-avail-1");
         queue.publish(message);
@@ -97,7 +98,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractPublishDoesNotMutateReferencedSourcePath() throws IOException {
+    protected void contractPublishDoesNotMutateReferencedSourcePath() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileStoreLocation location = testLocation();
         final String uriBefore = location.uri();
@@ -111,7 +112,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractQueueItemIncludesExpectedFileStoreLocation() throws IOException {
+    protected void contractQueueItemIncludesExpectedFileStoreLocation() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileStoreLocation location = testLocation();
         final FileGroupQueueMessage message = createMessage("fg-loc-1", location);
@@ -124,7 +125,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractQueueItemHasStableId() throws IOException {
+    protected void contractQueueItemHasStableId() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileGroupQueueMessage message = createMessage("fg-id-1");
         queue.publish(message);
@@ -138,7 +139,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractPublishRejectsWrongQueueName() throws IOException {
+    protected void contractPublishRejectsWrongQueueName() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileGroupQueueMessage wrongNameMessage = FileGroupQueueMessage.create(
                 "wrongQueueName",
@@ -158,14 +159,14 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     // ------------------------------------------------------------------
 
     @Test
-    void contractNextReturnsEmptyWhenQueueIsEmpty() throws IOException {
+    protected void contractNextReturnsEmptyWhenQueueIsEmpty() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final Optional<FileGroupQueueItem> item = queue.next();
         assertThat(item).isEmpty();
     }
 
     @Test
-    void contractAcknowledgePreventsRedelivery() throws IOException {
+    protected void contractAcknowledgePreventsRedelivery() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileGroupQueueMessage message = createMessage("fg-ack-1");
         queue.publish(message);
@@ -183,7 +184,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractAcknowledgeIsIdempotent() throws IOException {
+    protected void contractAcknowledgeIsIdempotent() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileGroupQueueMessage message = createMessage("fg-ack-idem-1");
         queue.publish(message);
@@ -197,7 +198,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractCloseReleasesResources() throws IOException {
+    protected void contractCloseReleasesResources() throws IOException {
         queue = createQueue(QUEUE_NAME);
         // Close must not throw.
         queue.close();
@@ -205,7 +206,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractItemMetadataContainsQueueName() throws IOException {
+    protected void contractItemMetadataContainsQueueName() throws IOException {
         queue = createQueue(QUEUE_NAME);
         final FileGroupQueueMessage message = createMessage("fg-meta-1");
         queue.publish(message);
@@ -218,7 +219,7 @@ abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
     }
 
     @Test
-    void contractNameAndType() throws IOException {
+    protected void contractNameAndType() throws IOException {
         queue = createQueue(QUEUE_NAME);
         assertThat(queue.getName()).isEqualTo(QUEUE_NAME);
         assertThat(queue.getType()).isNotNull();

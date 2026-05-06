@@ -14,8 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.stage;
 
+
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.config.PipelineValidationResult;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfigValidator;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.runtime.FileGroupQueueFactory;
+import stroom.proxy.app.pipeline.runtime.FileStoreFactory;
+import stroom.proxy.app.pipeline.runtime.PipelineStageName;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineLifecycle;
+import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
 
@@ -55,11 +74,9 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null, null,
-                        new PipelineStageConfig(
+                        forwardConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null, null, null,
-                                new PipelineStageThreadsConfig())),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -102,18 +119,14 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null,
-                        new PipelineStageConfig(
+                        aggregateConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
-                                ProxyPipelineConfig.AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                ProxyPipelineConfig.AGGREGATE_STORE),
+                        forwardConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null, null, null,
-                                new PipelineStageThreadsConfig())),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -151,13 +164,12 @@ class TestIndependentStageExecution extends StroomUnitTest {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
+                                new ReceiveStageThreadsConfig()),
                         null, null, null, null),
                 defaultFileStores());
 
@@ -191,11 +203,9 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null, null,
-                        new PipelineStageConfig(
+                        forwardConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null, null, null,
-                                new PipelineStageThreadsConfig())),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -242,11 +252,9 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null, null,
-                        new PipelineStageConfig(
+                        forwardConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null, null, null,
-                                new PipelineStageThreadsConfig())),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
                 defaultFileStores());
 
         final PipelineValidationResult result = new ProxyPipelineConfigValidator().validate(config);

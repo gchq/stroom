@@ -14,8 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateClosePublisher;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
 
@@ -307,41 +327,34 @@ class TestProxyPipelineAssembler extends StroomUnitTest {
         return new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        new PipelineStageConfig(
+                        receiveConfig(
                                 true,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ReceiveStageThreadsConfig()),
+                        splitZipConfig(
                                 true,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.SPLIT_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ConsumerStageThreadsConfig()),
+                        preAggregateConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.PRE_AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new PreAggregateStageThreadsConfig()),
+                        aggregateConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
                                 ProxyPipelineConfig.AGGREGATE_STORE,
-                                new PipelineStageThreadsConfig()),
-                        new PipelineStageConfig(
+                                new ConsumerStageThreadsConfig()),
+                        forwardConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
-                                null,
-                                null,
-                                new PipelineStageThreadsConfig())),
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
     }
 

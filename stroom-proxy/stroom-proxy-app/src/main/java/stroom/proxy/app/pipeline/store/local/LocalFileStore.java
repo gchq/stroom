@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.store.local;
 
+import stroom.proxy.app.pipeline.store.FileStore;
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
+import stroom.proxy.app.pipeline.store.FileStoreWrite;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;

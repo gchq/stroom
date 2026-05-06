@@ -47,7 +47,7 @@ pipeline:
   #     splitZipQueue: splitZipInput
   #     fileStore: receiveStore
   #     threads:
-  #       consumerThreads: 1
+  #       maxConcurrentReceives: 7
   #   splitZip:
   #     enabled: true
   #     inputQueue: splitZipInput
@@ -62,6 +62,7 @@ pipeline:
   #     fileStore: preAggregateStore
   #     threads:
   #       consumerThreads: 1
+  #       closeOldAggregatesThreads: 1
   #   aggregate:
   #     enabled: true
   #     inputQueue: aggregateInput

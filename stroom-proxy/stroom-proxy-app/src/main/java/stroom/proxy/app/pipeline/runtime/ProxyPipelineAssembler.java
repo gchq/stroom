@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateClosePublisher;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
+import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.Aggregator;

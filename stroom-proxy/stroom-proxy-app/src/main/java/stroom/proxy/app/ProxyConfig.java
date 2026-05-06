@@ -22,7 +22,7 @@ import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
-import stroom.proxy.app.pipeline.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.ReceiveDataConfig;

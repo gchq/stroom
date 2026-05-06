@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.pipeline;
+package stroom.proxy.app.pipeline.runtime;
 
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfigValidator;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.store.FileStore;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -272,16 +279,16 @@ public class ProxyPipelineRuntime implements AutoCloseable {
                                                            stageProcessors,
                                                    final Map<String, FileGroupQueue> queues,
                                                    final Map<String, FileStore> fileStores) {
-        final Optional<FileGroupQueue> inputQueue = stage.getInputQueue()
+        final Optional<FileGroupQueue> inputQueue = stage.getInputQueueOpt()
                 .map(queueName -> getOrCreateQueue(queueName, queueFactory, queues));
 
-        final Optional<FileGroupQueue> outputQueue = stage.getOutputQueue()
+        final Optional<FileGroupQueue> outputQueue = stage.getOutputQueueOpt()
                 .map(queueName -> getOrCreateQueue(queueName, queueFactory, queues));
 
-        final Optional<FileGroupQueue> splitZipQueue = stage.getSplitZipQueue()
+        final Optional<FileGroupQueue> splitZipQueue = stage.getSplitZipQueueOpt()
                 .map(queueName -> getOrCreateQueue(queueName, queueFactory, queues));
 
-        final Optional<FileStore> fileStore = stage.getFileStore()
+        final Optional<FileStore> fileStore = stage.getFileStoreOpt()
                 .map(fileStoreName -> getOrCreateFileStore(fileStoreName, fileStoreFactory, fileStores));
 
         final FileGroupQueueWorker worker = inputQueue
@@ -291,7 +298,7 @@ public class ProxyPipelineRuntime implements AutoCloseable {
 
         return new RuntimeStage(
                 stage.name(),
-                stage.config(),
+                stage.consumerThreads(),
                 inputQueue.orElse(null),
                 outputQueue.orElse(null),
                 splitZipQueue.orElse(null),
@@ -315,7 +322,7 @@ public class ProxyPipelineRuntime implements AutoCloseable {
      * Runtime model for a single enabled pipeline stage.
      *
      * @param stageName The logical stage name.
-     * @param config The stage configuration.
+     * @param consumerThreads The consumer thread config, if this is a queue-consuming stage.
      * @param inputQueue The resolved input queue, if configured.
      * @param outputQueue The resolved output queue, if configured.
      * @param splitZipQueue The resolved split zip queue, if configured.
@@ -324,7 +331,7 @@ public class ProxyPipelineRuntime implements AutoCloseable {
      */
     public record RuntimeStage(
             PipelineStageName stageName,
-            PipelineStageConfig config,
+            ConsumerStageThreadsConfig consumerThreads,
             FileGroupQueue inputQueue,
             FileGroupQueue outputQueue,
             FileGroupQueue splitZipQueue,
@@ -333,15 +340,14 @@ public class ProxyPipelineRuntime implements AutoCloseable {
 
         public RuntimeStage {
             stageName = Objects.requireNonNull(stageName, "stageName");
-            config = Objects.requireNonNull(config, "config");
         }
 
         public String getConfigName() {
             return stageName.getConfigName();
         }
 
-        public PipelineStageThreadsConfig getThreads() {
-            return config.getThreads();
+        public ConsumerStageThreadsConfig getThreads() {
+            return consumerThreads;
         }
 
         public Optional<FileGroupQueue> getInputQueue() {
