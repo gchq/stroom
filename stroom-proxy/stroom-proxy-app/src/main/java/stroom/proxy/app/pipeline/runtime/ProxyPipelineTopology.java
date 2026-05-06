@@ -20,6 +20,7 @@ import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
 import stroom.proxy.app.pipeline.queue.QueueDefinition;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

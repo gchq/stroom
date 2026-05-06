@@ -17,6 +17,7 @@
 package stroom.proxy.app.pipeline.queue;
 
 import stroom.proxy.app.pipeline.store.FileStore;
+
 /**
  * Supported queue implementations for the proxy reference-message pipeline.
  * <p>
@@ -25,6 +26,7 @@ import stroom.proxy.app.pipeline.store.FileStore;
  * implementations must not move the referenced file-group data.
  * </p>
  */
+
 public enum QueueType {
     /**
      * A local/simple filesystem queue backed by persisted message files.

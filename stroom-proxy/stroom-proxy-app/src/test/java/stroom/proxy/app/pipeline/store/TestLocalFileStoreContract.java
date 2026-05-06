@@ -17,6 +17,7 @@
 package stroom.proxy.app.pipeline.store;
 
 import stroom.proxy.app.pipeline.store.local.LocalFileStore;
+
 import java.nio.file.Path;
 
 /**

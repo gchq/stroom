@@ -16,11 +16,7 @@
 
 package stroom.proxy.app.pipeline.runtime;
 
-
 import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
-import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
-import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
-import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
 import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
 import stroom.proxy.app.pipeline.monitor.PipelineMonitorProvider;
@@ -29,9 +25,10 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
-import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
 import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
 import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageProcessor;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
@@ -42,13 +39,10 @@ import stroom.util.io.PathCreator;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.EnumMap;
-import java.util.Map;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -232,9 +226,10 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
         // Simulate: explicit stages provided in YAML
         final PipelineStagesConfig explicitStages = new PipelineStagesConfig(
                 null, null, null, null,
-                forwardConfig(
+                new ForwardStageConfig(
                         true,
-                        "customInput"));
+                        "customInput",
+                        new ConsumerStageThreadsConfig()));
 
         final ProxyPipelineConfig config = new ProxyPipelineConfig(null, explicitStages, null);
 
@@ -315,6 +310,7 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
     // -------------------------------------------------------------------------
 
     private static class RuntimeTestHarness {
+
         final ProxyPipelineRuntime runtime;
         final ProxyPipelineLifecycle lifecycle;
 
@@ -334,14 +330,17 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
                     new EnumMap<>(PipelineStageName.class);
 
             stageProcessors.put(PipelineStageName.PRE_AGGREGATE,
-                    new PreAggregateStageProcessor(fileStoreRegistry, dir -> {}));
+                    new PreAggregateStageProcessor(fileStoreRegistry, dir -> {
+                    }));
 
             stageProcessors.put(PipelineStageName.AGGREGATE,
-                    new AggregateStageProcessor(fileStoreRegistry, dir -> {}));
+                    new AggregateStageProcessor(fileStoreRegistry, dir -> {
+                    }));
 
             stageProcessors.put(PipelineStageName.FORWARD,
                     new ForwardStageProcessor(fileStoreRegistry,
-                            (message, sourceDir) -> {}));
+                            (message, sourceDir) -> {
+                            }));
 
             final FileStore splitStore = fileStoreFactory.getFileStore(
                     ProxyPipelineConfig.SPLIT_STORE);
@@ -363,6 +362,7 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
     // -------------------------------------------------------------------------
 
     private static final class TestPathCreator implements PathCreator {
+
         private final Path root;
 
         private TestPathCreator(final Path root) {

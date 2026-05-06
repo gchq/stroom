@@ -20,6 +20,7 @@ import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.proxy.app.pipeline.store.FileStoreWrite;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -48,9 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.Objects;
-import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;

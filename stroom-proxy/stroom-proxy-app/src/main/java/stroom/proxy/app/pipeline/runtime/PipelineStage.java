@@ -23,6 +23,7 @@ import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
 import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
 import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
+
 import java.util.Objects;
 import java.util.Optional;
 

@@ -16,11 +16,7 @@
 
 package stroom.proxy.app.pipeline.stage;
 
-
 import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
-import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
-import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
-import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
 import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.PipelineValidationResult;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
@@ -33,6 +29,10 @@ import stroom.proxy.app.pipeline.runtime.FileStoreFactory;
 import stroom.proxy.app.pipeline.runtime.PipelineStageName;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineLifecycle;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -74,9 +74,10 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null, null,
-                        forwardConfig(
+                        new ForwardStageConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -84,7 +85,8 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 config,
                 new FileGroupQueueFactory(config, pathCreator),
                 new FileStoreFactory(config, pathCreator),
-                Map.of(PipelineStageName.FORWARD, item -> {}));
+                Map.of(PipelineStageName.FORWARD, item -> {
+                }));
 
         // Only forward stage should be enabled.
         assertThat(runtime.isStageEnabled(PipelineStageName.FORWARD)).isTrue();
@@ -119,14 +121,16 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null,
-                        aggregateConfig(
+                        new AggregateStageConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                ProxyPipelineConfig.AGGREGATE_STORE),
-                        forwardConfig(
+                                ProxyPipelineConfig.AGGREGATE_STORE,
+                                new ConsumerStageThreadsConfig()),
+                        new ForwardStageConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -135,8 +139,10 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 new FileGroupQueueFactory(config, pathCreator),
                 new FileStoreFactory(config, pathCreator),
                 Map.of(
-                        PipelineStageName.AGGREGATE, item -> {},
-                        PipelineStageName.FORWARD, item -> {}));
+                        PipelineStageName.AGGREGATE, item -> {
+                        },
+                        PipelineStageName.FORWARD, item -> {
+                        }));
 
         assertThat(runtime.getStages()).hasSize(2);
         assertThat(runtime.isStageEnabled(PipelineStageName.AGGREGATE)).isTrue();
@@ -164,7 +170,7 @@ class TestIndependentStageExecution extends StroomUnitTest {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        receiveConfig(
+                        new ReceiveStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 null,
@@ -203,9 +209,10 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null, null,
-                        forwardConfig(
+                        new ForwardStageConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -252,9 +259,10 @@ class TestIndependentStageExecution extends StroomUnitTest {
                 defaultQueues(),
                 new PipelineStagesConfig(
                         null, null, null, null,
-                        forwardConfig(
+                        new ForwardStageConfig(
                                 true,
-                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE)),
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
+                                new ConsumerStageThreadsConfig())),
                 defaultFileStores());
 
         final PipelineValidationResult result = new ProxyPipelineConfigValidator().validate(config);
@@ -264,7 +272,7 @@ class TestIndependentStageExecution extends StroomUnitTest {
     // --- helpers ---
 
     private FileGroupQueueMessage createMessage(final String queueName,
-                                                 final String fileGroupId) {
+                                                final String fileGroupId) {
         return FileGroupQueueMessage.create(
                 "message-" + fileGroupId,
                 queueName,
@@ -296,26 +304,77 @@ class TestIndependentStageExecution extends StroomUnitTest {
     }
 
     private static final class TestPathCreator implements PathCreator {
+
         private final Path root;
 
         private TestPathCreator(final Path root) {
             this.root = root;
         }
 
-        @Override public String replaceTimeVars(final String path) { return path; }
-        @Override public String replaceTimeVars(final String path, final ZonedDateTime dateTime) { return path; }
-        @Override public String replaceSystemProperties(final String path) { return path; }
-        @Override public Path toAppPath(final String pathString) {
-            final Path path = Path.of(pathString);
-            return path.isAbsolute() ? path.normalize() : root.resolve(path).normalize();
+        @Override
+        public String replaceTimeVars(final String path) {
+            return path;
         }
-        @Override public String replaceUUIDVars(final String path) { return path; }
-        @Override public String replaceFileName(final String path, final String fileName) { return path; }
-        @Override public String[] findVars(final String path) { return new String[0]; }
-        @Override public boolean containsVars(final String path) { return false; }
-        @Override public String replace(final String path, final String var, final LongSupplier replacementSupplier, final int pad) { return path; }
-        @Override public String replace(final String str, final String var, final Supplier<String> replacementSupplier) { return str; }
-        @Override public String replaceAll(final String path) { return path; }
-        @Override public String replaceContextVars(final String path) { return path; }
+
+        @Override
+        public String replaceTimeVars(final String path, final ZonedDateTime dateTime) {
+            return path;
+        }
+
+        @Override
+        public String replaceSystemProperties(final String path) {
+            return path;
+        }
+
+        @Override
+        public Path toAppPath(final String pathString) {
+            final Path path = Path.of(pathString);
+            return path.isAbsolute()
+                    ? path.normalize()
+                    : root.resolve(path).normalize();
+        }
+
+        @Override
+        public String replaceUUIDVars(final String path) {
+            return path;
+        }
+
+        @Override
+        public String replaceFileName(final String path, final String fileName) {
+            return path;
+        }
+
+        @Override
+        public String[] findVars(final String path) {
+            return new String[0];
+        }
+
+        @Override
+        public boolean containsVars(final String path) {
+            return false;
+        }
+
+        @Override
+        public String replace(final String path,
+                              final String var,
+                              final LongSupplier replacementSupplier,
+                              final int pad) {
+            return path;
+        }
+
+        @Override
+        public String replace(final String str, final String var, final Supplier<String> replacementSupplier) {
+            return str;
+        }
+
+        @Override
+        public String replaceAll(final String path) {
+            return path;
+        }
+
+        @Override
+        public String replaceContextVars(final String path) {
+            return path;
+        }
     }
 }

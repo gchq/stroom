@@ -17,6 +17,7 @@
 package stroom.proxy.app.pipeline.stage;
 
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+
 import java.time.Duration;
 import java.util.Objects;
 

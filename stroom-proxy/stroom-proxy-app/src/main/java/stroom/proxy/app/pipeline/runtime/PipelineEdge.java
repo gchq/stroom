@@ -18,6 +18,7 @@ package stroom.proxy.app.pipeline.runtime;
 
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.store.FileStore;
+
 import java.util.Objects;
 
 /**

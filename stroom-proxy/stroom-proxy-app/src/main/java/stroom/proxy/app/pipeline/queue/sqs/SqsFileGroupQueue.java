@@ -26,10 +26,14 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.codahale.metrics.health.HealthCheck.Result;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
@@ -200,23 +204,24 @@ public class SqsFileGroupQueue implements FileGroupQueue {
     }
 
     @Override
-    public com.codahale.metrics.health.HealthCheck.Result healthCheck() {
+    public Result healthCheck() {
         try {
-            final software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse response =
+            final GetQueueAttributesResponse response =
                     sqsClient.getQueueAttributes(
-                            software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest.builder()
+                            GetQueueAttributesRequest.builder()
                                     .queueUrl(queueUrl)
                                     .attributeNames(
-                                            software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES,
-                                            software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
+                                            QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES,
+                                            QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE)
                                     .build());
 
             final String approxMessages = response.attributes().getOrDefault(
-                    software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES, "0");
+                    QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES, "0");
             final String approxInFlight = response.attributes().getOrDefault(
-                    software.amazon.awssdk.services.sqs.model.QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE, "0");
+                    QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE,
+                    "0");
 
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return Result.builder()
                     .healthy()
                     .withDetail("queueUrl", queueUrl)
                     .withDetail("approximateMessages", Long.parseLong(approxMessages))
@@ -225,7 +230,7 @@ public class SqsFileGroupQueue implements FileGroupQueue {
                     .build();
 
         } catch (final Exception e) {
-            return com.codahale.metrics.health.HealthCheck.Result.builder()
+            return Result.builder()
                     .unhealthy()
                     .withMessage("SQS queue health check failed for %s: %s", queueUrl, e.getMessage())
                     .build();
@@ -350,7 +355,10 @@ public class SqsFileGroupQueue implements FileGroupQueue {
             metadata.put("queueType", QueueType.SQS.name());
             metadata.put("sqsMessageId", sqsMessage.messageId());
             metadata.put("receiptHandle", sqsMessage.receiptHandle());
-            metadata.put("state", completed ? "completed" : "in-flight");
+            metadata.put("state",
+                    completed
+                            ? "completed"
+                            : "in-flight");
             return Map.copyOf(metadata);
         }
 

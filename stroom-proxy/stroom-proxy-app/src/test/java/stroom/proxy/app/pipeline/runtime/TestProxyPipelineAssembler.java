@@ -16,11 +16,7 @@
 
 package stroom.proxy.app.pipeline.runtime;
 
-
 import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
-import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
-import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
-import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
 import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
@@ -29,10 +25,17 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.queue.QueueDefinition;
 import stroom.proxy.app.pipeline.stage.aggregate.AggregateClosePublisher;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
 import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
@@ -225,6 +228,7 @@ class TestProxyPipelineAssembler extends StroomUnitTest {
     // -------------------------------------------------------------------------
 
     private static class AssemblerTestHarness {
+
         final ProxyPipelineRuntime runtime;
         final ProxyPipelineLifecycle lifecycle;
 
@@ -327,31 +331,31 @@ class TestProxyPipelineAssembler extends StroomUnitTest {
         return new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        receiveConfig(
+                        new ReceiveStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        splitZipConfig(
+                        new SplitZipStageConfig(
                                 true,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_STORE,
                                 new ConsumerStageThreadsConfig()),
-                        preAggregateConfig(
+                        new PreAggregateStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_STORE,
                                 new PreAggregateStageThreadsConfig()),
-                        aggregateConfig(
+                        new AggregateStageConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_STORE,
                                 new ConsumerStageThreadsConfig()),
-                        forwardConfig(
+                        new ForwardStageConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
                                 new ConsumerStageThreadsConfig())),

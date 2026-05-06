@@ -16,14 +16,14 @@
 
 package stroom.proxy.app.pipeline.stage.forward;
 
+import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
-import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.runtime.FileStoreRegistry;
+import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
-import stroom.proxy.app.handler.FileGroup;
 
 import java.io.IOException;
 import java.nio.file.Files;

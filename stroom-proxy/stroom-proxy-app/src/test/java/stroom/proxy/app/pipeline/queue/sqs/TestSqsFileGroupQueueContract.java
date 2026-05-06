@@ -19,10 +19,12 @@ package stroom.proxy.app.pipeline.queue.sqs;
 import stroom.proxy.app.pipeline.queue.AbstractFileGroupQueueContractTest;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.containers.localstack.LocalStackContainer.Service;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -30,10 +32,6 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
-
-import java.io.IOException;
-
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 /**
  * Runs the {@link AbstractFileGroupQueueContractTest} suite against a real
@@ -50,7 +48,7 @@ class TestSqsFileGroupQueueContract extends AbstractFileGroupQueueContractTest {
     @Container
     static final LocalStackContainer LOCAL_STACK = new LocalStackContainer(
             DockerImageName.parse("localstack/localstack:4.4"))
-            .withServices(SQS);
+            .withServices(Service.SQS);
 
     private SqsClient sqsClient;
     private String queueUrl;
@@ -58,7 +56,7 @@ class TestSqsFileGroupQueueContract extends AbstractFileGroupQueueContractTest {
     @BeforeEach
     void setUpSqs() {
         sqsClient = SqsClient.builder()
-                .endpointOverride(LOCAL_STACK.getEndpointOverride(SQS))
+                .endpointOverride(LOCAL_STACK.getEndpointOverride(Service.SQS))
                 .region(Region.of(LOCAL_STACK.getRegion()))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(
@@ -72,7 +70,7 @@ class TestSqsFileGroupQueueContract extends AbstractFileGroupQueueContractTest {
     }
 
     @Override
-    protected FileGroupQueue createQueue(final String name) throws IOException {
+    protected FileGroupQueue createQueue(final String name) {
         return new SqsFileGroupQueue(
                 name,
                 queueUrl,

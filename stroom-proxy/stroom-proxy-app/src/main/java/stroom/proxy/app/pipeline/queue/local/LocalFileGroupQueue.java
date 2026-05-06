@@ -21,6 +21,7 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueType;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;

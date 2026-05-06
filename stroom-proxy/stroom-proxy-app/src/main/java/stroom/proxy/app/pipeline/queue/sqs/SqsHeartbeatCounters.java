@@ -18,6 +18,7 @@ package stroom.proxy.app.pipeline.queue.sqs;
 
 import stroom.proxy.app.pipeline.monitor.PipelineMetricsRegistrar;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
+
 import java.util.concurrent.atomic.LongAdder;
 
 /**

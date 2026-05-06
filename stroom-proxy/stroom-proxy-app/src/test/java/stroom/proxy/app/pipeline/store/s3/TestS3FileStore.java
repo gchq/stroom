@@ -18,15 +18,16 @@ package stroom.proxy.app.pipeline.store.s3;
 
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * S3-specific tests for {@link S3FileStore} that are not part of the
@@ -66,20 +67,21 @@ class TestS3FileStore {
         final FileStoreLocation location = FileStoreLocation.s3(
                 STORE_NAME, "my-bucket", "prefix/subdir");
 
-        assertEquals(STORE_NAME, location.storeName());
-        assertEquals(FileStoreLocation.LocationType.S3, location.locationType());
-        assertEquals("s3://my-bucket/prefix/subdir", location.uri());
-        assertTrue(location.isS3());
-        assertFalse(location.isLocalFileSystem());
-        assertEquals("my-bucket", location.getS3Bucket());
-        assertEquals("prefix/subdir", location.getS3KeyPrefix());
+        assertThat(location.storeName()).isEqualTo(STORE_NAME);
+        assertThat(location.locationType()).isEqualTo(FileStoreLocation.LocationType.S3);
+        assertThat(location.uri()).isEqualTo("s3://my-bucket/prefix/subdir");
+        assertThat(location.isS3()).isTrue();
+        assertThat(location.isLocalFileSystem()).isFalse();
+        assertThat(location.getS3Bucket()).isEqualTo("my-bucket");
+        assertThat(location.getS3KeyPrefix()).isEqualTo("prefix/subdir");
     }
 
     @Test
     void testS3LocationRequiresS3Scheme() {
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThatThrownBy(() ->
                 new FileStoreLocation(STORE_NAME, FileStoreLocation.LocationType.S3,
-                        "file:///some/path", Map.of()));
+                        "file:///some/path", Map.of()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -87,6 +89,7 @@ class TestS3FileStore {
         final FileStoreLocation localLocation = FileStoreLocation.localFileSystem(
                 STORE_NAME, tempDir.resolve("some-path"));
 
-        assertThrows(java.io.IOException.class, () -> s3FileStore.resolve(localLocation));
+        assertThatThrownBy(() -> s3FileStore.resolve(localLocation))
+                .isInstanceOf(java.io.IOException.class);
     }
 }

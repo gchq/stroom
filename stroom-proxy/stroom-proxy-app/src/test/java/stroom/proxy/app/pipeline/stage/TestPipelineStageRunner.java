@@ -16,11 +16,7 @@
 
 package stroom.proxy.app.pipeline.stage;
 
-
 import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
-import static stroom.proxy.app.pipeline.config.TestStageConfigFactory.*;
-import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
-import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
 import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
@@ -31,6 +27,13 @@ import stroom.proxy.app.pipeline.runtime.FileStoreFactory;
 import stroom.proxy.app.pipeline.runtime.PipelineStageName;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineLifecycle;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -126,7 +129,8 @@ class TestPipelineStageRunner extends StroomUnitTest {
 
         final FileGroupQueueWorker worker = new FileGroupQueueWorker(
                 queue,
-                item -> {});
+                item -> {
+                });
 
         final PipelineStageRunner runner = new PipelineStageRunner(
                 PipelineStageName.PRE_AGGREGATE,
@@ -150,7 +154,8 @@ class TestPipelineStageRunner extends StroomUnitTest {
 
         final FileGroupQueueWorker worker = new FileGroupQueueWorker(
                 queue,
-                item -> {});
+                item -> {
+                });
 
         final PipelineStageRunner runner = new PipelineStageRunner(
                 PipelineStageName.FORWARD,
@@ -171,7 +176,8 @@ class TestPipelineStageRunner extends StroomUnitTest {
 
         final FileGroupQueueWorker worker = new FileGroupQueueWorker(
                 queue,
-                item -> {});
+                item -> {
+                });
 
         final PipelineStageRunner runner = new PipelineStageRunner(
                 PipelineStageName.FORWARD,
@@ -193,7 +199,8 @@ class TestPipelineStageRunner extends StroomUnitTest {
 
         final FileGroupQueueWorker worker = new FileGroupQueueWorker(
                 queue,
-                item -> {});
+                item -> {
+                });
 
         assertThatThrownBy(() -> new PipelineStageRunner(
                 PipelineStageName.FORWARD,
@@ -252,10 +259,14 @@ class TestPipelineStageRunner extends StroomUnitTest {
                 new FileGroupQueueFactory(pipelineConfig, pathCreator),
                 new FileStoreFactory(pipelineConfig, pathCreator),
                 Map.of(
-                        PipelineStageName.SPLIT_ZIP, item -> {},
-                        PipelineStageName.PRE_AGGREGATE, item -> {},
-                        PipelineStageName.AGGREGATE, item -> {},
-                        PipelineStageName.FORWARD, item -> {}));
+                        PipelineStageName.SPLIT_ZIP, item -> {
+                        },
+                        PipelineStageName.PRE_AGGREGATE, item -> {
+                        },
+                        PipelineStageName.AGGREGATE, item -> {
+                        },
+                        PipelineStageName.FORWARD, item -> {
+                        }));
 
         final ProxyPipelineLifecycle lifecycle = ProxyPipelineLifecycle.fromRuntime(runtime);
 
@@ -276,7 +287,7 @@ class TestPipelineStageRunner extends StroomUnitTest {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        receiveConfig(
+                        new ReceiveStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 null,
@@ -308,7 +319,7 @@ class TestPipelineStageRunner extends StroomUnitTest {
     }
 
     private FileGroupQueueMessage createMessage(final String queueName,
-                                                 final String fileGroupId) {
+                                                final String fileGroupId) {
         return FileGroupQueueMessage.create(
                 "message-" + fileGroupId,
                 queueName,
@@ -327,31 +338,31 @@ class TestPipelineStageRunner extends StroomUnitTest {
         return new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        receiveConfig(
+                        new ReceiveStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        splitZipConfig(
+                        new SplitZipStageConfig(
                                 true,
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.SPLIT_STORE,
                                 new ConsumerStageThreadsConfig()),
-                        preAggregateConfig(
+                        new PreAggregateStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_STORE,
                                 new PreAggregateStageThreadsConfig()),
-                        aggregateConfig(
+                        new AggregateStageConfig(
                                 true,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_STORE,
                                 new ConsumerStageThreadsConfig()),
-                        forwardConfig(
+                        new ForwardStageConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
                                 new ConsumerStageThreadsConfig())),

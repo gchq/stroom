@@ -19,6 +19,7 @@ package stroom.proxy.app.pipeline.store.s3;
 import stroom.proxy.app.pipeline.store.AbstractFileStoreContractTest;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
+
 import java.nio.file.Path;
 
 /**

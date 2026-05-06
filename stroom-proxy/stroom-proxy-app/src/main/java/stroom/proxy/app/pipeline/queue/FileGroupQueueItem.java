@@ -18,6 +18,7 @@ package stroom.proxy.app.pipeline.queue;
 
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
+
 import java.io.IOException;
 import java.util.Map;
 

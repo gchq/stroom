@@ -20,6 +20,7 @@ import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.store.FileStore;
+
 import java.util.Objects;
 import java.util.Optional;
 

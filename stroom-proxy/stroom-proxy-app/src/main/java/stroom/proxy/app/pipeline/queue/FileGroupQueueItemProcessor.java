@@ -18,6 +18,7 @@ package stroom.proxy.app.pipeline.queue;
 
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
+
 /**
  * Processing contract for a leased {@link FileGroupQueueItem}.
  * <p>
@@ -34,6 +35,7 @@ import stroom.proxy.app.pipeline.store.FileStoreLocation;
  * error handling, logging, and metrics behaviour.
  * </p>
  */
+
 @FunctionalInterface
 public interface FileGroupQueueItemProcessor {
 
@@ -42,7 +44,7 @@ public interface FileGroupQueueItemProcessor {
      *
      * @param item The leased queue item to process.
      * @throws Exception If processing fails. The caller should translate this
-     * exception into the queue implementation's fail/retry behaviour.
+     *                   exception into the queue implementation's fail/retry behaviour.
      */
     void process(FileGroupQueueItem item) throws Exception;
 }

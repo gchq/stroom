@@ -281,8 +281,9 @@ public class ZipReceiver implements Receiver {
                 // We have more than one feed in the source zip or it's not in proper format.
                 // The pipeline's SplitZipStageProcessor will handle splitting.
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
-                LOGGER.debug(() -> LogUtil.message("Pass {} to destination for splitting, isValid: {}, feedGroupCount: {}",
-                        receivingDir, receiveResult.valid, feedGroupCount));
+                LOGGER.debug(() ->
+                        LogUtil.message("Pass {} to destination for splitting, isValid: {}, feedGroupCount: {}",
+                                receivingDir, receiveResult.valid, feedGroupCount));
                 destination.accept(receivingDir);
             }
         } else {

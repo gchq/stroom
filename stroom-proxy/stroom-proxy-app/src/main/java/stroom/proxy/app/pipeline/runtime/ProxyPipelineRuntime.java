@@ -23,6 +23,7 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.store.FileStore;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
