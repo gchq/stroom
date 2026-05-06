@@ -23,7 +23,7 @@ import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.string.EncodingUtil;
 
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -35,7 +35,7 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
     private static final String META = "meta";
 
     private final Class<D> clazz;
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
 
     public JsonSerialiser2(final Class<D> clazz) {
         this.clazz = clazz;
