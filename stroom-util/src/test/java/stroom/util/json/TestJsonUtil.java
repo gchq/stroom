@@ -17,7 +17,13 @@
 package stroom.util.json;
 
 import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.TypeLiteral;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -30,6 +36,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 class TestJsonUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestJsonUtil.class);
 
     protected static final String JSON = """
             {
@@ -57,7 +65,8 @@ class TestJsonUtil {
     Stream<DynamicTest> testGetEntries_differentJson() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
-                .withWrappedOutputType(new TypeLiteral<Map<String, String>>(){})
+                .withWrappedOutputType(new TypeLiteral<Map<String, String>>() {
+                })
                 .withTestFunction(testCase ->
                         JsonUtil.getEntries(testCase.getInput(), "key"))
                 .withSimpleEqualityAssertion()
@@ -85,8 +94,10 @@ class TestJsonUtil {
     @TestFactory
     Stream<DynamicTest> getEntries_rootObject() {
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<Set<String>>(){})
-                .withWrappedOutputType(new TypeLiteral<Map<String, String>>(){})
+                .withWrappedInputType(new TypeLiteral<Set<String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Map<String, String>>() {
+                })
                 .withTestFunction(testCase ->
                         JsonUtil.getEntries(JSON, testCase.getInput()))
                 .withSimpleEqualityAssertion()
@@ -125,4 +136,150 @@ class TestJsonUtil {
                 .build();
     }
 
+    @Test
+    void testConsistentOrder() {
+        final String json = JsonUtil.getConsistentOrderMapper(true)
+                .writeValueAsString(new MyPojo());
+
+        // JSON props and map entries should be in a nice predictable a-z order
+        Assertions.assertThat(json)
+                .isEqualTo("""
+                        {
+                          "aaa" : "AAA",
+                          "bbb" : "BBB",
+                          "ccc" : "CCC",
+                          "ddd" : "DDD",
+                          "mmmMap" : {
+                            "aaa" : "AAA",
+                            "bbb" : "BBB",
+                            "ccc" : "CCC",
+                            "ddd" : "DDD",
+                            "xxx" : "XXX",
+                            "yyy" : "YYY",
+                            "zzz" : "ZZZ"
+                          },
+                          "xxx" : "XXX",
+                          "yyy" : "YYY",
+                          "zzz" : "ZZZ"
+                        }""");
+    }
+
+    @Test
+    void testEnum() {
+        final EnumWrapper enumWrapper = new EnumWrapper(MyEnum.TWO);
+        final String jsonV3 = JsonUtil.getMapper(true)
+                .writeValueAsString(enumWrapper);
+        final String jsonV2 = writeValueAsStringWithV2Jackson(enumWrapper);
+
+        LOGGER.debug("jsonV3:\n{}", jsonV3);
+        LOGGER.debug("jsonV2:\n{}", jsonV2);
+
+        Assertions.assertThat(jsonV3)
+                .isEqualTo(jsonV2);
+    }
+
+    private static <T> String writeValueAsStringWithV2Jackson(final T value) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT)
+                    .writeValueAsString(value);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class EnumWrapper {
+
+        @JsonProperty
+        private final MyEnum myEnum;
+
+        @JsonCreator
+        private EnumWrapper(@JsonProperty("myEnum") final MyEnum myEnum) {
+            this.myEnum = myEnum;
+        }
+
+        public MyEnum getMyEnum() {
+            return myEnum;
+        }
+    }
+
+
+    private enum MyEnum {
+        ONE(1),
+        TWO(2),
+        THREE(3),
+        ;
+
+        private final int value;
+
+        MyEnum(final int value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(value);
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    @JsonPropertyOrder(alphabetic = true)
+    @SuppressWarnings("unused")
+    private static class MyPojo {
+
+        // Declared in random order
+        @JsonProperty
+        private final String aaa;
+        @JsonProperty
+        private final String ddd;
+        @JsonProperty
+        private final String yyy;
+        @JsonProperty
+        private final String xxx;
+        @JsonProperty
+        private final String ccc;
+        @JsonProperty
+        private final String bbb;
+        @JsonProperty
+        private final String zzz;
+        @JsonProperty
+        private final Map<String, String> mmmMap;
+
+        // Declared in
+        @JsonCreator
+        private MyPojo(@JsonProperty("ddd") final String ddd,
+                       @JsonProperty("aaa") final String aaa,
+                       @JsonProperty("zzz") final String zzz,
+                       @JsonProperty("ccc") final String ccc,
+                       @JsonProperty("xxx") final String xxx) {
+
+            // Assignments kept alphabetical to guarantee all 26 are accounted for
+            this.aaa = aaa;
+            this.bbb = "BBB";
+            this.ccc = ccc;
+            this.ddd = ddd;
+            // ...
+            this.xxx = xxx;
+            this.yyy = "YYY";
+            this.zzz = zzz;
+            this.mmmMap = Map.of(
+                    "zzz", "ZZZ",
+                    "yyy", "YYY",
+                    "xxx", "XXX",
+                    "ddd", "DDD",
+                    "ccc", "CCC",
+                    "bbb", "BBB",
+                    "aaa", "AAA");
+        }
+
+        public MyPojo() {
+            this("DDD", "AAA", "ZZZ", "CCC", "XXX");
+        }
+    }
 }

@@ -17,6 +17,7 @@
 package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -105,16 +106,22 @@ public class GenerateProxyExpectedYaml {
     public static List<String> removeDropWizardLines(final String value) {
         return value.lines()
                 .sequential()
-                .takeWhile(line ->
-                        line.startsWith("---")
-                                || line.startsWith(PROXY_CONFIG + ":")
-                                || line.startsWith(" "))
+                .filter(line -> !line.startsWith("---"))
+                .dropWhile(line -> {
+                    final boolean isDropped = !line.startsWith(PROXY_CONFIG + ":");
+                    if (isDropped) {
+                        LOGGER.debug("Dropping line '{}'", line);
+                    }
+                    return isDropped;
+                })
+                .takeWhile(line -> line.startsWith(PROXY_CONFIG + ":") || line.startsWith("  "))
                 .toList();
     }
 
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // Need to use legacy v2 jackson as JsonSchemaGenerator lib needs v2
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
         final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 
         // If you want to configure it manually:

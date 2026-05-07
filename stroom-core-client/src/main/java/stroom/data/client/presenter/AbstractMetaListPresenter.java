@@ -392,17 +392,12 @@ public abstract class AbstractMetaListPresenter
     }
 
     private String getFeed(final MetaRow metaRow) {
-        if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
-            return metaRow.getMeta().getFeedName();
-        }
-        return null;
+        return NullSafe.get(metaRow, MetaRow::getMeta, Meta::getFeedName);
     }
 
     private DocRef getPipeline(final MetaRow metaRow) {
-        if (metaRow.getMeta().getProcessorUuid() != null) {
-            if (metaRow.getPipeline() != null) {
-                return metaRow.getPipeline();
-            }
+        if (NullSafe.nonNull(metaRow, MetaRow::getMeta, Meta::getProcessorUuid)) {
+            return metaRow.getPipeline();
         }
         return null;
     }
@@ -410,9 +405,7 @@ public abstract class AbstractMetaListPresenter
     void addPipelineColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
-                                        Optional.ofNullable(metaRow)
-                                                .map(this::getPipeline)
-                                                .orElse(null),
+                                        NullSafe.get(metaRow, this::getPipeline),
                                 getEventBus())
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),

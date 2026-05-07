@@ -17,6 +17,7 @@
 package stroom.pathways.shared.otel.trace;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,11 +46,11 @@ public class InstrumentationScope {
     public InstrumentationScope(@JsonProperty("name") final String name,
                                 @JsonProperty("version") final String version,
                                 @JsonProperty("attributes") final List<KeyValue> attributes,
-                                @JsonProperty("droppedAttributesCount") final int droppedAttributesCount) {
+                                @JsonProperty("droppedAttributesCount") final Integer droppedAttributesCount) {
         this.name = name;
         this.version = version;
         this.attributes = attributes;
-        this.droppedAttributesCount = droppedAttributesCount;
+        this.droppedAttributesCount = NullSafe.getInt(droppedAttributesCount);
     }
 
     public String getName() {
@@ -105,6 +106,10 @@ public class InstrumentationScope {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder extends AbstractBuilder<InstrumentationScope, Builder> {
 

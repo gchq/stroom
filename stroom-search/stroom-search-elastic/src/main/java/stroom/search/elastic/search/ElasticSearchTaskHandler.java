@@ -60,7 +60,6 @@ import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.json.JsonData;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.scoring.ScoringModel;
 import dev.langchain4j.rag.content.Content;
@@ -73,6 +72,7 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonNumber;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -268,7 +268,8 @@ public class ElasticSearchTaskHandler {
                 fieldIndex.create(RERANK_SCORE_FIELD_NAME);
             }
 
-            final SearchResponse<ObjectNode> searchResponse = elasticClient.search(searchRequestBuilder.build(),
+            final SearchResponse<ObjectNode> searchResponse = elasticClient.search(
+                    searchRequestBuilder.build(),
                     ObjectNode.class);
             final String scrollId = searchResponse.scrollId();
 

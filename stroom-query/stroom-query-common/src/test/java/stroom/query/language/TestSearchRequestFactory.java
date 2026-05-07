@@ -68,7 +68,7 @@ public class TestSearchRequestFactory extends AbstractQueryTest {
                     () -> criteria -> null,
                     MockSecurityContext.getInstance())
                     .create(input, searchRequest, expressionContext);
-            return JsonUtil.writeValueAsString(searchRequest);
+            return JsonUtil.writeValueAsConsistentString(searchRequest);
 
         } catch (final RuntimeException e) {
             return e.toString();

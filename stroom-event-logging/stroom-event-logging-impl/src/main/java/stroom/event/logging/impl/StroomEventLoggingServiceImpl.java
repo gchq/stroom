@@ -129,6 +129,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
         this.deviceCache = deviceCache;
+        // TODO Using legacy v2 jackson for now as introspect() is not a thing in v3
         this.objectMapper = createObjectMapper();
     }
 
@@ -684,10 +685,10 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                Date.class.isAssignableFrom(type) ||
                                Instant.class.isAssignableFrom(type) ||
                                (type.isArray() &&
-                          (type.getComponentType().equals(Byte.class) ||
-                           type.getComponentType().equals(byte.class) ||
-                           type.getComponentType().equals(Character.class) ||
-                           type.getComponentType().equals(char.class)));
+                                (type.getComponentType().equals(Byte.class) ||
+                                 type.getComponentType().equals(byte.class) ||
+                                 type.getComponentType().equals(Character.class) ||
+                                 type.getComponentType().equals(char.class)));
 
         LOGGER.trace("isLeafPropertyType({}), returning: {}", type, isLeaf);
         return isLeaf;

@@ -29,11 +29,11 @@ import stroom.util.shared.Clearable;
 import stroom.util.string.EncodingUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -59,7 +59,7 @@ public class FSPersistence implements Persistence, Clearable {
 
     private final RWLockFactory lockFactory = new StripedLockFactory();
     private final Path dir;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     @SuppressWarnings("unused")
     @Inject
@@ -76,7 +76,7 @@ public class FSPersistence implements Persistence, Clearable {
             throw new UncheckedIOException(e);
         }
 
-        objectMapper = JsonUtil.getNoIndentMapper();
+        jsonMapper = JsonUtil.getNoIndentMapper();
     }
 
 
@@ -238,7 +238,7 @@ public class FSPersistence implements Persistence, Clearable {
     private Optional<String> getName(final Path metaFile) {
         try {
             final byte[] data = Files.readAllBytes(metaFile);
-            final GenericDoc genericDoc = objectMapper.readValue(new StringReader(EncodingUtil.asString(data)),
+            final GenericDoc genericDoc = jsonMapper.readValue(new StringReader(EncodingUtil.asString(data)),
                     GenericDoc.class);
             return Optional.ofNullable(genericDoc.getName());
 

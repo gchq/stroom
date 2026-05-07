@@ -20,14 +20,18 @@ import stroom.pipeline.xml.converter.ParserFactory;
 
 import org.xml.sax.XMLReader;
 
+import java.util.Objects;
+
 public class JSONParserFactory implements ParserFactory {
 
-    private JSONFactoryConfig config = new JSONFactoryConfig();
+    private JSONFactoryConfig config = null;
     private boolean addRootObject = true;
 
     @Override
     public XMLReader getParser() {
-        return new JSONParser(config, addRootObject);
+        return new JSONParser(
+                Objects.requireNonNullElseGet(config, JSONFactoryConfig::new),
+                addRootObject);
     }
 
     public void setAddRootObject(final boolean addRootObject) {

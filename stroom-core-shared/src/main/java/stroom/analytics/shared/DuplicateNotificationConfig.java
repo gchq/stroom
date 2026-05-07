@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -72,5 +73,32 @@ public class DuplicateNotificationConfig {
 
     public List<String> getColumnNames() {
         return columnNames;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final DuplicateNotificationConfig that = (DuplicateNotificationConfig) o;
+        return rememberNotifications == that.rememberNotifications
+               && suppressDuplicateNotifications == that.suppressDuplicateNotifications
+               && chooseColumns == that.chooseColumns
+               && Objects.equals(columnNames, that.columnNames);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rememberNotifications, suppressDuplicateNotifications, chooseColumns, columnNames);
+    }
+
+    @Override
+    public String toString() {
+        return "DuplicateNotificationConfig{" +
+               "rememberNotifications=" + rememberNotifications +
+               ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
+               ", chooseColumns=" + chooseColumns +
+               ", columnNames=" + columnNames +
+               '}';
     }
 }

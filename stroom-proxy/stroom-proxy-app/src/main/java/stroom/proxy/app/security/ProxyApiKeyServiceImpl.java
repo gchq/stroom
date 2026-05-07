@@ -43,10 +43,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -356,7 +356,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
     private synchronized void writeToDisk(final VerifiedApiKeys verifiedApiKeys) {
         if (verifiedApiKeys != null) {
             final Path jsonFile = getJsonFilePath();
-            final ObjectMapper mapper = JsonUtil.getMapper();
+            final JsonMapper mapper = JsonUtil.getMapper();
             try (final OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
 
                 LOGGER.debug("writeToDisk() - Writing verifiedApiKeys to file {}\n{}",

@@ -18,7 +18,6 @@ package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
@@ -67,7 +66,7 @@ class TestPropertyUtil {
         final ImmutablePojo immutablePojo = new ImmutablePojo();
 
         final ObjectInfo<ImmutablePojo> objectInfo = PropertyUtil.getObjectInfo(
-                JsonUtil.getMapper(), "stroom", immutablePojo);
+                "stroom", immutablePojo);
 
         assertThat(objectInfo.getName())
                 .isEqualTo("stroom");

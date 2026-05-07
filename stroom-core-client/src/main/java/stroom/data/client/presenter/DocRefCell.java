@@ -308,7 +308,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         private EventBus eventBus;
         private boolean showIcon = false;
-        private boolean hasOpenAndCopy = false;
+        private boolean hasOpenAndCopy = true;
         private DocRef.DisplayType displayType = DisplayType.NAME;
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, DocRef> docRefFunction;

@@ -38,6 +38,8 @@ dependencies {
     implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
+    implementation libs.jackson2.core
+    implementation libs.jackson2.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.javassist

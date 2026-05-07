@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
  * Some of the code in this class is copied from com.codahale.metrics.servlets.HealthCheckServlet
  * which is also licenced under Apache 2.0.
  */
+@Singleton // Because objectMapper
 public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminServlet {
 
     private static final String BASE_PATH_SPEC = "/filteredhealthcheck";
@@ -72,6 +74,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     @Inject
     public FilteredHealthCheckServlet(final HealthCheckRegistry healthCheckRegistry) {
         this.healthCheckRegistry = healthCheckRegistry;
+        // Legacy v2 ObjectMapper as HealthCheckModule uses v2
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new HealthCheckModule());
     }
@@ -148,11 +151,11 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
             final Set<String> allowSet = allowListParamVal == null || allowListParamVal.isBlank()
                     ? Collections.emptySet()
                     : Arrays.stream(allowListParamVal.split(","))
-                            .collect(Collectors.toSet());
+                      .collect(Collectors.toSet());
             final Set<String> denySet = denyListParamVal == null || denyListParamVal.isBlank()
                     ? Collections.emptySet()
                     : Arrays.stream(denyListParamVal.split(","))
-                            .collect(Collectors.toSet());
+                      .collect(Collectors.toSet());
 
             validateName(allowSet, PARAM_NAME_ALLOW_LIST);
             validateName(denySet, PARAM_NAME_DENY_LIST);
@@ -177,8 +180,8 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
                 if (!allNames.contains(allowName)) {
                     throw new RuntimeException(
                             "Name '" + allowName
-                                    + "' is not a valid health check name for parameter '"
-                                    + paramName + "'.");
+                            + "' is not a valid health check name for parameter '"
+                            + paramName + "'.");
                 }
             }
         }

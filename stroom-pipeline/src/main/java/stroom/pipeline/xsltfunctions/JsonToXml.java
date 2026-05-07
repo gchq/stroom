@@ -16,7 +16,6 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.util.shared.Severity;
 
@@ -70,7 +69,7 @@ class JsonToXml extends StroomExtensionFunctionCall {
         contentHandler.setPipelineConfiguration(pipe);
         contentHandler.setReceiver(builder);
 
-        final JSONParser parser = new JSONParser(new JSONFactoryConfig(), false);
+        final JSONParser parser = new JSONParser(false);
         parser.setContentHandler(contentHandler);
 
         try {

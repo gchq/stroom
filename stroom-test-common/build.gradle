@@ -40,7 +40,7 @@ dependencies {
     implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
-    implementation libs.jackson.datatype.jdk8
+    //implementation libs.jackson.datatype.jdk8
     implementation libs.jgit
     implementation libs.jooq
     implementation libs.junit.jupiter.api

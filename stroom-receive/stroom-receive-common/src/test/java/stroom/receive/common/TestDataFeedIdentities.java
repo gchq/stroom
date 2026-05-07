@@ -24,8 +24,8 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +45,7 @@ class TestDataFeedIdentities {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataFeedIdentities.class);
 
     static void main(final String[] ignored) throws IOException {
-        final ObjectMapper mapper = JsonUtil.getMapper();
+        final JsonMapper mapper = JsonUtil.getMapper();
         final Path dir = Paths.get("/tmp/TestDataFeedIdentities");
         Files.createDirectories(dir);
 

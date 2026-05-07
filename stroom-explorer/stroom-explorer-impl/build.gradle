@@ -58,6 +58,8 @@ dependencies {
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
+    testImplementation libs.jackson.databind
+
     runtimeOnly libs.mysql.connector.java
 
     testImplementation libs.bundles.common.test.implementation

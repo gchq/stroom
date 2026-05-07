@@ -82,7 +82,8 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.jackson.datatype.jdk8
+    //testImplementation libs.jackson.datatype.jdk8
+    testImplementation libs.jackson2.core
     testImplementation libs.mbknor.jackson.jsonSchema
     testImplementation libs.java.diff.utils
 

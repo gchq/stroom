@@ -24,11 +24,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectReader;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -125,8 +126,7 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
                     .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             try (final InputStream fileStream = new FileInputStream(path.toFile())) {
                 try {
-                    final DataFeedIdentities dataFeedIdentities = reader.readValue(fileStream,
-                            DataFeedIdentities.class);
+                    final DataFeedIdentities dataFeedIdentities = reader.readValue(fileStream);
                     if (dataFeedIdentities != null && !dataFeedIdentities.isEmpty()) {
                         final int addedCount = dataFeedIdentityServiceProvider.get()
                                 .addDataFeedKeys(dataFeedIdentities.getDataFeedIdentities(), path);
@@ -137,7 +137,7 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
                         LOGGER.info(() -> LogUtil.message("No data feed identities found in {}",
                                 path.toAbsolutePath().normalize()));
                     }
-                } catch (final IOException e) {
+                } catch (final JacksonException e) {
                     LOGGER.debug(() -> LogUtil.message("Error parsing file {}: {}", path, e.getMessage()), e);
                     LOGGER.error("Error parsing file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
                 }

@@ -38,6 +38,7 @@ dependencies {
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.databind
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.swagger.annotations

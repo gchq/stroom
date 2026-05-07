@@ -48,6 +48,8 @@ dependencies {
     implementation "org.apache.lucene:lucene-highlighter:10.3.2"
 
     implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
     implementation libs.guice
     implementation libs.langchain4j
     implementation libs.slf4j.api

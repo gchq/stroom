@@ -27,12 +27,9 @@ import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -41,6 +38,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -68,7 +67,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestPlanBFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPlanBFilter.class);
-    private static final ObjectMapper MAPPER = createMapper(true);
+    private static final JsonMapper MAPPER = createMapper(true);
 
     @Mock
     ShardWriters shardWriters;
@@ -267,8 +266,7 @@ public class TestPlanBFilter {
                           final TraceWriter writer) {
         try (final BufferedReader lineReader = Files.newBufferedReader(path)) {
             final String line = lineReader.readLine();
-            final ExportTraceServiceRequest exportRequest =
-                    MAPPER.readValue(line, ExportTraceServiceRequest.class);
+            final ExportTraceServiceRequest exportRequest = MAPPER.readValue(line, ExportTraceServiceRequest.class);
             for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
                 for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
                     for (final Span span : NullSafe.list(scopeSpans.getSpans())) {
@@ -281,13 +279,11 @@ public class TestPlanBFilter {
         }
     }
 
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        return mapper;
+    private static JsonMapper createMapper(final boolean indent) {
+        return JsonUtil.getMapper(indent)
+                .rebuild()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+                .build();
     }
 
     private Schema loadSchema(final InputStream inputStream) throws Exception {

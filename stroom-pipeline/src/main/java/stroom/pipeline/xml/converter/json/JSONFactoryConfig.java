@@ -16,150 +16,171 @@
 
 package stroom.pipeline.xml.converter.json;
 
-import java.util.Objects;
+public record JSONFactoryConfig(
+        boolean allowComments,
+        boolean allowYamlComments,
+        boolean allowUnquotedFieldNames,
+        boolean allowSingleQuotes,
+        boolean allowUnquotedControlChars,
+        boolean allowBackslashEscapingAnyCharacter,
+        boolean allowNumericLeadingZeros,
+        boolean allowNonNumericNumbers,
+        boolean allowMissingValues,
+        boolean allowTrailingComma,
+        int stringTruncateLength,
+        int maxStringLength,
+        int maxDepth) {
 
-public class JSONFactoryConfig {
+    public static final int DEFAULT_STRING_TRUNCATE_LENGTH = 10_000;
+    public static final int DEFAULT_MAX_STRING_LENGTH = 100_000_000;
+    public static final int DEFAULT_MAX_DEPTH = 500;
 
-    private boolean allowComments;
-    private boolean allowYamlComments;
-    private boolean allowUnquotedFieldNames;
-    private boolean allowSingleQuotes;
-    private boolean allowUnquotedControlChars;
-    private boolean allowBackslashEscapingAnyCharacter;
-    private boolean allowNumericLeadingZeros;
-    private boolean allowNonNumericNumbers;
-    private boolean allowMissingValues;
-    private boolean allowTrailingComma;
-
-    public boolean isAllowComments() {
-        return allowComments;
+    public JSONFactoryConfig() {
+        this(new Builder());
     }
 
-    public void setAllowComments(final boolean allowComments) {
-        this.allowComments = allowComments;
-    }
-
-    public boolean isAllowYamlComments() {
-        return allowYamlComments;
-    }
-
-    public void setAllowYamlComments(final boolean allowYamlComments) {
-        this.allowYamlComments = allowYamlComments;
-    }
-
-    public boolean isAllowUnquotedFieldNames() {
-        return allowUnquotedFieldNames;
-    }
-
-    public void setAllowUnquotedFieldNames(final boolean allowUnquotedFieldNames) {
-        this.allowUnquotedFieldNames = allowUnquotedFieldNames;
-    }
-
-    public boolean isAllowSingleQuotes() {
-        return allowSingleQuotes;
-    }
-
-    public void setAllowSingleQuotes(final boolean allowSingleQuotes) {
-        this.allowSingleQuotes = allowSingleQuotes;
-    }
-
-    public boolean isAllowUnquotedControlChars() {
-        return allowUnquotedControlChars;
-    }
-
-    public void setAllowUnquotedControlChars(final boolean allowUnquotedControlChars) {
-        this.allowUnquotedControlChars = allowUnquotedControlChars;
-    }
-
-    public boolean isAllowBackslashEscapingAnyCharacter() {
-        return allowBackslashEscapingAnyCharacter;
-    }
-
-    public void setAllowBackslashEscapingAnyCharacter(final boolean allowBackslashEscapingAnyCharacter) {
-        this.allowBackslashEscapingAnyCharacter = allowBackslashEscapingAnyCharacter;
-    }
-
-    public boolean isAllowNumericLeadingZeros() {
-        return allowNumericLeadingZeros;
-    }
-
-    public void setAllowNumericLeadingZeros(final boolean allowNumericLeadingZeros) {
-        this.allowNumericLeadingZeros = allowNumericLeadingZeros;
-    }
-
-    public boolean isAllowNonNumericNumbers() {
-        return allowNonNumericNumbers;
-    }
-
-    public void setAllowNonNumericNumbers(final boolean allowNonNumericNumbers) {
-        this.allowNonNumericNumbers = allowNonNumericNumbers;
-    }
-
-    public boolean isAllowMissingValues() {
-        return allowMissingValues;
-    }
-
-    public void setAllowMissingValues(final boolean allowMissingValues) {
-        this.allowMissingValues = allowMissingValues;
-    }
-
-    public boolean isAllowTrailingComma() {
-        return allowTrailingComma;
-    }
-
-    public void setAllowTrailingComma(final boolean allowTrailingComma) {
-        this.allowTrailingComma = allowTrailingComma;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public JSONFactoryConfig {
+        if (stringTruncateLength < 0) {
+            stringTruncateLength = 0;
         }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
+        if (maxStringLength < 0) {
+            maxStringLength = 0;
         }
-        final JSONFactoryConfig that = (JSONFactoryConfig) o;
-        return allowComments == that.allowComments &&
-                allowYamlComments == that.allowYamlComments &&
-                allowUnquotedFieldNames == that.allowUnquotedFieldNames &&
-                allowSingleQuotes == that.allowSingleQuotes &&
-                allowUnquotedControlChars == that.allowUnquotedControlChars &&
-                allowBackslashEscapingAnyCharacter == that.allowBackslashEscapingAnyCharacter &&
-                allowNumericLeadingZeros == that.allowNumericLeadingZeros &&
-                allowNonNumericNumbers == that.allowNonNumericNumbers &&
-                allowMissingValues == that.allowMissingValues &&
-                allowTrailingComma == that.allowTrailingComma;
+        if (maxDepth < 0) {
+            maxDepth = 0;
+        }
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(
-                allowComments,
-                allowYamlComments,
-                allowUnquotedFieldNames,
-                allowSingleQuotes,
-                allowUnquotedControlChars,
-                allowBackslashEscapingAnyCharacter,
-                allowNumericLeadingZeros,
-                allowNonNumericNumbers,
-                allowMissingValues,
-                allowTrailingComma);
+    private JSONFactoryConfig(final Builder builder) {
+        this(builder.allowComments,
+                builder.allowYamlComments,
+                builder.allowUnquotedFieldNames,
+                builder.allowSingleQuotes,
+                builder.allowUnquotedControlChars,
+                builder.allowBackslashEscapingAnyCharacter,
+                builder.allowNumericLeadingZeros,
+                builder.allowNonNumericNumbers,
+                builder.allowMissingValues,
+                builder.allowTrailingComma,
+                builder.stringTruncateLength,
+                builder.maxStringLength,
+                builder.maxDepth);
     }
 
-    @Override
-    public String toString() {
-        return "JSONParserConfig{" +
-                "allowComments=" + allowComments +
-                ", allowYamlComments=" + allowYamlComments +
-                ", allowUnquotedFieldNames=" + allowUnquotedFieldNames +
-                ", allowSingleQuotes=" + allowSingleQuotes +
-                ", allowUnquotedControlChars=" + allowUnquotedControlChars +
-                ", allowBackslashEscapingAnyCharacter=" + allowBackslashEscapingAnyCharacter +
-                ", allowNumericLeadingZeros=" + allowNumericLeadingZeros +
-                ", allowNonNumericNumbers=" + allowNonNumericNumbers +
-                ", allowMissingValues=" + allowMissingValues +
-                ", allowTrailingComma=" + allowTrailingComma +
-                '}';
+    public static Builder copy(final JSONFactoryConfig source) {
+        final Builder builder = new Builder();
+        builder.allowComments = source.allowComments();
+        builder.allowYamlComments = source.allowYamlComments();
+        builder.allowUnquotedFieldNames = source.allowUnquotedFieldNames();
+        builder.allowSingleQuotes = source.allowSingleQuotes();
+        builder.allowUnquotedControlChars = source.allowUnquotedControlChars();
+        builder.allowBackslashEscapingAnyCharacter = source.allowBackslashEscapingAnyCharacter();
+        builder.allowNumericLeadingZeros = source.allowNumericLeadingZeros();
+        builder.allowNonNumericNumbers = source.allowNonNumericNumbers();
+        builder.allowMissingValues = source.allowMissingValues();
+        builder.allowTrailingComma = source.allowTrailingComma();
+        builder.stringTruncateLength = source.stringTruncateLength();
+        builder.maxStringLength = source.maxStringLength();
+        builder.maxDepth = source.maxDepth();
+        return builder;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private boolean allowComments = false;
+        private boolean allowYamlComments = false;
+        private boolean allowUnquotedFieldNames = false;
+        private boolean allowSingleQuotes = false;
+        private boolean allowUnquotedControlChars = false;
+        private boolean allowBackslashEscapingAnyCharacter = false;
+        private boolean allowNumericLeadingZeros = false;
+        private boolean allowNonNumericNumbers = false;
+        private boolean allowMissingValues = false;
+        private boolean allowTrailingComma = false;
+        private int stringTruncateLength = DEFAULT_STRING_TRUNCATE_LENGTH;
+        private int maxStringLength = DEFAULT_MAX_STRING_LENGTH;
+        private int maxDepth = DEFAULT_MAX_DEPTH;
+
+        private Builder() {
+        }
+
+
+        public Builder allowComments(final boolean allowComments) {
+            this.allowComments = allowComments;
+            return this;
+        }
+
+        public Builder allowYamlComments(final boolean allowYamlComments) {
+            this.allowYamlComments = allowYamlComments;
+            return this;
+        }
+
+        public Builder allowUnquotedFieldNames(final boolean allowUnquotedFieldNames) {
+            this.allowUnquotedFieldNames = allowUnquotedFieldNames;
+            return this;
+        }
+
+        public Builder allowSingleQuotes(final boolean allowSingleQuotes) {
+            this.allowSingleQuotes = allowSingleQuotes;
+            return this;
+        }
+
+        public Builder allowUnquotedControlChars(final boolean allowUnquotedControlChars) {
+            this.allowUnquotedControlChars = allowUnquotedControlChars;
+            return this;
+        }
+
+        public Builder allowBackslashEscapingAnyCharacter(final boolean allowBackslashEscapingAnyCharacter) {
+            this.allowBackslashEscapingAnyCharacter = allowBackslashEscapingAnyCharacter;
+            return this;
+        }
+
+        public Builder allowNumericLeadingZeros(final boolean allowNumericLeadingZeros) {
+            this.allowNumericLeadingZeros = allowNumericLeadingZeros;
+            return this;
+        }
+
+        public Builder allowNonNumericNumbers(final boolean allowNonNumericNumbers) {
+            this.allowNonNumericNumbers = allowNonNumericNumbers;
+            return this;
+        }
+
+        public Builder allowMissingValues(final boolean allowMissingValues) {
+            this.allowMissingValues = allowMissingValues;
+            return this;
+        }
+
+        public Builder allowTrailingComma(final boolean allowTrailingComma) {
+            this.allowTrailingComma = allowTrailingComma;
+            return this;
+        }
+
+        public Builder stringTruncateLength(final int stringTruncateLength) {
+            this.stringTruncateLength = stringTruncateLength;
+            return this;
+        }
+
+        public Builder maxStringLength(final int maxStringLength) {
+            this.maxStringLength = maxStringLength;
+            return this;
+        }
+
+        public Builder maxDepth(final int maxDepth) {
+            this.maxDepth = maxDepth;
+            return this;
+        }
+
+        public JSONFactoryConfig build() {
+            return new JSONFactoryConfig(this);
+        }
+
     }
 }

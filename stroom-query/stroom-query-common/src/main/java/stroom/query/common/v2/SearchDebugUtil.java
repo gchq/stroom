@@ -26,9 +26,9 @@ import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -74,13 +74,9 @@ public class SearchDebugUtil {
     }
 
     private static String getSuffix(final boolean actual) {
-        final String suffix;
-        if (actual) {
-            suffix = "_actual.txt";
-        } else {
-            suffix = "_expected.txt";
-        }
-        return suffix;
+        return actual
+                ? "_actual.txt"
+                : "_expected.txt";
     }
 
     public static void validateRequest() {
@@ -110,7 +106,7 @@ public class SearchDebugUtil {
                     FileUtil.getCanonicalPath(pathForActualOutput));
 
             throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath() +
-                    " " + pathForExpectedOutput.toAbsolutePath());
+                                       " " + pathForExpectedOutput.toAbsolutePath());
         }
     }
 
@@ -118,11 +114,12 @@ public class SearchDebugUtil {
         if (enabled && ((writeExpected && !actual) || (writeActual && actual))) {
             final String suffix = getSuffix(actual);
             try {
-                final ObjectMapper mapper = JsonUtil.getMapper();
-                try (final Writer writer = new OutputStreamWriter(
-                        Files.newOutputStream(dir.resolve("searchRequest" + suffix)))) {
+                final JsonMapper mapper = JsonUtil.getConsistentOrderMapper(true);
+                final Path file = dir.resolve("searchRequest" + suffix);
+                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(file))) {
                     mapper.writeValue(writer, searchRequest);
                 }
+                LOGGER.debug("writeRequest() - file: {}", file.toAbsolutePath().normalize());
             } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -133,12 +130,13 @@ public class SearchDebugUtil {
         if (enabled && ((writeExpected && !actual) || (writeActual && actual))) {
             final String suffix = getSuffix(actual);
             try {
-                final ObjectMapper mapper = JsonUtil.getMapper();
+                final JsonMapper mapper = JsonUtil.getConsistentOrderMapper(true);
 
-                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(
-                        dir.resolve("searchResponse" + suffix)))) {
+                final Path file = dir.resolve("searchResponse" + suffix);
+                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(file))) {
                     mapper.writeValue(writer, searchResponse);
                 }
+                LOGGER.debug("writeResponse() - file: {}", file.toAbsolutePath().normalize());
 
                 for (final Result result : searchResponse.getResults()) {
                     if (result instanceof final TableResult tableResult) {

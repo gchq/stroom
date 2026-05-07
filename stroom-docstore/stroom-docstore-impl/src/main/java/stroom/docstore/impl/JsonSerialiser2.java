@@ -21,21 +21,35 @@ import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.string.EncodingUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 public class JsonSerialiser2<D> implements Serialiser2<D> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JsonSerialiser2.class);
 
     private static final String META = "meta";
 
     private final Class<D> clazz;
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
+
+    static {
+        // Make sure EncodingUtil is using the same charset as writeValueAsBytes.
+        // This is because we are using methods like jsonMapper.readValue(jsonBytes, clazz)
+        // which use UTF-8 under the hood. If EncodingUtil ever changes its charset then
+        // we need to change how we use Jackson
+        if (!StandardCharsets.UTF_8.equals(EncodingUtil.CHARSET)) {
+            throw new IllegalStateException("Expecting EncodingUtil to use UTF8");
+        }
+    }
 
     public JsonSerialiser2(final Class<D> clazz) {
         this.clazz = clazz;
@@ -49,28 +63,49 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
 
     @Override
     public D read(final ImportExportAsset asset) throws IOException {
-        D document = null;
         if (asset != null) {
             final byte[] data = asset.getInputData();
             if (data != null) {
-                document = mapper.readValue(new StringReader(EncodingUtil.asString(data)), clazz);
+                final D document = mapper.readValue(data, clazz);
+                LOGGER.trace(() -> LogUtil.message("read() - document: {}, json:\n{}",
+                        document, EncodingUtil.asString(data)));
+                return document;
+            } else {
+                return null;
             }
+        } else {
+            return null;
         }
-        return document;
     }
 
     @Override
     public ImportExportDocument write(final D document) throws IOException {
-        final StringWriter stringWriter = new StringWriter();
-        write(stringWriter, document);
+        final byte[] jsonBytes = writeAsBytes(document);
         final ImportExportDocument importExportDocument = new ImportExportDocument();
-        importExportDocument.addExtAsset(
-                new ByteArrayImportExportAsset(META, EncodingUtil.asBytes(stringWriter.toString())));
+        importExportDocument.addExtAsset(new ByteArrayImportExportAsset(META, jsonBytes));
+        LOGGER.trace(() -> LogUtil.message("write() - document: {}, json:\n{}",
+                document, EncodingUtil.asString(jsonBytes)));
         return importExportDocument;
     }
 
     @Override
     public void write(final Writer writer, final D document) throws IOException {
         mapper.writeValue(writer, document);
+    }
+
+    @Override
+    public String writeAsString(final D document) {
+        final String json = mapper.writeValueAsString(document);
+        LOGGER.trace("writeAsString() - document: {}, json:\n{}", document, json);
+        return json;
+    }
+
+    @Override
+    public byte[] writeAsBytes(final D document) {
+        // UTF-8 bytes
+        final byte[] jsonBytes = mapper.writeValueAsBytes(document);
+        LOGGER.trace(() -> LogUtil.message("writeAsBytes() - document: {}, json:\n{}",
+                document, EncodingUtil.asString(jsonBytes)));
+        return jsonBytes;
     }
 }

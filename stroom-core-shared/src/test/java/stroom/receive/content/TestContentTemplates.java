@@ -24,8 +24,8 @@ import stroom.receive.content.shared.ContentTemplates;
 import stroom.receive.content.shared.TemplateType;
 import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -80,10 +80,7 @@ class TestContentTemplates {
     private <T> void doSerdeTest(final T entity,
                                  final Class<T> clazz) throws IOException {
 
-        final ObjectMapper mapper = JsonUtil.getMapper();
-        assertThat(mapper.canSerialize(entity.getClass()))
-                .isTrue();
-
+        final JsonMapper mapper = JsonUtil.getMapper();
         final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 

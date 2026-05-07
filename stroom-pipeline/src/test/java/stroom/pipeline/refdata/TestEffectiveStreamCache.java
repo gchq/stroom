@@ -32,16 +32,16 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -253,7 +253,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
     }
 
     @Test
-    void testSystemInfo() throws JsonProcessingException {
+    void testSystemInfo() {
         final MetaService mockMetaService = Mockito.mock(MetaService.class);
 
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
@@ -284,8 +284,8 @@ class TestEffectiveStreamCache extends StroomUnitTest {
                     .isEqualTo(3);
 
             final SystemInfoResult systemInfo = effectiveStreamCache.getSystemInfo();
-            final ObjectMapper objectMapper = new ObjectMapper();
-            final String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(systemInfo);
+            final JsonMapper jsonMapper = JsonUtil.getMapper();
+            final String json = jsonMapper.writeValueAsString(systemInfo);
             LOGGER.debug("systemInfo:\n{}", json);
         }
     }

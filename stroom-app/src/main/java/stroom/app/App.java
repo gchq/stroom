@@ -157,6 +157,7 @@ public class App extends Application<Config> {
     public void initialize(final Bootstrap<Config> bootstrap) {
 
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
+        // This is currently jackson v2 as that is what DW 5.0.1 uses
         bootstrap.getObjectMapper()
                 .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
