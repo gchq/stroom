@@ -102,11 +102,9 @@ dependencies {
 }
 
 // Testcontainers LocalStack extends JUnit 4's TestRule. The root build.gradle
-// globally excludes junit:junit via configurations.all — file dependencies
-// bypass module exclusion rules.
-dependencies {
-    testImplementation files('libs/junit-4.13.2.jar')
-}
+// globally excludes junit:junit via configurations.all — so we use local stub
+// classes in src/test/java/org/junit to satisfy the compiler without actually
+// pulling in JUnit 4 as a dependency.
 jar {
     manifest {
         attributes(
