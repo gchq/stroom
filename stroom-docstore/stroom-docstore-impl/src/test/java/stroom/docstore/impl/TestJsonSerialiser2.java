@@ -25,9 +25,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestJsonSerialiser2 {
@@ -55,13 +55,13 @@ class TestJsonSerialiser2 {
         assertThat(importExportDocument.getExtAsset("meta")
                 .getInputData())
                 .isEqualTo(bytes);
-        assertThat(json.getBytes(UTF_8))
+        assertThat(json.getBytes(StandardCharsets.UTF_8))
                 .isEqualTo(bytes);
-        assertThat(stringWriter.toString().getBytes(UTF_8))
+        assertThat(stringWriter.toString().getBytes(StandardCharsets.UTF_8))
                 .isEqualTo(bytes);
         assertThat(stringWriter.toString())
                 .isEqualTo(json);
-        assertThat(new String(bytes, UTF_8))
+        assertThat(new String(bytes, StandardCharsets.UTF_8))
                 .isEqualTo(json);
 
         // Make sure all the deser methods are producing the same doc
