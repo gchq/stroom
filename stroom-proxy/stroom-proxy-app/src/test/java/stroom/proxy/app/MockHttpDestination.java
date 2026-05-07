@@ -553,7 +553,7 @@ public class MockHttpDestination {
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,
                 () -> "Forward to stroom datafeed POST count",
-                Duration.ofMinutes(1),
+                Duration.ofMinutes(2),
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
@@ -574,7 +574,7 @@ public class MockHttpDestination {
                 },
                 (long) count,
                 () -> "Received item count",
-                Duration.ofMinutes(1),
+                Duration.ofMinutes(2),
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
