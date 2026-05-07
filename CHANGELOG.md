@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v8.0-proxy-beta.2] - 2026-05-07
+
+* Build : Fix.
+
+
 ## [v8.0-proxy-beta.1] - 2026-05-07
 
 * Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
@@ -2207,7 +2212,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-proxy-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-proxy-beta.2...HEAD
+[v8.0-proxy-beta.2]: https://github.com/gchq/stroom/compare/v8.0-proxy-beta.1...v8.0-proxy-beta.2
 [v8.0-proxy-beta.1]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v8.0-proxy-beta.1
 [v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
 [v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
