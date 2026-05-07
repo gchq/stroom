@@ -114,7 +114,7 @@ class TestInnerProcessEndToEnd {
     void testAggregateSplitting() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         test(1, 1, 2, receiverFactory ->
-                sendSimpleZip(receiverFactory, feedName, 2001));
+                sendSimpleZip(receiverFactory, feedName, 21));
     }
 
     @Test
@@ -122,7 +122,7 @@ class TestInnerProcessEndToEnd {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
         test(1, 1, 4, receiverFactory ->
-                sendComplexZip(receiverFactory, feedName1, feedName2, 2001));
+                sendComplexZip(receiverFactory, feedName1, feedName2, 21));
     }
 
 
