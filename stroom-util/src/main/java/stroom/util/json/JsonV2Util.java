@@ -18,6 +18,8 @@ package stroom.util.json;
 
 import stroom.util.concurrent.LazyValue;
 import stroom.util.exception.ThrowingConsumer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
@@ -33,8 +35,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper.Builder;
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -57,8 +57,7 @@ import java.util.Set;
 @Deprecated
 public final class JsonV2Util {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtil.class);
-
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JsonV2Util.class);
     private static final ObjectMapper OBJECT_MAPPER = createMapper(true);
     private static final ObjectMapper NO_INDENT_MAPPER = createMapper(false);
 
