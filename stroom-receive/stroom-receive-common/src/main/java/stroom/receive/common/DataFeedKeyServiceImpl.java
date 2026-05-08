@@ -169,7 +169,8 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
 
         if (dataFeedKey.isExpired()) {
             LOGGER.debug(() -> LogUtil.message(
-                    "Ignoring expired Data Feed Key in sourceFile: {}", dataFeedKey.getSourceFile()));
+                    "isValidDataFeedKey() - Ignoring expired Data Feed Key in sourceFile: {}",
+                    dataFeedKey.getSourceFile()));
             return false;
         }
         final String value = dataFeedKey.getStreamMetaValue(ownerMetaKey);
@@ -204,7 +205,8 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
 
         keyOwnerToDataFeedKeyMap.forEach((keyOwner, cachedHashedDataFeedKeys) ->
                 cachedHashedDataFeedKeys.removeIf(isExpiredPredicate));
-        LOGGER.debug("Removed {} cachedHashedDataFeedKey items from keyOwnerToDataFeedKeyMap", isExpiredPredicate);
+        LOGGER.debug("evictExpired() - Removed {} cachedHashedDataFeedKey items from keyOwnerToDataFeedKeyMap",
+                isExpiredPredicate);
         if (isExpiredPredicate.intValue() > 0) {
             LOGGER.info("Evicted {} expired data feed keys", isExpiredPredicate);
         }
@@ -218,7 +220,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
                                         .anyMatch(CachedHashedDataFeedKey::isExpired));
         unHashedKeyToDataFeedKeyCache.invalidateEntries(isExpiredBiPredicate);
 
-        LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", isExpiredBiPredicate);
+        LOGGER.debug("evictExpired() - Removed {} unHashedKeyToDataFeedKeyCache entries", isExpiredBiPredicate);
     }
 
     @Override
@@ -236,7 +238,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
                                                     Objects.equals(sourceFile,
                                                             cachedHashedDataFeedKey.getSourceFile())));
             unHashedKeyToDataFeedKeyCache.invalidateEntries(countingBiPredicate);
-            LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", countingBiPredicate);
+            LOGGER.debug("removeKeysForFile() - Removed {} unHashedKeyToDataFeedKeyCache entries", countingBiPredicate);
 
             final CountingPredicate<CachedHashedDataFeedKey> sourceFilePredicate = PredicateUtil.countingPredicate(
                     cachedKey ->
@@ -244,7 +246,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
             keyOwnerToDataFeedKeyMap.forEach((keyOwner, cachedHashedDataFeedKeys) -> {
                 cachedHashedDataFeedKeys.removeIf(sourceFilePredicate);
             });
-            LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", countingBiPredicate);
+            LOGGER.debug("removeKeysForFile() - Removed {} subjectIdToDataFeedKeyMap entries", countingBiPredicate);
             LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", countingBiPredicate, sourceFile);
         }
         LOGGER.debug(() -> LogUtil.message("Total cached keys: {}", keyOwnerToDataFeedKeyMap.values()
