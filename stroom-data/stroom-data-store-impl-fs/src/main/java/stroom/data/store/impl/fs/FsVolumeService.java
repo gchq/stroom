@@ -709,7 +709,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     @Override
     public SystemInfoResult getSystemInfo() {
 
-        final Volumes volumes = getCurrentVolumes();
+        final Volumes volumes = securityContext.asProcessingUserResult(this::getCurrentVolumes);
         final List<Map<String, Object>> volInfoList = volumes
                 .getMap()
                 .values()

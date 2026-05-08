@@ -50,6 +50,7 @@ class TestDataFeedIdentities {
         final ObjectMapper mapper = JsonUtil.getMapper();
         final Path dir = Paths.get("/tmp/TestDataFeedIdentities");
         Files.createDirectories(dir);
+        final Instant now = Instant.now();
 
         final List<String> jsonList = new ArrayList<>();
 
@@ -58,9 +59,9 @@ class TestDataFeedIdentities {
             final List<KeyWithHash> keyWithHashList = new ArrayList<>();
             final List<CertificateIdentity> certificateIdentityList = new ArrayList<>();
             final Instant expiry = switch (i) {
-                case 0 -> Instant.now().minus(Duration.ofMinutes(10)); // Expired
-                case 1 -> Instant.now().plus(Duration.ofMinutes(1)); // Soon to expire
-                case 2 -> Instant.now().plus(Duration.ofDays(10)); // Long life
+                case 0 -> now.minus(Duration.ofMinutes(10)); // Expired
+                case 1 -> now.plus(Duration.ofMinutes(1)); // Soon to expire
+                case 2 -> now.plus(Duration.ofDays(10)); // Long life
                 default -> throw new RuntimeException("Unexpected i: " + i);
             };
 

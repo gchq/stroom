@@ -24,6 +24,7 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.prometheus.AppInfoProvider;
 import stroom.dropwizard.common.prometheus.PrometheusModule;
+import stroom.dropwizard.common.sysinfo.SystemInfoAdminServletModule;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
@@ -54,6 +55,7 @@ public class AppModule extends AbstractModule {
         install(new ResourceModule());
         install(new JerseyModule());
         install(new PrometheusModule());
+        install(new SystemInfoAdminServletModule());
 
         bind(AppInfoProvider.class).to(StroomAppInfoProvider.class);
 
