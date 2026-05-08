@@ -124,6 +124,11 @@ public class ExpressionTreeViewImpl
     }
 
     @Override
+    public void write() {
+        treePanel.write();
+    }
+
+    @Override
     public void endEditing() {
         treePanel.endEditing();
     }

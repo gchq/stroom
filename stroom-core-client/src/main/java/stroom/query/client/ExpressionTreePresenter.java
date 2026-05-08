@@ -89,6 +89,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public ExpressionOperator write() {
+        // Write any current editing values.
+        getView().write();
+        // Now get the data from the tree.
         return new ExpressionModel().getExpressionFromTree(tree);
     }
 
@@ -298,6 +301,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         void init(RestFactory restFactory,
                   DocRef dataSource,
                   FieldSelectionListModel fieldSelectionListModel);
+
+        void write();
 
         void endEditing();
 

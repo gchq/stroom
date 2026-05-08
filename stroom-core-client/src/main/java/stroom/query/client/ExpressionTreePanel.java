@@ -172,6 +172,15 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         termEditor.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
+    public void write() {
+        if (operatorEditor != null) {
+            operatorEditor.write();
+        }
+        if (termEditor != null) {
+            termEditor.write();
+        }
+    }
+
     public void endEditing() {
         if (operatorEditor != null) {
             operatorEditor.endEdit();

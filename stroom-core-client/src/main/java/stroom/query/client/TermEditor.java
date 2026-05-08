@@ -220,6 +220,12 @@ public class TermEditor extends Composite {
         reading = false;
     }
 
+    public void write() {
+        if (editing) {
+            write(term);
+        }
+    }
+
     private void write(final Term term) {
         final QueryField selectedField = fieldListBox.getValue();
         final Condition condition = conditionListBox.getValue();

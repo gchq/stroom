@@ -90,6 +90,14 @@ public class OperatorEditor extends Composite {
         }
     }
 
+    public void write() {
+        if (editing) {
+//            layout.setVisible(false);
+//
+//            editing = false;
+        }
+    }
+
     public void endEdit() {
         if (editing) {
             layout.setVisible(false);
