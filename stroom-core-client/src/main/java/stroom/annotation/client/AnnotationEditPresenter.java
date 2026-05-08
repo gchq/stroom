@@ -1475,6 +1475,18 @@ public class AnnotationEditPresenter
             this.entries = entries;
         }
 
+        public long getId() {
+            return id;
+        }
+
+        public AnnotationEntryType getAnnotationEntryType() {
+            return annotationEntryType;
+        }
+
+        public List<AnnotationEntry> getEntries() {
+            return entries;
+        }
+
         @Override
         public boolean equals(final Object obj) {
             if (obj == this) {
