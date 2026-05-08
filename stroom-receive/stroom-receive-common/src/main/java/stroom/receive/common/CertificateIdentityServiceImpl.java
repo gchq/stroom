@@ -24,6 +24,8 @@ import stroom.security.api.UserIdentity;
 import stroom.util.PredicateUtil;
 import stroom.util.PredicateUtil.CountingPredicate;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
@@ -55,6 +57,8 @@ import java.util.function.Predicate;
 @Singleton
 public class CertificateIdentityServiceImpl
         implements CertificateIdentityService, AuthenticatorFilter, Managed, HasSystemInfo {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateIdentityServiceImpl.class);
 
     private final CertificateExtractor certificateExtractor;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
