@@ -16,17 +16,37 @@
 
 package stroom.receive.common;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import java.util.Objects;
 
 interface DataFeedKeyHasher {
 
+    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyHasher.class);
+
+    String generateSalt();
+
     /**
-     * Generate the hash of a datafeed key.
+     * Generate the hash of a datafeed key using the supplied salt.
+     *
+     * @param dataFeedKey The datafeed key to generate a hash for
+     * @param salt        The salt to use when hashing the dataFeedKey.
+     * @return The hash and the salt used.
+     */
+    HashOutput hash(String dataFeedKey, String salt);
+
+    /**
+     * Generate the hash of a datafeed key using a randomly generated salt.
      *
      * @param dataFeedKey The datafeed key to generate a hash for
      * @return The hash and the salt used.
      */
-    HashOutput hash(String dataFeedKey);
+    default HashOutput hash(final String dataFeedKey) {
+        Objects.requireNonNull(dataFeedKey);
+        final String generatedSalt = generateSalt();
+        return hash(dataFeedKey, generatedSalt);
+    }
 
     /**
      * Verify a dataFeedKey against its hash, and if provided include its salt.
@@ -38,7 +58,10 @@ interface DataFeedKeyHasher {
      */
     default boolean verify(final String dataFeedKey, final String hash, final String salt) {
         final HashOutput hashOutput = hash(Objects.requireNonNull(dataFeedKey));
-        return Objects.equals(Objects.requireNonNull(hash), hashOutput.hash);
+        final boolean isValid = Objects.equals(Objects.requireNonNull(hash), hashOutput.hash);
+        LOGGER.debug("verify() - salt: '{}', hash: '{}', dataFeedKey: '{}', isValid: {}",
+                salt, hash, dataFeedKey, isValid);
+        return isValid;
     }
 
     /**

@@ -23,7 +23,6 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
-import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -47,12 +46,10 @@ public class AnnotationValues {
     // fieldName => Val
     private final Map<String, Val> values = new ConcurrentHashMap<>();
     private final AtomicBoolean isDeleted = new AtomicBoolean(false);
-    private final LazyValue<ValLong> lazyAnnotationIdVal;
 
     public AnnotationValues(final AnnotationIdentity annotationIdentity) {
         Objects.requireNonNull(annotationIdentity);
         this.annotationIdentity = annotationIdentity;
-        this.lazyAnnotationIdVal = LazyValue.initialisedBy(() -> ValLong.create(annotationIdentity.getId()));
     }
 
     public AnnotationIdentity getAnnotationIdentity() {
@@ -60,16 +57,8 @@ public class AnnotationValues {
     }
 
     public Val getAnnotationIdAsVal() {
-        // No need to cache this as V
-        return lazyAnnotationIdVal.getValueWithoutLocks();
+        return ValLong.create(getAnnotationIdentity().getId());
     }
-
-//    public void clear(final QueryField queryField) {
-//        LOGGER.trace(() -> LogUtil.message("clear() - annotationIdentity: {}, queryField: {}",
-//                annotationIdentity, queryField));
-//        Objects.requireNonNull(queryField);
-//        values.remove(queryField.getFldName());
-//    }
 
     public void clear(final String fieldName) {
         LOGGER.trace(() -> LogUtil.message("clear() - annotationIdentity: {}, fieldName: {}",
@@ -77,11 +66,6 @@ public class AnnotationValues {
         Objects.requireNonNull(fieldName);
         values.remove(fieldName);
     }
-
-//    public void put(final QueryField queryField, final Val val) {
-//        LOGGER.trace(() -> LogUtil.message("put() - queryField: {}, val: {}", queryField, LogUtil.typedValue(val)));
-//        values.put(Objects.requireNonNull(queryField).getFldName(), val);
-//    }
 
     public void put(final Collection<FieldValueEntry> fieldValueEntries) {
         LOGGER.trace(() -> LogUtil.message("put() - annotationIdentity: {}, fieldValueEntries: {}",

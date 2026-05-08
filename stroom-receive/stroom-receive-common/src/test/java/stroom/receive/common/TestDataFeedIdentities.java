@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestDataFeedIdentities {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataFeedIdentities.class);
@@ -125,35 +127,36 @@ class TestDataFeedIdentities {
 
     @Test
     void testSerde() {
-        final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
+        final DataFeedKeyHasher hasher1 = new Argon2DataFeedKeyHasher();
+        final DataFeedKeyHasher hasher2 = new BCryptDataFeedKeyHasher();
 
         @SuppressWarnings("checkstyle:lineLength") final String key1 =
                 "sdk_"
-                + hasher.getAlgorithm().getUniqueId()
+                + hasher1.getAlgorithm().getUniqueId()
                 + "_"
                 + "okfXqkmtns3k4828fZcnutWUFmegj3hqk83o9sYCLefWGTrRrpT6Bt23FuT1ebwcftPNaL1B7aFbK37gbpefZgQeeP3esbnvNXu612co4awVxpn33He6i1vn7g8kUFEk";
         @SuppressWarnings("checkstyle:lineLength") final String key2 =
                 "sdk_"
-                + hasher.getAlgorithm().getUniqueId()
+                + hasher2.getAlgorithm().getUniqueId()
                 + "_"
                 + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
 
-        final HashOutput hashOutput1 = hasher.hash(key1);
+        final HashOutput hashOutput1 = hasher1.hash(key1);
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hashOutput1.hash(),
                 hashOutput1.salt(),
-                hasher.getAlgorithm(),
+                hasher1.getAlgorithm(),
                 Map.of(
                         StandardHeaderArguments.ACCOUNT_ID, "system 1",
                         "key1", "val1",
                         "key2", "val2"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
-        final HashOutput hashOutput2 = hasher.hash(key2);
+        final HashOutput hashOutput2 = hasher2.hash(key2);
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hashOutput2.hash(),
-                hashOutput2.salt(),
-                hasher.getAlgorithm(),
+                null, // Don't need salt for Bcrypt
+                hasher2.getAlgorithm(),
                 Map.of(
                         StandardHeaderArguments.ACCOUNT_ID, "system 2",
                         "key3", "val3",
@@ -184,5 +187,17 @@ class TestDataFeedIdentities {
 
         final DataFeedIdentities dataFeedIdentities = new DataFeedIdentities(dataFeedIdentityList);
         TestUtil.testSerialisation(dataFeedIdentities, DataFeedIdentities.class);
+        assertThat(hasher1.verify(key1, hashedDataFeedKey1.getHash(), hashedDataFeedKey1.getSalt()))
+                .isTrue();
+        assertThat(hasher1.verify(key1, hashedDataFeedKey1.getHash(), "wrong salt"))
+                .isFalse();
+        assertThat(hasher1.verify(key1, "wrong hash", hashedDataFeedKey1.getSalt()))
+                .isFalse();
+        // Salt is null here
+        assertThat(hasher2.verify(key2, hashedDataFeedKey2.getHash(), hashedDataFeedKey2.getSalt()))
+                .isTrue();
+        // Now try it with a salt value
+        assertThat(hasher2.verify(key2, hashedDataFeedKey2.getHash(), hashOutput2.salt()))
+                .isTrue();
     }
 }

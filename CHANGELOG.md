@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.2] - 2026-05-05
+
+* Bug **#5532** : Relax Data Feed Identities validation so salt is optional.
+
+
+## [v7.12.1] - 2026-04-27
+
+* Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
+
+* Feature : Add config prop `stroom.annotation.eventLinkCacheSizeLimit` (default 1,000,000) to protect Stroom from caching too many annotation to event links. If this limit is exceeded, the query will error.
+
+
+## [v7.12.0] - 2026-04-27
+
 * Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
 
 * Bug : Fix annotation dash/query columns not updating when status/label/collection names are deleted/modified.
