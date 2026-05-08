@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
+@JsonPropertyOrder({"name", "description", "details"})
 public class SystemInfoResult {
 
     @NotNull

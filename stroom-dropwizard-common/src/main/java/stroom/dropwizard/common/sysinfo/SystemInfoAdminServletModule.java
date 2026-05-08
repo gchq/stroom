@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.dropwizard.common.sysinfo;
 
-import java.util.Set;
+import stroom.util.guice.AdminServletBinder;
 
-/**
- * A servlet that is registered on the admin port.
- * All admin servlets are un-authenticated on the basis that access to the admin port
- * will be carefully restricted.
- * Any servlets requiring authentication should instead implement {@link IsServlet}.
- */
-public interface IsAdminServlet {
+import com.google.inject.AbstractModule;
 
-    /**
-     * @return The part of the path that will be in addition to any base path,
-     * e.g. "/datafeed".
-     */
-    Set<String> getPathSpecs();
+public class SystemInfoAdminServletModule extends AbstractModule {
 
-    default String getDisplayName() {
-        return getClass().getName();
+    @Override
+    protected void configure() {
+
+        AdminServletBinder.create(binder())
+                .bind(SystemInfoAdminServlet.class);
     }
 }

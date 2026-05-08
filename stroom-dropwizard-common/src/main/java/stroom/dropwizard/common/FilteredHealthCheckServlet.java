@@ -65,6 +65,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     private static final String PARAM_NAME_MINIMAL = "minimal";
     private static final String PARAM_NAME_PRETTY = "pretty";
     private static final String CONTENT_TYPE = "application/json";
+    private static final String DISPLAY_NAME = "Filtered Health Check Servlet";
 
     private final HealthCheckRegistry healthCheckRegistry;
     private final ObjectMapper objectMapper;
@@ -148,11 +149,11 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
             final Set<String> allowSet = allowListParamVal == null || allowListParamVal.isBlank()
                     ? Collections.emptySet()
                     : Arrays.stream(allowListParamVal.split(","))
-                            .collect(Collectors.toSet());
+                      .collect(Collectors.toSet());
             final Set<String> denySet = denyListParamVal == null || denyListParamVal.isBlank()
                     ? Collections.emptySet()
                     : Arrays.stream(denyListParamVal.split(","))
-                            .collect(Collectors.toSet());
+                      .collect(Collectors.toSet());
 
             validateName(allowSet, PARAM_NAME_ALLOW_LIST);
             validateName(denySet, PARAM_NAME_DENY_LIST);
@@ -177,8 +178,8 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
                 if (!allNames.contains(allowName)) {
                     throw new RuntimeException(
                             "Name '" + allowName
-                                    + "' is not a valid health check name for parameter '"
-                                    + paramName + "'.");
+                            + "' is not a valid health check name for parameter '"
+                            + paramName + "'.");
                 }
             }
         }
@@ -187,5 +188,10 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     @Override
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return DISPLAY_NAME;
     }
 }
