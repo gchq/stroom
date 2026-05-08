@@ -56,7 +56,7 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
                 .onShow(e -> editorPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ColumnFilter filter = getColumnFilter();
+                        final ColumnFilter filter = getColumnFilter(column);
                         if ((filter == null && column.getFilter() != null)
                             || (filter != null && !filter.equals(column.getColumnFilter()))) {
                             columnChangeConsumer.accept(column, column.copy().columnFilter(filter).build());
@@ -79,15 +79,13 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
         editorPresenter.setText(expression);
     }
 
-    public ColumnFilter getColumnFilter() {
-        ColumnFilter filter = null;
-
+    public ColumnFilter getColumnFilter(final Column column) {
+        final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
         final String expression = editorPresenter.getText().trim();
         if (expression.length() > 0) {
-            filter = new ColumnFilter(expression);
+            builder.filter(expression);
         }
-
-        return filter;
+        return builder.build();
     }
 
     public interface ColumnFilterView extends View {

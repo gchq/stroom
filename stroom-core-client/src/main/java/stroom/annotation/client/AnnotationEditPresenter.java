@@ -496,9 +496,9 @@ public class AnnotationEditPresenter
                 }
 
                 for (final AnnotationEntryGroup annotationEntryGroup : groups) {
-                    if (!annotationEntryGroup.entries.isEmpty()) {
-                        if (annotationEntryGroup.entries.size() == 1) {
-                            for (final AnnotationEntry entry : annotationEntryGroup.entries) {
+                    if (!annotationEntryGroup.getEntries().isEmpty()) {
+                        if (annotationEntryGroup.getEntries().size() == 1) {
+                            for (final AnnotationEntry entry : annotationEntryGroup.getEntries()) {
                                 final boolean added = addEntryHtml(history, entry, now, line);
                                 if (added && first) {
                                     // If we actually added some content then make sure we add a line marker before any
@@ -844,11 +844,11 @@ public class AnnotationEditPresenter
                                  final AnnotationEntryGroup group,
                                  final Date now,
                                  final SafeHtml line) {
-        final AnnotationEntry first = group.entries.get(0);
+        final AnnotationEntry first = group.getEntries().get(0);
         final boolean expanded = expandedItems.contains(first.getId());
         final AnnotationEntryType entryType = first.getEntryType();
         UserRef user = first.getEntryUser();
-        for (final AnnotationEntry entry : group.entries) {
+        for (final AnnotationEntry entry : group.getEntries()) {
             if (!Objects.equals(entry.getEntryUser(), user)) {
                 user = null;
                 break;
@@ -856,7 +856,7 @@ public class AnnotationEditPresenter
         }
         final UserRef userRef = user;
 
-        final int count = group.entries.size();
+        final int count = group.getEntries().size();
         final String actionText = switch (entryType) {
             case TITLE, SUBJECT, STATUS, ASSIGNED, COMMENT, RETENTION_PERIOD, DESCRIPTION, DELETE ->
                     entryType.getActionText();
@@ -895,7 +895,7 @@ public class AnnotationEditPresenter
             // Add content if expanded.
             if (expanded) {
                 border.div(body -> {
-                    for (final AnnotationEntry entry : group.entries) {
+                    for (final AnnotationEntry entry : group.getEntries()) {
                         addEntryHtml(body, entry, now, line);
                     }
                 }, HISTORY_GROUP_BODY);
@@ -1449,9 +1449,30 @@ public class AnnotationEditPresenter
         this.parent = parent;
     }
 
-    private record AnnotationEntryGroup(long id, AnnotationEntryType annotationEntryType,
-                                        List<AnnotationEntry> entries) {
+    private static class AnnotationEntryGroup {
+        private final long id;
+        private final AnnotationEntryType annotationEntryType;
+        private final List<AnnotationEntry> entries;
 
+        public AnnotationEntryGroup(final long id,
+                                    final AnnotationEntryType annotationEntryType,
+                                    final List<AnnotationEntry> entries) {
+            this.id = id;
+            this.annotationEntryType = annotationEntryType;
+            this.entries = entries;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public AnnotationEntryType getAnnotationEntryType() {
+            return annotationEntryType;
+        }
+
+        public List<AnnotationEntry> getEntries() {
+            return entries;
+        }
     }
 
 
