@@ -47,7 +47,6 @@ public class FilteredMapper implements ItemMapper {
     }
 
     public static ItemMapper create(final List<Column> newColumns,
-                                    final boolean applyValueFilters,
                                     final ExpressionOperator rowFilterExpression,
                                     final DateTimeSettings dateTimeSettings,
                                     final ErrorConsumer errorConsumer,
@@ -56,7 +55,6 @@ public class FilteredMapper implements ItemMapper {
         // Combine filters.
         final Optional<Predicate<Values>> optionalCombinedPredicate = createValuesPredicate(
                 newColumns,
-                applyValueFilters,
                 rowFilterExpression,
                 dateTimeSettings,
                 expressionPredicateFactory);
@@ -73,7 +71,6 @@ public class FilteredMapper implements ItemMapper {
     }
 
     public static Optional<Predicate<Values>> createValuesPredicate(final List<Column> newColumns,
-                                                                    final boolean applyValueFilters,
                                                                     final ExpressionOperator rowFilterExpression,
                                                                     final DateTimeSettings dateTimeSettings,
                                                                     final ExpressionPredicateFactory
@@ -81,7 +78,6 @@ public class FilteredMapper implements ItemMapper {
         // Create column value filter expression.
         final Optional<Predicate<Values>> valuesPredicate = RowValueFilter.create(
                 newColumns,
-                applyValueFilters,
                 dateTimeSettings,
                 expressionPredicateFactory);
 

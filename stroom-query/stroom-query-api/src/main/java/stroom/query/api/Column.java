@@ -232,6 +232,20 @@ public final class Column implements HasDisplayValue {
                 columnValueSelection);
     }
 
+    public boolean hasActiveFilter() {
+        return ((filter != null &&
+                 (
+                         (filter.getIncludes() != null && !filter.getIncludes().trim().isEmpty()) ||
+                         (filter.getExcludes() != null && !filter.getExcludes().trim().isEmpty()) ||
+                         !filter.getIncludeDictionaries().isEmpty() ||
+                         !filter.getExcludeDictionaries().isEmpty()
+                 )) ||
+                (columnFilter != null &&
+                 columnFilter.isEnabled() &&
+                 columnFilter.getFilter() != null &&
+                 !columnFilter.getFilter().isBlank()));
+    }
+
     public static Builder builder() {
         return new Builder();
     }

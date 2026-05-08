@@ -51,12 +51,10 @@ public class RowValueFilter {
     }
 
     public static Optional<Predicate<Values>> create(final List<Column> columns,
-                                                     final boolean applyValueFilters,
                                                      final DateTimeSettings dateTimeSettings,
                                                      final ExpressionPredicateFactory expressionPredicateFactory) {
         // Create column value filter expression.
-        final Optional<ExpressionOperator> optionalExpressionOperator =
-                create(columns, applyValueFilters);
+        final Optional<ExpressionOperator> optionalExpressionOperator = create(columns);
         return optionalExpressionOperator.flatMap(expressionOperator -> {
             // Create the field position map for the new columns.
             final ValueFunctionFactories<Values> queryFieldIndex = createColumnIdValExtractors(columns);
@@ -77,12 +75,11 @@ public class RowValueFilter {
         return fieldPositionMap::get;
     }
 
-    private static Optional<ExpressionOperator> create(final List<Column> columns,
-                                                       final boolean applyValueFilters) {
+    private static Optional<ExpressionOperator> create(final List<Column> columns) {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         columns.forEach(column -> {
             final ColumnFilter columnFilter = column.getColumnFilter();
-            if (applyValueFilters && columnFilter != null) {
+            if (columnFilter != null && columnFilter.isEnabled()) {
                 final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
                         new SingleFieldProvider(column.getId()),
                         columnFilter.getFilter());
