@@ -13726,6 +13726,7 @@ components:
           - 401 - 312 - Client Token or Certificate failed authentication
           - 401 - 313 - Data feed key failed authentication
           - 401 - 314 - Data feed key has expired
+          - 401 - 315 - Client Certificate DN failed authentication
           - 500 - 400 - Compressed stream invalid
           - 413 - 410 - Content too large
           - 500 - 999 - Unknown error
