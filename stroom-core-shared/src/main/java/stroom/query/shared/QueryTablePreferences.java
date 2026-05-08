@@ -92,7 +92,7 @@ public class QueryTablePreferences {
     private List<Column> migrateColumnValueFilters(final List<Column> columns,
                                                    final Boolean applyValueFilters) {
         List<Column> cols = columns;
-        if (applyValueFilters != null) {
+        if (applyValueFilters != null && columns != null) {
             cols = columns.stream().map(column -> {
                 final ColumnFilter columnFilter = column.getColumnFilter();
                 if (columnFilter == null) {

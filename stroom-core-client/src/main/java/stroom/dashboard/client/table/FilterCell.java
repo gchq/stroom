@@ -157,7 +157,7 @@ public class FilterCell
      * Constructs a TextInputCell that renders its text without HTML markup.
      */
     public FilterCell(final FilterCellManager filterCellManager) {
-        super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);//, BrowserEvents.CLICK);
+        super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);
         this.filterCellManager = filterCellManager;
     }
 
@@ -238,14 +238,14 @@ public class FilterCell
 
             outer.div(buttons -> {
                 buttons.elem(button -> {
-                            button.div("", Attribute.className("background"));
-                            button.div(div -> {
-                                div.appendTrustedString(SvgImage.DISABLE.getSvg());
-                            }, Attribute.className("svg-image svg-image__process face"));
-                        }, SafeHtmlUtils.fromSafeConstant("button"),
-                        new Attribute("type", "button"),
-                        Attribute.className(buttonClassName.build()),
-                        Attribute.title(title));
+                    button.div("", Attribute.className("background"));
+                    button.div(div -> {
+                        div.appendTrustedString(SvgImage.DISABLE.getSvg());
+                    }, Attribute.className("svg-image svg-image__process face"));
+                }, SafeHtmlUtils.fromSafeConstant("button"),
+                    new Attribute("type", "button"),
+                    Attribute.className(buttonClassName.build()),
+                    Attribute.title(title));
             }, Attribute.className("dashboard-table-filter-cell-buttons"));
 
         }, Attribute.className("dashboard-table-filter-cell"));
