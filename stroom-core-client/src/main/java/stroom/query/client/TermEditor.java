@@ -174,13 +174,6 @@ public class TermEditor extends Composite {
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
-    public void update(final Term term) {
-        final String value = term.getValue();
-        write(term);
-        term.setValue(value);
-        read(term);
-    }
-
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
@@ -205,13 +198,24 @@ public class TermEditor extends Composite {
     private void read(final Term term) {
         reading = true;
 
-        // Select the current value.
-        conditionListBox.setValue(null);
-        changeField(null, null, false);
-        fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
-            fieldListBox.setValue(fieldInfo);
-            changeField(fieldInfo, term.getCondition(), false);
-        });
+        // See if the field is the same, if so then do not bother fetching field info from the server.
+        if (term.getField() != null && Objects.equals(
+                NullSafe.get(fieldListBox, BaseSelectionBox::getValue, QueryField::getFldName),
+                term.getField())) {
+            changeField(fieldListBox.getValue(), term.getCondition(), false);
+        } else if (term.getField() == null) {
+            // If the field is null then set the field box to null and update the other controls.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+        } else {
+            // If the field is not null then go and fetch the field info and do a full update.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+            fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
+                fieldListBox.setValue(fieldInfo);
+                changeField(fieldInfo, term.getCondition(), false);
+            });
+        }
 
         reading = false;
     }
@@ -304,6 +308,8 @@ public class TermEditor extends Composite {
             fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
+            fieldTypeLabel.setText("");
+            fieldTypeLabel.setTitle("");
             fieldTypeLabel.setVisible(false);
         }
     }

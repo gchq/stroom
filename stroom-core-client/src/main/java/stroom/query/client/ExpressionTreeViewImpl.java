@@ -69,13 +69,17 @@ public class ExpressionTreeViewImpl
             @Override
             protected void setSelected(final Item item) {
                 if (selectionModel != null) {
-                    selectionModel.setSelected(item, true);
+                    if (!selectionModel.isSelected(item)) {
+                        endEditing();
+                        selectionModel.setSelected(item, true);
+                    }
                 }
             }
 
             @Override
             protected void startDragging(final Item parent, final Item child) {
                 if (selectionModel != null) {
+                    endEditing();
                     selectionModel.clear();
                 }
             }

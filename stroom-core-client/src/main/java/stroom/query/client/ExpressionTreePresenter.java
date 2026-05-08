@@ -131,6 +131,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     private void copy(final Item parent, final Item item) {
+        getView().endEditing();
         if (item instanceof final Operator operator) {
             List<Item> children = tree.getChildren(operator);
             if (children != null) {
@@ -159,6 +160,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public void disable() {
+        getView().endEditing();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -172,6 +174,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public void delete() {
+        getView().endEditing();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -213,6 +216,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     private void addNewItem(final Item item) {
+        getView().endEditing();
         if (selectionModel != null) {
             final Item selected = selectionModel.getSelectedObject();
 

@@ -243,7 +243,6 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                             mapper = SimpleMapper.create(dataStore.getColumns(), columns);
                             mapper = FilteredMapper.create(
                                     columns,
-                                    tableSettings.applyValueFilters(),
                                     tableSettings.getAggregateFilter(),
                                     expressionContext.getDateTimeSettings(),
                                     errorConsumer,

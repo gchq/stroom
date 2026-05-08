@@ -131,9 +131,12 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                         @Override
                         public void run() {
                             final Element th = heading.getElement();
-                            final Element button = ElementUtil.findChild(th, "column-valueFilterIcon");
                             final Element target = event.getEventTarget().cast();
+                            final Element button = ElementUtil.findChild(th, "column-valueFilterIcon");
                             final boolean isFilterButton = button.isOrHasChild(target);
+                            final Element diableFilterButton = ElementUtil.findChild(th,
+                                    "dashboard-table-filter-cell-disable-button");
+                            final boolean isDiableFilterButton = diableFilterButton.isOrHasChild(target);
 
                             if (currentFilterColIndex == colIndex) {
                                 HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
@@ -150,12 +153,20 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                         hideEvent -> resetFilterColIndex(),
                                         column.getColumnValueSelection(),
                                         QueryTableColumnsManager.this);
+
+                            } else if (isDiableFilterButton) {
+                                final FilterCellManager filterCellManager = tablePresenter.getFilterCellManager();
+                                if (filterCellManager != null) {
+                                    final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
+                                    builder.enabled(!builder.build().isEnabled());
+                                    filterCellManager.setColumnFilter(column, builder.build());
+                                }
                             }
 
                             if (currentMenuColIndex == colIndex) {
                                 HideMenuEvent.builder().fire(queryTableColumnsManager);
 
-                            } else if (!isFilterButton) {
+                            } else if (!isFilterButton && !isDiableFilterButton) {
                                 currentMenuColIndex = colIndex;
                                 final List<Item> menuItems = getMenuItems(column);
 
@@ -204,7 +215,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             }
 
             tablePresenter.setPreferredColumns(columns);
-//            tablePresenter.setDirty(true);
         }
     }
 
@@ -213,7 +223,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         final Column column = getColumn(colIndex);
         if (column != null) {
             final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().width(size).build());
-            tablePresenter.updateColumns(newColumns);
             tablePresenter.setPreferredColumns(newColumns);
         }
     }
@@ -252,7 +261,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         }
 
         if (change) {
-            tablePresenter.updateColumns(newColumns);
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.refresh();
         }
@@ -286,7 +294,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     public void showFormat(final Column column) {
         formatPresenter.show(column, (oldColumn, newColumn) -> {
             final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
-            tablePresenter.updateColumns(newColumns);
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.refresh();
         });
@@ -296,7 +303,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         columnFilterPresenter.show(column, (oldColumn, newColumn) -> {
             final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
-            tablePresenter.updateColumns(newColumns);
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.onColumnFilterChange();
         });
@@ -306,7 +312,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         final List<Column> columns = getColumns();
         columns.remove(column);
         columns.add(0, column);
-        tablePresenter.updateColumns(columns);
         tablePresenter.setPreferredColumns(columns);
     }
 
@@ -314,7 +319,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         final List<Column> columns = getColumns();
         columns.remove(column);
         columns.add(column);
-        tablePresenter.updateColumns(columns);
         tablePresenter.setPreferredColumns(columns);
     }
 
@@ -335,31 +339,24 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     }
 
     @Override
-    public void setValueFilter(final Column column, final String valueFilter) {
-        ColumnFilter columnFilter = null;
-        if (NullSafe.isNonBlankString(valueFilter)) {
-            // TODO : Add case sensitive option.
-            columnFilter = new ColumnFilter(valueFilter);
-        }
-
+    public void setColumnFilter(final Column column, final ColumnFilter columnFilter) {
         if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
-            // Required to replace column filter in place, so we don't need to re-render the table which would lose
-            // focus from column filter textbox.
-            column.setColumnFilter(columnFilter);
-
             if (columnFilter != null &&
                 NullSafe.isNonBlankString(columnFilter.getFilter())) {
                 if (tablePresenter.getQueryTablePreferences() != null &&
-                    !tablePresenter.getQueryTablePreferences().applyValueFilters()) {
-                    tablePresenter.toggleApplyValueFilters();
+                    !tablePresenter.getQueryTablePreferences().showValueFilters()) {
+                    tablePresenter.toggleShowValueFilters();
                 }
             }
 
+            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // focus from column filter textbox.
+            column.setColumnFilter(columnFilter);
+
             final List<Column> newColumns =
                     replaceColumns(getColumns(), column, column.copy().columnFilter(columnFilter).build());
-            tablePresenter.updateColumns(newColumns);
-            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.setFocused(false);
+            tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.onColumnFilterChange();
         }
     }
@@ -373,7 +370,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
             final List<Column> newColumns = replaceColumns(getColumns(), column,
                     column.copy().columnValueSelection(columnValueSelection).build());
-            tablePresenter.updateColumns(newColumns);
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.setFocused(false);
             tablePresenter.onColumnFilterChange();
@@ -395,7 +391,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
     private void showColumn(final Column column) {
         final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().visible(true).build());
-        tablePresenter.updateColumns(newColumns);
         tablePresenter.setPreferredColumns(newColumns);
     }
 
@@ -404,7 +399,6 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
             final List<Column> newColumns = replaceColumns(getColumns(), column, column.copy().visible(false).build());
-            tablePresenter.updateColumns(newColumns);
             tablePresenter.setPreferredColumns(newColumns);
         }
     }

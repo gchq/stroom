@@ -444,7 +444,6 @@ public class FlatResultCreator implements ResultCreator {
             // Apply filter to parent.
             final Optional<Predicate<Values>> filter = FilteredMapper.createValuesPredicate(
                     parent.getColumns(),
-                    parent.applyValueFilters(),
                     parent.getAggregateFilter(),
                     dataStore.getDateTimeSettings(),
                     expressionPredicateFactory);
