@@ -44,7 +44,6 @@ import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.LinkEvents;
-import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.RemoveTag;
 import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -292,50 +291,56 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Override
     public Annotation createAnnotation(final CreateAnnotationRequest request) {
-        checkAppPermission();
+        // Treat use permission as read so that users can link events even if they only have use permission.
+        return securityContext.useAsReadResult(() -> {
+            checkAppPermission();
 
-        // Create the annotation.
-        final Annotation annotation = annotationDao.createAnnotation(request, getCurrentUser());
-        final DocRef docRef = annotation.asDocRef();
-        final UserRef userRef = securityContext.getUserRef();
+            // Create the annotation.
+            final Annotation annotation = annotationDao.createAnnotation(request, getCurrentUser());
+            final DocRef docRef = annotation.asDocRef();
+            final UserRef userRef = securityContext.getUserRef();
 
-        securityContext.asProcessingUser(() -> {
-            // Create permissions.
-            final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
+            securityContext.asProcessingUser(() -> {
+                // Create permissions.
+                final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
 
-            // Add owner permission.
-            documentPermissionService.setPermission(docRef, userRef, DocumentPermission.OWNER);
+                // Add owner permission.
+                documentPermissionService.setPermission(docRef, userRef, DocumentPermission.OWNER);
 
-            // Add ownership perms to parent groups.
-            final Set<UserRef> parentGroups = userGroupsServiceProvider.get().getGroups(userRef);
-            if (NullSafe.hasItems(parentGroups)) {
-                parentGroups.forEach(group ->
-                        documentPermissionService.setPermission(docRef, group, DocumentPermission.OWNER));
-            }
+                // Add ownership perms to parent groups.
+                final Set<UserRef> parentGroups = userGroupsServiceProvider.get().getGroups(userRef);
+                if (NullSafe.hasItems(parentGroups)) {
+                    parentGroups.forEach(group ->
+                            documentPermissionService.setPermission(docRef, group, DocumentPermission.OWNER));
+                }
+            });
+
+            fireEntityEvent(EntityAction.CREATE, annotation.asDocRef(), annotation.getId());
+            return annotation;
         });
-
-        fireEntityEvent(EntityAction.CREATE, annotation.asDocRef(), annotation.getId());
-        return annotation;
     }
 
     public boolean change(final SingleAnnotationChangeRequest request) {
-        Objects.requireNonNull(request);
-        checkAppPermission();
-        checkEditPermission(request.getAnnotationRef());
-        final AbstractAnnotationChange change = request.getChange();
-        final boolean result = annotationDao.change(request, getCurrentUser());
-        final DocRef annotationRef = request.getAnnotationRef();
-        final long annotationId = Objects.requireNonNullElseGet(
-                request.getAnnotationId(),
-                () -> getIdOrThrow(annotationRef));
+        // Treat use permission as read so that users can link events even if they only have use permission.
+        return securityContext.useAsReadResult(() -> {
+            Objects.requireNonNull(request);
+            checkAppPermission();
+            checkEditPermission(request.getAnnotationRef());
+            final AbstractAnnotationChange change = request.getChange();
+            final boolean result = annotationDao.change(request, getCurrentUser());
+            final DocRef annotationRef = request.getAnnotationRef();
+            final long annotationId = Objects.requireNonNullElseGet(
+                    request.getAnnotationId(),
+                    () -> getIdOrThrow(annotationRef));
 
-        switch (change) {
-            case final LinkEvents ignored -> LOGGER.debug("change() - Skipping linkEvents, handled by DAO");
-            case final UnlinkEvents ignored -> LOGGER.debug("change() - Skipping unlinkEvents, handled by DAO");
-            default -> createEntityEvent(change, EntityAction.UPDATE, annotationRef, annotationId)
-                    .ifPresent(entityEventBus::fire);
-        }
-        return result;
+            switch (change) {
+                case final LinkEvents ignored -> LOGGER.debug("change() - Skipping linkEvents, handled by DAO");
+                case final UnlinkEvents ignored -> LOGGER.debug("change() - Skipping unlinkEvents, handled by DAO");
+                default -> createEntityEvent(change, EntityAction.UPDATE, annotationRef, annotationId)
+                        .ifPresent(entityEventBus::fire);
+            }
+            return result;
+        });
     }
 
     private long getIdOrThrow(final DocRef annotationRef) {
@@ -343,33 +348,33 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return annotationDao.getIdOrThrow(annotationRef);
     }
 
-    public Integer batchChange(final MultiAnnotationChangeRequest request) {
-        final List<AnnotationIdentity> annotationIdentities = getRefsForEdit(request.getAnnotationIdList());
-
-        for (final AnnotationIdentity annotationIdentity : annotationIdentities) {
-            final SingleAnnotationChangeRequest singleAnnotationChangeRequest = new SingleAnnotationChangeRequest(
-                    annotationIdentity, request.getChange());
-            annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
-        }
-
-        if (!annotationIdentities.isEmpty()) {
-            final AbstractAnnotationChange change = request.getChange();
-            if (change instanceof UnlinkEvents || change instanceof LinkEvents) {
-                LOGGER.debug("batchChange() - Skipping linkEvents/unlinkEvents, handled by DAO");
-            } else {
-                fireUpdateEvents(change, annotationIdentities);
-            }
-        }
-        return annotationIdentities.size();
-    }
-
-    private List<AnnotationIdentity> getRefsForEdit(final List<Long> annotationIdList) {
-        checkAppPermission();
-        final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(annotationIdList);
-        annotationIdentities.forEach(annotationIdentity ->
-                checkEditPermission(annotationIdentity.asDocRef()));
-        return annotationIdentities;
-    }
+//    public Integer batchChange(final MultiAnnotationChangeRequest request) {
+//        final List<AnnotationIdentity> annotationIdentities = getRefsForEdit(request.getAnnotationIdList());
+//
+//        for (final AnnotationIdentity annotationIdentity : annotationIdentities) {
+//            final SingleAnnotationChangeRequest singleAnnotationChangeRequest = new SingleAnnotationChangeRequest(
+//                    annotationIdentity, request.getChange());
+//            annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
+//        }
+//
+//        if (!annotationIdentities.isEmpty()) {
+//            final AbstractAnnotationChange change = request.getChange();
+//            if (change instanceof UnlinkEvents || change instanceof LinkEvents) {
+//                LOGGER.debug("batchChange() - Skipping linkEvents/unlinkEvents, handled by DAO");
+//            } else {
+//                fireUpdateEvents(change, annotationIdentities);
+//            }
+//        }
+//        return annotationIdentities.size();
+//    }
+//
+//    private List<AnnotationIdentity> getRefsForEdit(final List<Long> annotationIdList) {
+//        checkAppPermission();
+//        final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(annotationIdList);
+//        annotationIdentities.forEach(annotationIdentity ->
+//                checkEditPermission(annotationIdentity.asDocRef()));
+//        return annotationIdentities;
+//    }
 
     List<EventId> getLinkedEvents(final DocRef annotationRef) {
         checkAppPermission();

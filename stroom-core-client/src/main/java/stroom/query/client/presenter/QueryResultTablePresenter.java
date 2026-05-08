@@ -326,7 +326,7 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
 
         registerHandler(resetButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -401,21 +401,21 @@ public class QueryResultTablePresenter
         }
     }
 
-    public void toggleApplyValueFilters() {
+    public void toggleShowValueFilters() {
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
-        final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
-        setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
+        final boolean showValueFilters = !queryTablePreferences.showValueFilters();
+        setQueryTablePreferences(queryTablePreferences.copy().showValueFilters(showValueFilters).build());
         setDirty(true);
         refresh();
-        setApplyValueFilters(applyValueFilters);
+        setShowValueFilters(showValueFilters);
     }
 
-    private void setApplyValueFilters(final boolean applyValueFilters) {
-        valueFilterButton.setState(applyValueFilters);
-        if (applyValueFilters) {
-            dataGrid.addStyleName("applyValueFilters");
+    private void setShowValueFilters(final boolean showValueFilters) {
+        valueFilterButton.setState(showValueFilters);
+        if (showValueFilters) {
+            dataGrid.addStyleName("showValueFilters");
         } else {
-            dataGrid.removeStyleName("applyValueFilters");
+            dataGrid.removeStyleName("showValueFilters");
         }
     }
 
@@ -897,6 +897,31 @@ public class QueryResultTablePresenter
         currentColumns = columns;
         setDirty(true);
 
+
+
+
+        // Remove existing columns.
+        removeAllColumns();
+
+        // Add expander column.
+        addExpanderColumn();
+
+        // Add columns.
+        for (final Column column : columns) {
+            // Only include the field if it is supposed to be visible.
+            if (column.isVisible()) {
+                addColumn(column);
+            }
+        }
+
+//                dataGrid.redrawHeaders();
+        dataGrid.resizeTableToFitColumns();
+
+
+
+
+
+
         fireColumnAndDataUpdate();
     }
 
@@ -928,9 +953,9 @@ public class QueryResultTablePresenter
     }
 
     public void updateQueryTablePreferences() {
-        // Change value filter state.
+        // Change value filter visible state.
         final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
-        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        setShowValueFilters(queryTablePreferences.showValueFilters());
         updatePageSize(queryTablePreferences);
         refresh();
     }

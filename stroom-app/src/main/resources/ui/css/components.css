@@ -2769,3 +2769,50 @@ button.main-menu svg {
     align-items: center;
     gap: var(--control__gap--horizontal);
 }
+
+.dataGridWidget .dashboard-table-filter-cell {
+    display: none;
+    position: relative;
+    width: 100%;
+}
+
+.dataGridWidget.showValueFilters .dashboard-table-filter-cell {
+    display: block;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-text {
+    padding-right: 25px;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-text-disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+.dataGridWidget .dashboard-table-filter-cell-buttons {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    top: 0;
+    right: 0;
+    align-items: center;
+    padding: 5px;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-disable-button {
+    display: flex;
+    position: relative;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    align-items: center;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0;
+    border-radius: .25rem;
+}
