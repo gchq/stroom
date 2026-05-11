@@ -45,6 +45,10 @@ public class DataFeedKeyGenerator {
         attrMap.put(StandardHeaderArguments.ACCOUNT_ID, accountId);
         final HashOutput hashOutput = HASHER.hash(key);
 
+        // Bcrypt's salt is encoded in the hash, so not needed
+        final String salt = HASHER.getAlgorithm() != DataFeedKeyHashAlgorithm.BCRYPT_2A
+                ? hashOutput.salt()
+                : null;
         return new KeyWithHash(key, new HashedDataFeedKey(
                 hashOutput.hash(),
                 hashOutput.salt(),

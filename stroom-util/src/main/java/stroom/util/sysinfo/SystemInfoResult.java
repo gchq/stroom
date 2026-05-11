@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -118,7 +118,8 @@ public class SystemInfoResult {
 
         private String name;
         private String description = null;
-        private Map<String, Object> details = new HashMap<>();
+        // Use a LinkedHashMap so the caller can dictate order
+        private Map<String, Object> details = new LinkedHashMap<>();
 
         public Builder(final String name) {
             this.name = name;

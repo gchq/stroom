@@ -43,6 +43,8 @@ import org.jspecify.annotations.NonNull;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -113,48 +115,68 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
             writeHtmlHeader(writer);
             writer.write("<h1>System Info Providers</h1>");
             writer.write("<ul>");
+            writeNewLine(writer);
             for (final String provider : providerNames.stream().sorted().toList()) {
                 writer.write("<li><a href=\"./sysinfo?provider="
                              + provider + "&pretty=true\">"
                              + provider + "</a></li>");
+                writeNewLine(writer);
 
                 final List<ParamInfo> paramInfoList = NullSafe.list(getParamInfo(provider));
                 if (!paramInfoList.isEmpty()) {
                     writer.write("<p>Parameter details:</p>");
+                    writeNewLine(writer);
                     writer.write("<ul>");
+                    writeNewLine(writer);
                     for (final ParamInfo paramInfo : paramInfoList) {
                         writer.write("<li>");
-                        writer.write("Name: " + paramInfo.getName() + ", ");
-                        writer.write("Type: " + paramInfo.getParamType() + ", ");
-                        writer.write("Description: " + paramInfo.getDescription());
+                        writer.write("<code>" + paramInfo.getName() + "</code> (");
+                        writer.write((paramInfo.isMandatory()
+                                ? "Mandatory"
+                                : "Optional"));
+                        writer.write(") - " + paramInfo.getDescription());
                         writer.write("</li>");
+                        writeNewLine(writer);
                     }
                     writer.write("</ul>");
+                    writeNewLine(writer);
                 }
 
                 final List<NamedParamCombination> namedParamCombinations = NullSafe.list(
                         getNamedParamCombinations(provider));
                 if (!namedParamCombinations.isEmpty()) {
                     writer.write("<p>Parameter combinations:</p>");
+                    writeNewLine(writer);
                     writer.write("<ul>");
+                    writeNewLine(writer);
                     for (final NamedParamCombination namedParamCombination : namedParamCombinations) {
                         final String combinationName = namedParamCombination.getName();
                         final String paramStr = namedParamCombination.getParams()
                                 .entrySet()
                                 .stream()
-                                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                                .map(entry ->
+                                        entry.getKey()
+                                        + "="
+                                        + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
                                 .collect(Collectors.joining("&"));
 
-                        writer.write("<li><a href=\"./sysinfo?"
-                                     + "provider=" + provider
-                                     + "&pretty=true"
-                                     + "&" + paramStr
-                                     + "\">" + combinationName + "</a></li>");
+                        final String url = req.getRequestURI() + "?"
+                                           + "provider=" + provider
+                                           + "&pretty=true"
+                                           + "&" + paramStr;
+
+                        writer.write("<li><a href=\"" + url + "\">"
+                                     + combinationName
+                                     + "</a> (<code>"
+                                     + url + "</code>)</li>");
+                        writeNewLine(writer);
                     }
                     writer.write("</ul>");
+                    writeNewLine(writer);
                 }
             }
             writer.write("</ul>");
+            writeNewLine(writer);
             writeHtmlFooter(writer);
             writer.close();
         }
@@ -186,6 +208,10 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
         writer.write("""
                   </body>
                 </html>""");
+    }
+
+    private static void writeNewLine(final Writer writer) throws IOException {
+        writer.write("\n");
     }
 
     private void displayInfo(final HttpServletRequest req,
@@ -258,11 +284,11 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
                 .collect(Collectors.toSet());
     }
 
-    public Optional<SystemInfoResult> get(final String providerName) {
+    private Optional<SystemInfoResult> get(final String providerName) {
         return get(providerName, Collections.emptyMap());
     }
 
-    public Optional<SystemInfoResult> get(final String providerName, final Map<String, String> params) {
+    private Optional<SystemInfoResult> get(final String providerName, final Map<String, String> params) {
         // We should have a user in context as this is coming from an authenticated rest api
         final HasSystemInfo systemInfoSupplier = supliersMap.get(providerName);
         try {

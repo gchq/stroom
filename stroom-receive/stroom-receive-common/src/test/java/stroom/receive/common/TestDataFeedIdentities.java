@@ -53,9 +53,10 @@ class TestDataFeedIdentities {
         final Instant now = Instant.now();
 
         final List<String> jsonList = new ArrayList<>();
+        final long nowMs = System.currentTimeMillis();
 
         for (int i = 0; i < 3; i++) {
-            final String fileName = "file" + i + ".json";
+            final String fileName = "file" + i + "_" + nowMs + ".json";
             final List<KeyWithHash> keyWithHashList = new ArrayList<>();
             final List<CertificateIdentity> certificateIdentityList = new ArrayList<>();
             final Instant expiry = switch (i) {

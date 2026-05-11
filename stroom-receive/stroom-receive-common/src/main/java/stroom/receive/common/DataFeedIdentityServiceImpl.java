@@ -49,6 +49,24 @@ public class DataFeedIdentityServiceImpl implements DataFeedIdentityService {
     }
 
     @Override
+    public void removeKeysForFile(final Path sourceFile) {
+        if (sourceFile != null) {
+            try {
+                dataFeedKeyService.removeKeysForFile(sourceFile);
+            } catch (final Exception e) {
+                LOGGER.error("Error adding data feed keys from file " + sourceFile, e);
+            }
+            try {
+                certificateIdentityService.removeKeysForFile(sourceFile);
+            } catch (final Exception e) {
+                LOGGER.error("Error adding certificate identities from file " + sourceFile, e);
+            }
+        } else {
+            LOGGER.debug("removeKeysForFile() - Null sourceFile");
+        }
+    }
+
+    @Override
     public int addDataFeedKeys(final List<DataFeedIdentity> dataFeedIdentities, final Path sourceFile) {
         if (NullSafe.hasItems(dataFeedIdentities) && sourceFile != null) {
             final List<IdentityStatus> statuses = new ArrayList<>();
@@ -70,24 +88,6 @@ public class DataFeedIdentityServiceImpl implements DataFeedIdentityService {
         } else {
             LOGGER.debug("addDataFeedKeys() - Empty dataFeedIdentities");
             return 0;
-        }
-    }
-
-    @Override
-    public void removeKeysForFile(final Path sourceFile) {
-        if (sourceFile != null) {
-            try {
-                dataFeedKeyService.removeKeysForFile(sourceFile);
-            } catch (final Exception e) {
-                LOGGER.error("Error adding data feed keys from file " + sourceFile, e);
-            }
-            try {
-                certificateIdentityService.removeKeysForFile(sourceFile);
-            } catch (final Exception e) {
-                LOGGER.error("Error adding certificate identities from file " + sourceFile, e);
-            }
-        } else {
-            LOGGER.debug("removeKeysForFile() - Null sourceFile");
         }
     }
 }
