@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.3] - 2026-05-11
+
+* Feature **#5183** : Add title to dashboard link function.
+
+* Bug **#5518** : Fix expression editor bug.
+
+* Bug **#5507** : Improve dashboard column filtering.
+
+* Bug **#5516** : Allow event links with only feed USE permission.
+
+* Feature : Add System Info Admin Servlet. Add menu of all admin servlets at `<admin port>/<admin path>/menu`.
+
+* Bug : Fix permission exceptions when getting volume system info.
+
+
 ## [v7.12.2] - 2026-05-05
 
 * Bug **#5532** : Relax Data Feed Identities validation so salt is optional.
@@ -2136,7 +2151,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.3...HEAD
+[v7.12.3]: https://github.com/gchq/stroom/compare/v7.12.2...v7.12.3
 [v7.12.2]: https://github.com/gchq/stroom/compare/v7.12.1...v7.12.2
 [v7.12.1]: https://github.com/gchq/stroom/compare/v7.12.0...v7.12.1
 [v7.12.0]: https://github.com/gchq/stroom/compare/v7.12-beta.2...v7.12.0
