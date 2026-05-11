@@ -14725,6 +14725,9 @@
       "ColumnFilter" : {
         "type" : "object",
         "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
           "filter" : {
             "type" : "string"
           }
@@ -22600,6 +22603,9 @@
           },
           "selectionFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "showValueFilters" : {
+            "type" : "boolean"
           }
         }
       },
@@ -26185,6 +26191,9 @@
               }
             },
             "showDetail" : {
+              "type" : "boolean"
+            },
+            "showValueFilters" : {
               "type" : "boolean"
             },
             "useDefaultExtractionPipeline" : {
