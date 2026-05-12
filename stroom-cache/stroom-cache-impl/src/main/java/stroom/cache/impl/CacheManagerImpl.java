@@ -213,7 +213,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 throw new RuntimeException(LogUtil.message("Unknown cache name {}", cacheName));
             }
         } else {
-            final List<String> cacheNames = caches.keySet()
+            final List<String> cacheNames = getCacheNames()
                     .stream()
                     .sorted()
                     .limit(limit)
@@ -242,5 +242,15 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 ParamInfo.optionalParam(PARAM_NAME_CACHE_NAME,
                         "The name of the cache to see the list of keys for. " +
                         "If not supplied a list of cache names will be returned"));
+    }
+
+    @Override
+    public List<NamedParamCombination> getNamedParamCombinations() {
+        return getCacheNames()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(cacheName ->
+                        new NamedParamCombination(PARAM_NAME_CACHE_NAME, cacheName))
+                .toList();
     }
 }

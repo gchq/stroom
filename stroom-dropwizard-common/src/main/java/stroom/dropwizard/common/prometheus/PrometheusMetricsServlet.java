@@ -73,6 +73,7 @@ class PrometheusMetricsServlet extends HttpServlet implements IsAdminServlet {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PrometheusMetricsServlet.class);
     private static final String BASE_PATH_SPEC = "/prometheusMetrics";
     private static final Set<String> PATH_SPECS = Set.of(BASE_PATH_SPEC);
+    private static final String DISPLAY_NAME = "Prometheus Metrics";
 
     public static final String METRICS_REGISTRY = MetricsServlet.class.getCanonicalName() + ".registry";
     public static final String METRIC_FILTER = MetricsServlet.class.getCanonicalName() + ".metricFilter";
@@ -95,6 +96,11 @@ class PrometheusMetricsServlet extends HttpServlet implements IsAdminServlet {
     @Override
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return DISPLAY_NAME;
     }
 
     @Override

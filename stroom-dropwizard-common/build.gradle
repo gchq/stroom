@@ -30,6 +30,8 @@ dependencies {
     implementation libs.dropwizard.metrics.healthchecks
     //implementation libs.dropwizard.websockets
     implementation libs.guice
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
     implementation libs.jetty.servlet

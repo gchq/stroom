@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,14 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
+/**
+ * Classes implementing this interface can expose their state to the following places for
+ * debugging or administration use:
+ * <ul>
+ *     <li>SystemInfoAdminServlet (unauthenticated on admin port)</li>
+ *     <li>SystemInfoResource (authenticated REST API, requires VIEW_SYSTEM_INFO_PERMISSION app perm)</li>
+ * </ul>
+ */
 public interface HasSystemInfo {
 
     /**
@@ -62,9 +71,61 @@ public interface HasSystemInfo {
         }
     }
 
+    /**
+     * @return A list of {@link ParamInfo} objects that describe the parameters for this {@link HasSystemInfo}
+     * instance, or an empty list if there are no parameters.
+     */
     default List<ParamInfo> getParamInfo() {
         return Collections.emptyList();
     }
+
+    /**
+     * @return If this {@link HasSystemInfo} has a fixed set of parameter combinations for one or more parameters
+     * return the list of combinations here. E.g. if {@link HasSystemInfo} provides information about named caches,
+     * then this method can return list of maps each containing the name param as a key and the cache name as a value.
+     */
+    default List<NamedParamCombination> getNamedParamCombinations() {
+        return Collections.emptyList();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    class NamedParamCombination {
+
+        @JsonProperty
+        private final String name;
+        @JsonProperty
+        private final Map<String, String> params;
+
+        @JsonCreator
+        public NamedParamCombination(@JsonProperty("name") final String name,
+                                     @JsonProperty("params") final Map<String, String> params) {
+            this.name = name;
+            this.params = params;
+        }
+
+        public NamedParamCombination(@NonNull final String paramName,
+                                     @NonNull final String paramValue) {
+            Objects.requireNonNull(paramName);
+            Objects.requireNonNull(paramValue);
+            this.name = paramValue;
+            this.params = Map.of(paramName, paramValue);
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Map<String, String> getParams() {
+            return params;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @JsonPropertyOrder(alphabetic = true)
     @JsonInclude(Include.NON_NULL)

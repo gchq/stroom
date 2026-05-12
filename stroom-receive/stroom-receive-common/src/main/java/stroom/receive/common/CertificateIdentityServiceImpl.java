@@ -42,7 +42,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
@@ -219,7 +221,7 @@ public class CertificateIdentityServiceImpl
     @Override
     public SystemInfoResult getSystemInfo() {
         // sourcePath => accountId => Map
-        final Map<String, Map<String, List<Map<String, String>>>> map = new HashMap<>();
+        final Map<String, Map<String, List<Map<String, Object>>>> map = new TreeMap<>();
         final String keyOwnerMetaKey = receiveDataConfigProvider.get().getDataFeedOwnerMetaKey();
         identityMap.values()
                 .forEach(cachedIdentities -> {
@@ -229,22 +231,37 @@ public class CertificateIdentityServiceImpl
                         final String keyOwner = Objects.requireNonNullElse(
                                 certificateIdentity.getStreamMetaValue(keyOwnerMetaKey),
                                 "null");
-                        final List<Map<String, String>> keysForAccountId = map.computeIfAbsent(path,
-                                        k -> new HashMap<>())
-                                .computeIfAbsent(keyOwner, k -> new ArrayList<>());
+                        final List<Map<String, Object>> keysForAccountId = map.computeIfAbsent(path,
+                                        ignored -> new TreeMap<>())
+                                .computeIfAbsent(keyOwner, ignored -> new ArrayList<>());
 
                         final String remaining = Duration.between(
                                 Instant.now(),
                                 certificateIdentity.getExpiryDate()).toString();
-                        final Map<String, String> leafMap = Map.of(
-                                "expiry", certificateIdentity.getExpiryDate().toString(),
-                                "remaining", remaining);
+                        final Map<String, Object> leafMap = new LinkedHashMap<>();
+                        leafMap.put("dn", certificateIdentity.getCertificateDn());
+                        leafMap.put("expiry", certificateIdentity.getExpiryDate().toString());
+                        leafMap.put("remaining", remaining);
+                        leafMap.put("streamMetaData", getStreamMetaData(certificateIdentity));
                         keysForAccountId.add(leafMap);
                     }
                 });
         return SystemInfoResult.builder(this)
+                .addDetail("ownerMetaKey", getOwnerMetaKey(receiveDataConfigProvider.get()).getAsLowerCase())
                 .addDetail("sourceFiles", map)
                 .build();
+    }
+
+    private Map<String, String> getStreamMetaData(final CertificateIdentity certificateIdentity) {
+        final Map<CIKey, String> sourceMap = NullSafe.map(certificateIdentity.getCIStreamMetaData());
+        final Map<String, String> map = new LinkedHashMap<>(sourceMap.size());
+        sourceMap.entrySet()
+                .stream()
+                .sorted(Comparator.comparing(entry ->
+                        entry.getKey().getAsLowerCase()))
+                .forEach(entry ->
+                        map.put(entry.getKey().getAsLowerCase(), entry.getValue()));
+        return map;
     }
 
     private CIKey getOwnerMetaKey(final ReceiveDataConfig receiveDataConfig) {

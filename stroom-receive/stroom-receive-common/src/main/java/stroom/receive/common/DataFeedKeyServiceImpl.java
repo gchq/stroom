@@ -47,7 +47,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +55,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -77,6 +78,8 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
     private static final Comparator<CachedHashedDataFeedKey> HASHED_DATA_FEED_KEY_COMPARATOR =
             Comparator.comparingLong(CachedHashedDataFeedKey::getExpiryDateEpochMs)
                     .reversed();
+    public static final Predicate<CachedHashedDataFeedKey> ALWAYS_TRUE_PREDICATE = ignored ->
+            true;
 
     // The owner will likely have >1 CachedHashedDataFeedKey due to the overlap of keys when
     // new keys are being supplied, but not many. Use CIKey so we are not fussy on case.
@@ -389,24 +392,18 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
             filter = (final CachedHashedDataFeedKey key) -> {
                 final String ownerFromKey = key.getStreamMetaValue(keyOwnerMetaKey);
                 final boolean result = Objects.equals(ownerFromKey, ownerFromAttrMap);
-                LOGGER.debug("keyOwnerMetaKey: {}, ownerFromAttrMap: {}, ownerFromKey: {}, result: {}",
+                LOGGER.debug("createKeyOwnerFilter() - keyOwnerMetaKey: {}, ownerFromAttrMap: {}, " +
+                             "ownerFromKey: {}, result: {}",
                         keyOwnerMetaKey, ownerFromAttrMap, ownerFromKey, result);
                 return result;
             };
         } else {
-            filter = key -> true;
+            LOGGER.debug("createKeyOwnerFilter() - keyOwnerMetaKey is blank, returning always true filter");
+            filter = ALWAYS_TRUE_PREDICATE;
         }
         return filter;
     }
 
-//    private List<CachedHashedDataFeedKey> createHashedDataFeedKey(final String keyOwner) {
-//        if (NullSafe.isBlankString(keyOwner)) {
-//            return Collections.emptyList();
-//        } else {
-//            keyOwnerToDataFeedKeyMap.get(CIKey.of(keyOwner));
-//        }
-//
-//    }
 
     /**
      * Loading function for an un-hashed key and its keyOwner.
@@ -534,8 +531,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
     @Override
     public SystemInfoResult getSystemInfo() {
         // sourcePath => accountId => Map
-        final Map<String, Map<String, List<Map<String, String>>>> map = new HashMap<>();
+        final Map<String, Map<String, List<Map<String, Object>>>> map = new TreeMap<>();
         final String keyOwnerMetaKey = receiveDataConfigProvider.get().getDataFeedOwnerMetaKey();
+
         keyOwnerToDataFeedKeyMap.values()
                 .forEach(dataFeedKeys -> {
                     for (final CachedHashedDataFeedKey dataFeedKey : dataFeedKeys) {
@@ -543,23 +541,39 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
                         final String keyOwner = Objects.requireNonNullElse(
                                 dataFeedKey.getStreamMetaValue(keyOwnerMetaKey),
                                 "null");
-                        final List<Map<String, String>> keysForAccountId = map.computeIfAbsent(path,
-                                        k -> new HashMap<>())
-                                .computeIfAbsent(keyOwner, k -> new ArrayList<>());
+                        final List<Map<String, Object>> keysForAccountId = map.computeIfAbsent(
+                                        path, ignored -> new TreeMap<>())
+                                .computeIfAbsent(keyOwner, ignored -> new ArrayList<>());
 
                         final String remaining = Duration.between(
                                 Instant.now(),
                                 dataFeedKey.getExpiryDate()).toString();
-                        final Map<String, String> leafMap = Map.of(
-                                "expiry", dataFeedKey.getExpiryDate().toString(),
-                                "remaining", remaining,
-                                "algorithm", dataFeedKey.getHashAlgorithm().toString());
+                        final Map<String, Object> leafMap = new LinkedHashMap<>();
+                        leafMap.put("algorithm", dataFeedKey.getHashAlgorithm().name());
+                        leafMap.put("hash", dataFeedKey.getHash());
+                        leafMap.put("salt", dataFeedKey.getSalt());
+                        leafMap.put("expiry", dataFeedKey.getExpiryDate().toString());
+                        leafMap.put("remaining", remaining);
+                        leafMap.put("streamMetaData", getStreamMetaData(dataFeedKey.getDataFeedKey()));
                         keysForAccountId.add(leafMap);
                     }
                 });
         return SystemInfoResult.builder(this)
+                .addDetail("ownerMetaKey", getOwnerMetaKey(receiveDataConfigProvider.get()).getAsLowerCase())
                 .addDetail("sourceFiles", map)
                 .build();
+    }
+
+    private Map<String, String> getStreamMetaData(final HashedDataFeedKey dataFeedKey) {
+        final Map<CIKey, String> sourceMap = NullSafe.map(dataFeedKey.getCIStreamMetaData());
+        final Map<String, String> map = new LinkedHashMap<>(sourceMap.size());
+        sourceMap.entrySet()
+                .stream()
+                .sorted(Comparator.comparing(entry ->
+                        entry.getKey().getAsLowerCase()))
+                .forEach(entry ->
+                        map.put(entry.getKey().getAsLowerCase(), entry.getValue()));
+        return map;
     }
 
     private CIKey getOwnerMetaKey(final ReceiveDataConfig receiveDataConfig) {
@@ -581,4 +595,23 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
     private record UnHashedCacheKey(String unHashedKey, CIKey keyOwner) {
 
     }
+
+//    @JsonPropertyOrder({"owner"})
+//    private static class FlatDataFeedKey {
+//
+//        @JsonProperty
+//        private final String owner;
+//        @JsonProperty
+//        private final String hash;
+//        @JsonProperty
+//        private final String salt;
+//        @JsonProperty
+//        private final DataFeedKeyHashAlgorithm hashAlgorithm;
+//        @JsonProperty
+//        private final Map<String, String> streamMetaData;
+//        @JsonProperty
+//        private final Instant expiryDate;
+//        @JsonProperty
+//        private final Duration remaining;
+//    }
 }

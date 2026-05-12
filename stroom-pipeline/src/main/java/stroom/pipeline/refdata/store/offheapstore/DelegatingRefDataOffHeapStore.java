@@ -485,6 +485,14 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     }
 
     @Override
+    public List<NamedParamCombination> getNamedParamCombinations() {
+        return feedNameToStoreMap.keySet()
+                .stream()
+                .map(feedName -> new NamedParamCombination(PARAM_NAME_FEED, feedName))
+                .toList();
+    }
+
+    @Override
     public SystemInfoResult getSystemInfo() {
         try {
             final ReferenceDataConfig referenceDataConfig = referenceDataConfigProvider.get();

@@ -67,6 +67,7 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     private static final String PARAM_NAME_MINIMAL = "minimal";
     private static final String PARAM_NAME_PRETTY = "pretty";
     private static final String CONTENT_TYPE = "application/json";
+    private static final String DISPLAY_NAME = "Filtered Health Check Servlet";
 
     private final HealthCheckRegistry healthCheckRegistry;
     private final ObjectMapper objectMapper;
@@ -190,5 +191,10 @@ public class FilteredHealthCheckServlet extends HttpServlet implements IsAdminSe
     @Override
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return DISPLAY_NAME;
     }
 }
