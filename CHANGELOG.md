@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.4] - 2026-05-14
+
+* Refactor : Improve logging and system info output for Data Feed Keys.
+
 * Feature **#5183** : Add title to dashboard link function.
 
 * Bug **#5518** : Fix expression editor bug.
@@ -2164,7 +2168,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.4...HEAD
+[v7.12.4]: https://github.com/gchq/stroom/compare/v7.12.3...v7.12.4
 [v7.12.3]: https://github.com/gchq/stroom/compare/v7.12.2...v7.12.3
 [v7.12.2]: https://github.com/gchq/stroom/compare/v7.12.1...v7.12.2
 [v7.12.1]: https://github.com/gchq/stroom/compare/v7.12.0...v7.12.1
