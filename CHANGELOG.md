@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.4] - 2026-05-14
+
+* Refactor : Improve logging and system info output for Data Feed Keys.
+
+* Feature **#5526** : Add event logging to ask stroom AI.
+
+* Bug **#5544** : Fix DocRef bug.
+
+
 ## [v7.12.3] - 2026-05-11
 
 * Feature **#5183** : Add title to dashboard link function.
