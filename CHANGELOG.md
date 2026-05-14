@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Feature **#5183** : Add title to dashboard link function.
+
+* Bug **#5518** : Fix expression editor bug.
+
+* Bug **#5507** : Improve dashboard column filtering.
+
+* Bug **#5516** : Allow event links with only feed USE permission.
+
+* Feature **#5526** : Add event logging to ask stroom AI.
+
+* Bug **#5544** : Fix DocRef bug.
+
+
 ## [v7.12.3] - 2026-05-11
 
 * Feature **#5183** : Add title to dashboard link function.
