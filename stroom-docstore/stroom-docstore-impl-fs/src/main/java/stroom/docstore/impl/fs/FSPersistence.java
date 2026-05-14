@@ -26,7 +26,6 @@ import stroom.importexport.api.ImportExportDocument;
 import stroom.util.io.PathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
-import stroom.util.string.EncodingUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.inject.Inject;
@@ -36,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -238,8 +236,7 @@ public class FSPersistence implements Persistence, Clearable {
     private Optional<String> getName(final Path metaFile) {
         try {
             final byte[] data = Files.readAllBytes(metaFile);
-            final GenericDoc genericDoc = jsonMapper.readValue(new StringReader(EncodingUtil.asString(data)),
-                    GenericDoc.class);
+            final GenericDoc genericDoc = jsonMapper.readValue(data, GenericDoc.class);
             return Optional.ofNullable(genericDoc.getName());
 
         } catch (final IOException | RuntimeException e) {

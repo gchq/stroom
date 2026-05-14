@@ -49,7 +49,6 @@ import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
-import stroom.util.string.EncodingUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -235,13 +234,14 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                     toDocRefDisplayString(docRef)));
         }
 
-        final Map<String, byte[]> data = readPersistence(docRef);
-        if (data != null) {
+        final ImportExportDocument importExportDocument = readPersistence(docRef);
+        if (importExportDocument != null) {
             try {
                 // We only need to read the meta data in order to satisfy the request for info.
                 // No other data needs to be read at this point.
-                final byte[] meta = data.get(META);
-                final GenericDoc document = JsonUtil.readValue(EncodingUtil.asString(meta), GenericDoc.class);
+                final ImportExportAsset asset = importExportDocument.getExtAsset(META);
+                final byte[] meta = asset.getInputData();
+                final GenericDoc document = JsonUtil.readValue(meta, GenericDoc.class);
                 return DocRefInfo
                         .builder()
                         .docRef(DocRef.builder()
