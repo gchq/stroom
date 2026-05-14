@@ -86,8 +86,11 @@ public class OpenAIServiceImpl implements OpenAIService {
             //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
 
+            final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+                    modelDoc,
+                    OpenAIModelDoc::getHttpClientConfiguration,
+                    HttpClientConfig.builder().build()));
             final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
-            final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
             try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
                 final String url = getUrl(modelDoc, "models");
                 final String apiKey = getApiKey(modelDoc);
@@ -283,7 +286,7 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     private HttpClientConfiguration convert(final HttpClientConfig config) {
         if (config == null) {
-            return null;
+            return new HttpClientConfiguration();
         }
 
         return HttpClientConfiguration
