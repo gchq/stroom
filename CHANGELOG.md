@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.12] - 2026-05-14
+
+* Feature **#5183** : Add title to dashboard link function.
+
+* Bug **#5518** : Fix expression editor bug.
+
+* Bug **#5507** : Improve dashboard column filtering.
+
+* Bug **#5516** : Allow event links with only feed USE permission.
+
+* Feature **#5526** : Add event logging to ask stroom AI.
+
+* Bug **#5544** : Fix DocRef bug.
+
+
 ## [v7.11.11] - 2026-04-27
 
 * Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
@@ -2126,7 +2141,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.12...HEAD
+[v7.11.12]: https://github.com/gchq/stroom/compare/v7.11.11...v7.11.12
 [v7.11.11]: https://github.com/gchq/stroom/compare/v7.11.10...v7.11.11
 [v7.11.10]: https://github.com/gchq/stroom/compare/v7.11.9...v7.11.10
 [v7.11.9]: https://github.com/gchq/stroom/compare/v7.11.8...v7.11.9
