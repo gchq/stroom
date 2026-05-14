@@ -10315,6 +10315,8 @@ components:
     ColumnFilter:
       type: object
       properties:
+        enabled:
+          type: boolean
         filter:
           type: string
     ColumnRef:
@@ -16754,6 +16756,8 @@ components:
           format: int32
         selectionFilter:
           $ref: "#/components/schemas/ExpressionOperator"
+        showValueFilters:
+          type: boolean
     RangeInteger:
       type: object
       properties:
@@ -19484,6 +19488,8 @@ components:
             items:
               $ref: "#/components/schemas/ComponentSelectionHandler"
           showDetail:
+            type: boolean
+          showValueFilters:
             type: boolean
           useDefaultExtractionPipeline:
             type: boolean
