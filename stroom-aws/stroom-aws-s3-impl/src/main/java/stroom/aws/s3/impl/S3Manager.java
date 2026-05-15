@@ -16,90 +16,31 @@
 
 package stroom.aws.s3.impl;
 
-import stroom.aws.s3.impl.S3ClientPool.PooledClient;
-import stroom.aws.s3.shared.AwsAssumeRole;
-import stroom.aws.s3.shared.AwsAssumeRoleClientConfig;
-import stroom.aws.s3.shared.AwsAssumeRoleRequest;
-import stroom.aws.s3.shared.AwsHttpConfig;
-import stroom.aws.s3.shared.AwsPolicyDescriptorType;
-import stroom.aws.s3.shared.AwsProvidedContext;
-import stroom.aws.s3.shared.AwsProxyConfig;
-import stroom.aws.s3.shared.AwsTag;
+import stroom.aws.s3.client.S3ClientHelper;
+import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
+import stroom.aws.s3.client.S3Util;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.TemplateCache;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.shared.string.CIKey;
-import stroom.util.shared.string.CIKeys;
 import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
 
-import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
-import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.profiles.ProfileFile;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3AsyncClient;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.crt.S3CrtHttpConfiguration;
-import software.amazon.awssdk.services.s3.crt.S3CrtProxyConfiguration;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest.Builder;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
-import software.amazon.awssdk.services.s3.model.S3Request;
-import software.amazon.awssdk.services.s3.model.S3Response;
-import software.amazon.awssdk.services.s3.model.Tag;
-import software.amazon.awssdk.services.s3.model.Tagging;
-import software.amazon.awssdk.services.sts.StsAsyncClient;
-import software.amazon.awssdk.services.sts.StsAsyncClientBuilder;
-import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
-import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
-import software.amazon.awssdk.services.sts.model.Credentials;
-import software.amazon.awssdk.services.sts.model.PolicyDescriptorType;
-import software.amazon.awssdk.services.sts.model.ProvidedContext;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
-import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
-import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
-import software.amazon.awssdk.transfer.s3.model.FileDownload;
-import software.amazon.awssdk.transfer.s3.model.FileUpload;
-import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
-import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -108,9 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -138,257 +77,60 @@ public class S3Manager {
     private static final String SEPARATE_META_FILE_METADATA_KEY = "has-stroom-meta-file";
 
     static final String AWS_USER_DEFINED_META_PREFIX = "x-amz-meta-";
-    static final String MANIFEST_METADATA_KEY_PREFIX = "mf-";
     static final String META_METADATA_KEY_PREFIX = "meta-";
+
+    public static final String FEED_TAG_KEY = "feed";
+    public static final String STREAM_TYPE_TAG_KEY = "stream-type";
+    public static final String META_ID_TAG_KEY = "meta-id";
+
+    static {
+        if (!Objects.equals(AWS_USER_DEFINED_META_PREFIX, AWS_USER_DEFINED_META_PREFIX.toLowerCase())) {
+            // This is because of use of CIKey.startsWithLowerCase
+            throw new IllegalStateException("Expecting AWS_USER_DEFINED_META_PREFIX to be lower case");
+        }
+    }
 
     private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
-    private final S3ClientPool s3ClientPool;
+    private final S3ClientHelper s3ClientHelper;
 
     public S3Manager(final TemplateCache templateCache,
                      final S3ClientConfig s3ClientConfig,
                      final S3MetaFieldsMapper s3MetaFieldsMapper,
-                     final S3ClientPool clientPool) {
+                     final S3ClientHelper s3ClientHelper) {
         this.templateCache = templateCache;
         this.s3ClientConfig = s3ClientConfig;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
-        this.s3ClientPool = clientPool;
+        this.s3ClientHelper = s3ClientHelper;
     }
 
-    private PooledClient<S3AsyncClient> getAsyncClient() {
-        return s3ClientPool.getPooledS3AsyncClient(s3ClientConfig);
-    }
-
-    private PooledClient<S3Client> getSyncClient() {
-        return s3ClientPool.getPooledS3Client(s3ClientConfig);
-    }
-
-    private URI createUri(final String uri) {
-        return NullSafe.isNonBlankString(uri)
-                ? URI.create(uri)
-                : null;
-    }
-
-    private Region createRegion(final String region) {
-        return NullSafe.isNonBlankString(region)
-                ? Region.of(region)
-                : null;
-    }
-
-    private S3CrtHttpConfiguration createHttpConfiguration(final AwsHttpConfig awsHttpConfig) {
-        if (awsHttpConfig == null) {
-            return null;
+    private Template getTemplate(final String templateStr) {
+        final Template template;
+        if (TemplateUtil.isStaticTemplate(templateStr)) {
+            // No point hitting the cache if our keyPattern is a static one containing something
+            // with high cardinality like a meta id.
+            template = TemplateUtil.parseTemplate(templateStr);
+        } else {
+            template = templateCache.getTemplate(templateStr);
         }
-
-        return S3CrtHttpConfiguration
-                .builder()
-                .connectionTimeout(Duration.parse(awsHttpConfig.getConnectionTimeout()))
-                .trustAllCertificatesEnabled(awsHttpConfig.getTrustAllCertificatesEnabled())
-                .proxyConfiguration(createProxyConfiguration(awsHttpConfig.getProxyConfiguration()))
-                .build();
+        return template;
     }
 
-    private S3CrtProxyConfiguration createProxyConfiguration(final AwsProxyConfig awsProxyConfig) {
-        if (awsProxyConfig == null) {
-            return null;
-        }
-
-        return S3CrtProxyConfiguration
-                .builder()
-                .host(awsProxyConfig.getHost())
-                .port(awsProxyConfig.getPort())
-                .scheme(awsProxyConfig.getScheme())
-                .username(awsProxyConfig.getUsername())
-                .password(awsProxyConfig.getPassword())
-                .useSystemPropertyValues(awsProxyConfig.getUseSystemPropertyValues())
-                .build();
-    }
-
-    private AwsCredentialsProvider createCredentialsProvider(final S3ClientConfig s3ClientConfig) {
-        if (NullSafe.nonNull(s3ClientConfig.getAssumeRole(), AwsAssumeRole::getRequest)) {
-            // If the config asks the client to assume a role then get assumed role credentials.
-            try (final StsAsyncClient stsAsyncClient =
-                    createStsAsyncClient(s3ClientConfig)) {
-                final AssumeRoleRequest assumeRoleRequest =
-                        createAssumeRoleRequest(s3ClientConfig.getAssumeRole().getRequest());
-                final Future<AssumeRoleResponse> responseFuture = stsAsyncClient.assumeRole(assumeRoleRequest);
-                final AssumeRoleResponse response = responseFuture.get();
-                final Credentials credentials = response.credentials();
-                final AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(
-                        credentials.accessKeyId(),
-                        credentials.secretAccessKey(),
-                        credentials.sessionToken());
-                return AwsCredentialsProviderChain.builder()
-                        .credentialsProviders(StaticCredentialsProvider.create(sessionCredentials))
-                        .build();
-            } catch (final InterruptedException | ExecutionException | RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-
-        return createCredentialsProvider(s3ClientConfig.getCredentials());
-    }
-
-    private AssumeRoleRequest createAssumeRoleRequest(final AwsAssumeRoleRequest config) {
-        final AssumeRoleRequest.Builder builder = AssumeRoleRequest.builder();
-        NullSafe.consume(config.getRoleArn(), builder::roleArn);
-        NullSafe.consume(config.getRoleSessionName(), builder::roleSessionName);
-        NullSafe.consume(config.getPolicyArns(), policyArns ->
-                builder.policyArns(policyArns.stream()
-                        .map(this::createPolicyDescriptorType)
-                        .toList()));
-        NullSafe.consume(config.getPolicy(), builder::policy);
-        NullSafe.consume(config.getDurationSeconds(), builder::durationSeconds);
-        NullSafe.consume(config.getTags(), tags ->
-                builder.tags(tags.stream()
-                        .map(this::createStsTag)
-                        .toList()));
-        NullSafe.consume(config.getTransitiveTagKeys(), builder::transitiveTagKeys);
-        NullSafe.consume(config.getExternalId(), builder::externalId);
-        NullSafe.consume(config.getSerialNumber(), builder::serialNumber);
-        NullSafe.consume(config.getTokenCode(), builder::tokenCode);
-        NullSafe.consume(config.getSourceIdentity(), builder::sourceIdentity);
-        NullSafe.consume(config.getProvidedContexts(), providedContexts ->
-                builder.providedContexts(providedContexts.stream()
-                        .map(this::createProvidedContext)
-                        .toList()));
-        return builder.build();
-    }
-
-    private ProvidedContext createProvidedContext(final AwsProvidedContext awsProvidedContext) {
-        return ProvidedContext
-                .builder()
-                .contextAssertion(awsProvidedContext.getContextAssertion())
-                .providerArn(awsProvidedContext.getProviderArn())
-                .build();
-    }
-
-    private PolicyDescriptorType createPolicyDescriptorType(final AwsPolicyDescriptorType awsPolicyDescriptorType) {
-        return PolicyDescriptorType.builder().arn(awsPolicyDescriptorType.getArn()).build();
-    }
-
-    private software.amazon.awssdk.services.sts.model.Tag createStsTag(final AwsTag awsTag) {
-        return software.amazon.awssdk.services.sts.model.Tag
-                .builder()
-                .key(awsTag.getKey())
-                .value(awsTag.getValue())
-                .build();
-    }
-
-    private StsAsyncClient createStsAsyncClient(final S3ClientConfig s3ClientConfig) {
-        final StsAsyncClientBuilder builder = StsAsyncClient.builder();
-
-        final AwsAssumeRole assumeRole = s3ClientConfig.getAssumeRole();
-        final AwsAssumeRoleClientConfig awsAssumeRoleClientConfig = assumeRole.getClientConfig();
-        if (awsAssumeRoleClientConfig != null && awsAssumeRoleClientConfig.getCredentials() != null) {
-            builder.credentialsProvider(createCredentialsProvider(awsAssumeRoleClientConfig.getCredentials()));
-        } else if (s3ClientConfig.getCredentials() != null) {
-            builder.credentialsProvider(createCredentialsProvider(s3ClientConfig.getCredentials()));
-        }
-
-        if (awsAssumeRoleClientConfig != null && awsAssumeRoleClientConfig.getRegion() != null) {
-            builder.region(createRegion(awsAssumeRoleClientConfig.getRegion()));
-        } else if (s3ClientConfig.getRegion() != null) {
-            builder.region(createRegion(s3ClientConfig.getRegion()));
-        }
-
-        NullSafe.consume(awsAssumeRoleClientConfig,
-                AwsAssumeRoleClientConfig::getEndpointOverride,
-                endpointOverride ->
-                        builder.endpointOverride(createUri(endpointOverride)));
-
-        return builder.build();
-    }
-
-    private AwsCredentialsProvider createCredentialsProvider(
-            final stroom.aws.s3.shared.AwsCredentials awsCredentials) {
-
-        if (awsCredentials != null) {
-            switch (awsCredentials) {
-                case final stroom.aws.s3.shared.AwsAnonymousCredentials awsAnonymousCredentials -> {
-                    LOGGER.debug("Using AWS anonymous credentials");
-                    return AnonymousCredentialsProvider.create();
-                }
-                case final stroom.aws.s3.shared.AwsBasicCredentials awsBasicCredentials -> {
-                    LOGGER.debug("Using AWS basic credentials");
-                    final AwsCredentials credentials = AwsBasicCredentials
-                            .create(awsBasicCredentials.getAccessKeyId(), awsBasicCredentials.getSecretAccessKey());
-                    return StaticCredentialsProvider.create(credentials);
-
-                }
-                case final stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
-                    LOGGER.debug("Using AWS default credentials");
-                    return DefaultCredentialsProvider.builder().build();
-                }
-                case final stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
-                    LOGGER.debug("Using AWS environment variable credentials");
-                    return EnvironmentVariableCredentialsProvider.create();
-                }
-                case final stroom.aws.s3.shared.AwsProfileCredentials awsProfileCredentials -> {
-                    LOGGER.debug("Using AWS profile credentials");
-                    if (!NullSafe.isBlankString(awsProfileCredentials.getProfileFilePath())) {
-                        final Path path = Paths.get(awsProfileCredentials.getProfileFilePath());
-                        return ProfileCredentialsProvider
-                                .builder()
-                                .profileFile(ProfileFile.builder().content(path).build())
-                                .build();
-                    } else {
-                        return ProfileCredentialsProvider
-                                .builder()
-                                .profileName(awsProfileCredentials.getProfileName())
-                                .build();
-                    }
-                }
-                case final stroom.aws.s3.shared.AwsSessionCredentials awsSessionCredentials -> {
-                    LOGGER.debug("Using AWS session credentials");
-                    final AwsSessionCredentials credentials = AwsSessionCredentials
-                            .builder()
-                            .accessKeyId(awsSessionCredentials.getAccessKeyId())
-                            .secretAccessKey(awsSessionCredentials.getSecretAccessKey())
-                            .sessionToken(awsSessionCredentials.getSessionToken())
-                            .build();
-                    return StaticCredentialsProvider.create(credentials);
-
-                }
-                case final stroom.aws.s3.shared.AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
-                    LOGGER.debug("Using AWS system property credentials");
-                    return SystemPropertyCredentialsProvider.create();
-                }
-                case final stroom.aws.s3.shared.AwsWebCredentials awsWebCredentials -> {
-                    LOGGER.debug("Using AWS web identity credentials");
-                    return WebIdentityTokenFileCredentialsProvider
-                            .builder()
-                            .roleArn(awsWebCredentials.getRoleArn())
-                            .roleSessionName(awsWebCredentials.getRoleSessionName())
-                            .webIdentityTokenFile(Paths.get(awsWebCredentials.getWebIdentityTokenFile()))
-                            .asyncCredentialUpdateEnabled(awsWebCredentials.getAsyncCredentialUpdateEnabled())
-                            .prefetchTime(Duration.parse(awsWebCredentials.getPrefetchTime()))
-                            .staleTime(Duration.parse(awsWebCredentials.getStaleTime()))
-                            .roleSessionDuration(Duration.parse(awsWebCredentials.getSessionDuration()))
-                            .build();
-                }
-                default -> {
-                    final String message = "Unknown AWS credentials type: " + awsCredentials.getClass().getName();
-                    LOGGER.error(() -> message);
-                    throw new RuntimeException(message);
-                }
-            }
-        }
-
-        LOGGER.debug("No AWS credentials provided, using default");
-        return DefaultCredentialsProvider.builder().build();
-    }
-
+    /**
+     * Create an S3 bucket name using either the supplied bucketNamePattern or the bucketName from
+     * the s3ClientConfig. {@link Meta} is used to provide values for the templated bucket name.
+     *
+     * @param bucketNamePattern If null, it will use the bucketName from the s3ClientConfig.
+     */
     public String createBucketName(final String bucketNamePattern,
                                    final Meta meta) {
-        final Template template = templateCache.getTemplate(bucketNamePattern);
-        String bucketName = template.buildExecutor()
-                .addLazyReplacement(FEED_VAR, meta::getFeedName)
-                .addLazyReplacement(TYPE_VAR, meta::getTypeName)
-                .execute();
+        Objects.requireNonNull(meta);
+        final String effectiveBucketNamePattern = NullSafe.nonBlankStringElseGet(
+                bucketNamePattern,
+                this::getBucketNamePattern);
 
+        String bucketName = applyTemplate(effectiveBucketNamePattern, meta);
         bucketName = S3Util.cleanBucketName(bucketName);
         final int len = bucketName.length();
         if (len < 3) {
@@ -399,30 +141,34 @@ public class S3Manager {
             LOGGER.warn("Truncating bucket name: '{}'. Length must be >=3 and <=63.", bucketName);
             return bucketName.substring(0, 63);
         }
-
+        LOGGER.debug("createBucketName() - bucketNamePattern: '{}', meta: '{}', bucketName: '{}'",
+                bucketNamePattern, meta, bucketName);
         return bucketName;
     }
 
-    private String createManifestKey(final String key) {
-        if (NullSafe.isNonBlankString(key)) {
-            final CIKey ciKey = CIKeys.getCommonKey(key);
-            final CIKey cleanedCiKey = s3MetaFieldsMapper.getS3Key(ciKey)
-                    .orElse(null);
-            if (cleanedCiKey == null) {
-                LOGGER.warn("Unknown manifest key '{}'", key);
-            }
-            // Add on the key prefix to distinguish it as a user-defined key and as a manifest key
-            return NullSafe.get(
-                    cleanedCiKey,
-                    CIKey::get,
-                    str -> AWS_USER_DEFINED_META_PREFIX + MANIFEST_METADATA_KEY_PREFIX + str);
-        } else {
-            return key;
-        }
-    }
+    /**
+     * Create an S3 key using either the supplied keyPattern or the keyPattern from
+     * the s3ClientConfig. {@link Meta} is used to provide values for the templated key.
+     *
+     * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
+     */
+    public String createKey(final String keyPattern, final Meta meta) {
+        Objects.requireNonNull(meta);
+        final String effectiveKeyPattern = NullSafe.nonBlankStringElseGet(
+                keyPattern,
+                this::getKeyNamePattern);
 
-    private String createMetaKey(final String key, final int part) {
-        return META_METADATA_KEY_PREFIX + part + "-" + S3Util.cleanS3MetaDataKey(key);
+        String key = applyTemplate(effectiveKeyPattern, meta);
+        key = S3Util.cleanKeyName(key);
+
+        final int keyBytesLen = key.getBytes(StandardCharsets.UTF_8).length;
+        if (keyBytesLen > 1024) {
+            throw new RuntimeException(LogUtil.message("Key name '{}' too long {}, must be less than 1,024 bytes",
+                    key, keyBytesLen));
+        }
+        LOGGER.debug("createKey() - keyPattern: '{}', meta: '{}', key: '{}'",
+                keyPattern, meta, key);
+        return key;
     }
 
     public String getBucketNamePattern() {
@@ -443,180 +189,181 @@ public class S3Manager {
         return upload(getBucketNamePattern(), getKeyNamePattern(), meta, attributeMap, source);
     }
 
+    public PutObjectResponse upload(final Meta meta,
+                                    final Map<CIKey, String> s3MetaData,
+                                    final Path source) {
+        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, s3MetaData, source);
+    }
+
     public PutObjectResponse upload(final String bucketNamePattern,
                                     final String keyNamePattern,
                                     final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source) {
-        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
-        NullSafe.requireNonBlankString(bucketNamePattern, () -> "bucketNamePattern must not be blank");
         final String bucketName = createBucketName(bucketNamePattern, meta);
         final String key = createKey(keyNamePattern, meta);
+        final Map<String, String> tags = createS3TagsFromMeta(meta);
 
-        try {
-            return tryUpload(bucketName, key, meta, attributeMap, source);
-        } catch (final RuntimeException e) {
-            if (s3ClientConfig.isCreateBuckets()) {
-                debug("Error uploading: ", bucketName, key, source, e);
-
-                // If we are creating buckets then try to create the bucket and upload again.
-                try {
-                    createBucket(bucketName);
-                    return tryUpload(bucketName, key, meta, attributeMap, source);
-                } catch (final RuntimeException e2) {
-                    error("Error uploading: ", bucketName, key, source, e2);
-                    throw e2;
-                }
-            } else {
-                error("Error uploading: ", bucketName, key, source, e);
-                throw e;
-            }
-        }
+        return s3ClientHelper.upload(
+                bucketName,
+                key,
+                tags,
+                convertAttributeMapToS3Metadata(attributeMap),
+                source);
     }
 
-    private PutObjectResponse tryUpload(final String bucketName,
-                                        final String key,
-                                        final Meta meta,
-                                        final AttributeMap attributeMap,
-                                        final Path source) {
-        final PutObjectRequest request = createPutObjectRequest(bucketName, key, meta, attributeMap, source);
-        logRequest("Uploading: ", bucketName, key, request);
+    public PutObjectResponse upload(final String bucketNamePattern,
+                                    final String keyNamePattern,
+                                    final Meta meta,
+                                    final Map<CIKey, String> s3MetaData,
+                                    final Path source) {
+        final String bucketName = createBucketName(bucketNamePattern, meta);
+        final String key = createKey(keyNamePattern, meta);
+        final Map<String, String> tags = createS3TagsFromMeta(meta);
 
-        final PutObjectResponse response;
-        if (s3ClientConfig.isAsync()) {
-            response = s3ClientPool.getWithAsyncS3Client(s3ClientConfig, s3AsyncClient -> {
-                if (s3ClientConfig.isMultipart()) {
-                    try (final S3TransferManager transferManager =
-                            S3TransferManager.builder()
-                                    .s3Client(s3AsyncClient)
-                                    .build()) {
+        return s3ClientHelper.upload(
+                bucketName,
+                key,
+                tags,
+                s3MetaData,
+                source);
+    }
 
-                        final UploadFileRequest uploadFileRequest =
-                                UploadFileRequest.builder()
-                                        .putObjectRequest(request)
-                                        .addTransferListener(LoggingTransferListener.create())
-                                        .source(source)
-                                        .build();
-
-                        final FileUpload fileUpload = transferManager.uploadFile(uploadFileRequest);
-
-                        final CompletedFileUpload uploadResult = fileUpload.completionFuture().join();
-                        LOGGER.debug(() -> "Upload result: " +
-                                           getDebugIdentity(bucketName, key) +
-                                           ", result=" +
-                                           uploadResult);
-                        return uploadResult.response();
-                    } catch (final RuntimeException e) {
-                        debug("Error putting object (async, multi-part)", bucketName, key, source, e);
-                        throw e;
-                    }
-                } else {
-                    try {
-                        return s3AsyncClient.putObject(request, source).join();
-                    } catch (final Exception e) {
-                        debug("Error putting object (async)", bucketName, key, source, e);
-                        throw e;
+    private Map<CIKey, String> convertAttributeMapToS3Metadata(final AttributeMap attributeMap) {
+        if (NullSafe.isEmptyMap(attributeMap)) {
+            return Collections.emptyMap();
+        } else {
+            return CollectionUtil.mappingKeys(attributeMap, key -> {
+                final String cleanedKey = S3Util.cleanS3MetaDataKey(key);
+                if (LOGGER.isDebugEnabled()) {
+                    if (Objects.equals(key, cleanedKey)) {
+                        LOGGER.debug("convertAttributeMapToS3Metadata() - key '{}' cleaned to '{}'",
+                                key, cleanedKey);
                     }
                 }
-            });
-        } else {
-            response = s3ClientPool.getWithS3Client(s3ClientConfig, s3Client -> {
-                try {
-                    LOGGER.debug(() -> LogUtil.message(
-                            "tryUpload() - Putting Object (sync) - bucketName: {}, key: {}, source: {}, meta: {}, " +
-                            "requestMeta: {}, tags: {}",
-                            bucketName,
-                            key,
-                            source.toAbsolutePath(),
-                            meta,
-                            request.metadata(),
-                            request.tagging()));
-                    return s3Client.putObject(request, source);
-                } catch (final Exception e) {
-                    debug("Error putting object (sync)", bucketName, key, source, e);
-                    throw e;
-                }
+                return CIKey.of(cleanedKey);
             });
         }
-
-        logResponse("Uploaded: ", bucketName, key, response);
-        return response;
     }
 
-    private void createBucket(final String bucketName) {
-        final CreateBucketRequest request = CreateBucketRequest.builder().bucket(bucketName).build();
-        logRequest("Creating bucket: ", bucketName, null, request);
+//    private PutObjectResponse tryUpload(final String bucketName,
+//                                        final String key,
+//                                        final Meta meta,
+//                                        final AttributeMap attributeMap,
+//                                        final Path source) {
+//        final PutObjectRequest request = createPutObjectRequest(bucketName, key, meta, attributeMap, source);
+//        logRequest("Uploading: ", bucketName, key, request);
+//
+//        final PutObjectResponse response;
+//        if (s3ClientConfig.isAsync()) {
+//            response = s3ClientPool.getWithAsyncS3Client(s3ClientConfig, s3AsyncClient -> {
+//                if (s3ClientConfig.isMultipart()) {
+//                    try (final S3TransferManager transferManager =
+//                            S3TransferManager.builder()
+//                                    .s3Client(s3AsyncClient)
+//                                    .build()) {
+//
+//                        final UploadFileRequest uploadFileRequest =
+//                                UploadFileRequest.builder()
+//                                        .putObjectRequest(request)
+//                                        .addTransferListener(LoggingTransferListener.create())
+//                                        .source(source)
+//                                        .build();
+//
+//                        final FileUpload fileUpload = transferManager.uploadFile(uploadFileRequest);
+//
+//                        final CompletedFileUpload uploadResult = fileUpload.completionFuture().join();
+//                        LOGGER.debug(() -> "Upload result: " +
+//                                           getDebugIdentity(bucketName, key) +
+//                                           ", result=" +
+//                                           uploadResult);
+//                        return uploadResult.response();
+//                    } catch (final RuntimeException e) {
+//                        debug("Error putting object (async, multi-part)", bucketName, key, source, e);
+//                        throw e;
+//                    }
+//                } else {
+//                    try {
+//                        return s3AsyncClient.putObject(request, source).join();
+//                    } catch (final Exception e) {
+//                        debug("Error putting object (async)", bucketName, key, source, e);
+//                        throw e;
+//                    }
+//                }
+//            });
+//        } else {
+//            response = s3ClientPool.getWithS3Client(s3ClientConfig, s3Client -> {
+//                try {
+//                    LOGGER.debug(() -> LogUtil.message(
+//                            "tryUpload() - Putting Object (sync) - bucketName: {}, key: {}, source: {}, meta: {}, " +
+//                            "requestMeta: {}, tags: {}",
+//                            bucketName,
+//                            key,
+//                            source.toAbsolutePath(),
+//                            meta,
+//                            request.metadata(),
+//                            request.tagging()));
+//                    return s3Client.putObject(request, source);
+//                } catch (final Exception e) {
+//                    debug("Error putting object (sync)", bucketName, key, source, e);
+//                    throw e;
+//                }
+//            });
+//        }
+//
+//        logResponse("Uploaded: ", bucketName, key, response);
+//        return response;
+//    }
 
-        final CreateBucketResponse response;
-        if (s3ClientConfig.isAsync()) {
-            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
-                response = pooledClient.getClient()
-                        .createBucket(request)
-                        .join();
-            } catch (final S3Exception e) {
-                error("Error creating bucket: ", bucketName, null, e);
-                throw e;
-            }
-        } else {
-            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-                response = pooledClient.getClient().createBucket(request);
-            } catch (final S3Exception e) {
-                error("Error creating bucket: ", bucketName, null, e);
-                throw e;
-            }
-        }
-
-        logResponse("Created bucket: ", bucketName, null, response);
-    }
+//    private void createBucket(final String bucketName) {
+//        final CreateBucketRequest request = CreateBucketRequest.builder()
+//                .bucket(bucketName)
+//                .build();
+//        logRequest("Creating bucket: ", bucketName, null, request);
+//
+//        final CreateBucketResponse response;
+//        if (s3ClientConfig.isAsync()) {
+//            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+//                response = pooledClient.getClient()
+//                        .createBucket(request)
+//                        .join();
+//            } catch (final S3Exception e) {
+//                error("Error creating bucket: ", bucketName, null, e);
+//                throw e;
+//            }
+//        } else {
+//            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+//                response = pooledClient.getClient().createBucket(request);
+//            } catch (final S3Exception e) {
+//                error("Error creating bucket: ", bucketName, null, e);
+//                throw e;
+//            }
+//        }
+//
+//        logResponse("Created bucket: ", bucketName, null, response);
+//    }
 
     /**
      * Get part of an S3 object, defined by a contiguous byte range.
      *
-     * @param meta            The {@link Meta} the object belongs to.
-     * @param childStreamType The child stream type, or null if this is not a child stream.
-     * @param byteRange       The range of bytes to fetch.
+     * @param meta      The {@link Meta} the object belongs to.
+     * @param byteRange The range of bytes to fetch.
      * @return The repose containing the byte range.
      */
     public ResponseInputStream<GetObjectResponse> getObject(final Meta meta,
-                                                            final String childStreamType,
                                                             final Range<Long> byteRange) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(byteRange);
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta, childStreamType);
-        final GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .range(rangeToHttpString(byteRange))
-                .build();
-
-        logRequest("GET (range) : ", bucketName, key, byteRange, request);
-
-        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-            return pooledClient.getClient().getObject(request);
-        } catch (final RuntimeException e) {
-            error("Error getting: ", bucketName, key, byteRange, e);
-            throw e;
-        }
+        final String key = createKey(getKeyNamePattern(), meta);
+        return s3ClientHelper.getObjectByteRange(bucketName, key, byteRange);
     }
 
     public ResponseInputStream<GetObjectResponse> getObject(final String bucketName,
                                                             final String key) {
         NullSafe.requireNonBlankString(bucketName);
         NullSafe.requireNonBlankString(key);
-        final GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
-
-        logRequest("GET: ", bucketName, key, request);
-
-        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-            return pooledClient.getClient().getObject(request);
-        } catch (final RuntimeException e) {
-            error("Error getting: ", bucketName, key, e);
-            throw e;
-        }
+        return s3ClientHelper.getObject(bucketName, key);
     }
 
     /**
@@ -647,26 +394,9 @@ public class S3Manager {
                                                                final Range<Long> byteRange) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(byteRange);
-        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(keyNamePattern, meta, childStreamType);
-        final GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .range(rangeToHttpString(byteRange))
-                .build();
-
-        logRequest("GET (range) : ", bucketName, key, byteRange, request);
-
-        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-            return LOGGER.logDurationIfDebugEnabled(
-                    () -> pooledClient.getClient().getObject(request),
-                    () -> LogUtil.message("getByteRange() - bucket: '{}', key: '{}', byteRange: '{}'",
-                            bucketName, key, byteRange));
-        } catch (final RuntimeException e) {
-            error("Error getting: ", bucketName, key, byteRange, e);
-            throw e;
-        }
+        final String key = createKey(keyNamePattern, meta);
+        return s3ClientHelper.getObjectByteRange(bucketName, key, byteRange);
     }
 
     public long getFileSize(final Meta meta,
@@ -678,26 +408,9 @@ public class S3Manager {
                             final String childStreamType,
                             final String keyNamePattern) {
         Objects.requireNonNull(meta);
-        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
         final String key = createKey(keyNamePattern, meta);
-        final HeadObjectRequest request = HeadObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
-
-        logRequest("HEAD: ", bucketName, key, request);
-
-        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-            final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
-                    () -> pooledClient.getClient().headObject(request),
-                    () -> LogUtil.message("getFileSize() - bucket: '{}', key: '{}'",
-                            bucketName, key));
-            return Objects.requireNonNullElse(headObjectResponse.contentLength(), 0L);
-        } catch (final RuntimeException e) {
-            error("Error getting file size: ", bucketName, key, e);
-            throw e;
-        }
+        return s3ClientHelper.getFileSize(bucketName, key);
     }
 
     public S3ObjectInfo getObjectInfo(final Meta meta,
@@ -705,50 +418,51 @@ public class S3Manager {
         Objects.requireNonNull(meta);
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
         final String key = createKey(keyNamePattern, meta);
-        Objects.requireNonNull(key, "key must not be null. keyNamePattern: " + keyNamePattern);
-        final HeadObjectRequest request = HeadObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
+        return s3ClientHelper.getObjectInfo(bucketName, key);
 
-        logRequest("HEAD: ", bucketName, key, request);
-
-        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-            final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
-                    () -> pooledClient.getClient().headObject(request),
-                    () -> LogUtil.message("getObjectInfo() - bucket: '{}', key: '{}'",
-                            bucketName, key));
-
-            final Map<String, String> metadata = headObjectResponse.metadata();
-            final long contentLength = Objects.requireNonNullElse(
-                    headObjectResponse.contentLength(),
-                    0L);
-
-            final AttributeMap manifest;
-            final List<AttributeMap> attributeMaps;
-            if (NullSafe.hasEntries(metadata)) {
-                manifest = readManifest(metadata);
-                attributeMaps = readMeta(metadata);
-            } else {
-                manifest = new AttributeMap();
-                attributeMaps = Collections.emptyList();
-            }
-
-            return new S3ObjectInfo(
-                    bucketName,
-                    key,
-                    contentLength,
-                    attributeMaps,
-                    manifest,
-                    false);
-        } catch (final NoSuchKeyException e) {
-            error("Error getting object info: ", bucketName, key, e);
-            throw new RuntimeException(LogUtil.message("No data found for meta: {} using key: {}, bucket: {}",
-                    meta, key, bucketName), e);
-        } catch (final RuntimeException e) {
-            error("Error getting object info: ", bucketName, key, e);
-            throw e;
-        }
+//        final HeadObjectRequest request = HeadObjectRequest.builder()
+//                .bucket(bucketName)
+//                .key(key)
+//                .build();
+//
+//        logRequest("HEAD: ", bucketName, key, request);
+//
+//        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+//            final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
+//                    () -> pooledClient.getClient().headObject(request),
+//                    () -> LogUtil.message("getObjectInfo() - bucket: '{}', key: '{}'",
+//                            bucketName, key));
+//
+//            final Map<String, String> metadata = headObjectResponse.metadata();
+//            final long contentLength = Objects.requireNonNullElse(
+//                    headObjectResponse.contentLength(),
+//                    0L);
+//
+//            final AttributeMap manifest;
+//            final List<AttributeMap> attributeMaps;
+//            if (NullSafe.hasEntries(metadata)) {
+//                manifest = readManifest(metadata);
+//                attributeMaps = readMeta(metadata);
+//            } else {
+//                manifest = new AttributeMap();
+//                attributeMaps = Collections.emptyList();
+//            }
+//
+//            return new S3ObjectInfo(
+//                    bucketName,
+//                    key,
+//                    contentLength,
+//                    attributeMaps,
+//                    manifest,
+//                    false);
+//        } catch (final NoSuchKeyException e) {
+//            error("Error getting object info: ", bucketName, key, e);
+//            throw new RuntimeException(LogUtil.message("No data found for meta: {} using key: {}, bucket: {}",
+//                    meta, key, bucketName), e);
+//        } catch (final RuntimeException e) {
+//            error("Error getting object info: ", bucketName, key, e);
+//            throw e;
+//        }
     }
 
     private List<AttributeMap> readMeta(final Map<String, String> metadata) {
@@ -805,39 +519,7 @@ public class S3Manager {
         return segmentedMetaEntry;
     }
 
-    private AttributeMap readManifest(final Map<String, String> metadata) {
-        if (NullSafe.hasEntries(metadata)) {
-            return new AttributeMap(metadata.entrySet()
-                    .stream()
-                    .map(entry -> {
-                        String key = entry.getKey();
-                        final String value = entry.getValue();
-                        removeAwsPrefix(key);
-                        if (key.startsWith(MANIFEST_METADATA_KEY_PREFIX)) {
-                            key = key.substring(MANIFEST_METADATA_KEY_PREFIX.length());
-                            final CIKey originalCiKey = s3MetaFieldsMapper.getOriginalKey(CIKey.of(key))
-                                    .orElse(null);
-                            final String effectiveKey;
-                            if (originalCiKey == null) {
-                                // TODO how do we handle un-reversable keys??
-                                LOGGER.warn("readManifest() - Unknown manifest key '{}' with value '{}'",
-                                        key, value);
-                                effectiveKey = key;
-                            } else {
-                                effectiveKey = originalCiKey.get();
-                            }
-                            return Map.entry(effectiveKey, value);
-                        } else {
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
-        } else {
-            return new AttributeMap();
-        }
-    }
-
+    // TODO not sure this is needed as the SDK should silently do this
     private static String removeAwsPrefix(final String key) {
         return NullSafe.get(
                 key,
@@ -874,63 +556,11 @@ public class S3Manager {
                                       final Path dest,
                                       final boolean allowAsync) {
         Objects.requireNonNull(meta);
-        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
         Objects.requireNonNull(dest);
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
         final String key = createKey(keyNamePattern, meta);
-        final GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
-        logRequest("Downloading: ", bucketName, key, request);
 
-        final GetObjectResponse response;
-        if (allowAsync && s3ClientConfig.isAsync()) {
-            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
-                final S3AsyncClient s3AsyncClient = pooledClient.getClient();
-                if (s3ClientConfig.isMultipart()) {
-                    try (final S3TransferManager transferManager =
-                            S3TransferManager.builder()
-                                    .s3Client(s3AsyncClient)
-                                    .build()) {
-
-                        final DownloadFileRequest downloadFileRequest =
-                                DownloadFileRequest.builder()
-                                        .getObjectRequest(request)
-                                        .addTransferListener(LoggingTransferListener.create())
-                                        .destination(dest)
-                                        .build();
-
-                        final FileDownload downloadFile = transferManager.downloadFile(downloadFileRequest);
-
-                        final CompletedFileDownload downloadResult = downloadFile.completionFuture().join();
-                        LOGGER.debug(() -> "Download result: " +
-                                           getDebugIdentity(bucketName, key) +
-                                           ", result=" +
-                                           downloadResult);
-                        response = downloadResult.response();
-                    }
-                } else {
-                    response = s3AsyncClient.getObject(request, dest).join();
-                }
-            } catch (final RuntimeException e) {
-                error("Error downloading: ", bucketName, key, e);
-                throw e;
-            }
-        } else {
-            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-                response = LOGGER.logDurationIfDebugEnabled(
-                        () -> pooledClient.getClient().getObject(request, dest),
-                        () -> LogUtil.message("Download() - bucket: '{}', key: '{}', dest: '{}'",
-                                bucketName, key, dest));
-            } catch (final RuntimeException e) {
-                error("Error downloading: ", bucketName, key, e);
-                throw e;
-            }
-        }
-
-        logResponse("Downloaded: ", bucketName, key, response);
-        return response;
+        return s3ClientHelper.download(bucketName, key, dest, allowAsync);
     }
 
     public List<String> listKeys(final Meta meta,
@@ -939,21 +569,7 @@ public class S3Manager {
 
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
         final String key = createKey(getKeyNamePattern(), meta);
-        final ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
-                .bucket(bucketName)
-                .prefix(key)
-                .build();
-
-        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-            final ListObjectsV2Response listObjectsV2Response = pooledClient.getClient()
-                    .listObjectsV2(listObjectsV2Request);
-            return NullSafe.stream(listObjectsV2Response.contents())
-                    .map(S3Object::key)
-                    .toList();
-        } catch (final S3Exception e) {
-            error("Error deleting: ", bucketName, key, e);
-            throw e;
-        }
+        return s3ClientHelper.listKeys(bucketName, key);
     }
 
     public DeleteObjectResponse delete(final Meta meta) {
@@ -965,61 +581,32 @@ public class S3Manager {
                                        final String keyNamePattern) {
         final String bucketName = createBucketName(bucketNamePattern, meta);
         final String key = createKey(keyNamePattern, meta);
-        final DeleteObjectRequest request = DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
-        logRequest("Deleting: ", bucketName, key, request);
-
-        final DeleteObjectResponse response;
-        if (s3ClientConfig.isAsync()) {
-            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
-                response = pooledClient.getClient().deleteObject(request).join();
-            } catch (final S3Exception e) {
-                error("Error deleting: ", bucketName, key, e);
-                throw e;
-            }
-        } else {
-            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-                response = pooledClient.getClient().deleteObject(request);
-            } catch (final S3Exception e) {
-                error("Error deleting: ", bucketName, key, e);
-                throw e;
-            }
-        }
-
-        logResponse("Deleted: ", bucketName, key, response);
-        return response;
+        return s3ClientHelper.delete(bucketName, key);
     }
 
-    private Tagging createTags(final Meta meta) {
-        return Tagging.builder()
-                .tagSet(
-                        Tag.builder().key("feed").value(meta.getFeedName()).build(),
-                        Tag.builder().key("stream-type").value(meta.getTypeName()).build(),
-                        Tag.builder().key("meta-id").value(String.valueOf(meta.getId())).build()
-                )
-                .build();
+    private Map<String, String> createS3TagsFromMeta(final Meta meta) {
+        Objects.requireNonNull(meta);
+        return Map.of(
+                FEED_TAG_KEY, meta.getFeedName(),
+                STREAM_TYPE_TAG_KEY, meta.getTypeName(),
+                META_ID_TAG_KEY, Long.toString(meta.getId()));
     }
 
-    public String createKey(final String keyPattern, final Meta meta) {
-        return createKey(keyPattern, meta, null);
-    }
-
-    public String createKey(final String keyPattern, final Meta meta, final String childStreamType) {
+    private String applyTemplate(final String templateStr, final Meta meta) {
         final Template template;
-        if (TemplateUtil.isStaticTemplate(keyPattern)) {
+        if (TemplateUtil.isStaticTemplate(templateStr)) {
             // No point hitting the cache if our keyPattern is a static one containing something
             // with high cardinality like a meta id.
-            template = TemplateUtil.parseTemplate(keyPattern);
+            template = TemplateUtil.parseTemplate(templateStr);
         } else {
-            template = templateCache.getTemplate(keyPattern);
+            template = templateCache.getTemplate(templateStr);
         }
-        final ZonedDateTime zonedDateTime =
+
+        final Supplier<ZonedDateTime> zonedDateTimeSupplier = () ->
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
 
-        String keyName = template.buildExecutor()
-                .addStandardTimeReplacements(zonedDateTime)
+        final String output = template.buildExecutor()
+                .addStandardTimeReplacements(zonedDateTimeSupplier)
                 .addLazyReplacement(FEED_VAR, meta::getFeedName)
                 .addLazyReplacement(TYPE_VAR, meta::getTypeName)
                 .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
@@ -1027,15 +614,8 @@ public class S3Manager {
                 .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
                 .execute();
 
-        keyName = S3Util.cleanKeyName(keyName);
-
-        final int keyBytesLen = keyName.getBytes(StandardCharsets.UTF_8).length;
-        if (keyBytesLen > 1024) {
-            throw new RuntimeException(LogUtil.message("Key name '{}' too long {}, must be less than 1,024 bytes",
-                    keyName, keyBytesLen));
-        }
-
-        return keyName;
+        LOGGER.debug("applyTemplate() - template: '{}', output: '{}", template, output);
+        return output;
     }
 
     /**
@@ -1061,11 +641,7 @@ public class S3Manager {
      * Pad a prefix.
      */
     private static String padId(final long current) {
-//        if (current == null) {
-//            return START_PREFIX;
-//        } else {
         return StringIdUtil.idToString(current);
-//        }
     }
 
     /**
@@ -1075,9 +651,6 @@ public class S3Manager {
      * e.g. metaId 123,456,789 => "123/456"
      */
     static String getIdPath(final long metaId) {
-//        if (metaId == null) {
-//            return "";
-//        } else {
         final String idStr = padId(metaId);
         final StringBuilder sb = new StringBuilder();
         final int endIdxExc = idStr.length() - PAD_SIZE;
@@ -1089,140 +662,86 @@ public class S3Manager {
             sb.append(part);
         }
         return sb.toString();
-//        }
     }
 
-    private PutObjectRequest createPutObjectRequest(final String bucketName,
-                                                    final String key,
-                                                    final Meta meta,
-                                                    final AttributeMap attributeMap,
-                                                    final Path source) {
+    // TODO Not sure this is needed, but do just in case the SDK doesn't remove it.
+    public static CIKey removeAwsPrefix(final CIKey key) {
+        return NullSafe.get(
+                key,
+                ciKey -> {
+                    if (ciKey.startsWithLowerCase(AWS_USER_DEFINED_META_PREFIX)) {
+                        ciKey = ciKey.substring(AWS_USER_DEFINED_META_PREFIX.length());
+                    }
+                    return ciKey;
+                });
+    }
 
-        // Convert the manifest attributeMap into s3 metadata key/value pairs to save
-        // creating a tiny file for them.
-        final Map<String, String> metadata = NullSafe.map(attributeMap)
-                .entrySet()
-                .stream()
-                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
-                .map(entry -> Map.entry(
-                        createManifestKey(entry.getKey()),
-                        entry.getValue()))
-                .filter(entry -> entry.getKey() != null)
-                .collect(Collectors.toMap(
-                        Entry::getKey,
-                        Entry::getValue));
-
-        final Builder builder = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .tagging(createTags(meta))
-                .metadata(metadata);
-        if (source.getFileName().toString().endsWith(".zst")) {
-            builder.contentEncoding("zstd");
+    /**
+     * Remove a prefix if present.
+     *
+     * @param key
+     * @param lowerCasePrefix The prefix in lowercase
+     * @return
+     */
+    public CIKey removePrefix(final CIKey key, final String lowerCasePrefix) {
+        if (NullSafe.isEmptyString(lowerCasePrefix)) {
+            return key;
+        } else {
+            return NullSafe.get(
+                    key,
+                    ciKey -> {
+                        if (ciKey.startsWithLowerCase(lowerCasePrefix)) {
+                            ciKey = ciKey.substring(lowerCasePrefix.length());
+                        }
+                        return ciKey;
+                    });
         }
-        return builder.build();
     }
 
-    private void logRequest(final String message,
-                            final String bucketName,
-                            final String key,
-                            final S3Request request) {
-        LOGGER.debug(() -> message + getDebugIdentity(bucketName, key));
-        LOGGER.trace(() -> message + getDebugIdentity(bucketName, key) + ", request=" + request);
-    }
-
-    private void logRequest(final String message,
-                            final String bucketName,
-                            final String key,
-                            final Range<Long> range,
-                            final S3Request request) {
-        LOGGER.debug(() -> message + getDebugIdentity(bucketName, key) + ", range=" + range);
-        LOGGER.trace(() -> message + getDebugIdentity(bucketName, key) + ", range=" + range + ", request=" + request);
-    }
-
-    private void logResponse(final String message,
-                             final String bucketName,
-                             final String key,
-                             final S3Response response) {
-        LOGGER.debug(() -> message + getDebugIdentity(bucketName, key));
-        LOGGER.trace(() -> message + getDebugIdentity(bucketName, key) + ", response=" + response);
-    }
-
-    private void debug(final String message,
-                       final String bucketName,
-                       final String key,
-                       final Exception e) {
-        LOGGER.debug(() -> message +
-                           getDebugIdentity(bucketName, key) +
-                           ", message=" +
-                           e.getMessage(), e);
-    }
-
-    private void debug(final String message,
-                       final String bucketName,
-                       final String key,
-                       final Path path,
-                       final Exception e) {
-        LOGGER.debug(() -> LogUtil.message("{} {}, path: {}, message: {}",
-                message,
-                getDebugIdentity(bucketName, key),
-                NullSafe.get(path, Path::toAbsolutePath),
-                LogUtil.exceptionMessage(e)), e);
-    }
-
-    private void error(final String message,
-                       final String bucketName,
-                       final String key,
-                       final Exception e) {
-        LOGGER.error(() -> message +
-                           getDebugIdentity(bucketName, key) +
-                           ", message=" +
-                           e.getMessage(), e);
-    }
-
-    private void error(final String message,
-                       final String bucketName,
-                       final String key,
-                       final Path path,
-                       final Exception e) {
-        LOGGER.error(() -> LogUtil.message("{} {}, path: {}, message: {}",
-                message,
-                getDebugIdentity(bucketName, key),
-                NullSafe.get(path, Path::toAbsolutePath),
-                LogUtil.exceptionMessage(e)), e);
-    }
-
-    private void error(final String message,
-                       final String bucketName,
-                       final String key,
-                       final Range<Long> range,
-                       final Exception e) {
-        LOGGER.error(() -> message +
-                           getDebugIdentity(bucketName, key) +
-                           ", range=" + range +
-                           ", message=" + e.getMessage(), e);
-    }
-
-    private String getDebugIdentity(final String bucketName,
-                                    final String key) {
-        return "bucketName=" +
-               bucketName +
-               Optional.ofNullable(key).map(k -> ", key=" + k).orElse("");
-    }
+//    private PutObjectRequest createPutObjectRequest(final String bucketName,
+//                                                    final String key,
+//                                                    final Meta meta,
+//                                                    final AttributeMap attributeMap,
+//                                                    final Path source) {
+//
+//        // Convert the manifest attributeMap into s3 metadata key/value pairs to save
+//        // creating a tiny file for them.
+//        final Map<String, String> metadata = NullSafe.map(attributeMap)
+//                .entrySet()
+//                .stream()
+//                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
+//                .map(entry -> Map.entry(
+//                        createManifestKey(entry.getKey()),
+//                        entry.getValue()))
+//                .filter(entry -> entry.getKey() != null)
+//                .collect(Collectors.toMap(
+//                        Entry::getKey,
+//                        Entry::getValue));
+//
+//        final Builder builder = PutObjectRequest.builder()
+//                .bucket(bucketName)
+//                .key(key)
+//                .tagging(createS3TagsFromMeta(meta))
+//                .metadata(metadata);
+//        if (source.getFileName().toString().endsWith(".zst")) {
+//            builder.contentEncoding("zstd");
+//        }
+//        return builder.build();
+//    }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public record S3ObjectInfo(
-            String bucketName,
-            String key,
-            long contentLength,
-            List<AttributeMap> meta,
-            AttributeMap manifest,
-            boolean hasMetaFile) {
-
-    }
+//    public record S3ObjectInfo(
+//            String bucketName,
+//            String key,
+//            long contentLength,
+//            List<AttributeMap> meta,
+//            AttributeMap manifest,
+//            boolean hasMetaFile) {
+//
+//    }
 
 
     // --------------------------------------------------------------------------------

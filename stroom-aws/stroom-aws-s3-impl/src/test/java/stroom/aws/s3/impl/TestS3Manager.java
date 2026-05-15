@@ -16,9 +16,12 @@
 
 package stroom.aws.s3.impl;
 
+import stroom.aws.s3.client.S3ClientHelper;
+import stroom.aws.s3.client.S3ClientPoolImpl;
 import stroom.aws.s3.impl.S3Manager.SegmentedMetaEntry;
 import stroom.aws.s3.shared.AwsBasicCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.cache.impl.TemplateCacheImpl;
 import stroom.data.shared.StreamTypeNames;
@@ -31,6 +34,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
 import com.google.inject.TypeLiteral;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -57,20 +62,47 @@ public class TestS3Manager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestS3Manager.class);
 
-    @Test
-    void testHead(@TempDir final Path tempDir) throws IOException {
+    private CacheManager cacheManager;
+    private S3Manager s3Manager;
 
+    @BeforeEach
+    void setUp() {
         final String uuid = UUID.randomUUID().toString();
         S3ClientConfig s3ClientConfig = getS3ClientConfig();
         s3ClientConfig = s3ClientConfig.copy()
                 .keyPattern(s3ClientConfig.getKeyPattern() + "/" + uuid)
                 .build();
 
-        final S3Manager s3Manager = new S3Manager(
-                new TemplateCacheImpl(new CacheManagerImpl()),
+        cacheManager = new CacheManagerImpl();
+
+        s3Manager = new S3Manager(
+                new TemplateCacheImpl(cacheManager),
                 s3ClientConfig,
                 new S3MetaFieldsMapper(),
-                new S3ClientPoolImpl(new CacheManagerImpl()));
+                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(cacheManager)));
+    }
+
+    @AfterEach
+    void tearDown() {
+        s3Manager = null;
+        cacheManager.close();
+        cacheManager = null;
+    }
+
+    @Test
+    void testHead(@TempDir final Path tempDir) throws IOException {
+
+//        final String uuid = UUID.randomUUID().toString();
+//        S3ClientConfig s3ClientConfig = getS3ClientConfig();
+//        s3ClientConfig = s3ClientConfig.copy()
+//                .keyPattern(s3ClientConfig.getKeyPattern() + "/" + uuid)
+//                .build();
+//
+//        final S3Manager s3Manager = new S3Manager(
+//                new TemplateCacheImpl(new CacheManagerImpl()),
+//                s3ClientConfig,
+//                new S3MetaFieldsMapper(),
+//                new S3ClientHelper());
         final Path file = tempDir.resolve("test.txt");
 
         Files.writeString(file,
@@ -99,17 +131,17 @@ public class TestS3Manager {
 
     @Test
     void getRange(@TempDir final Path tempDir) throws IOException {
-        final String uuid = UUID.randomUUID().toString();
-        S3ClientConfig s3ClientConfig = getS3ClientConfig();
-        s3ClientConfig = s3ClientConfig.copy()
-                .keyPattern(s3ClientConfig.getKeyPattern() + "/" + uuid)
-                .build();
-
-        final S3Manager s3Manager = new S3Manager(
-                new TemplateCacheImpl(new CacheManagerImpl()),
-                s3ClientConfig,
-                new S3MetaFieldsMapper(),
-                new S3ClientPoolImpl(new CacheManagerImpl()));
+//        final String uuid = UUID.randomUUID().toString();
+//        S3ClientConfig s3ClientConfig = getS3ClientConfig();
+//        s3ClientConfig = s3ClientConfig.copy()
+//                .keyPattern(s3ClientConfig.getKeyPattern() + "/" + uuid)
+//                .build();
+//
+//        final S3Manager s3Manager = new S3Manager(
+//                new TemplateCacheImpl(new CacheManagerImpl()),
+//                s3ClientConfig,
+//                new S3MetaFieldsMapper(),
+//                new S3ClientPoolImpl(new CacheManagerImpl()));
         final Path file = tempDir.resolve("test.txt");
 
         Files.writeString(file,
@@ -289,4 +321,5 @@ public class TestS3Manager {
                 .keyPattern("${feed}/${type}/${year}/${idPadded}")
                 .build();
     }
+
 }

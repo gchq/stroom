@@ -35,7 +35,6 @@ import stroom.pipeline.writer.OutputFactory;
 import stroom.pipeline.writer.OutputProxy;
 import stroom.svg.shared.SvgImage;
 import stroom.util.io.CompressionUtil;
-import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -144,12 +143,12 @@ public class S3Appender extends AbstractAppender {
 
                     try {
                         final S3Manager s3Manager = s3ManagerFactory.createS3Manager(s3ClientConfig);
-                        final String bucketNamePattern = NullSafe
-                                .nonBlank(S3Appender.this.bucketNamePattern)
-                                .orElse(s3Manager.getBucketNamePattern());
-                        final String keyNamePattern = NullSafe
-                                .nonBlank(S3Appender.this.keyNamePattern)
-                                .orElse(s3Manager.getKeyNamePattern());
+//                        final String bucketNamePattern = NullSafe
+//                                .nonBlank(S3Appender.this.bucketNamePattern)
+//                                .orElse(s3Manager.getBucketNamePattern());
+//                        final String keyNamePattern = NullSafe
+//                                .nonBlank(S3Appender.this.keyNamePattern)
+//                                .orElse(s3Manager.getKeyNamePattern());
 
                         // Upload to S3
                         // Upload the zip to S3.

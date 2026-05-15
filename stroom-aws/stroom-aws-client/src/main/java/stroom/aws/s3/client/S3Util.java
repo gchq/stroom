@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.impl;
+package stroom.aws.s3.client;
 
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class S3Util {
 
-    private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9]");
+    private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9_-]");
     private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.-]");
     private static final Pattern S3_KEY_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
     private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
@@ -57,5 +59,14 @@ public class S3Util {
         keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
         keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
         return keyName;
+    }
+
+    public static void validateMetadataKey(final String metadataKey) throws IllegalArgumentException {
+        if (NullSafe.isNonBlankString(metadataKey)) {
+            if (S3_META_KEY_INVALID_CHARS_PATTERN.matcher(metadataKey).find()) {
+                throw new IllegalArgumentException(LogUtil.message("Invalid metadata key: '{}'. Pattern: '{}'",
+                        metadataKey, S3_META_KEY_INVALID_CHARS_PATTERN));
+            }
+        }
     }
 }

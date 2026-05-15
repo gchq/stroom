@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.aws.s3.impl'
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')

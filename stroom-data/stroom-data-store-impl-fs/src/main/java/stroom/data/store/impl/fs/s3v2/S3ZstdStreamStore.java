@@ -18,13 +18,17 @@ package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
+import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
 import stroom.data.store.impl.fs.StreamStore;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
@@ -67,6 +71,7 @@ public class S3ZstdStreamStore implements StreamStore {
     private final MetaService metaService;
     //    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     //    private final S3ClientPool s3ClientPool;
     private final ZstdSeekTableCache zstdSeekTableCache;
     private final HeapBufferPool heapBufferPool;
@@ -82,6 +87,7 @@ public class S3ZstdStreamStore implements StreamStore {
             final MetaService metaService,
 //                final S3MetaFieldsMapper s3MetaFieldsMapper,
             final S3StreamTypeExtensions s3StreamTypeExtensions,
+            final S3MetaFieldsMapper s3MetaFieldsMapper,
 //                final S3ClientPool s3ClientPool,
             final ZstdSeekTableCache zstdSeekTableCache,
             final HeapBufferPool heapBufferPool,
@@ -92,6 +98,7 @@ public class S3ZstdStreamStore implements StreamStore {
         this.metaService = metaService;
 //        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
 //        this.s3ClientPool = s3ClientPool;
         this.zstdSeekTableCache = zstdSeekTableCache;
         this.heapBufferPool = heapBufferPool;
@@ -118,6 +125,7 @@ public class S3ZstdStreamStore implements StreamStore {
                 this,
                 s3Manager,
                 s3StreamTypeExtensions,
+                s3MetaFieldsMapper,
                 heapBufferPool,
                 tempDir,
                 dataVolume,
@@ -157,13 +165,26 @@ public class S3ZstdStreamStore implements StreamStore {
                 meta,
                 dataVolume,
                 s3StreamTypeExtensions,
+                s3MetaFieldsMapper,
                 executorProvider);
+    }
+
+    @Override
+    public FsVolumeType getVolumeType() {
+        return FsVolumeType.S3_V2;
     }
 
     @Override
     public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
         // TODO
         throw new UnsupportedOperationException("TODO");
+    }
+
+    @Override
+    public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
+                                                  final DataVolume dataVolume,
+                                                  final Progress progress) {
+        return null;
     }
 
     /**

@@ -16,8 +16,9 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
+import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
 import stroom.aws.s3.impl.S3Manager;
-import stroom.aws.s3.impl.S3Manager.S3ObjectInfo;
+import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -32,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import org.jspecify.annotations.NonNull;
 
@@ -44,6 +46,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -57,6 +60,15 @@ import java.util.stream.Stream;
 final class S3ZstdSource implements Source {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdSource.class);
+    static final String MANIFEST_METADATA_KEY_PREFIX = "mf-";
+    static final int MANIFEST_METADATA_KEY_PREFIX_LENGTH = MANIFEST_METADATA_KEY_PREFIX.length();
+
+    static {
+        if (!Objects.equals(MANIFEST_METADATA_KEY_PREFIX, MANIFEST_METADATA_KEY_PREFIX.toLowerCase())) {
+            // This is because of use of CIKey.startsWithLowerCase
+            throw new IllegalStateException("Expecting MANIFEST_METADATA_KEY_PREFIX to be lower case");
+        }
+    }
 
     private final Map<Long, S3InputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
@@ -67,6 +79,7 @@ final class S3ZstdSource implements Source {
     private final S3ZstdStreamStore s3ZstdStreamStore;
     private final Meta meta;
     private final DataVolume dataVolume;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     /**
      * The {@link FileKey} of the main stream type
      */
@@ -85,6 +98,7 @@ final class S3ZstdSource implements Source {
                         final Meta meta,
                         final DataVolume dataVolume,
                         final S3StreamTypeExtensions s3StreamTypeExtensions,
+                        final S3MetaFieldsMapper s3MetaFieldsMapper,
                         final ExecutorProvider executorProvider) {
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
         this.executorProvider = executorProvider;
@@ -99,6 +113,7 @@ final class S3ZstdSource implements Source {
 //        this.counts = countTypes();
         this.parentFileKey = FileKey.of(dataVolume, meta);
         this.parentS3Key = s3StreamTypeExtensions.getkey(parentFileKey);
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
     }
 
     @Override
@@ -137,7 +152,7 @@ final class S3ZstdSource implements Source {
     private void readManifest(final AttributeMap attributeMap) {
         LOGGER.debug("readManifest() - attributeMap: {}", attributeMap);
         final S3ObjectInfo objectInfo = s3Manager.getObjectInfo(meta, parentS3Key);
-        final AttributeMap manifest = objectInfo.manifest();
+        final AttributeMap manifest = readManifest(objectInfo.s3Metadata());
         LOGGER.debug("readManifest() - manifest: {}", manifest);
         attributeMap.putAll(manifest);
 
@@ -153,6 +168,39 @@ final class S3ZstdSource implements Source {
             }
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private AttributeMap readManifest(final Map<CIKey, String> metadata) {
+        if (NullSafe.hasEntries(metadata)) {
+            return new AttributeMap(metadata.entrySet()
+                    .stream()
+                    .map(entry -> {
+                        CIKey key = S3Manager.removeAwsPrefix(entry.getKey());
+                        final String value = entry.getValue();
+                        key = S3Manager.removeAwsPrefix(key);
+                        if (key.startsWithLowerCase(MANIFEST_METADATA_KEY_PREFIX)) {
+                            key = key.substring(MANIFEST_METADATA_KEY_PREFIX_LENGTH);
+                            final CIKey originalCiKey = s3MetaFieldsMapper.getOriginalKey(key)
+                                    .orElse(null);
+                            if (originalCiKey == null) {
+                                // TODO how do we handle un-reversable keys??
+                                LOGGER.warn("readManifest() - Unknown manifest key '{}' with value '{}'",
+                                        key, value);
+                            } else {
+                                key = originalCiKey;
+                            }
+                            return Map.entry(key, value);
+                        } else {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(
+                            entry -> entry.getKey().get(),
+                            Entry::getValue)));
+        } else {
+            return new AttributeMap();
         }
     }
 

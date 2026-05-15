@@ -50,5 +50,8 @@ public interface Target extends Closeable {
      */
     OutputStreamProvider next();
 
+    /**
+     * Logically delete this target, i.e. mark the associated meta record as DELETED
+     */
     void logicallyDelete();
 }

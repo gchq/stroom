@@ -530,10 +530,20 @@ public final class LogUtil {
                 : null;
     }
 
+    /**
+     * Null-safe way to get the class simple name of an object.
+     *
+     * @return Class simple name or null if obj is null.
+     */
     public static String getSimpleClassName(final Object obj) {
         return NullSafe.get(obj, Object::getClass, Class::getSimpleName);
     }
 
+    /**
+     * Null-safe way to get the class name of an object.
+     *
+     * @return Class name or null if obj is null.
+     */
     public static String getClassName(final Object obj) {
         return NullSafe.get(obj, Object::getClass, Class::getName);
     }

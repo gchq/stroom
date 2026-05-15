@@ -21,21 +21,33 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.standard.FsFileDeleter;
 import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.data.store.impl.fs.standard.FsSource;
 import stroom.data.store.impl.fs.standard.FsTarget;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A file system stream store.
@@ -51,13 +63,15 @@ class FsStreamStore implements StreamStore {
     //    private final FsVolumeService volumeService;
 //    private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
+    private final FsFileDeleter fsFileDeleter;
 //    private final S3Store s3Store;
 //    private final S3ZstdStore s3ZstdStore;
 
     @Inject
     FsStreamStore(final FsPathHelper fileSystemStreamPathHelper,
                   final MetaService metaService,
-                  final PathCreator pathCreator) {
+                  final PathCreator pathCreator,
+                  final FsFileDeleter fsFileDeleter) {
 
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
@@ -66,6 +80,7 @@ class FsStreamStore implements StreamStore {
         this.pathCreator = pathCreator;
 //        this.s3Store = s3Store;
 //        this.s3ZstdStore = s3ZstdStore;
+        this.fsFileDeleter = fsFileDeleter;
     }
 
 //    @Override
@@ -194,10 +209,117 @@ class FsStreamStore implements StreamStore {
     }
 
     @Override
+    public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
+                                                  final DataVolume dataVolume,
+                                                  final Progress progress) {
+        Objects.requireNonNull(simpleMeta);
+        Objects.requireNonNull(dataVolume);
+        if (FsVolumeType.STANDARD != dataVolume.getVolumeType()) {
+            throw new IllegalArgumentException("Volume type must be " + FsVolumeType.STANDARD);
+        }
+
+        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
+        final Path file = fileSystemStreamPathHelper.getRootPath(
+                volumePath,
+                simpleMeta,
+                simpleMeta.getTypeName());
+        final Path dir = file.getParent();
+        String baseName = file.getFileName().toString();
+        baseName = baseName.substring(0, baseName.indexOf("."));
+
+        final boolean isSuccessful;
+        if (Files.isDirectory(dir)) {
+            isSuccessful = fsFileDeleter.deleteFilesByBaseName(
+                    simpleMeta.getId(),
+                    dir,
+                    baseName,
+                    progress::addFileDeletes);
+        } else {
+            isSuccessful = true;
+            LOGGER.warn(() -> LogUtil.message(
+                    "{} - Directory '{}' does not exist for meta {}",
+                    PhysicalDeleteExecutor.TASK_NAME, FileUtil.getCanonicalPath(dir), simpleMeta));
+        }
+
+        return new FsPhysicalDeleteOutcome(
+                simpleMeta,
+                dataVolume,
+                isSuccessful,
+                volumePath,
+                dir);
+    }
+
+    @Override
+    public void clean(final List<PhysicalDeleteOutcome> ignoredPhysicalDeleteOutcomes,
+                      final Instant deleteThreshold,
+                      final Progress progress) {
+
+        final List<PhysicalDeleteOutcome> successfulOutcomes = NullSafe.stream(ignoredPhysicalDeleteOutcomes)
+                .filter(PhysicalDeleteOutcome::wasSuccessful)
+                .toList();
+
+        final AtomicLong deleteCount = new AtomicLong();
+        successfulOutcomes.stream()
+                .filter(outcome -> outcome instanceof FsPhysicalDeleteOutcome)
+                .map(outcome -> (FsPhysicalDeleteOutcome) outcome)
+                .forEach(outcome ->
+                        fsFileDeleter.tryDeleteDir(
+                                outcome.rootDir,
+                                outcome.dir,
+                                deleteThreshold.toEpochMilli(),
+                                count -> {
+                                    deleteCount.addAndGet(count);
+                                    progress.addDirDeletes(count);
+                                }));
+
+        LOGGER.debug(() -> LogUtil.message(
+                "{} - Deleted {} empty directories for {} meta IDs",
+                PhysicalDeleteExecutor.TASK_NAME, deleteCount, successfulOutcomes.size()));
+    }
+
+    @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
         final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
         final FsSource fsSource = FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
         LOGGER.debug("openSource() - meta: {}, dataVolume: {}, fsSource: {}", meta, dataVolume, fsSource);
         return fsSource;
+    }
+
+    @Override
+    public FsVolumeType getVolumeType() {
+        return FsVolumeType.STANDARD;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record FsPhysicalDeleteOutcome(SimpleMeta simpleMeta,
+                                   DataVolume dataVolume,
+                                   boolean wasSuccessful,
+                                   Path rootDir,
+                                   Path dir) implements PhysicalDeleteOutcome {
+
+        FsPhysicalDeleteOutcome {
+            Objects.requireNonNull(simpleMeta);
+            Objects.requireNonNull(dataVolume);
+            Objects.requireNonNull(rootDir);
+            Objects.requireNonNull(dir);
+        }
+
+        @Override
+        public boolean wasSuccessful() {
+            return wasSuccessful;
+        }
+
+        @Override
+        public DataVolume dataVolume() {
+            return dataVolume;
+        }
+
+        @Override
+        public SimpleMeta simpleMeta() {
+            return simpleMeta;
+        }
     }
 }

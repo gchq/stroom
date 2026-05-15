@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -36,6 +37,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -67,6 +69,7 @@ public final class S3ZstdTarget implements Target {
     private final S3ZstdStreamStore s3ZstdStreamStore;
     private final S3Manager s3Manager;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final HeapBufferPool heapBufferPool;
     private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
@@ -99,12 +102,14 @@ public final class S3ZstdTarget implements Target {
                          final S3ZstdStreamStore s3ZstdStreamStore,
                          final S3Manager s3Manager,
                          final S3StreamTypeExtensions s3StreamTypeExtensions,
+                         final S3MetaFieldsMapper s3MetaFieldsMapper,
                          final HeapBufferPool heapBufferPool,
                          final Path tempDir,
                          final DataVolume dataVolume,
                          final Meta meta,
                          final S3ZstdTarget parentTarget,
                          final String childStreamType) {
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.heapBufferPool = heapBufferPool;
         this.dataVolume = dataVolume;
         this.metaService = metaService;
@@ -131,6 +136,7 @@ public final class S3ZstdTarget implements Target {
                                final S3ZstdStreamStore s3ZstdStreamStore,
                                final S3Manager s3Manager,
                                final S3StreamTypeExtensions s3StreamTypeExtensions,
+                               final S3MetaFieldsMapper s3MetaFieldsMapper,
                                final HeapBufferPool heapBufferPool,
                                final Path tempDir,
                                final DataVolume dataVolume,
@@ -140,12 +146,12 @@ public final class S3ZstdTarget implements Target {
                 s3ZstdStreamStore,
                 s3Manager,
                 s3StreamTypeExtensions,
+                s3MetaFieldsMapper,
                 heapBufferPool,
                 tempDir,
                 dataVolume,
                 meta,
-                null,
-                null);
+                null, null);
     }
 
     @Override
@@ -364,7 +370,24 @@ public final class S3ZstdTarget implements Target {
 
     private AttributeMap uploadFile() {
         final AttributeMap attributeMap = getAttributes();
-        s3Manager.upload(s3Bucket, s3Key, meta, attributeMap, tempFilePath);
+
+        final Map<CIKey, String> s3MetaData = new HashMap<>(attributeMap.size());
+        attributeMap.forEach((key, value) -> {
+            CIKey ciKey = CIKey.of(key);
+            ciKey = s3MetaFieldsMapper.getS3Key(ciKey)
+                    .orElse(null);
+            if (ciKey != null) {
+                // Prefix key with mf- to distinguish it from .meta that is put in the s3MetaData (with 'meta-').
+                // Pretty sure we don't need to also prefix with x-amz-meta- as the SDK should do
+                // transparently
+                ciKey = CIKey.ofDynamicKey(S3ZstdSource.MANIFEST_METADATA_KEY_PREFIX + ciKey.getAsLowerCase());
+                s3MetaData.put(ciKey, value);
+            } else {
+                LOGGER.warn("Unknown manifest key '{}'", key);
+            }
+        });
+
+        s3Manager.upload(s3Bucket, s3Key, meta, s3MetaData, tempFilePath);
         LOGGER.debug("close() - Uploaded fileKey: {}, tempFilePath: {}, s3Bucket: {}, " +
                      "s3Key: {}, attributeMap: {}",
                 fileKey, tempFilePath, s3Bucket, s3Key, attributeMap);
@@ -497,6 +520,7 @@ public final class S3ZstdTarget implements Target {
                 s3ZstdStreamStore,
                 s3Manager,
                 s3StreamTypeExtensions,
+                s3MetaFieldsMapper,
                 heapBufferPool,
                 tempDir,
                 dataVolume,

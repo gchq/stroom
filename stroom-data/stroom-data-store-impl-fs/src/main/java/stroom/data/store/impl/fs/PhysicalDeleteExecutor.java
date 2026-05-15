@@ -18,10 +18,9 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.StreamStore.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.s3v2.ZstdDictionaryTaskDao;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.standard.FsFileDeleter;
-import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.SimpleMeta;
@@ -30,10 +29,9 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.concurrent.DurationAdder;
 import stroom.util.concurrent.WorkQueue;
-import stroom.util.io.FileUtil;
-import stroom.util.io.PathCreator;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -45,28 +43,20 @@ import stroom.util.time.TimeUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -79,48 +69,34 @@ public class PhysicalDeleteExecutor {
 
     private final ClusterLockService clusterLockService;
     private final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider;
-    private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
     private final PhysicalDelete physicalDelete;
     private final DataVolumeDao dataVolumeDao;
     private final ZstdDictionaryTaskDao zstdDictionaryTaskDao;
     private final TaskContextFactory taskContextFactory;
     private final ExecutorProvider executorProvider;
-    private final FsFileDeleter fsFileDeleter;
-    private final PathCreator pathCreator;
-
-    private final Map<FsVolumeType, AtomicBoolean> volumeTypeToHaveWarnedMap;
+    private final Map<FsVolumeType, StreamStore> streamStoreMap;
 
     @Inject
     PhysicalDeleteExecutor(
             final ClusterLockService clusterLockService,
             final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider,
-            final FsPathHelper fileSystemStreamPathHelper,
             final MetaService metaService,
             final PhysicalDelete physicalDelete,
             final DataVolumeDao dataVolumeDao,
             final ZstdDictionaryTaskDao zstdDictionaryTaskDao,
             final TaskContextFactory taskContextFactory,
             final ExecutorProvider executorProvider,
-            final FsFileDeleter fsFileDeleter,
-            final PathCreator pathCreator) {
+            final Map<FsVolumeType, StreamStore> streamStoreMap) {
         this.clusterLockService = clusterLockService;
         this.dataStoreServiceConfigProvider = dataStoreServiceConfigProvider;
-        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.physicalDelete = physicalDelete;
         this.dataVolumeDao = dataVolumeDao;
         this.zstdDictionaryTaskDao = zstdDictionaryTaskDao;
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
-        this.fsFileDeleter = fsFileDeleter;
-        this.pathCreator = pathCreator;
-        this.volumeTypeToHaveWarnedMap = Collections.unmodifiableMap(new EnumMap<>(
-                Arrays.stream(FsVolumeType.values())
-                        .collect(Collectors.toMap(
-                                Function.identity(),
-                                ignored -> new AtomicBoolean(false)))));
-
+        this.streamStoreMap = streamStoreMap;
     }
 
     public void exec() {
@@ -291,26 +267,32 @@ public class PhysicalDeleteExecutor {
         Set<SimpleMeta> failedMetasSet = null;
         try {
             final Map<Path, Path> dirToVolPathMap = new ConcurrentHashMap<>(); // dir => volumePath
+            final Set<PhysicalDeleteOutcome> physicalDeleteOutcomes = ConcurrentHashMap.newKeySet();
 
             // Delete all the files associated with simpleMetas
-            final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = deleteMetaFiles(
+            deleteMetaFiles(
                     taskContext,
                     simpleMetas,
                     workQueue,
                     progress,
-                    dirToVolPathMap);
+                    physicalDeleteOutcomes);
 
             if (!progress.hasBreachedThreshold()) {
                 // Remove any empty directories (including their ancestors, but not the root volumePath)
 
-                deleteEmptyDirs(simpleMetas, deleteThresholdEpoch, progress, dirToVolPathMap);
+                deleteEmptyDirs(deleteThresholdEpoch, progress, physicalDeleteOutcomes);
 
                 if (Thread.interrupted()) {
                     throw new InterruptedException();
                 }
 
-                final Set<Long> successfulMetaIdSet = new HashSet<>(successfulMetaIdDeleteQueue.size());
-                successfulMetaIdDeleteQueue.drainTo(successfulMetaIdSet);
+                final Set<Long> successfulMetaIdSet = physicalDeleteOutcomes.stream()
+                        .filter(PhysicalDeleteOutcome::wasSuccessful)
+                        .map(PhysicalDeleteOutcome::simpleMeta)
+                        .map(SimpleMeta::getId)
+                        .collect(Collectors.toSet());
+//                final Set<Long> successfulMetaIdSet = new HashSet<>(successfulMetaIdDeleteQueue.size());
+//                successfulMetaIdDeleteQueue.drainTo(successfulMetaIdSet);
                 final int successCount = successfulMetaIdSet.size();
 
                 failedMetasSet = simpleMetas.stream()
@@ -333,22 +315,31 @@ public class PhysicalDeleteExecutor {
         return NullSafe.set(failedMetasSet);
     }
 
-    private void deleteEmptyDirs(final List<SimpleMeta> simpleMetas,
-                                 final Instant deleteThresholdEpoch,
+    private void deleteEmptyDirs(final Instant deleteThresholdEpoch,
                                  final Progress progress,
-                                 final Map<Path, Path> dirToVolPathMap) {
+                                 final Set<PhysicalDeleteOutcome> physicalDeleteOutcomes) {
+
         final DurationTimer dirDeletionTimer = DurationTimer.start();
-        dirToVolPathMap.forEach((dir, volumePath) ->
-                fsFileDeleter.tryDeleteDir(
-                        volumePath,
-                        dir,
-                        deleteThresholdEpoch.toEpochMilli(),
-                        progress::addDirDeletes));
+        final Map<FsVolumeType, List<PhysicalDeleteOutcome>> successfulOutcomesByType = NullSafe.stream(
+                        physicalDeleteOutcomes)
+                .filter(PhysicalDeleteOutcome::wasSuccessful)
+                .collect(Collectors.groupingBy(
+                        outcome -> outcome.dataVolume().getVolumeType()));
+
+        successfulOutcomesByType.forEach((fsVolumeType, outcomes) -> {
+            final StreamStore streamStore = getStreamStore(fsVolumeType);
+            streamStore.clean(outcomes, deleteThresholdEpoch, progress);
+            LOGGER.debug(() -> LogUtil.message("{} - Cleaned storefsVolumeType: {}, successfulOutcomes: {}",
+                    TASK_NAME, fsVolumeType, outcomes.size()));
+        });
 
         progress.addDirDeletionDuration(dirDeletionTimer);
         LOGGER.debug(() -> LogUtil.message(
-                "{} - Deleted any empty directories for {} directories, {} meta IDs in {}",
-                TASK_NAME, dirToVolPathMap.size(), simpleMetas.size(), dirDeletionTimer));
+                "{} - Deleted {} empty directories for {} meta IDs in {}",
+                TASK_NAME,
+                progress.getDirDeleteCount(),
+                CollectionUtil.sumValueSizes(successfulOutcomesByType),
+                dirDeletionTimer));
     }
 
     private void deleteMetaRecords(final Progress progress,
@@ -389,14 +380,14 @@ public class PhysicalDeleteExecutor {
                 TASK_NAME, volCount, successfulMetaIdSet.size(), volDeleteTimer.get()));
     }
 
-    private LinkedBlockingQueue<Long> deleteMetaFiles(
+    private void deleteMetaFiles(
             final TaskContext taskContext,
             final List<SimpleMeta> simpleMetas,
             final WorkQueue workQueue,
             final Progress progress,
-            final Map<Path, Path> dirToVolPathMap) throws InterruptedException {
+            final Set<PhysicalDeleteOutcome> physicalDeleteOutcomes) throws InterruptedException {
+        LOGGER.debug(() -> LogUtil.message("{} - simpleMetas.size: {}", TASK_NAME, simpleMetas.size()));
 
-        final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = new LinkedBlockingQueue<>();
         final DurationTimer durationTimer = DurationTimer.start();
 
         // Delete all matching files with concurrent threads working on a simpleMeta at a time
@@ -408,9 +399,8 @@ public class PhysicalDeleteExecutor {
             final Runnable runnable = deleteFiles(
                     simpleMeta,
                     taskContext,
-                    successfulMetaIdDeleteQueue,
-                    progress,
-                    dirToVolPathMap);
+                    physicalDeleteOutcomes,
+                    progress);
 
             workQueue.exec(runnable);
         }
@@ -430,20 +420,18 @@ public class PhysicalDeleteExecutor {
         if (Thread.interrupted()) {
             throw new InterruptedException();
         }
-        return successfulMetaIdDeleteQueue;
     }
 
     private Runnable deleteFiles(final SimpleMeta simpleMeta,
                                  final TaskContext parentTaskContext,
-                                 final Queue<Long> successfulMetaIdDeleteQueue,
-                                 final Progress progress,
-                                 final Map<Path, Path> dirToVolPathMap) {
+                                 final Set<PhysicalDeleteOutcome> physicalDeleteOutcomes,
+                                 final Progress progress) {
 
         final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
         return taskContextFactory.childContext(
                 parentTaskContext,
                 "Deleting files",
-                taskContext -> {
+                ignored -> {
                     try {
                         if (Thread.interrupted()) {
                             throw new InterruptedException();
@@ -473,49 +461,56 @@ public class PhysicalDeleteExecutor {
                                 isSuccessful = true;
                             } else {
                                 final FsVolumeType volumeType = dataVolume.volume().getVolumeType();
-                                switch (volumeType) {
-                                    case STANDARD -> {
-                                        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
-                                        final Path file = fileSystemStreamPathHelper.getRootPath(
-                                                volumePath,
-                                                simpleMeta,
-                                                simpleMeta.getTypeName());
-                                        final Path dir = file.getParent();
-                                        String baseName = file.getFileName().toString();
-                                        baseName = baseName.substring(0, baseName.indexOf("."));
+                                final StreamStore streamStore = getStreamStore(volumeType);
+                                final PhysicalDeleteOutcome outcome = streamStore.physicallyDelete(
+                                        simpleMeta,
+                                        dataVolume,
+                                        progress);
+                                physicalDeleteOutcomes.add(outcome);
+                                isSuccessful = outcome.wasSuccessful();
 
-                                        if (Files.isDirectory(dir)) {
-                                            isSuccessful = fsFileDeleter.deleteFilesByBaseName(
-                                                    simpleMeta.getId(), dir, baseName, progress::addFileDeletes);
-
-                                            dirToVolPathMap.put(dir, volumePath);
-                                        } else {
-                                            isSuccessful = true;
-                                            LOGGER.warn(() -> LogUtil.message(
-                                                    "{} - Directory '{}' does not exist for meta {}",
-                                                    TASK_NAME, FileUtil.getCanonicalPath(dir), simpleMeta));
-                                        }
-                                    }
-                                    case S3_V1 -> {
-                                        // FIXME: Add something.
-                                        warnAboutUnsupportedType(volumeType);
-                                        isSuccessful = false;
-                                    }
-                                    case S3_V2 -> {
-                                        // FIXME: Add something.
-                                        warnAboutUnsupportedType(volumeType);
-                                        isSuccessful = false;
-                                    }
-                                    default -> {
-                                        warnAboutUnsupportedType(volumeType);
-                                        isSuccessful = false;
-                                    }
-                                }
+//                                switch (volumeType) {
+//                                    case STANDARD -> {
+//                                        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
+//                                        final Path file = fileSystemStreamPathHelper.getRootPath(
+//                                                volumePath,
+//                                                simpleMeta,
+//                                                simpleMeta.getTypeName());
+//                                        final Path dir = file.getParent();
+//                                        String baseName = file.getFileName().toString();
+//                                        baseName = baseName.substring(0, baseName.indexOf("."));
+//
+//                                        if (Files.isDirectory(dir)) {
+//                                            isSuccessful = fsFileDeleter.deleteFilesByBaseName(
+//                                                    simpleMeta.getId(), dir, baseName, progress::addFileDeletes);
+//
+//                                            dirToVolPathMap.put(dir, volumePath);
+//                                        } else {
+//                                            isSuccessful = true;
+//                                            LOGGER.warn(() -> LogUtil.message(
+//                                                    "{} - Directory '{}' does not exist for meta {}",
+//                                                    TASK_NAME, FileUtil.getCanonicalPath(dir), simpleMeta));
+//                                        }
+//                                    }
+//                                    case S3_V1 -> {
+//                                        // FIXME: Add something.
+//                                        warnAboutUnsupportedType(volumeType);
+//                                        isSuccessful = false;
+//                                    }
+//                                    case S3_V2 -> {
+//                                        // FIXME: Add something.
+//                                        warnAboutUnsupportedType(volumeType);
+//                                        isSuccessful = false;
+//                                    }
+//                                    default -> {
+//                                        warnAboutUnsupportedType(volumeType);
+//                                        isSuccessful = false;
+//                                    }
+//                                }
                             }
-
-                            if (isSuccessful) {
-                                successfulMetaIdDeleteQueue.add(simpleMeta.getId());
-                            }
+//                            if (isSuccessful) {
+//                                successfulMetaIdDeleteQueue.add(simpleMeta.getId());
+//                            }
                             progress.recordMetaFileDeleteSuccess(isSuccessful);
                         }
                     } catch (final InterruptedException e) {
@@ -524,16 +519,6 @@ public class PhysicalDeleteExecutor {
                         Thread.currentThread().interrupt();
                     }
                 });
-    }
-
-    private void warnAboutUnsupportedType(final FsVolumeType volumeType) {
-        if (volumeType != null) {
-            final AtomicBoolean haveWarned = volumeTypeToHaveWarnedMap.get(volumeType);
-            // Only warn once per run for each unsupported type
-            if (haveWarned.compareAndSet(false, true)) {
-                LOGGER.warn("{} is not currently supported for volume type {}", TASK_NAME, volumeType);
-            }
-        }
     }
 
     private void info(final Supplier<String> message) {
@@ -561,11 +546,23 @@ public class PhysicalDeleteExecutor {
                 });
     }
 
+    private StreamStore getStreamStore(final FsVolumeType fsVolumeType) {
+        Objects.requireNonNull(fsVolumeType, "FsVolumeType must not be null");
+        final StreamStore streamStore = streamStoreMap.get(fsVolumeType);
+        LOGGER.debug(() -> LogUtil.message(
+                "getStreamStore() - fsVolumeType: {}, streamStore: {}",
+                fsVolumeType, LogUtil.typedValue(streamStore)));
+        if (streamStore == null) {
+            throw new IllegalArgumentException("No StreamStore for " + fsVolumeType);
+        }
+        return streamStore;
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    static final class Progress {
+    public static final class Progress {
 
         private final DataStoreServiceConfig dataStoreServiceConfig;
         private final int failureThreshold;

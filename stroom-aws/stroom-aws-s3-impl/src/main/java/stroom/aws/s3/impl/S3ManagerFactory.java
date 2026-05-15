@@ -16,6 +16,8 @@
 
 package stroom.aws.s3.impl;
 
+import stroom.aws.s3.client.S3ClientHelper;
+import stroom.aws.s3.client.S3ClientPool;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.TemplateCache;
 import stroom.docref.DocRef;
@@ -46,7 +48,8 @@ public class S3ManagerFactory {
 
     public S3Manager createS3Manager(final S3ClientConfig s3ClientConfig) {
         LOGGER.debug("createS3Manager() - s3ClientConfig: {}", s3ClientConfig);
-        return new S3Manager(templateCache, s3ClientConfig, s3MetaFieldsMapper, s3ClientPool);
+        final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
+        return new S3Manager(templateCache, s3ClientConfig, s3MetaFieldsMapper, s3ClientHelper);
     }
 
     public S3Manager createS3Manager(final DocRef s3ConfigRef) {

@@ -234,7 +234,7 @@ class TestTemplateUtil {
                 "${foo}__${year}/${year}-${month}/${year}-${month}-${day}/${hour}:${minute}:${second}.${millis}";
         final Template templator = TemplateUtil.parseTemplate(templateStr);
         final String output = templator.buildExecutor()
-                .addStandardTimeReplacements(zonedDateTime)
+                .addStandardTimeReplacements(() -> zonedDateTime)
                 .execute();
         assertThat(output)
                 .isEqualTo("__2018/2018-08/2018-08-20/13:17:22.123");

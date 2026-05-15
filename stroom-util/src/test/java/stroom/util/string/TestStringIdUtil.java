@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,23 @@ public class TestStringIdUtil {
                 .addCase(99999L, 6)
                 .addCase(100000L, 6)
                 .addCase(999999L, 6)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetIdPath() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(long.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(StringIdUtil::getIdPath)
+                .withSimpleEqualityAssertion()
+                .addCase(0L, "")
+                .addCase(1L, "")
+                .addCase(999L, "")
+                .addCase(4_321L, "004")
+                .addCase(987_654_321L, "987/654")
+                .addCase(999_999_999_001L, "999/999/999")
+                .addCase(999_999_999_999L, "999/999/999")
                 .build();
     }
 }

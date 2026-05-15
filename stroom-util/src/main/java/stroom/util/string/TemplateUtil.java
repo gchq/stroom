@@ -16,6 +16,7 @@
 
 package stroom.util.string;
 
+import stroom.util.concurrent.LazyValue;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.SimplePathCreator;
@@ -47,6 +48,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
 public class TemplateUtil {
@@ -471,9 +473,11 @@ public class TemplateUtil {
          *     <li>{@code ${ms}} =>  milliseconds seconds since the unix epoch, not padded</li>
          * </ol>
          *
-         * @param zonedDateTime The time to use for all replacements.
+         * @param zonedDateTimeSupplier If any time variables are present in the template, this supplier
+         *                              will be called at most once to provide a consistent replacement time
+         *                              for all replacements.
          */
-        ExecutorBuilder addStandardTimeReplacements(ZonedDateTime zonedDateTime);
+        ExecutorBuilder addStandardTimeReplacements(Supplier<ZonedDateTime> zonedDateTimeSupplier);
 
         /**
          * Add a replacement for {@code ${uuid}} with a randomly generated UUID.
@@ -581,7 +585,7 @@ public class TemplateUtil {
         }
 
         @Override
-        public ExecutorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
+        public ExecutorBuilder addStandardTimeReplacements(final Supplier<ZonedDateTime> zonedDateTimeSupplier) {
             // Template is all static text so this is a no-op
             return this;
         }
@@ -717,23 +721,33 @@ public class TemplateUtil {
 
         @Override
         public ExecutorBuilder addStandardTimeReplacements() {
-            addStandardTimeReplacements(ZonedDateTime.now(ZoneOffset.UTC));
+            addStandardTimeReplacements(() -> ZonedDateTime.now(ZoneOffset.UTC));
             return this;
         }
 
         @Override
-        public ExecutorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
+        public ExecutorBuilder addStandardTimeReplacements(final Supplier<ZonedDateTime> zonedDateTimeSupplier) {
             final Set<CIKey> varsInTemplate = template.getVarsInTemplate();
+            final LazyValue<ZonedDateTime> lazyTime = LazyValue.initialisedBy(zonedDateTimeSupplier);
 
-            addTimeReplacement(YEAR_VAR, varsInTemplate, zonedDateTime::getYear, 4);
-            addTimeReplacement(MONTH_VAR, varsInTemplate, zonedDateTime::getMonthValue, 2);
-            addTimeReplacement(DAY_VAR, varsInTemplate, zonedDateTime::getDayOfMonth, 2);
-            addTimeReplacement(HOUR_VAR, varsInTemplate, zonedDateTime::getHour, 2);
-            addTimeReplacement(MINUTE_VAR, varsInTemplate, zonedDateTime::getMinute, 2);
-            addTimeReplacement(SECOND_VAR, varsInTemplate, zonedDateTime::getSecond, 2);
-            addTimeReplacement(MILLIS_VAR, varsInTemplate, () ->
-                    zonedDateTime.getLong(ChronoField.MILLI_OF_SECOND), 3);
-            addTimeReplacement(MS_VAR, varsInTemplate, () -> zonedDateTime.toInstant().toEpochMilli(), 3);
+            addTimeReplacement(YEAR_VAR, varsInTemplate, lazyTime, ZonedDateTime::getYear, 4);
+            addTimeReplacement(MONTH_VAR, varsInTemplate, lazyTime, ZonedDateTime::getMonthValue, 2);
+            addTimeReplacement(DAY_VAR, varsInTemplate, lazyTime, ZonedDateTime::getDayOfMonth, 2);
+            addTimeReplacement(HOUR_VAR, varsInTemplate, lazyTime, ZonedDateTime::getHour, 2);
+            addTimeReplacement(MINUTE_VAR, varsInTemplate, lazyTime, ZonedDateTime::getMinute, 2);
+            addTimeReplacement(SECOND_VAR, varsInTemplate, lazyTime, ZonedDateTime::getSecond, 2);
+            addTimeReplacement(MILLIS_VAR,
+                    varsInTemplate,
+                    lazyTime,
+                    time ->
+                            time.getLong(ChronoField.MILLI_OF_SECOND),
+                    3);
+            addTimeReplacement(
+                    MS_VAR,
+                    varsInTemplate,
+                    lazyTime,
+                    time -> time.toInstant().toEpochMilli(),
+                    3);
             return this;
         }
 
@@ -868,6 +882,24 @@ public class TemplateUtil {
             if (varsInTemplate.contains(var)) {
                 final ReplacementProvider stringReplacementSupplier = ignored -> {
                     String value = String.valueOf(valueSupplier.getAsLong());
+                    if (pad > 0) {
+                        value = Strings.padStart(value, pad, '0');
+                    }
+                    return value;
+                };
+                varToReplacementProviderMap.put(var, stringReplacementSupplier);
+            }
+        }
+
+        private void addTimeReplacement(final CIKey var,
+                                        final Set<CIKey> varsInTemplate,
+                                        final LazyValue<ZonedDateTime> timeSupplier,
+                                        final ToLongFunction<ZonedDateTime> getter,
+                                        final int pad) {
+            if (varsInTemplate.contains(var)) {
+                final ReplacementProvider stringReplacementSupplier = ignored -> {
+                    final ZonedDateTime time = timeSupplier.getValueWithoutLocks();
+                    String value = String.valueOf(getter.applyAsLong(time));
                     if (pad > 0) {
                         value = Strings.padStart(value, pad, '0');
                     }

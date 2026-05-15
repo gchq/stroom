@@ -21,9 +21,14 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 
+import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Interface for the various implementations of Stream Store, i.e. traditional FS, S3, etc.
@@ -37,10 +42,24 @@ public interface StreamStore {
      */
     Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException;
 
+    void physicallyDelete(final Collection<DataVolume> dataVolumes);
+
     /**
      * Physically delete streams.
      */
-    void physicallyDelete(final Collection<DataVolume> dataVolumes);
+    PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
+                                           final DataVolume dataVolume,
+                                           final Progress progress);
+
+    /**
+     * After physicallyDelete is run, implementations may need to do clean up operations, e.g. removing
+     * empty directories.
+     */
+    default void clean(final List<PhysicalDeleteOutcome> ignoredPhysicalDeleteOutcomes,
+                       final Instant deleteThreshold,
+                       final Progress progress) {
+        // no-op
+    }
 
     /**
      * <p>
@@ -54,4 +73,19 @@ public interface StreamStore {
      *                       existent.
      */
     Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException;
+
+    FsVolumeType getVolumeType();
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface PhysicalDeleteOutcome {
+
+        boolean wasSuccessful();
+
+        DataVolume dataVolume();
+
+        SimpleMeta simpleMeta();
+    }
 }

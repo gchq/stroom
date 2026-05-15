@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.impl;
-
+package stroom.aws.s3.client;
 
 import stroom.aws.s3.shared.AwsAssumeRole;
 import stroom.aws.s3.shared.AwsAssumeRoleClientConfig;
@@ -174,15 +173,11 @@ public class S3ClientPoolImpl implements S3ClientPool {
     }
 
     private URI createUri(final String uri) {
-        return NullSafe.isNonBlankString(uri)
-                ? URI.create(uri)
-                : null;
+        return NullSafe.mapNonBlankString(uri, URI::create);
     }
 
     private Region createRegion(final String region) {
-        return NullSafe.isNonBlankString(region)
-                ? Region.of(region)
-                : null;
+        return NullSafe.mapNonBlankString(region, Region::of);
     }
 
     private S3CrtHttpConfiguration createHttpConfiguration(final AwsHttpConfig awsHttpConfig) {
@@ -316,7 +311,7 @@ public class S3ClientPoolImpl implements S3ClientPool {
 
         if (awsCredentials != null) {
             switch (awsCredentials) {
-                case final stroom.aws.s3.shared.AwsAnonymousCredentials awsAnonymousCredentials -> {
+                case final stroom.aws.s3.shared.AwsAnonymousCredentials ignored -> {
                     LOGGER.debug("Using AWS anonymous credentials");
                     return AnonymousCredentialsProvider.create();
                 }
@@ -327,11 +322,11 @@ public class S3ClientPoolImpl implements S3ClientPool {
                     return StaticCredentialsProvider.create(credentials);
 
                 }
-                case final stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
+                case final stroom.aws.s3.shared.AwsDefaultCredentials ignored -> {
                     LOGGER.debug("Using AWS default credentials");
                     return DefaultCredentialsProvider.builder().build();
                 }
-                case final stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
+                case final stroom.aws.s3.shared.AwsEnvironmentVariableCredentials ignored -> {
                     LOGGER.debug("Using AWS environment variable credentials");
                     return EnvironmentVariableCredentialsProvider.create();
                 }
@@ -361,7 +356,7 @@ public class S3ClientPoolImpl implements S3ClientPool {
                     return StaticCredentialsProvider.create(credentials);
 
                 }
-                case final stroom.aws.s3.shared.AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
+                case final stroom.aws.s3.shared.AwsSystemPropertyCredentials ignored -> {
                     LOGGER.debug("Using AWS system property credentials");
                     return SystemPropertyCredentialsProvider.create();
                 }

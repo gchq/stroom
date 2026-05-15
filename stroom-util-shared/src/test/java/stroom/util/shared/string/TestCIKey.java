@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -453,6 +453,90 @@ public class TestCIKey {
                 .addCase(Tuple.of("FOO", "oo"), true)
                 .addCase(Tuple.of("foo", "x"), false)
                 .addCase(Tuple.of("FOO", "x"), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testStartsWithIgnoreCase() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
+                    final CIKey ciKey = CIKey.of(str);
+                    final boolean result = ciKey.startsWithIgnoreCase(subStr);
+                    // Check other combos of upper/lower case
+                    assertThat(CIKey.of(str.toUpperCase()).startsWithIgnoreCase(subStr.toUpperCase()))
+                            .isEqualTo(result);
+                    assertThat(CIKey.of(str.toUpperCase()).startsWithIgnoreCase(subStr))
+                            .isEqualTo(result);
+                    assertThat(ciKey.startsWithIgnoreCase(subStr.toUpperCase()))
+                            .isEqualTo(result);
+                    return result;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("", ""), true)
+                .addCase(Tuple.of("foo", "f"), true)
+                .addCase(Tuple.of("foo", "fo"), true)
+                .addCase(Tuple.of("foo", "foo"), true)
+                .addCase(Tuple.of("foo", "fooX"), false)
+                .addCase(Tuple.of("foo", "oo"), false)
+                .addCase(Tuple.of("foo", "o"), false)
+                .addCase(Tuple.of("foo", "x"), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testStartsWithLowerCase() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
+                    final CIKey ciKey = CIKey.of(str);
+                    return ciKey.startsWithLowerCase(subStr);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("", ""), true)
+                .addCase(Tuple.of("foo", "f"), true)
+                .addCase(Tuple.of("foo", "fo"), true)
+                .addCase(Tuple.of("foo", "foo"), true)
+                .addCase(Tuple.of("foo", "foox"), false)
+                .addCase(Tuple.of("FOO", "f"), true)
+                .addCase(Tuple.of("FOO", "fo"), true)
+                .addCase(Tuple.of("FOO", "foo"), true)
+                .addCase(Tuple.of("FOO", "foox"), false)
+                .addCase(Tuple.of("foo", "oo"), false)
+                .addCase(Tuple.of("FOO", "oo"), false)
+                .addCase(Tuple.of("foo", "x"), false)
+                .addCase(Tuple.of("FOO", "x"), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSubString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, int.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final String str = testCase.getInput()._1;
+                    final int idx = testCase.getInput()._2;
+                    final CIKey ciKey = CIKey.of(str);
+                    final CIKey newCiKey = ciKey.substring(idx);
+                    return newCiKey.get();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("", 0), "")
+                .addCase(Tuple.of("foobar", 0), "foobar")
+                .addCase(Tuple.of("FOOBAR", 0), "FOOBAR")
+                .addCase(Tuple.of("fooBAR", 1), "ooBAR")
+                .addCase(Tuple.of("foobar", 1), "oobar")
+                .addCase(Tuple.of("foobar", 5), "r")
+                .addCase(Tuple.of("foobar", 6), "")
+                .addThrowsCase(Tuple.of("foobar", -1), StringIndexOutOfBoundsException.class)
+                .addThrowsCase(Tuple.of("foobar", 7), StringIndexOutOfBoundsException.class)
                 .build();
     }
 

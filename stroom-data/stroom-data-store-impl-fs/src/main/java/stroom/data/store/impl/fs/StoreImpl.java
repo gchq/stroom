@@ -140,9 +140,16 @@ public class StoreImpl implements Store, AttributeMapFactory {
 
     @Override
     public void logicallyDeleteTarget(final Target target) {
-        Objects.requireNonNull(target);
-        LOGGER.debug(() -> LogUtil.message("logicallyDeleteTarget() - target: {}", LogUtil.typedValue(target)));
-        target.logicallyDelete();
+        if (target != null) {
+            try {
+                LOGGER.debug(() -> LogUtil.message("logicallyDeleteTarget() - target: {}",
+                        LogUtil.typedValue(target)));
+                target.logicallyDelete();
+            } catch (final Exception e) {
+                LOGGER.error(() -> LogUtil.message("Unable to delete stream {} {}! - {}",
+                        LogUtil.getSimpleClassName(target), target, e.getMessage()), e);
+            }
+        }
     }
 
     @Override

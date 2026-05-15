@@ -266,7 +266,7 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : Optional.empty());
     }
 
@@ -277,9 +277,9 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : (val3 != null
-                                ? Optional.of(val3)
+                           ? Optional.of(val3)
                                 : Optional.empty()));
     }
 
@@ -293,11 +293,11 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : (val3 != null
-                                ? Optional.of(val3)
+                           ? Optional.of(val3)
                                 : (val4 != null
-                                        ? Optional.of(val4)
+                                   ? Optional.of(val4)
                                         : Optional.empty())));
     }
 
@@ -374,6 +374,19 @@ public class NullSafe {
     }
 
     /**
+     * Maps str using mapper if str is not null/empty.
+     *
+     * @return The mapped value or null if str is null/empty.
+     */
+    public static <T> T mapNonEmptyString(final String str, final Function<String, T> mapper) {
+        if (isNonEmptyString(str)) {
+            return Objects.requireNonNull(mapper).apply(str);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * @return str if it is not null/empty/blank, else other.
      */
     public static String nonBlankStringElse(final String str, final String other) {
@@ -414,6 +427,19 @@ public class NullSafe {
             } else {
                 consumer.accept(str);
             }
+        }
+    }
+
+    /**
+     * Maps str using mapper if str is not null/empty/blank.
+     *
+     * @return The mapped value or null if str is null/empty/blank.
+     */
+    public static <T> T mapNonBlankString(final String str, final Function<String, T> mapper) {
+        if (isNonBlankString(str)) {
+            return Objects.requireNonNull(mapper).apply(str);
+        } else {
+            return null;
         }
     }
 
@@ -829,8 +855,8 @@ public class NullSafe {
     public static <C extends Collection<T>, T> List<T> sort(final C collection) {
         return collection != null
                 ? collection.stream()
-                .sorted()
-                .collect(Collectors.toList())
+                  .sorted()
+                  .collect(Collectors.toList())
                 : Collections.emptyList();
     }
 
@@ -1849,7 +1875,7 @@ public class NullSafe {
     /**
      * If value is null or empty an {@link IllegalArgumentException} will be thrown.
      *
-     * @param value           THe string to test.
+     * @param value THe string to test.
      * @return The supplied string if not empty.
      */
     public static String requireNonEmptyString(final String value) {
@@ -1876,7 +1902,7 @@ public class NullSafe {
     /**
      * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown.
      *
-     * @param value           THe string to test.
+     * @param value THe string to test.
      * @return The supplied string if not blank.
      */
     public static String requireNonBlankString(final String value) {
@@ -1908,7 +1934,7 @@ public class NullSafe {
         return predicate != null
                 ? predicate
                 : (defaultOutcome
-                        ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
+                   ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
                         : (Predicate<T>) ALWAYS_FALSE_PREDICATE);
 //        return requireNonNullElseGet(predicate, () -> ignored -> defaultOutcome);
 

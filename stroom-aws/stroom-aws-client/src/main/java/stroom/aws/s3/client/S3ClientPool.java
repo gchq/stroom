@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.impl;
-
+package stroom.aws.s3.client;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 
@@ -62,20 +61,5 @@ public interface S3ClientPool {
         try (final PooledClient<S3AsyncClient> pooledClient = getPooledS3AsyncClient(config)) {
             return work.apply(pooledClient.getClient());
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface PooledClient<T> extends AutoCloseable {
-
-        /**
-         * @return The actual client object. Do not call close on the returned client.
-         */
-        T getClient();
-
-        @Override
-        void close();
     }
 }

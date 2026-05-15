@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,29 @@ public class StringIdUtil {
             case 2 -> baseDigitCount + 1;
             default -> throw new IllegalStateException("Unexpected value: " + mod);
         };
+    }
+
+    /**
+     * @return The metaId as a directory path with one dir for 1000 metaIds.
+     * e.g.
+     * <ul>
+     *     <li>{@code 999 => ""}</li>
+     *     <li>{@code 4,321 => "004"}</li>
+     *     <li>{@code 123,456,789 => "123/456"}</li>
+     * </ul>
+     */
+    public static String getIdPath(final long metaId) {
+        final String idStr = idToString(metaId);
+        final StringBuilder sb = new StringBuilder();
+        final int endIdxExc = idStr.length() - PAD_SIZE;
+        for (int i = 0; i < endIdxExc; i += PAD_SIZE) {
+            final String part = idStr.substring(i, i + PAD_SIZE);
+            if (!sb.isEmpty()) {
+                sb.append("/");
+            }
+            sb.append(part);
+        }
+        return sb.toString();
     }
 
 }

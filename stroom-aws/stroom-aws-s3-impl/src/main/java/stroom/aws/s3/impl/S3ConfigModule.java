@@ -33,7 +33,6 @@ public class S3ConfigModule extends AbstractModule {
         super.configure();
 
         bind(S3ConfigStore.class).to(S3ConfigStoreImpl.class);
-        bind(S3ClientPool.class).to(S3ClientPoolImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(S3ConfigStoreImpl.class);

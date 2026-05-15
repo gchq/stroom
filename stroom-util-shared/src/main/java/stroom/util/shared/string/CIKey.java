@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * <p>
  * Useful as a case-insensitive cache key that retains the case of the
  * original string at the cost of wrapping it in another object. Also
- * useful for case insensitive comparisons of common strings.
+ * useful for case-insensitive comparisons of common strings.
  * </p>
  * <p>
  * See {@link CIKeys} for common {@link CIKey} instances.
@@ -396,6 +396,7 @@ public class CIKey implements Comparable<CIKey> {
     public int hashCode() {
         // Lazy hashCode caching as this is used as a map key.
         // Borrows pattern from String.hashCode()
+        // Hash on the lowerKey to make it case-insensitive
         int h = hash;
         if (h == 0 && !hashIsZero) {
             // Hash on lower key only so we get a case in-sensitive match
@@ -420,8 +421,7 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Returns true if the string this {@link CIKey} wraps contains subString
-     * ignoring case.
+     * Returns true if the string this {@link CIKey} wraps contains subString ignoring case.
      * If subString is all lower case, use {@link CIKey#containsLowerCase(String)} instead.
      */
     public boolean containsIgnoreCase(final String subString) {
@@ -433,11 +433,11 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Returns true if the string this {@link CIKey} wraps contains (ignoring case) lowerSubString.
+     * Returns true if the string this {@link CIKey} wraps contains lowerSubString.
      * {@code lowerSubString} MUST be all lower case.
      * <p>
      * This method is a slight optimisation to avoid having to lower-case the input if it
-     * is know to already be lower-case.
+     * is known to already be lower-case.
      * </p>
      * If lowerSubString is mixed or upper case, use {@link CIKey#containsIgnoreCase(String)} instead.
      */
@@ -446,7 +446,49 @@ public class CIKey implements Comparable<CIKey> {
         if (lowerKey == null) {
             return false;
         }
-        return lowerKey.contains(toLowerCase(lowerSubString));
+        return lowerKey.contains(lowerSubString);
+    }
+
+    /**
+     * Returns true if the string this {@link CIKey} wraps starts with prefix ignoring case.
+     * If prefix is all lower case, use {@link CIKey#startsWithLowerCase(String)} instead.
+     */
+    public boolean startsWithIgnoreCase(final String prefix) {
+        Objects.requireNonNull(prefix);
+        if (lowerKey == null) {
+            return false;
+        }
+        return lowerKey.startsWith(toLowerCase(prefix));
+    }
+
+    /**
+     * Returns true if the string this {@link CIKey} wraps starts with lowerPrefix.
+     * {@code lowerPrefix} MUST be all lower case.
+     * <p>
+     * This method is a slight optimisation to avoid having to lower-case the input if it
+     * is known to already be lower-case.
+     * </p>
+     * If lowerSubString is mixed or upper case, use {@link CIKey#containsIgnoreCase(String)} instead.
+     */
+    public boolean startsWithLowerCase(final String lowerPrefix) {
+        Objects.requireNonNull(lowerPrefix);
+        if (lowerKey == null) {
+            return false;
+        }
+        return lowerKey.startsWith(lowerPrefix);
+    }
+
+    /**
+     * Performs a substring on the wrapped string.
+     * The wrapped case is maintained.
+     */
+    public CIKey substring(final int beginIndex) {
+        if (key == null) {
+            return null;
+        } else {
+            final String newKey = key.substring(beginIndex);
+            return CIKey.of(newKey);
+        }
     }
 
     /**
@@ -669,6 +711,13 @@ public class CIKey implements Comparable<CIKey> {
                         Entry::getValue));
     }
 
+    /**
+     * Converts the passed {@link CIKey} keyed map into a simple {@link String} keyed map, using the
+     * case of the {@link CIKey}.
+     * Does not support null keys.
+     *
+     * @return A non-null map.
+     */
     public static <V> Map<String, V> convertToStringMap(final Map<CIKey, ? extends V> map) {
         return NullSafe.map(map)
                 .entrySet()
@@ -678,6 +727,13 @@ public class CIKey implements Comparable<CIKey> {
                         Entry::getValue));
     }
 
+    /**
+     * Converts the passed {@link CIKey} keyed map into a simple {@link String} keyed map, using the
+     * lower-case value of the {@link CIKey}.
+     * Does not support null keys.
+     *
+     * @return A non-null map.
+     */
     public static <V> Map<String, V> convertToLowerCaseStringMap(final Map<CIKey, ? extends V> map) {
         return NullSafe.map(map)
                 .entrySet()

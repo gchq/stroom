@@ -2,19 +2,8 @@ plugins {
     id "com.gradle.develocity" version "4.2.2"
 }
 
-// Accept the T&Cs for publishing build scans
-develocity {
-    buildScan {
-        termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
-        termsOfUseAgree = "yes"
-        publishing.onlyIf { hasProperty('buildScan') != null && hasProperty('buildScan') }
-    }
-}
-
-rootProject.name = 'stroom'
-
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +17,19 @@ rootProject.name = 'stroom'
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Accept the T&Cs for publishing build scans
+develocity {
+    buildScan {
+        termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
+        termsOfUseAgree = "yes"
+        publishing.onlyIf { hasProperty('buildScan') != null && hasProperty('buildScan') }
+    }
+}
+
+rootProject.name = 'stroom'
+
+
 
 // Activity
 include 'stroom-activity:stroom-activity-api'
@@ -54,6 +56,7 @@ include 'stroom-contentstore:stroom-contentstore-api'
 include 'stroom-contentstore:stroom-contentstore-impl'
 
 // AWS
+include 'stroom-aws:stroom-aws-client'
 include 'stroom-aws:stroom-aws-s3-impl'
 
 // App.

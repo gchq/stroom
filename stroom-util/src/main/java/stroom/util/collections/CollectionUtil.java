@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.SequencedMap;
 import java.util.Set;
@@ -239,6 +240,84 @@ public class CollectionUtil {
                         () -> new EnumMap<>(enumType)));
     }
 
+    /**
+     * Gets a combined count of the number of items in each value in the map, where the value
+     * is a collection.
+     *
+     * @return The sum of items in all values.
+     */
+    public static int sumValueSizes(final Map<?, ? extends Collection<?>> map) {
+        if (NullSafe.isEmptyMap(map)) {
+            return 0;
+        } else {
+            return map.values()
+                    .stream()
+                    .mapToInt(Collection::size)
+                    .sum();
+        }
+    }
+
+    /**
+     * Creates a function to map just the key of a {@link Entry}.
+     */
+    public static <K1, K2, V> Function<Entry<K1, V>, Entry<K2, V>> createKeyMapper(
+            final Function<K1, K2> keyMapper) {
+        Objects.requireNonNull(keyMapper);
+        return (Entry<K1, V> entry) ->
+                Map.entry(keyMapper.apply(entry.getKey()), entry.getValue());
+    }
+
+    /**
+     * Convert the supplied map, mapping each key in it using keyMapper.
+     * Null keys are not allowed.
+     * If keyMapper causes duplicate keys an exception will be thrown.
+     */
+    public static <K1, K2, V> Map<K2, V> mappingKeys(final Map<K1, V> map,
+                                                     final Function<K1, K2> keyMapper) {
+        if (map == null) {
+            return null;
+        } else if (map.isEmpty()) {
+            return Collections.emptyMap();
+        } else {
+            Objects.requireNonNull(keyMapper);
+            return map.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            entry -> keyMapper.apply(entry.getKey()),
+                            Entry::getValue));
+        }
+    }
+
+    /**
+     * Creates a function to map just the value of a {@link Entry}.
+     */
+    public static <K, V1, V2> Function<Entry<K, V1>, Entry<K, V2>> createValueMapper(
+            final Function<V1, V2> valueMapper) {
+        Objects.requireNonNull(valueMapper);
+        return (Entry<K, V1> entry) ->
+                Map.entry(entry.getKey(), valueMapper.apply(entry.getValue()));
+    }
+
+    /**
+     * Convert the supplied map, mapping each value in it using valueMapper.
+     * Null keys are not allowed.
+     */
+    public static <K, V1, V2> Map<K, V2> mappingValues(final Map<K, V1> map,
+                                                       final Function<V1, V2> valueMapper) {
+        if (map == null) {
+            return null;
+        } else if (map.isEmpty()) {
+            return Collections.emptyMap();
+        } else {
+            Objects.requireNonNull(valueMapper);
+            return map.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Entry::getKey,
+                            entry -> valueMapper.apply(entry.getValue())));
+        }
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -267,17 +346,13 @@ public class CollectionUtil {
 
         private SequencedMap<K, V> map = null;
 
-        private LinkedHashMapBuilder() {
-        }
-
-        private LinkedHashMapBuilder(final Class<K> ignoredKeyType, final Class<V> ignoredValueType) {
+        private LinkedHashMapBuilder(final Class<K> ignoredKeyType,
+                                     final Class<V> ignoredValueType) {
             // types to aid generics
         }
 
         public LinkedHashMapBuilder<K, V> add(final K key, final V val) {
-            if (map == null) {
-                map = new LinkedHashMap<>();
-            }
+            map = Objects.requireNonNullElseGet(map, LinkedHashMap::new);
             map.put(key, val);
             return this;
         }
