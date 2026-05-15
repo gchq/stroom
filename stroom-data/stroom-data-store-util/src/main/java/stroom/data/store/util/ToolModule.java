@@ -53,6 +53,7 @@ public class ToolModule extends AbstractModule {
         install(new MockTaskModule());
         install(new MockWordListProviderModule());
         install(new stroom.activity.mock.MockActivityModule());
+        install(new stroom.aws.s3.client.S3ClientModule());
         install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());

@@ -18,6 +18,7 @@ ext.moduleName = 'stroom.data.store.util'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-mock')
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')

@@ -17,12 +17,15 @@
 package stroom.aws.s3.impl;
 
 
+import stroom.aws.s3.client.S3ClientModule;
+
 import com.google.inject.AbstractModule;
 
 public class S3AllModules extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new S3ClientModule());
         install(new S3ConfigHandlerModule());
         install(new S3ConfigModule());
         install(new S3PipelineElementsModule());
