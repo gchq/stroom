@@ -25,9 +25,12 @@ dependencies {
 
     implementation libs.aws.crt
     implementation libs.aws.s3.transfer.manager
+    implementation libs.aws.sqs
     implementation libs.aws.sts
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jakarta.inject
+    implementation libs.jakarta.validation.api
     implementation libs.slf4j.api
 
     testImplementation libs.bundles.common.test.implementation

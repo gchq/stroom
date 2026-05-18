@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.shared;
+package stroom.aws.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,26 +24,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsTag {
+public class AwsAssumeRole {
 
     @JsonProperty
-    private final String key;
+    private final AwsAssumeRoleClientConfig clientConfig;
     @JsonProperty
-    private final String value;
+    private final AwsAssumeRoleRequest request;
 
     @JsonCreator
-    public AwsTag(@JsonProperty("key") final String key,
-                  @JsonProperty("value") final String value) {
-        this.key = key;
-        this.value = value;
+    public AwsAssumeRole(@JsonProperty("clientConfig") final AwsAssumeRoleClientConfig clientConfig,
+                         @JsonProperty("request") final AwsAssumeRoleRequest request) {
+        this.clientConfig = clientConfig;
+        this.request = request;
     }
 
-    public String getKey() {
-        return key;
+    public AwsAssumeRoleClientConfig getClientConfig() {
+        return clientConfig;
     }
 
-    public String getValue() {
-        return value;
+    public AwsAssumeRoleRequest getRequest() {
+        return request;
     }
 
     @Override
@@ -51,13 +51,13 @@ public class AwsTag {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AwsTag awsTag = (AwsTag) o;
-        return Objects.equals(key, awsTag.key)
-               && Objects.equals(value, awsTag.value);
+        final AwsAssumeRole that = (AwsAssumeRole) o;
+        return Objects.equals(clientConfig, that.clientConfig)
+               && Objects.equals(request, that.request);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        return Objects.hash(clientConfig, request);
     }
 }

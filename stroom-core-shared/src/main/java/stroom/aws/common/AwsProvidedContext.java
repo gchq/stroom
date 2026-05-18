@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.shared;
+package stroom.aws.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,26 +24,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsAssumeRole {
+public class AwsProvidedContext {
 
     @JsonProperty
-    private final AwsAssumeRoleClientConfig clientConfig;
+    private final String providerArn;
     @JsonProperty
-    private final AwsAssumeRoleRequest request;
+    private final String contextAssertion;
 
     @JsonCreator
-    public AwsAssumeRole(@JsonProperty("clientConfig") final AwsAssumeRoleClientConfig clientConfig,
-                         @JsonProperty("request") final AwsAssumeRoleRequest request) {
-        this.clientConfig = clientConfig;
-        this.request = request;
+    public AwsProvidedContext(@JsonProperty("providerArn") final String providerArn,
+                              @JsonProperty("contextAssertion") final String contextAssertion) {
+        this.providerArn = providerArn;
+        this.contextAssertion = contextAssertion;
     }
 
-    public AwsAssumeRoleClientConfig getClientConfig() {
-        return clientConfig;
+    public String getProviderArn() {
+        return providerArn;
     }
 
-    public AwsAssumeRoleRequest getRequest() {
-        return request;
+    public String getContextAssertion() {
+        return contextAssertion;
     }
 
     @Override
@@ -51,13 +51,13 @@ public class AwsAssumeRole {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AwsAssumeRole that = (AwsAssumeRole) o;
-        return Objects.equals(clientConfig, that.clientConfig)
-               && Objects.equals(request, that.request);
+        final AwsProvidedContext that = (AwsProvidedContext) o;
+        return Objects.equals(providerArn, that.providerArn)
+               && Objects.equals(contextAssertion, that.contextAssertion);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clientConfig, request);
+        return Objects.hash(providerArn, contextAssertion);
     }
 }

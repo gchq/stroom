@@ -16,6 +16,9 @@
 
 package stroom.aws.s3.shared;
 
+import stroom.aws.common.AwsAssumeRole;
+import stroom.aws.common.AwsCredentials;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

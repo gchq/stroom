@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,50 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.shared;
+package stroom.aws.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
-public class AwsAssumeRoleClientConfig {
+public class AwsTag {
+
     @JsonProperty
-    private final AwsCredentials credentials;
+    private final String key;
     @JsonProperty
-    private final String region;
-    @JsonProperty
-    private final String endpointOverride;
+    private final String value;
 
     @JsonCreator
-    public AwsAssumeRoleClientConfig(@JsonProperty("credentials") final AwsCredentials credentials,
-                                     @JsonProperty("region") final String region,
-                                     @JsonProperty("endpointOverride") final String endpointOverride) {
-        this.credentials = credentials;
-        this.region = region;
-        this.endpointOverride = endpointOverride;
+    public AwsTag(@JsonProperty("key") final String key,
+                  @JsonProperty("value") final String value) {
+        this.key = key;
+        this.value = value;
     }
 
-    public AwsCredentials getCredentials() {
-        return credentials;
+    public String getKey() {
+        return key;
     }
 
-    public String getRegion() {
-        return region;
+    public String getValue() {
+        return value;
     }
 
-    public String getEndpointOverride() {
-        return endpointOverride;
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AwsTag awsTag = (AwsTag) o;
+        return Objects.equals(key, awsTag.key)
+               && Objects.equals(value, awsTag.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, value);
     }
 }

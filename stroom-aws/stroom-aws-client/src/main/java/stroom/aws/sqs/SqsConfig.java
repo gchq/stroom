@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app;
+package stroom.aws.sqs;
 
+
+import stroom.aws.common.AwsAssumeRole;
+import stroom.aws.common.AwsCredentials;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsAtomicConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,10 +33,18 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
+@NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
-public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig {
+public class SqsConfig
+        extends AbstractConfig
+        implements IsStroomConfig, IsProxyConfig, IsAtomicConfig {
 
     public static final StroomDuration DEFAULT_POLL_FREQUENCY = StroomDuration.ofSeconds(10);
+
+    @JsonProperty
+    private final AwsCredentials credentials;
+    @JsonProperty
+    private final AwsAssumeRole assumeRole;
     @JsonProperty
     private final String awsRegionName;
     @JsonProperty
@@ -38,30 +52,41 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
     @JsonProperty
     private final String queueName;
     @JsonProperty
-    private final String queueUrl;
-    @JsonProperty
     private final StroomDuration pollFrequency;
 
-    public SqsConnectorConfig() {
+    public SqsConfig() {
+        credentials = null;
+        assumeRole = null;
         awsRegionName = null;
         awsProfileName = null;
         queueName = null;
-        queueUrl = null;
         pollFrequency = DEFAULT_POLL_FREQUENCY;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SqsConnectorConfig(@JsonProperty("awsRegionName") final String awsRegionName,
-                              @JsonProperty("awsProfileName") final String awsProfileName,
-                              @JsonProperty("queueName") final String queueName,
-                              @JsonProperty("queueUrl") final String queueUrl,
-                              @JsonProperty("pollFrequency") final StroomDuration pollFrequency) {
+    public SqsConfig(@JsonProperty("credentials") final AwsCredentials credentials,
+                     @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
+                     @JsonProperty("awsRegionName") final String awsRegionName,
+                     @JsonProperty("awsProfileName") final String awsProfileName,
+                     @JsonProperty("queueName") final String queueName,
+                     @JsonProperty("pollFrequency") final StroomDuration pollFrequency) {
+        this.credentials = credentials;
+        this.assumeRole = assumeRole;
         this.awsRegionName = awsRegionName;
         this.awsProfileName = awsProfileName;
         this.queueName = queueName;
-        this.queueUrl = queueUrl;
         this.pollFrequency = Objects.requireNonNullElse(pollFrequency, DEFAULT_POLL_FREQUENCY);
+    }
+
+    @JsonProperty
+    public AwsCredentials getCredentials() {
+        return credentials;
+    }
+
+    @JsonProperty
+    public AwsAssumeRole getAssumeRole() {
+        return assumeRole;
     }
 
     @NotBlank
@@ -75,15 +100,10 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         return awsProfileName;
     }
 
+    @NotBlank
     @JsonProperty
     public String getQueueName() {
         return queueName;
-    }
-
-    @NotBlank
-    @JsonProperty
-    public String getQueueUrl() {
-        return queueUrl;
     }
 
     @JsonProperty
@@ -95,17 +115,48 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         return new Builder();
     }
 
+    public static Builder builder(final SqsConfig sqsConfig) {
+        return new Builder(sqsConfig);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
     public static class Builder {
 
+        private AwsCredentials credentials;
+        private AwsAssumeRole assumeRole;
         private String awsRegionName;
         private String awsProfileName;
         private String queueName;
-        private String queueUrl;
-        private StroomDuration pollFrequency = StroomDuration.ofSeconds(10);
+        private StroomDuration pollFrequency = DEFAULT_POLL_FREQUENCY;
+
+        public Builder() {
+        }
+
+        public Builder(final SqsConfig sqsConfig) {
+            this.credentials = sqsConfig.credentials;
+            this.assumeRole = sqsConfig.assumeRole;
+            this.awsRegionName = sqsConfig.awsRegionName;
+            this.awsProfileName = sqsConfig.awsProfileName;
+            this.queueName = sqsConfig.queueName;
+            this.pollFrequency = sqsConfig.pollFrequency;
+        }
+
+        public Builder credentials(final AwsCredentials credentials) {
+            this.credentials = credentials;
+            return this;
+        }
+
+        public Builder assumeRole(final AwsAssumeRole assumeRole) {
+            this.assumeRole = assumeRole;
+            return this;
+        }
 
         public Builder awsRegionName(final String awsRegionName) {
             this.awsRegionName = awsRegionName;
@@ -122,23 +173,20 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
             return this;
         }
 
-        public Builder queueUrl(final String queueUrl) {
-            this.queueUrl = queueUrl;
-            return this;
-        }
-
         public Builder pollFrequency(final StroomDuration pollFrequency) {
             this.pollFrequency = pollFrequency;
             return this;
         }
 
-        public SqsConnectorConfig build() {
-            return new SqsConnectorConfig(
+        public SqsConfig build() {
+            return new SqsConfig(
+                    credentials,
+                    assumeRole,
                     awsRegionName,
                     awsProfileName,
                     queueName,
-                    queueUrl,
-                    pollFrequency);
+                    pollFrequency
+            );
         }
     }
 }

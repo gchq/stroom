@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.aws.sqs;
 
-/**
- * Marker interface for config classes used by Stroom.
- * Helps with ensuring all config classes are bound.
- * Used to distinguish between config classes that are used by proxy.
- * Config classes can implement both {@link IsStroomConfig} and {@link IsProxyConfig} if
- * they are shared.
- */
-public interface IsStroomConfig extends HasPropertyPath {
+
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import software.amazon.awssdk.services.sqs.SqsClient;
+
+public class SqsClientFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsClientFactory.class);
+
+    public SqsClient createSqsClient() {
+        throw new UnsupportedOperationException("Not implemented yet");
+
+    }
 
 }

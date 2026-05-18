@@ -16,13 +16,20 @@
 
 package stroom.util.shared;
 
+
 /**
- * Marker interface for config classes used by Stroom.
- * Helps with ensuring all config classes are bound.
- * Used to distinguish between config classes that are used by proxy.
- * Config classes can implement both {@link IsStroomConfig} and {@link IsProxyConfig} if
- * they are shared.
+ * Marker interface to indicate that the implementing class should be treated
+ * as an 'atomic' (not in the concurrency sense) stroom config/property value.
+ * <p>
+ * I.e. The object will likely have multiple fields, and possibly sub-objects,
+ * but will be (de-)serialised as a single atomic unit. Thus, Stroom's property
+ * key can reference this object, but not descend into it to refence its fields.
+ * </p>
+ * <p>
+ * Typically implementing classes may be held in collections, e.g. lists, in which
+ * case the whole collection is treated as an atomic unit.
+ * </p>
  */
-public interface IsStroomConfig extends HasPropertyPath {
+public interface IsAtomicConfig extends IsStroomConfig {
 
 }

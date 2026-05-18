@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.shared;
+package stroom.aws.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,26 +24,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsProvidedContext {
+public class AwsPolicyDescriptorType {
 
     @JsonProperty
-    private final String providerArn;
-    @JsonProperty
-    private final String contextAssertion;
+    private final String arn;
 
     @JsonCreator
-    public AwsProvidedContext(@JsonProperty("providerArn") final String providerArn,
-                              @JsonProperty("contextAssertion") final String contextAssertion) {
-        this.providerArn = providerArn;
-        this.contextAssertion = contextAssertion;
+    public AwsPolicyDescriptorType(@JsonProperty("arn") final String arn) {
+        this.arn = arn;
     }
 
-    public String getProviderArn() {
-        return providerArn;
-    }
-
-    public String getContextAssertion() {
-        return contextAssertion;
+    public String getArn() {
+        return arn;
     }
 
     @Override
@@ -51,13 +43,12 @@ public class AwsProvidedContext {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AwsProvidedContext that = (AwsProvidedContext) o;
-        return Objects.equals(providerArn, that.providerArn)
-               && Objects.equals(contextAssertion, that.contextAssertion);
+        final AwsPolicyDescriptorType that = (AwsPolicyDescriptorType) o;
+        return Objects.equals(arn, that.arn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(providerArn, contextAssertion);
+        return Objects.hashCode(arn);
     }
 }

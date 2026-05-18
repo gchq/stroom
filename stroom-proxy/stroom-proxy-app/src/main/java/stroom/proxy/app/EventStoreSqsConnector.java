@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import java.util.List;
 import java.util.Map;
 
-public class SqsConnector {
+public class EventStoreSqsConnector {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsConnector.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStoreSqsConnector.class);
 
     private final EventStore eventStore;
     private final SqsClient sqsClient;
@@ -47,16 +47,16 @@ public class SqsConnector {
     private final String queueUrl;
     private final int waitTimeSeconds;
 
-    public SqsConnector(final EventStore eventStore,
-                        final SqsConnectorConfig config,
-                        final ReceiptIdGenerator receiptIdGenerator) {
+    public EventStoreSqsConnector(final EventStore eventStore,
+                                  final SqsConnectorConfig config,
+                                  final ReceiptIdGenerator receiptIdGenerator) {
         this.eventStore = eventStore;
         this.receiptIdGenerator = receiptIdGenerator;
         try {
             LOGGER.debug(() -> "Creating SQS client");
             sqsClient = SqsClient.builder()
                     .region(Region.of(config.getAwsRegionName()))
-                    .credentialsProvider(DefaultCredentialsProvider.create())
+                    .credentialsProvider(DefaultCredentialsProvider.builder().build())
                     .build();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

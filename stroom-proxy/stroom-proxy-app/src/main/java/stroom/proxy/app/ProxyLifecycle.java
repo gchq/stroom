@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,11 @@ public class ProxyLifecycle implements Managed {
 
         if (proxyConfig.getSqsConnectors() != null) {
             for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectors()) {
-                final SqsConnector sqsConnector = new SqsConnector(
+                final EventStoreSqsConnector eventStoreSqsConnector = new EventStoreSqsConnector(
                         eventStore, sqsConnectorConfig, receiptIdGenerator);
                 // Add executor to forward event store.
                 proxyServices.addFrequencyExecutor("SQS - poll",
-                        () -> sqsConnector::poll,
+                        () -> eventStoreSqsConnector::poll,
                         sqsConnectorConfig.getPollFrequency().toMillis());
             }
         }

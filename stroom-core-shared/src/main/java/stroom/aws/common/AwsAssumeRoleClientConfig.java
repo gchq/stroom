@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,41 +14,41 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.shared;
+package stroom.aws.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
 @JsonInclude(Include.NON_NULL)
-public class AwsPolicyDescriptorType {
+public class AwsAssumeRoleClientConfig {
 
     @JsonProperty
-    private final String arn;
+    private final AwsCredentials credentials;
+    @JsonProperty
+    private final String region;
+    @JsonProperty
+    private final String endpointOverride;
 
     @JsonCreator
-    public AwsPolicyDescriptorType(@JsonProperty("arn") final String arn) {
-        this.arn = arn;
+    public AwsAssumeRoleClientConfig(@JsonProperty("credentials") final AwsCredentials credentials,
+                                     @JsonProperty("region") final String region,
+                                     @JsonProperty("endpointOverride") final String endpointOverride) {
+        this.credentials = credentials;
+        this.region = region;
+        this.endpointOverride = endpointOverride;
     }
 
-    public String getArn() {
-        return arn;
+    public AwsCredentials getCredentials() {
+        return credentials;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final AwsPolicyDescriptorType that = (AwsPolicyDescriptorType) o;
-        return Objects.equals(arn, that.arn);
+    public String getRegion() {
+        return region;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(arn);
+    public String getEndpointOverride() {
+        return endpointOverride;
     }
 }
