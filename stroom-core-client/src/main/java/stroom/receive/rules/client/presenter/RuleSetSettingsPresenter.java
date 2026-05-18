@@ -411,9 +411,9 @@ public class RuleSetSettingsPresenter
                           final ReceiveDataRules document,
                           final boolean readOnly) {
         fieldSelectionBoxModel.clear();
-        fieldSelectionBoxModel.addItems(document.getFields());
+        NullSafe.consume(document.getFields(), fieldSelectionBoxModel::addItems);
         rules.clear();
-        rules.addAll(document.getRules());
+        NullSafe.consume(document.getRules(), rules::addAll);
         listPresenter.getSelectionModel()
                 .clear();
         update();

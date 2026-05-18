@@ -50,7 +50,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -398,7 +397,6 @@ public class GlobalConfigService implements GlobalConfig {
 
         // Get info about the config class, i.e. ctor, prop names, etc.
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                new ObjectMapper(),
                 propertyPath.getParentPropertyName()
                         .orElse(null),
                 config);

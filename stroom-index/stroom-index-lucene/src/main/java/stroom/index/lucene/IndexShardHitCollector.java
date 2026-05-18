@@ -48,6 +48,7 @@ class IndexShardHitCollector extends SimpleCollector {
     private final DocIdQueue docIdQueue;
     private final LongAdder totalHitCount;
     private final LongAdder localHitCount = new LongAdder();
+    private final ScoreMode scoreMode;
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
@@ -55,13 +56,15 @@ class IndexShardHitCollector extends SimpleCollector {
                            final IndexShard indexShard,
                            final Query query,
                            final DocIdQueue docIdQueue,
-                           final LongAdder totalHitCount) {
+                           final LongAdder totalHitCount,
+                           final ScoreMode scoreMode) {
         this.taskContext = taskContext;
         this.indexShard = indexShard;
         this.queryKey = queryKey;
         this.query = query;
         this.docIdQueue = docIdQueue;
         this.totalHitCount = totalHitCount;
+        this.scoreMode = scoreMode;
 
         info(() -> "Searching...");
     }
@@ -108,7 +111,7 @@ class IndexShardHitCollector extends SimpleCollector {
 
     @Override
     public ScoreMode scoreMode() {
-        return ScoreMode.COMPLETE_NO_SCORES;
+        return scoreMode;
     }
 
     @Override
@@ -117,6 +120,10 @@ class IndexShardHitCollector extends SimpleCollector {
                + ", shard: " + NullSafe.get(indexShard, IndexShard::getId)
                + ", shard hits: " + localHitCount.sum()
                + ", total hits: " + NullSafe.getOrElse(totalHitCount, LongAdder::sum, -1);
+    }
+
+    public long getLocalHitCount() {
+        return localHitCount.sum();
     }
 }
 

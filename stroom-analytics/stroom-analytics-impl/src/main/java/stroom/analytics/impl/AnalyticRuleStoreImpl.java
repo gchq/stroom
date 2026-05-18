@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticProcessConfig;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -31,6 +32,9 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtil;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
@@ -38,11 +42,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,6 +62,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
+    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
     private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
@@ -65,6 +72,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
+                          final Provider<ProcessorFilterService> processorFilterServiceProvider,
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
@@ -75,6 +83,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                 AnalyticRuleDoc::builder,
                 AnalyticRuleDoc::copy);
         this.securityContext = securityContext;
+        this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
@@ -286,6 +295,38 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        final Set<DocRef> docRefs = new HashSet<>();
+        final AnalyticRuleDoc ruleDoc = readDocument(docRef);
+
+        if (docRef != null && ruleDoc != null && AnalyticRuleDoc.TYPE.equals(docRef.getType())) {
+            if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.STREAMING)) {
+                final ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
+
+                final List<DocRef> processorFilters = filterResultPage.getValues().stream()
+                        .filter(ProcessorFilterUtil::shouldExport)
+                        .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
+                        .toList();
+
+                docRefs.addAll(processorFilters);
+
+                docRefs.addAll(store.findDocRefsEmbeddedIn(docRef));
+            }
+
+            if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.SCHEDULED_QUERY)) {
+                final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
+                        .ownerDocRef(docRef)
+                        .build();
+
+                final ResultPage<ExecutionSchedule> resultPage =
+                        executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
+
+                resultPage.getValues().forEach(schedule -> {
+                    docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
+                            schedule.getUuid(), schedule.getName()));
+                });
+            }
+            return docRefs;
+        }
         return null;
     }
 

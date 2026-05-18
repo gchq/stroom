@@ -16,13 +16,12 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
-import stroom.docref.DocRef;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.shared.HasId;
 import stroom.util.time.StroomDuration;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -37,7 +36,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,8 +56,8 @@ class TestAnnotationService {
 
     @Test
     void performDataRetention() {
-        final LongList logicallyDeletedIds = createLongList(0, 100);
-        final LongList physicallyDeletedIds = createLongList(1000, 100);
+        final List<AnnotationIdentity> logicallyDeletedIds = createLongList(0, 100);
+        final List<AnnotationIdentity> physicallyDeletedIds = createLongList(1000, 100);
         Mockito.when(mockAnnotationDao.markDeletedByDataRetention())
                 .thenReturn(logicallyDeletedIds);
         Mockito.when(mockAnnotationConfig.getPhysicalDeleteAge())
@@ -68,18 +66,14 @@ class TestAnnotationService {
         Mockito.when(mockAnnotationDao.physicallyDelete(Mockito.any()))
                 .thenReturn(physicallyDeletedIds);
 
-        Mockito.when(mockAnnotationDao.idListToDocRefs(Mockito.any()))
-                .thenAnswer(invocation -> {
-                    final LongList ids = invocation.getArgument(0, LongList.class);
-                    final List<DocRef> docRefs = ids.longStream()
-                            .boxed()
-                            .map(id -> Annotation.buildDocRef()
-                                    .uuid(String.valueOf(id))
-                                    .build())
-                            .collect(Collectors.toList());
-
-                    return docRefs;
-                });
+//        Mockito.when(mockAnnotationDao.idListToDocRefs(Mockito.any()))
+//                .thenAnswer(invocation -> {
+//                    final LongList ids = invocation.getArgument(0, LongList.class);
+//                    return ids.longStream()
+//                            .boxed()
+//                            .map(id -> new AnnotationIdentity(String.valueOf(id), id))
+//                            .collect(Collectors.toList());
+//                });
 
         final AnnotationService annotationService = new AnnotationService(
                 mockAnnotationDao,
@@ -102,10 +96,11 @@ class TestAnnotationService {
 
         final LongList allIds = entityEventBatchArgumentCaptor.getAllValues()
                 .stream()
-                .flatMap(batch -> batch.getEntityEvents().stream())
-                .map(EntityEvent::getDocRef)
-                .map(DocRef::getUuid)
-                .mapToLong(Long::parseLong)
+                .flatMap(batch ->
+                        batch.getEntityEvents().stream())
+                .mapToLong(entityEvent -> entityEvent.getDataObjectAs(
+                        AnnotationIdEntityEventData.class,
+                        AnnotationIdEntityEventData::getAnnotationId))
                 .collect(LongArrayList::new,
                         LongArrayList::add,
                         LongArrayList::addAll);
@@ -113,16 +108,16 @@ class TestAnnotationService {
         assertThat(allIds.size())
                 .isEqualTo(100 + 100);
         final LongOpenHashSet allIdsSet = new LongOpenHashSet(allIds);
-        assertThat(allIdsSet.containsAll(logicallyDeletedIds))
+        assertThat(allIdsSet.containsAll(HasId.asIdList(logicallyDeletedIds)))
                 .isTrue();
-        assertThat(allIdsSet.containsAll(physicallyDeletedIds))
+        assertThat(allIdsSet.containsAll(HasId.asIdList(physicallyDeletedIds)))
                 .isTrue();
     }
 
     @Test
     void performDataRetention_noChanges() {
-        final LongList logicallyDeletedIds = LongList.of();
-        final LongList physicallyDeletedIds = LongList.of();
+        final List<AnnotationIdentity> logicallyDeletedIds = List.of();
+        final List<AnnotationIdentity> physicallyDeletedIds = List.of();
         Mockito.when(mockAnnotationDao.markDeletedByDataRetention())
                 .thenReturn(logicallyDeletedIds);
         Mockito.when(mockAnnotationConfig.getPhysicalDeleteAge())
@@ -151,10 +146,10 @@ class TestAnnotationService {
                 .fire(entityEventBatchArgumentCaptor.capture());
     }
 
-    private LongList createLongList(final int fromInc, final int count) {
+    private List<AnnotationIdentity> createLongList(final int fromInc, final int count) {
         return LongStream.range(fromInc, fromInc + count)
-                .collect(LongArrayList::new,
-                        LongArrayList::add,
-                        LongArrayList::addAll);
+                .boxed()
+                .map(id -> new AnnotationIdentity("uuid-" + id, id))
+                .toList();
     }
 }

@@ -59,12 +59,6 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
     public final TableField<ExecutionHistoryRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
-     * The column
-     * <code>stroom.execution_history.fk_execution_schedule_id</code>.
-     */
-    public final TableField<ExecutionHistoryRecord, Integer> FK_EXECUTION_SCHEDULE_ID = createField(DSL.name("fk_execution_schedule_id"), SQLDataType.INTEGER.nullable(false), this, "");
-
-    /**
      * The column <code>stroom.execution_history.execution_time_ms</code>.
      */
     public final TableField<ExecutionHistoryRecord, Long> EXECUTION_TIME_MS = createField(DSL.name("execution_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
@@ -84,6 +78,12 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
      * The column <code>stroom.execution_history.message</code>.
      */
     public final TableField<ExecutionHistoryRecord, String> MESSAGE = createField(DSL.name("message"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column
+     * <code>stroom.execution_history.fk_execution_schedule_uuid</code>.
+     */
+    public final TableField<ExecutionHistoryRecord, String> FK_EXECUTION_SCHEDULE_UUID = createField(DSL.name("fk_execution_schedule_uuid"), SQLDataType.VARCHAR(255), this, "");
 
     private ExecutionHistory(Name alias, Table<ExecutionHistoryRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -131,7 +131,7 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
 
     @Override
     public List<ForeignKey<ExecutionHistoryRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID);
+        return Arrays.asList(Keys.EXECUTION_HISTORY_FK_EXECUTION_SCHEDULE_UUID);
     }
 
     @Override

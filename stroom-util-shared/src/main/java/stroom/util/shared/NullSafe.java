@@ -228,7 +228,7 @@ public class NullSafe {
         if (list == null || list.isEmpty()) {
             return null;
         } else {
-            // GWT can't do getFirst()
+            //noinspection SequencedCollectionMethodCanBeUsed   // GWT can't do getFirst()
             return list.get(0);
         }
     }
@@ -240,7 +240,7 @@ public class NullSafe {
         if (list == null || list.isEmpty()) {
             return null;
         } else {
-            // GWT can't do getLast()
+            //noinspection SequencedCollectionMethodCanBeUsed   // GWT can't do getLast()
             return list.get(list.size() - 1);
         }
     }
@@ -748,7 +748,7 @@ public class NullSafe {
     }
 
     /**
-     * Returns a {@link Stream} of entries is non-null else returns an empty {@link Stream}
+     * Returns a {@link Stream<Entry>} of entries if non-null else returns an empty {@link Stream<Entry>}
      */
     public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
         if (map == null || map.isEmpty()) {
@@ -824,10 +824,9 @@ public class NullSafe {
      * @return A non-null unmodifiable set of items.
      */
     public static <T> Set<T> asSet(final T... items) {
-        //noinspection Java9CollectionFactory
         return items == null || items.length == 0
                 ? Collections.emptySet()
-                : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(items)));
+                : Set.of(items);
     }
 
     /**
@@ -872,10 +871,9 @@ public class NullSafe {
         } else if (list.stream().allMatch(Objects::nonNull)) {
             return Collections.unmodifiableList(list);
         } else {
-            //noinspection SimplifyStreamApiCallChains // cos GWT
             return list.stream()
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toUnmodifiableList());
+                    .toList();
         }
     }
 

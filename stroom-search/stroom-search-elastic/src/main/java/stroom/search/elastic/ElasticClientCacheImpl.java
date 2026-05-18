@@ -99,7 +99,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private ElasticsearchClient borrowClient(final ElasticConnectionConfig key) {
         final ElasticsearchClient client = cache.get(key);
         synchronized (this) {
-            useMap.computeIfAbsent(client, k -> new State()).increment();
+            useMap.computeIfAbsent(client, ignored -> new State()).increment();
         }
         return client;
     }
@@ -127,6 +127,10 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     public void clear() {
         cache.clear();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class State {
 

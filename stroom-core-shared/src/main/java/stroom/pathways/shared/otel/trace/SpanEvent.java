@@ -17,6 +17,7 @@
 package stroom.pathways.shared.otel.trace;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,11 +46,11 @@ public class SpanEvent {
     public SpanEvent(@JsonProperty("timeUnixNano") final String timeUnixNano,
                      @JsonProperty("name") final String name,
                      @JsonProperty("attributes") final List<KeyValue> attributes,
-                     @JsonProperty("droppedAttributesCount") final int droppedAttributesCount) {
+                     @JsonProperty("droppedAttributesCount") final Integer droppedAttributesCount) {
         this.timeUnixNano = timeUnixNano;
         this.name = name;
         this.attributes = attributes;
-        this.droppedAttributesCount = droppedAttributesCount;
+        this.droppedAttributesCount = NullSafe.getInt(droppedAttributesCount);
     }
 
     public String getTimeUnixNano() {

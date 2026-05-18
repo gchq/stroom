@@ -40,10 +40,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.TimeUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -344,7 +344,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
 
             if (isWriteRequired) {
                 final Path jsonFile = getJsonFilePath();
-                final ObjectMapper mapper = JsonUtil.getMapper();
+                final JsonMapper mapper = JsonUtil.getMapper();
                 try (final OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
 
                     LOGGER.debug("writeToDisk() - Writing hashedReceiveDataRules to file {}\n{}",

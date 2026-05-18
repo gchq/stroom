@@ -144,7 +144,7 @@ public enum FieldType implements HasDisplayValue, HasPrimitiveValue {
             false),
     DENSE_VECTOR(12,
                  CIKey.internStaticKey("DenseVector"),
-            "denseVector",
+            "dense vector",
             "Dense vector embedding field type\n" +
             "\n" +
             "Supports vector search using algorithms such as k nearest neighbour.\n" +

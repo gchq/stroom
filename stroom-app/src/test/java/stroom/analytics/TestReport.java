@@ -138,6 +138,8 @@ class TestReport extends AbstractAnalyticsTest {
                 .owningDoc(docRef)
                 .build());
 
+        assertThat(executionSchedule).isNotNull();
+
         // Now run the search process.
         scheduledExecutorService.exec(reportExecutor);
 

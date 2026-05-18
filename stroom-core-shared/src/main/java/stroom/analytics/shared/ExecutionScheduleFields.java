@@ -33,7 +33,7 @@ public class ExecutionScheduleFields {
 
     private static final List<QueryField> FIELDS = new ArrayList<>();
 
-    public static final String ID = "Id";
+    public static final String UUID = "uuid";
     public static final String NAME = "Name";
     public static final String PARENT_DOC = "Parent Document";
     public static final String PARENT_RULE = "Parent Rule";
@@ -49,7 +49,6 @@ public class ExecutionScheduleFields {
     public static final String START_TIME = "Start Time";
     public static final String END_TIME = "End Time";
 
-    public static final QueryField FIELD_ID = QueryField.createId(ID);
     public static final QueryField FIELD_NAME = QueryField.createText(NAME);
     public static final QueryField FIELD_ENABLED = QueryField.createBoolean(ENABLED);
     public static final QueryField FIELD_NODE_NAME = QueryField.createText(NODE_NAME);
@@ -66,7 +65,6 @@ public class ExecutionScheduleFields {
             = QueryField.createText(PARENT_DOC_TYPE);
 
     static {
-        FIELDS.add(FIELD_ID);
         FIELDS.add(FIELD_NAME);
         FIELDS.add(FIELD_ENABLED);
         FIELDS.add(FIELD_NODE_NAME);

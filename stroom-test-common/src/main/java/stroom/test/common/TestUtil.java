@@ -20,6 +20,7 @@ import stroom.test.common.DynamicTestBuilder.InitialBuilder;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.AsciiTable.TableBuilder;
@@ -30,13 +31,12 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.mockito.Mockito;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -253,24 +253,22 @@ public class TestUtil {
     }
 
     /**
-     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, ObjectMapper)}
+     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, JsonMapper)}
      */
     public static <T> T testSerialisation(final T object,
                                           final Class<T> clazz) {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        return testSerialisation(object, clazz, null, objectMapper);
+        final JsonMapper jsonMapper = JsonUtil.getNoIndentMapper();
+        return testSerialisation(object, clazz, null, jsonMapper);
     }
 
     /**
-     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, ObjectMapper)}
+     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, JsonMapper)}
      */
     public static <T> T testSerialisation(final T object,
                                           final Class<T> clazz,
-                                          final BiConsumer<ObjectMapper, String> jsonConsumer) {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        return testSerialisation(object, clazz, jsonConsumer, objectMapper);
+                                          final BiConsumer<JsonMapper, String> jsonConsumer) {
+        final JsonMapper jsonMapper = JsonUtil.getNoIndentMapper();
+        return testSerialisation(object, clazz, jsonConsumer, jsonMapper);
     }
 
     /**
@@ -282,8 +280,8 @@ public class TestUtil {
      */
     public static <T> T testSerialisation(final T object,
                                           final Class<T> clazz,
-                                          final BiConsumer<ObjectMapper, String> jsonConsumer,
-                                          final ObjectMapper objectMapper) {
+                                          final BiConsumer<JsonMapper, String> jsonConsumer,
+                                          final JsonMapper objectMapper) {
         Objects.requireNonNull(object);
         Objects.requireNonNull(clazz);
         Objects.requireNonNull(objectMapper);
@@ -291,7 +289,7 @@ public class TestUtil {
         final String json;
         try {
             json = objectMapper.writeValueAsString(object);
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error serialising {}: {}", object, e.getMessage()), e);
         }
@@ -305,7 +303,7 @@ public class TestUtil {
         final T object2;
         try {
             object2 = objectMapper.readValue(json, clazz);
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error deserialising {}: {}", json, e.getMessage()), e);
         }

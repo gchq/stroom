@@ -19,7 +19,7 @@ package stroom.search.elastic;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.TransportUtils;
 import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
@@ -43,11 +43,13 @@ import java.util.regex.Pattern;
 import javax.net.ssl.SSLContext;
 
 public class ElasticClientFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
     private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+)://(.+?)(?::([0-9]+)/?)?$");
 
     @Inject
-    public ElasticClientFactory() { }
+    public ElasticClientFactory() {
+    }
 
     public ElasticsearchClient create(final ElasticConnectionConfig config,
                                       final ElasticClientConfig elasticClientConfig) {
@@ -94,15 +96,16 @@ public class ElasticClientFactory {
         // Set API key header if authentication is used. Key is in the format "<key id>:<secret>"
         final String apiKey = getEncodedApiKey(config);
         if (config.getUseAuthentication() && apiKey != null) {
-            final Header[] defaultHeaders = new Header[] {
-                new BasicHeader("Authorization", "ApiKey " + apiKey)
+            final Header[] defaultHeaders = new Header[]{
+                    new BasicHeader("Authorization", "ApiKey " + apiKey)
             };
 
             restClientBuilder.setDefaultHeaders(defaultHeaders);
         }
 
+        // Use Jackson 3 not 2
         final ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(),
-                new JacksonJsonpMapper());
+                new Jackson3JsonpMapper());
 
         return new ElasticsearchClient(transport);
     }
@@ -128,6 +131,7 @@ public class ElasticClientFactory {
 
     /**
      * Encode the API key ID and secret in base64 for use in a HTTP request.
+     *
      * @return Base-64 encoded string. If no API key or secret are defined, returns `null`.
      */
     private String getEncodedApiKey(final ElasticConnectionConfig config) {
@@ -153,7 +157,9 @@ public class ElasticClientFactory {
                 // Extract the host, port and scheme
                 final String scheme = matches.group(1);
                 final String host = matches.group(2);
-                Integer port = matches.group(3) != null ? Integer.parseInt(matches.group(3)) : null;
+                Integer port = matches.group(3) != null
+                        ? Integer.parseInt(matches.group(3))
+                        : null;
 
                 // If no port specified, try and infer it from the scheme
                 if (port == null) {

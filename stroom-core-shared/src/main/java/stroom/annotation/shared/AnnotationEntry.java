@@ -161,6 +161,10 @@ public class AnnotationEntry {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractBuilder<AnnotationEntry, AnnotationEntry.Builder> {
 
         private Long id;

@@ -96,7 +96,6 @@ public class TableResultCreator implements ResultCreator {
                 mapper = SimpleMapper.create(dataStore.getColumns(), columns);
                 mapper = FilteredMapper.create(
                         columns,
-                        tableSettings.applyValueFilters(),
                         tableSettings.getAggregateFilter(),
                         dataStore.getDateTimeSettings(),
                         errorConsumer,

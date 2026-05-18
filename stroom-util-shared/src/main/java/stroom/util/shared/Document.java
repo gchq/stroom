@@ -24,10 +24,6 @@ import stroom.docref.HasUuid;
 public interface Document extends HasType, HasUuid, HasName {
 
     default DocRef asDocRef() {
-        return DocRef.builder()
-                .type(getType())
-                .name(getName())
-                .uuid(getUuid())
-                .build();
+        return new DocRef(getType(), getUuid(), getName());
     }
 }

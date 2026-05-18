@@ -9680,6 +9680,14 @@ components:
           format: int64
         updateUser:
           $ref: "#/components/schemas/UserRef"
+    AnnotationIdentity:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
     AnnotationTable:
       type: object
       allOf:
@@ -10329,8 +10337,28 @@ components:
         annotationEntryId:
           type: integer
           format: int64
-        annotationRef:
-          $ref: "#/components/schemas/DocRef"
+        annotationEntryType:
+          type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK_EVENT
+          - UNLINK_EVENT
+          - RETENTION_PERIOD
+          - DESCRIPTION
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
+          - DELETE
+        annotationIdentity:
+          $ref: "#/components/schemas/AnnotationIdentity"
         data:
           type: string
     ChangeAssignedTo:
@@ -10489,6 +10517,8 @@ components:
     ColumnFilter:
       type: object
       properties:
+        enabled:
+          type: boolean
         filter:
           type: string
     ColumnRef:
@@ -11508,8 +11538,28 @@ components:
         annotationEntryId:
           type: integer
           format: int64
-        annotationRef:
-          $ref: "#/components/schemas/DocRef"
+        annotationEntryType:
+          type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK_EVENT
+          - UNLINK_EVENT
+          - RETENTION_PERIOD
+          - DESCRIPTION
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
+          - DELETE
+        annotationIdentity:
+          $ref: "#/components/schemas/AnnotationIdentity"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -11536,7 +11586,7 @@ components:
     DenseVectorFieldConfig:
       type: object
       properties:
-        modelRef:
+        embeddingModelRef:
           $ref: "#/components/schemas/DocRef"
         nearestNeighbourCount:
           type: integer
@@ -11544,6 +11594,20 @@ components:
         overlapSize:
           type: integer
           format: int32
+        rerankBatchSize:
+          type: integer
+          format: int32
+        rerankModelRef:
+          $ref: "#/components/schemas/DocRef"
+        rerankModelType:
+          type: string
+          enum:
+          - JINA
+          - COHERE
+          - OPEN_AI
+        rerankScoreMinimum:
+          type: number
+          format: float
         segmentSize:
           type: integer
           format: int32
@@ -12367,6 +12431,12 @@ components:
           - CREATE_EXPLORER_NODE
           - UPDATE_EXPLORER_NODE
           - DELETE_EXPLORER_NODE
+          - LINK
+          - UNLINK
+        data:
+          type: string
+        dataClassName:
+          type: string
         docRef:
           $ref: "#/components/schemas/DocRef"
         oldDocRef:
@@ -12495,9 +12565,6 @@ components:
           type: boolean
         enabled:
           type: boolean
-        id:
-          type: integer
-          format: int32
         name:
           type: string
         nodeName:
@@ -12510,6 +12577,8 @@ components:
           $ref: "#/components/schemas/Schedule"
         scheduleBounds:
           $ref: "#/components/schemas/ScheduleBounds"
+        uuid:
+          type: string
     ExecutionScheduleRequest:
       type: object
       properties:
@@ -17024,6 +17093,8 @@ components:
           format: int32
         selectionFilter:
           $ref: "#/components/schemas/ExpressionOperator"
+        showValueFilters:
+          type: boolean
     RangeInteger:
       type: object
       properties:
@@ -18550,6 +18621,9 @@ components:
     SingleAnnotationChangeRequest:
       type: object
       properties:
+        annotationId:
+          type: integer
+          format: int64
         annotationRef:
           $ref: "#/components/schemas/DocRef"
         change:
@@ -19605,6 +19679,8 @@ components:
             items:
               $ref: "#/components/schemas/ComponentSelectionHandler"
           showDetail:
+            type: boolean
+          showValueFilters:
             type: boolean
           useDefaultExtractionPipeline:
             type: boolean

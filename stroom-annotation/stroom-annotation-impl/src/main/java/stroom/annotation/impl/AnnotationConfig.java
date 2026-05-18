@@ -30,24 +30,33 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
+
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     public static final String DEFAULT_RETENTION_PERIOD = "5y";
+    public static final int DEFAULT_EVENT_LINK_CACHE_SIZE_LIMIT = 1_000_000;
+    public static final String EVENT_LINK_CACHE_SIZE_LIMIT_PROP_NAME = "eventLinkCacheSizeLimit";
 
     private final AnnotationDBConfig dbConfig;
     private final String createText;
     private final String defaultRetentionPeriod;
     private final StroomDuration physicalDeleteAge;
+    private final int eventLinkCacheSizeLimit;
     private final CacheConfig annotationTagCache;
     private final CacheConfig annotationFeedCache;
+    private final CacheConfig annotationValCache;
+    private final CacheConfig annotationValStringCache;
 
     public AnnotationConfig() {
         dbConfig = new AnnotationDBConfig();
         createText = "Create Annotation";
         defaultRetentionPeriod = DEFAULT_RETENTION_PERIOD;
         physicalDeleteAge = StroomDuration.ofDays(7);
+        eventLinkCacheSizeLimit = DEFAULT_EVENT_LINK_CACHE_SIZE_LIMIT;
         annotationTagCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -55,6 +64,16 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
         annotationFeedCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        annotationValCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        // ValStrings are immutable, but if annotation tags change we want to old
+        // ones to be aged-off. Use 5 days to allow for long weekends.
+        annotationValStringCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofDays(5))
                 .build();
     }
 
@@ -64,14 +83,21 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                             @JsonProperty("createText") final String createText,
                             @JsonProperty("defaultRetentionPeriod") final String defaultRetentionPeriod,
                             @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge,
+                            @JsonProperty(EVENT_LINK_CACHE_SIZE_LIMIT_PROP_NAME) final Integer eventLinkCacheSizeLimit,
                             @JsonProperty("annotationTagCache") final CacheConfig annotationTagCache,
-                            @JsonProperty("annotationFeedCache") final CacheConfig annotationFeedCache) {
+                            @JsonProperty("annotationFeedCache") final CacheConfig annotationFeedCache,
+                            @JsonProperty("annotationValCache") final CacheConfig annotationValCache,
+                            @JsonProperty("annotationValStringCache") final CacheConfig annotationValStringCache) {
         this.dbConfig = dbConfig;
         this.createText = createText;
         this.defaultRetentionPeriod = defaultRetentionPeriod;
         this.physicalDeleteAge = physicalDeleteAge;
+        this.eventLinkCacheSizeLimit = Objects.requireNonNullElse(
+                eventLinkCacheSizeLimit, DEFAULT_EVENT_LINK_CACHE_SIZE_LIMIT);
         this.annotationTagCache = annotationTagCache;
         this.annotationFeedCache = annotationFeedCache;
+        this.annotationValCache = annotationValCache;
+        this.annotationValStringCache = annotationValStringCache;
     }
 
     @Override
@@ -98,6 +124,13 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
         return physicalDeleteAge;
     }
 
+    @JsonPropertyDescription("The maximum number of annotation to event links that can be cached. If this " +
+                             "number is breached, it will result in an error.")
+    @Min(0)
+    public int getEventLinkCacheSizeLimit() {
+        return eventLinkCacheSizeLimit;
+    }
+
     @JsonPropertyDescription("Cache config for annotation tags")
     public CacheConfig getAnnotationTagCache() {
         return annotationTagCache;
@@ -107,6 +140,21 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     public CacheConfig getAnnotationFeedCache() {
         return annotationFeedCache;
     }
+
+    @JsonPropertyDescription("Cache config for annotation values used for query result decoration")
+    public CacheConfig getAnnotationValCache() {
+        return annotationValCache;
+    }
+
+    @JsonPropertyDescription("Cache config for low cardinality annotation string values used for query " +
+                             "result decoration")
+    public CacheConfig getAnnotationValStringCache() {
+        return annotationValStringCache;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @BootStrapConfig
     public static class AnnotationDBConfig extends AbstractDbConfig {

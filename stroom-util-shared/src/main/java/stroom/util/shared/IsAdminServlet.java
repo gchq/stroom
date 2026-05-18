@@ -31,4 +31,8 @@ public interface IsAdminServlet {
      * e.g. "/datafeed".
      */
     Set<String> getPathSpecs();
+
+    default String getDisplayName() {
+        return getClass().getName();
+    }
 }

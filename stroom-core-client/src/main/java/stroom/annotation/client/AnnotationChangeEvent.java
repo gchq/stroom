@@ -71,6 +71,10 @@ public class AnnotationChangeEvent extends GwtEvent<AnnotationChangeEvent.Handle
         return annotationRef;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onChange(AnnotationChangeEvent event);

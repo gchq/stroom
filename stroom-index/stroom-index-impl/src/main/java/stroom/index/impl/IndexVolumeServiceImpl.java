@@ -647,7 +647,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        final VolumeMap volumeMap = getCurrentVolumeMap();
+        final VolumeMap volumeMap = securityContext.asProcessingUserResult(this::getCurrentVolumeMap);
+
         final Map<VolGroupNode, List<Map<String, Object>>> volInfoMap = volumeMap.getGroupNameToVolumesMap()
                 .entrySet()
                 .stream()

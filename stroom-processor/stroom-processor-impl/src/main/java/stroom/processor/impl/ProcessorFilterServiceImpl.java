@@ -41,6 +41,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
@@ -475,19 +476,21 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     }
 
     @Override
-    public ResultPage<ProcessorFilter> find(final DocRef pipelineDocRef) {
-        if (pipelineDocRef == null) {
-            throw new IllegalArgumentException("Supplied pipeline reference cannot be null");
+    public ResultPage<ProcessorFilter> find(final DocRef parentDocRef) {
+        if (parentDocRef == null) {
+            throw new IllegalArgumentException("Supplied document reference cannot be null");
         }
 
-        if (!PipelineDoc.TYPE.equals(pipelineDocRef.getType())) {
-            throw new IllegalArgumentException("Supplied pipeline reference cannot be of type " +
-                                               pipelineDocRef.getType());
+        if (!(PipelineDoc.TYPE.equals(parentDocRef.getType()) || AnalyticRuleDoc.TYPE.equals(parentDocRef.getType()))) {
+            throw new IllegalArgumentException("Supplied document reference cannot be of type " +
+                                               parentDocRef.getType());
         }
 
         // First try to find the associated processors
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
+                .op(Op.OR)
+                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, parentDocRef)
+                .addDocRefTerm(ProcessorFields.ANALYTIC_RULE, Condition.IS_DOC_REF, parentDocRef).build();
         final ResultPage<Processor> processorResultPage = processorService.find(
                 new ExpressionCriteria(processorExpression));
         if (processorResultPage.isEmpty()) {

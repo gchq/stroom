@@ -33,6 +33,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -139,7 +140,7 @@ public class ScheduledProcessEditPresenter
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption(executionSchedule.getId() == null
+                .caption(executionSchedule.getUuid() == null
                         ? "Create Schedule"
                         : "Edit Schedule")
                 .onShow(e -> getView().focus())
@@ -179,9 +180,11 @@ public class ScheduledProcessEditPresenter
             } else if (scheduledTimes.isError()) {
                 AlertEvent.fireWarn(this, scheduledTimes.getError(), event::reset);
             } else {
-                if (!getView().getStartTime().isValid()) {
+                if (!getView().getStartTime().isValid()
+                    && !scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
                     AlertEvent.fireWarn(this, "Invalid start time", event::reset);
-                } else if (!getView().getEndTime().isValid()) {
+                } else if (!getView().getEndTime().isValid()
+                           && !scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
                     AlertEvent.fireWarn(this, "Invalid end time", event::reset);
                 } else {
                     final ScheduleBounds scheduleBounds = new ScheduleBounds(

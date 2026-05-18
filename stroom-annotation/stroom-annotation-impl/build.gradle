@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.annotation.impl'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
@@ -46,6 +47,7 @@ dependencies {
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
+    implementation libs.jakarta.validation.api
     implementation libs.restygwt
     implementation libs.slf4j.api
 

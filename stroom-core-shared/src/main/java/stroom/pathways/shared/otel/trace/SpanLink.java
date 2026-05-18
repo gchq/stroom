@@ -17,6 +17,7 @@
 package stroom.pathways.shared.otel.trace;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,12 +50,12 @@ public class SpanLink {
                     @JsonProperty("spanId") final String spanId,
                     @JsonProperty("traceState") final String traceState,
                     @JsonProperty("attributes") final List<KeyValue> attributes,
-                    @JsonProperty("droppedAttributesCount") final int droppedAttributesCount) {
+                    @JsonProperty("droppedAttributesCount") final Integer droppedAttributesCount) {
         this.traceId = traceId;
         this.spanId = spanId;
         this.traceState = traceState;
         this.attributes = attributes;
-        this.droppedAttributesCount = droppedAttributesCount;
+        this.droppedAttributesCount = NullSafe.getInt(droppedAttributesCount);
     }
 
     public String getTraceId() {

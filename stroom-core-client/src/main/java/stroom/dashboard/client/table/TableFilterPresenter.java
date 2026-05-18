@@ -87,7 +87,7 @@ public class TableFilterPresenter
                 .onShow(e -> focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ColumnFilter columnFilter = columnFilterPresenter.getColumnFilter();
+                        final ColumnFilter columnFilter = columnFilterPresenter.getColumnFilter(column);
                         final IncludeExcludeFilter includeExcludeFilter = includeExcludeFilterPresenter.getFilter();
                         if ((!Objects.equals(columnFilter, column.getColumnFilter()) ||
                              (!Objects.equals(includeExcludeFilter, column.getFilter())))) {

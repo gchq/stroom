@@ -64,6 +64,7 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jackson.core
     implementation libs.jackson.databind
+    implementation libs.jackson.dataformat.yaml
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
     implementation libs.jetty.server

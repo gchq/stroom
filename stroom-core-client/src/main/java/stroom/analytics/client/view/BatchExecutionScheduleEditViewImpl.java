@@ -125,6 +125,7 @@ public final class BatchExecutionScheduleEditViewImpl
         startTimeEnable.addValueChangeHandler(event -> update());
         endTimeEnable.addValueChangeHandler(event -> update());
         runAsUserEnable.addValueChangeHandler(event -> update());
+        scheduleBox.addValueChangeHandler(event -> update());
 
         update();
     }
@@ -200,14 +201,16 @@ public final class BatchExecutionScheduleEditViewImpl
         nodeBox.setEnabled(nodeEnable.getValue());
         nodeForm.setDisabled(!nodeEnable.getValue());
 
-        scheduleBox.setEnabled(scheduleEnable.getValue());
-        scheduleForm.setDisabled(!scheduleEnable.getValue());
+        final boolean instantSchedule = scheduleBox.getValue().getType().equals(ScheduleType.INSTANT);
+        scheduleBox.setEnabled(scheduleEnable.getValue() && !instantSchedule);
+        scheduleForm.setDisabled(!(scheduleEnable.getValue() && !instantSchedule));
+        scheduleForm.setLabel("Schedule (" + scheduleBox.getValue().getType().getDisplayValue() + ")");
 
-        startTimeBox.setEnabled(startTimeEnable.getValue());
-        startTimeForm.setDisabled(!startTimeEnable.getValue());
+        startTimeBox.setEnabled(startTimeEnable.getValue() && !instantSchedule);
+        startTimeForm.setDisabled(!(startTimeEnable.getValue() && !instantSchedule));
 
-        endTimeBox.setEnabled(endTimeEnable.getValue());
-        endTimeForm.setDisabled(!endTimeEnable.getValue());
+        endTimeBox.setEnabled(endTimeEnable.getValue() && !instantSchedule);
+        endTimeForm.setDisabled(!(endTimeEnable.getValue() && !instantSchedule));
 
         userRefSelectionBoxPresenter.setEnabled(runAsUserEnable.getValue());
         runAsUserForm.setDisabled(!runAsUserEnable.getValue());

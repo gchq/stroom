@@ -35,8 +35,7 @@ import com.gwtplatform.mvp.client.View;
 import javax.inject.Provider;
 
 public class DataGenSettingsPresenter
-        extends DocPresenter<DataGenSettingsView, DataGenDoc>
-        implements DirtyUiHandlers {
+        extends DocPresenter<DataGenSettingsView, DataGenDoc> {
 
     final DocSelectionBoxPresenter destinationFeedPresenter;
     private final UiConfigCache uiConfigCache;
@@ -53,9 +52,7 @@ public class DataGenSettingsPresenter
         this.uiConfigCache = uiConfigcache;
         this.templatePresenter = editorPresenterProvider.get();
 
-        view.setUiHandlers(this);
         view.setTemplateEditor(templatePresenter.getView());
-
         destinationFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
         destinationFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeed(destinationFeedPresenter.getView());
@@ -64,8 +61,8 @@ public class DataGenSettingsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(destinationFeedPresenter.addDataSelectionHandler(e -> onDirty()));
-        registerHandler(templatePresenter.addValueChangeHandler(e -> onDirty()));
+        registerHandler(destinationFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(templatePresenter.addValueChangeHandler(e -> onChange()));
     }
 
     @Override
@@ -85,11 +82,6 @@ public class DataGenSettingsPresenter
     }
 
     @Override
-    public void onDirty() {
-        setDirty(true);
-    }
-
-    @Override
     protected DataGenDoc onWrite(final DataGenDoc doc) {
         return doc
                 .copy()
@@ -98,7 +90,7 @@ public class DataGenSettingsPresenter
                 .build();
     }
 
-    public interface DataGenSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface DataGenSettingsView extends View {
 
         void setDestinationFeed(View view);
 

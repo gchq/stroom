@@ -24,12 +24,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -47,15 +44,15 @@ class TestYamlUtil {
 
         final ImmutablePojo immutablePojoDefault = new ImmutablePojo();
 
-        final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory())
-                .registerModule(new Jdk8Module())
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        final YAMLMapper yamlMapper = YAMLMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
 
-        final String defaultYaml = yamlObjectMapper.writeValueAsString(immutablePojoDefault);
+        final String defaultYaml = yamlMapper.writeValueAsString(immutablePojoDefault);
 
         LOGGER.info("yaml:\n{}", defaultYaml);
 
-        final ImmutablePojo immutablePojoDefault2 = yamlObjectMapper.readValue(defaultYaml, ImmutablePojo.class);
+        final ImmutablePojo immutablePojoDefault2 = yamlMapper.readValue(defaultYaml, ImmutablePojo.class);
 
         assertThat(immutablePojoDefault2)
                 .isEqualTo(immutablePojoDefault);
@@ -71,20 +68,14 @@ class TestYamlUtil {
 
         final ImmutablePojo immutablePojoMerged = YamlUtil.mergeYamlNodeTrees(
                 ImmutablePojo.class,
-                yamlObjectMapper,
-                mapper -> {
-                    try {
-                        return mapper.readTree(sparseYaml);
-                    } catch (final IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                mapper ->
-                        yamlObjectMapper.valueToTree(immutablePojoDefault));
+                yamlMapper,
+                mapper -> mapper.readTree(sparseYaml),
+                ignored ->
+                        yamlMapper.valueToTree(immutablePojoDefault));
     }
 
     @Test
-    void testMergeYamlNodeTrees_empty() throws JsonProcessingException {
+    void testMergeYamlNodeTrees_empty() {
         doYamlMergeTest("""
                         """,
                 (defaultPojo, mergedPojo) -> {
@@ -94,11 +85,11 @@ class TestYamlUtil {
     }
 
     @Test
-    void testMergeYamlNodeTrees_noChange() throws JsonProcessingException {
+    void testMergeYamlNodeTrees_noChange() {
         final ImmutablePojo immutablePojoDefault = new ImmutablePojo();
-        final ObjectMapper yamlObjectMapper = YamlUtil.getMapper();
+        final YAMLMapper yamlMapper = YamlUtil.getMapper();
         // sparse is identical to default
-        final String sparseYaml = yamlObjectMapper.writeValueAsString(immutablePojoDefault);
+        final String sparseYaml = yamlMapper.writeValueAsString(immutablePojoDefault);
 
         doYamlMergeTest(sparseYaml, (defaultPojo, mergedPojo) -> {
             assertThat(mergedPojo)
@@ -107,11 +98,11 @@ class TestYamlUtil {
     }
 
     @Test
-    void testMergeYamlNodeTrees_oneRootFieldChanged() throws JsonProcessingException {
+    void testMergeYamlNodeTrees_oneRootFieldChanged() {
         final ImmutablePojo expectedPojo = new ImmutablePojo().withMyInt(999);
         doYamlMergeTest("""
                         myInt: 999
-                                """,
+                        """,
                 (defaultPojo, mergedPojo) -> {
                     assertThat(mergedPojo)
                             .isEqualTo(expectedPojo);
@@ -119,12 +110,12 @@ class TestYamlUtil {
     }
 
     @Test
-    void testMergeYamlNodeTrees_nullBranch() throws JsonProcessingException {
+    void testMergeYamlNodeTrees_nullBranch() {
         final ImmutablePojo expectedPojo = new ImmutablePojo().withMyInt(999);
         doYamlMergeTest("""
                         myInt: 999
                         immutableChild:
-                                """,
+                        """,
                 (defaultPojo, mergedPojo) -> {
                     assertThat(mergedPojo)
                             .isEqualTo(expectedPojo);
@@ -132,7 +123,7 @@ class TestYamlUtil {
     }
 
     @Test
-    void testMergeYamlNodeTrees_multipleChanges() throws JsonProcessingException {
+    void testMergeYamlNodeTrees_multipleChanges() {
         final ImmutablePojo expectedPojo = new ImmutablePojo()
                 .withMyInt(999)
                 .withImmutableChild(new ImmutableChildPojo()
@@ -146,7 +137,7 @@ class TestYamlUtil {
                           myString: a new value
                           immutableGrandChild:
                             myString: another new value
-                                """,
+                        """,
                 (defaultPojo, mergedPojo) -> {
                     assertThat(mergedPojo)
                             .isEqualTo(expectedPojo);
@@ -154,33 +145,25 @@ class TestYamlUtil {
     }
 
     private void doYamlMergeTest(final String sparseYaml,
-                                 final BiConsumer<ImmutablePojo, ImmutablePojo> objectsConsumer)
-            throws JsonProcessingException {
+                                 final BiConsumer<ImmutablePojo, ImmutablePojo> objectsConsumer) {
         doYamlMergeTest(sparseYaml, ImmutablePojo.class, ImmutablePojo::new, objectsConsumer);
     }
 
     private <T> void doYamlMergeTest(final String sparseYaml,
                                      final Class<T> valueType,
                                      final Supplier<T> defaultObjectSupplier,
-                                     final BiConsumer<T, T> objectsConsumer)
-            throws JsonProcessingException {
+                                     final BiConsumer<T, T> objectsConsumer) {
         final T defaultObject = defaultObjectSupplier.get();
-        final ObjectMapper yamlObjectMapper = YamlUtil.getMapper();
+        final YAMLMapper yamlMapper = YamlUtil.getMapper();
 
-        LOGGER.debug("default yaml:\n{}", yamlObjectMapper.writeValueAsString(defaultObject));
+        LOGGER.debug("default yaml:\n{}", yamlMapper.writeValueAsString(defaultObject));
 
         final T mergedObject = YamlUtil.mergeYamlNodeTrees(
                 valueType,
-                yamlObjectMapper,
-                mapper -> {
-                    try {
-                        return mapper.readTree(sparseYaml);
-                    } catch (final IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                mapper ->
-                        yamlObjectMapper.valueToTree(defaultObject));
+                yamlMapper,
+                mapper -> mapper.readTree(sparseYaml),
+                ignored ->
+                        yamlMapper.valueToTree(defaultObject));
         objectsConsumer.accept(defaultObject, mergedObject);
     }
 

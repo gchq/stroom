@@ -56,6 +56,7 @@ dependencies {
     implementation libs.ws.rs.api
 
     testImplementation libs.commons.lang
+    testImplementation libs.jackson.databind
 
     runtimeOnly libs.mysql.connector.java
 

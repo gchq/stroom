@@ -28,6 +28,7 @@ if [ "$(id -u)" = '0' ]; then
     # WARNING: use chown -R with caution as some dirs (e.g. data) can
     # contain MANY files, resulting in a big delay on container start
     chown proxy:proxy /stroom-proxy/content
+    chown proxy:proxy /stroom-proxy/data_feed_identities
     chown proxy:proxy /stroom-proxy/logs
     chown proxy:proxy /stroom-proxy/logs/extra_headers.txt
     chown proxy:proxy /stroom-proxy/data

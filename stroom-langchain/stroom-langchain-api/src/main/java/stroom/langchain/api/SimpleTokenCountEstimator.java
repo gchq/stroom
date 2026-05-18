@@ -16,8 +16,8 @@
 
 package stroom.langchain.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import stroom.util.json.JsonUtil;
+
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -33,8 +33,6 @@ import dev.langchain4j.model.TokenCountEstimator;
 import java.util.Map;
 
 public class SimpleTokenCountEstimator implements TokenCountEstimator {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
     public int estimateTokenCountInText(final String text) {
@@ -108,16 +106,12 @@ public class SimpleTokenCountEstimator implements TokenCountEstimator {
                         continue;
                     }
 
-                    try {
-                        final Map<?, ?> arguments = OBJECT_MAPPER.readValue(toolExecutionRequest.arguments(),
-                                Map.class);
-                        for (final Map.Entry<?, ?> argument : arguments.entrySet()) {
-                            tokenCount += 2;
-                            tokenCount += estimateTokenCountInText(String.valueOf(argument.getKey()));
-                            tokenCount += estimateTokenCountInText(String.valueOf(argument.getValue()));
-                        }
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                    final Map<?, ?> arguments = JsonUtil.getMapper().readValue(toolExecutionRequest.arguments(),
+                            Map.class);
+                    for (final Map.Entry<?, ?> argument : arguments.entrySet()) {
+                        tokenCount += 2;
+                        tokenCount += estimateTokenCountInText(String.valueOf(argument.getKey()));
+                        tokenCount += estimateTokenCountInText(String.valueOf(argument.getValue()));
                     }
                 }
             }

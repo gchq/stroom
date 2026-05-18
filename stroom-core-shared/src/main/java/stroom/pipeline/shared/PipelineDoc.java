@@ -168,6 +168,10 @@ public class PipelineDoc extends AbstractDoc {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder
             extends AbstractBuilder<PipelineDoc, Builder> {
 

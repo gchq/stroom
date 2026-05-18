@@ -17,6 +17,7 @@
 package stroom.index.lucene;
 
 import stroom.index.impl.LuceneProvider;
+import stroom.query.common.v2.RerankScoringFilterFactory;
 import stroom.search.extraction.MemoryIndex;
 import stroom.util.guice.GuiceUtil;
 
@@ -28,6 +29,7 @@ public class LuceneModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(MemoryIndex.class).to(LuceneMemoryIndex.class);
+        bind(RerankScoringFilterFactory.class).to(RerankScoringFilterFactoryImpl.class);
 
         // Bind this provider.
         GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene980Provider.class);

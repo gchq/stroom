@@ -31,7 +31,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
@@ -264,7 +263,7 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 // in the key
                 final String key = getDelegatingStore().list(Integer.MAX_VALUE, refStoreEntry ->
                                 refStoreEntry.getMapDefinition().equals(mapDefinition)
-                                        && !refStoreEntry.getKey().contains("-"))
+                                && !refStoreEntry.getKey().contains("-"))
                         .get(0)
                         .getKey();
 
@@ -288,7 +287,7 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 // in the key
                 final String key = getDelegatingStore().list(Integer.MAX_VALUE, refStoreEntry ->
                                 refStoreEntry.getMapDefinition().equals(mapDefinition)
-                                        && !refStoreEntry.getKey().contains("-"))
+                                && !refStoreEntry.getKey().contains("-"))
                         .get(0)
                         .getKey();
 
@@ -313,7 +312,7 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
                 // in the key
                 final String key = getDelegatingStore().list(Integer.MAX_VALUE, refStoreEntry ->
                                 refStoreEntry.getMapDefinition().equals(mapDefinition)
-                                        && !refStoreEntry.getKey().contains("-"))
+                                && !refStoreEntry.getKey().contains("-"))
                         .get(0)
                         .getKey();
 
@@ -364,8 +363,8 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         final long keyValueEntryCount = getDelegatingStore().getKeyValueEntryCount();
         assertThat(keyValueEntryCount)
                 .isEqualTo((long) ENTRIES_PER_MAP_DEF
-                        * getDefaultRefStreamDefinitions().size()
-                        * MAPS_PER_REF_STREAM_DEF);
+                           * getDefaultRefStreamDefinitions().size()
+                           * MAPS_PER_REF_STREAM_DEF);
     }
 
     @Test
@@ -374,8 +373,8 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
         final long rangeValueEntryCount = getDelegatingStore().getRangeValueEntryCount();
         assertThat(rangeValueEntryCount)
                 .isEqualTo((long) ENTRIES_PER_MAP_DEF
-                        * getDefaultRefStreamDefinitions().size()
-                        * MAPS_PER_REF_STREAM_DEF);
+                           * getDefaultRefStreamDefinitions().size()
+                           * MAPS_PER_REF_STREAM_DEF);
     }
 
     @Test
@@ -427,7 +426,7 @@ class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest 
     }
 
     @Test
-    void testGetSystemInfo() throws JsonProcessingException {
+    void testGetSystemInfo() {
         loadDefaultData();
 
         final SystemInfoResult systemInfo = getDelegatingStore().getSystemInfo();

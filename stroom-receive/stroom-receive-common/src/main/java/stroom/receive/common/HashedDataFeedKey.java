@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -89,7 +90,7 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.hash = NullSafe.requireNonBlankString(hash, () -> "hash must not be blank");
-        this.salt = NullSafe.requireNonBlankString(salt, () -> "salt must not be blank");
+        this.salt = salt;
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm, "hashAlgorithm must not be null");
         // No point holding blank keys or null values
         this.ciStreamMetaData = NullSafe.map(streamMetaData)
@@ -137,6 +138,11 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         return hash;
     }
 
+    /**
+     * @return The salt used during the hashing process. May be null if no salt is used
+     * or if the algorithm encodes the salt in the hash (e.g. BCrypt)
+     */
+    @Nullable
     public String getSalt() {
         return salt;
     }

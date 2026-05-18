@@ -146,9 +146,13 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                         @Override
                         public void run() {
                             final Element th = heading.getElement();
-                            final Element button = ElementUtil.findChild(th, "column-valueFilterIcon");
                             final Element target = event.getEventTarget().cast();
+                            final Element button = ElementUtil.findChild(th, "column-valueFilterIcon");
                             final boolean isFilterButton = button.isOrHasChild(target);
+                            final Element diableFilterButton = ElementUtil.findChild(th,
+                                    "dashboard-table-filter-cell-disable-button");
+                            final boolean isDiableFilterButton = diableFilterButton.isOrHasChild(target);
+
 
                             if (currentFilterColIndex == colIndex) {
                                 HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
@@ -171,12 +175,20 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                                         },
                                         column.getColumnValueSelection(),
                                         ColumnsManager.this);
+
+                            } else if (isDiableFilterButton) {
+                                final FilterCellManager filterCellManager = tablePresenter.getFilterCellManager();
+                                if (filterCellManager != null) {
+                                    final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
+                                    builder.enabled(!builder.build().isEnabled());
+                                    filterCellManager.setColumnFilter(column, builder.build());
+                                }
                             }
 
                             if (currentMenuColIndex == colIndex) {
                                 HideMenuEvent.builder().fire(columnsManager);
 
-                            } else if (!isFilterButton) {
+                            } else if (!isFilterButton && !isDiableFilterButton) {
                                 currentMenuColIndex = colIndex;
                                 final List<Item> menuItems = getMenuItems(column);
 
@@ -331,8 +343,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
             if (newField.getColumnFilter() != null &&
                 NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
-                if (!tablePresenter.getTableComponentSettings().applyValueFilters()) {
-                    tablePresenter.toggleApplyValueFilters();
+                if (!tablePresenter.getTableComponentSettings().showValueFilters()) {
+                    tablePresenter.toggleShowValueFilters();
                 }
             }
 
@@ -429,14 +441,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     @Override
-    public void setValueFilter(final Column column,
-                               final String valueFilter) {
-        ColumnFilter columnFilter = null;
-        if (NullSafe.isNonBlankString(valueFilter)) {
-            // TODO : Add case sensitive option.
-            columnFilter = new ColumnFilter(valueFilter);
-        }
-
+    public void setColumnFilter(final Column column,
+                                final ColumnFilter columnFilter) {
         if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
             // Required to replace column filter in place so we don't need to re-render the table which would lose
             // focus from column filter textbox.
@@ -445,6 +451,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
             replaceColumn(column, column.copy().columnFilter(columnFilter).build());
             tablePresenter.setFocused(false);
             tablePresenter.onChange();
+            tablePresenter.updateColumns();
             tablePresenter.onColumnFilterChange();
         }
     }
@@ -734,17 +741,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 .disabledIcon(SvgImage.FILTER)
                 .text("Filter")
                 .command(() -> filterColumn(column))
-                .highlight((column.getFilter() != null
-                            && ((column.getFilter().getIncludes() != null
-                                 && !column.getFilter().getIncludes().trim().isEmpty())
-                                || (column.getFilter().getExcludes() != null
-                                    && !column.getFilter().getExcludes().trim().isEmpty())
-                                || !column.getFilter().getIncludeDictionaries().isEmpty()
-                                || !column.getFilter().getExcludeDictionaries().isEmpty())
-                           ) ||
-                           (column.getColumnFilter() != null
-                            && ((column.getColumnFilter().getFilter() != null
-                                 && !column.getColumnFilter().getFilter().trim().isEmpty()))))
+                .highlight(column.hasActiveFilter())
                 .build();
     }
 

@@ -349,6 +349,40 @@ class TestStroomCacheImpl {
     }
 
     @Test
+    void testCompute() {
+        // Make sure compute works with a loading cache
+        assertThat(cache.size())
+                .isEqualTo(12);
+
+        assertThat(cache.get(5))
+                .isEqualTo("May");
+
+        assertThat(cache.size())
+                .isEqualTo(12);
+
+        final String val = cache.compute(5, (k, v) -> {
+            assertThat(k)
+                    .isEqualTo(5);
+            return v + "XXX";
+        });
+        assertThat(val)
+                .isEqualTo("MayXXX");
+        assertThat(cache.size())
+                .isEqualTo(12);
+
+        // Remove using compute
+        final String val2 = cache.compute(5, (ignoredKey, ignoredVal) -> null);
+        assertThat(val2)
+                .isEqualTo(null);
+        assertThat(cache.size())
+                .isEqualTo(11);
+        assertThat(cache.get(5))
+                .isEqualTo(null);
+        assertThat(cache.getIfPresent(5))
+                .isEmpty();
+    }
+
+    @Test
     void testInvalidate() {
         final List<Integer> numbers = new CopyOnWriteArrayList<>();
         final List<String> monthNames = new CopyOnWriteArrayList<>();

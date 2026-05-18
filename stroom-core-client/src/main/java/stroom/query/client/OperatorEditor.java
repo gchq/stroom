@@ -39,10 +39,7 @@ public class OperatorEditor extends Composite {
         protected void onBind() {
             super.onBind();
             registerHandler(listBox.addValueChangeHandler(event -> {
-                if (!reading && operator != null) {
-                    operator.setOp(event.getValue());
-                    onChange();
-                }
+                onChange();
             }));
         }
     };
@@ -93,6 +90,14 @@ public class OperatorEditor extends Composite {
         }
     }
 
+    public void write() {
+        if (editing) {
+//            layout.setVisible(false);
+//
+//            editing = false;
+        }
+    }
+
     public void endEdit() {
         if (editing) {
             layout.setVisible(false);
@@ -102,7 +107,8 @@ public class OperatorEditor extends Composite {
     }
 
     private void onChange() {
-        if (!reading) {
+        if (!reading && operator != null) {
+            operator.setOp(listBox.getValue());
             if (uiHandlers != null) {
                 uiHandlers.onChange();
             }

@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.2_10-jdk-alpine-3.23@sha256:da683f4f02f9427597d8fa162b73b8222fe08596dcebaf23e4399576ff8b037e AS stroom-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:30d9f87d702c2c1c601ed0d31e0c88ea1ea474ee7676cda7b7a59e759181c4dd AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -65,10 +65,17 @@ VOLUME /stroom/config/
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
+# Create Docker volume for data feed idenity files to be dropped into
+VOLUME /stroom/data_feed_identities/
+
+# Create Docker volume for local checkouts of git repos
+VOLUME /stroom/git_repo/
+
 # Create Docker volume for use by any lmdb data stores.
 VOLUME /stroom/lmdb/
 
-# lmdb_library muted as tmpfs not a managed volume
+# lmdb binaries that are extracted from the stroom jar on each boot.
+VOLUME /stroom/lmdb_library/
 
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
@@ -76,8 +83,16 @@ VOLUME /stroom/logs/
 # Create Docker volume for any output stroom creates, e.g. from file appenders
 VOLUME /stroom/output/
 
+# Create Docker volume for PlanB state store
+VOLUME /stroom/planb/
+
 # Create Docker volume for Stroom's off-heap reference data
 VOLUME /stroom/reference_data/
+
+# Create Docker volume for Stroom's off-heap reference data staging area
+# This could potentiall be mounted as tmpfs (if the host has sufficient memory) as the
+# data is only present for the life of a ref load.
+VOLUME /stroom/reference_staging_data/
 
 # Create Docker volume for Stroom's off-heap search result data
 VOLUME /stroom/search_results/
@@ -110,6 +125,8 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/data_feed_identities && \
+    mkdir -p /stroom/git_repo && \
     mkdir -p /stroom/lmdb && \
     mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \

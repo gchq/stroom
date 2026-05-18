@@ -16,21 +16,22 @@
 
 package stroom.util.json;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 public abstract class AbstractJsonSerialiser<T> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJsonSerialiser.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractJsonSerialiser.class);
 
     public String serialise(final T object) {
         try {
             return JsonUtil.writeValueAsString(object);
-
         } catch (final RuntimeException e) {
-            LOGGER.debug("Problem serialising {} {}", new Object[]{getSerialisableClass(), object}, e);
-            LOGGER.warn("Problem serialising {} {} - {} (enable debug for full trace)",
-                    getSerialisableClass(), object, String.valueOf(e));
+            LOGGER.debug(() -> LogUtil.message("Problem serialising {} {} - {}",
+                    getSerialisableClass(), object, LogUtil.exceptionMessage(e)), e);
+            LOGGER.warn(() -> LogUtil.message("Problem serialising {} {} - {} (enable debug for full trace)",
+                    getSerialisableClass(), object, LogUtil.exceptionMessage(e)));
         }
         return null;
     }
@@ -39,8 +40,10 @@ public abstract class AbstractJsonSerialiser<T> {
         try {
             return JsonUtil.readValue(json, getSerialisableClass());
         } catch (final RuntimeException e) {
-            LOGGER.debug("Unable to deserialise", e);
-            LOGGER.warn(e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Unable to deserialise to {} - {}",
+                    getSerialisableClass(), LogUtil.exceptionMessage(e)), e);
+            LOGGER.warn(() -> LogUtil.message("Unable to deserialise to {} - {} (enable debug for full trace)",
+                    getSerialisableClass(), LogUtil.exceptionMessage(e)));
         }
         return null;
     }

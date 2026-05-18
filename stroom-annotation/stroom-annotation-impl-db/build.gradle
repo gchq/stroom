@@ -28,6 +28,7 @@ dependencies {
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -36,6 +37,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.caffeine
     implementation libs.fastutil.core
     implementation libs.flyway.core
     implementation libs.flyway.mysql
@@ -45,6 +47,7 @@ dependencies {
     implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.slf4j.api
+    implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java
 
@@ -54,6 +57,7 @@ dependencies {
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
     testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+    testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-search:stroom-searchable-api')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-task:stroom-task-mock')

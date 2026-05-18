@@ -24,11 +24,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectReader;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -121,31 +122,38 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
     private void processFile(final Path path) {
         if (path != null && Files.isRegularFile(path)) {
             LOGGER.info(() -> LogUtil.message("Reading data feed identity file {}", path.toAbsolutePath().normalize()));
-            final ObjectReader reader = JsonUtil.getMapper().reader()
-                    .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-            try (final InputStream fileStream = new FileInputStream(path.toFile())) {
-                try {
-                    final DataFeedIdentities dataFeedIdentities = reader.readValue(fileStream,
-                            DataFeedIdentities.class);
-                    if (dataFeedIdentities != null && !dataFeedIdentities.isEmpty()) {
-                        final int addedCount = dataFeedIdentityServiceProvider.get()
-                                .addDataFeedKeys(dataFeedIdentities.getDataFeedIdentities(), path);
-                        LOGGER.info(() -> LogUtil.message("Loaded {} data feed identities found in {}",
-                                addedCount,
-                                path.toAbsolutePath().normalize()));
-                    } else {
-                        LOGGER.info(() -> LogUtil.message("No data feed identities found in {}",
-                                path.toAbsolutePath().normalize()));
-                    }
-                } catch (final IOException e) {
-                    LOGGER.debug(() -> LogUtil.message("Error parsing file {}: {}", path, e.getMessage()), e);
-                    LOGGER.error("Error parsing file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
-                }
-            } catch (final IOException e) {
-                LOGGER.debug(() -> LogUtil.message("Error reading file {}: {}", path, e.getMessage()), e);
-                LOGGER.error("Error reading file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
+            final DataFeedIdentities dataFeedIdentities = readDataFeedIdentities(path);
+            if (dataFeedIdentities != null && !dataFeedIdentities.isEmpty()) {
+                final int addedCount = dataFeedIdentityServiceProvider.get()
+                        .addDataFeedKeys(dataFeedIdentities.getDataFeedIdentities(), path);
+                LOGGER.info(() -> LogUtil.message("Loaded {} data feed identities found in {}",
+                        addedCount,
+                        path.toAbsolutePath().normalize()));
+            } else {
+                LOGGER.info(() -> LogUtil.message("No data feed identities found in {}",
+                        path.toAbsolutePath().normalize()));
             }
+        } else {
+            LOGGER.debug("processFile() - Skipping path that is not a regular file {}", path);
         }
+    }
+
+    private DataFeedIdentities readDataFeedIdentities(final Path path) {
+        final ObjectReader reader = JsonUtil.getMapper().reader()
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        DataFeedIdentities dataFeedIdentities = null;
+        try (final InputStream fileStream = new FileInputStream(path.toFile())) {
+            try {
+                dataFeedIdentities = reader.readValue(fileStream);
+            } catch (final JacksonException e) {
+                LOGGER.debug(() -> LogUtil.message("Error parsing file {}: {}", path, e.getMessage()), e);
+                LOGGER.error("Error parsing file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
+            }
+        } catch (final IOException e) {
+            LOGGER.debug(() -> LogUtil.message("Error reading file {}: {}", path, e.getMessage()), e);
+            LOGGER.error("Error reading file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
+        }
+        return dataFeedIdentities;
     }
 
     private static boolean isJsonFile(final Path path) {
@@ -160,5 +168,4 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
                 NullSafe.get(path, Path::toAbsolutePath, Path::normalize), isJsonFile));
         return isJsonFile;
     }
-
 }

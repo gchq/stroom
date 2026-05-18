@@ -54,12 +54,6 @@ public class ExecutionTracker extends TableImpl<ExecutionTrackerRecord> {
 
     /**
      * The column
-     * <code>stroom.execution_tracker.fk_execution_schedule_id</code>.
-     */
-    public final TableField<ExecutionTrackerRecord, Integer> FK_EXECUTION_SCHEDULE_ID = createField(DSL.name("fk_execution_schedule_id"), SQLDataType.INTEGER.nullable(false), this, "");
-
-    /**
-     * The column
      * <code>stroom.execution_tracker.actual_execution_time_ms</code>.
      */
     public final TableField<ExecutionTrackerRecord, Long> ACTUAL_EXECUTION_TIME_MS = createField(DSL.name("actual_execution_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
@@ -75,6 +69,12 @@ public class ExecutionTracker extends TableImpl<ExecutionTrackerRecord> {
      * <code>stroom.execution_tracker.next_effective_execution_time_ms</code>.
      */
     public final TableField<ExecutionTrackerRecord, Long> NEXT_EFFECTIVE_EXECUTION_TIME_MS = createField(DSL.name("next_effective_execution_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column
+     * <code>stroom.execution_tracker.fk_execution_schedule_uuid</code>.
+     */
+    public final TableField<ExecutionTrackerRecord, String> FK_EXECUTION_SCHEDULE_UUID = createField(DSL.name("fk_execution_schedule_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     private ExecutionTracker(Name alias, Table<ExecutionTrackerRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -117,7 +117,7 @@ public class ExecutionTracker extends TableImpl<ExecutionTrackerRecord> {
 
     @Override
     public List<ForeignKey<ExecutionTrackerRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.EXECUTION_TRACKER_EXECUTION_SCHEDULE_ID);
+        return Arrays.asList(Keys.EXECUTION_TRACKER_FK_EXECUTION_SCHEDULE_UUID);
     }
 
     @Override

@@ -17,15 +17,14 @@
 package stroom.util.shared;
 
 import stroom.test.common.TestUtil;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -254,12 +253,7 @@ class TestPropertyPath {
     private <T> void doSerdeTest(final T entity,
                                  final Class<T> clazz) throws IOException {
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
-        assertThat(mapper.canSerialize(entity.getClass()))
-                .isTrue();
+        final JsonMapper mapper = JsonUtil.getMapper();
 
         final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);

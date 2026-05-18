@@ -34,7 +34,6 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     private final int maxDocIdQueueSize;
     private final int maxThreadsPerTask;
     private final CacheConfig remoteSearchResultCache;
-    private final CacheConfig indexShardSearcherCache;
 
     public IndexShardSearchConfig() {
         maxDocIdQueueSize = 1_000_000;
@@ -43,25 +42,19 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
                 .maximumSize(100L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        indexShardSearcherCache = CacheConfig.builder()
-                .maximumSize(2L)
-                .expireAfterAccess(StroomDuration.ofMinutes(1))
-                .build();
     }
 
     @JsonCreator
     public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
                                   @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
-                                  @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache,
-                                  @JsonProperty("indexShardSearcherCache") final CacheConfig indexShardSearcherCache) {
+                                  @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache) {
         this.maxDocIdQueueSize = maxDocIdQueueSize;
         this.maxThreadsPerTask = maxThreadsPerTask;
         this.remoteSearchResultCache = remoteSearchResultCache;
-        this.indexShardSearcherCache = indexShardSearcherCache;
     }
 
     @JsonPropertyDescription("The maximum number of doc ids that will be queued ready for stored data to be " +
-            "retrieved from the index shard")
+                             "retrieved from the index shard")
     public int getMaxDocIdQueueSize() {
         return maxDocIdQueueSize;
     }
@@ -75,17 +68,13 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
         return remoteSearchResultCache;
     }
 
-    public CacheConfig getIndexShardSearcherCache() {
-        return indexShardSearcherCache;
-    }
 
     @Override
     public String toString() {
         return "IndexShardSearchConfig{" +
-                "maxDocIdQueueSize=" + maxDocIdQueueSize +
-                ", maxThreadsPerTask=" + maxThreadsPerTask +
-                ", remoteSearchResultCache=" + remoteSearchResultCache +
-                ", indexShardSearcherCache=" + indexShardSearcherCache +
-                '}';
+               "maxDocIdQueueSize=" + maxDocIdQueueSize +
+               ", maxThreadsPerTask=" + maxThreadsPerTask +
+               ", remoteSearchResultCache=" + remoteSearchResultCache +
+               '}';
     }
 }

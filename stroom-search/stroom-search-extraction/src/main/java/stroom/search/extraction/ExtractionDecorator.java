@@ -28,6 +28,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.RerankScoringFilter;
+import stroom.query.common.v2.RerankScoringFilterFactory;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.FieldIndex;
@@ -49,10 +51,13 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,11 +89,13 @@ public class ExtractionDecorator {
     private final Provider<QueryInfoHolder> queryInfoHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final QueryKey queryKey;
+    private final RerankScoringFilterFactory rerankScoringFilterFactory;
 
     private final Map<DocRef, PipelineData> pipelineDataMap = new ConcurrentHashMap<>();
     private final StreamEventMap streamEventMap;
     private final StoredDataQueue storedDataQueue;
     private final Map<DocRef, Receiver> receivers;
+    private final List<RerankScoringFilter> rerankScoringFilterList = new ArrayList<>();
 
     private DocRef dataSource;
 
@@ -104,7 +111,8 @@ public class ExtractionDecorator {
                         final Provider<ExtractionTaskHandler> handlerProvider,
                         final Provider<QueryInfoHolder> queryInfoHolderProvider,
                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
-                        final QueryKey queryKey) {
+                        final QueryKey queryKey,
+                        final RerankScoringFilterFactory rerankScoringFilterFactory) {
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
@@ -118,6 +126,7 @@ public class ExtractionDecorator {
         this.queryInfoHolderProvider = queryInfoHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.queryKey = queryKey;
+        this.rerankScoringFilterFactory = rerankScoringFilterFactory;
 
         // Create a queue to receive values and store them for asynchronous processing.
         streamEventMap = new StreamEventMap(extractionConfig.getMaxStreamEventMapSize());
@@ -146,7 +155,20 @@ public class ExtractionDecorator {
                 valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.accept(values));
             }
 
-            receivers.put(docRef, new Receiver(fieldIndex, valuesConsumer));
+            // Insert rerank scoring filter.
+            final Optional<RerankScoringFilter> optionalRerankScoringFilter = rerankScoringFilterFactory.create(
+                    query.getDataSource(),
+                    query.getExpression(),
+                    fieldIndex,
+                    valuesConsumer,
+                    coprocessors.getErrorConsumer());
+            optionalRerankScoringFilter.ifPresent(rerankScoringFilterList::add);
+            final ValuesConsumer consumer = optionalRerankScoringFilter
+                    .map(rerankScoringFilter -> (ValuesConsumer) rerankScoringFilter)
+                    .orElse(valuesConsumer);
+
+            // Add the receiver.
+            receivers.put(docRef, new Receiver(fieldIndex, consumer));
         });
 
         // Set the delay to use for extraction of each stream.
@@ -271,7 +293,19 @@ public class ExtractionDecorator {
             futures[i] = CompletableFuture.runAsync(() ->
                     extractData(parentContext, queryKey, extractionCount, errorConsumer), executor);
         }
-        return CompletableFuture.allOf(futures);
+
+        // If we are not reranking then just deliver a completable future to cover extraction processes.
+        if (rerankScoringFilterList.isEmpty()) {
+            return CompletableFuture.allOf(futures);
+        }
+
+        // If we are doing rerank scoring then ensure a final scoring is done after completion.
+        return CompletableFuture.runAsync(() -> {
+            // Wait for all extractions to complete before stopping rerank.
+            CompletableFuture.allOf(futures).join();
+            // Stop rerank.
+            rerankScoringFilterList.forEach(RerankScoringFilter::close);
+        }, executor);
     }
 
     private void extractData(final TaskContext parentContext,

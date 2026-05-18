@@ -82,6 +82,18 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    annotationValCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    annotationValStringCache:
+      expireAfterAccess: "P5D"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     createText: "Create Annotation"
     db:
       connection:
@@ -100,6 +112,7 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     defaultRetentionPeriod: "5y"
+    eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
     chatMemory:
@@ -699,10 +712,10 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
-    minTimeToKeepEnvOpen: "PT1M"
+    minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
-    path: "${stroom.home}/planb"
+    path: "planb"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
@@ -844,7 +857,6 @@ appConfig:
       AccountId: "Text"
       Component: "Text"
       Compression: "Text"
-      content-length: "Text"
       ContextEncoding: "Text"
       ContextFormat: "Text"
       EffectiveTime: "Date"
@@ -857,18 +869,19 @@ appConfig:
       ReceivedPath: "Text"
       ReceivedTime: "Date"
       ReceivedTimeHistory: "Text"
+      RemoteAddress: "Text"
       RemoteCertExpiry: "Date"
       RemoteDN: "Text"
       RemoteHost: "Text"
-      RemoteAddress: "Text"
       Schema: "Text"
       SchemaVersion: "Text"
       System: "Text"
       Type: "Text"
-      UploadUsername: "Text"
       UploadUserId: "Text"
-      user-agent: "Text"
+      UploadUsername: "Text"
       X-Forwarded-For: "Text"
+      content-length: "Text"
+      user-agent: "Text"
   receive:
     allowedCertificateProviders: []
     authenticatedDataFeedKeyCache:
@@ -881,8 +894,8 @@ appConfig:
     dataFeedIdentitiesDir: "data_feed_identities"
     dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
-    - "TOKEN"
-    - "CERTIFICATE"
+    - "AuthenticationType{displayValue='OAuth Token'}"
+    - "AuthenticationType{displayValue='Client certificate'}"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
@@ -944,12 +957,6 @@ appConfig:
       offHeapResults: true
       valueQueueSize: 10000
     shard:
-      indexShardSearcherCache:
-        expireAfterAccess: "PT1M"
-        expireAfterWrite: null
-        maximumSize: 2
-        refreshAfterWrite: null
-        statisticsMode: "INTERNAL"
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
       remoteSearchResultCache:
@@ -1358,34 +1365,34 @@ appConfig:
     scheme: "https"
   visualisationAsset:
     aceEditorModes:
-      htm: "HTML"
-      txt: "TEXT"
       css: "CSS"
-      svg: "XML"
-      xml: "XML"
-      js: "JAVASCRIPT"
+      htm: "HTML"
       html: "HTML"
+      js: "JAVASCRIPT"
+      svg: "XML"
+      txt: "TEXT"
+      xml: "XML"
     assetCacheDir: "asset_cache"
     clearAssetCacheOnStartup: false
     default: "application/octet-stream"
     defaultAceEditorMode: "TEXT"
     mimetypes:
-      htm: "text/html"
-      jpg: "image/jpeg"
-      css: "text/css"
-      tiff: "image/tiff"
-      bmp: "image/bmp"
       apng: "image/apng"
+      bmp: "image/bmp"
+      css: "text/css"
       gif: "image/jpeg"
-      svg: "image/svg+xml"
-      png: "image/png"
-      js: "text/javascript"
-      webp: "image/webp"
-      tif: "image/tiff"
-      txt: "text/plain"
-      xml: "application/xml"
-      jpeg: "image/jpeg"
+      htm: "text/html"
       html: "text/html"
+      jpeg: "image/jpeg"
+      jpg: "image/jpeg"
+      js: "text/javascript"
+      png: "image/png"
+      svg: "image/svg+xml"
+      tif: "image/tiff"
+      tiff: "image/tiff"
+      txt: "text/plain"
+      webp: "image/webp"
+      xml: "application/xml"
   visualisationAssetDb:
     connection:
       jdbcDriverClassName: null

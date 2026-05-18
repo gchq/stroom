@@ -76,10 +76,10 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
+import jakarta.servlet.ServletContext;
 import jakarta.validation.ValidatorFactory;
+import org.eclipse.jetty.ee10.servlet.SessionHandler;
 import org.eclipse.jetty.http.HttpCookie;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.session.SessionHandler;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -157,6 +157,7 @@ public class App extends Application<Config> {
     public void initialize(final Bootstrap<Config> bootstrap) {
 
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
+        // This is currently jackson v2 as that is what DW 5.0.1 uses
         bootstrap.getObjectMapper()
                 .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
@@ -405,7 +406,7 @@ public class App extends Application<Config> {
     private void configureSessionCookie(final Environment environment,
                                         final SessionCookieConfig sessionCookieConfig) {
         // Ensure the session cookie that provides JSESSIONID is secure.
-        final ContextHandler.Context context = environment
+        final ServletContext context = environment
                 .getApplicationContext()
                 .getServletContext();
 
@@ -414,7 +415,7 @@ public class App extends Application<Config> {
         servletSessionCookieConfig.setSecure(sessionCookieConfig.isSecure());
         servletSessionCookieConfig.setHttpOnly(sessionCookieConfig.isHttpOnly());
         context.setAttribute(
-                HttpCookie.SAME_SITE_DEFAULT_ATTRIBUTE,
+                HttpCookie.SAME_SITE_ATTRIBUTE,
                 sessionCookieConfig.getSameSite().getAttributeValue());
     }
 

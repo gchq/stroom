@@ -168,7 +168,7 @@ class TestSerialisation {
         final Path actualFileIn = dir.resolve(testName + "-JSON.actual.in.json");
         final Path actualFileOut = dir.resolve(testName + "-JSON.actual.out.json");
 
-        final String serialisedIn = JsonUtil.writeValueAsString(objIn);
+        final String serialisedIn = JsonUtil.writeValueAsConsistentString(objIn);
 //        System.out.println(serialisedIn);
 
         if (!Files.isRegularFile(expectedFile)) {
@@ -193,7 +193,7 @@ class TestSerialisation {
 
         // Now deserialise the string from the serialised object
         final T objOut = JsonUtil.readValue(serialisedIn, type);
-        final String serialisedOut = JsonUtil.writeValueAsString(objOut);
+        final String serialisedOut = JsonUtil.writeValueAsConsistentString(objOut);
 //        System.out.println(serialisedOut);
         StreamUtil.stringToFile(serialisedOut, actualFileOut);
 

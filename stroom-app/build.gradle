@@ -230,6 +230,9 @@ dependencies {
     implementation libs.flyway.mysql
     implementation libs.guava
     implementation libs.guice
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jackson.dataformat.yaml
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject

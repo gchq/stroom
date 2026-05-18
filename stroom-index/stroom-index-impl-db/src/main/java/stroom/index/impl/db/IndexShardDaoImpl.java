@@ -96,7 +96,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             .commitDurationMs(record.get(INDEX_SHARD.COMMIT_DURATION_MS))
             .commitDocumentCount(record.get(INDEX_SHARD.COMMIT_DOCUMENT_COUNT))
             .status(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-            record.get(INDEX_SHARD.STATUS)))
+                    record.get(INDEX_SHARD.STATUS)))
             .fileSize(record.get(INDEX_SHARD.FILE_SIZE))
             .indexVersion(record.get(INDEX_SHARD.INDEX_VERSION))
             .nodeName(record.get(INDEX_SHARD.NODE_NAME))
@@ -435,7 +435,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         }
 
         public List<Field<?>> getDbFieldsByName(final String[] fieldNames) {
-            return valueMapper.getDbFieldsByName(fieldNames);
+            return valueMapper.getDbFieldsByNameAsList(fieldNames);
         }
 
         public Mapper<?>[] getMappersForFieldNames(final String[] fieldNames) {

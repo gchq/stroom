@@ -25,6 +25,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
@@ -48,8 +49,8 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     @Override
     public PipelineDoc read(final ImportExportDocument importExportDocument) throws IOException {
         final PipelineDoc document = delegate.read(importExportDocument);
-        final String json = EncodingUtil.asString(importExportDocument.getExtAssetData(JSON));
-        final PipelineData pipelineData = getPipelineDataFromJson(json);
+        final byte[] jsonBytes = importExportDocument.getExtAssetData(JSON);
+        final PipelineData pipelineData = getPipelineDataFromJson(jsonBytes);
         return document.copy().pipelineData(pipelineData).build();
     }
 
@@ -64,9 +65,21 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         }
 
         importExportDocument.addExtAsset(
-                new ByteArrayImportExportAsset(JSON, EncodingUtil.asBytes(getJsonFromPipelineData(pipelineData))));
+                new ByteArrayImportExportAsset(JSON, getJsonFromPipelineDataAsBytes(pipelineData)));
 
         return importExportDocument;
+    }
+
+    public PipelineData getPipelineDataFromJson(final byte[] json) {
+        if (json != null) {
+            try {
+                return JsonUtil.readValue(json, PipelineData.class);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to unmarshal pipeline config", e);
+            }
+        }
+
+        return null;
     }
 
     public PipelineData getPipelineDataFromJson(final String json) {
@@ -81,15 +94,19 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         return null;
     }
 
-    public String getJsonFromPipelineData(final PipelineData pipelineData) {
+    public byte[] getJsonFromPipelineDataAsBytes(final PipelineData pipelineData) {
         if (pipelineData != null) {
             try {
-                return JsonUtil.writeValueAsString(pipelineData);
+                return JsonUtil.writeValueAsBytes(pipelineData);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to marshal pipeline config", e);
             }
         }
 
         return null;
+    }
+
+    public String getJsonFromPipelineData(final PipelineData pipelineData) {
+        return NullSafe.get(pipelineData, this::getJsonFromPipelineDataAsBytes, EncodingUtil::asString);
     }
 }

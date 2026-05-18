@@ -116,6 +116,7 @@ public class LinkedEventPresenter
         if (success != null && success) {
             AnnotationChangeEvent.fire(this, annotationRef);
             parent.updateHistory();
+            refreshData();
         }
     }
 
@@ -153,13 +154,17 @@ public class LinkedEventPresenter
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
         this.annotationRef = docRef;
         dirty = false;
-        annotationResourceClient.getLinkedEvents(docRef, this::setData, this);
+        refreshData();
         enableButtons();
     }
 
     @Override
     protected Annotation onWrite(final Annotation document) {
         return null;
+    }
+
+    private void refreshData() {
+        annotationResourceClient.getLinkedEvents(annotationRef, this::setData, this);
     }
 
     private void setData(final List<EventId> data) {

@@ -28,6 +28,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.HasId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
@@ -75,6 +76,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -348,6 +350,20 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
+    public static <R extends UpdatableRecord<R>> R create(final DSLContext context, final R record) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(record);
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record:\n" + record);
+        try {
+            record.attach(context.configuration());
+            final int count = record.store();
+            LOGGER.debug("create() - count: {}, record: {}", count, record);
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -1294,10 +1310,48 @@ public final class JooqUtil {
                         countInBatch, batchSize));
             }
             fetchAgain = countInBatch >= batchSize;
-            LOGGER.debug("batchProcess() - batchSize: {}, iteration: {}, countInBatch: {}, fetchAgain: {}",
+            LOGGER.debug("batchProcessById() - batchSize: {}, iteration: {}, countInBatch: {}, fetchAgain: {}",
                     batchSize, iteration, countInBatch, fetchAgain);
             if (!ids.isEmpty()) {
                 idBatchConsumer.accept(ids);
+            }
+        }
+    }
+
+    /**
+     * Method to do some work in batches, where the batch is defined by a {@link LongList} of ids.
+     *
+     * @param batchSize       The size of the batch.
+     * @param idBatchSupplier Will be called at least once. MUST return a {@link LongList} with size <= batchSize.
+     *                        On each call it must return a new batch of Ids, else it will endlessly loop.
+     * @param idBatchConsumer Will be called for each batch of ids supplied by idBatchSupplier. Won't be called
+     *                        if no ids are found in a batch. The consumer will be passed the batch of {@link HasId}s
+     *                        and for convenience a {@link LongList} of the ids from the {@link HasId} list (in the
+     *                        same order)
+     */
+    @NullMarked
+    public static <T extends HasId> void batchProcessByHasId(final int batchSize,
+                                                             final Supplier<List<T>> idBatchSupplier,
+                                                             final BiConsumer<List<Long>, List<T>> idBatchConsumer) {
+        Objects.requireNonNull(idBatchSupplier);
+        Objects.requireNonNull(idBatchConsumer);
+        boolean fetchAgain = true;
+        int iteration = 0;
+        while (fetchAgain) {
+            iteration++;
+            final List<T> hasIds = idBatchSupplier.get();
+            final int countInBatch = hasIds.size();
+            if (countInBatch > batchSize) {
+                throw new RuntimeException(LogUtil.message("Was supplied more items {} than the batch size {}",
+                        countInBatch, batchSize));
+            }
+            fetchAgain = countInBatch >= batchSize;
+            LOGGER.debug("batchProcessByHasId() - batchSize: {}, iteration: {}, countInBatch: {}, fetchAgain: {}",
+                    batchSize, iteration, countInBatch, fetchAgain);
+            if (!hasIds.isEmpty()) {
+
+                final List<Long> ids = HasId.asIdList(hasIds);
+                idBatchConsumer.accept(ids, hasIds);
             }
         }
     }

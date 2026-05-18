@@ -16,33 +16,68 @@
 
 package stroom.annotation.shared;
 
-import stroom.docref.DocRef;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class DeleteAnnotationEntryRequest {
 
     @JsonProperty
-    private final DocRef annotationRef;
+    private final AnnotationIdentity annotationIdentity;
+    @JsonProperty
+    private final AnnotationEntryType annotationEntryType;
     @JsonProperty
     private final long annotationEntryId;
 
     @JsonCreator
-    public DeleteAnnotationEntryRequest(@JsonProperty("annotationRef") final DocRef annotationRef,
-                                        @JsonProperty("annotationEntryId") final long annotationEntryId) {
-        this.annotationRef = annotationRef;
+    public DeleteAnnotationEntryRequest(
+            @JsonProperty("annotationIdentity") final AnnotationIdentity annotationIdentity,
+            @JsonProperty("annotationEntryType") final AnnotationEntryType annotationEntryType,
+            @JsonProperty("annotationEntryId") final long annotationEntryId) {
+        this.annotationIdentity = annotationIdentity;
+        this.annotationEntryType = annotationEntryType;
         this.annotationEntryId = annotationEntryId;
     }
 
-    public DocRef getAnnotationRef() {
-        return annotationRef;
+    public AnnotationIdentity getAnnotationIdentity() {
+        return annotationIdentity;
+    }
+
+    public AnnotationEntryType getAnnotationEntryType() {
+        return annotationEntryType;
     }
 
     public long getAnnotationEntryId() {
         return annotationEntryId;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final DeleteAnnotationEntryRequest that = (DeleteAnnotationEntryRequest) o;
+        return annotationEntryId == that.annotationEntryId && Objects.equals(annotationIdentity,
+                that.annotationIdentity) && annotationEntryType == that.annotationEntryType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(annotationIdentity, annotationEntryType, annotationEntryId);
+    }
+
+    @Override
+    public String toString() {
+        return "DeleteAnnotationEntryRequest{" +
+               "annotationIdentity=" + annotationIdentity +
+               ", annotationEntryType=" + annotationEntryType +
+               ", annotationEntryId=" + annotationEntryId +
+               '}';
     }
 }

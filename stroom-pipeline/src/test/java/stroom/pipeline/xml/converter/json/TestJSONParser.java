@@ -26,6 +26,7 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.filter.XMLFilterFork;
+import stroom.pipeline.parser.JSONParser;
 import stroom.pipeline.writer.JSONWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.XMLWriter;
@@ -37,6 +38,9 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
@@ -56,7 +60,9 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -67,7 +73,11 @@ class TestJSONParser extends StroomUnitTest {
 
     @Test
     void testKV() throws IOException {
-        positiveTest("KV");
+        test("KV", "", false, elementIdIndicatorsMap -> {
+            // No warnings on string size
+            assertThat(elementIdIndicatorsMap)
+                    .isEmpty();
+        });
     }
 
     @Test
@@ -83,6 +93,27 @@ class TestJSONParser extends StroomUnitTest {
     @Test
     void testEmbeddedXml() throws IOException {
         positiveTest("EmbeddedXml");
+    }
+
+    @Test
+    void testVeryLongString() throws IOException {
+        test("VeryLongString",
+                "",
+                false,
+                elementIdIndicatorsMap -> {
+                    // One string is truncated, so one warning.
+                    assertThat(elementIdIndicatorsMap)
+                            .hasSize(1);
+                    final Indicators indicators = elementIdIndicatorsMap.get(
+                            new ElementId(JSONParser.ELEMENT_TYPE, JSONParser.ELEMENT_TYPE));
+                    assertThat(indicators.getErrorList())
+                            .hasSize(1);
+                    final StoredError error = indicators.getErrorList().getFirst();
+                    assertThat(error.getSeverity())
+                            .isEqualTo(Severity.WARNING);
+                    assertThat(error.getMessage())
+                            .containsIgnoringCase("truncated");
+                });
     }
 
     private void negativeTest(final String stem, final String type) throws IOException {
@@ -265,7 +296,16 @@ class TestJSONParser extends StroomUnitTest {
         test(stem, "", false);
     }
 
-    private void test(final String stem, final String testType, final boolean expectedErrors) throws IOException {
+    private void test(final String stem,
+                      final String testType,
+                      final boolean expectedErrors) throws IOException {
+        test(stem, testType, expectedErrors, null);
+    }
+
+    private void test(final String stem,
+                      final String testType,
+                      final boolean expectedErrors,
+                      final Consumer<Map<ElementId, Indicators>> errorsConsumer) throws IOException {
         // Get the testing directory.
         final Path testDir = getTestDir();
 
@@ -293,7 +333,9 @@ class TestJSONParser extends StroomUnitTest {
         FileUtil.deleteFile(outTempJSON);
         FileUtil.deleteFile(errTemp);
 
-        assertThat(Files.isRegularFile(input)).as(FileUtil.getCanonicalPath(input) + " does not exist").isTrue();
+        assertThat(Files.isRegularFile(input))
+                .as(FileUtil.getCanonicalPath(input) + " does not exist")
+                .isTrue();
 
         final OutputStream xmlOS = new BufferedOutputStream(Files.newOutputStream(outTempXML));
         final OutputStream jsonOS = new BufferedOutputStream(Files.newOutputStream(outTempJSON));
@@ -302,7 +344,15 @@ class TestJSONParser extends StroomUnitTest {
         final OutputStreamAppender xmlAppender = new OutputStreamAppender(errorReceiverProxy, xmlOS);
         final OutputStreamAppender jsonAppender = new OutputStreamAppender(errorReceiverProxy, jsonOS);
 
-        final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null, null, null, null, null, null, null);
+        final XMLWriter xmlWriter = new XMLWriter(
+                errorReceiverProxy,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
         xmlWriter.setIndentOutput(true);
         xmlWriter.setPreventEscapeSwitching(true);
         xmlWriter.setTarget(xmlAppender);
@@ -381,6 +431,11 @@ class TestJSONParser extends StroomUnitTest {
             errWriter.close();
         }
 
+        final Map<ElementId, Indicators> indicatorsMap = errorReceiver.getIndicatorsMap();
+        if (errorsConsumer != null && NullSafe.hasEntries(indicatorsMap)) {
+            errorsConsumer.accept(indicatorsMap);
+        }
+
         // Only output errors if there were any.
         if (expectedErrors && errorReceiver.isAllOk()) {
             fail("Expected errors but none were found");
@@ -404,6 +459,8 @@ class TestJSONParser extends StroomUnitTest {
 
     private XMLReader createReader() {
         final JSONParserFactory factory = new JSONParserFactory();
+//        factory.setConfig(JSONFactoryConfig.builder()
+//                .build());
         factory.setAddRootObject(false);
 
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();

@@ -30,7 +30,7 @@ import jakarta.inject.Inject;
 import org.xml.sax.XMLReader;
 
 @ConfigurableElement(
-        type = "JSONParser",
+        type = JSONParser.ELEMENT_TYPE,
         category = Category.PARSER,
         description = """
                 A built-in parser for parsing JSON source data (in JSON fragment format) into an XML representation \
@@ -46,7 +46,8 @@ import org.xml.sax.XMLReader;
         icon = SvgImage.PIPELINE_JSON)
 public class JSONParser extends AbstractParser {
 
-    private JSONFactoryConfig config = new JSONFactoryConfig();
+    public static final String ELEMENT_TYPE = "JSONParser";
+    private JSONFactoryConfig.Builder configBuilder = JSONFactoryConfig.builder();
     private boolean addRootObject = true;
 
     @Inject
@@ -58,7 +59,7 @@ public class JSONParser extends AbstractParser {
     @Override
     protected XMLReader createReader() {
         final JSONParserFactory jsonParserFactory = new JSONParserFactory();
-        jsonParserFactory.setConfig(config);
+        jsonParserFactory.setConfig(configBuilder.build());
         jsonParserFactory.setAddRootObject(addRootObject);
         return jsonParserFactory.getParser();
     }
@@ -72,91 +73,124 @@ public class JSONParser extends AbstractParser {
 
     @PipelineProperty(
             description = "Feature that determines whether parser will allow use  of Java/C++ style " +
-                    "comments (both '/'+'*' and '//' varieties) within parsed content or not.",
+                          "comments (both '/'+'*' and '//' varieties) within parsed content or not.",
             defaultValue = "false",
             displayPriority = 2)
     public void setAllowComments(final boolean allowComments) {
-        this.config.setAllowComments(allowComments);
+        this.configBuilder.allowComments(allowComments);
     }
 
     @PipelineProperty(
             description = "Feature that determines whether parser will allow use of YAML comments, ones " +
-                    "starting with '#' and continuing until the end of the line. This commenting style is " +
-                    "common with scripting languages as well.",
+                          "starting with '#' and continuing until the end of the line. This commenting style is " +
+                          "common with scripting languages as well.",
             defaultValue = "false",
             displayPriority = 3)
     public void setAllowYamlComments(final boolean allowYamlComments) {
-        this.config.setAllowYamlComments(allowYamlComments);
+        this.configBuilder.allowYamlComments(allowYamlComments);
     }
 
     @PipelineProperty(description = "Feature that determines whether parser will allow use of unquoted field names " +
-            "(which is allowed by Javascript, but not by JSON specification).",
+                                    "(which is allowed by Javascript, but not by JSON specification).",
             defaultValue = "false",
             displayPriority = 4)
     public void setAllowUnquotedFieldNames(final boolean allowUnquotedFieldNames) {
-        this.config.setAllowUnquotedFieldNames(allowUnquotedFieldNames);
+        this.configBuilder.allowUnquotedFieldNames(allowUnquotedFieldNames);
     }
 
     @PipelineProperty(
-            description = "Feature that determines whether parser will allow use of single quotes (apostrophe," +
+            description =
+                    "Feature that determines whether parser will allow use of single quotes (apostrophe," +
                     " character '\\'') for quoting Strings (names and String values). If so, this is in addition " +
                     "to other acceptable markers but not by JSON specification).",
             defaultValue = "false",
             displayPriority = 5)
     public void setAllowSingleQuotes(final boolean allowSingleQuotes) {
-        this.config.setAllowSingleQuotes(allowSingleQuotes);
+        this.configBuilder.allowSingleQuotes(allowSingleQuotes);
     }
 
     @PipelineProperty(
             description = "Feature that determines whether parser will allow JSON Strings to contain unquoted" +
-                    " control characters (ASCII characters with value less than 32, including tab and line " +
-                    "feed characters) or not. If feature is set false, an exception is thrown if such a " +
-                    "character is encountered.",
+                          " control characters (ASCII characters with value less than 32, including tab and line " +
+                          "feed characters) or not. If feature is set false, an exception is thrown if such a " +
+                          "character is encountered.",
             defaultValue = "false",
             displayPriority = 6)
     public void setAllowUnquotedControlChars(final boolean allowUnquotedControlChars) {
-        this.config.setAllowUnquotedControlChars(allowUnquotedControlChars);
+        this.configBuilder.allowUnquotedControlChars(allowUnquotedControlChars);
     }
 
-    @PipelineProperty(description = "Feature that can be enabled to accept quoting of all character using backslash" +
+    @PipelineProperty(description =
+            "Feature that can be enabled to accept quoting of all character using backslash" +
             " quoting mechanism: if not enabled, only characters that are explicitly listed by JSON specification can" +
             " be thus escaped (see JSON spec for small list of these characters)",
             defaultValue = "false",
             displayPriority = 7)
     public void setAllowBackslashEscapingAnyCharacter(final boolean allowBackslashEscapingAnyCharacter) {
-        this.config.setAllowBackslashEscapingAnyCharacter(allowBackslashEscapingAnyCharacter);
+        this.configBuilder.allowBackslashEscapingAnyCharacter(allowBackslashEscapingAnyCharacter);
     }
 
-    @PipelineProperty(description = "Feature that determines whether parser will allow JSON integral numbers to start" +
+    @PipelineProperty(description =
+            "Feature that determines whether parser will allow JSON integral numbers to start" +
             " with additional (ignorable) zeroes (like: 000001).",
             defaultValue = "false",
             displayPriority = 8)
     public void setAllowNumericLeadingZeros(final boolean allowNumericLeadingZeros) {
-        this.config.setAllowNumericLeadingZeros(allowNumericLeadingZeros);
+        this.configBuilder.allowNumericLeadingZeros(allowNumericLeadingZeros);
     }
 
-    @PipelineProperty(description = "Feature that allows parser to recognize set of \"Not-a-Number\" (NaN) tokens as" +
+    @PipelineProperty(description =
+            "Feature that allows parser to recognize set of \"Not-a-Number\" (NaN) tokens as" +
             " legal floating number values (similar to how many other data formats and programming language source" +
             " code allows it).",
             defaultValue = "false",
             displayPriority = 9)
     public void setAllowNonNumericNumbers(final boolean allowNonNumericNumbers) {
-        this.config.setAllowNonNumericNumbers(allowNonNumericNumbers);
+        this.configBuilder.allowNonNumericNumbers(allowNonNumericNumbers);
     }
 
-    @PipelineProperty(description = "Feature allows the support for \"missing\" values in a JSON array: missing value" +
+    @PipelineProperty(description =
+            "Feature allows the support for \"missing\" values in a JSON array: missing value" +
             " meaning sequence of two commas, without value in-between but only optional white space.",
             defaultValue = "false",
             displayPriority = 10)
     public void setAllowMissingValues(final boolean allowMissingValues) {
-        this.config.setAllowMissingValues(allowMissingValues);
+        this.configBuilder.allowMissingValues(allowMissingValues);
     }
 
     @PipelineProperty(description = "Feature that determines whether we will allow for a single trailing comma" +
-            " following the final value (in an Array) or member (in an Object). These commas will simply be ignored.",
+                                    " following the final value (in an Array) or member (in an Object). " +
+                                    "These commas will simply be ignored.",
             defaultValue = "false",
             displayPriority = 11)
     public void setAllowTrailingComma(final boolean allowTrailingComma) {
-        this.config.setAllowTrailingComma(allowTrailingComma);
+        this.configBuilder.allowTrailingComma(allowTrailingComma);
+    }
+
+    @PipelineProperty(description = "String values will be truncated to this length. This is to protect Stroom " +
+                                    "from running out of memory when there are very large string " +
+                                    "values in the JSON. When a value is truncated a Warning will be logged." +
+                                    "Setting this to a very large value effectively disables this.",
+            defaultValue = "10000",
+            displayPriority = 12)
+    public void setStringTruncateLength(final int stringTruncateLength) {
+        this.configBuilder.stringTruncateLength(stringTruncateLength);
+    }
+
+    @PipelineProperty(description = "String values longer than this length will result in an Error being logged, " +
+                                    "regardless of the value of stringTruncateLength. " +
+                                    "Setting this to a very large value effectively disables this.",
+            defaultValue = "100000000", // See tools.jackson.core.StreamReadConstraints
+            displayPriority = 13)
+    public void setMaxStringLength(final int maxStringLength) {
+        this.configBuilder.maxStringLength(maxStringLength);
+    }
+
+    @PipelineProperty(description = "Maximum number of levels in the JSON document. An Error will be logged if " +
+                                    "this is exceeded.",
+            defaultValue = "500", // See tools.jackson.core.StreamReadConstraints
+            displayPriority = 14)
+    public void setMaxDepth(final int maxDepth) {
+        this.configBuilder.maxDepth(maxDepth);
     }
 }

@@ -675,7 +675,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 }
 
                 builder.columns(modifiedColumns);
-                builder.applyValueFilters(queryTablePreferences.applyValueFilters());
 
                 // Combine row filters.
                 if (tableSettings.getAggregateFilter() == null) {

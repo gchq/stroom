@@ -40,10 +40,10 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.string.StringIdUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -64,10 +64,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TraceLoader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TraceLoader.class);
-    private static final ObjectMapper MAPPER = createMapper(true);
+    private static final JsonMapper MAPPER = createMapper(true);
 
-    private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder().type(PlanBDoc.TYPE).uuid("traces").build();
-    private static final PathwaysDoc PATHWAYS_DOC = PathwaysDoc.builder().uuid("1").build();
+    private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder()
+            .type(PlanBDoc.TYPE)
+            .uuid("traces")
+            .build();
+    private static final PathwaysDoc PATHWAYS_DOC = PathwaysDoc.builder()
+            .uuid("1")
+            .build();
 
     public void addOneMore(final TracePersistence persistence) {
         try (final TraceWriter writer = persistence.createWriter()) {
@@ -80,6 +85,7 @@ public class TraceLoader {
         try (final TraceWriter writer = persistence.createWriter()) {
             for (int i = 1; i <= 13; i++) {
                 final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
+                LOGGER.debug("Loading {}", path.toAbsolutePath().normalize());
                 loadData(path, writer);
             }
         }
@@ -184,12 +190,14 @@ public class TraceLoader {
         }
     }
 
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        return mapper;
+    private static JsonMapper createMapper(final boolean indent) {
+        return JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+                .configure(SerializationFeature.INDENT_OUTPUT, indent)
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+                .build();
     }
 }

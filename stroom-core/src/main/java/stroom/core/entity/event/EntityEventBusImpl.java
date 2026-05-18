@@ -32,8 +32,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +46,6 @@ import java.util.function.Consumer;
 class EntityEventBusImpl implements EntityEventBus {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EntityEventBusImpl.class);
-    private static final Logger log = LoggerFactory.getLogger(EntityEventBusImpl.class);
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;

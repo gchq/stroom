@@ -65,14 +65,15 @@ import co.elastic.clients.transport.rest5_client.low_level.ResponseException;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
 import co.elastic.clients.util.NamedValue;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.json.JsonFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -220,7 +221,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             // Cache config value to avoid Provider lookup on every element.
             maxNestedElementDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
 
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             fatalError("Failed to initialise JsonGenerator", e);
         } finally {
             super.startProcessing();
@@ -342,7 +343,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             // We have closed out an outer `map`, so queue the document for indexing
                             processDocument();
                         }
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         fatalError("Invalid end of object", e);
                     }
                     break;
@@ -350,7 +351,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     try {
                         currentDepth--;
                         jsonGenerator.writeEndArray();
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         fatalError("Invalid end of array", e);
                     }
                     break;
@@ -459,7 +460,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private boolean writeFieldName() throws IOException {
         if (currentDocFieldName != null) {
-            jsonGenerator.writeFieldName(currentDocFieldName);
+            jsonGenerator.writeName(currentDocFieldName);
             return true;
         } else {
             return false;
@@ -494,7 +495,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     indexDocuments();
                 }
             }
-        } catch (final IOException e) {
+        } catch (final JacksonException e) {
             fatalError("Failed to flush JSON to stream", e);
         } catch (final Exception e) {
             fatalError(e.getMessage(), e);

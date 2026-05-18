@@ -113,6 +113,8 @@ public interface CacheManager extends AutoCloseable {
 
     boolean exists(final String name);
 
+    void registerCache(String name, StroomCache<?, ?> cache);
+
     <K, V> StroomCache<K, V> getCache(final String name);
 
     <K, V> LoadingStroomCache<K, V> getLoadingCache(final String name);

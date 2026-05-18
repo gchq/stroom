@@ -13,6 +13,169 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.4] - 2026-05-14
+
+* Refactor : Improve logging and system info output for Data Feed Keys.
+
+* Feature **#5526** : Add event logging to ask stroom AI.
+
+* Bug **#5544** : Fix DocRef bug.
+
+
+## [v7.12.3] - 2026-05-11
+
+* Feature **#5183** : Add title to dashboard link function.
+
+* Bug **#5518** : Fix expression editor bug.
+
+* Bug **#5507** : Improve dashboard column filtering.
+
+* Bug **#5516** : Allow event links with only feed USE permission.
+
+* Feature : Add System Info Admin Servlet. Add menu of all admin servlets at `<admin port>/<admin path>/menu`.
+
+* Bug : Fix permission exceptions when getting volume system info.
+
+
+## [v7.12.2] - 2026-05-05
+
+* Bug **#5532** : Relax Data Feed Identities validation so salt is optional.
+
+
+## [v7.12.1] - 2026-04-27
+
+* Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
+
+* Feature : Add config prop `stroom.annotation.eventLinkCacheSizeLimit` (default 1,000,000) to protect Stroom from caching too many annotation to event links. If this limit is exceeded, the query will error.
+
+
+## [v7.12.0] - 2026-04-27
+
+* Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
+
+* Bug : Fix annotation dash/query columns not updating when status/label/collection names are deleted/modified.
+
+* Bug : Fix annotation decorations in dash/query columns showing deleted annotation entries.
+
+* Bug : Fix annotation Comment and History columns not updating when entries are added/updated/deleted.
+
+* Bug **#5508** : Improve annotation decoration performance.
+
+* Bug : Fix Annotation -> Events screen not refreshing the linked events list when an event link is added/removed.
+
+* Bug : Add missing directories (data_feed_identities, git_repo, lmdb_library, planb, reference_staging_data) as volumes in the docker image.
+
+
+## [v7.13-beta.2] - 2026-04-15
+
+* Build : Fix CI build failure due to missing Docker container prefix.
+
+
+## [v7.13-beta.1] - 2026-04-13
+
+* Feature **#5282** : Add pipeline scheduling.
+
+* Feature **#5346** : Choose which external document changes to save when saving a pipeline.
+
+* Issue **#5366** : Add level and status to rules.
+
+* Feature **#5377** : Embedded pipeline docs.
+
+* Issue **#5366** : Create new doc object DataGen.
+
+* Issue **#5366** : Add Execution tab to DataGen.
+
+* Feature **#5387** : Allow pipeline stepping across multiple streams.
+
+* Issue **#5366** : Implement job scheduling for DataGen.
+
+* Feature **#3103** : Allow multiple dashboard instances.
+
+* Refactor : Refactor the feedKey locking in PreAggregator and make AttributeMapUtil#readKeys() more lenient when reading `.meta `files.
+
+* Dependency : Uplift org.apache.commons:commons-pool2 from 2.12.1 to 2.13.1.
+
+* Dependency : Uplift org.flywaydb:flyway-core from 11.20.0 to 12.0.0.
+
+* Dependency : Uplift org.eclipse.jgit:org.eclipse.jgit from 7.3.0.202506031305-r to 7.5.0.202512021534-r.
+
+* Dependency : Uplift org.apache.solr:solr-solrj from 9.8.0 to 9.10.1.
+
+* Dependency : Uplift swagger from 2.2.41 to 2.2.42.
+
+* Bug : Fix output of the manage_users --listPermissions command.
+
+* Bug : Fix missing arg validation on reset_password CLI command. Obfuscate password in logging.
+
+* Refactor : Remove HBase statistics (may require change to default config).
+
+* Refactor : Remove ScyllaDB based state store.
+
+* Feature : Editing items in the UI now indicates save required only when changes are made.
+
+* Issue **#5366** : Refactor schedulers.
+
+* Feature **#3206** : User tab sessions.
+
+* Issue **#5366** : Refactor schedulers to interface and cleanup.
+
+* Dependency : Uplift gwt from 2.12.2 to 2.13.0.
+
+* Dependency : Uplift co.elastic.clients:elasticsearch-java from 9.2.1 to 9.3.2.
+
+* Build : Uplift gradle-wrapper from 9.3.0 to 9.3.1.
+
+* Dependency : Uplift org.yaml:snakeyaml from 2.2 to 2.6.
+
+* Refactor : Replace NullSafe.requireNonNullElse() with Objects.requireNonNullElse().
+
+* Refactor : Replace NullSafe.requireNonNullElseGet() with Objects.requireNonNullElseGet().
+
+* Issue **#5366** : Fix typo.
+
+* Feature **#5366** : Rebase on master.
+
+* Feature **#5366** : Cleanup.
+
+* Feature **#5366** : Checkstyle.
+
+* Feature **#5232** : Add standard annotation comments. MIGRATION: Any comments previously configured in standardComments property will need to saved as annotation comments.
+
+* Feature **#5366** : Change icon for DataGen.
+
+* Feature **#5366** : Add feed name to rule detection.
+
+* Feature : Improve the ProgressMonitor task creation logging output to included counts of errored and skipped filters. Change task creation to re-test filter enabled/deleted state just prior to creating tasks. Add validation to ProcessorConfig to enforce a minimum value of `1` on some properties.
+
+* Feature **#5366** : Fix DataGen destination feed not firing dirty event.
+
+* Feature **#5366** : Checkstyle.
+
+* Bug **#5503** : Fix search rerank LLM processing and add debug logging.
+
+* Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
+
+* Bug **#5484** : Fix stream browser Retention column and Info pane showing wrong retention period/rule.
+
+* Feature **#5490** : Add rerank capability to dense vector search.
+
+* Feature **#5492** : Change Git Repo folder colour as red looked like an error.
+
+* Bug **#5486** : Fix SQL to physically delete annotations.
+
+* Bug **#5488** : Fix `forwardFileDestinations[n].atomicMoveEnabled` property not being used.
+
+* Feature **#5480** : Group some annotation history items and make them expandable.
+
+* Bug **#5485** : Fix Plan B snapshot race condition bug.
+
+* Bug **#5495** : Fix query column order bug.
+
+* Bug **#5495** : Add option to reset query table customisation.
+
+* Feature **#5161** : Make dashboard tab menu available from settings icon.
+
+
 ## [v7.12-beta.1] - 2026-03-24
 
 * Feature **#5427** : Change the Data Feed Key authentication mechanism to support authentication by X509 certificate DN. Add a new allowed type of `CERTIFICATE_IDENTITY` to `.receive.enabledAuthenticationTypes`. Rename property `.receive.dataFeedKeysDir` to  `.receive.dataFeedIdentitiesDir` and change the structure of the files in it, all files will have to be replaced. Rename property `.receive.dataFeedKeyOwnerMetaKey` to `.receive.dataFeedOwnerMetaKey`. Change the default value of `.receive.dataFeedIdentitiesDir` from `data_feed_keys` to `data_feed_identities`.
@@ -2080,7 +2243,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.2...HEAD
+[v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
+[v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
 [v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
 [v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5

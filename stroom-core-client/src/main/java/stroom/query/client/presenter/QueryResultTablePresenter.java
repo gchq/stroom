@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationTagNameChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
@@ -138,6 +139,7 @@ public class QueryResultTablePresenter
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
+    private final ButtonView resetButton;
     private final ButtonView annotateButton;
     private final EventBus eventBus;
     private final ButtonView askAiButton;
@@ -231,6 +233,11 @@ public class QueryResultTablePresenter
         valueFilterButton.setTitle("Filter Values");
         pagerView.addButton(valueFilterButton);
 
+        // Reset button
+        resetButton = pagerView.addButton(SvgPresets.UNDO);
+        resetButton.setEnabled(true);
+        resetButton.setTitle("Reset table customisation");
+
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(annotationManager.isEnabled());
@@ -322,7 +329,14 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
+
+        registerHandler(resetButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                setPreferredColumns(Collections.emptyList());
+                refresh();
+            }
+        }));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -358,8 +372,12 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
-                onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
     }
 
     private void onAnnotationChange() {
@@ -386,21 +404,21 @@ public class QueryResultTablePresenter
         }
     }
 
-    public void toggleApplyValueFilters() {
+    public void toggleShowValueFilters() {
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
-        final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
-        setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
+        final boolean showValueFilters = !queryTablePreferences.showValueFilters();
+        setQueryTablePreferences(queryTablePreferences.copy().showValueFilters(showValueFilters).build());
         onChange();
         refresh();
-        setApplyValueFilters(applyValueFilters);
+        setShowValueFilters(showValueFilters);
     }
 
-    private void setApplyValueFilters(final boolean applyValueFilters) {
-        valueFilterButton.setState(applyValueFilters);
-        if (applyValueFilters) {
-            dataGrid.addStyleName("applyValueFilters");
+    private void setShowValueFilters(final boolean showValueFilters) {
+        valueFilterButton.setState(showValueFilters);
+        if (showValueFilters) {
+            dataGrid.addStyleName("showValueFilters");
         } else {
-            dataGrid.removeStyleName("applyValueFilters");
+            dataGrid.removeStyleName("showValueFilters");
         }
     }
 
@@ -647,30 +665,11 @@ public class QueryResultTablePresenter
                             .stream()
                             .map(c -> c.column)
                             .collect(Collectors.toList());
-
-
-//                    // Adjust result columns to match UI preferences.
-//                    final Map<String, Column> prefs = queryTablePreferences
-//                            .getColumns()
-//                            .stream()
-//                            .collect(Collectors.toMap(Column::getId, c -> c));
-//
-//                    final List<Column> fixedColumns = new ArrayList<>(columns.size());
-//                    columns.forEach(column -> {
-//                        final Column pref = prefs.get(column.getId());
-//                        if (pref != null) {
-//                            fixedColumns.add(column.copy().width(pref.getWidth()).build());
-//                        } else {
-//                            fixedColumns.add(column);
-//                        }
-//                    });
-//                    columns = fixedColumns;
                 }
-
 
                 updateColumns(columns);
 
-                final List<TableRow> values = processData(columns, tableResult.getRows());
+                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
@@ -900,6 +899,32 @@ public class QueryResultTablePresenter
         setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
         onChange();
+
+
+
+
+        // Remove existing columns.
+        removeAllColumns();
+
+        // Add expander column.
+        addExpanderColumn();
+
+        // Add columns.
+        for (final Column column : columns) {
+            // Only include the field if it is supposed to be visible.
+            if (column.isVisible()) {
+                addColumn(column);
+            }
+        }
+
+//                dataGrid.redrawHeaders();
+        dataGrid.resizeTableToFitColumns();
+
+
+
+
+
+
         fireColumnAndDataUpdate();
     }
 
@@ -931,9 +956,9 @@ public class QueryResultTablePresenter
     }
 
     public void updateQueryTablePreferences() {
-        // Change value filter state.
+        // Change value filter visible state.
         final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
-        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        setShowValueFilters(queryTablePreferences.showValueFilters());
         updatePageSize(queryTablePreferences);
         refresh();
     }

@@ -21,11 +21,13 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.StreamFeedProvider;
+import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.UserRef;
 
@@ -47,11 +49,13 @@ public class TestModule extends AbstractModule {
         install(new DbTestModule());
         install(new MockTaskModule());
         install(new CacheModule());
+        install(new MockNodeServiceModule());
 
         bind(UserRefLookup.class).toInstance((userUuid, context) ->
                 Optional.of(UserRef.forUserUuid(userUuid)));
         bind(StreamFeedProvider.class).toInstance(id -> "TEST_FEED_NAME");
         bind(Metrics.class).toInstance(new MockMetrics());
+        bind(EntityEventBus.class).toInstance(EntityEventBus.NO_OP_EVENT_BUS);
     }
 //
 //

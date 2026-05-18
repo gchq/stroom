@@ -22,6 +22,6 @@ public class InstantTrigger implements Trigger {
 
     @Override
     public Instant getNextExecutionTimeAfter(final Instant afterTime) {
-        return afterTime;
+        return Instant.now();
     }
 }

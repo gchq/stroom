@@ -591,7 +591,6 @@ class TestDataRetentionPolicyExecutor {
         return new DataRetentionPolicyExecutor(
                 clusterLockService,
                 () -> buildRules(rules),
-                dataRetentionConfig,
                 metaService,
                 taskContextFactory);
     }

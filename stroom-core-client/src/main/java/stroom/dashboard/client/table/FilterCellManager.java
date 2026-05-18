@@ -17,11 +17,12 @@
 package stroom.dashboard.client.table;
 
 import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
 
 public interface FilterCellManager {
 
-    void setValueFilter(Column column, String valueFilter);
+    void setColumnFilter(Column column, ColumnFilter columnFilter);
 
     void setValueSelection(Column column, ColumnValueSelection columnValueSelection);
 }

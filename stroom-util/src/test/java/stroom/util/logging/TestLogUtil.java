@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -395,6 +396,27 @@ class TestLogUtil {
                 .addCase(null, "")
                 .addCase(Collections.emptyList(), "")
                 .addCase(List.of(1, 2, 3), "10, 20, 30")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSample() {
+        final List<Integer> list = IntStream.rangeClosed(1, 5)
+                .boxed()
+                .toList();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(int.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(size ->
+                        LogUtil.getSample(list, size, i -> "X" + i))
+                .withSimpleEqualityAssertion()
+                .addCase(0, "")
+                .addCase(1, "[X1, ...]")
+                .addCase(2, "[X1, X2, ...]")
+                .addCase(4, "[X1, X2, X3, X4, ...]")
+                .addCase(5, "[X1, X2, X3, X4, X5]")
+                .addCase(10, "[X1, X2, X3, X4, X5]")
                 .build();
     }
 }

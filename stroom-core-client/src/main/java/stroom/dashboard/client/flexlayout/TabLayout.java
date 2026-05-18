@@ -17,6 +17,7 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.TabManager;
 import stroom.item.client.EventBinder;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
@@ -37,6 +38,8 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
     private final EventBus eventBus;
     private final MutableTabLayoutConfig tabLayoutConfig;
+    private final FlexLayout flexLayout;
+    private final TabManager tabManager;
     private final FlexLayoutChangeHandler changeHandler;
     private final InlineSvgButton settings;
     private final LinkTabBar tabBar;
@@ -56,8 +59,11 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 if (MouseUtil.isPrimary(event)) {
                     final TabData selectedTab = tabBar.getSelectedTab();
                     if (selectedTab instanceof final Component component) {
-                        component.showSettings();
-//                    tabManager.showMenu(settings.getElement(), flexLayout, this, component.getTabConfig());
+//                        component.showSettings();
+                        tabManager.showMenu(settings.getElement(),
+                                flexLayout,
+                                TabLayout.this,
+                                component.getTabConfig());
                     }
                 }
             }, ClickEvent.getType()));
@@ -65,9 +71,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     };
 
     public TabLayout(final EventBus eventBus,
+                     final FlexLayout flexLayout,
+                     final TabManager tabManager,
                      final MutableTabLayoutConfig tabLayoutConfig,
                      final FlexLayoutChangeHandler changeHandler) {
         this.eventBus = eventBus;
+        this.flexLayout = flexLayout;
+        this.tabManager = tabManager;
 
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;

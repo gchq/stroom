@@ -58,7 +58,8 @@ public class EntityEventBatch {
     /**
      * @param entityEvents     The events in the batch.
      * @param homogeneousBatch Set to true if all {@link EntityEvent}s in entityEvents share the same
-     *                         {@link EntityEventKey}. Set to false if not known.
+     *                         {@link EntityEventKey} (i.e. {@link EntityAction} and doc type).
+     *                         Set to false if not known.
      */
     @JsonCreator
     public EntityEventBatch(@JsonProperty("entityEvents") final List<EntityEvent> entityEvents,

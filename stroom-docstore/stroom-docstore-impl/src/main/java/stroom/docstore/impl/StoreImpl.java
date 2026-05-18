@@ -39,6 +39,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -49,6 +50,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -73,6 +76,7 @@ import java.util.stream.Collectors;
 public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> implements Store<D> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
+    private static final String META = "meta";
 
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
@@ -219,20 +223,48 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
     @Override
     public DocRefInfo info(final DocRef docRef) {
-        Objects.requireNonNull(docRef);
-        final D document = read(docRef);
-        return DocRefInfo
-                .builder()
-                .docRef(DocRef.builder()
-                        .type(document.getType())
-                        .uuid(document.getUuid())
-                        .name(document.getName())
-                        .build())
-                .createTime(document.getCreateTimeMs())
-                .createUser(document.getCreateUser())
-                .updateTime(document.getUpdateTimeMs())
-                .updateUser(document.getUpdateUser())
-                .build();
+        // Check that we have been passed a docref to get info for.
+        Objects.requireNonNull(docRef, "Null DocRef");
+        // Ensure the type matches the type expected for this store.
+        checkType(docRef);
+
+        // Check that the user has permission to read this item.
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            throwPermissionException(LogUtil.message("You are not authorised to read {}",
+                    toDocRefDisplayString(docRef)));
+        }
+
+        final ImportExportDocument importExportDocument = readPersistence(docRef);
+        if (importExportDocument != null) {
+            try {
+                // We only need to read the meta data in order to satisfy the request for info.
+                // No other data needs to be read at this point.
+                final ImportExportAsset asset = importExportDocument.getExtAsset(META);
+                final byte[] meta = asset.getInputData();
+                final GenericDoc document = JsonUtil.readValue(meta, GenericDoc.class);
+                return DocRefInfo
+                        .builder()
+                        .docRef(DocRef.builder()
+                                .type(docRef.getType())
+                                .uuid(document.getUuid())
+                                .name(document.getName())
+                                .build())
+                        .createTime(document.getCreateTimeMs())
+                        .createUser(document.getCreateUser())
+                        .updateTime(document.getUpdateTimeMs())
+                        .updateUser(document.getUpdateUser())
+                        .build();
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new RuntimeException(
+                        LogUtil.message("Error deserialising {} from store {}, {}",
+                                docRef,
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
+            }
+        } else {
+            throw new DocumentNotFoundException(docRef);
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -401,9 +433,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private D importDocument(final DocRef docRef,
-                                final D existingDocument,
-                                final String uuid,
-                                final ImportExportDocument convertedImportExportDocument) {
+                             final D existingDocument,
+                             final String uuid,
+                             final ImportExportDocument convertedImportExportDocument) {
         return persistence.getLockFactory().lockResult(uuid, () -> {
             try {
                 // Turn the data map into a document.
@@ -462,16 +494,16 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
         return exportDocument(docRef, omitAuditFields, messageList, d -> d);
     }
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList,
-                                              final Function<D, D> function) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList,
+                                               final Function<D, D> function) {
         ImportExportDocument importExportDocument = new ImportExportDocument();
 
         try {
@@ -832,5 +864,23 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 .updateTimeMs(null)
                 .updateUser(null)
                 .build();
+    }
+
+    /**
+     * Define a generic basic doc for deserialising common doc information fields.
+     */
+    private static class GenericDoc extends AbstractDoc {
+
+        @JsonCreator
+        public GenericDoc(@JsonProperty("type") final String type,
+                          @JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTimeMs") final Long createTimeMs,
+                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser) {
+            super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        }
     }
 }

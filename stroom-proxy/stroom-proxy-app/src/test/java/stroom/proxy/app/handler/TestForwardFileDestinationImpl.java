@@ -70,7 +70,8 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -107,7 +108,7 @@ class TestForwardFileDestinationImpl {
     }
 
     private ForwardFileDestination createForwardFileDest() {
-        return new ForwardFileDestinationImpl(dirs.getStoreDir(), NAME, pathCreator);
+        return new ForwardFileDestinationImpl(dirs.getStoreDir(), NAME, pathCreator, true);
     }
 
     @Test
@@ -115,7 +116,8 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -179,7 +181,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig(subPathStr),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(subPath)
                 .exists()
@@ -225,7 +228,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${feed}/${year}", TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -310,7 +314,8 @@ class TestForwardFileDestinationImpl {
                 PathTemplateConfig.DISABLED,
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(subPath)
                 .exists()
@@ -356,7 +361,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${foo}/${year}", TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -406,7 +412,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${foo}/${year}", TemplatingMode.REMOVE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -456,7 +463,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${foo}/${year}", TemplatingMode.IGNORE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -508,7 +516,8 @@ class TestForwardFileDestinationImpl {
                             TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                     null,
                     null,
-                    pathCreator);
+                    pathCreator,
+                    true);
         }).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -517,7 +526,8 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -562,7 +572,8 @@ class TestForwardFileDestinationImpl {
                 null,
                 "health.check",
                 LivenessCheckMode.WRITE,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(file)
                 .doesNotExist();
@@ -595,7 +606,8 @@ class TestForwardFileDestinationImpl {
                 null,
                 "health.check",
                 LivenessCheckMode.READ,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(file)
                 .doesNotExist();
@@ -628,7 +640,8 @@ class TestForwardFileDestinationImpl {
                 null,
                 "health.check",
                 LivenessCheckMode.READ,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dir)
                 .doesNotExist();

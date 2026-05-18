@@ -38,7 +38,7 @@ public interface ExecutionScheduleDao {
 
     ResultPage<ExecutionSchedule> fetchExecutionSchedule(ExecutionScheduleRequest request);
 
-    Optional<ExecutionSchedule> fetchScheduleById(int id);
+    Optional<ExecutionSchedule> fetchScheduleByUuid(String uuid);
 
     List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid);
 
@@ -49,6 +49,8 @@ public interface ExecutionScheduleDao {
     Boolean deleteExecutionSchedule(ExecutionSchedule executionSchedule);
 
     Boolean deleteExecutionSchedules(List<ExecutionSchedule> executionSchedules);
+
+    Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules);
 
     Optional<ExecutionTracker> getTracker(ExecutionSchedule schedule);
 

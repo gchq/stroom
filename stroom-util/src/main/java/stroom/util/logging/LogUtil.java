@@ -377,7 +377,7 @@ public final class LogUtil {
         if (value == null) {
             return null;
         } else {
-            return value.getClass().getSimpleName() + " " + value;
+            return "(" + value.getClass().getSimpleName() + ") " + value;
         }
     }
 
@@ -438,10 +438,16 @@ public final class LogUtil {
      * @return The path as an absolute and normalised path or null if path is null
      */
     public static String path(final Path path) {
-        return NullSafe.toString(
-                path,
-                Path::toAbsolutePath,
-                Path::normalize);
+        try {
+            return NullSafe.toString(
+                    path,
+                    Path::toAbsolutePath,
+                    Path::normalize);
+        } catch (final Exception e) {
+            LOGGER.error("Error converting '{}' to an absolute and normalised path - {}",
+                    path, LogUtil.exceptionMessage(e), e);
+            return NullSafe.toString(path);
+        }
     }
 
     /**
@@ -573,23 +579,28 @@ public final class LogUtil {
     public static <T> String getSample(final Collection<T> collection,
                                        final int sampleSize,
                                        final Function<T, String> toStringFunction) {
-        if (collection == null) {
-            return null;
-        } else {
-            final int count = collection.size();
-            final boolean isTruncated = sampleSize < count;
-            final Function<T, String> func = Objects.requireNonNullElse(
-                    toStringFunction,
-                    Objects::toString);
-            final String str = collection.stream()
-                    .limit(sampleSize)
-                    .map(func)
-                    .collect(Collectors.joining(", "));
-            return "[" + str
-                   + (isTruncated
-                    ? ", ..."
-                    : "")
-                   + "]";
+        try {
+            if (collection == null) {
+                return null;
+            } else if (sampleSize <= 0) {
+                return "";
+            } else {
+                final Function<T, String> func = Objects.requireNonNullElse(
+                        toStringFunction,
+                        Objects::toString);
+                final int size = collection.size();
+                final String str = collection.stream()
+                        .limit(sampleSize)
+                        .map(func)
+                        .collect(Collectors.joining(", "));
+                final String truncatedPart = sampleSize < size
+                        ? ", ..."
+                        : "";
+                return "[" + str + truncatedPart + "]";
+            }
+        } catch (final Exception e) {
+            LOGGER.error("Error in getSample - {}", LogUtil.exceptionMessage(e), e);
+            return "?";
         }
     }
 }

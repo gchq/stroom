@@ -16,13 +16,15 @@
 
 package stroom.annotation.shared;
 
+import stroom.annotation.shared.AbstractAnnotationChange.HasAnnotationTag;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public final class SetTag extends AbstractAnnotationChange {
+public final class SetTag extends AbstractAnnotationChange implements HasAnnotationTag {
 
     @JsonProperty
     private final AnnotationTag tag;

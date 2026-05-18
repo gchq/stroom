@@ -43,20 +43,18 @@ import stroom.query.api.TableSettings;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import org.apache.commons.text.StringEscapeUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 
 public class SearchRequestMapper {
 
@@ -134,7 +132,7 @@ public class SearchRequestMapper {
 
     private List<ResultRequest> mapResultRequests(final DashboardSearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null
-                || searchRequest.getComponentResultRequests().size() == 0) {
+            || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
 
@@ -207,16 +205,17 @@ public class SearchRequestMapper {
 //
 //        return tableComponentSettings;
 //
-////        final TableSettings tableSettings = TableSettings.builder()
-////                .queryId(tableComponentSettings.getQueryId())
-////                .addFields(mapFields(tableComponentSettings.getFields()))
-////                .extractValues(tableComponentSettings.extractValues())
-////                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
-////                .addMaxResults(mapIntArray(tableComponentSettings.getMaxResults()))
-////                .showDetail(tableComponentSettings.getShowDetail())
-////                .build();
-////
-////        return tableSettings;
+
+    /// /        final TableSettings tableSettings = TableSettings.builder()
+    /// /                .queryId(tableComponentSettings.getQueryId())
+    /// /                .addFields(mapFields(tableComponentSettings.getFields()))
+    /// /                .extractValues(tableComponentSettings.extractValues())
+    /// /                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
+    /// /                .addMaxResults(mapIntArray(tableComponentSettings.getMaxResults()))
+    /// /                .showDetail(tableComponentSettings.getShowDetail())
+    /// /                .build();
+    /// /
+    /// /        return tableSettings;
 //    }
 
 //    private List<Field> mapFields(final List<Field> fields) {
@@ -404,7 +403,6 @@ public class SearchRequestMapper {
 //
 //        return tableSettings;
 //    }
-
     private Column.Builder convertField(final VisField visField,
                                         final Map<String, stroom.query.api.Format> formatMap) {
         final Column.Builder builder = Column.builder();
@@ -439,8 +437,8 @@ public class SearchRequestMapper {
         final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
 
         if (visualisation == null
-                || visualisation.getSettings() == null
-                || visualisation.getSettings().length() == 0) {
+            || visualisation.getSettings() == null
+            || visualisation.getSettings().length() == 0) {
             return null;
         }
 
@@ -722,25 +720,20 @@ public class SearchRequestMapper {
         private Map<String, String> getDashboardSettingsMap(final String json) {
             final Map<String, String> map = new HashMap<>();
 
-            try {
-                if (json != null && !json.isEmpty()) {
-                    final ObjectMapper objectMapper = JsonUtil.getNoIndentMapper();
-                    final JsonNode node = objectMapper.readTree(json);
+            if (json != null && !json.isEmpty()) {
+                final JsonMapper jsonMapper = JsonUtil.getNoIndentMapper();
+                final JsonNode node = jsonMapper.readTree(json);
 
-                    final Iterator<Entry<String, JsonNode>> iterator = node.fields();
-                    while (iterator.hasNext()) {
-                        final Entry<String, JsonNode> entry = iterator.next();
-                        final JsonNode val = entry.getValue();
-                        if (val != null) {
-                            final String str = val.textValue();
-                            if (str != null) {
-                                map.put(entry.getKey(), str);
-                            }
+                final Set<Entry<String, JsonNode>> iterator = node.properties();
+                node.properties().forEach(entry -> {
+                    final JsonNode val = entry.getValue();
+                    if (val != null) {
+                        final String str = val.stringValue();
+                        if (str != null) {
+                            map.put(entry.getKey(), str);
                         }
                     }
-                }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+                });
             }
 
             return map;

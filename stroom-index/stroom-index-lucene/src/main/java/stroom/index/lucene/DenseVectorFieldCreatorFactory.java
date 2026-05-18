@@ -48,16 +48,16 @@ public class DenseVectorFieldCreatorFactory {
         final LuceneIndexField luceneIndexField = LuceneIndexField.fromIndexField(indexField);
         final DenseVectorFieldConfig denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
 
-        if (denseVectorFieldConfig == null || denseVectorFieldConfig.getModelRef() == null) {
+        if (denseVectorFieldConfig == null || denseVectorFieldConfig.getEmbeddingModelRef() == null) {
             LOGGER.error("Embedding model is not defined for field {}", indexField);
             throw new IllegalArgumentException("Embedding model is not defined for field " +
                                                indexField);
         }
 
         // Query the embeddings API for a vector representation of the query expression
-        LOGGER.trace("Fetching model doc {}", denseVectorFieldConfig.getModelRef());
+        LOGGER.trace("Fetching model doc {}", denseVectorFieldConfig.getEmbeddingModelRef());
         final OpenAIModelDoc modelDoc = openAIService
-                .getOpenAIModelDoc(denseVectorFieldConfig.getModelRef());
+                .getOpenAIModelDoc(denseVectorFieldConfig.getEmbeddingModelRef());
 
         LOGGER.trace("Fetching embedding model {}", modelDoc);
         final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);

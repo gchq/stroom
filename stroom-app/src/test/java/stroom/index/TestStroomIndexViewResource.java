@@ -31,7 +31,6 @@ import stroom.query.api.SearchResponse;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -124,7 +123,7 @@ class TestStroomIndexViewResource {
     // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
     // ages to run no tests
     @Test
-    void test() throws JsonProcessingException {
+    void test() {
         // Given
         final SearchRequest searchRequest = getSearchRequest();
 

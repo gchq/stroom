@@ -16,8 +16,12 @@
 
 package stroom.receive.common;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.StringUtil;
 
+import jakarta.inject.Singleton;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.params.Argon2Parameters;
@@ -27,7 +31,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Objects;
 
+@Singleton // For thread safe SecureRandom
 class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Argon2DataFeedKeyHasher.class);
 
     // WARNING!!!
     // Do not change any of these otherwise it will break hash verification of existing
@@ -38,31 +45,30 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
     private static final int MEMORY_KB = 65_536;
     private static final int PARALLELISM = 1;
 
-    private final SecureRandom secureRandom;
-
-    public Argon2DataFeedKeyHasher() {
-        this.secureRandom = new SecureRandom();
-    }
+    private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
-    public HashOutput hash(final String dataFeedKey) {
-        final String randomSalt = StringUtil.createRandomCode(
+    public String generateSalt() {
+        final String salt = StringUtil.createRandomCode(
                 secureRandom,
                 32,
                 StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
-        return hash(dataFeedKey, randomSalt);
+        LOGGER.debug("generateSalt() - salt: '{}'", salt);
+        return salt;
     }
 
     public HashOutput hash(final String dataFeedKey, final String salt) {
-        final Argon2Parameters params = new Builder(Argon2Parameters.ARGON2_id)
+        Objects.requireNonNull(dataFeedKey);
+        final Builder builder = new Builder(Argon2Parameters.ARGON2_id)
                 .withVersion(Argon2Parameters.ARGON2_VERSION_13)
                 .withIterations(ITERATIONS)
                 .withMemoryAsKB(MEMORY_KB)
-                .withParallelism(PARALLELISM)
-                .withSalt(salt.getBytes(StandardCharsets.UTF_8))
-                .build();
+                .withParallelism(PARALLELISM);
+        if (NullSafe.isNonEmptyString(salt)) {
+            builder.withSalt(salt.getBytes(StandardCharsets.UTF_8));
+        }
+        final Argon2Parameters params = builder.build();
 
-        Objects.requireNonNull(dataFeedKey);
         final Argon2BytesGenerator generator = new Argon2BytesGenerator();
         generator.init(params);
         final byte[] result = new byte[HASH_LENGTH];
@@ -75,6 +81,7 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
         // Base58 is a bit less nasty than base64 and widely supported in other languages
         // due to use in bitcoin.
         final String hash = Hex.encodeHexString(result);
+        LOGGER.debug("hash() - salt: '{}', hash: '{}', dataFeedKey: '{}'", salt, hash, dataFeedKey);
         return new HashOutput(hash, salt);
     }
 
@@ -83,7 +90,10 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
         Objects.requireNonNull(dataFeedKey);
         Objects.requireNonNull(hash);
         final HashOutput hashOutput = hash(dataFeedKey, salt);
-        return Objects.equals(hash, hashOutput.hash());
+        final boolean isValid = Objects.equals(hash, hashOutput.hash());
+        LOGGER.debug("verify() - salt: '{}', hash: '{}', dataFeedKey: '{}', isValid: {}",
+                salt, hash, dataFeedKey, isValid);
+        return isValid;
     }
 
     @Override

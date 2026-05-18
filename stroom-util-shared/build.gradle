@@ -30,7 +30,7 @@ dependencies {
     testImplementation libs.guice
     testImplementation libs.jackson.core
     testImplementation libs.jackson.databind
-    testImplementation libs.jackson.datatype.jdk8
+    //testImplementation libs.jackson.datatype.jdk8
     testImplementation libs.jmh.core
     testImplementation libs.jmh.generator.annprocess
     testImplementation libs.slf4j.api

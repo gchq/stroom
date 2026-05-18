@@ -17,6 +17,7 @@
 package stroom.importexport;
 
 import stroom.util.json.JsonUtil;
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.SerialisationTestConstructor;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -43,8 +45,8 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -146,7 +148,7 @@ class TestJsonSerialisation {
     @TestFactory
     @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testDefaultValues() {
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
+        final JsonMapper jsonMapper = JsonUtil.getMapper();
 
         return buildRelatedResourceTests(clazz -> {
             // Try and find the no args constructor if there is any.
@@ -168,13 +170,12 @@ class TestJsonSerialisation {
                     final String json2;
                     try {
                         final Object o = noArgsConstructor.newInstance();
-                        json1 = objectMapper.writeValueAsString(o);
-                        final Object o2 = objectMapper.readValue(json1, clazz);
-                        json2 = objectMapper.writeValueAsString(o2);
+                        json1 = jsonMapper.writeValueAsString(o);
+                        final Object o2 = jsonMapper.readValue(json1, clazz);
+                        json2 = jsonMapper.writeValueAsString(o2);
                     } catch (final InstantiationException
                                    | IllegalAccessException
-                                   | InvocationTargetException
-                                   | IOException e) {
+                                   | InvocationTargetException e) {
                         throw new RuntimeException(e);
                     }
 
@@ -196,7 +197,7 @@ class TestJsonSerialisation {
     @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testFullSerialisation() {
         final Map<Class<?>, Object> valueStrategies = initializeValueStrategies();
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
+        final JsonMapper jsonMapper = JsonUtil.getConsistentOrderMapper(true);
 
         return buildRelatedResourceTests(clazz -> {
             if (!Modifier.isInterface(clazz.getModifiers())
@@ -206,14 +207,14 @@ class TestJsonSerialisation {
                 final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
                 final Constructor<?> test = findTestConstructor(constructors);
                 if (test != null) {
-                    construct(clazz, test, valueStrategies, objectMapper);
+                    construct(clazz, test, valueStrategies, jsonMapper);
                 } else {
                     final Constructor<?> creator = findJsonCreator(constructors);
                     if (creator != null) {
-                        construct(clazz, creator, valueStrategies, objectMapper);
+                        construct(clazz, creator, valueStrategies, jsonMapper);
                     } else {
                         for (final Constructor<?> constructor : constructors) {
-                            construct(clazz, constructor, valueStrategies, objectMapper);
+                            construct(clazz, constructor, valueStrategies, jsonMapper);
                         }
                     }
                 }
@@ -245,7 +246,7 @@ class TestJsonSerialisation {
     private void construct(final Class<?> clazz,
                            final Constructor<?> constructor,
                            final Map<Class<?>, Object> valueStrategies,
-                           final ObjectMapper objectMapper) {
+                           final JsonMapper jsonMapper) {
         final Class<?>[] paramTypes = constructor.getParameterTypes();
         final Object[] params = new Object[paramTypes.length];
         for (int i = 0; i < params.length; i++) {
@@ -255,19 +256,38 @@ class TestJsonSerialisation {
         try {
             constructor.setAccessible(true);
             final Object o = constructor.newInstance(params);
-            final String json1;
-            final String json2;
-            try {
-                json1 = objectMapper.writeValueAsString(o);
-                final Object o2 = objectMapper.readValue(json1, clazz);
-                json2 = objectMapper.writeValueAsString(o2);
-            } catch (final IOException e) {
-                throw new RuntimeException(e);
-            }
+            final String json1 = jsonMapper.writeValueAsString(o);
+            final Object o2 = jsonMapper.readValue(json1, clazz);
+            final String json2 = jsonMapper.writeValueAsString(o2);
 
             Assertions.assertThat(json2)
                     .describedAs(
                             "%s - Checking default values on (de)serialisation", clazz.getName())
+                    .isEqualTo(json1);
+
+            // Make sure that the serialised form looks the same as that produced by jackson v2,
+            // albeit when both use a mapper that enforces consistent ordering
+            final String json3V2;
+            final String json4V2;
+            try {
+                final ObjectMapper mapperV2 = JsonV2Util.getConsistentOrderMapper(true);
+                json3V2 = mapperV2.writeValueAsString(o);
+                final Object o3 = jsonMapper.readValue(json3V2, clazz);
+                json4V2 = mapperV2.writeValueAsString(o3);
+            } catch (final JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            Assertions.assertThat(json3V2)
+                    .describedAs(
+                            "%s - Checking default values on (de)serialisation (Jackson v2)",
+                            clazz.getName())
+                    .isEqualTo(json4V2);
+
+            Assertions.assertThat(json3V2)
+                    .describedAs(
+                            "%s - Comparing Jackson v2 and v3",
+                            clazz.getName())
                     .isEqualTo(json1);
 
         } catch (final InstantiationException | InvocationTargetException | IllegalAccessException e) {

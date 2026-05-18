@@ -883,19 +883,29 @@ public final class StoreCreationTool {
             return refs.getFirst();
         }
 
-        final DocRef openAiRef = openAIModelStore.createDocument("stella-embed");
-        OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(openAiRef);
-        openAIModelDoc = openAIModelDoc
+        final DocRef embeddingModelRef = openAIModelStore.createDocument("stella-embed");
+        OpenAIModelDoc embeddingModelDoc = openAIModelStore.readDocument(embeddingModelRef);
+        embeddingModelDoc = embeddingModelDoc
                 .copy()
                 .baseUrl("http://localhost:9511/v1")
                 .modelId("stella-embed")
                 .maxContextWindowTokens(512)
                 .build();
-        openAIModelStore.writeDocument(openAIModelDoc);
+        openAIModelStore.writeDocument(embeddingModelDoc);
+
+        final DocRef rerankModelRef = openAIModelStore.createDocument("stella-embed");
+        OpenAIModelDoc rerankModelDoc = openAIModelStore.readDocument(rerankModelRef);
+        rerankModelDoc = rerankModelDoc
+                .copy()
+                .baseUrl("http://localhost:9511/v1")
+                .modelId("stella-embed")
+                .maxContextWindowTokens(512)
+                .build();
+        openAIModelStore.writeDocument(rerankModelDoc);
 
         final DocRef indexRef = commonTestScenarioCreator.createIndex(
                 name,
-                createIndexFields(openAiRef),
+                createIndexFields(embeddingModelRef, rerankModelRef),
                 maxDocsPerShard.orElse(LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD));
 
         // Create the indexing pipeline.
@@ -924,7 +934,8 @@ public final class StoreCreationTool {
         return indexRef;
     }
 
-    private List<LuceneIndexField> createIndexFields(final DocRef openAiModelRef) {
+    private List<LuceneIndexField> createIndexFields(final DocRef embeddingModelRef,
+                                                     final DocRef rerankModelRef) {
         final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(LuceneIndexField.createField("Feed"));
         indexFields.add(LuceneIndexField.createField("Feed (Keyword)", AnalyzerType.KEYWORD));
@@ -946,11 +957,12 @@ public final class StoreCreationTool {
                 .stored(false)
                 .denseVectorFieldConfig(DenseVectorFieldConfig
                         .builder()
-                        .modelRef(openAiModelRef)
+                        .embeddingModelRef(embeddingModelRef)
                         .vectorSimilarityFunction(VectorSimilarityFunctionType.DOT_PRODUCT)
                         .segmentSize(2000)
                         .overlapSize(200)
                         .nearestNeighbourCount(1000)
+                        .rerankModelRef(rerankModelRef)
                         .build())
                 .build());
         indexFields.add(LuceneIndexField.createField("Description"));

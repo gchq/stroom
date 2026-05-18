@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.2_10-jdk-alpine-3.23@sha256:da683f4f02f9427597d8fa162b73b8222fe08596dcebaf23e4399576ff8b037e AS stroom-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:30d9f87d702c2c1c601ed0d31e0c88ea1ea474ee7676cda7b7a59e759181c4dd AS stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -57,6 +57,7 @@ VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
+VOLUME /stroom-proxy/data_feed_identities/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
 VOLUME /stroom-proxy/zip_file_ingest/
@@ -92,6 +93,7 @@ RUN \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
+    mkdir -p /stroom-proxy/data_feed_identities && \
     mkdir -p /stroom-proxy/failures && \
     mkdir -p /stroom-proxy/zip_file_ingest && \
     mkdir -p /stroom-proxy/zip_file_ingest_failed && \

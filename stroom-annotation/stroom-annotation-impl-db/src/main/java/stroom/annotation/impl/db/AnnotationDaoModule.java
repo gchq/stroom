@@ -18,6 +18,7 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.AnnotationTagDao;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -36,6 +37,11 @@ public class AnnotationDaoModule extends AbstractModule {
                 .addBinding(AnnotationDaoImpl.class)
                 .addBinding(AnnotationTagDaoImpl.class)
                 .addBinding(AnnotationFeedIdToNameCache.class)
-                .addBinding(AnnotationFeedNameToIdCache.class);
+                .addBinding(AnnotationFeedNameToIdCache.class)
+                .addBinding(AnnotationValCache.class);
+
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(AnnotationEventLinkCache.class)
+                .addBinding(AnnotationValCache.class);
     }
 }

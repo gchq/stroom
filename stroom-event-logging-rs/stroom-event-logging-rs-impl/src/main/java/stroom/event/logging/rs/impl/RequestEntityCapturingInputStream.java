@@ -18,11 +18,11 @@ package stroom.event.logging.rs.impl;
 
 import stroom.util.logging.LambdaLogger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -46,20 +46,20 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
 
     public RequestEntityCapturingInputStream(final ResourceInfo resourceInfo,
                                              final InputStream original,
-                                             final ObjectMapper objectMapper,
+                                             final JsonMapper jsonMapper,
                                              final Charset charset) throws IOException {
         super(original);
         this.requestParamClass = findRequestParamClass(resourceInfo);
-        readEntity(objectMapper, charset);
+        readEntity(jsonMapper, charset);
         constructed = true;
     }
 
-    private void readEntity(final ObjectMapper objectMapper, final Charset charset) {
+    private void readEntity(final JsonMapper jsonMapper, final Charset charset) {
 
         if (requestParamClass != null) {
             try {
                 mark(MAX_ENTITY_SIZE + 1);
-                requestEntity = objectMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
+                requestEntity = jsonMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
             } catch (final Exception ex) {
                 //Indicates that this request type cannot be constructed in this way.
                 requestEntity = null;
@@ -103,7 +103,7 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
                                " on " +
                                resourceInfo.getResourceClass().getSimpleName());
         }
-        return suppliedParams.get(0);
+        return suppliedParams.getFirst();
     }
 
     public Object getRequestEntity() {

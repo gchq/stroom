@@ -27,15 +27,17 @@ import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.io.IgnoreCloseWriter;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.SerializedString;
 import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.io.SerializedString;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -61,7 +63,6 @@ public class JSONWriter extends AbstractWriter {
     private final String rootValueSeparator = "\n";
     private final Deque<String> elements = new ArrayDeque<>();
     private final CharBuffer content = new CharBuffer();
-    private final JsonFactory jsonFactory = new JsonFactory();
     private JsonGenerator jsonGenerator;
     private boolean doneElement;
     private int depth;
@@ -74,26 +75,25 @@ public class JSONWriter extends AbstractWriter {
     }
 
     private JsonGenerator createGenerator() {
-        final JsonGenerator jsonGenerator;
         try {
-            jsonGenerator = jsonFactory.createGenerator(new IgnoreCloseWriter(getWriter()));
-            if (indentOutput) {
-                jsonGenerator.useDefaultPrettyPrinter();
-            }
-
+            final JsonMapper jsonMapper = JsonUtil.getMapper(indentOutput);
             // Configure the jsonGenerator to add a root value separator unless
             // we want trailing ones in which case we will add them ourselves on
             // endElement().
-            if (addTrailingRootValueSeparator) {
-                jsonGenerator.setRootValueSeparator(null);
-            } else {
-                jsonGenerator.setRootValueSeparator(new SerializedString(rootValueSeparator));
-            }
-        } catch (final IOException | RuntimeException e) {
+            final SerializedString rootValueSeparator = addTrailingRootValueSeparator
+                    ? null
+                    : new SerializedString(this.rootValueSeparator);
+            final JsonFactory jsonFactory = jsonMapper.tokenStreamFactory()
+                    .rebuild()
+                    .rootValueSeparator(rootValueSeparator)
+                    .build();
+
+            final Writer writer = new IgnoreCloseWriter(getWriter());
+            jsonGenerator = jsonFactory.createGenerator(writer);
+        } catch (final RuntimeException e) {
             fatal(e);
             throw LoggedException.wrap(e);
         }
-
         return jsonGenerator;
     }
 
@@ -109,7 +109,7 @@ public class JSONWriter extends AbstractWriter {
                 jsonGenerator.close();
                 jsonGenerator = null;
             }
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             fatal(e);
         } finally {
             super.endProcessing();
@@ -167,7 +167,7 @@ public class JSONWriter extends AbstractWriter {
                 }
             }
 
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             error(e);
         } finally {
             content.clear();
@@ -262,12 +262,12 @@ public class JSONWriter extends AbstractWriter {
                         jsonGenerator.flush();
                     }
                     returnDestinations();
-                } catch (final IOException e) {
+                } catch (final Exception e) {
                     throw new SAXException(e);
                 }
             }
 
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             error(e);
         } finally {
             clearKey();
@@ -298,8 +298,8 @@ public class JSONWriter extends AbstractWriter {
         }
 
         try {
-            jsonGenerator.writeFieldName(currentKey);
-        } catch (final IOException e) {
+            jsonGenerator.writeName(currentKey);
+        } catch (final Exception e) {
             fatal(e);
         }
 

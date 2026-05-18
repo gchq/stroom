@@ -30,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestVisSettings {
 
+    private static final String WHITESPACE_PATTERN = "\\s*";
+
     @Test
     void test() throws Exception {
         final Path jsonFile = Paths.get(
@@ -39,17 +41,12 @@ class TestVisSettings {
         final String json = StreamUtil.fileToString(jsonFile);
 
         final VisSettings visSettings = JsonUtil.readValue(json, VisSettings.class);
-        final String output = JsonUtil.writeValueAsString(visSettings);
+        final String output = JsonUtil.getConsistentOrderMapper(false)
+                .writeValueAsString(visSettings);
 
-        String in = json.replaceAll("\\s*", "");
-        String out = output.replaceAll("\\s*", "");
-
-        // JSON should be the same up to 'interpolationMode'
-        final int index = in.indexOf("interpolationMode");
-        if (index != -1) {
-            in = in.substring(0, index);
-            out = out.substring(0, index);
-        }
+        // Normalise whitespace
+        final String in = json.replaceAll(WHITESPACE_PATTERN, "");
+        final String out = output.replaceAll(WHITESPACE_PATTERN, "");
 
         System.out.println(in);
         System.out.println(out);
