@@ -16,9 +16,9 @@
 
 package stroom.search.elastic.search;
 
+import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.OpenAIService;
 import stroom.docref.DocRef;
-import stroom.langchain.api.OpenAIModelStore;
-import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.common.v2.Coprocessors;

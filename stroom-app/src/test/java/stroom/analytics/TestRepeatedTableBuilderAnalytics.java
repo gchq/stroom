@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.ai.impl.MockOpenAIModule;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -25,7 +26,6 @@ import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;

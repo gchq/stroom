@@ -1,0 +1,96 @@
+.askStroomAiViewImpl {
+    overflow: hidden;
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    display: flex;
+    gap: var(--control__padding--vertical);
+}
+
+.dialog-content .askStroomAiViewImpl {
+  border: 1px solid var(--control__border-color);
+  overflow: auto;
+}
+
+.askStroomAiViewImpl-top {
+    display: flex;
+    border-bottom: 1px solid var(--splitter__background-color);
+    padding: 0 5px;
+    gap: 5px;
+}
+
+.askStroomAiViewImpl-title {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    flex-direction: row;
+}
+
+.askStroomAiViewImpl-buttons {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.askStroomAiViewImpl-bottom {
+    padding: 10px;
+}
+
+.askStroomAiViewImpl-bottom-inner {
+    display: flex;
+    gap: 5px;
+    overflow: hidden;
+    background-color: var(--page__background-color);
+    border: 1px solid var(--splitter__background-color);
+    border-radius: .25rem;
+    padding: 5px;
+}
+
+.askStroomAiViewImpl-messagePane {
+    gap: 5px;
+}
+
+.askStroomAiViewImpl-messagePane input,
+.askStroomAiViewImpl-modelPane .dropDownView-container {
+    border: 1px solid transparent;
+    background: none;
+}
+
+.askStroomAiViewImpl-messagePane .play svg {
+    color: #4caf50;
+}
+
+.askStroomAiViewImpl-messagePane .pause svg {
+    color: #2196f3;
+}
+
+.askStroomAiViewImpl-messagePane .stop svg {
+    color: #d32f2f;
+}
+
+.askStroomAiViewImpl-modelPane {
+
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-container {
+    width: 100%;
+}
+
+.askStroomAiViewImpl-bottom button.Button {
+    min-width: 80px;
+}
+
+.askStroomAiViewImpl--docked-right {
+    border-left: 1px solid var(--splitter__background-color);
+}
+
+.askStroomAiViewImpl--docked-left {
+    border-right: 1px solid var(--splitter__background-color);
+}
+
+.askStroomAiViewImpl--docked-top {
+    border-bottom: 1px solid var(--splitter__background-color);
+}
+
+.askStroomAiViewImpl--docked-bottom {
+    border-top: 1px solid var(--splitter__background-color);
+}

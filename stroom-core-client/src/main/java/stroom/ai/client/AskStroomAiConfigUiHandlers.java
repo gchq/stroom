@@ -16,6 +16,7 @@
 
 package stroom.ai.client;
 
+import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.gwtplatform.mvp.client.UiHandlers;
@@ -23,4 +24,6 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface AskStroomAiConfigUiHandlers extends UiHandlers {
 
     void onSetDefault(TaskMonitorFactory taskMonitorFactory);
+
+    void onDockBehaviourChange(DockBehaviour dockBehaviour);
 }

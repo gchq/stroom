@@ -16,9 +16,9 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.OpenAIService;
 import stroom.docref.DocRef;
-import stroom.langchain.api.OpenAIModelStore;
-import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;

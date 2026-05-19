@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.langchain.api.SimpleTokenCountEstimator;
+import stroom.ai.api.SimpleTokenCountEstimator;
 
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;

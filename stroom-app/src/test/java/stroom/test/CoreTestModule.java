@@ -16,6 +16,7 @@
 
 package stroom.test;
 
+import stroom.ai.impl.MockOpenAIModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.DbConnectionsModule;
 import stroom.app.guice.JerseyModule;
@@ -23,7 +24,6 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
 import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;

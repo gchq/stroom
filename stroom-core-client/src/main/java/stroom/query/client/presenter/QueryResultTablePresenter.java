@@ -48,10 +48,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasChangeHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
@@ -901,8 +898,6 @@ public class QueryResultTablePresenter
         onChange();
 
 
-
-
         // Remove existing columns.
         removeAllColumns();
 
@@ -919,10 +914,6 @@ public class QueryResultTablePresenter
 
 //                dataGrid.redrawHeaders();
         dataGrid.resizeTableToFitColumns();
-
-
-
-
 
 
         fireColumnAndDataUpdate();
@@ -1071,8 +1062,7 @@ public class QueryResultTablePresenter
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
                 AskStroomAiEvent.fire(this,
-                        currentSearchModel.getCurrentNode(),
-                        new QueryTableContext(queryKey.toString(), request));
+                        new QueryTableContext(queryKey.toString(), currentSearchModel.getCurrentNode(), request));
             }
         }
     }

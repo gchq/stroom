@@ -17,6 +17,7 @@
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
+import stroom.ai.impl.MockOpenAIModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
@@ -36,7 +37,6 @@ import stroom.feed.impl.MockFeedModule;
 import stroom.gitrepo.mock.MockGitRepoModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;

@@ -1,5 +1,13 @@
 package stroom.query.impl;
 
+import stroom.ai.api.ChatMemoryService;
+import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.OpenAIService;
+import stroom.ai.api.SimpleTokenCountEstimator;
+import stroom.ai.api.SummaryReducer;
+import stroom.ai.api.TableQuery;
+import stroom.ai.api.TableQueryMessages;
+import stroom.ai.api.TableSummaryMessages;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
@@ -13,16 +21,9 @@ import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
-import stroom.langchain.api.ChatMemoryService;
-import stroom.langchain.api.OpenAIModelStore;
-import stroom.langchain.api.OpenAIService;
-import stroom.langchain.api.SimpleTokenCountEstimator;
-import stroom.langchain.api.SummaryReducer;
-import stroom.langchain.api.TableQuery;
-import stroom.langchain.api.TableQueryMessages;
-import stroom.langchain.api.TableSummaryMessages;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.Column;
 import stroom.query.api.OffsetRange;
@@ -111,11 +112,21 @@ public class AskStroomAIService {
                         searchRequest.getComponentResultRequests().getFirst();
                 if (componentResultRequest instanceof TableResultRequest tableResultRequest) {
                     tableResultRequest = tableResultRequest.copy().requestedRange(range).build();
-                    searchRequest = dashboardTableContext.getSearchRequest()
-                            .copy()
-                            .componentResultRequests(Collections.singletonList(tableResultRequest))
-                            .build();
-                    return dashboardService.search(searchRequest);
+//                    searchRequest = dashboardTableContext.getSearchRequest()
+//                            .copy()
+//                            .componentResultRequests(Collections.singletonList(tableResultRequest))
+//                            .build();
+//                                                    final DownloadSearchResultsRequest downloadSearchResultsRequest =
+//                                        new DownloadSearchResultsRequest(
+//                                                searchRequest,
+//                                                getComponentConfig().getId(),
+//                                                downloadPresenter.getFileType(),
+//                                                downloadPresenter.downloadAllTables(),
+//                                                downloadPresenter.isSample(),
+//                                                downloadPresenter.getPercent());
+//
+//
+//                    return dashboardService.downloadSearchResults(searchRequest);
                 }
                 throw new RuntimeException("No table component provided");
             };
@@ -462,12 +473,19 @@ public class AskStroomAIService {
         return defaultConfigProvider.get();
     }
 
-    public Boolean setDefaultModel(final DocRef modelRef) {
+    public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
+        setDefaultModel(config.getModelRef());
+        setDefaultTableSummaryConfig(config.getTableSummary());
+        setDefaultChatMemoryConfigConfig(config.getChatMemory());
+        return true;
+    }
+
+    private Boolean setDefaultModel(final DocRef modelRef) {
         globalConfigProvider.get().setDocRef(getDefaultConfig(), AskStroomAIConfig.PROP_NAME_MODEL_REF, modelRef);
         return true;
     }
 
-    public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
+    private Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
         final TableSummaryConfig defaultTableSummaryConfig = tableSummaryConfigProvider.get();
         globalConfigProvider.get().setInt(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
@@ -478,7 +496,7 @@ public class AskStroomAIService {
         return true;
     }
 
-    public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
+    private Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
         final ChatMemoryConfig defaultChatMemoryConfig = chatMemoryConfigProvider.get();
         globalConfigProvider.get().setInt(defaultChatMemoryConfig,
                 ChatMemoryConfig.PROP_NAME_TOKEN_LIMIT,

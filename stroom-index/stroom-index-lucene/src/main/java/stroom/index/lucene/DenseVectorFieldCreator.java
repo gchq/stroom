@@ -16,8 +16,8 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.index.shared.LuceneIndexField;
-import stroom.langchain.api.SimpleTokenCountEstimator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

@@ -17,12 +17,16 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
+import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.ChatMemoryConfig;
 import stroom.ai.shared.TableSummaryConfig;
 import stroom.alert.client.event.AlertEvent;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
@@ -37,53 +41,66 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Consumer;
+
 public class AskStroomAiConfigPresenter
         extends MyPresenterWidget<AskStroomAiConfigView>
         implements AskStroomAiConfigUiHandlers {
 
     private final AskStroomAiClient askStroomAiClient;
+    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
+
+    private Consumer<DockBehaviour> dockBehaviourChangeHandler;
+    private DockBehaviour snapshotDockBehaviour;
 
     @Inject
     public AskStroomAiConfigPresenter(final EventBus eventBus,
                                       final AskStroomAiConfigView view,
                                       final AskStroomAiClient askStroomAiClient,
-                                      final ClientSecurityContext clientSecurityContext) {
+                                      final ClientSecurityContext clientSecurityContext,
+                                      final DocSelectionBoxPresenter docSelectionBoxPresenter) {
         super(eventBus, view);
         this.askStroomAiClient = askStroomAiClient;
+        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
+
         view.setUiHandlers(this);
+
+        getView().setModelRefSelection(docSelectionBoxPresenter.getView());
+        docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        docSelectionBoxPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         // Only allow administrators to set the default model.
         view.allowSetDefault(clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
     }
 
-    public void show() {
+    public void show(final AskStroomAIConfig currentConfig,
+                     final Consumer<AskStroomAIConfig> configConsumer,
+                     final DockBehaviour snapshotDockBehaviour,
+                     final Consumer<DockBehaviour> dockBehaviourConsumer) {
+        this.dockBehaviourChangeHandler = dockBehaviourConsumer;
+        // Snapshot the current state for potential revert on cancel.
+        this.snapshotDockBehaviour = snapshotDockBehaviour;
+
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(700, 500))
+                .popupSize(PopupSize.resizable(400, 600))
                 .caption("Configure Ask Stroom AI")
                 .onShow(e -> {
-                    // Read the local config or default.
-                    askStroomAiClient.getConfig(config -> {
-                        readChatMemoryConfig(NullSafe.getOrElse(config,
-                                AskStroomAIConfig::getChatMemory, new ChatMemoryConfig()));
-                        readTableSummaryConfig(NullSafe.getOrElse(config,
-                                AskStroomAIConfig::getTableSummary, new TableSummaryConfig()));
-                    }, this);
+                    read(currentConfig);
+                    getView().setDockBehaviour(snapshotDockBehaviour);
                     getView().focus();
                 })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         // Update the local config.
-                        askStroomAiClient.getConfig(config -> {
-                            final ChatMemoryConfig chatMemoryConfig = writeChatMemoryConfig();
-                            final TableSummaryConfig tableSummaryConfig = writeTableSummaryConfig();
-                            final AskStroomAIConfig askStroomAIConfig = config
-                                    .copy()
-                                    .tableSummaryConfig(tableSummaryConfig)
-                                    .chatMemoryConfig(chatMemoryConfig)
-                                    .build();
-                            askStroomAiClient.setConfig(askStroomAIConfig);
-                        }, this);
+                        final AskStroomAIConfig config = write();
+                        askStroomAiClient.setConfig(config);
+                        dockBehaviourConsumer.accept(getView().getDockBehaviour());
+                        configConsumer.accept(config);
+                    } else {
+                        if (dockBehaviourConsumer != null && snapshotDockBehaviour != null) {
+                            dockBehaviourConsumer.accept(snapshotDockBehaviour);
+                        }
                     }
                     e.hide();
                 })
@@ -92,28 +109,28 @@ public class AskStroomAiConfigPresenter
 
     @Override
     public void onSetDefault(final TaskMonitorFactory taskMonitorFactory) {
-        askStroomAiClient.setDefaultChatMemoryConfigConfig(writeChatMemoryConfig(), success -> {
-            askStroomAiClient.setDefaultTableSummaryConfig(writeTableSummaryConfig(), success2 -> {
-                AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default table config updated", null);
-            }, taskMonitorFactory);
+        final AskStroomAIConfig config = write();
+        askStroomAiClient.setDefaultAskStroomAIConfig(config, success -> {
+            AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null);
         }, taskMonitorFactory);
     }
 
-    public void readTableSummaryConfig(final TableSummaryConfig config) {
-        getView().setMaximumBatchSize(NullSafe.getOrElse(
-                config,
-                TableSummaryConfig::getMaximumBatchSize,
-                TableSummaryConfig.DEFAULT_MAXIMUM_BATCH_SIZE));
-        getView().setMaximumTableInputRows(NullSafe.getOrElse(
-                config,
-                TableSummaryConfig::getMaximumTableInputRows,
-                TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_INPUT_ROWS));
+    @Override
+    public void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
+        // Forward to the caller for immediate (live) application.
+        if (dockBehaviourChangeHandler != null) {
+            dockBehaviourChangeHandler.accept(dockBehaviour);
+        }
     }
 
-    public TableSummaryConfig writeTableSummaryConfig() {
-        return new TableSummaryConfig(
-                getView().getMaximumBatchSize(),
-                getView().getMaximumTableInputRows());
+    private void read(final AskStroomAIConfig config) {
+        readChatMemoryConfig(NullSafe.getOrElse(config,
+                AskStroomAIConfig::getChatMemory, new ChatMemoryConfig()));
+        readTableSummaryConfig(NullSafe.getOrElse(config,
+                AskStroomAIConfig::getTableSummary, new TableSummaryConfig()));
+        if (config != null && config.getModelRef() != null) {
+            docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
+        }
     }
 
     public void readChatMemoryConfig(final ChatMemoryConfig config) {
@@ -127,10 +144,38 @@ public class AskStroomAiConfigPresenter
                 ChatMemoryConfig.DEFAULT_CHAT_MEMORY_TTL));
     }
 
+    public void readTableSummaryConfig(final TableSummaryConfig config) {
+        getView().setMaximumBatchSize(NullSafe.getOrElse(
+                config,
+                TableSummaryConfig::getMaximumBatchSize,
+                TableSummaryConfig.DEFAULT_MAXIMUM_BATCH_SIZE));
+        getView().setMaximumTableInputRows(NullSafe.getOrElse(
+                config,
+                TableSummaryConfig::getMaximumTableInputRows,
+                TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_INPUT_ROWS));
+    }
+
+    public AskStroomAIConfig write() {
+        final ChatMemoryConfig chatMemoryConfig = writeChatMemoryConfig();
+        final TableSummaryConfig tableSummaryConfig = writeTableSummaryConfig();
+        return AskStroomAIConfig
+                .builder()
+                .tableSummaryConfig(tableSummaryConfig)
+                .chatMemoryConfig(chatMemoryConfig)
+                .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
+                .build();
+    }
+
     public ChatMemoryConfig writeChatMemoryConfig() {
         return new ChatMemoryConfig(
                 getView().getMemoryTokenLimit(),
                 getView().getMemoryTimeToLive());
+    }
+
+    public TableSummaryConfig writeTableSummaryConfig() {
+        return new TableSummaryConfig(
+                getView().getMaximumBatchSize(),
+                getView().getMaximumTableInputRows());
     }
 
     public interface AskStroomAiConfigView extends View, Focus, HasUiHandlers<AskStroomAiConfigUiHandlers> {
@@ -152,6 +197,12 @@ public class AskStroomAiConfigPresenter
         SimpleDuration getMemoryTimeToLive();
 
         void setMemoryTimeToLive(SimpleDuration memoryTimeToLive);
+
+        void setDockBehaviour(DockBehaviour dockBehaviour);
+
+        DockBehaviour getDockBehaviour();
+
+        void setModelRefSelection(View view);
     }
 
 }

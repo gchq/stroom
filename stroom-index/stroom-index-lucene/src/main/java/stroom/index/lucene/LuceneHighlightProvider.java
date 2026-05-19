@@ -16,11 +16,11 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.OpenAIService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.lucene.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.IndexFieldCache;

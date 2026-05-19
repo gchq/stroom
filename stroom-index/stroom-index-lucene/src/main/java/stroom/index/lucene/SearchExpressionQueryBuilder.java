@@ -16,10 +16,10 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.OpenAIService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.lucene.analyser.AnalyzerFactory;
-import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;

@@ -11,16 +11,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class DashboardTableContext extends AskStroomAiContext {
 
     @JsonProperty
+    private final String node;
+    @JsonProperty
     private final DashboardSearchRequest searchRequest;
 
     @JsonCreator
     public DashboardTableContext(@JsonProperty("chatMemoryId") final String chatMemoryId,
+                                 @JsonProperty("node") final String node,
                                  @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
         super(chatMemoryId);
+        this.node = node;
         this.searchRequest = searchRequest;
     }
 
     public DashboardSearchRequest getSearchRequest() {
         return searchRequest;
+    }
+
+    public String getNode() {
+        return node;
     }
 }

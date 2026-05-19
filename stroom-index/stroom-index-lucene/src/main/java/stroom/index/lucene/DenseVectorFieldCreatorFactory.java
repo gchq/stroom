@@ -16,8 +16,8 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.OpenAIService;
 import stroom.index.shared.LuceneIndexField;
-import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;

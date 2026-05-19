@@ -16,7 +16,6 @@
 
 package stroom.ai.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -68,26 +67,34 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "getDefaultConfig")
     AskStroomAIConfig getDefaultConfig();
 
-    @POST
-    @Path("/setDefaultModel")
-    @Operation(
-            summary = "Set the default model to use for asking questions",
-            operationId = "setDefaultModel")
-    Boolean setDefaultModel(@Parameter(description = "modelRef", required = true) final DocRef modelRef);
+//    @POST
+//    @Path("/setDefaultModel")
+//    @Operation(
+//            summary = "Set the default model to use for asking questions",
+//            operationId = "setDefaultModel")
+//    Boolean setDefaultModel(@Parameter(description = "modelRef", required = true) final DocRef modelRef);
+//
+//    @POST
+//    @Path("/setDefaultTableSummaryConfig")
+//    @Operation(
+//            summary = "Set the default table summary config to use for asking questions",
+//            operationId = "setDefaultTableSummaryConfig")
+//    Boolean setDefaultTableSummaryConfig(
+//            @Parameter(description = "config", required = true) final TableSummaryConfig config);
+//
+//    @POST
+//    @Path("/setDefaultChatMemoryConfigConfig")
+//    @Operation(
+//            summary = "Set the default chat memory config to use for asking questions",
+//            operationId = "setDefaultChatMemoryConfigConfig")
+//    Boolean setDefaultChatMemoryConfigConfig(
+//            @Parameter(description = "config", required = true) final ChatMemoryConfig config);
 
     @POST
-    @Path("/setDefaultTableSummaryConfig")
+    @Path("/setDefaultAskStroomAIConfig")
     @Operation(
-            summary = "Set the default table summary config to use for asking questions",
-            operationId = "setDefaultTableSummaryConfig")
-    Boolean setDefaultTableSummaryConfig(
-            @Parameter(description = "config", required = true) final TableSummaryConfig config);
-
-    @POST
-    @Path("/setDefaultChatMemoryConfigConfig")
-    @Operation(
-            summary = "Set the default chat memory config to use for asking questions",
-            operationId = "setDefaultChatMemoryConfigConfig")
-    Boolean setDefaultChatMemoryConfigConfig(
-            @Parameter(description = "config", required = true) final ChatMemoryConfig config);
+            summary = "Set the default Stroom AI config to use for asking questions",
+            operationId = "setDefaultAskStroomAIConfig")
+    Boolean setDefaultAskStroomAIConfig(
+            @Parameter(description = "config", required = true) final AskStroomAIConfig config);
 }

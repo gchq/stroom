@@ -20,9 +20,8 @@ import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
-import stroom.ai.shared.ChatMemoryConfig;
-import stroom.ai.shared.TableSummaryConfig;
-import stroom.docref.DocRef;
+import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.QueryTableContext;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
@@ -52,10 +51,21 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public AskStroomAiResponse askStroomAi(final String nodeName, final AskStroomAiRequest request) {
+        String requestedNode = nodeName;
+        // Use a specific node if the context demands it. This is necessary for paging some search results to the AI
+        // service.
+        if (nodeName == null && request.getContext() != null) {
+            requestedNode = switch (request.getContext()) {
+                case final DashboardTableContext dashboardTableContext -> dashboardTableContext.getNode();
+                case final QueryTableContext queryTableContext -> queryTableContext.getNode();
+                default -> null;
+            };
+        }
+
         final AskStroomAIService aiService = askStroomAIServiceProvider.get();
         try {
             // Make sure we ask the question on the right node.
-            final String node = aiService.getBestNode(nodeName, request);
+            final String node = aiService.getBestNode(requestedNode, request);
 
             // If the client doesn't specify a node then execute locally.
             if (node == null) {
@@ -86,19 +96,25 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public Boolean setDefaultModel(final DocRef modelRef) {
-        return askStroomAIServiceProvider.get().setDefaultModel(modelRef);
+    public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
+        return askStroomAIServiceProvider.get().setDefaultAskStroomAIConfig(config);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
-        return askStroomAIServiceProvider.get().setDefaultTableSummaryConfig(config);
-    }
-
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
-        return askStroomAIServiceProvider.get().setDefaultChatMemoryConfigConfig(config);
-    }
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public Boolean setDefaultModel(final DocRef modelRef) {
+//        return askStroomAIServiceProvider.get().setDefaultModel(modelRef);
+//    }
+//
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
+//        return askStroomAIServiceProvider.get().setDefaultTableSummaryConfig(config);
+//    }
+//
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
+//        return askStroomAIServiceProvider.get().setDefaultChatMemoryConfigConfig(config);
+//    }
 }

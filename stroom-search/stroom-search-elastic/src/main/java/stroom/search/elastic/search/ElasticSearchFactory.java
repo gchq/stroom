@@ -16,8 +16,8 @@
 
 package stroom.search.elastic.search;
 
+import stroom.ai.api.OpenAIService;
 import stroom.dictionary.api.WordListProvider;
-import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;

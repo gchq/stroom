@@ -17,6 +17,7 @@
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
@@ -946,6 +947,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                 @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
+                @JsonProperty(PROP_NAME_AI) final AiConfig aiConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
                 @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAIConfig askStroomAIConfig,
@@ -1013,6 +1015,7 @@ class TestConfigMapper {
             super(haltBootOnConfigValidationFailure,
                     crossModuleConfig,
                     activityConfig,
+                    aiConfig,
                     analyticsConfig,
                     annotationConfig,
                     askStroomAIConfig,

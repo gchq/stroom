@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.ai.impl.MockOpenAIModule;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutable;
@@ -31,7 +32,6 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;

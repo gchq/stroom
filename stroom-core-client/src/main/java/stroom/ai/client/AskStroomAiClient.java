@@ -4,11 +4,8 @@ import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
-import stroom.ai.shared.ChatMemoryConfig;
-import stroom.ai.shared.TableSummaryConfig;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -52,48 +49,57 @@ public class AskStroomAiClient {
         }
     }
 
-    void setDefaultModel(final DocRef modelRef,
-                         final Consumer<Boolean> consumer,
-                         final TaskMonitorFactory taskMonitorFactory) {
+//    void setDefaultModel(final DocRef modelRef,
+//                         final Consumer<Boolean> consumer,
+//                         final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(RESOURCE)
+//                .method(res -> res.setDefaultModel(modelRef))
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
+//
+//    void setDefaultTableSummaryConfig(final TableSummaryConfig tableSummaryConfig,
+//                                      final Consumer<Boolean> consumer,
+//                                      final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(RESOURCE)
+//                .method(res -> res.setDefaultTableSummaryConfig(tableSummaryConfig))
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
+//
+//    void setDefaultChatMemoryConfigConfig(final ChatMemoryConfig chatMemoryConfig,
+//                                          final Consumer<Boolean> consumer,
+//                                          final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(RESOURCE)
+//                .method(res -> res.setDefaultChatMemoryConfigConfig(chatMemoryConfig))
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
+
+    void setDefaultAskStroomAIConfig(final AskStroomAIConfig config,
+                                     final Consumer<Boolean> consumer,
+                                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
-                .method(res -> res.setDefaultModel(modelRef))
+                .method(res -> res.setDefaultAskStroomAIConfig(config))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    void setDefaultTableSummaryConfig(final TableSummaryConfig tableSummaryConfig,
-                                      final Consumer<Boolean> consumer,
-                                      final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(RESOURCE)
-                .method(res -> res.setDefaultTableSummaryConfig(tableSummaryConfig))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    void setDefaultChatMemoryConfigConfig(final ChatMemoryConfig chatMemoryConfig,
-                                          final Consumer<Boolean> consumer,
-                                          final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(RESOURCE)
-                .method(res -> res.setDefaultChatMemoryConfigConfig(chatMemoryConfig))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    void sendMessage(final String node,
-                     final AskStroomAiRequest request,
+    void sendMessage(final AskStroomAiRequest request,
                      final Consumer<AskStroomAiResponse> consumer,
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.askStroomAi(
-                        node,
                         request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
