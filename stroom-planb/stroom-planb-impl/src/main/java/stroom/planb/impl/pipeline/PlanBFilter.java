@@ -921,9 +921,11 @@ public class PlanBFilter extends AbstractXMLFilter {
         return switch (type) {
             case STRING -> ValString.create(currentStringValue);
             case XML -> {
-                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                value.flip();
-                yield ValXml.create(ByteBufferUtils.getBytes(value));
+                final ByteBuffer buffer = stagingValueOutputStream.getByteBuffer();
+                buffer.flip();
+                final Val val = ValXml.create(ByteBufferUtils.getBytes(buffer));
+                buffer.clear();
+                yield val;
             }
             default -> ValNull.INSTANCE;
         };
