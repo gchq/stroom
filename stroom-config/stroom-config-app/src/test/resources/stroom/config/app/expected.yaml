@@ -589,6 +589,7 @@ appConfig:
   lifecycle:
     enabled: true
   lmdbLibrary:
+    providedJffiLibraryPath: null
     providedSystemLibraryPath: null
     systemLibraryExtractDir: "lmdb_library"
   logging:
