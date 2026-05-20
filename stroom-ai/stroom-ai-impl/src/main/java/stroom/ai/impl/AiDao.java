@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,27 @@ package stroom.ai.impl;
 
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.util.shared.UserRef;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AiDao {
 
-    AiChat newChat(UserRef userRef);
+    AiChat createChat(UserRef userRef);
 
-    void storeMessage(int chatId, AiChatMessage message);
+    List<AiChat> listChats(String userUuid);
+
+    Optional<AiChat> getChat(int chatId);
+
+    void updateChatTitle(int chatId, String title);
+
+    void deleteChat(int chatId);
+
+    AiChatMessage storeMessage(int chatId, AiMessageType messageType, String message);
 
     List<AiChatMessage> getMessages(int chatId);
 
-//    Job create(Job job);
-//
-//    Job update(Job job);
-//
-//    boolean delete(final int id);
-//
-//    Optional<Job> fetch(int id);
-//
-//    ResultPage<Job> find(FindJobCriteria findJobCriteria);
-//
-//    int deleteOrphans();
-//
-//    int setJobsEnabled(String nodeName, boolean enabled, final Set<String> includeJobs,
-//    final Set<String> excludeJobs);
+    List<AiChatMessage> getMessagesSince(int chatId, int lastSeenMessageId);
 }

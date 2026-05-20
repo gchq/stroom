@@ -16,7 +16,7 @@
 
 package stroom.index.lucene;
 
-import stroom.ai.api.OpenAIService;
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.HighlightProvider;
@@ -41,15 +41,15 @@ class LuceneHighlightProvider implements HighlightProvider {
 
     private final WordListProvider wordListProvider;
     private final Provider<SearchConfig> searchConfigProvider;
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
 
     @Inject
     LuceneHighlightProvider(final WordListProvider wordListProvider,
                             final Provider<SearchConfig> searchConfigProvider,
-                            final Provider<OpenAIService> openAIServiceProvider) {
+                            final Provider<AiService> aiServiceProvider) {
         this.wordListProvider = wordListProvider;
         this.searchConfigProvider = searchConfigProvider;
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
     }
 
     /**
@@ -71,7 +71,7 @@ class LuceneHighlightProvider implements HighlightProvider {
                     indexFieldCache,
                     wordListProvider,
                     dateTimeSettings,
-                    openAIServiceProvider.get());
+                    aiServiceProvider.get());
             final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(expression);
 
             highlights = query.getTerms();

@@ -16,7 +16,7 @@
 
 package stroom.index.lucene;
 
-import stroom.ai.api.OpenAIService;
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.lucene.analyser.AnalyzerFactory;
@@ -76,18 +76,18 @@ class SearchExpressionQueryBuilder {
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
-    private final OpenAIService openAIService;
+    private final AiService aiService;
 
     SearchExpressionQueryBuilder(final DocRef indexDocRef,
                                  final IndexFieldCache indexFieldCache,
                                  final WordListProvider wordListProvider,
                                  final DateTimeSettings dateTimeSettings,
-                                 final OpenAIService openAIService) {
+                                 final AiService aiService) {
         this.indexDocRef = indexDocRef;
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
         this.dateTimeSettings = dateTimeSettings;
-        this.openAIService = openAIService;
+        this.aiService = aiService;
     }
 
     public SearchExpressionQuery buildQuery(final ExpressionOperator expression) {
@@ -565,10 +565,10 @@ class SearchExpressionQueryBuilder {
 
             try {
                 // Query the embeddings API for a vector representation of the query expression
-                final OpenAIModelDoc modelDoc = openAIService
+                final OpenAIModelDoc modelDoc = aiService
                         .getOpenAIModelDoc(denseVectorFieldConfig.getEmbeddingModelRef());
 
-                final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);
+                final EmbeddingModel embeddingModel = aiService.getEmbeddingModel(modelDoc);
                 final float[] queryVector = embeddingModel.embed(value).content().vector();
                 return KnnFloatVectorField.newVectorQuery(fieldName,
                         queryVector,

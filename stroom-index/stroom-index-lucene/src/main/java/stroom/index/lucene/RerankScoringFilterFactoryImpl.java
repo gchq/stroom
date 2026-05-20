@@ -16,8 +16,8 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.ai.api.OpenAIService;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.ExpressionOperator;
@@ -65,15 +65,15 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
 
     private final IndexFieldCache indexFieldCache;
     private final OpenAIModelStore openAIModelStore;
-    private final OpenAIService openAIService;
+    private final AiService aiService;
 
     @Inject
     public RerankScoringFilterFactoryImpl(final IndexFieldCache indexFieldCache,
                                           final OpenAIModelStore openAIModelStore,
-                                          final OpenAIService openAIService) {
+                                          final AiService aiService) {
         this.indexFieldCache = indexFieldCache;
         this.openAIModelStore = openAIModelStore;
-        this.openAIService = openAIService;
+        this.aiService = aiService;
     }
 
     @Override
@@ -202,7 +202,7 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
         final RerankModelType rerankModelType = denseVectorFieldConfig.getRerankModelType();
         return switch (rerankModelType) {
             case JINA -> {
-                final ScoringModel scoringModel = openAIService.getJinaScoringModel(
+                final ScoringModel scoringModel = aiService.getJinaScoringModel(
                         rerankModel);
                 yield ReRankingContentAggregator
                         .builder()
@@ -211,7 +211,7 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
                         .build();
             }
             case COHERE -> {
-                final ScoringModel scoringModel = openAIService.getCohereScoringModel(
+                final ScoringModel scoringModel = aiService.getCohereScoringModel(
                         rerankModel);
                 yield ReRankingContentAggregator
                         .builder()
@@ -220,8 +220,8 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
                         .build();
             }
             case OPEN_AI -> {
-                final ChatModel chatModel = openAIService.getChatModel(rerankModel);
-                yield new OpenAIAdvancedReranker(chatModel);
+                final ChatModel chatModel = aiService.getChatModel(rerankModel);
+                yield new AiAdvancedReranker(chatModel);
             }
         };
     }

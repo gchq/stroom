@@ -19,140 +19,153 @@ package stroom.ai.impl.db;
 import stroom.ai.impl.AiDao;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
+import stroom.db.util.JooqUtil;
 import stroom.util.shared.UserRef;
 
-import java.util.List;
+import jakarta.inject.Inject;
+import org.jooq.Record;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
+import static stroom.ai.impl.db.jooq.tables.AiChat.AI_CHAT;
+import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 
 public class AiDaoImpl implements AiDao {
 
-    @Override
-    public AiChat newChat(final UserRef userRef) {
-        return null;
+    private static final Function<Record, AiChat> RECORD_TO_AI_CHAT = record ->
+            new AiChat(
+                    record.get(AI_CHAT.ID),
+                    record.get(AI_CHAT.CREATE_TIME_MS),
+                    record.get(AI_CHAT.UPDATE_TIME_MS),
+                    record.get(AI_CHAT.USER_UUID),
+                    record.get(AI_CHAT.TITLE));
+
+    private static final Function<Record, AiChatMessage> RECORD_TO_AI_CHAT_MESSAGE = record ->
+            new AiChatMessage(
+                    record.get(AI_CHAT_MESSAGE.ID),
+                    record.get(AI_CHAT_MESSAGE.FK_AI_CHAT_ID),
+                    record.get(AI_CHAT_MESSAGE.CREATE_TIME_MS),
+                    AiMessageType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                            record.get(AI_CHAT_MESSAGE.MESSAGE_TYPE).byteValue()),
+                    record.get(AI_CHAT_MESSAGE.MESSAGE));
+
+    private final AiDbConnProvider aiDbConnProvider;
+
+    @Inject
+    AiDaoImpl(final AiDbConnProvider aiDbConnProvider) {
+        this.aiDbConnProvider = aiDbConnProvider;
     }
 
     @Override
-    public void storeMessage(final int chatId, final AiChatMessage message) {
+    public AiChat createChat(final UserRef userRef) {
+        final long now = System.currentTimeMillis();
+        final String userName = userRef.toDisplayString();
+        final String userUuid = userRef.getUuid();
+        final String title = "New Conversation";
 
+        final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .insertInto(AI_CHAT)
+                .set(AI_CHAT.VERSION, 1)
+                .set(AI_CHAT.CREATE_TIME_MS, now)
+                .set(AI_CHAT.CREATE_USER, userName)
+                .set(AI_CHAT.UPDATE_TIME_MS, now)
+                .set(AI_CHAT.UPDATE_USER, userName)
+                .set(AI_CHAT.USER_UUID, userUuid)
+                .set(AI_CHAT.TITLE, title)
+                .returning(AI_CHAT.ID)
+                .fetchOne()
+                .getId());
+
+        return new AiChat(id, now, now, userUuid, title);
+    }
+
+    @Override
+    public List<AiChat> listChats(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT)
+                        .where(AI_CHAT.USER_UUID.eq(userUuid))
+                        .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
+                        .fetch())
+                .map(RECORD_TO_AI_CHAT::apply);
+    }
+
+    @Override
+    public Optional<AiChat> getChat(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT)
+                        .where(AI_CHAT.ID.eq(chatId))
+                        .fetchOptional())
+                .map(RECORD_TO_AI_CHAT::apply);
+    }
+
+    @Override
+    public void updateChatTitle(final int chatId, final String title) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.TITLE, title)
+                .set(AI_CHAT.UPDATE_TIME_MS, System.currentTimeMillis())
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
+    public void deleteChat(final int chatId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .deleteFrom(AI_CHAT)
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final String message) {
+        final long now = System.currentTimeMillis();
+        final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .insertInto(AI_CHAT_MESSAGE)
+                .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
+                .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
+                .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) messageType.getPrimitiveValue())
+                .set(AI_CHAT_MESSAGE.MESSAGE, message)
+                .returning(AI_CHAT_MESSAGE.ID)
+                .fetchOne()
+                .getId());
+
+        // Also update the parent chat's update_time_ms.
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.UPDATE_TIME_MS, now)
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+
+        return new AiChatMessage(id, chatId, now, messageType, message);
     }
 
     @Override
     public List<AiChatMessage> getMessages(final int chatId) {
-        return List.of();
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_MESSAGE)
+                        .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                        .orderBy(AI_CHAT_MESSAGE.CREATE_TIME_MS.asc())
+                        .fetch())
+                .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
     }
-    ////    private static final Logger LOGGER = LoggerFactory.getLogger(JobDao.class);
-//
-//    public static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> Job
-//            .builder()
-//            .id(record.get(JOB.ID))
-//            .version(record.get(JOB.VERSION))
-//            .createTimeMs(record.get(JOB.CREATE_TIME_MS))
-//            .createUser(record.get(JOB.CREATE_USER))
-//            .updateTimeMs(record.get(JOB.UPDATE_TIME_MS))
-//            .updateUser(record.get(JOB.UPDATE_USER))
-//            .name(record.get(JOB.NAME))
-//            .enabled(record.get(JOB.ENABLED))
-//            .build();
-//
-//    public static final BiFunction<Job, JobRecord, JobRecord> JOB_TO_RECORD_MAPPER =
-//            (job, record) -> {
-//                record.set(JOB.ID, job.getId());
-//                record.set(JOB.VERSION, job.getVersion());
-//                record.set(JOB.CREATE_TIME_MS, job.getCreateTimeMs());
-//                record.set(JOB.CREATE_USER, job.getCreateUser());
-//                record.set(JOB.UPDATE_TIME_MS, job.getUpdateTimeMs());
-//                record.set(JOB.UPDATE_USER, job.getUpdateUser());
-//                record.set(JOB.NAME, job.getName());
-//                record.set(JOB.ENABLED, job.isEnabled());
-//                return record;
-//            };
-//
-//    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
-//            FindJobCriteria.FIELD_ID, JOB.ID,
-//            FindJobCriteria.FIELD_NAME, JOB.NAME);
-//
-//    private final GenericDao<JobRecord, Job, Integer> genericDao;
-//    private final JobDbConnProvider jobDbConnProvider;
-//
-//    @Inject
-//    AiDaoImpl(final JobDbConnProvider jobDbConnProvider) {
-//        genericDao = new GenericDao<>(
-//                jobDbConnProvider,
-//                JOB,
-//                JOB.ID,
-//                JOB_TO_RECORD_MAPPER,
-//                RECORD_TO_JOB_MAPPER);
-//        this.jobDbConnProvider = jobDbConnProvider;
-//    }
-//
-//    @Override
-//    public Job create(@NotNull final Job job) {
-//        return genericDao.create(job);
-//    }
-//
-//    @Override
-//    public Job update(@NotNull final Job job) {
-//        return genericDao.update(job);
-//    }
-//
-//    @Override
-//    public boolean delete(final int id) {
-//        return genericDao.delete(id);
-//    }
-//
-//    @Override
-//    public Optional<Job> fetch(final int id) {
-//        return genericDao.fetch(id);
-//    }
-//
-//    @Override
-//    public ResultPage<Job> find(final FindJobCriteria criteria) {
-//        final Collection<Condition> conditions = JooqUtil.conditions(
-//                JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
-//
-//        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-//        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
-//        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
-//        final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
-//                        .select()
-//                        .from(JOB)
-//                        .where(conditions)
-//                        .orderBy(orderFields)
-//                        .limit(offset, limit)
-//                        .fetch())
-//                .map(RECORD_TO_JOB_MAPPER::apply);
-//        return ResultPage.createCriterialBasedList(list, criteria);
-//    }
-//
-//    @Override
-//    public int deleteOrphans() {
-//        return JooqUtil.contextResult(jobDbConnProvider, context -> context
-//                .deleteFrom(JOB)
-//                .where(JOB.ID.notIn(
-//                        context.select(JOB_NODE.JOB_ID)
-//                                .from(JOB_NODE)))
-//                .execute());
-//    }
-//
-//    @Override
-//    public int setJobsEnabled(final String nodeName,
-//                              final boolean enabled,
-//                              final Set<String> includeJobs,
-//                              final Set<String> excludeJobs) {
-//        return JooqUtil.contextResult(jobDbConnProvider, context -> context
-//                .update(JOB_NODE)
-//                .set(JOB_NODE.ENABLED, enabled)
-//                .where(JOB_NODE.NODE_NAME.eq(nodeName)
-//                        .and(JOB_NODE.JOB_ID.in(
-//                                DSL.select(JOB.ID).from(JOB)
-//                                        .where(JOB.NAME.in(includeJobs)
-//                                                .or(DSL.condition(includeJobs.size() == 0)))
-//                        )).and(JOB_NODE.JOB_ID.notIn(
-//                                DSL.select(JOB.ID).from(JOB)
-//                                        .where(JOB.NAME.in(excludeJobs)
-//                                                .and(DSL.condition(excludeJobs.size() > 0)))
-//                        )))
-//                .execute()
-//        );
-//    }
+
+    @Override
+    public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_MESSAGE)
+                        .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                        .and(AI_CHAT_MESSAGE.ID.gt(lastSeenMessageId))
+                        .orderBy(AI_CHAT_MESSAGE.CREATE_TIME_MS.asc())
+                        .fetch())
+                .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
+    }
 }

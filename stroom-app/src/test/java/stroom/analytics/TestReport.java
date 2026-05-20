@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.ai.impl.MockOpenAIModule;
+import stroom.ai.impl.MockAiModule;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ReportExecutor;
 import stroom.analytics.impl.ReportStore;
@@ -78,7 +78,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockOpenAIModule.class)
+@IncludeModule(MockAiModule.class)
 class TestReport extends AbstractAnalyticsTest {
 
     @Inject

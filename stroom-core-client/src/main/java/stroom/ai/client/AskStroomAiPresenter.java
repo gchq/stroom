@@ -18,6 +18,9 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -62,16 +65,20 @@ public class AskStroomAiPresenter
         extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
         implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
 
-    private static final String MARKDOWN_SECTION_BREAK = "\n\n---\n\n";
     private static final int DEFAULT_DOCK_WIDTH = 350;
     private static final int DEFAULT_DOCK_HEIGHT = 250;
+    private static final int MAX_TITLE_LENGTH = 60;
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
+    private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
     private final UserPreferencesManager userPreferencesManager;
     private AskStroomAiContext data;
+    private AiChat currentChat;
+    private boolean titleGenerated;
+    private int lastSeenMessageId;
 
     private boolean showing;
     private boolean docked;
@@ -85,11 +92,13 @@ public class AskStroomAiPresenter
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
                                 final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
+                                final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
                                 final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
+        this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userPreferencesManager = userPreferencesManager;
 
@@ -149,8 +158,11 @@ public class AskStroomAiPresenter
         ShowAskStroomAiEvent.fire(this, true);
 
         Scheduler.get().scheduleDeferred(() -> {
-            setContext(event.getData());
-            getView().focus();
+            // Auto-create a chat if none exists.
+            ensureChat(() -> {
+                setContext(event.getData());
+                getView().focus();
+            });
         });
     }
 
@@ -261,22 +273,25 @@ public class AskStroomAiPresenter
     @Override
     public void onSendMessage(final String message) {
         getView().setSendButtonLoadingState(true);
-        renderMarkdown("> " + message);
+        getView().setEmptyState(false);
+        appendMessageHtml("ai-message ai-message--user", "> " + message);
 
         // Scroll markdown container to bottom, so the user's message is displayed
         final Element markdownContainer = getView().getMarkdownContainer();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
 
-        askStroomAiClient.getConfig(config -> {
-//            final AskStroomAiRequest request = new AskStroomAiRequest(config, data, message);
-//            askStroomAiClient.sendMessage(request,
-//                    response -> {
-//                        onMessageReceived(response.getMessage());
-//                        getView().setSendButtonLoadingState(false);
-//                    }, error ->
-//                            showError(error, "Stroom AI request failed", () ->
-//                                    getView().setSendButtonLoadingState(false)), this);
-        }, this);
+        ensureChat(() -> askStroomAiClient.getConfig(config -> {
+            final AskStroomAiRequest request = new AskStroomAiRequest(
+                    currentChat, config, data, message);
+            askStroomAiClient.sendMessage(request,
+                    response -> {
+                        // Poll to get the properly typed, persisted messages.
+                        pollForNewMessages();
+                        maybeGenerateTitle(message);
+                    }, error ->
+                            showError(error, "Stroom AI request failed", () ->
+                                    getView().setSendButtonLoadingState(false)), this);
+        }, this));
     }
 
     private void showError(final RestError error,
@@ -289,33 +304,194 @@ public class AskStroomAiPresenter
                 callback);
     }
 
-    private void onMessageReceived(final String message) {
-        final Element markdownContainer = getView().getMarkdownContainer();
-        final int oldScrollHeight = markdownContainer.getScrollHeight();
-
-        renderMarkdown(message);
-
-        // Scroll down a little, to display the start of the response message
-        markdownContainer.setScrollTop(oldScrollHeight + 50);
+    /**
+     * Poll for new messages since lastSeenMessageId. Renders any new messages
+     * with type-aware formatting and updates the lastSeenMessageId.
+     */
+    private void pollForNewMessages() {
+        if (currentChat == null) {
+            return;
+        }
+        askStroomAiClient.pollMessages(currentChat.getId(), lastSeenMessageId, response -> {
+            if (response.getNewMessages() != null && !response.getNewMessages().isEmpty()) {
+                for (final AiChatMessage msg : response.getNewMessages()) {
+                    // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
+                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
+                        renderMessage(msg);
+                    }
+                    // Track the highest seen message ID.
+                    lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
+                }
+                // Scroll to show new content.
+                final Element markdownContainer = getView().getMarkdownContainer();
+                markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+            }
+            if (!response.isComplete()) {
+                // If the conversation is still in-flight, schedule another poll after 1s.
+                new com.google.gwt.user.client.Timer() {
+                    @Override
+                    public void run() {
+                        pollForNewMessages();
+                    }
+                }.schedule(1000);
+            } else {
+                getView().setSendButtonLoadingState(false);
+            }
+        }, error -> {
+            // Clear loading state on poll failure so the UI doesn't get stuck.
+            getView().setSendButtonLoadingState(false);
+        }, this);
     }
 
-    private void renderMarkdown(final String message) {
+    /**
+     * Render a single message with type-aware HTML structure.
+     */
+    private void renderMessage(final AiChatMessage msg) {
+        switch (msg.getMessageType()) {
+            case USER_MESSAGE:
+                appendMessageHtml("ai-message ai-message--user", "> " + msg.getMessage());
+                break;
+            case AI_RESPONSE:
+                appendMessageHtml("ai-message ai-message--assistant", msg.getMessage());
+                break;
+            case ERROR:
+                appendMessageHtml("ai-message ai-message--error", msg.getMessage());
+                break;
+            case THINKING:
+                appendCollapsibleMessage("ai-message ai-message--thinking",
+                        "\uD83E\uDD14 Thinking\u2026", msg.getMessage());
+                break;
+            case DASHBOARD_DATA:
+            case QUERY_DATA:
+            case TABLE_DATA:
+                appendCollapsibleMessage("ai-message ai-message--data",
+                        "\uD83D\uDCCA Data context", msg.getMessage());
+                break;
+            default:
+                appendMessageHtml("ai-message", msg.getMessage());
+                break;
+        }
+    }
+
+    /**
+     * Append a message div with the given CSS class and markdown content.
+     */
+    private void appendMessageHtml(final String cssClass, final String markdownText) {
         final Element markdownContainer = getView().getMarkdownContainer();
+        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
 
-        // Emit the rendered markdown as HTML
-        final StringBuilder sb = new StringBuilder();
-        if (markdownContainer.hasChildNodes()) {
-            sb.append(MARKDOWN_SECTION_BREAK);
-        }
-        sb.append(message);
-        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(sb.toString());
-        final DivElement newMarkdownContent = Document.get().createDivElement();
-        newMarkdownContent.setInnerSafeHtml(markdownHtml);
+        final DivElement wrapper = Document.get().createDivElement();
+        wrapper.setClassName(cssClass);
+        wrapper.setInnerSafeHtml(markdownHtml);
+        markdownContainer.appendChild(wrapper);
+    }
 
-        // Append all new markdown nodes to the container
-        while (newMarkdownContent.getFirstChild() != null) {
-            markdownContainer.appendChild(newMarkdownContent.getFirstChild());
+    /**
+     * Append a collapsible details/summary element for thinking and data messages.
+     */
+    private void appendCollapsibleMessage(final String cssClass,
+                                          final String summaryText,
+                                          final String markdownText) {
+        final Element markdownContainer = getView().getMarkdownContainer();
+        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
+
+        // Build: <details class="..."><summary>...</summary><div>rendered content</div></details>
+        final DivElement contentDiv = Document.get().createDivElement();
+        contentDiv.setInnerSafeHtml(markdownHtml);
+
+        final Element details = Document.get().createElement("details");
+        details.setClassName(cssClass);
+
+        final Element summary = Document.get().createElement("summary");
+        summary.setInnerText(summaryText);
+
+        details.appendChild(summary);
+        details.appendChild(contentDiv);
+        markdownContainer.appendChild(details);
+    }
+
+    @Override
+    public void onNewChat() {
+        askStroomAiClient.createChat(chat -> {
+            currentChat = chat;
+            titleGenerated = false;
+            lastSeenMessageId = 0;
+            getView().clearMessages();
+            getView().setEmptyState(true);
+            getView().setTitle(chat.getTitle());
+            getView().focus();
+        }, this);
+    }
+
+    @Override
+    public void onShowHistory() {
+        aiChatHistoryPresenterProvider.get().show(this::loadChat);
+    }
+
+    private void loadChat(final AiChat chat) {
+        currentChat = chat;
+        // A loaded chat already has a title.
+        titleGenerated = true;
+        lastSeenMessageId = 0;
+        getView().clearMessages();
+        getView().setTitle(chat.getTitle());
+
+        // Load messages for the selected chat.
+        askStroomAiClient.getMessages(chat.getId(), messages -> {
+            if (messages != null && !messages.isEmpty()) {
+                getView().setEmptyState(false);
+                for (final AiChatMessage msg : messages) {
+                    renderMessage(msg);
+                    lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
+                }
+            } else {
+                getView().setEmptyState(true);
+            }
+            // Scroll to bottom after loading all messages.
+            final Element markdownContainer = getView().getMarkdownContainer();
+            markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+            getView().focus();
+        }, this);
+    }
+
+    /**
+     * Ensure a chat exists, creating one if necessary, then run the callback.
+     */
+    private void ensureChat(final Runnable then) {
+        if (currentChat != null) {
+            then.run();
+        } else {
+            askStroomAiClient.createChat(chat -> {
+                currentChat = chat;
+                titleGenerated = false;
+                lastSeenMessageId = 0;
+                getView().setTitle(chat.getTitle());
+                then.run();
+            }, this);
         }
+    }
+
+    /**
+     * Auto-generate a conversation title from the first user message.
+     * Only fires once per conversation.
+     */
+    private void maybeGenerateTitle(final String userMessage) {
+        if (titleGenerated || currentChat == null || userMessage == null) {
+            return;
+        }
+        titleGenerated = true;
+
+        final String title;
+        if (userMessage.length() <= MAX_TITLE_LENGTH) {
+            title = userMessage;
+        } else {
+            title = userMessage.substring(0, MAX_TITLE_LENGTH) + "…";
+        }
+
+        getView().setTitle(title);
+        askStroomAiClient.updateChatTitle(currentChat.getId(), title, success -> {
+            // Title persisted successfully — nothing more to do.
+        }, this);
     }
 
     public interface AskStroomAiView extends View, Focus, HasUiHandlers<AskStroomAiUiHandlers> {
@@ -327,6 +503,12 @@ public class AskStroomAiPresenter
         String getMessage();
 
         void setSendButtonLoadingState(final boolean enabled);
+
+        void setTitle(String title);
+
+        void clearMessages();
+
+        void setEmptyState(boolean empty);
     }
 
     // ---- Dock preference helpers ----

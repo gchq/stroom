@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,15 @@
 
 package stroom.ai.client;
 
-import stroom.ai.shared.AskStroomAiContext;
+import stroom.ai.shared.AiChat;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface AskStroomAiUiHandlers extends UiHandlers {
+public interface AiChatHistoryUiHandlers extends UiHandlers {
 
-    void setContext(AskStroomAiContext data);
+    void onSelect(AiChat chat);
 
-    void onSendMessage(String message);
+    void onDelete(AiChat chat);
 
-    void onChangeConfig();
-
-    void onNewChat();
-
-    void onShowHistory();
+    void onOpen(AiChat chat);
 }

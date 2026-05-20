@@ -16,10 +16,14 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.api.OpenAIService;
+import stroom.ai.api.AiService;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.test.common.StroomCoreServerTestFileUtil;
+import stroom.util.shared.UserRef;
 
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -36,22 +40,23 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MockOpenAiService implements OpenAIService {
+public class MockAiService implements AiService {
 
     private static final Path EMBEDDING_CACHE = StroomCoreServerTestFileUtil
             .getTestResourcesDir()
             .resolve("embedding_cache.txt");
 
-    private final OpenAIServiceImpl openAIService;
+    private final AiServiceImpl aiService;
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
     @Inject
-    MockOpenAiService(final OpenAIServiceImpl openAIService) {
-        this.openAIService = openAIService;
+    MockAiService(final AiServiceImpl aiService) {
+        this.aiService = aiService;
 
         try {
             if (Files.exists(EMBEDDING_CACHE)) {
@@ -88,22 +93,22 @@ public class MockOpenAiService implements OpenAIService {
 
     @Override
     public OpenAIModelDoc getOpenAIModelDoc(final DocRef docRef) {
-        return openAIService.getOpenAIModelDoc(docRef);
+        return aiService.getOpenAIModelDoc(docRef);
     }
 
     @Override
     public String getModel(final OpenAIModelDoc modelDoc) {
-        return openAIService.getModel(modelDoc);
+        return aiService.getModel(modelDoc);
     }
 
     @Override
     public dev.langchain4j.model.chat.ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
-        return openAIService.getChatModel(modelDoc);
+        return aiService.getChatModel(modelDoc);
     }
 
     @Override
     public synchronized EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
-        final EmbeddingModel innerProxy = openAIService.getEmbeddingModel(modelDoc);
+        final EmbeddingModel innerProxy = aiService.getEmbeddingModel(modelDoc);
         return textSegments -> {
             final TextSegment textSegment = textSegments.getFirst();
             final String text = writeTextSegment(textSegment);
@@ -138,12 +143,55 @@ public class MockOpenAiService implements OpenAIService {
 
     @Override
     public dev.langchain4j.model.scoring.ScoringModel getCohereScoringModel(final OpenAIModelDoc modelDoc) {
-        return openAIService.getCohereScoringModel(modelDoc);
+        return aiService.getCohereScoringModel(modelDoc);
     }
 
     @Override
     public dev.langchain4j.model.scoring.ScoringModel getJinaScoringModel(final OpenAIModelDoc modelDoc) {
-        return openAIService.getJinaScoringModel(modelDoc);
+        return aiService.getJinaScoringModel(modelDoc);
     }
 
+    // ---- Chat persistence operations (delegate to wrapped AiServiceImpl) ----
+
+    @Override
+    public AiChat createChat(final UserRef userRef) {
+        return aiService.createChat(userRef);
+    }
+
+    @Override
+    public List<AiChat> listChats(final String userUuid) {
+        return aiService.listChats(userUuid);
+    }
+
+    @Override
+    public Optional<AiChat> getChat(final int chatId) {
+        return aiService.getChat(chatId);
+    }
+
+    @Override
+    public void updateChatTitle(final int chatId, final String title) {
+        aiService.updateChatTitle(chatId, title);
+    }
+
+    @Override
+    public void deleteChat(final int chatId) {
+        aiService.deleteChat(chatId);
+    }
+
+    @Override
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final String message) {
+        return aiService.storeMessage(chatId, messageType, message);
+    }
+
+    @Override
+    public List<AiChatMessage> getMessages(final int chatId) {
+        return aiService.getMessages(chatId);
+    }
+
+    @Override
+    public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
+        return aiService.getMessagesSince(chatId, lastSeenMessageId);
+    }
 }

@@ -15,13 +15,11 @@ import com.google.gwt.event.shared.HasHandlers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public class MyDataGridAiSupport<T> {
 
     private final HasHandlers globalEventBus;
     private final MyDataGrid<T> dataGrid;
-    private final String chatMemoryId = UUID.randomUUID().toString();
 
     public MyDataGridAiSupport(final HasHandlers globalEventBus,
                                final MyDataGrid<T> dataGrid) {
@@ -79,13 +77,13 @@ public class MyDataGridAiSupport<T> {
 
     private void aiCell(final int row, final int col) {
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeader(col),
+                new GeneralTableContext(getHeader(col),
                         Collections.singletonList(Collections.singletonList(dataGrid.getCellText(row, col)))));
     }
 
     private void aiRow(final int row) {
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeaders(),
+                new GeneralTableContext(getHeaders(),
                         Collections.singletonList(getRow(row))));
     }
 
@@ -101,7 +99,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeaders(),
+                new GeneralTableContext(getHeaders(),
                         rows));
     }
 
@@ -112,7 +110,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeader(col),
+                new GeneralTableContext(getHeader(col),
                         rows));
     }
 
@@ -128,7 +126,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeader(col),
+                new GeneralTableContext(getHeader(col),
                         rows));
     }
 
@@ -139,7 +137,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeaders(),
+                new GeneralTableContext(getHeaders(),
                         rows));
     }
 

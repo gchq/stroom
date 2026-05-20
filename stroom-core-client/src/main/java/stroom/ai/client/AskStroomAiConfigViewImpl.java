@@ -21,9 +21,7 @@ import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.client.AskStroomAiPresenter.DockLocation;
 import stroom.ai.client.AskStroomAiPresenter.DockType;
 import stroom.item.client.SelectionBox;
-import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
-import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,6 +30,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -52,9 +51,11 @@ public class AskStroomAiConfigViewImpl
     @UiField
     ValueSpinner maximumTableInputRows;
     @UiField
-    ValueSpinner memoryTokenLimit;
+    TextArea tableQuerySystemPrompt;
     @UiField
-    DurationPicker memoryTimeToLive;
+    TextArea tableQueryUserPrompt;
+    @UiField
+    TextArea summaryMergePrompt;
     @UiField
     SimplePanel modelRef;
     @UiField
@@ -80,8 +81,6 @@ public class AskStroomAiConfigViewImpl
         maximumBatchSize.setMax(1000000);
         maximumTableInputRows.setMin(1);
         maximumTableInputRows.setMax(1000000);
-        memoryTokenLimit.setMin(1);
-        memoryTokenLimit.setMax(1000000);
     }
 
     @Override
@@ -120,23 +119,33 @@ public class AskStroomAiConfigViewImpl
     }
 
     @Override
-    public void setMemoryTokenLimit(final int memoryTokenLimit) {
-        this.memoryTokenLimit.setValue(memoryTokenLimit);
+    public void setTableQuerySystemPrompt(final String prompt) {
+        this.tableQuerySystemPrompt.setText(prompt);
     }
 
     @Override
-    public int getMemoryTokenLimit() {
-        return memoryTokenLimit.getIntValue();
+    public String getTableQuerySystemPrompt() {
+        return tableQuerySystemPrompt.getText();
     }
 
     @Override
-    public SimpleDuration getMemoryTimeToLive() {
-        return memoryTimeToLive.getValue();
+    public void setTableQueryUserPrompt(final String prompt) {
+        this.tableQueryUserPrompt.setText(prompt);
     }
 
     @Override
-    public void setMemoryTimeToLive(final SimpleDuration memoryTimeToLive) {
-        this.memoryTimeToLive.setValue(memoryTimeToLive);
+    public String getTableQueryUserPrompt() {
+        return tableQueryUserPrompt.getText();
+    }
+
+    @Override
+    public void setSummaryMergePrompt(final String prompt) {
+        this.summaryMergePrompt.setText(prompt);
+    }
+
+    @Override
+    public String getSummaryMergePrompt() {
+        return summaryMergePrompt.getText();
     }
 
     @Override

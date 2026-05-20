@@ -1,17 +1,15 @@
 package stroom.query.impl;
 
-import stroom.ai.api.ChatMemoryService;
+import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.ai.api.OpenAIService;
-import stroom.ai.api.SimpleTokenCountEstimator;
-import stroom.ai.api.SummaryReducer;
-import stroom.ai.api.TableQuery;
-import stroom.ai.api.TableQueryMessages;
-import stroom.ai.api.TableSummaryMessages;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatPollRequest;
+import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
-import stroom.ai.shared.ChatMemoryConfig;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
@@ -21,7 +19,6 @@ import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -30,17 +27,21 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserRef;
 
-import dev.langchain4j.memory.chat.TokenWindowChatMemory;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.service.AiServices;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -49,55 +50,34 @@ public class AskStroomAIService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
 
-    private static final String TABLE_CHAT_MEMORY_KEY = "table";
-    private static final String SUMMARY_CHAT_MEMORY_KEY = "summary";
     private static final Pattern MD_TABLE_ESCAPE = Pattern.compile("[$&`*_~#+-.!|()\\[\\]{}<>]");
 
-    private final OpenAIService openAIService;
-    private final ChatMemoryService chatMemoryService;
+    private final AiService aiService;
     private final DashboardService dashboardService;
     private final QueryService queryService;
     private final OpenAIModelStore openAIModelStore;
     private final Provider<AskStroomAIConfig> defaultConfigProvider;
     private final Provider<GlobalConfig> globalConfigProvider;
     private final Provider<TableSummaryConfig> tableSummaryConfigProvider;
-    private final Provider<ChatMemoryConfig> chatMemoryConfigProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    public AskStroomAIService(final OpenAIService openAIService,
-                              final ChatMemoryService chatMemoryService,
+    public AskStroomAIService(final AiService aiService,
                               final DashboardService dashboardService,
                               final QueryService queryService,
                               final OpenAIModelStore openAIModelStore,
                               final Provider<AskStroomAIConfig> defaultConfigProvider,
                               final Provider<GlobalConfig> globalConfigProvider,
                               final Provider<TableSummaryConfig> tableSummaryConfigProvider,
-                              final Provider<ChatMemoryConfig> chatMemoryConfigProvider) {
-        this.openAIService = openAIService;
-        this.chatMemoryService = chatMemoryService;
+                              final SecurityContext securityContext) {
+        this.aiService = aiService;
         this.dashboardService = dashboardService;
         this.queryService = queryService;
         this.openAIModelStore = openAIModelStore;
         this.defaultConfigProvider = defaultConfigProvider;
         this.globalConfigProvider = globalConfigProvider;
         this.tableSummaryConfigProvider = tableSummaryConfigProvider;
-        this.chatMemoryConfigProvider = chatMemoryConfigProvider;
-    }
-
-    /**
-     * Dashboard search queries and StroomQL queries will run on specific nodes so find out which node that is.
-     *
-     * @param nodeName The provided search node.
-     * @param request  The ask stroom AI request.
-     * @return The node to use or null if the current node is ok.
-     */
-    public String getBestNode(final String nodeName, final AskStroomAiRequest request) {
-        if (request.getContext() instanceof final DashboardTableContext dashboardTableContext) {
-            return dashboardService.getBestNode(nodeName, dashboardTableContext.getSearchRequest());
-        } else if (request.getContext() instanceof final QueryTableContext queryTableContext) {
-            return queryService.getBestNode(nodeName, queryTableContext.getSearchRequest());
-        }
-        return null;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -105,6 +85,33 @@ public class AskStroomAIService {
      * The user is provided with an aggregated response from all batches once compiled.
      */
     public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
+        // Persist the user's message if a chat is associated.
+        final AiChat aiChat = request.getAiChat();
+        if (aiChat != null && request.getMessage() != null) {
+            aiService.storeMessage(aiChat.getId(), AiMessageType.USER_MESSAGE, request.getMessage());
+        }
+
+        String responseText;
+        try {
+            responseText = processRequest(request);
+
+            // Persist the AI response on success.
+            if (aiChat != null && responseText != null) {
+                aiService.storeMessage(aiChat.getId(), AiMessageType.AI_RESPONSE, responseText);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            responseText = e.getMessage();
+            // Persist error only.
+            if (aiChat != null) {
+                aiService.storeMessage(aiChat.getId(), AiMessageType.ERROR, responseText);
+            }
+        }
+
+        return new AskStroomAiResponse(responseText);
+    }
+
+    private String processRequest(final AskStroomAiRequest request) {
         if (request.getContext() instanceof final DashboardTableContext dashboardTableContext) {
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
                 DashboardSearchRequest searchRequest = dashboardTableContext.getSearchRequest();
@@ -112,27 +119,12 @@ public class AskStroomAIService {
                         searchRequest.getComponentResultRequests().getFirst();
                 if (componentResultRequest instanceof TableResultRequest tableResultRequest) {
                     tableResultRequest = tableResultRequest.copy().requestedRange(range).build();
-//                    searchRequest = dashboardTableContext.getSearchRequest()
-//                            .copy()
-//                            .componentResultRequests(Collections.singletonList(tableResultRequest))
-//                            .build();
-//                                                    final DownloadSearchResultsRequest downloadSearchResultsRequest =
-//                                        new DownloadSearchResultsRequest(
-//                                                searchRequest,
-//                                                getComponentConfig().getId(),
-//                                                downloadPresenter.getFileType(),
-//                                                downloadPresenter.downloadAllTables(),
-//                                                downloadPresenter.isSample(),
-//                                                downloadPresenter.getPercent());
-//
-//
-//                    return dashboardService.downloadSearchResults(searchRequest);
                 }
                 throw new RuntimeException("No table component provided");
             };
-            return new AskStroomAiResponse(createStroomAiTableSummary(
+            return createStroomAiTableSummary(
                     request,
-                    dataProvider));
+                    dataProvider);
 
         } else if (request.getContext() instanceof final QueryTableContext queryTableContext) {
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
@@ -143,13 +135,13 @@ public class AskStroomAIService {
                         .build();
                 return queryService.search(searchRequest);
             };
-            return new AskStroomAiResponse(createStroomAiTableSummary(
+            return createStroomAiTableSummary(
                     request,
-                    dataProvider));
+                    dataProvider);
         } else if (request.getContext() instanceof final GeneralTableContext generalTableContext) {
-            return new AskStroomAiResponse(createGeneralAiTableSummary(
+            return createGeneralAiTableSummary(
                     request,
-                    generalTableContext));
+                    generalTableContext);
         }
 
         throw new IllegalStateException();
@@ -163,17 +155,15 @@ public class AskStroomAIService {
                                                final GeneralTableContext generalTableData) {
         try {
             final AskStroomAIConfig config = request.getConfig();
-            final ResultBuilder resultBuilder = createResultBuilder(
-                    request, request.getMessage());
+            final ChatModel chatModel = getChatModel(config);
+            final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(config);
+            final ResultBuilder resultBuilder = new ResultBuilder(
+                    chatModel, request.getMessage(), tableSummaryConfig);
 
             // Create column header string.
             final String header = writeHeader(generalTableData.getColumns());
 
             // Batch and summarise user message responses into a combined summary
-            final TableSummaryConfig tableSummaryConfig = NullSafe.getOrElse(
-                    config,
-                    AskStroomAIConfig::getTableSummary,
-                    new TableSummaryConfig());
             final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
             final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
             final StringBuilder batch = new StringBuilder(header);
@@ -212,7 +202,11 @@ public class AskStroomAIService {
         }
     }
 
-    private ChatModel getChatModel(final DocRef docRef) {
+    private ChatModel getChatModel(final AskStroomAIConfig config) {
+        if (config == null || config.getModelRef() == null) {
+            throw new RuntimeException("No model specified");
+        }
+        final DocRef docRef = config.getModelRef();
         if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
             throw new RuntimeException("Default OpenAI API doc ref is incorrect");
         }
@@ -222,7 +216,14 @@ public class AskStroomAIService {
             throw new RuntimeException("Default OpenAI API doc cannot be found");
         }
 
-        return openAIService.getChatModel(openAIModelDoc);
+        return aiService.getChatModel(openAIModelDoc);
+    }
+
+    private TableSummaryConfig getTableSummaryConfig(final AskStroomAIConfig config) {
+        return NullSafe.getOrElse(
+                config,
+                AskStroomAIConfig::getTableSummary,
+                new TableSummaryConfig());
     }
 
     /**
@@ -233,11 +234,10 @@ public class AskStroomAIService {
                                               final Function<OffsetRange, DashboardSearchResponse> dataProvider) {
         try {
             final AskStroomAIConfig config = request.getConfig();
-            final ResultBuilder resultBuilder = createResultBuilder(
-                    request,
-                    request.getMessage());
-
-//            final ResultBuilder2 resultBuilder = new ResultBuilder2(chatModel, aiQuery);
+            final ChatModel chatModel = getChatModel(config);
+            final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(config);
+            final ResultBuilder resultBuilder = new ResultBuilder(
+                    chatModel, request.getMessage(), tableSummaryConfig);
 
             // Get the first result page from the data source.
             OffsetRange range = new OffsetRange(0, 100);
@@ -253,10 +253,6 @@ public class AskStroomAIService {
                     .toList());
 
             // Batch and summarise user message responses into a combined summary
-            final TableSummaryConfig tableSummaryConfig = NullSafe.getOrElse(
-                    config,
-                    AskStroomAIConfig::getTableSummary,
-                    new TableSummaryConfig());
             final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
             final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
             final StringBuilder batch = new StringBuilder(header);
@@ -326,39 +322,6 @@ public class AskStroomAIService {
         }
     }
 
-    private ResultBuilder createResultBuilder(final AskStroomAiRequest request,
-                                              final String aiQuery) {
-        final AskStroomAIConfig modelConfig = request.getConfig();
-        if (modelConfig == null || modelConfig.getModelRef() == null) {
-            throw new RuntimeException("No model specified");
-        }
-        final DocRef docRef = modelConfig.getModelRef();
-
-        final ChatModel chatModel = getChatModel(docRef);
-        final String chatMemoryId = request.getContext().getChatMemoryId();
-        final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-        final String summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-        final int maxTokens = request.getConfig().getChatMemory().getTokenLimit();
-
-        final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
-                .chatModel(chatModel)
-                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
-                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
-                        .id(tableChatMemoryId)
-                        .maxTokens(maxTokens, new SimpleTokenCountEstimator())
-                        .build())
-                .build();
-        final SummaryReducer summaryReducerService = AiServices.builder(SummaryReducer.class)
-                .chatModel(chatModel)
-                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
-                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
-                        .id(summaryChatMemoryId)
-                        .maxTokens(maxTokens, new SimpleTokenCountEstimator())
-                        .build())
-                .build();
-        return new ResultBuilder(chatMemoryId, aiQuery, tableQueryService, summaryReducerService);
-    }
-
     private String writeHeader(final List<String> columnList) {
         final StringBuilder sb = new StringBuilder();
         if (!columnList.isEmpty()) {
@@ -401,66 +364,66 @@ public class AskStroomAIService {
                 .replace("\n", "<br>");
     }
 
+    /**
+     * Processes table data batches using direct ChatModel.chat() calls with configurable prompt templates.
+     * For each batch, constructs a query prompt from the template, calls the LLM, and accumulates
+     * partial summaries. If multiple batches are needed, merges partial summaries using the merge
+     * prompt template.
+     */
     static class ResultBuilder {
-
-        private final String aiQuery;
-        private final TableQuery tableQueryService;
-        private final SummaryReducer summaryReducerService;
-        private final String tableChatMemoryId;
-        private final String summaryChatMemoryId;
-        private String cumulativeSummary = "";
-
-        public ResultBuilder(final String chatMemoryId,
-                             final String aiQuery,
-                             final TableQuery tableQueryService,
-                             final SummaryReducer summaryReducerService) {
-            this.aiQuery = aiQuery;
-            this.tableQueryService = tableQueryService;
-            this.summaryReducerService = summaryReducerService;
-            tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-            summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-        }
-
-        void add(final String data) {
-            // Process any remaining batch content
-            final String batchAnswer = tableQueryService.answerChunk(
-                    tableChatMemoryId, aiQuery, data);
-            if (cumulativeSummary.isEmpty()) {
-                cumulativeSummary = batchAnswer;
-            } else {
-                cumulativeSummary = summaryReducerService.merge(
-                        summaryChatMemoryId, cumulativeSummary, batchAnswer);
-            }
-        }
-
-        String get() {
-            return cumulativeSummary;
-        }
-    }
-
-    static class ResultBuilder2 {
 
         private final ChatModel chatModel;
         private final String aiQuery;
+        private final TableSummaryConfig config;
         private String cumulativeSummary = "";
 
-        public ResultBuilder2(final ChatModel chatModel,
-                              final String aiQuery) {
+        public ResultBuilder(final ChatModel chatModel,
+                             final String aiQuery,
+                             final TableSummaryConfig config) {
             this.chatModel = chatModel;
             this.aiQuery = aiQuery;
+            this.config = config;
         }
 
         void add(final String data) {
-            // Process any remaining batch content
-            final String batchAnswer = chatModel.chat(TableQueryMessages.createMessages(aiQuery, data))
-                    .aiMessage()
-                    .text();
+            // Build the query prompt from the configurable template
+            final String systemPrompt = config.getTableQuerySystemPrompt() != null
+                    ? config.getTableQuerySystemPrompt()
+                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
+            final String userPromptTemplate = config.getTableQueryUserPrompt() != null
+                    ? config.getTableQueryUserPrompt()
+                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
+
+            final String userPrompt = userPromptTemplate
+                    .replace("{{query}}", aiQuery)
+                    .replace("{{table}}", data);
+
+            final List<ChatMessage> messages = new ArrayList<>(2);
+            messages.add(new SystemMessage(systemPrompt));
+            messages.add(new UserMessage(userPrompt));
+
+            final ChatResponse response = chatModel.chat(messages);
+            final String batchAnswer = response.aiMessage().text();
+
             if (cumulativeSummary.isEmpty()) {
                 cumulativeSummary = batchAnswer;
             } else {
-                cumulativeSummary = chatModel.chat(TableSummaryMessages.createMessages(cumulativeSummary, batchAnswer))
-                        .aiMessage()
-                        .text();
+                // Merge with the configurable merge prompt template
+                final String mergePromptTemplate = config.getSummaryMergePrompt() != null
+                        ? config.getSummaryMergePrompt()
+                        : TableSummaryConfig.DEFAULT_SUMMARY_MERGE_PROMPT;
+
+                final String mergePrompt = mergePromptTemplate
+                        .replace("{{a}}", cumulativeSummary)
+                        .replace("{{b}}", batchAnswer);
+
+                final List<ChatMessage> mergeMessages = new ArrayList<>(2);
+                mergeMessages.add(new SystemMessage(
+                        "You merge partial answers into a unified, concise summary."));
+                mergeMessages.add(new UserMessage(mergePrompt));
+
+                final ChatResponse mergeResponse = chatModel.chat(mergeMessages);
+                cumulativeSummary = mergeResponse.aiMessage().text();
             }
         }
 
@@ -468,6 +431,73 @@ public class AskStroomAIService {
             return cumulativeSummary;
         }
     }
+
+    // ---- Chat management methods ----
+
+    public AiChat createChat() {
+        final UserRef userRef = securityContext.getUserRef();
+        return aiService.createChat(userRef);
+    }
+
+    public List<AiChat> listChats() {
+        final String userUuid = securityContext.getUserRef().getUuid();
+        return aiService.listChats(userUuid);
+    }
+
+    public AiChat getChat(final int chatId) {
+        final AiChat chat = aiService.getChat(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found: " + chatId));
+        verifyOwnership(chat);
+        return chat;
+    }
+
+    public void deleteChat(final int chatId) {
+        verifyOwnership(chatId);
+        aiService.deleteChat(chatId);
+    }
+
+    public void updateChatTitle(final int chatId, final String title) {
+        verifyOwnership(chatId);
+        aiService.updateChatTitle(chatId, title);
+    }
+
+    public List<AiChatMessage> getMessages(final int chatId) {
+        verifyOwnership(chatId);
+        return aiService.getMessages(chatId);
+    }
+
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final String message) {
+        verifyOwnership(chatId);
+        return aiService.storeMessage(chatId, messageType, message);
+    }
+
+    private void verifyOwnership(final int chatId) {
+        final AiChat chat = aiService.getChat(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found: " + chatId));
+        verifyOwnership(chat);
+    }
+
+    private void verifyOwnership(final AiChat chat) {
+        final String currentUserUuid = securityContext.getUserRef().getUuid();
+        if (!currentUserUuid.equals(chat.getUserUuid())) {
+            throw new RuntimeException("Access denied: chat " + chat.getId()
+                                       + " does not belong to the current user");
+        }
+    }
+
+    public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
+        verifyOwnership(chatId);
+        final List<AiChatMessage> newMessages = aiService.getMessagesSince(
+                chatId, request.getLastSeenMessageId());
+        // Conversation is complete if there are no THINKING messages among the new messages.
+        final boolean complete = newMessages.stream()
+                .noneMatch(msg -> msg.getMessageType() == AiMessageType.THINKING);
+        return new AiChatPollResponse(newMessages, complete);
+    }
+
+    // ---- Config methods ----
 
     public AskStroomAIConfig getDefaultConfig() {
         return defaultConfigProvider.get();
@@ -476,7 +506,6 @@ public class AskStroomAIService {
     public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
         setDefaultModel(config.getModelRef());
         setDefaultTableSummaryConfig(config.getTableSummary());
-        setDefaultChatMemoryConfigConfig(config.getChatMemory());
         return true;
     }
 
@@ -493,17 +522,15 @@ public class AskStroomAIService {
         globalConfigProvider.get().setInt(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
                 config.getMaximumTableInputRows());
-        return true;
-    }
-
-    private Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
-        final ChatMemoryConfig defaultChatMemoryConfig = chatMemoryConfigProvider.get();
-        globalConfigProvider.get().setInt(defaultChatMemoryConfig,
-                ChatMemoryConfig.PROP_NAME_TOKEN_LIMIT,
-                config.getTokenLimit());
-        globalConfigProvider.get().setString(defaultChatMemoryConfig,
-                ChatMemoryConfig.PROP_NAME_TIME_TO_LIVE,
-                config.getTimeToLive().toString());
+        globalConfigProvider.get().setString(defaultTableSummaryConfig,
+                TableSummaryConfig.PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT,
+                config.getTableQuerySystemPrompt());
+        globalConfigProvider.get().setString(defaultTableSummaryConfig,
+                TableSummaryConfig.PROP_NAME_TABLE_QUERY_USER_PROMPT,
+                config.getTableQueryUserPrompt());
+        globalConfigProvider.get().setString(defaultTableSummaryConfig,
+                TableSummaryConfig.PROP_NAME_SUMMARY_MERGE_PROMPT,
+                config.getSummaryMergePrompt());
         return true;
     }
 }

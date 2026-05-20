@@ -16,10 +16,8 @@ public final class DashboardTableContext extends AskStroomAiContext {
     private final DashboardSearchRequest searchRequest;
 
     @JsonCreator
-    public DashboardTableContext(@JsonProperty("chatMemoryId") final String chatMemoryId,
-                                 @JsonProperty("node") final String node,
+    public DashboardTableContext(@JsonProperty("node") final String node,
                                  @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
-        super(chatMemoryId);
         this.node = node;
         this.searchRequest = searchRequest;
     }

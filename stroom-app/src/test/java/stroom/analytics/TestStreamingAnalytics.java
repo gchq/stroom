@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.ai.impl.MockOpenAIModule;
+import stroom.ai.impl.MockAiModule;
 import stroom.analytics.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -56,7 +56,7 @@ import java.util.UUID;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockOpenAIModule.class)
+@IncludeModule(MockAiModule.class)
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject

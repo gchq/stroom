@@ -14,9 +14,7 @@ public final class DashboardTableData extends AskStroomAiData {
     private final DashboardSearchRequest searchRequest;
 
     @JsonCreator
-    public DashboardTableData(@JsonProperty("chatMemoryId") final String chatMemoryId,
-                              @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
-        super(chatMemoryId);
+    public DashboardTableData(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
         this.searchRequest = searchRequest;
     }
 

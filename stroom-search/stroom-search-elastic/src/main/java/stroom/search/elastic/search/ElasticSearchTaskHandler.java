@@ -16,8 +16,8 @@
 
 package stroom.search.elastic.search;
 
+import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.ai.api.OpenAIService;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.datasource.FieldType;
@@ -99,7 +99,7 @@ public class ElasticSearchTaskHandler {
             new ThreadPoolImpl("Elasticsearch Scroll Request");
 
     private final Provider<ElasticSearchConfig> elasticSearchConfigProvider;
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final OpenAIModelStore openAIModelStore;
@@ -108,14 +108,14 @@ public class ElasticSearchTaskHandler {
 
     @Inject
     ElasticSearchTaskHandler(final Provider<ElasticSearchConfig> elasticSearchConfigProvider,
-                             final Provider<OpenAIService> openAIServiceProvider,
+                             final Provider<AiService> aiServiceProvider,
                              final ElasticClientCache elasticClientCache,
                              final ElasticClusterStore elasticClusterStore,
                              final OpenAIModelStore openAIModelStore,
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory) {
         this.elasticSearchConfigProvider = elasticSearchConfigProvider;
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.openAIModelStore = openAIModelStore;
@@ -422,7 +422,7 @@ public class ElasticSearchTaskHandler {
             }
         }
 
-        final ScoringModel scoringModel = openAIServiceProvider.get().getJinaScoringModel(rerankModel);
+        final ScoringModel scoringModel = aiServiceProvider.get().getJinaScoringModel(rerankModel);
         final int maxContextWindowTokens = rerankModel.getMaxContextWindowTokens();
         final ReRankingContentAggregator rerankAggregator = ReRankingContentAggregator.builder()
                 .scoringModel(scoringModel)

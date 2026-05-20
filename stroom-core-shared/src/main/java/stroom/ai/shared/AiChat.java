@@ -32,16 +32,20 @@ public class AiChat {
     @JsonProperty
     private final long updateTimeMs;
     @JsonProperty
+    private final String userUuid;
+    @JsonProperty
     private final String title;
 
     @JsonCreator
     public AiChat(@JsonProperty("id") final int id,
                   @JsonProperty("createTimeMs") final long createTimeMs,
                   @JsonProperty("updateTimeMs") final long updateTimeMs,
+                  @JsonProperty("userUuid") final String userUuid,
                   @JsonProperty("title") final String title) {
         this.id = id;
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
+        this.userUuid = userUuid;
         this.title = title;
     }
 
@@ -57,6 +61,10 @@ public class AiChat {
         return updateTimeMs;
     }
 
+    public String getUserUuid() {
+        return userUuid;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -70,12 +78,13 @@ public class AiChat {
         return id == aiChat.id &&
                createTimeMs == aiChat.createTimeMs &&
                updateTimeMs == aiChat.updateTimeMs &&
+               Objects.equals(userUuid, aiChat.userUuid) &&
                Objects.equals(title, aiChat.title);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, createTimeMs, updateTimeMs, title);
+        return Objects.hash(id, createTimeMs, updateTimeMs, userUuid, title);
     }
 
     @Override
@@ -84,6 +93,7 @@ public class AiChat {
                "id=" + id +
                ", createTimeMs=" + createTimeMs +
                ", updateTimeMs=" + updateTimeMs +
+               ", userUuid='" + userUuid + '\'' +
                ", title='" + title + '\'' +
                '}';
     }

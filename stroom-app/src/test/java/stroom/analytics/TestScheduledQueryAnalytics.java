@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.ai.impl.MockOpenAIModule;
+import stroom.ai.impl.MockAiModule;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutable;
@@ -64,7 +64,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockOpenAIModule.class)
+@IncludeModule(MockAiModule.class)
 class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
     @Inject

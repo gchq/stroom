@@ -644,7 +644,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 AskStroomAiEvent.fire(this,
                         new DashboardTableContext(
-                                currentSearchModel.getCurrentQueryKey().toString(),
                                 currentSearchModel.getCurrentNode(),
                                 dashboardSearchRequest));
             }

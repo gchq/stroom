@@ -94,3 +94,101 @@
 .askStroomAiViewImpl--docked-bottom {
     border-top: 1px solid var(--splitter__background-color);
 }
+
+/* ---- Message thread ---- */
+
+.ai-message {
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 6px;
+    line-height: 1.5;
+}
+
+.ai-message--user {
+    background: var(--control__background-color--selected);
+}
+
+.ai-message--user blockquote {
+    border-left: 3px solid var(--control__border-color--focused);
+    margin: 0;
+    padding-left: 8px;
+}
+
+.ai-message--assistant {
+    /* default background — inherits from container */
+}
+
+.ai-message--error {
+    background: rgba(211, 47, 47, 0.1);
+    border-left: 3px solid #d32f2f;
+    color: #d32f2f;
+}
+
+.ai-message--thinking summary,
+.ai-message--data summary {
+    cursor: pointer;
+    color: var(--control__text-color--disabled);
+    font-style: italic;
+    user-select: none;
+}
+
+.ai-message--thinking[open],
+.ai-message--data[open] {
+    background: var(--page__background-color);
+}
+
+.ai-message--thinking summary::marker,
+.ai-message--data summary::marker {
+    font-size: 0.8em;
+}
+
+/* ---- Empty state (centered input, ChatGPT-style) ---- */
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-top,
+.askStroomAiViewImpl.empty .markdown-container {
+    display: none;
+}
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom-inner {
+    width: 100%;
+    max-width: 500px;
+}
+
+.askStroomAiViewImpl-emptyPrompt {
+    display: none;
+    font-size: 1.25em;
+    color: var(--control__text-color--disabled);
+    margin-bottom: 16px;
+    text-align: center;
+    user-select: none;
+}
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-emptyPrompt {
+    display: block;
+}
+
+/* ---- Message timestamps ---- */
+
+.ai-message-timestamp {
+    font-size: 0.7em;
+    color: var(--control__text-color--disabled);
+    margin-top: 2px;
+    display: block;
+}
+
+.aiChatHistoryViewImpl {
+    overflow: auto;
+}
+
+.aiChatHistoryViewImpl .cellTable {
+    width: 100%;
+}

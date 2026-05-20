@@ -17,12 +17,19 @@
 package stroom.ai.shared;
 
 import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 
 public enum AiMessageType implements HasPrimitiveValue {
     USER_MESSAGE(0),
-    DASHBOARD_DATA(1),
-    QUERY_DATA(2),
-    TABLE_DATA(3);
+    AI_RESPONSE(1),
+    THINKING(2),
+    ERROR(3),
+    DASHBOARD_DATA(4),
+    QUERY_DATA(5),
+    TABLE_DATA(6);
+
+    public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
 
     private final byte primitiveValue;
 

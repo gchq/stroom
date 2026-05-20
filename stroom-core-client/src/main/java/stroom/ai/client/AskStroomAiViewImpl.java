@@ -28,6 +28,7 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -40,8 +41,12 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
     private static final String SEND_BUTTON_CANCEL_TEXT = "Cancel";
+    private static final String EMPTY_STYLE = "empty";
     private final Widget widget;
+    private boolean sending;
 
+    @UiField
+    FlowPanel root;
     @UiField
     Label chatTitle;
     @UiField
@@ -50,6 +55,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     InlineSvgButton chatHistory;
     @UiField
     InlineSvgButton configure;
+    @UiField
+    Label emptyPrompt;
 
     @UiField
     SimplePanel markdownPreview;
@@ -115,6 +122,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             run.addStyleName("stop");
             run.removeStyleName("play");
         } else {
+            sending = false;
             run.setEnabled(!message.getText().isEmpty());
             run.setText(SEND_BUTTON_NORMAL_TEXT);
             run.setSvg(SvgImage.PLAY);
@@ -154,8 +162,39 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         }
     }
 
+    @UiHandler("newChat")
+    public void onNewChat(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onNewChat();
+        }
+    }
+
+    @UiHandler("chatHistory")
+    public void onChatHistory(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onShowHistory();
+        }
+    }
+
+    public void setTitle(final String title) {
+        chatTitle.setText(title);
+    }
+
+    public void clearMessages() {
+        markdownPreview.getElement().setInnerHTML("");
+    }
+
+    public void setEmptyState(final boolean empty) {
+        if (empty) {
+            root.addStyleName(EMPTY_STYLE);
+        } else {
+            root.removeStyleName(EMPTY_STYLE);
+        }
+    }
+
     private void sendMessage() {
-        if (!message.getText().isEmpty()) {
+        if (!message.getText().isEmpty() && !sending) {
+            sending = true;
             getUiHandlers().onSendMessage(getMessage());
             message.setText(null);
         }

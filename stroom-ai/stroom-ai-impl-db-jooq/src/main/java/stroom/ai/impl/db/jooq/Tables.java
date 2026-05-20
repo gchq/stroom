@@ -5,6 +5,7 @@ package stroom.ai.impl.db.jooq;
 
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 
 /**
@@ -17,4 +18,9 @@ public class Tables {
      * The table <code>stroom.ai_chat</code>.
      */
     public static final AiChat AI_CHAT = AiChat.AI_CHAT;
+
+    /**
+     * The table <code>stroom.ai_chat_message</code>.
+     */
+    public static final AiChatMessage AI_CHAT_MESSAGE = AiChatMessage.AI_CHAT_MESSAGE;
 }

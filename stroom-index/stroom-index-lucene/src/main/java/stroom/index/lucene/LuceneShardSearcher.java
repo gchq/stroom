@@ -16,7 +16,7 @@
 
 package stroom.index.lucene;
 
-import stroom.ai.api.OpenAIService;
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardSearchConfig;
@@ -92,7 +92,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                         final WordListProvider dictionaryStore,
                         final DateTimeSettings dateTimeSettings,
                         final QueryKey queryKey,
-                        final OpenAIService openAIService,
+                        final AiService aiService,
                         final FieldFactory fieldFactory) {
         this.queryKey = queryKey;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -107,7 +107,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                 indexFieldCache,
                 dictionaryStore,
                 dateTimeSettings,
-                openAIService);
+                aiService);
         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
         query = searchExpressionQuery.getQuery();
 

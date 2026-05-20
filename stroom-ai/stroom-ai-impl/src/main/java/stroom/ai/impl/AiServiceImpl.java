@@ -16,8 +16,11 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.ai.api.OpenAIService;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
@@ -32,6 +35,7 @@ import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpProxyConfig;
@@ -58,25 +62,30 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Singleton
-public class OpenAIServiceImpl implements OpenAIService {
+public class AiServiceImpl implements AiService {
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
+    private final AiDao aiDao;
 
     @Inject
-    OpenAIServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
-                      final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-                      final Provider<StoredSecrets> storedSecretsProvider,
-                      final Provider<HttpClientProviderCache> httpClientCacheProvider) {
+    AiServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
+                  final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                  final Provider<StoredSecrets> storedSecretsProvider,
+                  final Provider<HttpClientProviderCache> httpClientCacheProvider,
+                  final AiDao aiDao) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
         this.httpClientCacheProvider = httpClientCacheProvider;
+        this.aiDao = aiDao;
     }
 
     @Override
@@ -371,5 +380,49 @@ public class OpenAIServiceImpl implements OpenAIService {
                 .supportedCiphers(config.getSupportedCiphers())
                 .certAlias(config.getCertAlias())
                 .build();
+    }
+
+    // ---- Chat persistence operations (delegate to AiDao) ----
+
+    @Override
+    public AiChat createChat(final UserRef userRef) {
+        return aiDao.createChat(userRef);
+    }
+
+    @Override
+    public List<AiChat> listChats(final String userUuid) {
+        return aiDao.listChats(userUuid);
+    }
+
+    @Override
+    public Optional<AiChat> getChat(final int chatId) {
+        return aiDao.getChat(chatId);
+    }
+
+    @Override
+    public void updateChatTitle(final int chatId, final String title) {
+        aiDao.updateChatTitle(chatId, title);
+    }
+
+    @Override
+    public void deleteChat(final int chatId) {
+        aiDao.deleteChat(chatId);
+    }
+
+    @Override
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final String message) {
+        return aiDao.storeMessage(chatId, messageType, message);
+    }
+
+    @Override
+    public List<AiChatMessage> getMessages(final int chatId) {
+        return aiDao.getMessages(chatId);
+    }
+
+    @Override
+    public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
+        return aiDao.getMessagesSince(chatId, lastSeenMessageId);
     }
 }

@@ -4,11 +4,15 @@
 package stroom.ai.impl.db.jooq.tables;
 
 
-import java.util.Collection;
+import stroom.ai.impl.db.jooq.Indexes;
+import stroom.ai.impl.db.jooq.Keys;
+import stroom.ai.impl.db.jooq.Stroom;
+import stroom.ai.impl.db.jooq.tables.records.AiChatRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -24,9 +28,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.ai.impl.db.jooq.Keys;
-import stroom.ai.impl.db.jooq.Stroom;
-import stroom.ai.impl.db.jooq.tables.records.AiChatRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -122,6 +126,11 @@ public class AiChat extends TableImpl<AiChatRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.AI_CHAT_IDX_AI_CHAT_USER_UUID);
     }
 
     @Override

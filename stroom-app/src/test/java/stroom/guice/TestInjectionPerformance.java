@@ -17,7 +17,7 @@
 package stroom.guice;
 
 
-import stroom.ai.impl.MockOpenAIModule;
+import stroom.ai.impl.MockAiModule;
 import stroom.analytics.AnalyticsDataSetup;
 import stroom.analytics.impl.AnalyticRuleStore;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
@@ -85,7 +85,7 @@ class TestInjectionPerformance {
                 MockMetaStatisticsModule.class,
                 stroom.test.DatabaseTestControlModule.class,
                 JerseyModule.class,
-                MockOpenAIModule.class};
+                MockAiModule.class};
         final Module[] instances = new Module[moduleClasses.length];
         for (int i = 0; i < moduleClasses.length; i++) {
             final int pos = i;

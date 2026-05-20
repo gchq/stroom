@@ -37,14 +37,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class OpenAIAdvancedReranker implements ContentAggregator {
+public class AiAdvancedReranker implements ContentAggregator {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIAdvancedReranker.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiAdvancedReranker.class);
     private static final JsonMapper MAPPER = JsonUtil.getNoIndentMapper();
 
     private final ChatModel scoringModel;
 
-    public OpenAIAdvancedReranker(final ChatModel scoringModel) {
+    public AiAdvancedReranker(final ChatModel scoringModel) {
         // Use a cheaper, faster model for the scoring task
         this.scoringModel = scoringModel;
     }

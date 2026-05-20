@@ -16,7 +16,7 @@
 
 package stroom.test;
 
-import stroom.ai.impl.MockOpenAIModule;
+import stroom.ai.impl.MockAiModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.DbConnectionsModule;
 import stroom.app.guice.JerseyModule;
@@ -55,6 +55,6 @@ public class CoreTestModule extends AbstractModule {
         install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
         install(new JerseyModule());
-        install(new MockOpenAIModule());
+        install(new MockAiModule());
     }
 }

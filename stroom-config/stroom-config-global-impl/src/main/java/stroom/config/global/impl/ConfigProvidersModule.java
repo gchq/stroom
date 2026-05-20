@@ -36,15 +36,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.ai.shared.ChatMemoryConfig getChatMemoryConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.ai.shared.ChatMemoryConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.ai.shared.TableSummaryConfig getTableSummaryConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

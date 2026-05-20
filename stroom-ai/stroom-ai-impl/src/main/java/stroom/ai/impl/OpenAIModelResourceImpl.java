@@ -16,8 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.ai.api.OpenAIService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -50,16 +50,16 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
 
     private static HttpClientConfig defaultHttpClientConfig;
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
     OpenAIModelResourceImpl(
             final Provider<OpenAIModelStore> openAIModelStoreProvider,
-            final Provider<OpenAIService> openAIServiceProvider,
+            final Provider<AiService> aiServiceProvider,
             final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
@@ -91,7 +91,7 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
                 throw new IllegalArgumentException("Model ID must not be empty");
             }
 
-            final String model = openAIServiceProvider.get().getModel(modelDoc);
+            final String model = aiServiceProvider.get().getModel(modelDoc);
             return new OpenAIModelTestResponse(model != null, model);
         } catch (final NoSuchElementException e) {
             return new OpenAIModelTestResponse(false, "Model " + modelDoc.getModelId() + " not found");

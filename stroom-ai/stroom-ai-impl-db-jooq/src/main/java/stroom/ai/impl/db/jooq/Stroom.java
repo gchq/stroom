@@ -4,14 +4,15 @@
 package stroom.ai.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.ai.impl.db.jooq.tables.AiChat;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -33,6 +34,11 @@ public class Stroom extends SchemaImpl {
     public final AiChat AI_CHAT = AiChat.AI_CHAT;
 
     /**
+     * The table <code>stroom.ai_chat_message</code>.
+     */
+    public final AiChatMessage AI_CHAT_MESSAGE = AiChatMessage.AI_CHAT_MESSAGE;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -48,7 +54,8 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            AiChat.AI_CHAT
+            AiChat.AI_CHAT,
+            AiChatMessage.AI_CHAT_MESSAGE
         );
     }
 }

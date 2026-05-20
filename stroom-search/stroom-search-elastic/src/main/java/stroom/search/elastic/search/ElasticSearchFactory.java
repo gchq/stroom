@@ -16,7 +16,7 @@
 
 package stroom.search.elastic.search;
 
-import stroom.ai.api.OpenAIService;
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
@@ -59,7 +59,7 @@ public class ElasticSearchFactory {
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexCache elasticIndexCache;
     private final IndexFieldCache indexFieldCache;
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
 
@@ -68,14 +68,14 @@ public class ElasticSearchFactory {
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
                                 final ElasticIndexCache elasticIndexCache,
                                 final IndexFieldCache indexFieldCache,
-                                final Provider<OpenAIService> openAIServiceProvider,
+                                final Provider<AiService> aiServiceProvider,
                                 final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexCache = elasticIndexCache;
         this.indexFieldCache = indexFieldCache;
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get(THREAD_POOL);
     }
@@ -135,7 +135,7 @@ public class ElasticSearchFactory {
                                         final ExpressionOperator expression,
                                         final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
-                openAIServiceProvider,
+                aiServiceProvider,
                 index,
                 indexFieldCache,
                 wordListProvider,

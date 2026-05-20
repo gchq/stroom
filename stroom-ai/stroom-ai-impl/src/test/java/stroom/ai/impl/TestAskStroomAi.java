@@ -16,27 +16,21 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.api.ChatMemoryService;
-import stroom.ai.api.OpenAIService;
-import stroom.ai.api.SimpleTokenCountEstimator;
-import stroom.ai.api.SummaryReducer;
-import stroom.ai.api.TableQuery;
-import stroom.ai.api.TableQueryMessages;
-import stroom.ai.api.TableSummaryMessages;
+import stroom.ai.api.AiService;
 import stroom.ai.shared.AskStroomAIConfig;
-import stroom.ai.shared.ChatMemoryConfig;
+import stroom.ai.shared.TableSummaryConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.date.DateUtil;
 
-import dev.langchain4j.memory.chat.TokenWindowChatMemory;
-import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.service.AiServices;
-import jakarta.inject.Provider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -44,108 +38,19 @@ import java.util.regex.Pattern;
 @Disabled // Disabled because an API key must be configured to run this test
 public class TestAskStroomAi {
 
-    private static final String TABLE_CHAT_MEMORY_KEY = "table";
-    private static final String SUMMARY_CHAT_MEMORY_KEY = "summary";
     private static final Pattern MD_TABLE_ESCAPE = Pattern.compile("[$&`*_~#+-.!|()\\[\\]{}<>]");
 
     @Test
     void test() {
-//        final String table = """
-//                | EventTime | UserId | Count |
-//                | --- | --- | --- |
-//                | 2010 01 01T00 00 00 000Z | user4 | 5 |
-//                | 2010 01 01T00 05 00 000Z | user3 | 12 |
-//                | 2010 01 01T00 06 00 000Z | user1 | 6 |
-//                | 2010 01 01T00 04 00 000Z | user7 | 9 |
-//                | 2010 01 01T00 06 00 000Z | user7 | 365 |
-//                | 2010 01 01T00 04 00 000Z | user2 | 7 |
-//                | 2010 01 01T00 04 00 000Z | user4 | 4 |
-//                | 2010 01 01T00 02 00 000Z | user10 | 2 |
-//                | 2010 01 01T00 01 00 000Z | user5 | 8 |
-//                | 2010 01 01T00 03 00 000Z | user2 | 4 |
-//                | 2010 01 01T00 08 00 000Z | user3 | 7 |
-//                | 2010 01 01T00 00 00 000Z | user1 | 362 |
-//                | 2010 01 01T00 08 00 000Z | user9 | 369 |
-//                | 2010 01 01T00 08 00 000Z | user5 | 5 |
-//                | 2010 01 01T00 01 00 000Z | user10 | 4 |
-//                | 2010 01 01T00 07 00 000Z | user8 | 375 |
-//                | 2010 01 01T00 04 00 000Z | user5 | 365 |
-//                | 2010 01 01T00 01 00 000Z | user1 | 8 |
-//                | 2010 01 01T00 09 00 000Z | user10 | 368 |
-//
-//                """;
-
-
-//        final String table = """
-//                | EventTime                | UserId | Count |
-//                | ------------------------ | ------ | ----- |
-//                | 2010 01 01T00 00 00 000Z | user4  | 5     |
-//                | 2010 01 01T00 05 00 000Z | user3  | 12    |
-//                | 2010 01 01T00 06 00 000Z | user1  | 6     |
-//                | 2010 01 01T00 04 00 000Z | user7  | 9     |
-//                | 2010 01 01T00 06 00 000Z | user7  | 365   |
-//                | 2010 01 01T00 04 00 000Z | user2  | 7     |
-//                | 2010 01 01T00 04 00 000Z | user4  | 4     |
-//                | 2010 01 01T00 02 00 000Z | user10 | 2     |
-//                | 2010 01 01T00 01 00 000Z | user5  | 8     |
-//                | 2010 01 01T00 03 00 000Z | user2  | 4     |
-//                | 2010 01 01T00 08 00 000Z | user3  | 7     |
-//                | 2010 01 01T00 00 00 000Z | user1  | 362   |
-//                | 2010 01 01T00 08 00 000Z | user9  | 369   |
-//                | 2010 01 01T00 08 00 000Z | user5  | 5     |
-//                | 2010 01 01T00 01 00 000Z | user10 | 4     |
-//                | 2010 01 01T00 07 00 000Z | user8  | 375   |
-//                | 2010 01 01T00 04 00 000Z | user5  | 365   |
-//                | 2010 01 01T00 01 00 000Z | user1  | 8     |
-//                | 2010 01 01T00 09 00 000Z | user10 | 368   |
-//
-//                """;
-//
-//                final String table = """
-//                | EventTime | UserId | Count |
-//                | --- | --- | --- |
-//                | 2010 01 01T00 00 00 000Z | user4 | 5 |
-//                | 2010 01 01T00 05 00 000Z | user3 | 12 |
-//                | 2010 01 01T00 06 00 000Z | user1 | 6 |
-//                | 2010 01 01T00 04 00 000Z | user7 | 9 |
-//                | 2010 01 01T00 06 00 000Z | user7 | 365 |
-//                | 2010 01 01T00 04 00 000Z | user2 | 7 |
-//                | 2010 01 01T00 04 00 000Z | user4 | 4 |
-//                | 2010 01 01T00 02 00 000Z | user10 | 2 |
-//                | 2010 01 01T00 01 00 000Z | user5 | 8 |
-//                | 2010 01 01T00 03 00 000Z | user2 | 4 |
-//                | 2010 01 01T00 08 00 000Z | user3 | 7 |
-//                | 2010 01 01T00 00 00 000Z | user1 | 362 |
-//                | 2010 01 01T00 08 00 000Z | user9 | 369 |
-//                | 2010 01 01T00 08 00 000Z | user5 | 5 |
-//                | 2010 01 01T00 01 00 000Z | user10 | 4 |
-//                | 2010 01 01T00 07 00 000Z | user8 | 375 |
-//                | 2010 01 01T00 04 00 000Z | user5 | 365 |
-//                | 2010 01 01T00 01 00 000Z | user1 | 8 |
-//                | 2010 01 01T00 09 00 000Z | user10 | 368 |
-//                """;
-
-
-//        final String table = """
-//                | UserId | Count |
-//                | --- | --- |
-//                | user4 | 5 |
-//                | user3 | 12 |
-//                """;
-
-
         final List<String> columns = List.of("EventTime", "UserId", "Count");
         final int totalRows = 10000;
-        final Provider<List<String>> rowCreator = () -> List.of(
-                DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
-                "user" + (int) (Math.random() * 100),
-                "" + (int) (Math.random() * 100));
 
         final String baseUrl = "https://api.openai.com/v1/";
         final String apiKey = System.getProperty("OPEN_API_TEST_KEY");
         final String modelId = "gpt-4o";
 
-        final OpenAIService openAIService = new OpenAIServiceImpl(
+        final AiService aiService = new AiServiceImpl(
+                null,
                 null,
                 null,
                 null,
@@ -164,63 +69,31 @@ public class TestAskStroomAi {
                 modelId,
                 1000,
                 null);
-        final ChatModel chatModel = openAIService.getChatModel(modelDoc);
-
-        final String chatMemoryId = UUID.randomUUID().toString();
-        final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-        final String summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-        final int maxTokens = 1024;
-
-        final TokenCountEstimator tokenCountEstimator = new SimpleTokenCountEstimator();
+        final ChatModel chatModel = aiService.getChatModel(modelDoc);
 
         final AskStroomAIConfig modelConfig = new AskStroomAIConfig();
-        final ChatMemoryService chatMemoryService = new ChatMemoryServiceImpl(ChatMemoryConfig::new);
-        final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
-                .chatModel(chatModel)
-                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
-                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
-                        .id(tableChatMemoryId)
-                        .maxTokens(maxTokens, tokenCountEstimator)
-                        .build())
-                .build();
-        final SummaryReducer summaryReducerService = AiServices.builder(SummaryReducer.class)
-                .chatModel(chatModel)
-                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.builder()
-                        .chatMemoryStore(chatMemoryService.getChatMemoryStore())
-                        .id(summaryChatMemoryId)
-                        .maxTokens(maxTokens, tokenCountEstimator)
-                        .build())
-                .build();
-
-//        final String batchAnswer = tableQueryService.answerChunk(
-//                tableChatMemoryId, "Explain table", table);
-//
-//        System.out.println(batchAnswer);
-//
-//
-        final ResultBuilder resultBuilder =
-                new ResultBuilder(chatModel, chatMemoryId, "Explain table", tableQueryService, summaryReducerService);
-////        resultBuilder.add(data);
-////        System.out.println(resultBuilder.get());
-
+        final TableSummaryConfig tableSummaryConfig = modelConfig.getTableSummary();
+        final ResultBuilder resultBuilder = new ResultBuilder(
+                chatModel, "Explain table", tableSummaryConfig);
 
         // Create column header string.
         final String header = writeHeader(columns);
 
         // Batch and summarise user message responses into a combined summary
-        final int maxBatchSize = modelConfig.getTableSummary().getMaximumBatchSize();
-        final int maximumRowCount = modelConfig.getTableSummary().getMaximumTableInputRows();
+        final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
+        final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
         final StringBuilder batch = new StringBuilder(header);
         int rowCount = 0;
 
         for (int i = 0; i < totalRows; i++) {
-            final List<String> rowValues = rowCreator.get();
+            final List<String> rowValues = List.of(
+                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
+                    "user" + (int) (Math.random() * 100),
+                    "" + (int) (Math.random() * 100));
             final String rowString = writeRow(rowValues);
 
-            final int newBatchSize = SummaryReducer.USER_MESSAGE.length() + batch.length() + rowString.length();
+            final int newBatchSize = batch.length() + rowString.length();
             if (rowCount > 0 && newBatchSize > maxBatchSize) {
-                // Batch message plus the new row would exceed the maximum batch size, so send the batch to the
-                // model as-is
                 resultBuilder.add(batch.toString());
                 batch.setLength(0);
                 batch.append(header);
@@ -285,123 +158,52 @@ public class TestAskStroomAi {
                 .replace("\n", "<br>");
     }
 
+    /**
+     * Uses direct ChatModel.chat() with configurable prompt templates,
+     * matching the production ResultBuilder in AskStroomAIService.
+     */
     static class ResultBuilder {
 
         private final ChatModel chatModel;
         private final String aiQuery;
-        private final TableQuery tableQuery;
-        private final SummaryReducer summaryReducer;
-        private final String tableChatMemoryId;
-        private final String summaryChatMemoryId;
+        private final TableSummaryConfig config;
         private String cumulativeSummary = "";
 
         public ResultBuilder(final ChatModel chatModel,
-                             final String chatMemoryId,
                              final String aiQuery,
-                             final TableQuery tableQuery,
-                             final SummaryReducer summaryReducer) {
+                             final TableSummaryConfig config) {
             this.chatModel = chatModel;
             this.aiQuery = aiQuery;
-            this.tableQuery = tableQuery;
-            this.summaryReducer = summaryReducer;
-            tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-            summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
+            this.config = config;
         }
 
         void add(final String data) {
-//                        final String batchAnswer = tableQuery.answerChunk(
-//                    tableChatMemoryId, aiQuery, data);
-//            if (cumulativeSummary.isEmpty()) {
-//                cumulativeSummary = batchAnswer;
-//            } else {
-//                cumulativeSummary = summaryReducer.merge(
-//                        summaryChatMemoryId, cumulativeSummary, batchAnswer);
-//            }
+            final String userPrompt = config.getTableQueryUserPrompt()
+                    .replace("{{query}}", aiQuery)
+                    .replace("{{table}}", data);
 
-//            // Process any remaining batch content
-//            final List<ChatMessage> messages = new ArrayList<>();
-//            messages.add(new SystemMessage("""
-//                        You are a data analysis AI. You will answer user questions
-//                        using ONLY the markdown-formatted DATA TABLE records provided.
-//                        If the records do not contain relevant details, say "No relevant information."
-//                    """));
-//
-//            final String userMessageTemplate = """
-//                        USER QUERY:
-//                        {{query}}
-//
-//                        DATA TABLE:
-//                        {{table}}
-//
-//                        Provide findings relevant only to these records, in a concise structured format.
-//                    """;
-//
-//            String message = userMessageTemplate;
-//            message = message.replaceAll("\\{\\{query}}", aiQuery);
-//            message = message.replaceAll("\\{\\{table}}", data);
-//
-//            messages.add(new UserMessage(message));
-//
-            final String batchAnswer = queryTable(data);
+            final List<ChatMessage> messages = new ArrayList<>(2);
+            messages.add(new SystemMessage(config.getTableQuerySystemPrompt()));
+            messages.add(new UserMessage(userPrompt));
+
+            final ChatResponse response = chatModel.chat(messages);
+            final String batchAnswer = response.aiMessage().text();
+
             if (cumulativeSummary.isEmpty()) {
                 cumulativeSummary = batchAnswer;
             } else {
-                cumulativeSummary = merge(cumulativeSummary, batchAnswer);
+                final String mergePrompt = config.getSummaryMergePrompt()
+                        .replace("{{a}}", cumulativeSummary)
+                        .replace("{{b}}", batchAnswer);
+
+                final List<ChatMessage> mergeMessages = new ArrayList<>(2);
+                mergeMessages.add(new SystemMessage(
+                        "You merge partial answers into a unified, concise summary."));
+                mergeMessages.add(new UserMessage(mergePrompt));
+
+                final ChatResponse mergeResponse = chatModel.chat(mergeMessages);
+                cumulativeSummary = mergeResponse.aiMessage().text();
             }
-        }
-
-        private String queryTable(final String table) {
-//            // Process any remaining batch content
-//            final List<ChatMessage> messages = new ArrayList<>();
-//            messages.add(new SystemMessage("""
-//                        You are a data analysis AI. You will answer user questions
-//                        using ONLY the markdown-formatted DATA TABLE records provided.
-//                        If the records do not contain relevant details, say "No relevant information."
-//                    """));
-//
-//            final String userMessageTemplate = """
-//                        USER QUERY:
-//                        {{query}}
-//
-//                        DATA TABLE:
-//                        {{table}}
-//
-//                        Provide findings relevant only to these records, in a concise structured format.
-//                    """;
-//
-//            String message = userMessageTemplate;
-//            message = message.replaceAll("\\{\\{query}}", aiQuery);
-//            message = message.replaceAll("\\{\\{table}}", table);
-//
-//            messages.add(new UserMessage(message));
-
-            final ChatResponse response = chatModel.chat(TableQueryMessages.createMessages(aiQuery, table));
-            return response.aiMessage().text();
-        }
-
-        private String merge(final String a, final String b) {
-//            final List<ChatMessage> messages = new ArrayList<>();
-//            messages.add(new SystemMessage("You merge partial answers into a unified, concise summary."));
-//
-//            final String userMessageTemplate = """
-//                        Merge the following TWO summaries into a single improved summary.
-//                        Preserve important details and remove duplicates.
-//
-//                        SUMMARY A:
-//                        {{a}}
-//
-//                        SUMMARY B:
-//                        {{b}}
-//                    """;
-//
-//            String message = userMessageTemplate;
-//            message = message.replaceAll("\\{\\{a}}", a);
-//            message = message.replaceAll("\\{\\{b}}", b);
-//
-//            messages.add(new UserMessage(message));
-
-            final ChatResponse response = chatModel.chat(TableSummaryMessages.createMessages(a, b));
-            return response.aiMessage().text();
         }
 
         String get() {

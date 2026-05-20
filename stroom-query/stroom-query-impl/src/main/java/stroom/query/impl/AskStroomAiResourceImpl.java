@@ -16,76 +16,36 @@
 
 package stroom.query.impl;
 
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatPollRequest;
+import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
-import stroom.ai.shared.DashboardTableContext;
-import stroom.ai.shared.QueryTableContext;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.node.api.NodeService;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.ws.rs.client.Entity;
+
+import java.util.List;
 
 @AutoLogged
 class AskStroomAiResourceImpl implements AskStroomAiResource {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAiResourceImpl.class);
-
-    private final Provider<NodeService> nodeServiceProvider;
     private final Provider<AskStroomAIService> askStroomAIServiceProvider;
 
     @Inject
-    AskStroomAiResourceImpl(final Provider<NodeService> nodeServiceProvider,
-                            final Provider<AskStroomAIService> askStroomAIServiceProvider) {
-        this.nodeServiceProvider = nodeServiceProvider;
+    AskStroomAiResourceImpl(final Provider<AskStroomAIService> askStroomAIServiceProvider) {
         this.askStroomAIServiceProvider = askStroomAIServiceProvider;
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public AskStroomAiResponse askStroomAi(final String nodeName, final AskStroomAiRequest request) {
-        String requestedNode = nodeName;
-        // Use a specific node if the context demands it. This is necessary for paging some search results to the AI
-        // service.
-        if (nodeName == null && request.getContext() != null) {
-            requestedNode = switch (request.getContext()) {
-                case final DashboardTableContext dashboardTableContext -> dashboardTableContext.getNode();
-                case final QueryTableContext queryTableContext -> queryTableContext.getNode();
-                default -> null;
-            };
-        }
-
-        final AskStroomAIService aiService = askStroomAIServiceProvider.get();
-        try {
-            // Make sure we ask the question on the right node.
-            final String node = aiService.getBestNode(requestedNode, request);
-
-            // If the client doesn't specify a node then execute locally.
-            if (node == null) {
-                return askStroomAIServiceProvider.get().askStroomAi(request);
-            }
-
-            return nodeServiceProvider.get()
-                    .remoteRestResult(
-                            node,
-                            AskStroomAiResponse.class,
-                            () -> ResourcePaths.buildAuthenticatedApiPath(
-                                    AskStroomAiResource.BASE_PATH,
-                                    AskStroomAiResource.ASK_STROOM_AI_PATH_PART,
-                                    node),
-                            () -> askStroomAIServiceProvider.get().askStroomAi(request),
-                            builder -> builder.post(Entity.json(request)));
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw e;
-        }
+    public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
+        return askStroomAIServiceProvider.get().askStroomAi(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)
@@ -100,21 +60,43 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
         return askStroomAIServiceProvider.get().setDefaultAskStroomAIConfig(config);
     }
 
-//    @AutoLogged(OperationType.UNLOGGED)
-//    @Override
-//    public Boolean setDefaultModel(final DocRef modelRef) {
-//        return askStroomAIServiceProvider.get().setDefaultModel(modelRef);
-//    }
-//
-//    @AutoLogged(OperationType.UNLOGGED)
-//    @Override
-//    public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
-//        return askStroomAIServiceProvider.get().setDefaultTableSummaryConfig(config);
-//    }
-//
-//    @AutoLogged(OperationType.UNLOGGED)
-//    @Override
-//    public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
-//        return askStroomAIServiceProvider.get().setDefaultChatMemoryConfigConfig(config);
-//    }
+    @Override
+    public AiChat createChat() {
+        return askStroomAIServiceProvider.get().createChat();
+    }
+
+    @Override
+    public List<AiChat> listChats() {
+        return askStroomAIServiceProvider.get().listChats();
+    }
+
+    @Override
+    public AiChat getChat(final int chatId) {
+        return askStroomAIServiceProvider.get().getChat(chatId);
+    }
+
+    @AutoLogged(OperationType.DELETE)
+    @Override
+    public Boolean deleteChat(final int chatId) {
+        askStroomAIServiceProvider.get().deleteChat(chatId);
+        return true;
+    }
+
+    @Override
+    public List<AiChatMessage> getMessages(final int chatId) {
+        return askStroomAIServiceProvider.get().getMessages(chatId);
+    }
+
+    @AutoLogged(OperationType.UPDATE)
+    @Override
+    public Boolean updateChatTitle(final int chatId, final String title) {
+        askStroomAIServiceProvider.get().updateChatTitle(chatId, title);
+        return true;
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
+        return askStroomAIServiceProvider.get().pollMessages(chatId, request);
+    }
 }

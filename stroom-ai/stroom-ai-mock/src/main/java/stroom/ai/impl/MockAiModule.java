@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.ai.api;
+package stroom.ai.impl;
 
-import dev.langchain4j.store.memory.chat.ChatMemoryStore;
+import stroom.ai.api.AiService;
+import stroom.ai.api.OpenAIModelStore;
 
-public interface ChatMemoryService {
+import com.google.inject.AbstractModule;
 
-    ChatMemoryStore getChatMemoryStore();
+public class MockAiModule extends AbstractModule {
 
-    void pruneChatMemory();
+    @Override
+    protected void configure() {
+        // Services
+        bind(AiService.class).to(MockAiService.class);
+
+        // OpenAI Model
+        bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);
+    }
 }

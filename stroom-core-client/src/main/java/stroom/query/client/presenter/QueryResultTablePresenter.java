@@ -1062,7 +1062,7 @@ public class QueryResultTablePresenter
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
                 AskStroomAiEvent.fire(this,
-                        new QueryTableContext(queryKey.toString(), currentSearchModel.getCurrentNode(), request));
+                        new QueryTableContext(currentSearchModel.getCurrentNode(), request));
             }
         }
     }

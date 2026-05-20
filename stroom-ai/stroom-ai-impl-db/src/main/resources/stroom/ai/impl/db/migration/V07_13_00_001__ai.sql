@@ -35,15 +35,19 @@ CREATE TABLE IF NOT EXISTS ai_chat (
 --
 -- Create the ai_chat_message table
 --
-CREATE TABLE IF NOT EXISTS ai_chat_mesage (
+CREATE TABLE IF NOT EXISTS ai_chat_message (
     id                    int NOT NULL AUTO_INCREMENT,
     fk_ai_chat_id         int NOT NULL,
     create_time_ms        bigint NOT NULL,
-    update_time_ms        bigint NOT NULL,
     message_type          int NOT NULL,
     message               longtext NOT NULL,
-    PRIMARY KEY           (id)
+    PRIMARY KEY           (id),
+    CONSTRAINT fk_ai_chat_message_chat
+        FOREIGN KEY (fk_ai_chat_id) REFERENCES ai_chat (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+CREATE INDEX idx_ai_chat_user_uuid ON ai_chat (user_uuid);
+CREATE INDEX idx_ai_chat_message_chat_id ON ai_chat_message (fk_ai_chat_id);
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

@@ -19,7 +19,6 @@ package stroom.ai.client;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAIConfig;
-import stroom.ai.shared.ChatMemoryConfig;
 import stroom.ai.shared.TableSummaryConfig;
 import stroom.alert.client.event.AlertEvent;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -29,7 +28,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -124,24 +122,11 @@ public class AskStroomAiConfigPresenter
     }
 
     private void read(final AskStroomAIConfig config) {
-        readChatMemoryConfig(NullSafe.getOrElse(config,
-                AskStroomAIConfig::getChatMemory, new ChatMemoryConfig()));
         readTableSummaryConfig(NullSafe.getOrElse(config,
                 AskStroomAIConfig::getTableSummary, new TableSummaryConfig()));
         if (config != null && config.getModelRef() != null) {
             docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
         }
-    }
-
-    public void readChatMemoryConfig(final ChatMemoryConfig config) {
-        getView().setMemoryTokenLimit(NullSafe.getOrElse(
-                config,
-                ChatMemoryConfig::getTokenLimit,
-                ChatMemoryConfig.DEFAULT_CHAT_MEMORY_TOKEN_LIMIT));
-        getView().setMemoryTimeToLive(NullSafe.getOrElse(
-                config,
-                ChatMemoryConfig::getTimeToLive,
-                ChatMemoryConfig.DEFAULT_CHAT_MEMORY_TTL));
     }
 
     public void readTableSummaryConfig(final TableSummaryConfig config) {
@@ -153,29 +138,36 @@ public class AskStroomAiConfigPresenter
                 config,
                 TableSummaryConfig::getMaximumTableInputRows,
                 TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_INPUT_ROWS));
+        getView().setTableQuerySystemPrompt(NullSafe.getOrElse(
+                config,
+                TableSummaryConfig::getTableQuerySystemPrompt,
+                TableSummaryConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT));
+        getView().setTableQueryUserPrompt(NullSafe.getOrElse(
+                config,
+                TableSummaryConfig::getTableQueryUserPrompt,
+                TableSummaryConfig.DEFAULT_TABLE_QUERY_USER_PROMPT));
+        getView().setSummaryMergePrompt(NullSafe.getOrElse(
+                config,
+                TableSummaryConfig::getSummaryMergePrompt,
+                TableSummaryConfig.DEFAULT_SUMMARY_MERGE_PROMPT));
     }
 
     public AskStroomAIConfig write() {
-        final ChatMemoryConfig chatMemoryConfig = writeChatMemoryConfig();
         final TableSummaryConfig tableSummaryConfig = writeTableSummaryConfig();
         return AskStroomAIConfig
                 .builder()
                 .tableSummaryConfig(tableSummaryConfig)
-                .chatMemoryConfig(chatMemoryConfig)
                 .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                 .build();
-    }
-
-    public ChatMemoryConfig writeChatMemoryConfig() {
-        return new ChatMemoryConfig(
-                getView().getMemoryTokenLimit(),
-                getView().getMemoryTimeToLive());
     }
 
     public TableSummaryConfig writeTableSummaryConfig() {
         return new TableSummaryConfig(
                 getView().getMaximumBatchSize(),
-                getView().getMaximumTableInputRows());
+                getView().getMaximumTableInputRows(),
+                getView().getTableQuerySystemPrompt(),
+                getView().getTableQueryUserPrompt(),
+                getView().getSummaryMergePrompt());
     }
 
     public interface AskStroomAiConfigView extends View, Focus, HasUiHandlers<AskStroomAiConfigUiHandlers> {
@@ -190,13 +182,17 @@ public class AskStroomAiConfigPresenter
 
         int getMaximumTableInputRows();
 
-        void setMemoryTokenLimit(int memoryTokenLimit);
+        void setTableQuerySystemPrompt(String prompt);
 
-        int getMemoryTokenLimit();
+        String getTableQuerySystemPrompt();
 
-        SimpleDuration getMemoryTimeToLive();
+        void setTableQueryUserPrompt(String prompt);
 
-        void setMemoryTimeToLive(SimpleDuration memoryTimeToLive);
+        String getTableQueryUserPrompt();
+
+        void setSummaryMergePrompt(String prompt);
+
+        String getSummaryMergePrompt();
 
         void setDockBehaviour(DockBehaviour dockBehaviour);
 

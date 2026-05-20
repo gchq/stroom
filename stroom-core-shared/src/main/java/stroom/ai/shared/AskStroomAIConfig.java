@@ -34,28 +34,22 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
     public static final String PROP_NAME_MODEL_REF = "modelRef";
     public static final String PROP_NAME_TABLE_SUMMARY = "tableSummary";
-    public static final String PROP_NAME_CHAT_MEMORY = "chatMemory";
 
     @JsonProperty(PROP_NAME_MODEL_REF)
     private final DocRef modelRef;
     @JsonProperty(PROP_NAME_TABLE_SUMMARY)
     private final TableSummaryConfig tableSummary;
-    @JsonProperty(PROP_NAME_CHAT_MEMORY)
-    private final ChatMemoryConfig chatMemory;
 
     public AskStroomAIConfig() {
         modelRef = null;
         tableSummary = new TableSummaryConfig();
-        chatMemory = new ChatMemoryConfig();
     }
 
     @JsonCreator
     public AskStroomAIConfig(@JsonProperty(PROP_NAME_MODEL_REF) final DocRef modelRef,
-                             @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableSummaryConfig tableSummary,
-                             @JsonProperty(PROP_NAME_CHAT_MEMORY) final ChatMemoryConfig chatMemory) {
+                             @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableSummaryConfig tableSummary) {
         this.modelRef = modelRef;
         this.tableSummary = tableSummary;
-        this.chatMemory = chatMemory;
     }
 
     @JsonPropertyDescription("The model to use.")
@@ -68,16 +62,11 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         return tableSummary;
     }
 
-    public ChatMemoryConfig getChatMemory() {
-        return chatMemory;
-    }
-
     @Override
     public String toString() {
         return "AskStroomAIConfig{" +
                "modelRef='" + modelRef + "'" +
                ", tableSummaryConfig=" + tableSummary +
-               ", chatMemoryConfig=" + chatMemory +
                '}';
     }
 
@@ -93,18 +82,15 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
         private DocRef modelRef;
         private TableSummaryConfig tableSummaryConfig;
-        private ChatMemoryConfig chatMemoryConfig;
 
         private Builder() {
             modelRef = null;
             tableSummaryConfig = new TableSummaryConfig();
-            chatMemoryConfig = new ChatMemoryConfig();
         }
 
         private Builder(final AskStroomAIConfig askStroomAIConfig) {
             modelRef = askStroomAIConfig.modelRef;
             tableSummaryConfig = askStroomAIConfig.tableSummary;
-            chatMemoryConfig = askStroomAIConfig.chatMemory;
         }
 
         public Builder modelRef(final DocRef modelRef) {
@@ -117,18 +103,13 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             return self();
         }
 
-        public Builder chatMemoryConfig(final ChatMemoryConfig chatMemoryConfig) {
-            this.chatMemoryConfig = chatMemoryConfig;
-            return self();
-        }
-
         @Override
         protected Builder self() {
             return this;
         }
 
         public AskStroomAIConfig build() {
-            return new AskStroomAIConfig(modelRef, tableSummaryConfig, chatMemoryConfig);
+            return new AskStroomAIConfig(modelRef, tableSummaryConfig);
         }
     }
 }

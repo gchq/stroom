@@ -21,6 +21,7 @@ dependencies {
     implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
     implementation libs.guice
     implementation libs.langchain4j

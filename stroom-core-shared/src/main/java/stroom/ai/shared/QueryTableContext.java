@@ -16,10 +16,8 @@ public final class QueryTableContext extends AskStroomAiContext {
     private final QuerySearchRequest searchRequest;
 
     @JsonCreator
-    public QueryTableContext(@JsonProperty("chatMemoryId") final String chatMemoryId,
-                             @JsonProperty("node") final String node,
+    public QueryTableContext(@JsonProperty("node") final String node,
                              @JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
-        super(chatMemoryId);
         this.node = node;
         this.searchRequest = searchRequest;
     }

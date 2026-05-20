@@ -17,7 +17,7 @@
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
-import stroom.ai.impl.MockOpenAIModule;
+import stroom.ai.impl.MockAiModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
@@ -121,7 +121,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockXmlSchemaModule());
         install(new MockPlanBModule());
         install(new MockClusterLockModule());
-        install(new MockOpenAIModule());
+        install(new MockAiModule());
 
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class);

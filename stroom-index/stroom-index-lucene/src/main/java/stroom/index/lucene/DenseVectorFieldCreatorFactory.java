@@ -16,7 +16,7 @@
 
 package stroom.index.lucene;
 
-import stroom.ai.api.OpenAIService;
+import stroom.ai.api.AiService;
 import stroom.index.shared.LuceneIndexField;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
@@ -36,11 +36,11 @@ public class DenseVectorFieldCreatorFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DenseVectorFieldCreatorFactory.class);
 
-    private final OpenAIService openAIService;
+    private final AiService aiService;
 
     @Inject
-    DenseVectorFieldCreatorFactory(final OpenAIService openAIService) {
-        this.openAIService = openAIService;
+    DenseVectorFieldCreatorFactory(final AiService aiService) {
+        this.aiService = aiService;
     }
 
     public DenseVectorFieldCreator create(final IndexField indexField) {
@@ -56,11 +56,11 @@ public class DenseVectorFieldCreatorFactory {
 
         // Query the embeddings API for a vector representation of the query expression
         LOGGER.trace("Fetching model doc {}", denseVectorFieldConfig.getEmbeddingModelRef());
-        final OpenAIModelDoc modelDoc = openAIService
+        final OpenAIModelDoc modelDoc = aiService
                 .getOpenAIModelDoc(denseVectorFieldConfig.getEmbeddingModelRef());
 
         LOGGER.trace("Fetching embedding model {}", modelDoc);
-        final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);
+        final EmbeddingModel embeddingModel = aiService.getEmbeddingModel(modelDoc);
         final VectorSimilarityFunctionType vectorSimilarityFunctionType =
                 NullSafe.getOrElse(luceneIndexField,
                         LuceneIndexField::getDenseVectorFieldConfig,

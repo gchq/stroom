@@ -16,10 +16,8 @@ public final class GeneralTableContext extends AskStroomAiContext {
     private final List<List<String>> rows;
 
     @JsonCreator
-    public GeneralTableContext(@JsonProperty("chatMemoryId") final String chatMemoryId,
-                               @JsonProperty("columns") final List<String> columns,
+    public GeneralTableContext(@JsonProperty("columns") final List<String> columns,
                                @JsonProperty("rows") final List<List<String>> rows) {
-        super(chatMemoryId);
         this.columns = columns;
         this.rows = rows;
     }

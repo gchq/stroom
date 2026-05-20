@@ -28,21 +28,37 @@ public class AiChatMessage {
     @JsonProperty
     private final int id;
     @JsonProperty
+    private final int chatId;
+    @JsonProperty
+    private final long createTimeMs;
+    @JsonProperty
     private final AiMessageType messageType;
     @JsonProperty
     private final String message;
 
     @JsonCreator
     public AiChatMessage(@JsonProperty("id") final int id,
+                         @JsonProperty("chatId") final int chatId,
+                         @JsonProperty("createTimeMs") final long createTimeMs,
                          @JsonProperty("messageType") final AiMessageType messageType,
                          @JsonProperty("message") final String message) {
         this.id = id;
+        this.chatId = chatId;
+        this.createTimeMs = createTimeMs;
         this.messageType = messageType;
         this.message = message;
     }
 
     public int getId() {
         return id;
+    }
+
+    public int getChatId() {
+        return chatId;
+    }
+
+    public long getCreateTimeMs() {
+        return createTimeMs;
     }
 
     public AiMessageType getMessageType() {
@@ -59,18 +75,24 @@ public class AiChatMessage {
             return false;
         }
         final AiChatMessage that = (AiChatMessage) o;
-        return id == that.id && messageType == that.messageType && Objects.equals(message, that.message);
+        return id == that.id
+               && chatId == that.chatId
+               && createTimeMs == that.createTimeMs
+               && messageType == that.messageType
+               && Objects.equals(message, that.message);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, messageType, message);
+        return Objects.hash(id, chatId, createTimeMs, messageType, message);
     }
 
     @Override
     public String toString() {
         return "AiChatMessage{" +
                "id=" + id +
+               ", chatId=" + chatId +
+               ", createTimeMs=" + createTimeMs +
                ", messageType=" + messageType +
                ", message='" + message + '\'' +
                '}';
