@@ -16,11 +16,13 @@
                                    addStyleNames="allow-focus navigation-menu-button"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max markdown-container"/>
+        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
             <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
+                    <g:Label ui:field="contextIndicator"
+                             styleName="askStroomAiViewImpl-contextChip"/>
                     <g:TextBox ui:field="message" addStyleNames="dock-max w-100"/>
                     <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
                 </g:FlowPanel>

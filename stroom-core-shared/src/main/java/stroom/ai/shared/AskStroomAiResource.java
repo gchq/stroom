@@ -16,8 +16,10 @@
 
 package stroom.ai.shared;
 
+import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -77,7 +79,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @Operation(
             summary = "List all AI chat conversations for the current user",
             operationId = "listChats")
-    List<AiChat> listChats();
+    ResultPage<AiChat> listChats(@Parameter(description = "request", required = true) FindNamedEntityCriteria criteria);
 
     @POST
     @Path("/getChat/{chatId}")
@@ -116,4 +118,11 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     AiChatPollResponse pollMessages(@PathParam("chatId") int chatId,
                                     @Parameter(description = "request", required = true)
                                     AiChatPollRequest request);
+
+    @POST
+    @Path("/cancelProcessing/{chatId}")
+    @Operation(
+            summary = "Cancel in-progress AI batch analysis for a chat",
+            operationId = "cancelProcessing")
+    Boolean cancelProcessing(@PathParam("chatId") int chatId);
 }

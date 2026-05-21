@@ -11,6 +11,9 @@ import stroom.ai.shared.AskStroomAiResponse;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -89,11 +92,12 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void listChats(final Consumer<List<AiChat>> consumer,
+    void listChats(final FindNamedEntityCriteria criteria,
+                   final Consumer<ResultPage<AiChat>> consumer,
                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
-                .method(AskStroomAiResource::listChats)
+                .method(res -> res.listChats(criteria))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -154,6 +158,17 @@ public class AskStroomAiClient {
                 .method(res -> res.pollMessages(chatId, new AiChatPollRequest(lastSeenMessageId)))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void cancelProcessing(final int chatId,
+                          final Consumer<Boolean> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.cancelProcessing(chatId))
+                .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

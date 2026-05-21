@@ -178,7 +178,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
         }
     }
 
-    public void setFindResultListHandler(final FindDocResultListHandler findResultListHandler) {
+    public void setFindResultListHandler(final FindDocResultListHandler<FindResult> findResultListHandler) {
         this.findResultListHandler = findResultListHandler;
     }
 

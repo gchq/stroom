@@ -21,12 +21,17 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.db.util.JooqUtil;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import org.jooq.Condition;
 import org.jooq.Record;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -76,21 +81,29 @@ public class AiDaoImpl implements AiDao {
                 .set(AI_CHAT.USER_UUID, userUuid)
                 .set(AI_CHAT.TITLE, title)
                 .returning(AI_CHAT.ID)
-                .fetchOne()
-                .getId());
+                .fetchOne(AI_CHAT.ID));
 
         return new AiChat(id, now, now, userUuid, title);
     }
 
     @Override
-    public List<AiChat> listChats(final String userUuid) {
-        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+    public ResultPage<AiChat> listChats(final UserRef userRef, final FindNamedEntityCriteria criteria) {
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.of(AI_CHAT.USER_UUID.eq(userRef.getUuid())),
+                JooqUtil.getStringCondition(AI_CHAT.TITLE, criteria.getName()));
+
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+
+        final List<AiChat> list = JooqUtil.contextResult(aiDbConnProvider, context -> context
                         .select()
                         .from(AI_CHAT)
-                        .where(AI_CHAT.USER_UUID.eq(userUuid))
+                        .where(conditions)
                         .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
+                        .limit(offset, limit)
                         .fetch())
                 .map(RECORD_TO_AI_CHAT::apply);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
@@ -100,7 +113,7 @@ public class AiDaoImpl implements AiDao {
                         .from(AI_CHAT)
                         .where(AI_CHAT.ID.eq(chatId))
                         .fetchOptional())
-                .map(RECORD_TO_AI_CHAT::apply);
+                .map(RECORD_TO_AI_CHAT);
     }
 
     @Override
@@ -126,24 +139,28 @@ public class AiDaoImpl implements AiDao {
                                       final AiMessageType messageType,
                                       final String message) {
         final long now = System.currentTimeMillis();
-        final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
-                .insertInto(AI_CHAT_MESSAGE)
-                .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
-                .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
-                .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) messageType.getPrimitiveValue())
-                .set(AI_CHAT_MESSAGE.MESSAGE, message)
-                .returning(AI_CHAT_MESSAGE.ID)
-                .fetchOne()
-                .getId());
+        return JooqUtil.transactionResult(aiDbConnProvider, context -> {
+            final Integer id = context
+                    .insertInto(AI_CHAT_MESSAGE)
+                    .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
+                    .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
+                    .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) messageType.getPrimitiveValue())
+                    .set(AI_CHAT_MESSAGE.MESSAGE, message)
+                    .returning(AI_CHAT_MESSAGE.ID)
+                    .fetchOne(AI_CHAT_MESSAGE.ID);
 
-        // Also update the parent chat's update_time_ms.
-        JooqUtil.context(aiDbConnProvider, context -> context
-                .update(AI_CHAT)
-                .set(AI_CHAT.UPDATE_TIME_MS, now)
-                .where(AI_CHAT.ID.eq(chatId))
-                .execute());
+            // Check we didn't get null.
+            Objects.requireNonNull(id, "Null chat message id");
 
-        return new AiChatMessage(id, chatId, now, messageType, message);
+            // Also update the parent chat's update_time_ms.
+            context
+                    .update(AI_CHAT)
+                    .set(AI_CHAT.UPDATE_TIME_MS, now)
+                    .where(AI_CHAT.ID.eq(chatId))
+                    .execute();
+
+            return new AiChatMessage(id, chatId, now, messageType, message);
+        });
     }
 
     @Override

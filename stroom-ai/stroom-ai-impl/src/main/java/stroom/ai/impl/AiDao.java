@@ -19,6 +19,8 @@ package stroom.ai.impl;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import java.util.List;
@@ -28,7 +30,7 @@ public interface AiDao {
 
     AiChat createChat(UserRef userRef);
 
-    List<AiChat> listChats(String userUuid);
+    ResultPage<AiChat> listChats(UserRef userRef, FindNamedEntityCriteria criteria);
 
     Optional<AiChat> getChat(int chatId);
 

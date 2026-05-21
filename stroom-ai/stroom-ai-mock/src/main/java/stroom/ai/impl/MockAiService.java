@@ -23,7 +23,8 @@ import stroom.ai.shared.AiMessageType;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.test.common.StroomCoreServerTestFileUtil;
-import stroom.util.shared.UserRef;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -40,7 +41,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -153,18 +153,19 @@ public class MockAiService implements AiService {
 
     // ---- Chat persistence operations (delegate to wrapped AiServiceImpl) ----
 
+
     @Override
-    public AiChat createChat(final UserRef userRef) {
-        return aiService.createChat(userRef);
+    public AiChat createChat() {
+        return aiService.createChat();
     }
 
     @Override
-    public List<AiChat> listChats(final String userUuid) {
-        return aiService.listChats(userUuid);
+    public ResultPage<AiChat> listChats(final FindNamedEntityCriteria criteria) {
+        return aiService.listChats(criteria);
     }
 
     @Override
-    public Optional<AiChat> getChat(final int chatId) {
+    public AiChat getChat(final int chatId) {
         return aiService.getChat(chatId);
     }
 
@@ -193,5 +194,15 @@ public class MockAiService implements AiService {
     @Override
     public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
         return aiService.getMessagesSince(chatId, lastSeenMessageId);
+    }
+
+    @Override
+    public void verifyOwnership(final int chatId) {
+
+    }
+
+    @Override
+    public void verifyOwnership(final AiChat chat) {
+
     }
 }

@@ -24,6 +24,9 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.AskStroomAiEvent;
@@ -37,7 +40,9 @@ import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.DocumentPermission;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.util.client.ClipboardUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -50,6 +55,8 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -216,9 +223,7 @@ public class AskStroomAiPresenter
                     .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                     .build();
             askStroomAiConfigPresenterProvider.get().show(
-                    newConfig, c -> {
-                        askStroomAiClient.setConfig(c);
-                    }, currentDockBehaviour, this::onDockBehaviourChange);
+                    newConfig, askStroomAiClient::setConfig, currentDockBehaviour, this::onDockBehaviourChange);
         }, this);
     }
 
@@ -233,14 +238,21 @@ public class AskStroomAiPresenter
             final boolean wasDocked = docked;
             final boolean wantsDock = dockBehaviour.getDockType() == DockType.DOCK;
 
-            if (wasDocked && !wantsDock) {
-                // Switching from DOCK to DIALOG: undock then show popup.
-                DockEvent.fireUndock(this, this);
-                docked = false;
-                showing = false;
-                // Re-trigger show as dialog.
-                showAsDialog();
-            } else if (!wasDocked && wantsDock) {
+            if (wasDocked) {
+                if (wantsDock) {
+                    // Location change while docked: undock and re-dock.
+                    DockEvent.fireUndock(this, this);
+                    DockEvent.fire(this, this, dockBehaviour, getDockSize());
+                    getView().focus();
+                } else {
+                    // Switching from DOCK to DIALOG: undock then show popup.
+                    DockEvent.fireUndock(this, this);
+                    docked = false;
+                    showing = false;
+                    // Re-trigger show as dialog.
+                    showAsDialog();
+                }
+            } else if (wantsDock) {
                 // Switching from DIALOG to DOCK: hide popup then dock.
                 HidePopupRequestEvent.builder(this).fire();
                 showing = false;
@@ -250,13 +262,7 @@ public class AskStroomAiPresenter
                 docked = true;
                 DockEvent.fire(this, this, dockBehaviour, getDockSize());
                 getView().focus();
-            } else if (wasDocked && wantsDock) {
-                // Location change while docked: undock and re-dock.
-                DockEvent.fireUndock(this, this);
-                DockEvent.fire(this, this, dockBehaviour, getDockSize());
-                getView().focus();
             }
-            // DIALOG to DIALOG (location change) — nothing to do.
         }
     }
 
@@ -268,13 +274,27 @@ public class AskStroomAiPresenter
     @Override
     public void setContext(final AskStroomAiContext data) {
         this.data = data;
+
+        // Show attachment-style context indicator.
+        if (data instanceof DashboardTableContext) {
+            getView().setContextIndicator(SvgImage.CLIPBOARD, "Table data (Dashboard)");
+        } else if (data instanceof QueryTableContext) {
+            getView().setContextIndicator(SvgImage.CLIPBOARD, "Table data (Query)");
+        } else if (data instanceof final GeneralTableContext gtc) {
+            getView().setContextIndicator(SvgImage.CLIPBOARD, "Table data (" + gtc.getRows().size()
+                                                              + " rows, " + gtc.getColumns().size() + " cols)");
+        } else {
+            getView().clearContextIndicator();
+        }
     }
 
     @Override
     public void onSendMessage(final String message) {
         getView().setSendButtonLoadingState(true);
         getView().setEmptyState(false);
-        appendMessageHtml("ai-message ai-message--user", "> " + message);
+        getView().clearContextIndicator();
+        appendMessageHtml("ai-message ai-message--user", "> " + message,
+                System.currentTimeMillis(), false);
 
         // Scroll markdown container to bottom, so the user's message is displayed
         final Element markdownContainer = getView().getMarkdownContainer();
@@ -292,6 +312,18 @@ public class AskStroomAiPresenter
                             showError(error, "Stroom AI request failed", () ->
                                     getView().setSendButtonLoadingState(false)), this);
         }, this));
+    }
+
+    @Override
+    public void onCancelProcessing() {
+        if (currentChat != null) {
+            askStroomAiClient.cancelProcessing(currentChat.getId(),
+                    success -> {
+                        // Server will set the cancellation flag; the poll loop will pick up
+                        // partial results and stop. Reset UI now so the user can type again.
+                        getView().setSendButtonLoadingState(false);
+                    }, this);
+        }
     }
 
     private void showError(final RestError error,
@@ -347,42 +379,69 @@ public class AskStroomAiPresenter
      * Render a single message with type-aware HTML structure.
      */
     private void renderMessage(final AiChatMessage msg) {
+        final long timeMs = msg.getCreateTimeMs();
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
-                appendMessageHtml("ai-message ai-message--user", "> " + msg.getMessage());
+                appendMessageHtml("ai-message ai-message--user", "> " + msg.getMessage(),
+                        timeMs, false);
                 break;
             case AI_RESPONSE:
-                appendMessageHtml("ai-message ai-message--assistant", msg.getMessage());
+                appendMessageHtml("ai-message ai-message--assistant", msg.getMessage(),
+                        timeMs, true);
                 break;
             case ERROR:
-                appendMessageHtml("ai-message ai-message--error", msg.getMessage());
+                appendMessageHtml("ai-message ai-message--error", msg.getMessage(),
+                        timeMs, false);
                 break;
             case THINKING:
                 appendCollapsibleMessage("ai-message ai-message--thinking",
-                        "\uD83E\uDD14 Thinking\u2026", msg.getMessage());
+                        SvgImage.INFO, "Thinking...", msg.getMessage(), timeMs);
                 break;
             case DASHBOARD_DATA:
             case QUERY_DATA:
             case TABLE_DATA:
                 appendCollapsibleMessage("ai-message ai-message--data",
-                        "\uD83D\uDCCA Data context", msg.getMessage());
+                        SvgImage.TABLE, "Data context", msg.getMessage(), timeMs);
                 break;
             default:
-                appendMessageHtml("ai-message", msg.getMessage());
+                appendMessageHtml("ai-message", msg.getMessage(), timeMs, false);
                 break;
         }
     }
 
     /**
-     * Append a message div with the given CSS class and markdown content.
+     * Append a message div with the given CSS class, markdown content, and timestamp.
+     * If {@code showCopy} is true, a copy button is added for AI responses.
      */
-    private void appendMessageHtml(final String cssClass, final String markdownText) {
+    private void appendMessageHtml(final String cssClass,
+                                   final String markdownText,
+                                   final long timeMs,
+                                   final boolean showCopy) {
         final Element markdownContainer = getView().getMarkdownContainer();
         final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
 
         final DivElement wrapper = Document.get().createDivElement();
         wrapper.setClassName(cssClass);
         wrapper.setInnerSafeHtml(markdownHtml);
+
+        // Add message footer (timestamp + optional copy button).
+        final DivElement footer = Document.get().createDivElement();
+        footer.setClassName("ai-message-footer");
+
+        if (showCopy) {
+            final Element copyBtn = Document.get().createElement("button");
+            copyBtn.setClassName("ai-message-copy");
+            setCopyButtonContent(copyBtn, SvgImage.COPY, "Copy");
+            addCopyClickHandler(copyBtn, markdownText);
+            footer.appendChild(copyBtn);
+        }
+
+        final Element timestamp = Document.get().createElement("span");
+        timestamp.setClassName("ai-message-timestamp");
+        timestamp.setInnerText(formatRelativeTime(timeMs));
+        footer.appendChild(timestamp);
+
+        wrapper.appendChild(footer);
         markdownContainer.appendChild(wrapper);
     }
 
@@ -390,8 +449,10 @@ public class AskStroomAiPresenter
      * Append a collapsible details/summary element for thinking and data messages.
      */
     private void appendCollapsibleMessage(final String cssClass,
+                                          final SvgImage icon,
                                           final String summaryText,
-                                          final String markdownText) {
+                                          final String markdownText,
+                                          final long timeMs) {
         final Element markdownContainer = getView().getMarkdownContainer();
         final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
 
@@ -403,11 +464,78 @@ public class AskStroomAiPresenter
         details.setClassName(cssClass);
 
         final Element summary = Document.get().createElement("summary");
-        summary.setInnerText(summaryText);
+        // Use innerHTML so the SVG icon renders inline.
+        summary.setInnerHTML("<span class='svgIcon'>" + icon.getSvg() + "</span> " + summaryText);
+
+        // Add timestamp inside summary.
+        final Element timestamp = Document.get().createElement("span");
+        timestamp.setClassName("ai-message-timestamp");
+        timestamp.setInnerText(" --- " + formatRelativeTime(timeMs));
+        summary.appendChild(timestamp);
 
         details.appendChild(summary);
         details.appendChild(contentDiv);
         markdownContainer.appendChild(details);
+    }
+
+    /**
+     * Add a click handler to copy text to the clipboard using {@link ClipboardUtil}.
+     */
+    private static void addCopyClickHandler(final Element button, final String text) {
+        DOM.sinkEvents(button, Event.ONCLICK);
+        DOM.setEventListener(button, event -> {
+            if (Event.ONCLICK == event.getTypeInt()) {
+                if (ClipboardUtil.copy(text)) {
+                    setCopyButtonContent(button, SvgImage.OK, "Copied");
+                    new com.google.gwt.user.client.Timer() {
+                        @Override
+                        public void run() {
+                            setCopyButtonContent(button, SvgImage.COPY, "Copy");
+                        }
+                    }.schedule(2000);
+                }
+            }
+        });
+    }
+
+    /**
+     * Set the content of a copy button to an SVG icon + label.
+     */
+    private static void setCopyButtonContent(final Element button,
+                                             final SvgImage icon,
+                                             final String label) {
+        button.setInnerHTML("<span class='svgIcon'>" + icon.getSvg() + "</span> " + label);
+    }
+
+    /**
+     * Format a timestamp as a relative time string (e.g., "Just now", "5 minutes ago").
+     */
+    private static String formatRelativeTime(final long timeMs) {
+        if (timeMs <= 0) {
+            return "";
+        }
+        final long now = System.currentTimeMillis();
+        final long diff = now - timeMs;
+        final long seconds = diff / 1000;
+        final long minutes = seconds / 60;
+        final long hours = minutes / 60;
+        final long days = hours / 24;
+
+        if (days > 0) {
+            return days == 1
+                    ? "Yesterday"
+                    : days + " days ago";
+        } else if (hours > 0) {
+            return hours + (hours == 1
+                    ? " hour ago"
+                    : " hours ago");
+        } else if (minutes > 0) {
+            return minutes + (minutes == 1
+                    ? " minute ago"
+                    : " minutes ago");
+        } else {
+            return "Just now";
+        }
     }
 
     @Override
@@ -416,8 +544,10 @@ public class AskStroomAiPresenter
             currentChat = chat;
             titleGenerated = false;
             lastSeenMessageId = 0;
+            data = null;
             getView().clearMessages();
             getView().setEmptyState(true);
+            getView().clearContextIndicator();
             getView().setTitle(chat.getTitle());
             getView().focus();
         }, this);
@@ -433,7 +563,9 @@ public class AskStroomAiPresenter
         // A loaded chat already has a title.
         titleGenerated = true;
         lastSeenMessageId = 0;
+        data = null;
         getView().clearMessages();
+        getView().clearContextIndicator();
         getView().setTitle(chat.getTitle());
 
         // Load messages for the selected chat.
@@ -509,6 +641,10 @@ public class AskStroomAiPresenter
         void clearMessages();
 
         void setEmptyState(boolean empty);
+
+        void setContextIndicator(SvgImage icon, String text);
+
+        void clearContextIndicator();
     }
 
     // ---- Dock preference helpers ----

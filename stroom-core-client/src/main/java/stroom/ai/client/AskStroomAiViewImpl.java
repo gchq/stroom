@@ -65,6 +65,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     InlineSvgButton run;
     @UiField
+    Label contextIndicator;
+    @UiField
     SimplePanel modelRef;
 
     @Inject
@@ -139,6 +141,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiHandler("message")
     public void onMessageKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            // Both Enter and Ctrl+Enter send the message.
             sendMessage();
         }
     }
@@ -151,7 +154,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiHandler("run")
     public void onRun(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            sendMessage();
+            if (sending) {
+                getUiHandlers().onCancelProcessing();
+            } else {
+                sendMessage();
+            }
         }
     }
 
@@ -190,6 +197,23 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public void setContextIndicator(final SvgImage icon, final String text) {
+        if (text != null && !text.isEmpty()) {
+            contextIndicator.getElement().setInnerHTML(
+                    "<span class='svgIcon'>" + icon.getSvg() + "</span> " + text);
+            contextIndicator.setVisible(true);
+        } else {
+            clearContextIndicator();
+        }
+    }
+
+    @Override
+    public void clearContextIndicator() {
+        contextIndicator.setText("");
+        contextIndicator.setVisible(false);
     }
 
     private void sendMessage() {

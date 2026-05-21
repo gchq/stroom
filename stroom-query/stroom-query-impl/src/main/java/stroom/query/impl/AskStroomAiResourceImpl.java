@@ -26,6 +26,8 @@ import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -66,8 +68,8 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     }
 
     @Override
-    public List<AiChat> listChats() {
-        return askStroomAIServiceProvider.get().listChats();
+    public ResultPage<AiChat> listChats(final FindNamedEntityCriteria criteria) {
+        return askStroomAIServiceProvider.get().listChats(criteria);
     }
 
     @Override
@@ -98,5 +100,11 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     @Override
     public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
         return askStroomAIServiceProvider.get().pollMessages(chatId, request);
+    }
+
+    @AutoLogged(OperationType.UPDATE)
+    @Override
+    public Boolean cancelProcessing(final int chatId) {
+        return askStroomAIServiceProvider.get().cancelProcessing(chatId);
     }
 }

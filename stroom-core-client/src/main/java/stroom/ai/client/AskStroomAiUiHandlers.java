@@ -26,6 +26,8 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
 
     void onSendMessage(String message);
 
+    void onCancelProcessing();
+
     void onChangeConfig();
 
     void onNewChat();

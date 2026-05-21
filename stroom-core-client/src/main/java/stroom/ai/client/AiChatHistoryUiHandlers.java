@@ -16,15 +16,12 @@
 
 package stroom.ai.client;
 
-import stroom.ai.shared.AiChat;
-
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AiChatHistoryUiHandlers extends UiHandlers {
 
-    void onSelect(AiChat chat);
+    void changeQuickFilter(String name);
 
-    void onDelete(AiChat chat);
-
-    void onOpen(AiChat chat);
+    void onFilterKeyDown(KeyDownEvent event);
 }

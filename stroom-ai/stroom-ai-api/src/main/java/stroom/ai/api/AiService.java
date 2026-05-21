@@ -21,14 +21,14 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.util.shared.UserRef;
+import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.scoring.ScoringModel;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AiService {
 
@@ -48,11 +48,11 @@ public interface AiService {
 
     // ---- Chat persistence operations ----
 
-    AiChat createChat(UserRef userRef);
+    AiChat createChat();
 
-    List<AiChat> listChats(String userUuid);
+    ResultPage<AiChat> listChats(FindNamedEntityCriteria criteria);
 
-    Optional<AiChat> getChat(int chatId);
+    AiChat getChat(int chatId);
 
     void updateChatTitle(int chatId, String title);
 
@@ -63,4 +63,8 @@ public interface AiService {
     List<AiChatMessage> getMessages(int chatId);
 
     List<AiChatMessage> getMessagesSince(int chatId, int lastSeenMessageId);
+
+    void verifyOwnership(int chatId);
+
+    void verifyOwnership(AiChat chat);
 }

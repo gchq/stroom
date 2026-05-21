@@ -28,14 +28,16 @@ import stroom.credentials.shared.AccessTokenSecret;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.api.SecurityContext;
 import stroom.util.http.HttpAuthConfiguration;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpProxyConfiguration;
 import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.UserRef;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpProxyConfig;
@@ -73,6 +75,7 @@ public class AiServiceImpl implements AiService {
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
+    private final SecurityContext securityContext;
     private final AiDao aiDao;
 
     @Inject
@@ -80,11 +83,13 @@ public class AiServiceImpl implements AiService {
                   final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                   final Provider<StoredSecrets> storedSecretsProvider,
                   final Provider<HttpClientProviderCache> httpClientCacheProvider,
+                  final SecurityContext securityContext,
                   final AiDao aiDao) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
         this.httpClientCacheProvider = httpClientCacheProvider;
+        this.securityContext = securityContext;
         this.aiDao = aiDao;
     }
 
@@ -385,27 +390,46 @@ public class AiServiceImpl implements AiService {
     // ---- Chat persistence operations (delegate to AiDao) ----
 
     @Override
-    public AiChat createChat(final UserRef userRef) {
-        return aiDao.createChat(userRef);
+    public AiChat createChat() {
+        return aiDao.createChat(securityContext.getUserRef());
     }
 
     @Override
-    public List<AiChat> listChats(final String userUuid) {
-        return aiDao.listChats(userUuid);
+    public ResultPage<AiChat> listChats(final FindNamedEntityCriteria criteria) {
+        return aiDao.listChats(securityContext.getUserRef(), criteria);
     }
 
     @Override
-    public Optional<AiChat> getChat(final int chatId) {
-        return aiDao.getChat(chatId);
+    public AiChat getChat(final int chatId) {
+        final AiChat chat = aiDao.getChat(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found: " + chatId));
+        verifyOwnership(chat);
+        return chat;
+    }
+
+    @Override
+    public void verifyOwnership(final int chatId) {
+        verifyOwnership(getChat(chatId));
+    }
+
+    @Override
+    public void verifyOwnership(final AiChat chat) {
+        final String currentUserUuid = securityContext.getUserRef().getUuid();
+        if (!currentUserUuid.equals(chat.getUserUuid())) {
+            throw new RuntimeException("Access denied: chat " + chat.getId()
+                                       + " does not belong to the current user");
+        }
     }
 
     @Override
     public void updateChatTitle(final int chatId, final String title) {
+        verifyOwnership(chatId);
         aiDao.updateChatTitle(chatId, title);
     }
 
     @Override
     public void deleteChat(final int chatId) {
+        verifyOwnership(chatId);
         aiDao.deleteChat(chatId);
     }
 
@@ -413,6 +437,7 @@ public class AiServiceImpl implements AiService {
     public AiChatMessage storeMessage(final int chatId,
                                       final AiMessageType messageType,
                                       final String message) {
+        verifyOwnership(chatId);
         return aiDao.storeMessage(chatId, messageType, message);
     }
 
@@ -423,6 +448,7 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
+        verifyOwnership(chatId);
         return aiDao.getMessagesSince(chatId, lastSeenMessageId);
     }
 }
