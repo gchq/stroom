@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.5] - 2026-05-22
+
+* Bug : Fix typo in query snippet name (`Eval first first value` => `Eval first value`).
+
+* Bug **#5549** : Make jffi extract its native library to the same dir as the LMDB native library file. Add the config prop `providedJffiLibraryPath` to allow for a provided jffi lib.
+
+
 ## [v7.12.4] - 2026-05-14
 
 * Refactor : Improve logging and system info output for Data Feed Keys.
@@ -2160,7 +2167,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.5...HEAD
+[v7.12.5]: https://github.com/gchq/stroom/compare/v7.12.4...v7.12.5
 [v7.12.4]: https://github.com/gchq/stroom/compare/v7.12.3...v7.12.4
 [v7.12.3]: https://github.com/gchq/stroom/compare/v7.12.2...v7.12.3
 [v7.12.2]: https://github.com/gchq/stroom/compare/v7.12.1...v7.12.2
