@@ -77,11 +77,12 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
     public DocRef(@JsonProperty("type") final String type,
                   @JsonProperty("uuid") final String uuid,
                   @JsonProperty("name") final String name) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(uuid);
         this.type = type;
         this.uuid = uuid;
         this.name = name;
+
+        Objects.requireNonNull(type, () -> "Null DocRef type " + toShortString());
+        Objects.requireNonNull(uuid, () -> "Null DocRef UUID " + toShortString());
     }
 
     /**

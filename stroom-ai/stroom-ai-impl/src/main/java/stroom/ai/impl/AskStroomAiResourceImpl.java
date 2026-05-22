@@ -21,14 +21,31 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
+import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.QueryTableContext;
+import stroom.docref.DocRef;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
+import event.logging.Chat;
+import event.logging.ComplexLoggedOutcome;
+import event.logging.Data;
+import event.logging.DataSources;
+import event.logging.MultiObject;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -37,17 +54,92 @@ import java.util.List;
 @AutoLogged
 class AskStroomAiResourceImpl implements AskStroomAiResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAiResourceImpl.class);
+
     private final Provider<AskStroomAIService> askStroomAIServiceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    AskStroomAiResourceImpl(final Provider<AskStroomAIService> askStroomAIServiceProvider) {
+    AskStroomAiResourceImpl(final Provider<AskStroomAIService> askStroomAIServiceProvider,
+                            final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.askStroomAIServiceProvider = askStroomAIServiceProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
-        return askStroomAIServiceProvider.get().askStroomAi(request);
+        final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "askStroomAi"))
+                .withDescription(getDescription(request))
+                .withDefaultEventAction(getSearchEventAction(request))
+                .withComplexLoggedResult(searchEventAction -> {
+                    final AskStroomAiResponse response;
+                    try {
+                        response = askStroomAIServiceProvider.get().askStroomAi(request);
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        throw e;
+                    }
+
+                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                            .withResults(MultiObject
+                                    .builder()
+                                    .addChat(Chat
+                                            .builder()
+                                            .withContent(response.getMessage())
+                                            .build())
+                                    .build())
+                            .build();
+
+                    return ComplexLoggedOutcome.success(response, newSearchEventAction);
+                })
+                .getResultAndLog();
+    }
+
+    private String getDescription(final AskStroomAiRequest request) {
+        final AskStroomAiContext context = request.getContext();
+        if (context == null) {
+            return "Asking AI a question";
+        }
+        return switch (context) {
+            case final DashboardTableContext dashboardTableContext -> "Asking AI about dashboard search results";
+            case final QueryTableContext queryTableContext -> "Asking AI about Stroom QL search results";
+            case final GeneralTableContext generalTableContext -> "Asking AI about general table data";
+        };
+    }
+
+    private SearchEventAction getSearchEventAction(final AskStroomAiRequest request) {
+        final AskStroomAiContext context = request.getContext();
+        final String dataSourceInfo;
+        if (context == null) {
+            dataSourceInfo = "Conversational";
+        } else {
+            dataSourceInfo = switch (context) {
+                case final DashboardTableContext dashboardTableContext -> "Dashboard Table";
+                case final QueryTableContext queryTableContext -> "Stroom QL Query";
+                case final GeneralTableContext generalTableContext -> "General Table";
+            };
+        }
+
+        final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
+        return SearchEventAction
+                .builder()
+                .withDataSources(dataSources)
+                .withQuery(Query.builder()
+                        .withRaw(request.getMessage())
+                        .build())
+                .withData(Data
+                        .builder()
+                        .withName("Model")
+                        .withValue(NullSafe.get(
+                                request,
+                                AskStroomAiRequest::getConfig,
+                                AskStroomAIConfig::getModelRef,
+                                DocRef::getName))
+                        .build())
+                .build();
     }
 
     @AutoLogged(OperationType.UNLOGGED)
