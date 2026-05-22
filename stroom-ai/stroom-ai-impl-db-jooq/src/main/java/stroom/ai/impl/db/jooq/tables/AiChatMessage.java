@@ -76,6 +76,11 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
     public final TableField<AiChatMessageRecord, Integer> MESSAGE_TYPE = createField(DSL.name("message_type"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
+     * The column <code>stroom.ai_chat_message.fk_attachment_id</code>.
+     */
+    public final TableField<AiChatMessageRecord, Integer> FK_ATTACHMENT_ID = createField(DSL.name("fk_attachment_id"), SQLDataType.INTEGER, this, "");
+
+    /**
      * The column <code>stroom.ai_chat_message.message</code>.
      */
     public final TableField<AiChatMessageRecord, String> MESSAGE = createField(DSL.name("message"), SQLDataType.CLOB.nullable(false), this, "");
@@ -131,7 +136,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
 
     @Override
     public List<ForeignKey<AiChatMessageRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.FK_AI_CHAT_MESSAGE_CHAT);
+        return Arrays.asList(Keys.FK_AI_CHAT_MESSAGE_CHAT, Keys.FK_AI_CHAT_MESSAGE_ATTACHMENT);
     }
 
     @Override

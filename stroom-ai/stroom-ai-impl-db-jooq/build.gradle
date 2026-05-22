@@ -56,7 +56,7 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'ai_chat|ai_chat_message'
+                        includes = 'ai_chat|ai_chat_message|ai_chat_attachment'
                         // We don't want to include flyway versioning
                         excludes = 'ai_chat_schema_version'
                         // Specify 'version' for use in optimistic concurrency control

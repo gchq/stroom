@@ -18,7 +18,6 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
 import stroom.ai.shared.AiChat;
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -35,7 +34,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public class AiChatHistoryPresenter
@@ -216,6 +214,7 @@ public class AiChatHistoryPresenter
 //        HidePopupRequestEvent.builder(this).action(DialogAction.OK).fire();
 //    }
 //
+
     public interface AiChatHistoryView extends View, Focus, HasUiHandlers<AiChatHistoryUiHandlers> {
 
 //        void setData(List<AiChat> chats);

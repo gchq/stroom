@@ -41,23 +41,29 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -137,6 +143,37 @@ public class AskStroomAiPresenter
                     askStroomAiClient.setConfig(newConfig);
                 }, this)));
 
+        registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                // Capture copy click events.
+                final Element button = ElementUtil
+                        .findParent(target, element -> element.getTagName().equalsIgnoreCase("button"),
+                                2);
+                if (button != null) {
+                    final String data = button.getAttribute("data");
+                    if (data != null) {
+                        if (ClipboardUtil.copy(data)) {
+                            // Code to change label
+                            final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
+                            final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
+                            if (copyLabel != null) {
+                                copyIcon.setInnerHTML(SvgImage.OK.getSvg());
+                                copyLabel.setInnerHTML("Copied");
+                                new com.google.gwt.user.client.Timer() {
+                                    @Override
+                                    public void run() {
+                                        copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
+                                        copyLabel.setInnerHTML("Copy");
+                                    }
+                                }.schedule(2000);
+                            }
+                        }
+                    }
+                }
+            }
+        }, ClickEvent.getType()));
+
         // Listen for dock splitter resize events to persist the new size.
         addRegisteredHandler(DockResizeEvent.getType(), event -> {
             if (docked) {
@@ -169,6 +206,26 @@ public class AskStroomAiPresenter
             ensureChat(() -> {
                 setContext(event.getData());
                 getView().focus();
+
+                // Immediately send context-only request to create the attachment on the server
+                // and start the async download. The ATTACHMENT message will appear in the chat
+                // history when we poll for new messages.
+                if (this.data != null) {
+                    getView().setEmptyState(false);
+                    askStroomAiClient.getConfig(config -> {
+                        final AskStroomAiRequest request = new AskStroomAiRequest(
+                                currentChat, config, this.data, null);
+                        // Generate a title from the attachment type.
+                        maybeGenerateTitle(getContextTitle(this.data));
+                        // Clear context so it isn't re-attached when the user sends a question.
+                        this.data = null;
+                        getView().clearContextIndicator();
+                        askStroomAiClient.sendMessage(request,
+                                response -> pollForNewMessages(),
+                                error -> showError(error, "Failed to create attachment", null),
+                                this);
+                    }, getView());
+                }
             });
         });
     }
@@ -228,7 +285,6 @@ public class AskStroomAiPresenter
     }
 
     void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
-        final DockBehaviour oldBehaviour = this.currentDockBehaviour;
         this.currentDockBehaviour = dockBehaviour;
 
         // Persist to user preferences.
@@ -293,16 +349,21 @@ public class AskStroomAiPresenter
         getView().setSendButtonLoadingState(true);
         getView().setEmptyState(false);
         getView().clearContextIndicator();
-        appendMessageHtml("ai-message ai-message--user", "> " + message,
+
+        final HtmlBuilder hb = new HtmlBuilder();
+        appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
                 System.currentTimeMillis(), false);
+        appendToContainer(hb);
 
         // Scroll markdown container to bottom, so the user's message is displayed
-        final Element markdownContainer = getView().getMarkdownContainer();
-        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        final SimplePanel markdownContainer = getView().getMarkdownContainer();
+        markdownContainer.getElement().setScrollTop(markdownContainer.getElement().getScrollHeight());
 
         ensureChat(() -> askStroomAiClient.getConfig(config -> {
             final AskStroomAiRequest request = new AskStroomAiRequest(
                     currentChat, config, data, message);
+            // Clear context so follow-up messages don't re-attach the same data.
+            this.data = null;
             askStroomAiClient.sendMessage(request,
                     response -> {
                         // Poll to get the properly typed, persisted messages.
@@ -311,7 +372,7 @@ public class AskStroomAiPresenter
                     }, error ->
                             showError(error, "Stroom AI request failed", () ->
                                     getView().setSendButtonLoadingState(false)), this);
-        }, this));
+        }, getView()));
     }
 
     @Override
@@ -322,7 +383,7 @@ public class AskStroomAiPresenter
                         // Server will set the cancellation flag; the poll loop will pick up
                         // partial results and stop. Reset UI now so the user can type again.
                         getView().setSendButtonLoadingState(false);
-                    }, this);
+                    }, getView());
         }
     }
 
@@ -346,17 +407,17 @@ public class AskStroomAiPresenter
         }
         askStroomAiClient.pollMessages(currentChat.getId(), lastSeenMessageId, response -> {
             if (response.getNewMessages() != null && !response.getNewMessages().isEmpty()) {
+                final HtmlBuilder hb = new HtmlBuilder();
                 for (final AiChatMessage msg : response.getNewMessages()) {
                     // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
                     if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
-                        renderMessage(msg);
+                        renderMessage(hb, msg);
                     }
                     // Track the highest seen message ID.
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
                 // Scroll to show new content.
-                final Element markdownContainer = getView().getMarkdownContainer();
-                markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+                appendToContainer(hb);
             }
             if (!response.isComplete()) {
                 // If the conversation is still in-flight, schedule another poll after 1s.
@@ -375,36 +436,50 @@ public class AskStroomAiPresenter
         }, this);
     }
 
+    void appendToContainer(final HtmlBuilder hb) {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        final String current = NullSafe.toString(markdownContainer.getInnerHTML());
+        markdownContainer.setInnerHTML(current + hb.toSafeHtml().asString());
+        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+    }
+
     /**
      * Render a single message with type-aware HTML structure.
      */
-    private void renderMessage(final AiChatMessage msg) {
+    private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg) {
         final long timeMs = msg.getCreateTimeMs();
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
-                appendMessageHtml("ai-message ai-message--user", "> " + msg.getMessage(),
+                appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
                         timeMs, false);
                 break;
             case AI_RESPONSE:
-                appendMessageHtml("ai-message ai-message--assistant", msg.getMessage(),
+                appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
                         timeMs, true);
                 break;
             case ERROR:
-                appendMessageHtml("ai-message ai-message--error", msg.getMessage(),
+                appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
                         timeMs, false);
                 break;
             case THINKING:
-                appendCollapsibleMessage("ai-message ai-message--thinking",
+                appendCollapsibleMessage(hb, "ai-message ai-message--thinking",
                         SvgImage.INFO, "Thinking...", msg.getMessage(), timeMs);
                 break;
             case DASHBOARD_DATA:
             case QUERY_DATA:
             case TABLE_DATA:
-                appendCollapsibleMessage("ai-message ai-message--data",
+                appendCollapsibleMessage(hb, "ai-message ai-message--data",
                         SvgImage.TABLE, "Data context", msg.getMessage(), timeMs);
                 break;
+            case ATTACHMENT:
+                appendCollapsibleMessage(hb, "ai-message ai-message--data",
+                        SvgImage.TABLE,
+                        NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment"),
+                        "Attachment ID: " + NullSafe.get(msg, AiChatMessage::getAttachmentId),
+                        timeMs);
+                break;
             default:
-                appendMessageHtml("ai-message", msg.getMessage(), timeMs, false);
+                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, false);
                 break;
         }
     }
@@ -413,129 +488,82 @@ public class AskStroomAiPresenter
      * Append a message div with the given CSS class, markdown content, and timestamp.
      * If {@code showCopy} is true, a copy button is added for AI responses.
      */
-    private void appendMessageHtml(final String cssClass,
+    private void appendMessageHtml(final HtmlBuilder hb,
+                                   final String cssClass,
                                    final String markdownText,
                                    final long timeMs,
                                    final boolean showCopy) {
-        final Element markdownContainer = getView().getMarkdownContainer();
         final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
 
-        final DivElement wrapper = Document.get().createDivElement();
-        wrapper.setClassName(cssClass);
-        wrapper.setInnerSafeHtml(markdownHtml);
+        hb.div(wrapper -> {
+            wrapper.append(markdownHtml);
+            // Add message footer (timestamp + optional copy button).
+            wrapper.div(footer -> {
 
-        // Add message footer (timestamp + optional copy button).
-        final DivElement footer = Document.get().createDivElement();
-        footer.setClassName("ai-message-footer");
+                // Add copy button.
+                if (showCopy) {
+                    footer.elem(button -> {
+                                setCopyButtonContent(button, SvgImage.COPY, "Copy");
+                            }, SafeHtmlUtils.fromSafeConstant("button"),
+                            Attribute.className("ai-message-copy"),
+                            new Attribute("data", markdownText));
+                }
 
-        if (showCopy) {
-            final Element copyBtn = Document.get().createElement("button");
-            copyBtn.setClassName("ai-message-copy");
-            setCopyButtonContent(copyBtn, SvgImage.COPY, "Copy");
-            addCopyClickHandler(copyBtn, markdownText);
-            footer.appendChild(copyBtn);
-        }
+                // Add timestamp.
+                timestamp(footer, timeMs);
 
-        final Element timestamp = Document.get().createElement("span");
-        timestamp.setClassName("ai-message-timestamp");
-        timestamp.setInnerText(formatRelativeTime(timeMs));
-        footer.appendChild(timestamp);
-
-        wrapper.appendChild(footer);
-        markdownContainer.appendChild(wrapper);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className(cssClass));
     }
 
     /**
      * Append a collapsible details/summary element for thinking and data messages.
      */
-    private void appendCollapsibleMessage(final String cssClass,
+    private void appendCollapsibleMessage(final HtmlBuilder hb,
+                                          final String cssClass,
                                           final SvgImage icon,
                                           final String summaryText,
                                           final String markdownText,
                                           final long timeMs) {
-        final Element markdownContainer = getView().getMarkdownContainer();
-        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
+        hb.div(details -> {
 
-        // Build: <details class="..."><summary>...</summary><div>rendered content</div></details>
-        final DivElement contentDiv = Document.get().createDivElement();
-        contentDiv.setInnerSafeHtml(markdownHtml);
+            details.div(summary -> {
+                icon(summary, icon);
+                summary.append(summaryText);
+            }, Attribute.className("ai-message-header"));
 
-        final Element details = Document.get().createElement("details");
-        details.setClassName(cssClass);
+            // Add markdown message.
+            details.div(contentDiv -> {
+                contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText));
+            });
 
-        final Element summary = Document.get().createElement("summary");
-        // Use innerHTML so the SVG icon renders inline.
-        summary.setInnerHTML("<span class='svgIcon'>" + icon.getSvg() + "</span> " + summaryText);
-
-        // Add timestamp inside summary.
-        final Element timestamp = Document.get().createElement("span");
-        timestamp.setClassName("ai-message-timestamp");
-        timestamp.setInnerText(" --- " + formatRelativeTime(timeMs));
-        summary.appendChild(timestamp);
-
-        details.appendChild(summary);
-        details.appendChild(contentDiv);
-        markdownContainer.appendChild(details);
+            // Add timestamp footer.
+            details.div(footer -> {
+                timestamp(footer, timeMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className(cssClass));
     }
 
-    /**
-     * Add a click handler to copy text to the clipboard using {@link ClipboardUtil}.
-     */
-    private static void addCopyClickHandler(final Element button, final String text) {
-        DOM.sinkEvents(button, Event.ONCLICK);
-        DOM.setEventListener(button, event -> {
-            if (Event.ONCLICK == event.getTypeInt()) {
-                if (ClipboardUtil.copy(text)) {
-                    setCopyButtonContent(button, SvgImage.OK, "Copied");
-                    new com.google.gwt.user.client.Timer() {
-                        @Override
-                        public void run() {
-                            setCopyButtonContent(button, SvgImage.COPY, "Copy");
-                        }
-                    }.schedule(2000);
-                }
-            }
-        });
+    private static void icon(final HtmlBuilder hb, final SvgImage icon) {
+        hb.div(div -> {
+            div.appendTrustedString(icon.getSvg());
+        }, Attribute.className("svgIcon " + icon.getClassName()));
+    }
+
+    private void timestamp(final HtmlBuilder html, final long timeMs) {
+        html.div(timestamp -> {
+            timestamp.append(RelativeTimeUtil.formatRelativeTime(timeMs));
+        }, Attribute.className("ai-message-timestamp"));
     }
 
     /**
      * Set the content of a copy button to an SVG icon + label.
      */
-    private static void setCopyButtonContent(final Element button,
+    private static void setCopyButtonContent(final HtmlBuilder button,
                                              final SvgImage icon,
                                              final String label) {
-        button.setInnerHTML("<span class='svgIcon'>" + icon.getSvg() + "</span> " + label);
-    }
-
-    /**
-     * Format a timestamp as a relative time string (e.g., "Just now", "5 minutes ago").
-     */
-    private static String formatRelativeTime(final long timeMs) {
-        if (timeMs <= 0) {
-            return "";
-        }
-        final long now = System.currentTimeMillis();
-        final long diff = now - timeMs;
-        final long seconds = diff / 1000;
-        final long minutes = seconds / 60;
-        final long hours = minutes / 60;
-        final long days = hours / 24;
-
-        if (days > 0) {
-            return days == 1
-                    ? "Yesterday"
-                    : days + " days ago";
-        } else if (hours > 0) {
-            return hours + (hours == 1
-                    ? " hour ago"
-                    : " hours ago");
-        } else if (minutes > 0) {
-            return minutes + (minutes == 1
-                    ? " minute ago"
-                    : " minutes ago");
-        } else {
-            return "Just now";
-        }
+        icon(button, icon);
+        button.div(text -> text.append(label), Attribute.className("ai-message-copy-label"));
     }
 
     @Override
@@ -570,18 +598,18 @@ public class AskStroomAiPresenter
 
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
+            final HtmlBuilder hb = new HtmlBuilder();
             if (messages != null && !messages.isEmpty()) {
                 getView().setEmptyState(false);
                 for (final AiChatMessage msg : messages) {
-                    renderMessage(msg);
+                    renderMessage(hb, msg);
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
             } else {
                 getView().setEmptyState(true);
             }
             // Scroll to bottom after loading all messages.
-            final Element markdownContainer = getView().getMarkdownContainer();
-            markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+            appendToContainer(hb);
             getView().focus();
         }, this);
     }
@@ -626,11 +654,25 @@ public class AskStroomAiPresenter
         }, this);
     }
 
-    public interface AskStroomAiView extends View, Focus, HasUiHandlers<AskStroomAiUiHandlers> {
+    /**
+     * Returns a human-readable title for the given context type.
+     */
+    private String getContextTitle(final AskStroomAiContext context) {
+        if (context instanceof DashboardTableContext) {
+            return "Dashboard table analysis";
+        } else if (context instanceof QueryTableContext) {
+            return "Query table analysis";
+        } else if (context instanceof final GeneralTableContext gtc) {
+            return "Table analysis (" + gtc.getRows().size() + " rows)";
+        }
+        return "Table analysis";
+    }
+
+    public interface AskStroomAiView extends View, Focus, TaskMonitorFactory, HasUiHandlers<AskStroomAiUiHandlers> {
 
         void setModelRefSelection(View view);
 
-        Element getMarkdownContainer();
+        SimplePanel getMarkdownContainer();
 
         String getMessage();
 

@@ -5,6 +5,7 @@ package stroom.ai.impl.db.jooq;
 
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 import org.jooq.Catalog;
@@ -34,6 +35,11 @@ public class Stroom extends SchemaImpl {
     public final AiChat AI_CHAT = AiChat.AI_CHAT;
 
     /**
+     * The table <code>stroom.ai_chat_attachment</code>.
+     */
+    public final AiChatAttachment AI_CHAT_ATTACHMENT = AiChatAttachment.AI_CHAT_ATTACHMENT;
+
+    /**
      * The table <code>stroom.ai_chat_message</code>.
      */
     public final AiChatMessage AI_CHAT_MESSAGE = AiChatMessage.AI_CHAT_MESSAGE;
@@ -55,6 +61,7 @@ public class Stroom extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             AiChat.AI_CHAT,
+            AiChatAttachment.AI_CHAT_ATTACHMENT,
             AiChatMessage.AI_CHAT_MESSAGE
         );
     }

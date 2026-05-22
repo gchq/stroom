@@ -39,13 +39,17 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
                 If the records do not contain relevant details, say "No relevant information."
             """;
     public static final String DEFAULT_TABLE_QUERY_USER_PROMPT = """
+                CONVERSATION CONTEXT:
+                {{context}}
+
                 USER QUERY:
                 {{query}}
 
                 DATA TABLE:
                 {{table}}
 
-                Provide findings relevant only to these records, in a concise structured format.
+                Provide findings relevant only to these records, in a concise structured format. \
+                Use the conversation context to understand what has been previously discussed.
             """;
     public static final String DEFAULT_SUMMARY_MERGE_PROMPT = """
                 Merge the following TWO summaries into a single improved summary. \
@@ -113,8 +117,8 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
     }
 
     @JsonPropertyDescription(
-            "User prompt template for table queries. Use {{query}} for the user's question " +
-            "and {{table}} for the markdown table data")
+            "User prompt template for table queries. Use {{query}} for the user's question, " +
+            "{{table}} for the markdown table data, and {{context}} for prior conversation history")
     public String getTableQueryUserPrompt() {
         return tableQueryUserPrompt;
     }

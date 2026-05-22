@@ -19,8 +19,10 @@ ext.moduleName = 'stroom.ai.impl'
 dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -28,7 +30,10 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-query:stroom-query-impl')
+    implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

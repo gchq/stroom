@@ -49,6 +49,7 @@ public class AiModule extends AbstractModule {
                 .bind(OpenAIModelDoc.TYPE, OpenAIModelStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(OpenAIModelResourceImpl.class);
+                .bind(OpenAIModelResourceImpl.class)
+                .bind(AskStroomAiResourceImpl.class);
     }
 }

@@ -17,7 +17,10 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.docref.DocRef;
@@ -41,6 +44,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -203,6 +207,54 @@ public class MockAiService implements AiService {
 
     @Override
     public void verifyOwnership(final AiChat chat) {
+
+    }
+
+    @Override
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final Integer attachmentId,
+                                      final String message) {
+        return null;
+    }
+
+    @Override
+    public AiChatAttachment createAttachment(final int chatId, final AiAttachmentType type, final String contextJson) {
+        return null;
+    }
+
+    @Override
+    public void updateAttachmentStatus(final int attachmentId,
+                                       final AiAttachmentStatus status,
+                                       final String dataMarkdown,
+                                       final Integer rowCount,
+                                       final String description,
+                                       final String errorMessage) {
+
+    }
+
+    @Override
+    public Optional<AiChatAttachment> getAttachment(final int attachmentId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
+        return List.of();
+    }
+
+    @Override
+    public String getAttachmentData(final int attachmentId) {
+        return "";
+    }
+
+    @Override
+    public void updateMessageText(final int messageId, final String message) {
+
+    }
+
+    @Override
+    public void deleteMessage(final int messageId) {
 
     }
 }

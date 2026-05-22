@@ -33,6 +33,26 @@ CREATE TABLE IF NOT EXISTS ai_chat (
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 --
+-- Create the ai_chat_attachment table
+--
+CREATE TABLE IF NOT EXISTS ai_chat_attachment (
+    id                    int NOT NULL AUTO_INCREMENT,
+    fk_ai_chat_id         int NOT NULL,
+    create_time_ms        bigint NOT NULL,
+    update_time_ms        bigint NOT NULL,
+    status                int NOT NULL,
+    attachment_type       int NOT NULL,
+    description           varchar(255),
+    context_json          longtext,
+    data_markdown         longtext,
+    row_count             int,
+    error_message         varchar(1024),
+    PRIMARY KEY           (id),
+    CONSTRAINT fk_ai_chat_attachment_chat
+    FOREIGN KEY (fk_ai_chat_id) REFERENCES ai_chat (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+--
 -- Create the ai_chat_message table
 --
 CREATE TABLE IF NOT EXISTS ai_chat_message (
@@ -40,14 +60,19 @@ CREATE TABLE IF NOT EXISTS ai_chat_message (
     fk_ai_chat_id         int NOT NULL,
     create_time_ms        bigint NOT NULL,
     message_type          int NOT NULL,
+    fk_attachment_id      int DEFAULT NULL,
     message               longtext NOT NULL,
     PRIMARY KEY           (id),
     CONSTRAINT fk_ai_chat_message_chat
-        FOREIGN KEY (fk_ai_chat_id) REFERENCES ai_chat (id) ON DELETE CASCADE
+    FOREIGN KEY (fk_ai_chat_id) REFERENCES ai_chat (id) ON DELETE CASCADE,
+    CONSTRAINT fk_ai_chat_message_attachment
+    FOREIGN KEY (fk_attachment_id) REFERENCES ai_chat_attachment (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_ai_chat_user_uuid ON ai_chat (user_uuid);
+CREATE INDEX idx_ai_chat_attachment_chat_id ON ai_chat_attachment (fk_ai_chat_id);
 CREATE INDEX idx_ai_chat_message_chat_id ON ai_chat_message (fk_ai_chat_id);
+
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

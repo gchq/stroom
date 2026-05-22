@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:p="urn:import:stroom.widget.button.client">
+             xmlns:p="urn:import:stroom.widget.button.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
             <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
@@ -23,11 +24,12 @@
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
                     <g:Label ui:field="contextIndicator"
                              styleName="askStroomAiViewImpl-contextChip"/>
-                    <g:TextBox ui:field="message" addStyleNames="dock-max w-100"/>
-                    <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
+                    <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
+                    <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+                    <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
                 </g:FlowPanel>
             </g:FlowPanel>
         </g:FlowPanel>

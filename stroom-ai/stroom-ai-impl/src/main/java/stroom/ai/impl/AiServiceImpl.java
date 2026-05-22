@@ -18,7 +18,10 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.credentials.api.KeyStore;
@@ -450,5 +453,65 @@ public class AiServiceImpl implements AiService {
     public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
         verifyOwnership(chatId);
         return aiDao.getMessagesSince(chatId, lastSeenMessageId);
+    }
+
+    @Override
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final Integer attachmentId,
+                                      final String message) {
+        verifyOwnership(chatId);
+        return aiDao.storeMessage(chatId, messageType, attachmentId, message);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public void updateMessageText(final int messageId, final String message) {
+        aiDao.updateMessageText(messageId, message);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public void deleteMessage(final int messageId) {
+        aiDao.deleteMessage(messageId);
+    }
+
+    // ---- Attachment operations (delegate to AiDao) ----
+
+    @Override
+    public AiChatAttachment createAttachment(final int chatId,
+                                             final AiAttachmentType type,
+                                             final String contextJson) {
+        verifyOwnership(chatId);
+        return aiDao.createAttachment(chatId, type, contextJson);
+    }
+
+    // No ownership check — internal-only, called from async download threads.
+    @Override
+    public void updateAttachmentStatus(final int attachmentId,
+                                       final AiAttachmentStatus status,
+                                       final String dataMarkdown,
+                                       final Integer rowCount,
+                                       final String description,
+                                       final String errorMessage) {
+        aiDao.updateAttachmentStatus(attachmentId, status, dataMarkdown, rowCount, description, errorMessage);
+    }
+
+    // No ownership check — internal-only, resolves by attachment ID not chat.
+    @Override
+    public Optional<AiChatAttachment> getAttachment(final int attachmentId) {
+        return aiDao.getAttachment(attachmentId);
+    }
+
+    @Override
+    public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
+        verifyOwnership(chatId);
+        return aiDao.getAttachmentsByChatId(chatId);
+    }
+
+    // No ownership check — internal-only, loads large data for server-side LLM processing.
+    @Override
+    public String getAttachmentData(final int attachmentId) {
+        return aiDao.getAttachmentData(attachmentId);
     }
 }

@@ -75,17 +75,31 @@ public class AiChatMessageRecord extends UpdatableRecordImpl<AiChatMessageRecord
     }
 
     /**
+     * Setter for <code>stroom.ai_chat_message.fk_attachment_id</code>.
+     */
+    public void setFkAttachmentId(Integer value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_message.fk_attachment_id</code>.
+     */
+    public Integer getFkAttachmentId() {
+        return (Integer) get(4);
+    }
+
+    /**
      * Setter for <code>stroom.ai_chat_message.message</code>.
      */
     public void setMessage(String value) {
-        set(4, value);
+        set(5, value);
     }
 
     /**
      * Getter for <code>stroom.ai_chat_message.message</code>.
      */
     public String getMessage() {
-        return (String) get(4);
+        return (String) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -111,13 +125,14 @@ public class AiChatMessageRecord extends UpdatableRecordImpl<AiChatMessageRecord
     /**
      * Create a detached, initialised AiChatMessageRecord
      */
-    public AiChatMessageRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Integer messageType, String message) {
+    public AiChatMessageRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Integer messageType, Integer fkAttachmentId, String message) {
         super(AiChatMessage.AI_CHAT_MESSAGE);
 
         setId(id);
         setFkAiChatId(fkAiChatId);
         setCreateTimeMs(createTimeMs);
         setMessageType(messageType);
+        setFkAttachmentId(fkAttachmentId);
         setMessage(message);
         resetChangedOnNotNull();
     }

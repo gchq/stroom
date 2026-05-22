@@ -17,11 +17,14 @@
 package stroom.ai.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class AiChatMessage {
 
@@ -34,6 +37,8 @@ public class AiChatMessage {
     @JsonProperty
     private final AiMessageType messageType;
     @JsonProperty
+    private final Integer attachmentId;
+    @JsonProperty
     private final String message;
 
     @JsonCreator
@@ -41,11 +46,13 @@ public class AiChatMessage {
                          @JsonProperty("chatId") final int chatId,
                          @JsonProperty("createTimeMs") final long createTimeMs,
                          @JsonProperty("messageType") final AiMessageType messageType,
+                         @JsonProperty("attachmentId") final Integer attachmentId,
                          @JsonProperty("message") final String message) {
         this.id = id;
         this.chatId = chatId;
         this.createTimeMs = createTimeMs;
         this.messageType = messageType;
+        this.attachmentId = attachmentId;
         this.message = message;
     }
 
@@ -65,6 +72,10 @@ public class AiChatMessage {
         return messageType;
     }
 
+    public Integer getAttachmentId() {
+        return attachmentId;
+    }
+
     public String getMessage() {
         return message;
     }
@@ -79,12 +90,13 @@ public class AiChatMessage {
                && chatId == that.chatId
                && createTimeMs == that.createTimeMs
                && messageType == that.messageType
+               && Objects.equals(attachmentId, that.attachmentId)
                && Objects.equals(message, that.message);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, chatId, createTimeMs, messageType, message);
+        return Objects.hash(id, chatId, createTimeMs, messageType, attachmentId, message);
     }
 
     @Override
@@ -94,6 +106,7 @@ public class AiChatMessage {
                ", chatId=" + chatId +
                ", createTimeMs=" + createTimeMs +
                ", messageType=" + messageType +
+               ", attachmentId=" + attachmentId +
                ", message='" + message + '\'' +
                '}';
     }

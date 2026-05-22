@@ -3,7 +3,6 @@
     background-color: var(--control__background-color);
     color: var(--control__text-color);
     display: flex;
-    gap: var(--control__padding--vertical);
 }
 
 .dialog-content .askStroomAiViewImpl {
@@ -32,7 +31,7 @@
 }
 
 .askStroomAiViewImpl-middle {
-    padding: 0 5px;
+    padding: 2px 5px;
 }
 
 .askStroomAiViewImpl-bottom {
@@ -51,6 +50,7 @@
 
 .askStroomAiViewImpl-messagePane {
     gap: 5px;
+    align-items: center;
 }
 
 .askStroomAiViewImpl-contextChip {
@@ -72,24 +72,30 @@
     background: none;
 }
 
-.askStroomAiViewImpl-messagePane .play svg {
+.askStroomAiViewImpl-modelPane {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.askStroomAiViewImpl-modelPane .play svg {
     color: #4caf50;
 }
 
-.askStroomAiViewImpl-messagePane .pause svg {
+.askStroomAiViewImpl-modelPane .pause svg {
     color: #2196f3;
 }
 
-.askStroomAiViewImpl-messagePane .stop svg {
+.askStroomAiViewImpl-modelPane .stop svg {
     color: #d32f2f;
-}
-
-.askStroomAiViewImpl-modelPane {
-
 }
 
 .askStroomAiViewImpl-modelPane .dropDownView-container {
     width: 100%;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-button {
+    bottom: 3px;
 }
 
 .askStroomAiViewImpl-bottom button.Button {
@@ -119,6 +125,7 @@
     margin: 4px 0;
     border-radius: 6px;
     line-height: 1.5;
+    word-wrap: break-word;
 }
 
 .ai-message--user {
@@ -129,6 +136,7 @@
     border-left: 3px solid var(--control__border-color--focused);
     margin: 0;
     padding-left: 8px;
+    word-wrap: break-word;
 }
 
 .ai-message--assistant {
@@ -193,11 +201,15 @@
 
 /* ---- Message footer (timestamp + copy) ---- */
 
+.ai-message-header {
+    display: flex;
+    gap: 8px;
+}
+
 .ai-message-footer {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 4px;
 }
 
 .ai-message-timestamp {
@@ -207,40 +219,19 @@
 }
 
 .ai-message-copy {
-    font-size: 0.7em;
     color: var(--control__text-color--disabled);
     background: none;
     border: 1px solid var(--control__border-color);
-    border-radius: 3px;
-    padding: 1px 6px;
-    cursor: pointer;
-    line-height: 1.4;
+    padding: 2px 6px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border-radius: .25rem;
 }
 
 .ai-message-copy:hover {
     color: var(--control__text-color);
     border-color: var(--control__text-color);
-}
-
-/* ---- Inline SVG icons ---- */
-
-.ai-message-copy .svgIcon,
-.ai-message--thinking summary .svgIcon,
-.ai-message--data summary .svgIcon,
-.askStroomAiViewImpl-contextIndicator .svgIcon {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    vertical-align: -1px;
-}
-
-.ai-message-copy .svgIcon svg,
-.ai-message--thinking summary .svgIcon svg,
-.ai-message--data summary .svgIcon svg,
-.askStroomAiViewImpl-contextIndicator .svgIcon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
 }
 
 .aiChatHistoryCell {

@@ -17,7 +17,10 @@
 package stroom.ai.impl.db;
 
 import stroom.ai.impl.AiDao;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.db.util.JooqUtil;
@@ -36,6 +39,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static stroom.ai.impl.db.jooq.tables.AiChat.AI_CHAT;
+import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
 import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 
 public class AiDaoImpl implements AiDao {
@@ -55,6 +59,7 @@ public class AiDaoImpl implements AiDao {
                     record.get(AI_CHAT_MESSAGE.CREATE_TIME_MS),
                     AiMessageType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
                             record.get(AI_CHAT_MESSAGE.MESSAGE_TYPE).byteValue()),
+                    record.get(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID),
                     record.get(AI_CHAT_MESSAGE.MESSAGE));
 
     private final AiDbConnProvider aiDbConnProvider;
@@ -159,7 +164,41 @@ public class AiDaoImpl implements AiDao {
                     .where(AI_CHAT.ID.eq(chatId))
                     .execute();
 
-            return new AiChatMessage(id, chatId, now, messageType, message);
+            return new AiChatMessage(id, chatId, now, messageType, null, message);
+        });
+    }
+
+    @Override
+    public AiChatMessage storeMessage(final int chatId,
+                                      final AiMessageType messageType,
+                                      final Integer attachmentId,
+                                      final String message) {
+        final long now = System.currentTimeMillis();
+        return JooqUtil.transactionResult(aiDbConnProvider, context -> {
+            final var insert = context
+                    .insertInto(AI_CHAT_MESSAGE)
+                    .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
+                    .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
+                    .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) messageType.getPrimitiveValue())
+                    .set(AI_CHAT_MESSAGE.MESSAGE, message);
+
+            if (attachmentId != null) {
+                insert.set(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID, attachmentId);
+            }
+
+            final Integer id = insert
+                    .returning(AI_CHAT_MESSAGE.ID)
+                    .fetchOne(AI_CHAT_MESSAGE.ID);
+
+            Objects.requireNonNull(id, "Null chat message id");
+
+            context
+                    .update(AI_CHAT)
+                    .set(AI_CHAT.UPDATE_TIME_MS, now)
+                    .where(AI_CHAT.ID.eq(chatId))
+                    .execute();
+
+            return new AiChatMessage(id, chatId, now, messageType, attachmentId, message);
         });
     }
 
@@ -184,5 +223,129 @@ public class AiDaoImpl implements AiDao {
                         .orderBy(AI_CHAT_MESSAGE.CREATE_TIME_MS.asc())
                         .fetch())
                 .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
+    }
+
+    @Override
+    public void updateMessageText(final int messageId, final String message) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_MESSAGE)
+                .set(AI_CHAT_MESSAGE.MESSAGE, message)
+                .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                .execute());
+    }
+
+    @Override
+    public void deleteMessage(final int messageId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .deleteFrom(AI_CHAT_MESSAGE)
+                .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                .execute());
+    }
+
+    // ---- Attachment operations ----
+
+    private static final Function<Record, AiChatAttachment> RECORD_TO_ATTACHMENT = record ->
+            new AiChatAttachment(
+                    record.get(AI_CHAT_ATTACHMENT.ID),
+                    record.get(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID),
+                    record.get(AI_CHAT_ATTACHMENT.CREATE_TIME_MS),
+                    record.get(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS),
+                    AiAttachmentStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                            record.get(AI_CHAT_ATTACHMENT.STATUS).byteValue()),
+                    AiAttachmentType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                            record.get(AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE).byteValue()),
+                    record.get(AI_CHAT_ATTACHMENT.DESCRIPTION),
+                    record.get(AI_CHAT_ATTACHMENT.ROW_COUNT),
+                    record.get(AI_CHAT_ATTACHMENT.ERROR_MESSAGE));
+
+    @Override
+    public AiChatAttachment createAttachment(final int chatId,
+                                             final AiAttachmentType type,
+                                             final String contextJson) {
+        final long now = System.currentTimeMillis();
+        final int statusValue = (int) AiAttachmentStatus.PENDING.getPrimitiveValue();
+        final int typeValue = (int) type.getPrimitiveValue();
+
+        final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .insertInto(AI_CHAT_ATTACHMENT)
+                .set(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID, chatId)
+                .set(AI_CHAT_ATTACHMENT.CREATE_TIME_MS, now)
+                .set(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS, now)
+                .set(AI_CHAT_ATTACHMENT.STATUS, statusValue)
+                .set(AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE, typeValue)
+                .set(AI_CHAT_ATTACHMENT.CONTEXT_JSON, contextJson)
+                .returning(AI_CHAT_ATTACHMENT.ID)
+                .fetchOne(AI_CHAT_ATTACHMENT.ID));
+
+        return new AiChatAttachment(id, chatId, now, now,
+                AiAttachmentStatus.PENDING, type, null, null, null);
+    }
+
+    @Override
+    public void updateAttachmentStatus(final int attachmentId,
+                                       final AiAttachmentStatus status,
+                                       final String dataMarkdown,
+                                       final Integer rowCount,
+                                       final String description,
+                                       final String errorMessage) {
+        final long now = System.currentTimeMillis();
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_ATTACHMENT)
+                .set(AI_CHAT_ATTACHMENT.STATUS, (int) status.getPrimitiveValue())
+                .set(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS, now)
+                .set(AI_CHAT_ATTACHMENT.DATA_MARKDOWN, dataMarkdown)
+                .set(AI_CHAT_ATTACHMENT.ROW_COUNT, rowCount)
+                .set(AI_CHAT_ATTACHMENT.DESCRIPTION, description)
+                .set(AI_CHAT_ATTACHMENT.ERROR_MESSAGE, errorMessage)
+                .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
+                .execute());
+    }
+
+    @Override
+    public Optional<AiChatAttachment> getAttachment(final int attachmentId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(
+                                AI_CHAT_ATTACHMENT.ID,
+                                AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID,
+                                AI_CHAT_ATTACHMENT.CREATE_TIME_MS,
+                                AI_CHAT_ATTACHMENT.UPDATE_TIME_MS,
+                                AI_CHAT_ATTACHMENT.STATUS,
+                                AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE,
+                                AI_CHAT_ATTACHMENT.DESCRIPTION,
+                                AI_CHAT_ATTACHMENT.ROW_COUNT,
+                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
+                        .from(AI_CHAT_ATTACHMENT)
+                        .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
+                        .fetchOptional())
+                .map(RECORD_TO_ATTACHMENT);
+    }
+
+    @Override
+    public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(
+                                AI_CHAT_ATTACHMENT.ID,
+                                AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID,
+                                AI_CHAT_ATTACHMENT.CREATE_TIME_MS,
+                                AI_CHAT_ATTACHMENT.UPDATE_TIME_MS,
+                                AI_CHAT_ATTACHMENT.STATUS,
+                                AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE,
+                                AI_CHAT_ATTACHMENT.DESCRIPTION,
+                                AI_CHAT_ATTACHMENT.ROW_COUNT,
+                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
+                        .from(AI_CHAT_ATTACHMENT)
+                        .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
+                        .orderBy(AI_CHAT_ATTACHMENT.CREATE_TIME_MS.asc())
+                        .fetch())
+                .map(RECORD_TO_ATTACHMENT::apply);
+    }
+
+    @Override
+    public String getAttachmentData(final int attachmentId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT_ATTACHMENT.DATA_MARKDOWN)
+                .from(AI_CHAT_ATTACHMENT)
+                .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
+                .fetchOne(AI_CHAT_ATTACHMENT.DATA_MARKDOWN));
     }
 }

@@ -5,6 +5,7 @@ package stroom.ai.impl.db.jooq;
 
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 
@@ -18,6 +19,11 @@ public class Tables {
      * The table <code>stroom.ai_chat</code>.
      */
     public static final AiChat AI_CHAT = AiChat.AI_CHAT;
+
+    /**
+     * The table <code>stroom.ai_chat_attachment</code>.
+     */
+    public static final AiChatAttachment AI_CHAT_ATTACHMENT = AiChatAttachment.AI_CHAT_ATTACHMENT;
 
     /**
      * The table <code>stroom.ai_chat_message</code>.

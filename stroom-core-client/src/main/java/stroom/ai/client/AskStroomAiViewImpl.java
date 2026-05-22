@@ -18,9 +18,10 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.spinner.client.SpinnerSmall;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -31,7 +32,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -61,13 +62,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     SimplePanel markdownPreview;
     @UiField
-    TextBox message;
+    TextArea message;
     @UiField
     InlineSvgButton run;
     @UiField
     Label contextIndicator;
     @UiField
     SimplePanel modelRef;
+    @UiField
+    SpinnerSmall spinner;
 
     @Inject
     public AskStroomAiViewImpl(final Binder binder) {
@@ -106,8 +109,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     }
 
     @Override
-    public Element getMarkdownContainer() {
-        return markdownPreview.getElement();
+    public SimplePanel getMarkdownContainer() {
+        return markdownPreview;
     }
 
     @Override
@@ -138,10 +141,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         this.modelRef.setWidget(view.asWidget());
     }
 
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return spinner.createTaskMonitor();
+    }
+
     @UiHandler("message")
     public void onMessageKeyDown(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            // Both Enter and Ctrl+Enter send the message.
+        // Ctrl+Enter send the message.
+        if (!event.isShiftKeyDown() && event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             sendMessage();
         }
     }

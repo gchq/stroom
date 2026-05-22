@@ -37,37 +37,9 @@ public class AiChatCell extends AbstractCell<AiChat> {
 
             // Add age
             row.append(Templates.div(getCellClassName() + "-age",
-                    SafeHtmlUtil.from(formatRelativeTime(value.getUpdateTimeMs()))));
+                    SafeHtmlUtil.from(RelativeTimeUtil.formatRelativeTime(value.getUpdateTimeMs()))));
 
             sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
-        }
-    }
-
-    private static String formatRelativeTime(final long timeMs) {
-        if (timeMs <= 0) {
-            return "";
-        }
-        final long now = System.currentTimeMillis();
-        final long diff = now - timeMs;
-        final long seconds = diff / 1000;
-        final long minutes = seconds / 60;
-        final long hours = minutes / 60;
-        final long days = hours / 24;
-
-        if (days > 0) {
-            return days == 1
-                    ? "Yesterday"
-                    : days + " days ago";
-        } else if (hours > 0) {
-            return hours + (hours == 1
-                    ? " hour ago"
-                    : " hours ago");
-        } else if (minutes > 0) {
-            return minutes + (minutes == 1
-                    ? " minute ago"
-                    : " minutes ago");
-        } else {
-            return "Just now";
         }
     }
 

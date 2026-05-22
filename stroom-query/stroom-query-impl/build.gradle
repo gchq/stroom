@@ -17,8 +17,6 @@
 ext.moduleName = 'stroom.query.impl'
 
 dependencies {
-    implementation project(':stroom-ai:stroom-ai-api')
-    implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-docref')

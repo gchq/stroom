@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,20 @@ package stroom.ai.shared;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
-public enum AiMessageType implements HasPrimitiveValue {
-    USER_MESSAGE(0),
-    AI_RESPONSE(1),
-    THINKING(2),
-    ERROR(3),
-    DASHBOARD_DATA(4),
-    QUERY_DATA(5),
-    TABLE_DATA(6),
-    ATTACHMENT(7);
+/**
+ * Classifies the source type of an {@link AiChatAttachment}.
+ */
+public enum AiAttachmentType implements HasPrimitiveValue {
+    DASHBOARD(0),
+    QUERY(1),
+    GENERAL(2);
 
-    public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
-            PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
+    public static final PrimitiveValueConverter<AiAttachmentType> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(AiAttachmentType.class, AiAttachmentType.values());
 
     private final byte primitiveValue;
 
-    AiMessageType(final int primitiveValue) {
+    AiAttachmentType(final int primitiveValue) {
         this.primitiveValue = (byte) primitiveValue;
     }
 

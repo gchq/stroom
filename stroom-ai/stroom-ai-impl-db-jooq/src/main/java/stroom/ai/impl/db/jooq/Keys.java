@@ -5,7 +5,9 @@ package stroom.ai.impl.db.jooq;
 
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
+import stroom.ai.impl.db.jooq.tables.records.AiChatAttachmentRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatRecord;
 
@@ -28,11 +30,14 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<AiChatRecord> KEY_AI_CHAT_PRIMARY = Internal.createUniqueKey(AiChat.AI_CHAT, DSL.name("KEY_ai_chat_PRIMARY"), new TableField[] { AiChat.AI_CHAT.ID }, true);
+    public static final UniqueKey<AiChatAttachmentRecord> KEY_AI_CHAT_ATTACHMENT_PRIMARY = Internal.createUniqueKey(AiChatAttachment.AI_CHAT_ATTACHMENT, DSL.name("KEY_ai_chat_attachment_PRIMARY"), new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true);
     public static final UniqueKey<AiChatMessageRecord> KEY_AI_CHAT_MESSAGE_PRIMARY = Internal.createUniqueKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("KEY_ai_chat_message_PRIMARY"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<AiChatAttachmentRecord, AiChatRecord> FK_AI_CHAT_ATTACHMENT_CHAT = Internal.createForeignKey(AiChatAttachment.AI_CHAT_ATTACHMENT, DSL.name("fk_ai_chat_attachment_chat"), new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true);
+    public static final ForeignKey<AiChatMessageRecord, AiChatAttachmentRecord> FK_AI_CHAT_MESSAGE_ATTACHMENT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_attachment"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_ATTACHMENT_ID }, Keys.KEY_AI_CHAT_ATTACHMENT_PRIMARY, new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true);
     public static final ForeignKey<AiChatMessageRecord, AiChatRecord> FK_AI_CHAT_MESSAGE_CHAT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_chat"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true);
 }

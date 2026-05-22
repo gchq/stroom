@@ -5,6 +5,7 @@ package stroom.ai.impl.db.jooq;
 
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 import org.jooq.Index;
@@ -23,6 +24,7 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index AI_CHAT_ATTACHMENT_IDX_AI_CHAT_ATTACHMENT_CHAT_ID = Internal.createIndex(DSL.name("idx_ai_chat_attachment_chat_id"), AiChatAttachment.AI_CHAT_ATTACHMENT, new OrderField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID }, false);
     public static final Index AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID = Internal.createIndex(DSL.name("idx_ai_chat_message_chat_id"), AiChatMessage.AI_CHAT_MESSAGE, new OrderField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID }, false);
     public static final Index AI_CHAT_IDX_AI_CHAT_USER_UUID = Internal.createIndex(DSL.name("idx_ai_chat_user_uuid"), AiChat.AI_CHAT, new OrderField[] { AiChat.AI_CHAT.USER_UUID }, false);
 }
