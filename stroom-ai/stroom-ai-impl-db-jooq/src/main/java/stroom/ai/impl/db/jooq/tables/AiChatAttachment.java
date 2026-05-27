@@ -96,14 +96,14 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
     public final TableField<AiChatAttachmentRecord, String> CONTEXT_JSON = createField(DSL.name("context_json"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>stroom.ai_chat_attachment.data_markdown</code>.
-     */
-    public final TableField<AiChatAttachmentRecord, String> DATA_MARKDOWN = createField(DSL.name("data_markdown"), SQLDataType.CLOB, this, "");
-
-    /**
      * The column <code>stroom.ai_chat_attachment.row_count</code>.
      */
     public final TableField<AiChatAttachmentRecord, Integer> ROW_COUNT = createField(DSL.name("row_count"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_attachment.truncated</code>.
+     */
+    public final TableField<AiChatAttachmentRecord, Boolean> TRUNCATED = createField(DSL.name("truncated"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.ai_chat_attachment.error_message</code>.

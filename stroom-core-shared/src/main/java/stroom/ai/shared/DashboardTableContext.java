@@ -11,15 +11,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class DashboardTableContext extends AskStroomAiContext {
 
     @JsonProperty
+    private final String description;
+    @JsonProperty
     private final String node;
     @JsonProperty
     private final DashboardSearchRequest searchRequest;
 
     @JsonCreator
-    public DashboardTableContext(@JsonProperty("node") final String node,
+    public DashboardTableContext(@JsonProperty("description") final String description,
+                                 @JsonProperty("node") final String node,
                                  @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
+        this.description = description;
         this.node = node;
         this.searchRequest = searchRequest;
+    }
+
+    @Override
+    public String getDescription() {
+        return description != null
+                ? description
+                : "Dashboard table";
     }
 
     public DashboardSearchRequest getSearchRequest() {

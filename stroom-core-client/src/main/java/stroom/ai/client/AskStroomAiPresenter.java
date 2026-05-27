@@ -19,14 +19,12 @@ package stroom.ai.client;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
-import stroom.ai.shared.DashboardTableContext;
-import stroom.ai.shared.GeneralTableContext;
-import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.AskStroomAiEvent;
@@ -41,7 +39,6 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.ClipboardUtil;
@@ -58,6 +55,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -331,14 +329,9 @@ public class AskStroomAiPresenter
     public void setContext(final AskStroomAiContext data) {
         this.data = data;
 
-        // Show attachment-style context indicator.
-        if (data instanceof DashboardTableContext) {
-            getView().setContextIndicator(SvgImage.CLIPBOARD, "Table data (Dashboard)");
-        } else if (data instanceof QueryTableContext) {
-            getView().setContextIndicator(SvgImage.CLIPBOARD, "Table data (Query)");
-        } else if (data instanceof final GeneralTableContext gtc) {
-            getView().setContextIndicator(SvgImage.CLIPBOARD, "Table data (" + gtc.getRows().size()
-                                                              + " rows, " + gtc.getColumns().size() + " cols)");
+        // Show attachment-style context indicator using the context's description.
+        if (data != null) {
+            getView().setContextIndicator(SvgImage.CLIPBOARD, data.getDescription());
         } else {
             getView().clearContextIndicator();
         }
@@ -419,6 +412,10 @@ public class AskStroomAiPresenter
                 // Scroll to show new content.
                 appendToContainer(hb);
             }
+
+            // Update attachment status elements in-place.
+            updateAttachmentStatuses(response.getAttachments());
+
             if (!response.isComplete()) {
                 // If the conversation is still in-flight, schedule another poll after 1s.
                 new com.google.gwt.user.client.Timer() {
@@ -472,11 +469,7 @@ public class AskStroomAiPresenter
                         SvgImage.TABLE, "Data context", msg.getMessage(), timeMs);
                 break;
             case ATTACHMENT:
-                appendCollapsibleMessage(hb, "ai-message ai-message--data",
-                        SvgImage.TABLE,
-                        NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment"),
-                        "Attachment ID: " + NullSafe.get(msg, AiChatMessage::getAttachmentId),
-                        timeMs);
+                appendAttachmentMessage(hb, msg, timeMs);
                 break;
             default:
                 appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, false);
@@ -502,9 +495,9 @@ public class AskStroomAiPresenter
 
                 // Add copy button.
                 if (showCopy) {
-                    footer.elem(button -> {
-                                setCopyButtonContent(button, SvgImage.COPY, "Copy");
-                            }, SafeHtmlUtils.fromSafeConstant("button"),
+                    footer.elem(button ->
+                                    setCopyButtonContent(button, SvgImage.COPY, "Copy"),
+                            SafeHtmlUtils.fromSafeConstant("button"),
                             Attribute.className("ai-message-copy"),
                             new Attribute("data", markdownText));
                 }
@@ -542,6 +535,88 @@ public class AskStroomAiPresenter
                 timestamp(footer, timeMs);
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className(cssClass));
+    }
+
+    /**
+     * Render an ATTACHMENT message with a status line that can be updated in-place
+     * via a unique DOM ID.
+     */
+    private void appendAttachmentMessage(final HtmlBuilder hb,
+                                         final AiChatMessage msg,
+                                         final long timeMs) {
+        final Integer attachmentId = msg.getAttachmentId();
+        hb.div(container -> {
+            // Header with icon and description.
+            container.div(header -> {
+                icon(header, SvgImage.TABLE);
+                header.append(NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment"));
+            }, Attribute.className("ai-message-header"));
+
+            // Status line — will be updated in-place by polling.
+            if (attachmentId != null) {
+                container.div(statusDiv -> {
+                    appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading...");
+                }, Attribute.className("ai-attachment-status"), new Attribute("id",
+                        "ai-attachment-status-" +
+                        attachmentId));
+            }
+
+            // Footer with timestamp.
+            container.div(footer -> {
+                timestamp(footer, timeMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--data"));
+    }
+
+    private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
+        icon(hb, icon);
+        hb.div(status -> {
+            status.append(text);
+        }, Attribute.className("ai-attachment-status-text"));
+    }
+
+    /**
+     * Update existing attachment status elements in the DOM with current status.
+     */
+    private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
+        if (attachments == null) {
+            return;
+        }
+        for (final AiChatAttachment attachment : attachments) {
+            final Document doc = Document.get();
+            final Element statusEl = doc.getElementById("ai-attachment-status-" + attachment.getId());
+            if (statusEl != null) {
+                statusEl.setInnerHTML(formatAttachmentStatus(attachment));
+            }
+        }
+    }
+
+    /**
+     * Format a human-readable status string with an appropriate icon for the
+     * given attachment status.
+     */
+    private String formatAttachmentStatus(final AiChatAttachment attachment) {
+        final HtmlBuilder hb = new HtmlBuilder();
+        switch (attachment.getStatus()) {
+            case PENDING -> appendStatus(hb, SvgImage.DOWNLOAD, "Pending...");
+            case DOWNLOADING -> appendStatus(hb, SvgImage.DOWNLOAD, "Downloading...");
+            case READY -> {
+                final StringBuilder sb = new StringBuilder();
+                sb.append(" Ready");
+                if (attachment.getRowCount() != null) {
+                    sb.append(" --- ").append(attachment.getRowCount()).append(" rows");
+                }
+                if (attachment.isTruncated()) {
+                    sb.append(" (truncated to limit)");
+                }
+                appendStatus(hb, SvgImage.OK, sb.toString());
+            }
+            case ERROR -> appendStatus(hb, SvgImage.ERROR, "Error: " +
+                                                           NullSafe.getOrElse(attachment,
+                                                                   AiChatAttachment::getErrorMessage,
+                                                                   "Unknown error"));
+        }
+        return hb.toSafeHtml().asString();
     }
 
     private static void icon(final HtmlBuilder hb, final SvgImage icon) {
@@ -611,6 +686,12 @@ public class AskStroomAiPresenter
             // Scroll to bottom after loading all messages.
             appendToContainer(hb);
             getView().focus();
+
+            // Fetch attachment statuses to update status elements rendered above.
+            // For historical chats, attachments are already in their final state (READY/ERROR).
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response -> {
+                updateAttachmentStatuses(response.getAttachments());
+            }, error -> { /* ignore */ }, this);
         }, this);
     }
 
@@ -658,14 +739,7 @@ public class AskStroomAiPresenter
      * Returns a human-readable title for the given context type.
      */
     private String getContextTitle(final AskStroomAiContext context) {
-        if (context instanceof DashboardTableContext) {
-            return "Dashboard table analysis";
-        } else if (context instanceof QueryTableContext) {
-            return "Query table analysis";
-        } else if (context instanceof final GeneralTableContext gtc) {
-            return "Table analysis (" + gtc.getRows().size() + " rows)";
-        }
-        return "Table analysis";
+        return context.getDescription();
     }
 
     public interface AskStroomAiView extends View, Focus, TaskMonitorFactory, HasUiHandlers<AskStroomAiUiHandlers> {

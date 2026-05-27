@@ -37,21 +37,21 @@ public interface AiDao {
 
     void deleteMessage(int messageId);
 
-    // ---- Attachment operations ----
+    // ---------------------------------------------------------------------
+    // Attachment operations
+    // ---------------------------------------------------------------------
 
     AiChatAttachment createAttachment(int chatId, AiAttachmentType type, String contextJson);
 
-    void updateAttachmentStatus(int attachmentId, AiAttachmentStatus status,
-                                String dataMarkdown, Integer rowCount,
-                                String description, String errorMessage);
+    void updateAttachmentStatus(int attachmentId,
+                                AiAttachmentStatus status,
+                                Integer rowCount,
+                                String description,
+                                String errorMessage,
+                                boolean truncated);
 
     Optional<AiChatAttachment> getAttachment(int attachmentId);
 
     List<AiChatAttachment> getAttachmentsByChatId(int chatId);
-
-    /**
-     * Loads the large {@code data_markdown} column separately from the attachment metadata.
-     */
-    String getAttachmentData(int attachmentId);
 }
 

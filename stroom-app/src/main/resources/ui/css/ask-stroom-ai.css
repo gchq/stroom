@@ -201,15 +201,31 @@
 
 /* ---- Message footer (timestamp + copy) ---- */
 
-.ai-message-header {
+.ai-message-header,
+.ai-message-footer {
     display: flex;
     gap: 8px;
+    align-items: center;
 }
 
-.ai-message-footer {
+.ai-attachment-status {
+    font-size: 0.85em;
+    opacity: 0.8;
+    font-style: italic;
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.ai-attachment-status .svgIcon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.ai-attachment-status svg {
+    width: 14px;
+    height: 14px;
 }
 
 .ai-message-timestamp {

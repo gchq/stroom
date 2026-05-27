@@ -12,11 +12,11 @@
         <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">
             <l:SelectionBox ui:field="dockLocationSelectionBox"/>
         </form:FormGroup>
-        <form:FormGroup identity="maximumBatchSize" label="Maximum Table Batch Size">
-            <v:ValueSpinner ui:field="maximumBatchSize" width="200px"/>
-        </form:FormGroup>
         <form:FormGroup identity="maximumTableInputRows" label="Maximum Table Input Rows">
             <v:ValueSpinner ui:field="maximumTableInputRows" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maximumBatchSize" label="Maximum Table Batch Size">
+            <v:ValueSpinner ui:field="maximumBatchSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
             <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>

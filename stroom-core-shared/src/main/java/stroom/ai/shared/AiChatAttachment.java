@@ -26,11 +26,11 @@ import java.util.Objects;
 
 /**
  * Shared DTO representing an attachment associated with an AI chat.
- * Attachments hold downloaded table data and have a lifecycle status
- * (PENDING → DOWNLOADING → READY → ERROR).
+ * Attachments track downloaded table data stored on the local filesystem
+ * and have a lifecycle status (PENDING → DOWNLOADING → READY → ERROR).
  * <p>
- * The {@code dataMarkdown} field is intentionally excluded from JSON serialisation
- * to the client — it can be very large and is only used server-side for LLM processing.
+ * The actual table data (CSV) is stored on the local node filesystem,
+ * not in the database.
  */
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -53,6 +53,8 @@ public class AiChatAttachment {
     @JsonProperty
     private final Integer rowCount;
     @JsonProperty
+    private final boolean truncated;
+    @JsonProperty
     private final String errorMessage;
 
     @JsonCreator
@@ -64,6 +66,7 @@ public class AiChatAttachment {
                             @JsonProperty("attachmentType") final AiAttachmentType attachmentType,
                             @JsonProperty("description") final String description,
                             @JsonProperty("rowCount") final Integer rowCount,
+                            @JsonProperty("truncated") final boolean truncated,
                             @JsonProperty("errorMessage") final String errorMessage) {
         this.id = id;
         this.chatId = chatId;
@@ -73,6 +76,7 @@ public class AiChatAttachment {
         this.attachmentType = attachmentType;
         this.description = description;
         this.rowCount = rowCount;
+        this.truncated = truncated;
         this.errorMessage = errorMessage;
     }
 
@@ -108,6 +112,10 @@ public class AiChatAttachment {
         return rowCount;
     }
 
+    public boolean isTruncated() {
+        return truncated;
+    }
+
     public String getErrorMessage() {
         return errorMessage;
     }
@@ -122,6 +130,7 @@ public class AiChatAttachment {
                && chatId == that.chatId
                && createTimeMs == that.createTimeMs
                && updateTimeMs == that.updateTimeMs
+               && truncated == that.truncated
                && status == that.status
                && attachmentType == that.attachmentType
                && Objects.equals(description, that.description)
@@ -132,7 +141,7 @@ public class AiChatAttachment {
     @Override
     public int hashCode() {
         return Objects.hash(id, chatId, createTimeMs, updateTimeMs, status,
-                attachmentType, description, rowCount, errorMessage);
+                attachmentType, description, rowCount, truncated, errorMessage);
     }
 
     @Override
@@ -144,6 +153,7 @@ public class AiChatAttachment {
                ", attachmentType=" + attachmentType +
                ", description='" + description + '\'' +
                ", rowCount=" + rowCount +
+               ", truncated=" + truncated +
                '}';
     }
 }

@@ -155,7 +155,9 @@ public class MockAiService implements AiService {
         return aiService.getJinaScoringModel(modelDoc);
     }
 
-    // ---- Chat persistence operations (delegate to wrapped AiServiceImpl) ----
+    // ---------------------------------------------------------------------
+    // Chat persistence operations (delegate to wrapped AiServiceImpl)
+    // ---------------------------------------------------------------------
 
 
     @Override
@@ -226,10 +228,10 @@ public class MockAiService implements AiService {
     @Override
     public void updateAttachmentStatus(final int attachmentId,
                                        final AiAttachmentStatus status,
-                                       final String dataMarkdown,
                                        final Integer rowCount,
                                        final String description,
-                                       final String errorMessage) {
+                                       final String errorMessage,
+                                       final boolean truncated) {
 
     }
 
@@ -241,11 +243,6 @@ public class MockAiService implements AiService {
     @Override
     public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
         return List.of();
-    }
-
-    @Override
-    public String getAttachmentData(final int attachmentId) {
-        return "";
     }
 
     @Override

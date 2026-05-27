@@ -60,6 +60,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
@@ -1061,8 +1062,20 @@ public class QueryResultTablePresenter
                         .storeHistory(false)
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
+                // Build a descriptive summary from the search request source.
+                final String queryName = NullSafe.get(
+                        currentSearch.getSearchRequestSource(),
+                        SearchRequestSource::getOwnerDocRef,
+                        DocRef::getName);
+                final String description = queryName != null
+                        ? "Query '" + queryName + "'"
+                        : "Query table";
+
                 AskStroomAiEvent.fire(this,
-                        new QueryTableContext(currentSearchModel.getCurrentNode(), request));
+                        new QueryTableContext(
+                                description,
+                                currentSearchModel.getCurrentNode(),
+                                request));
             }
         }
     }

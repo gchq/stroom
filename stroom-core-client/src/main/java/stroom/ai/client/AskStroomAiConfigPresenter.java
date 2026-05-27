@@ -49,7 +49,6 @@ public class AskStroomAiConfigPresenter
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
 
     private Consumer<DockBehaviour> dockBehaviourChangeHandler;
-    private DockBehaviour snapshotDockBehaviour;
 
     @Inject
     public AskStroomAiConfigPresenter(final EventBus eventBus,
@@ -76,12 +75,10 @@ public class AskStroomAiConfigPresenter
                      final DockBehaviour snapshotDockBehaviour,
                      final Consumer<DockBehaviour> dockBehaviourConsumer) {
         this.dockBehaviourChangeHandler = dockBehaviourConsumer;
-        // Snapshot the current state for potential revert on cancel.
-        this.snapshotDockBehaviour = snapshotDockBehaviour;
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(400, 600))
+                .popupSize(PopupSize.resizable(600, 750))
                 .caption("Configure Ask Stroom AI")
                 .onShow(e -> {
                     read(currentConfig);
@@ -133,7 +130,7 @@ public class AskStroomAiConfigPresenter
         getView().setMaximumBatchSize(NullSafe.getOrElse(
                 config,
                 TableSummaryConfig::getMaximumBatchSize,
-                TableSummaryConfig.DEFAULT_MAXIMUM_BATCH_SIZE));
+                TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_BATCH_SIZE));
         getView().setMaximumTableInputRows(NullSafe.getOrElse(
                 config,
                 TableSummaryConfig::getMaximumTableInputRows,
@@ -165,9 +162,11 @@ public class AskStroomAiConfigPresenter
         return new TableSummaryConfig(
                 getView().getMaximumBatchSize(),
                 getView().getMaximumTableInputRows(),
+                TableSummaryConfig.DEFAULT_MAX_PARALLEL_BATCHES,
                 getView().getTableQuerySystemPrompt(),
                 getView().getTableQueryUserPrompt(),
-                getView().getSummaryMergePrompt());
+                getView().getSummaryMergePrompt(),
+                TableSummaryConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT);
     }
 
     public interface AskStroomAiConfigView extends View, Focus, HasUiHandlers<AskStroomAiConfigUiHandlers> {

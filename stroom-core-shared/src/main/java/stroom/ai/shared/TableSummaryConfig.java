@@ -31,8 +31,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig {
 
-    public static final int DEFAULT_MAXIMUM_BATCH_SIZE = 16384;
-    public static final int DEFAULT_MAXIMUM_TABLE_INPUT_ROWS = 100;
+    public static final int DEFAULT_MAXIMUM_TABLE_INPUT_ROWS = 10000;
+    public static final int DEFAULT_MAXIMUM_TABLE_BATCH_SIZE = 1000;
+    public static final int DEFAULT_MAX_PARALLEL_BATCHES = 4;
     public static final String DEFAULT_TABLE_QUERY_SYSTEM_PROMPT = """
                 You are a data analysis AI. You will answer user questions \
                 using ONLY the markdown-formatted DATA TABLE records provided. \
@@ -61,54 +62,77 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
                 SUMMARY B:
                 {{b}}
             """;
+    public static final String DEFAULT_MULTI_SUMMARY_MERGE_PROMPT = """
+                Merge the following summaries into a single unified, concise summary. \
+                Preserve important details, numerical findings, and remove duplicates.
 
-    public static final String PROP_NAME_MAXIMUM_BATCH_SIZE = "maximumBatchSize";
+                {{summaries}}
+            """;
+
     public static final String PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS = "maximumTableInputRows";
+    public static final String PROP_NAME_MAXIMUM_BATCH_SIZE = "maximumBatchSize";
+    public static final String PROP_NAME_MAX_PARALLEL_BATCHES = "maxParallelBatches";
     public static final String PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT = "tableQuerySystemPrompt";
     public static final String PROP_NAME_TABLE_QUERY_USER_PROMPT = "tableQueryUserPrompt";
     public static final String PROP_NAME_SUMMARY_MERGE_PROMPT = "summaryMergePrompt";
+    public static final String PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT = "multiSummaryMergePrompt";
 
     @JsonProperty(PROP_NAME_MAXIMUM_BATCH_SIZE)
     private final int maximumBatchSize;
     @JsonProperty(PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS)
     private final int maximumTableInputRows;
+    @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES)
+    private final int maxParallelBatches;
     @JsonProperty(PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT)
     private final String tableQuerySystemPrompt;
     @JsonProperty(PROP_NAME_TABLE_QUERY_USER_PROMPT)
     private final String tableQueryUserPrompt;
     @JsonProperty(PROP_NAME_SUMMARY_MERGE_PROMPT)
     private final String summaryMergePrompt;
+    @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT)
+    private final String multiSummaryMergePrompt;
 
     public TableSummaryConfig() {
-        maximumBatchSize = DEFAULT_MAXIMUM_BATCH_SIZE;
         maximumTableInputRows = DEFAULT_MAXIMUM_TABLE_INPUT_ROWS;
+        maximumBatchSize = DEFAULT_MAXIMUM_TABLE_BATCH_SIZE;
+        maxParallelBatches = DEFAULT_MAX_PARALLEL_BATCHES;
         tableQuerySystemPrompt = DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
         tableQueryUserPrompt = DEFAULT_TABLE_QUERY_USER_PROMPT;
         summaryMergePrompt = DEFAULT_SUMMARY_MERGE_PROMPT;
+        multiSummaryMergePrompt = DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
     }
 
     @JsonCreator
     public TableSummaryConfig(
-            @JsonProperty(PROP_NAME_MAXIMUM_BATCH_SIZE) final int maximumBatchSize,
             @JsonProperty(PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS) final int maximumTableInputRows,
+            @JsonProperty(PROP_NAME_MAXIMUM_BATCH_SIZE) final int maximumBatchSize,
+            @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES) final int maxParallelBatches,
             @JsonProperty(PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT) final String tableQuerySystemPrompt,
             @JsonProperty(PROP_NAME_TABLE_QUERY_USER_PROMPT) final String tableQueryUserPrompt,
-            @JsonProperty(PROP_NAME_SUMMARY_MERGE_PROMPT) final String summaryMergePrompt) {
-        this.maximumBatchSize = maximumBatchSize;
+            @JsonProperty(PROP_NAME_SUMMARY_MERGE_PROMPT) final String summaryMergePrompt,
+            @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT) final String multiSummaryMergePrompt) {
         this.maximumTableInputRows = maximumTableInputRows;
+        this.maximumBatchSize = maximumBatchSize;
+        this.maxParallelBatches = maxParallelBatches;
         this.tableQuerySystemPrompt = tableQuerySystemPrompt;
         this.tableQueryUserPrompt = tableQueryUserPrompt;
         this.summaryMergePrompt = summaryMergePrompt;
-    }
-
-    @JsonPropertyDescription("Maximum number of tokens to pass the AI service at a time")
-    public int getMaximumBatchSize() {
-        return maximumBatchSize;
+        this.multiSummaryMergePrompt = multiSummaryMergePrompt;
     }
 
     @JsonPropertyDescription("Maximum number of table result rows to pass to the AI when making requests")
     public int getMaximumTableInputRows() {
         return maximumTableInputRows;
+    }
+
+    @JsonPropertyDescription("Maximum number of table result rows to pass to the AI in a single batch")
+    public int getMaximumBatchSize() {
+        return maximumBatchSize;
+    }
+
+    @JsonPropertyDescription("Maximum number of concurrent LLM calls when processing batches in parallel")
+    public int getMaxParallelBatches() {
+        return maxParallelBatches;
     }
 
     @JsonPropertyDescription("System prompt used when querying the AI about table data")
@@ -130,14 +154,23 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
         return summaryMergePrompt;
     }
 
+    @JsonPropertyDescription(
+            "Prompt template for merging multiple summaries at once. Use {{summaries}} " +
+            "for the numbered list of summaries to merge")
+    public String getMultiSummaryMergePrompt() {
+        return multiSummaryMergePrompt;
+    }
+
     @Override
     public String toString() {
         return "TableSummaryConfig{" +
-               "maximumBatchSize=" + maximumBatchSize +
-               ", maximumTableInputRows=" + maximumTableInputRows +
+               "maximumTableInputRows=" + maximumTableInputRows +
+               ", maximumBatchSize=" + maximumBatchSize +
+               ", maxParallelBatches=" + maxParallelBatches +
                ", tableQuerySystemPrompt='" + tableQuerySystemPrompt + '\'' +
                ", tableQueryUserPrompt='" + tableQueryUserPrompt + '\'' +
                ", summaryMergePrompt='" + summaryMergePrompt + '\'' +
+               ", multiSummaryMergePrompt='" + multiSummaryMergePrompt + '\'' +
                '}';
     }
 
@@ -151,21 +184,30 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
 
     public static class Builder extends AbstractBuilder<TableSummaryConfig, TableSummaryConfig.Builder> {
 
-        private int maximumBatchSize = DEFAULT_MAXIMUM_BATCH_SIZE;
         private int maximumTableInputRows = DEFAULT_MAXIMUM_TABLE_INPUT_ROWS;
+        private int maximumBatchSize = DEFAULT_MAXIMUM_TABLE_BATCH_SIZE;
+        private int maxParallelBatches = DEFAULT_MAX_PARALLEL_BATCHES;
         private String tableQuerySystemPrompt = DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
         private String tableQueryUserPrompt = DEFAULT_TABLE_QUERY_USER_PROMPT;
         private String summaryMergePrompt = DEFAULT_SUMMARY_MERGE_PROMPT;
+        private String multiSummaryMergePrompt = DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
 
         private Builder() {
         }
 
         private Builder(final TableSummaryConfig tableSummaryConfig) {
-            maximumBatchSize = tableSummaryConfig.maximumBatchSize;
             maximumTableInputRows = tableSummaryConfig.maximumTableInputRows;
+            maximumBatchSize = tableSummaryConfig.maximumBatchSize;
+            maxParallelBatches = tableSummaryConfig.maxParallelBatches;
             tableQuerySystemPrompt = tableSummaryConfig.tableQuerySystemPrompt;
             tableQueryUserPrompt = tableSummaryConfig.tableQueryUserPrompt;
             summaryMergePrompt = tableSummaryConfig.summaryMergePrompt;
+            multiSummaryMergePrompt = tableSummaryConfig.multiSummaryMergePrompt;
+        }
+
+        public Builder maximumTableInputRows(final int maximumTableInputRows) {
+            this.maximumTableInputRows = maximumTableInputRows;
+            return self();
         }
 
         public Builder maximumBatchSize(final int maximumBatchSize) {
@@ -173,8 +215,8 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
             return self();
         }
 
-        public Builder maximumTableInputRows(final int maximumTableInputRows) {
-            this.maximumTableInputRows = maximumTableInputRows;
+        public Builder maxParallelBatches(final int maxParallelBatches) {
+            this.maxParallelBatches = maxParallelBatches;
             return self();
         }
 
@@ -193,6 +235,11 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
             return self();
         }
 
+        public Builder multiSummaryMergePrompt(final String multiSummaryMergePrompt) {
+            this.multiSummaryMergePrompt = multiSummaryMergePrompt;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -200,11 +247,13 @@ public class TableSummaryConfig extends AbstractConfig implements IsStroomConfig
 
         public TableSummaryConfig build() {
             return new TableSummaryConfig(
-                    maximumBatchSize,
                     maximumTableInputRows,
+                    maximumBatchSize,
+                    maxParallelBatches,
                     tableQuerySystemPrompt,
                     tableQueryUserPrompt,
-                    summaryMergePrompt);
+                    summaryMergePrompt,
+                    multiSummaryMergePrompt);
         }
     }
 }

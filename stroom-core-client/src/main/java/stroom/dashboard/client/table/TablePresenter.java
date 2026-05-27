@@ -78,6 +78,7 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
@@ -642,12 +643,36 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .dateTimeSettings(getDateTimeSettings())
                         .build();
 
+                // Build a descriptive summary from the search request source.
+                final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
+                final String dashboardName = NullSafe.get(
+                        source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
+                final String tableName = NullSafe.get(
+                        source, SearchRequestSource::getComponentName);
+                final String description = buildDashboardDescription(dashboardName, tableName);
+
                 AskStroomAiEvent.fire(this,
                         new DashboardTableContext(
+                                description,
                                 currentSearchModel.getCurrentNode(),
                                 dashboardSearchRequest));
             }
         }
+    }
+
+    private String buildDashboardDescription(final String dashboardName, final String tableName) {
+        final StringBuilder sb = new StringBuilder();
+        if (dashboardName != null) {
+            sb.append("Dashboard '").append(dashboardName).append("'");
+            if (tableName != null) {
+                sb.append(" -> Table '").append(tableName).append("'");
+            }
+        } else if (tableName != null) {
+            sb.append("Table '").append(tableName).append("'");
+        } else {
+            sb.append("Dashboard table");
+        }
+        return sb.toString();
     }
 
     private DashboardSearchRequest getDashboardSearchRequest(final Search currentSearch, final QueryKey queryKey) {

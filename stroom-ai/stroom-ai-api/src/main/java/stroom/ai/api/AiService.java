@@ -36,7 +36,9 @@ import java.util.Optional;
 
 public interface AiService {
 
-    // ---- Model operations ----
+    // ---------------------------------------------------------------------
+    // Model operations
+    // ---------------------------------------------------------------------
 
     OpenAIModelDoc getOpenAIModelDoc(DocRef docRef);
 
@@ -50,7 +52,9 @@ public interface AiService {
 
     ScoringModel getJinaScoringModel(OpenAIModelDoc modelDoc);
 
-    // ---- Chat persistence operations ----
+    // ---------------------------------------------------------------------
+    // Chat persistence operations
+    // ---------------------------------------------------------------------
 
     AiChat createChat();
 
@@ -78,17 +82,17 @@ public interface AiService {
 
     void verifyOwnership(AiChat chat);
 
-    // ---- Attachment operations ----
+    // ---------------------------------------------------------------------
+    // Attachment operations
+    // ---------------------------------------------------------------------
 
     AiChatAttachment createAttachment(int chatId, AiAttachmentType type, String contextJson);
 
     void updateAttachmentStatus(int attachmentId, AiAttachmentStatus status,
-                                String dataMarkdown, Integer rowCount,
-                                String description, String errorMessage);
+                                Integer rowCount, String description,
+                                String errorMessage, boolean truncated);
 
     Optional<AiChatAttachment> getAttachment(int attachmentId);
 
     List<AiChatAttachment> getAttachmentsByChatId(int chatId);
-
-    String getAttachmentData(int attachmentId);
 }

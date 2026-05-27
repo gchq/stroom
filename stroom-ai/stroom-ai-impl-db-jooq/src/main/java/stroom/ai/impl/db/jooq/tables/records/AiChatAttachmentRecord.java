@@ -131,31 +131,31 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
     }
 
     /**
-     * Setter for <code>stroom.ai_chat_attachment.data_markdown</code>.
-     */
-    public void setDataMarkdown(String value) {
-        set(8, value);
-    }
-
-    /**
-     * Getter for <code>stroom.ai_chat_attachment.data_markdown</code>.
-     */
-    public String getDataMarkdown() {
-        return (String) get(8);
-    }
-
-    /**
      * Setter for <code>stroom.ai_chat_attachment.row_count</code>.
      */
     public void setRowCount(Integer value) {
-        set(9, value);
+        set(8, value);
     }
 
     /**
      * Getter for <code>stroom.ai_chat_attachment.row_count</code>.
      */
     public Integer getRowCount() {
-        return (Integer) get(9);
+        return (Integer) get(8);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat_attachment.truncated</code>.
+     */
+    public void setTruncated(Boolean value) {
+        set(9, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_attachment.truncated</code>.
+     */
+    public Boolean getTruncated() {
+        return (Boolean) get(9);
     }
 
     /**
@@ -195,7 +195,7 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
     /**
      * Create a detached, initialised AiChatAttachmentRecord
      */
-    public AiChatAttachmentRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Long updateTimeMs, Integer status, Integer attachmentType, String description, String contextJson, String dataMarkdown, Integer rowCount, String errorMessage) {
+    public AiChatAttachmentRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Long updateTimeMs, Integer status, Integer attachmentType, String description, String contextJson, Integer rowCount, Boolean truncated, String errorMessage) {
         super(AiChatAttachment.AI_CHAT_ATTACHMENT);
 
         setId(id);
@@ -206,8 +206,8 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
         setAttachmentType(attachmentType);
         setDescription(description);
         setContextJson(contextJson);
-        setDataMarkdown(dataMarkdown);
         setRowCount(rowCount);
+        setTruncated(truncated);
         setErrorMessage(errorMessage);
         resetChangedOnNotNull();
     }

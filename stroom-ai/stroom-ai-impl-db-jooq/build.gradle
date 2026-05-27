@@ -61,6 +61,17 @@ jooq {
                         excludes = 'ai_chat_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
+
+                        // Treat some tinyint columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                includeExpression = '' +
+                                        '.*\\.ai_chat_attachment\\.truncated'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
+                            }
+                        }
                     }
                     generate {
                         // Implicit join seem like syntactic sugar that we don't need

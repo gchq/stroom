@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS ai_chat_attachment (
     attachment_type       int NOT NULL,
     description           varchar(255),
     context_json          longtext,
-    data_markdown         longtext,
     row_count             int,
+    truncated             tinyint(1) NOT NULL DEFAULT 0,
     error_message         varchar(1024),
     PRIMARY KEY           (id),
     CONSTRAINT fk_ai_chat_attachment_chat

@@ -393,7 +393,9 @@ public class AiServiceImpl implements AiService {
                 .build();
     }
 
-    // ---- Chat persistence operations (delegate to AiDao) ----
+    // ---------------------------------------------------------------------
+    // Chat persistence operations (delegate to AiDao)
+    // ---------------------------------------------------------------------
 
     @Override
     public AiChat createChat() {
@@ -479,7 +481,9 @@ public class AiServiceImpl implements AiService {
         aiDao.deleteMessage(messageId);
     }
 
-    // ---- Attachment operations (delegate to AiDao) ----
+    // ---------------------------------------------------------------------
+    // Attachment operations (delegate to AiDao)
+    // ---------------------------------------------------------------------
 
     @Override
     public AiChatAttachment createAttachment(final int chatId,
@@ -493,11 +497,11 @@ public class AiServiceImpl implements AiService {
     @Override
     public void updateAttachmentStatus(final int attachmentId,
                                        final AiAttachmentStatus status,
-                                       final String dataMarkdown,
                                        final Integer rowCount,
                                        final String description,
-                                       final String errorMessage) {
-        aiDao.updateAttachmentStatus(attachmentId, status, dataMarkdown, rowCount, description, errorMessage);
+                                       final String errorMessage,
+                                       final boolean truncated) {
+        aiDao.updateAttachmentStatus(attachmentId, status, rowCount, description, errorMessage, truncated);
     }
 
     // No ownership check — internal-only, resolves by attachment ID not chat.
@@ -510,11 +514,5 @@ public class AiServiceImpl implements AiService {
     public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
         verifyOwnership(chatId);
         return aiDao.getAttachmentsByChatId(chatId);
-    }
-
-    // No ownership check — internal-only, loads large data for server-side LLM processing.
-    @Override
-    public String getAttachmentData(final int attachmentId) {
-        return aiDao.getAttachmentData(attachmentId);
     }
 }

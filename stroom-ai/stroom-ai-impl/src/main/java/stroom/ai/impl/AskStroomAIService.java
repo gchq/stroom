@@ -43,6 +43,7 @@ import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.query.api.OffsetRange;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
@@ -68,20 +69,28 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 
 public class AskStroomAIService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
 
-    private static final Pattern MD_TABLE_ESCAPE = Pattern.compile("[$&`*_~#+-.!|()\\[\\]{}<>]");
+
 
     /**
      * Sentinel model ID that activates the stub ChatModel for offline testing.
@@ -95,6 +104,7 @@ public class AskStroomAIService {
     private static final long ATTACHMENT_POLL_INTERVAL_MS = 1_000;
 
     private final AiService aiService;
+    private final AiAttachmentFileStore attachmentFileStore;
     private final DashboardService dashboardService;
     private final QueryService queryService;
     private final OpenAIModelStore openAIModelStore;
@@ -108,6 +118,7 @@ public class AskStroomAIService {
 
     @Inject
     public AskStroomAIService(final AiService aiService,
+                              final AiAttachmentFileStore attachmentFileStore,
                               final DashboardService dashboardService,
                               final QueryService queryService,
                               final OpenAIModelStore openAIModelStore,
@@ -118,6 +129,7 @@ public class AskStroomAIService {
                               final Provider<TableSummaryConfig> tableSummaryConfigProvider,
                               final TaskContextFactory taskContextFactory) {
         this.aiService = aiService;
+        this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
         this.queryService = queryService;
         this.openAIModelStore = openAIModelStore;
@@ -175,7 +187,9 @@ public class AskStroomAIService {
         return new AskStroomAiResponse(null);
     }
 
-    // ---- Attachment lifecycle ----
+    // ---------------------------------------------------------------------
+    // Attachment lifecycle
+    // ---------------------------------------------------------------------
 
     /**
      * Creates an attachment record and starts downloading the data.
@@ -201,7 +215,7 @@ public class AskStroomAIService {
 
         // Store an ATTACHMENT message in the chat history linking to this attachment.
         aiService.storeMessage(chatId, AiMessageType.ATTACHMENT, attachment.getId(),
-                attachmentType.name() + " table data");
+                context.getDescription());
 
         if (context instanceof final GeneralTableContext generalTableContext) {
             // Synchronous — data is already in memory, just convert to markdown.
@@ -213,37 +227,52 @@ public class AskStroomAIService {
     }
 
     /**
-     * Converts GeneralTableContext (in-memory table data) directly to markdown and marks the
-     * attachment as READY. No async download needed.
+     * Converts GeneralTableContext (in-memory table data) directly to a CSV file
+     * in the attachment file store and marks the attachment as READY.
      */
     private void processGeneralAttachment(final int attachmentId,
                                           final GeneralTableContext generalTableContext) {
         try {
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
-                    null, null, null, null);
+                    null, null, null, false);
 
-            final String header = writeHeader(generalTableContext.getColumns());
-            final StringBuilder markdown = new StringBuilder(header);
-            int rowCount = 0;
-            for (final List<String> rowValues : generalTableContext.getRows()) {
-                markdown.append(writeRow(rowValues));
-                rowCount++;
+            final Path csvFile = attachmentFileStore.createAttachmentFile(attachmentId);
+            final int rowCount;
+            try (final BufferedWriter writer = Files.newBufferedWriter(csvFile)) {
+                // Write CSV header
+                writer.write(generalTableContext.getColumns().stream()
+                        .map(this::escapeCsvField)
+                        .collect(Collectors.joining(",")));
+                writer.newLine();
+                // Write rows
+                int count = 0;
+                for (final List<String> rowValues : generalTableContext.getRows()) {
+                    writer.write(rowValues.stream()
+                            .map(this::escapeCsvField)
+                            .collect(Collectors.joining(",")));
+                    writer.newLine();
+                    count++;
+                }
+                rowCount = count;
             }
 
-            final String description = "Table data (" + rowCount + " rows, "
+            final String description = generalTableContext.getDescription()
+                                       + " (" + rowCount + " rows, "
                                        + generalTableContext.getColumns().size() + " cols)";
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
-                    markdown.toString(), rowCount, description, null);
-        } catch (final RuntimeException e) {
+                    rowCount, description, null, false);
+        } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
-                    null, null, null, e.getMessage());
+                    null, null, e.getMessage(), false);
+            attachmentFileStore.deleteAttachmentFile(attachmentId);
         }
     }
 
     /**
-     * Submits an async task to download table data from a Dashboard or Query search,
-     * convert it to markdown, and store it against the attachment record.
+     * Submits an async task to download table data from a Dashboard or Query search
+     * and save the CSV to the attachment file store.
+     * Markdown conversion happens at analysis time, not here.
      */
     private void submitAsyncDownload(final int attachmentId,
                                      final int chatId,
@@ -254,45 +283,75 @@ public class AskStroomAIService {
                 taskContext -> {
                     try {
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
-                                null, null, null, null);
+                                null, null, null, false);
 
-                        final Supplier<ResourceGeneration> downloadSupplier = buildDownloadSupplier(context);
+                        final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(config);
+                        final Supplier<ResourceGeneration> downloadSupplier =
+                                buildDownloadSupplier(context, tableSummaryConfig);
                         final ResourceGeneration resourceGeneration = downloadSupplier.get();
                         final ResourceKey resourceKey = resourceGeneration.getResourceKey();
 
                         try {
-                            final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(config);
                             final Path tempFile = resourceStore.getTempFile(resourceKey);
-                            final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
+                            final Path targetFile = attachmentFileStore.createAttachmentFile(attachmentId);
+                            Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
 
-                            final List<String> allLines;
-                            try (final BufferedReader reader = Files.newBufferedReader(tempFile)) {
-                                allLines = reader.lines()
-                                        .limit(maximumRowCount + 1L)
-                                        .toList();
+                            // Count rows by streaming the file (skip CSV header).
+                            final int maxRows = tableSummaryConfig.getMaximumTableInputRows();
+                            int rowCount = 0;
+                            try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
+                                reader.readLine(); // skip CSV header
+                                while (reader.readLine() != null) {
+                                    rowCount++;
+                                }
                             }
 
-                            if (allLines.isEmpty()) {
-                                aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
-                                        "", 0, "Empty table", null);
-                                return;
+                            // Truncated if we got more rows than the configured max
+                            // (we requested maxRows+1 to probe for overflow).
+                            final boolean truncated = rowCount > maxRows;
+                            final int reportedRowCount;
+
+                            if (truncated) {
+                                // Rewrite the file without the overflow probe row.
+                                final Path trimmedFile = targetFile.resolveSibling(
+                                        targetFile.getFileName() + ".tmp");
+                                try (final BufferedReader reader = Files.newBufferedReader(targetFile);
+                                     final BufferedWriter writer = Files.newBufferedWriter(trimmedFile)) {
+                                    int linesWritten = 0;
+                                    String line;
+                                    while ((line = reader.readLine()) != null) {
+                                        // Write header + maxRows data lines
+                                        if (linesWritten <= maxRows) {
+                                            writer.write(line);
+                                            writer.newLine();
+                                            linesWritten++;
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                }
+                                Files.move(trimmedFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                                reportedRowCount = maxRows;
+                            } else {
+                                reportedRowCount = rowCount;
                             }
 
-                            // Convert CSV to markdown.
-                            final String csvHeader = allLines.getFirst();
-                            final String mdHeader = buildMarkdownHeader(csvHeader);
-                            final int dataLineCount = allLines.size() - 1;
-
-                            final StringBuilder markdown = new StringBuilder(mdHeader);
-                            for (int i = 1; i < allLines.size(); i++) {
-                                markdown.append(csvLineToMarkdownRow(allLines.get(i)));
+                            final int colCount;
+                            try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
+                                final String header = reader.readLine();
+                                colCount = header != null
+                                        ? parseCsvLine(header).size()
+                                        : 0;
                             }
 
-                            final int colCount = parseCsvLine(csvHeader).size();
-                            final String description = "Table data (" + dataLineCount + " rows, " + colCount + " cols)";
+                            final String description = context.getDescription()
+                                                       + " (" + reportedRowCount + " rows, " + colCount + " cols"
+                                                       + (truncated
+                                    ? ", truncated to limit"
+                                    : "") + ")";
 
                             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
-                                    markdown.toString(), dataLineCount, description, null);
+                                    reportedRowCount, description, null, truncated);
                         } finally {
                             try {
                                 resourceStore.deleteTempFile(resourceKey);
@@ -303,7 +362,8 @@ public class AskStroomAIService {
                     } catch (final Exception e) {
                         LOGGER.debug(e::getMessage, e);
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
-                                null, null, null, e.getMessage());
+                                null, null, e.getMessage(), false);
+                        attachmentFileStore.deleteAttachmentFile(attachmentId);
                     }
                 });
         executorProvider.get().execute(runnable);
@@ -311,33 +371,61 @@ public class AskStroomAIService {
 
     /**
      * Builds the download supplier for Dashboard or Query contexts.
+     * Applies row-limiting via the existing requestedRange on the search request.
      */
-    private Supplier<ResourceGeneration> buildDownloadSupplier(final AskStroomAiContext context) {
+    private Supplier<ResourceGeneration> buildDownloadSupplier(final AskStroomAiContext context,
+                                                               final TableSummaryConfig tableSummaryConfig) {
+        // Request one extra row beyond the limit to detect truncation.
+        // If we get maxRows+1 rows back, we know the data is genuinely truncated.
+        final long maxRows = tableSummaryConfig.getMaximumTableInputRows();
+        final OffsetRange probeRange = new OffsetRange(0L, maxRows + 1);
+
         if (context instanceof final DashboardTableContext ctx) {
             return () -> {
                 final DashboardSearchRequest searchRequest = ctx.getSearchRequest();
-                final String componentId = searchRequest.getComponentResultRequests().stream()
+                // Override requestedRange on each TableResultRequest to limit rows.
+                final List<ComponentResultRequest> limitedRequests =
+                        searchRequest.getComponentResultRequests().stream()
+                                .map(crr -> {
+                                    if (crr instanceof final TableResultRequest trr) {
+                                        return trr.copy()
+                                                .requestedRange(probeRange)
+                                                .build();
+                                    }
+                                    return crr;
+                                }).toList();
+
+                final DashboardSearchRequest limitedSearchRequest = searchRequest.copy()
+                        .componentResultRequests(limitedRequests)
+                        .build();
+
+                final String componentId = limitedRequests.stream()
                         .filter(crr -> crr instanceof TableResultRequest)
                         .map(ComponentResultRequest::getComponentId)
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("No table component found"));
                 final DownloadSearchResultsRequest downloadRequest = new DownloadSearchResultsRequest(
-                        searchRequest, componentId, DownloadSearchResultFileType.CSV,
+                        limitedSearchRequest, componentId, DownloadSearchResultFileType.CSV,
                         false, false, 100);
                 return dashboardService.downloadSearchResults(downloadRequest);
             };
         } else if (context instanceof final QueryTableContext ctx) {
             return () -> {
                 final QuerySearchRequest searchRequest = ctx.getSearchRequest();
+                final QuerySearchRequest limitedSearchRequest = searchRequest.copy()
+                        .requestedRange(probeRange)
+                        .build();
                 final DownloadQueryResultsRequest downloadRequest = new DownloadQueryResultsRequest(
-                        searchRequest, DownloadSearchResultFileType.CSV, false, 100);
+                        limitedSearchRequest, DownloadSearchResultFileType.CSV, false, 100);
                 return queryService.downloadSearchResults(downloadRequest);
             };
         }
         throw new IllegalStateException("Cannot build download supplier for: " + context.getClass().getName());
     }
 
-    // ---- Question processing ----
+    // ---------------------------------------------------------------------
+    // Question processing
+    // ---------------------------------------------------------------------
 
     /**
      * Core question processing. Creates a single THINKING message that is updated in place
@@ -387,9 +475,9 @@ public class AskStroomAIService {
     }
 
     /**
-     * Performs full batch analysis over all READY attachments, with conversation
-     * history included as context in the prompt. Each question triggers a fresh analysis
-     * so different aspects of the data can be explored.
+     * Performs parallel batch analysis over all READY attachments, reading CSV data
+     * from the attachment file store. Each batch is converted to markdown on-the-fly
+     * and submitted to the LLM concurrently. Results are merged in a single pass.
      */
     private String analyseWithAttachments(final AskStroomAiRequest request,
                                           final ChatModel chatModel,
@@ -403,74 +491,185 @@ public class AskStroomAIService {
             final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(request.getConfig());
             final String conversationContext = buildConversationSummary(chatId);
 
-            // Combine all attachment data into a single markdown table for analysis.
-            final StringBuilder allData = new StringBuilder();
-            int totalRows = 0;
+            // Build batches from CSV files on disk.
+            final List<String> batches = new ArrayList<>();
+            boolean anyTruncated = false;
             for (final AiChatAttachment attachment : attachments) {
-                final String data = aiService.getAttachmentData(attachment.getId());
-                if (NullSafe.isNonBlankString(data)) {
-                    allData.append(data);
-                    if (!data.endsWith("\n")) {
-                        allData.append('\n');
-                    }
-                    totalRows += NullSafe.getOrElse(attachment, AiChatAttachment::getRowCount, 0);
+                final Path csvFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+                if (!Files.exists(csvFile)) {
+                    throw new RuntimeException(
+                            "Attachment data file not found for attachment " + attachment.getId()
+                            + ". Data may have been cleaned up.");
+                }
+                batches.addAll(buildBatchesFromCsv(csvFile, tableSummaryConfig));
+                if (attachment.isTruncated()) {
+                    anyTruncated = true;
                 }
             }
 
-            if (allData.isEmpty()) {
+            if (batches.isEmpty()) {
                 return "No data available for analysis.";
             }
 
-            final String tableData = allData.toString();
-            final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
+            // Include truncation note in the user query if applicable.
+            final String userQuery = anyTruncated
+                    ? request.getMessage() + "\n\nNote: this data is truncated to the first "
+                      + tableSummaryConfig.getMaximumTableInputRows()
+                      + " rows of a larger result set."
+                    : request.getMessage();
 
-            // Estimate batches based on combined data size.
-            final int estimatedBatches = Math.max(1, (tableData.length() + maxBatchSize - 1) / maxBatchSize);
-
+            final int totalBatches = batches.size();
             aiService.updateMessageText(thinkingMessageId,
-                    "Analysing " + totalRows + " rows across "
+                    "Analysing " + totalBatches + " batch(es) across "
                     + attachments.size() + " attachment(s)...");
 
-            // Build an enhanced ResultBuilder that includes conversation context.
-            final ResultBuilder resultBuilder = new ResultBuilder(
-                    chatModel, request.getMessage(), tableSummaryConfig,
-                    aiService, thinkingMessageId, estimatedBatches, cancelled, conversationContext);
+            // Process batches in parallel with bounded concurrency.
+            final Executor executor = executorProvider.get();
+            final int maxParallel = tableSummaryConfig.getMaxParallelBatches();
+            final Semaphore semaphore = new Semaphore(maxParallel);
 
-            // Split table data into batches by character size and send to AI.
-            // Find the header (first two lines: column names + separator).
-            final String[] lines = tableData.split("\n", -1);
-            String mdHeader = "";
-            int dataStart = 0;
-            if (lines.length >= 2 && lines[1].contains("---")) {
-                mdHeader = lines[0] + "\n" + lines[1] + "\n";
-                dataStart = 2;
-            }
+            final String systemPrompt = tableSummaryConfig.getTableQuerySystemPrompt() != null
+                    ? tableSummaryConfig.getTableQuerySystemPrompt()
+                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
+            final String userPromptTemplate = tableSummaryConfig.getTableQueryUserPrompt() != null
+                    ? tableSummaryConfig.getTableQueryUserPrompt()
+                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
 
-            final StringBuilder batch = new StringBuilder(mdHeader);
-            for (int i = dataStart; i < lines.length; i++) {
+            final List<CompletableFuture<String>> futures = new ArrayList<>();
+            for (int i = 0; i < totalBatches; i++) {
                 if (cancelled.get()) {
                     break;
                 }
-                final String line = lines[i];
-                if (line.isEmpty()) {
-                    continue;
-                }
-                final String row = line + "\n";
-                if (batch.length() + row.length() > maxBatchSize && batch.length() > mdHeader.length()) {
-                    resultBuilder.add(batch.toString());
-                    batch.setLength(0);
-                    batch.append(mdHeader);
-                }
-                batch.append(row);
-            }
-            if (batch.length() > mdHeader.length() && !cancelled.get()) {
-                resultBuilder.add(batch.toString());
+                final String batch = batches.get(i);
+                final int batchNum = i + 1;
+                futures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        semaphore.acquire();
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Interrupted waiting for batch slot", e);
+                    }
+                    try {
+                        if (cancelled.get()) {
+                            return null;
+                        }
+                        aiService.updateMessageText(thinkingMessageId,
+                                "Analysing batch " + batchNum + " of " + totalBatches + "...");
+
+                        final String userPrompt = userPromptTemplate
+                                .replace("{{query}}", userQuery)
+                                .replace("{{table}}", batch)
+                                .replace("{{context}}", conversationContext);
+
+                        final List<ChatMessage> messages = List.of(
+                                new SystemMessage(systemPrompt),
+                                new UserMessage(userPrompt));
+
+                        final ChatResponse response = chatModel.chat(messages);
+                        return response.aiMessage().text();
+                    } finally {
+                        semaphore.release();
+                    }
+                }, executor));
             }
 
-            return resultBuilder.get();
+            // Collect results, handling per-batch failures gracefully.
+            final List<String> summaries = new ArrayList<>();
+            for (final CompletableFuture<String> future : futures) {
+                try {
+                    final String result = future.join();
+                    if (result != null && !result.isEmpty()) {
+                        summaries.add(result);
+                    }
+                } catch (final Exception e) {
+                    LOGGER.debug(() -> "Batch processing failed", e);
+                    // Continue collecting results from other batches.
+                }
+            }
+
+            if (summaries.isEmpty()) {
+                if (cancelled.get()) {
+                    return "Analysis was cancelled before any results were produced.";
+                }
+                return "No results could be extracted from the data.";
+            }
+
+            // Merge summaries.
+            if (summaries.size() == 1) {
+                return summaries.getFirst();
+            }
+            return mergeAllSummaries(chatModel, summaries, tableSummaryConfig);
         } finally {
             deregisterCancellation(chatId);
         }
+    }
+
+    /**
+     * Reads a CSV file and splits it into markdown-formatted batches,
+     * each respecting the maximum batch size.
+     */
+    List<String> buildBatchesFromCsv(final Path csvFile,
+                                     final TableSummaryConfig config) {
+        final List<String> batches = new ArrayList<>();
+        final int maxBatchSize = config.getMaximumBatchSize();
+
+        try (final BufferedReader reader = Files.newBufferedReader(csvFile)) {
+            final String csvHeader = reader.readLine();
+            if (csvHeader == null) {
+                return batches;
+            }
+
+            final String mdHeader = buildMarkdownHeader(csvHeader);
+            final StringBuilder batch = new StringBuilder(mdHeader);
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty()) {
+                    continue;
+                }
+                final String mdRow = csvLineToMarkdownRow(line);
+                if (batch.length() + mdRow.length() > maxBatchSize
+                    && batch.length() > mdHeader.length()) {
+                    batches.add(batch.toString());
+                    batch.setLength(0);
+                    batch.append(mdHeader);
+                }
+                batch.append(mdRow);
+            }
+
+            if (batch.length() > mdHeader.length()) {
+                batches.add(batch.toString());
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Failed to read CSV file: " + csvFile, e);
+        }
+        return batches;
+    }
+
+    /**
+     * Merges N summaries into a single unified summary using a single LLM call.
+     */
+    private String mergeAllSummaries(final ChatModel chatModel,
+                                     final List<String> summaries,
+                                     final TableSummaryConfig config) {
+        final StringBuilder combined = new StringBuilder();
+        for (int i = 0; i < summaries.size(); i++) {
+            combined.append("--- Summary ").append(i + 1).append(" ---\n");
+            combined.append(summaries.get(i)).append("\n\n");
+        }
+
+        final String mergePromptTemplate = config.getMultiSummaryMergePrompt() != null
+                ? config.getMultiSummaryMergePrompt()
+                : TableSummaryConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
+        final String mergePrompt = mergePromptTemplate
+                .replace("{{summaries}}", combined.toString());
+
+        final List<ChatMessage> messages = List.of(
+                new SystemMessage("You merge partial answers into a unified, concise summary."),
+                new UserMessage(mergePrompt));
+
+        final ChatResponse response = chatModel.chat(messages);
+        return response.aiMessage().text();
     }
 
     /**
@@ -702,166 +901,24 @@ public class AskStroomAIService {
                 new TableSummaryConfig());
     }
 
-    private String writeHeader(final List<String> columnList) {
-        final StringBuilder sb = new StringBuilder();
-        if (!columnList.isEmpty()) {
-            columnList.forEach(cell -> {
-                sb.append("| ");
-                sb.append(escape(cell));
-                sb.append(" ");
-            });
-            sb.append("|\n");
-            columnList.forEach(cell -> {
-                sb.append("| --- ");
-            });
-            sb.append("|\n");
-        }
-        return sb.toString();
-    }
 
-    private String writeRow(final List<String> rowValues) {
-        final StringBuilder sb = new StringBuilder();
-        if (!rowValues.isEmpty()) {
-            rowValues.forEach(cell -> {
-                sb.append("| ");
-                sb.append(escape(cell));
-                sb.append(" ");
-            });
-            sb.append("|\n");
-        }
-        return sb.toString();
-    }
-
-    private String escape(final String value) {
+    /**
+     * Escapes a field value for safe inclusion in a CSV file.
+     * Wraps in double quotes if the value contains commas, quotes, or newlines.
+     */
+    private String escapeCsvField(final String value) {
         if (value == null) {
             return "";
         }
-
-        // Replace characters that can cause issues with Markdown tables
-        return MD_TABLE_ESCAPE.matcher(value)
-                .replaceAll("\\\\$0")
-                .trim()
-                .replace("\n", "<br>");
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
-    /**
-     * Processes table data batches using direct ChatModel.chat() calls with configurable prompt templates.
-     * For each batch, constructs a query prompt from the template, calls the LLM, and accumulates
-     * partial summaries. If multiple batches are needed, merges partial summaries using the merge
-     * prompt template.
-     * <p>
-     * Supports progressive status feedback (THINKING messages persisted to the chat) and
-     * cancellation — if the cancelled flag is set, remaining batches are skipped and partial
-     * results are returned.
-     */
-    static class ResultBuilder {
-
-        private final ChatModel chatModel;
-        private final String aiQuery;
-        private final TableSummaryConfig config;
-        private final AiService aiService;
-        private final int thinkingMessageId;
-        private final int totalBatches;
-        private final AtomicBoolean cancelled;
-        private final String conversationContext;
-        private int batchCount;
-        private String cumulativeSummary = "";
-
-        public ResultBuilder(final ChatModel chatModel,
-                             final String aiQuery,
-                             final TableSummaryConfig config,
-                             final AiService aiService,
-                             final int thinkingMessageId,
-                             final int totalBatches,
-                             final AtomicBoolean cancelled,
-                             final String conversationContext) {
-            this.chatModel = chatModel;
-            this.aiQuery = aiQuery;
-            this.config = config;
-            this.aiService = aiService;
-            this.thinkingMessageId = thinkingMessageId;
-            this.totalBatches = totalBatches;
-            this.cancelled = cancelled;
-            this.conversationContext = conversationContext != null
-                    ? conversationContext
-                    : "";
-        }
-
-        void add(final String data) {
-            // Check cancellation before starting a new batch.
-            if (cancelled.get()) {
-                return;
-            }
-
-            batchCount++;
-
-            // Update the single THINKING message with progress.
-            final String suffix = batchCount > 1
-                    ? " merging summaries"
-                    : "";
-            aiService.updateMessageText(thinkingMessageId,
-                    "Analysing batch " + batchCount + "/" + totalBatches + "..." + suffix);
-
-            // Build the query prompt from the configurable template
-            final String systemPrompt = config.getTableQuerySystemPrompt() != null
-                    ? config.getTableQuerySystemPrompt()
-                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
-            final String userPromptTemplate = config.getTableQueryUserPrompt() != null
-                    ? config.getTableQueryUserPrompt()
-                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
-
-            final String userPrompt = userPromptTemplate
-                    .replace("{{query}}", aiQuery)
-                    .replace("{{table}}", data)
-                    .replace("{{context}}", conversationContext);
-
-            final List<ChatMessage> messages = new ArrayList<>(2);
-            messages.add(new SystemMessage(systemPrompt));
-            messages.add(new UserMessage(userPrompt));
-
-            final ChatResponse response = chatModel.chat(messages);
-            if (cancelled.get()) {
-                return;
-            }
-            final String batchAnswer = response.aiMessage().text();
-
-            if (cumulativeSummary.isEmpty()) {
-                cumulativeSummary = batchAnswer;
-            } else {
-                // Merge with the configurable merge prompt template
-                final String mergePromptTemplate = config.getSummaryMergePrompt() != null
-                        ? config.getSummaryMergePrompt()
-                        : TableSummaryConfig.DEFAULT_SUMMARY_MERGE_PROMPT;
-
-                final String mergePrompt = mergePromptTemplate
-                        .replace("{{a}}", cumulativeSummary)
-                        .replace("{{b}}", batchAnswer);
-
-                final List<ChatMessage> mergeMessages = new ArrayList<>(2);
-                mergeMessages.add(new SystemMessage(
-                        "You merge partial answers into a unified, concise summary."));
-                mergeMessages.add(new UserMessage(mergePrompt));
-
-                final ChatResponse mergeResponse = chatModel.chat(mergeMessages);
-                if (cancelled.get()) {
-                    return;
-                }
-                cumulativeSummary = mergeResponse.aiMessage().text();
-            }
-        }
-
-        String get() {
-            if (cancelled.get()) {
-                if (!cumulativeSummary.isEmpty()) {
-                    return cumulativeSummary;
-                }
-                return "Analysis was cancelled before any results were produced.";
-            }
-            return cumulativeSummary;
-        }
-    }
-
-    // ---- Cancellation methods ----
+    // ---------------------------------------------------------------------
+    // Cancellation methods
+    // ---------------------------------------------------------------------
 
     void registerCancellation(final int chatId, final AtomicBoolean flag) {
         cancellationFlags.put(chatId, flag);
@@ -869,7 +926,7 @@ public class AskStroomAIService {
 
     /**
      * Signals cancellation for an in-progress batch analysis.
-     * The ResultBuilder checks this flag before each batch.
+     * The batch processing checks this flag before each batch.
      */
     public boolean cancelProcessing(final int chatId) {
         aiService.verifyOwnership(chatId);
@@ -885,7 +942,9 @@ public class AskStroomAIService {
         cancellationFlags.remove(chatId);
     }
 
-    // ---- Chat management methods ----
+    // ---------------------------------------------------------------------
+    // Chat management methods
+    // ---------------------------------------------------------------------
 
     public AiChat createChat() {
         return aiService.createChat();
@@ -900,7 +959,14 @@ public class AskStroomAIService {
     }
 
     public void deleteChat(final int chatId) {
-        aiService.deleteChat(chatId);
+        // Get attachment IDs before cascade-deleting the chat records.
+        final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+        final List<Integer> attachmentIds = attachments.stream()
+                .map(AiChatAttachment::getId)
+                .toList();
+
+        aiService.deleteChat(chatId); // CASCADE deletes DB records
+        attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup CSV files
     }
 
     public void updateChatTitle(final int chatId, final String title) {
@@ -920,13 +986,22 @@ public class AskStroomAIService {
     public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
         final List<AiChatMessage> newMessages = aiService.getMessagesSince(
                 chatId, request.getLastSeenMessageId());
-        // Conversation is complete if there are no THINKING messages among the new messages.
-        final boolean complete = newMessages.stream()
+        final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+
+        // Conversation is complete if there are no THINKING messages among the new messages
+        // AND all attachments have finished downloading.
+        final boolean thinkingComplete = newMessages.stream()
                 .noneMatch(msg -> msg.getMessageType() == AiMessageType.THINKING);
-        return new AiChatPollResponse(newMessages, complete);
+        final boolean attachmentsComplete = attachments.stream()
+                .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
+                                || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
+        final boolean complete = thinkingComplete && attachmentsComplete;
+        return new AiChatPollResponse(newMessages, attachments, complete);
     }
 
-    // ---- Config methods ----
+    // ---------------------------------------------------------------------
+    // Config methods
+    // ---------------------------------------------------------------------
 
     public AskStroomAIConfig getDefaultConfig() {
         return defaultConfigProvider.get();
@@ -963,6 +1038,9 @@ public class AskStroomAIService {
         globalConfigProvider.get().setInt(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
                 config.getMaximumTableInputRows());
+        globalConfigProvider.get().setInt(defaultTableSummaryConfig,
+                TableSummaryConfig.PROP_NAME_MAX_PARALLEL_BATCHES,
+                config.getMaxParallelBatches());
         globalConfigProvider.get().setString(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT,
                 config.getTableQuerySystemPrompt());
@@ -972,6 +1050,9 @@ public class AskStroomAIService {
         globalConfigProvider.get().setString(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_SUMMARY_MERGE_PROMPT,
                 config.getSummaryMergePrompt());
+        globalConfigProvider.get().setString(defaultTableSummaryConfig,
+                TableSummaryConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
+                config.getMultiSummaryMergePrompt());
         return true;
     }
 }

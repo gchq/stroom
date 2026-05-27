@@ -29,17 +29,25 @@ public class AiChatPollResponse {
     @JsonProperty
     private final List<AiChatMessage> newMessages;
     @JsonProperty
+    private final List<AiChatAttachment> attachments;
+    @JsonProperty
     private final boolean complete;
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
+                              @JsonProperty("attachments") final List<AiChatAttachment> attachments,
                               @JsonProperty("complete") final boolean complete) {
         this.newMessages = newMessages;
+        this.attachments = attachments;
         this.complete = complete;
     }
 
     public List<AiChatMessage> getNewMessages() {
         return newMessages;
+    }
+
+    public List<AiChatAttachment> getAttachments() {
+        return attachments;
     }
 
     public boolean isComplete() {

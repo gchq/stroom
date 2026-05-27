@@ -74,8 +74,6 @@ public class TestAskStroomAi {
 
         final AskStroomAIConfig modelConfig = new AskStroomAIConfig();
         final TableSummaryConfig tableSummaryConfig = modelConfig.getTableSummary();
-        final ResultBuilder resultBuilder = new ResultBuilder(
-                chatModel, "Explain table", tableSummaryConfig);
 
         // Create column header string.
         final String header = writeHeader(columns);
@@ -86,6 +84,8 @@ public class TestAskStroomAi {
         final StringBuilder batch = new StringBuilder(header);
         int rowCount = 0;
 
+        final List<String> batchSummaries = new ArrayList<>();
+
         for (int i = 0; i < totalRows; i++) {
             final List<String> rowValues = List.of(
                     DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
@@ -95,7 +95,8 @@ public class TestAskStroomAi {
 
             final int newBatchSize = batch.length() + rowString.length();
             if (rowCount > 0 && newBatchSize > maxBatchSize) {
-                resultBuilder.add(batch.toString());
+                batchSummaries.add(processBatch(chatModel, tableSummaryConfig,
+                        "Explain table", batch.toString()));
                 batch.setLength(0);
                 batch.append(header);
             }
@@ -110,11 +111,53 @@ public class TestAskStroomAi {
         }
 
         if (!batch.isEmpty()) {
-            // Process any remaining batch content
-            resultBuilder.add(batch.toString());
+            batchSummaries.add(processBatch(chatModel, tableSummaryConfig,
+                    "Explain table", batch.toString()));
         }
 
-        System.out.println(resultBuilder.get());
+        // Merge all summaries if multiple
+        if (batchSummaries.size() == 1) {
+            System.out.println(batchSummaries.getFirst());
+        } else {
+            System.out.println(mergeSummaries(chatModel, tableSummaryConfig, batchSummaries));
+        }
+    }
+
+    private String processBatch(final ChatModel chatModel,
+                                final TableSummaryConfig config,
+                                final String query,
+                                final String data) {
+        final String userPrompt = config.getTableQueryUserPrompt()
+                .replace("{{query}}", query)
+                .replace("{{table}}", data)
+                .replace("{{context}}", "");
+
+        final List<ChatMessage> messages = new ArrayList<>(2);
+        messages.add(new SystemMessage(config.getTableQuerySystemPrompt()));
+        messages.add(new UserMessage(userPrompt));
+
+        final ChatResponse response = chatModel.chat(messages);
+        return response.aiMessage().text();
+    }
+
+    private String mergeSummaries(final ChatModel chatModel,
+                                  final TableSummaryConfig config,
+                                  final List<String> summaries) {
+        final StringBuilder combined = new StringBuilder();
+        for (int i = 0; i < summaries.size(); i++) {
+            combined.append("--- Summary ").append(i + 1).append(" ---\n");
+            combined.append(summaries.get(i)).append("\n\n");
+        }
+
+        final String mergePrompt = config.getMultiSummaryMergePrompt()
+                .replace("{{summaries}}", combined.toString());
+
+        final List<ChatMessage> messages = new ArrayList<>(2);
+        messages.add(new SystemMessage("You merge partial answers into a unified, concise summary."));
+        messages.add(new UserMessage(mergePrompt));
+
+        final ChatResponse response = chatModel.chat(messages);
+        return response.aiMessage().text();
     }
 
     private String writeHeader(final List<String> columnList) {
@@ -157,58 +200,5 @@ public class TestAskStroomAi {
                 .replaceAll("\\\\$0")
                 .trim()
                 .replace("\n", "<br>");
-    }
-
-    /**
-     * Uses direct ChatModel.chat() with configurable prompt templates,
-     * matching the production ResultBuilder in AskStroomAIService.
-     */
-    static class ResultBuilder {
-
-        private final ChatModel chatModel;
-        private final String aiQuery;
-        private final TableSummaryConfig config;
-        private String cumulativeSummary = "";
-
-        public ResultBuilder(final ChatModel chatModel,
-                             final String aiQuery,
-                             final TableSummaryConfig config) {
-            this.chatModel = chatModel;
-            this.aiQuery = aiQuery;
-            this.config = config;
-        }
-
-        void add(final String data) {
-            final String userPrompt = config.getTableQueryUserPrompt()
-                    .replace("{{query}}", aiQuery)
-                    .replace("{{table}}", data);
-
-            final List<ChatMessage> messages = new ArrayList<>(2);
-            messages.add(new SystemMessage(config.getTableQuerySystemPrompt()));
-            messages.add(new UserMessage(userPrompt));
-
-            final ChatResponse response = chatModel.chat(messages);
-            final String batchAnswer = response.aiMessage().text();
-
-            if (cumulativeSummary.isEmpty()) {
-                cumulativeSummary = batchAnswer;
-            } else {
-                final String mergePrompt = config.getSummaryMergePrompt()
-                        .replace("{{a}}", cumulativeSummary)
-                        .replace("{{b}}", batchAnswer);
-
-                final List<ChatMessage> mergeMessages = new ArrayList<>(2);
-                mergeMessages.add(new SystemMessage(
-                        "You merge partial answers into a unified, concise summary."));
-                mergeMessages.add(new UserMessage(mergePrompt));
-
-                final ChatResponse mergeResponse = chatModel.chat(mergeMessages);
-                cumulativeSummary = mergeResponse.aiMessage().text();
-            }
-        }
-
-        String get() {
-            return cumulativeSummary;
-        }
     }
 }

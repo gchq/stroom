@@ -17,6 +17,7 @@
 package stroom.ai.impl.db;
 
 import stroom.ai.impl.AiDao;
+import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
@@ -30,6 +31,7 @@ import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
 
 import java.util.Collection;
@@ -175,7 +177,7 @@ public class AiDaoImpl implements AiDao {
                                       final String message) {
         final long now = System.currentTimeMillis();
         return JooqUtil.transactionResult(aiDbConnProvider, context -> {
-            final var insert = context
+            InsertSetMoreStep<AiChatMessageRecord> insert = context
                     .insertInto(AI_CHAT_MESSAGE)
                     .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
                     .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
@@ -183,7 +185,7 @@ public class AiDaoImpl implements AiDao {
                     .set(AI_CHAT_MESSAGE.MESSAGE, message);
 
             if (attachmentId != null) {
-                insert.set(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID, attachmentId);
+                insert = insert.set(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID, attachmentId);
             }
 
             final Integer id = insert
@@ -242,7 +244,9 @@ public class AiDaoImpl implements AiDao {
                 .execute());
     }
 
-    // ---- Attachment operations ----
+    // ---------------------------------------------------------------------
+    // Attachment operations
+    // ---------------------------------------------------------------------
 
     private static final Function<Record, AiChatAttachment> RECORD_TO_ATTACHMENT = record ->
             new AiChatAttachment(
@@ -256,6 +260,7 @@ public class AiDaoImpl implements AiDao {
                             record.get(AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE).byteValue()),
                     record.get(AI_CHAT_ATTACHMENT.DESCRIPTION),
                     record.get(AI_CHAT_ATTACHMENT.ROW_COUNT),
+                    record.get(AI_CHAT_ATTACHMENT.TRUNCATED),
                     record.get(AI_CHAT_ATTACHMENT.ERROR_MESSAGE));
 
     @Override
@@ -263,8 +268,8 @@ public class AiDaoImpl implements AiDao {
                                              final AiAttachmentType type,
                                              final String contextJson) {
         final long now = System.currentTimeMillis();
-        final int statusValue = (int) AiAttachmentStatus.PENDING.getPrimitiveValue();
-        final int typeValue = (int) type.getPrimitiveValue();
+        final int statusValue = AiAttachmentStatus.PENDING.getPrimitiveValue();
+        final int typeValue = type.getPrimitiveValue();
 
         final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
                 .insertInto(AI_CHAT_ATTACHMENT)
@@ -278,25 +283,25 @@ public class AiDaoImpl implements AiDao {
                 .fetchOne(AI_CHAT_ATTACHMENT.ID));
 
         return new AiChatAttachment(id, chatId, now, now,
-                AiAttachmentStatus.PENDING, type, null, null, null);
+                AiAttachmentStatus.PENDING, type, null, null, false, null);
     }
 
     @Override
     public void updateAttachmentStatus(final int attachmentId,
                                        final AiAttachmentStatus status,
-                                       final String dataMarkdown,
                                        final Integer rowCount,
                                        final String description,
-                                       final String errorMessage) {
+                                       final String errorMessage,
+                                       final boolean truncated) {
         final long now = System.currentTimeMillis();
         JooqUtil.context(aiDbConnProvider, context -> context
                 .update(AI_CHAT_ATTACHMENT)
                 .set(AI_CHAT_ATTACHMENT.STATUS, (int) status.getPrimitiveValue())
                 .set(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS, now)
-                .set(AI_CHAT_ATTACHMENT.DATA_MARKDOWN, dataMarkdown)
                 .set(AI_CHAT_ATTACHMENT.ROW_COUNT, rowCount)
                 .set(AI_CHAT_ATTACHMENT.DESCRIPTION, description)
                 .set(AI_CHAT_ATTACHMENT.ERROR_MESSAGE, errorMessage)
+                .set(AI_CHAT_ATTACHMENT.TRUNCATED, truncated)
                 .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
                 .execute());
     }
@@ -313,6 +318,7 @@ public class AiDaoImpl implements AiDao {
                                 AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE,
                                 AI_CHAT_ATTACHMENT.DESCRIPTION,
                                 AI_CHAT_ATTACHMENT.ROW_COUNT,
+                                AI_CHAT_ATTACHMENT.TRUNCATED,
                                 AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
                         .from(AI_CHAT_ATTACHMENT)
                         .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
@@ -332,20 +338,12 @@ public class AiDaoImpl implements AiDao {
                                 AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE,
                                 AI_CHAT_ATTACHMENT.DESCRIPTION,
                                 AI_CHAT_ATTACHMENT.ROW_COUNT,
+                                AI_CHAT_ATTACHMENT.TRUNCATED,
                                 AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
                         .from(AI_CHAT_ATTACHMENT)
                         .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
                         .orderBy(AI_CHAT_ATTACHMENT.CREATE_TIME_MS.asc())
                         .fetch())
                 .map(RECORD_TO_ATTACHMENT::apply);
-    }
-
-    @Override
-    public String getAttachmentData(final int attachmentId) {
-        return JooqUtil.contextResult(aiDbConnProvider, context -> context
-                .select(AI_CHAT_ATTACHMENT.DATA_MARKDOWN)
-                .from(AI_CHAT_ATTACHMENT)
-                .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
-                .fetchOne(AI_CHAT_ATTACHMENT.DATA_MARKDOWN));
     }
 }

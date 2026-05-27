@@ -34,6 +34,7 @@ public class AiModule extends AbstractModule {
     protected void configure() {
         // Services
         bind(AiService.class).to(AiServiceImpl.class);
+        bind(AiAttachmentFileStore.class).asEagerSingleton();
 
         // OpenAI Model
         bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);

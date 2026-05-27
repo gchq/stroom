@@ -27,20 +27,30 @@ import dev.langchain4j.model.chat.response.ChatResponse;
  * without any network calls. Designed for end-to-end testing of the batch/merge pipeline.
  * <p>
  * Activated by setting {@code modelId = "__stub__"} on an OpenAIModel document.
+ * <p>
+ * Simulates realistic latency so that progress messages, THINKING updates,
+ * and attachment download status transitions are visible in the UI during testing.
  */
 class StubChatModel implements ChatModel {
 
-    private static final int SIMULATED_LATENCY_MS = 500;
+    /**
+     * Simulated latency for data batch analysis calls (per-batch).
+     * Deliberately long enough to see THINKING progress messages update.
+     */
+    private static final int BATCH_LATENCY_MS = 2_000;
+
+    /**
+     * Simulated latency for merge / conversational calls.
+     */
+    private static final int MERGE_LATENCY_MS = 3_000;
+
+    /**
+     * Simulated latency for simple conversational (no data) calls.
+     */
+    private static final int CONVERSATIONAL_LATENCY_MS = 1_500;
 
     @Override
     public ChatResponse doChat(final ChatRequest chatRequest) {
-        // Simulate LLM processing time so progress messages are visible.
-        try {
-            Thread.sleep(SIMULATED_LATENCY_MS);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         // Extract the user's query from the last UserMessage.
         final String userContent = chatRequest.messages().stream()
                 .filter(m -> m instanceof UserMessage)
@@ -51,6 +61,8 @@ class StubChatModel implements ChatModel {
         // Detect whether this is a merge prompt or a data analysis prompt.
         if (userContent.contains("SUMMARY A:") || userContent.contains("Summary A:")
                 || userContent.contains("summary A:")) {
+            // Merge step — simulate longer thinking for combining batch results.
+            sleep(MERGE_LATENCY_MS);
             return buildStubResponse("[Stub Merged Summary]\n\n"
                     + "Combined analysis from multiple batches.\n"
                     + "- Total patterns identified: 3\n"
@@ -59,11 +71,22 @@ class StubChatModel implements ChatModel {
         }
 
         // Count approximate data rows (pipe-delimited markdown table rows).
+        // Trim each line before checking — the header row may inherit leading whitespace
+        // from the prompt template's {{table}} placeholder position.
         long dataRows = userContent.lines()
+                .map(String::trim)
                 .filter(line -> line.startsWith("|") && !line.contains("---"))
                 .count();
         // Subtract header row.
         dataRows = Math.max(0, dataRows - 1);
+
+        if (dataRows > 0) {
+            // Data batch — simulate per-batch analysis time.
+            sleep(BATCH_LATENCY_MS);
+        } else {
+            // Pure conversation — no table data.
+            sleep(CONVERSATIONAL_LATENCY_MS);
+        }
 
         return buildStubResponse("[Stub Analysis --- " + dataRows + " rows]\n\n"
                 + "**Query**: " + truncate(extractQuery(userContent), 100) + "\n\n"
@@ -74,6 +97,14 @@ class StubChatModel implements ChatModel {
                 + "- Recommendation: review top 5 entries for outliers\n\n"
                 + "*This is a stub response for testing. "
                 + "Configure a real model to get actual AI analysis.*");
+    }
+
+    private static void sleep(final int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private ChatResponse buildStubResponse(final String text) {

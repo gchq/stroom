@@ -16,4 +16,10 @@ public abstract sealed class AskStroomAiContext permits DashboardTableContext, Q
 
     public AskStroomAiContext() {
     }
+
+    /**
+     * Returns a human-readable description of this context suitable for display in the UI,
+     * chat message headers, and audit event logs.
+     */
+    public abstract String getDescription();
 }
