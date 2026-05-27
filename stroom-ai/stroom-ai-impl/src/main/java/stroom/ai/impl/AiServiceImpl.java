@@ -38,6 +38,8 @@ import stroom.util.http.HttpProxyConfiguration;
 import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -73,6 +75,8 @@ import java.util.Optional;
 
 @Singleton
 public class AiServiceImpl implements AiService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiServiceImpl.class);
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -197,21 +201,11 @@ public class AiServiceImpl implements AiService {
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
         final String apiKey = getApiKey(modelDoc.getApiKeyName());
 
+        LOGGER.debug(() -> "getChatModel: modelId='" + modelDoc.getModelId()
+                + "' baseUrl='" + NullSafe.toString(modelDoc.getBaseUrl()) + "'");
+
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-//        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-//                .version(HttpClient.Version.HTTP_1_1);
-//
-////                .sslContext()authenticator();
-
-//        final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
-//        final CloseableHttpClient httpClient =
-//        httpClientFactoryProvider.get().get(modelName, httpClientConfiguration);
-
-//        final ApacheHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
-//                .httpClientBuilder(httpClientBuilder)
-//
-//              ;
 
         final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
         final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
@@ -224,7 +218,9 @@ public class AiServiceImpl implements AiService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        return modelBuilder.build();
+        return LOGGER.logDurationIfDebugEnabled(
+                modelBuilder::build,
+                r -> "getChatModel: built model '" + modelDoc.getModelId() + "'");
     }
 
     @Override
@@ -423,6 +419,9 @@ public class AiServiceImpl implements AiService {
     @Override
     public void verifyOwnership(final AiChat chat) {
         final String currentUserUuid = securityContext.getUserRef().getUuid();
+        LOGGER.trace(() -> "verifyOwnership: chatId=" + chat.getId()
+                + " owner=" + chat.getUserUuid()
+                + " currentUser=" + currentUserUuid);
         if (!currentUserUuid.equals(chat.getUserUuid())) {
             throw new RuntimeException("Access denied: chat " + chat.getId()
                                        + " does not belong to the current user");
@@ -490,7 +489,11 @@ public class AiServiceImpl implements AiService {
                                              final AiAttachmentType type,
                                              final String contextJson) {
         verifyOwnership(chatId);
-        return aiDao.createAttachment(chatId, type, contextJson);
+        final AiChatAttachment attachment = aiDao.createAttachment(chatId, type, contextJson);
+        LOGGER.debug(() -> "createAttachment: chatId=" + chatId
+                + " type=" + type
+                + " attachmentId=" + attachment.getId());
+        return attachment;
     }
 
     // No ownership check — internal-only, called from async download threads.
@@ -501,6 +504,10 @@ public class AiServiceImpl implements AiService {
                                        final String description,
                                        final String errorMessage,
                                        final boolean truncated) {
+        LOGGER.debug(() -> "updateAttachmentStatus: attachmentId=" + attachmentId
+                + " status=" + status
+                + (rowCount != null ? " rows=" + rowCount : "")
+                + (errorMessage != null ? " error='" + errorMessage + "'" : ""));
         aiDao.updateAttachmentStatus(attachmentId, status, rowCount, description, errorMessage, truncated);
     }
 
