@@ -31,10 +31,10 @@ import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
-import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -94,7 +94,6 @@ import java.util.stream.Collectors;
 public class AskStroomAIService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
-
 
 
     /**
@@ -159,15 +158,15 @@ public class AskStroomAIService {
         aiService.verifyOwnership(chatId);
 
         LOGGER.debug(() -> "askStroomAi: chatId=" + chatId
-                + " hasContext=" + (request.getContext() != null)
-                + " hasMessage=" + (request.getMessage() != null));
+                           + " hasContext=" + (request.getContext() != null)
+                           + " hasMessage=" + (request.getMessage() != null));
 
         // Stage 1: If context is present, create an attachment (and start async download if needed).
         if (request.getContext() != null) {
             try {
                 createAttachment(chatId, request.getContext(), request.getConfig());
                 LOGGER.debug(() -> "Attachment created for chatId=" + chatId
-                        + " contextType=" + request.getContext().getClass().getSimpleName());
+                                   + " contextType=" + request.getContext().getClass().getSimpleName());
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
                 aiService.storeMessage(chatId, AiMessageType.ERROR, e.getMessage());
@@ -186,7 +185,7 @@ public class AskStroomAIService {
                     aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
                     final String rt = responseText;
                     LOGGER.debug(() -> "Response stored for chatId=" + chatId
-                            + " responseLength=" + rt.length());
+                                       + " responseLength=" + rt.length());
                 }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
@@ -225,8 +224,8 @@ public class AskStroomAIService {
         }
 
         LOGGER.debug(() -> "createAttachment: chatId=" + chatId
-                + " type=" + attachmentType
-                + " description='" + context.getDescription() + "'");
+                           + " type=" + attachmentType
+                           + " description='" + context.getDescription() + "'");
 
         final String contextJson = JsonUtil.writeValueAsString(context);
         final AiChatAttachment attachment = aiService.createAttachment(chatId, attachmentType, contextJson);
@@ -251,8 +250,8 @@ public class AskStroomAIService {
     private void processGeneralAttachment(final int attachmentId,
                                           final GeneralTableContext generalTableContext) {
         LOGGER.debug(() -> "processGeneralAttachment: attachmentId=" + attachmentId
-                + " cols=" + generalTableContext.getColumns().size()
-                + " rows=" + generalTableContext.getRows().size());
+                           + " cols=" + generalTableContext.getColumns().size()
+                           + " rows=" + generalTableContext.getRows().size());
         try {
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
                     null, null, null, false);
@@ -278,7 +277,7 @@ public class AskStroomAIService {
                     throw new UncheckedIOException(e);
                 }
             }, () -> "processGeneralAttachment attachmentId=" + attachmentId
-                    + " rows=" + rowCountHolder[0]);
+                     + " rows=" + rowCountHolder[0]);
             final int rowCount = rowCountHolder[0];
 
             final String description = generalTableContext.getDescription()
@@ -308,8 +307,8 @@ public class AskStroomAIService {
                 taskContext -> {
                     try {
                         LOGGER.debug(() -> "Async download started: attachmentId=" + attachmentId
-                                + " chatId=" + chatId
-                                + " contextType=" + context.getClass().getSimpleName());
+                                           + " chatId=" + chatId
+                                           + " contextType=" + context.getClass().getSimpleName());
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
                                 null, null, null, false);
 
@@ -346,7 +345,7 @@ public class AskStroomAIService {
                                 final Path trimmedFile = targetFile.resolveSibling(
                                         targetFile.getFileName() + ".tmp");
                                 try (final BufferedReader reader = Files.newBufferedReader(targetFile);
-                                     final BufferedWriter writer = Files.newBufferedWriter(trimmedFile)) {
+                                        final BufferedWriter writer = Files.newBufferedWriter(trimmedFile)) {
                                     int linesWritten = 0;
                                     String line;
                                     while ((line = reader.readLine()) != null) {
@@ -381,8 +380,8 @@ public class AskStroomAIService {
                                     : "") + ")";
 
                             LOGGER.debug(() -> "Async download finished: attachmentId=" + attachmentId
-                                    + " rows=" + reportedRowCount + " cols=" + colCount
-                                    + " truncated=" + truncated);
+                                               + " rows=" + reportedRowCount + " cols=" + colCount
+                                               + " truncated=" + truncated);
                             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                                     reportedRowCount, description, null, truncated);
                         } finally {
@@ -494,8 +493,10 @@ public class AskStroomAIService {
                     .toList();
 
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId
-                    + " readyAttachments=" + readyAttachments.size()
-                    + " \u2192 " + (readyAttachments.isEmpty() ? "conversational" : "batch analysis"));
+                               + " readyAttachments=" + readyAttachments.size()
+                               + " -> " + (readyAttachments.isEmpty()
+                    ? "conversational"
+                    : "batch analysis"));
 
             if (!readyAttachments.isEmpty()) {
                 // Has attachments → full batch analysis with conversation context.
@@ -533,8 +534,8 @@ public class AskStroomAIService {
             final String conversationContext = buildConversationSummary(chatId);
 
             LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
-                    + " attachments=" + attachments.size()
-                    + " maxParallel=" + tableAnalysisConfig.getMaxParallelBatches());
+                               + " attachments=" + attachments.size()
+                               + " maxParallel=" + tableAnalysisConfig.getMaxParallelBatches());
 
             // Build batches from CSV files on disk.
             final List<String> batches = new ArrayList<>();
@@ -558,7 +559,7 @@ public class AskStroomAIService {
 
             final boolean truncatedData = anyTruncated;
             LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
-                    + " batches=" + batches.size() + " anyTruncated=" + truncatedData);
+                               + " batches=" + batches.size() + " anyTruncated=" + truncatedData);
 
             // Include truncation note in the user query if applicable.
             final String userQuery = anyTruncated
@@ -589,7 +590,7 @@ public class AskStroomAIService {
                 if (cancelled.get()) {
                     final int batchIdx = i;
                     LOGGER.debug(() -> "analyseWithAttachments: cancelled for chatId=" + chatId
-                            + " at batch " + batchIdx + "/" + totalBatches);
+                                       + " at batch " + batchIdx + "/" + totalBatches);
                     break;
                 }
                 final String batch = batches.get(i);
@@ -614,7 +615,7 @@ public class AskStroomAIService {
                                 .replace("{{context}}", conversationContext);
 
                         LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
-                                + " prompt (chatId=" + chatId + "):\n" + userPrompt);
+                                           + " prompt (chatId=" + chatId + "):\n" + userPrompt);
 
                         final List<ChatMessage> messages = List.of(
                                 new SystemMessage(systemPrompt),
@@ -626,7 +627,7 @@ public class AskStroomAIService {
                                      + " chatId=" + chatId
                                      + " responseLength=" + r.aiMessage().text().length());
                         LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
-                                + " response:\n" + response.aiMessage().text());
+                                           + " response:\n" + response.aiMessage().text());
                         return response.aiMessage().text();
                     } finally {
                         semaphore.release();
@@ -657,8 +658,10 @@ public class AskStroomAIService {
 
             // Merge summaries.
             LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
-                    + " summaries=" + summaries.size()
-                    + (summaries.size() > 1 ? " \u2192 merging" : " \u2192 single result"));
+                               + " summaries=" + summaries.size()
+                               + (summaries.size() > 1
+                    ? " -> merging"
+                    : " -> single result"));
             if (summaries.size() == 1) {
                 return summaries.getFirst();
             }
@@ -710,8 +713,8 @@ public class AskStroomAIService {
             }
             return batches;
         }, batches -> "buildBatchesFromCsv: file=" + csvFile.getFileName()
-                + " maxRowsPerBatch=" + config.getMaxRowsPerBatch()
-                + " \u2192 " + batches.size() + " batch(es)");
+                      + ", maxRowsPerBatch=" + config.getMaxRowsPerBatch()
+                      + ", batch(es)=" + batches.size());
     }
 
     /**
@@ -759,7 +762,7 @@ public class AskStroomAIService {
         final List<ChatMessage> messages = new ArrayList<>();
 
         LOGGER.debug(() -> "processConversational: chatId=" + chatId
-                + " historyMessages=" + history.size());
+                           + " historyMessages=" + history.size());
 
         messages.add(new SystemMessage(NullSafe.getOrElse(
                 defaultConfigProvider.get(),
@@ -792,7 +795,7 @@ public class AskStroomAIService {
         messages.add(new UserMessage(request.getMessage()));
 
         LOGGER.trace(() -> "processConversational: sending " + messages.size()
-                + " messages to LLM for chatId=" + chatId);
+                           + " messages to LLM for chatId=" + chatId);
 
         final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
                 () -> chatModel.chat(messages),
@@ -836,9 +839,9 @@ public class AskStroomAIService {
             }
 
             LOGGER.trace(() -> "waitForAttachments: chatId=" + chatId
-                    + " still waiting, statuses=" + attachments.stream()
-                            .map(a -> a.getId() + ":" + a.getStatus())
-                            .collect(java.util.stream.Collectors.joining(",")));
+                               + " still waiting, statuses=" + attachments.stream()
+                                       .map(a -> a.getId() + ":" + a.getStatus())
+                                       .collect(java.util.stream.Collectors.joining(",")));
 
             aiService.updateMessageText(thinkingMessageId,
                     "Waiting for table data download...");
@@ -985,7 +988,7 @@ public class AskStroomAIService {
         }
 
         LOGGER.debug(() -> "getChatModel: modelId='" + openAIModelDoc.getModelId()
-                + "' docRef=" + docRef.getUuid());
+                           + "' docRef=" + docRef.getUuid());
         return aiService.getChatModel(openAIModelDoc);
     }
 
@@ -1168,8 +1171,8 @@ public class AskStroomAIService {
         final List<AiChatMessage> messages = aiService.getMessages(chatId);
 
         LOGGER.debug(() -> "downloadChatHistory: chatId=" + chatId
-                + " includeDataContexts=" + includeDataContexts
-                + " messageCount=" + messages.size());
+                           + " includeDataContexts=" + includeDataContexts
+                           + " messageCount=" + messages.size());
 
         final String title = chat != null && chat.getTitle() != null
                 ? chat.getTitle()
@@ -1224,7 +1227,9 @@ public class AskStroomAIService {
                     // Stream the CSV from the attachment file store as a Markdown table.
                     writeAttachmentAsMarkdownTable(writer, msg.getAttachmentId(), msg.getMessage());
                 } else {
-                    final String body = msg.getMessage() != null ? msg.getMessage() : "";
+                    final String body = msg.getMessage() != null
+                            ? msg.getMessage()
+                            : "";
                     writer.write(body);
                     writer.newLine();
                 }
@@ -1237,7 +1242,7 @@ public class AskStroomAIService {
         LOGGER.debug(() -> {
             try {
                 return "downloadChatHistory: wrote " + filename
-                        + " (" + Files.size(file) + " bytes)";
+                       + " (" + Files.size(file) + " bytes)";
             } catch (final IOException e) {
                 return "downloadChatHistory: wrote " + filename;
             }
@@ -1256,7 +1261,7 @@ public class AskStroomAIService {
         final Path csvFile = attachmentFileStore.getAttachmentFile(attachmentId);
         if (!Files.exists(csvFile)) {
             LOGGER.debug(() -> "writeAttachmentAsMarkdownTable: CSV not found for attachmentId="
-                    + attachmentId + " (may have been cleaned up)");
+                               + attachmentId + " (may have been cleaned up)");
             writer.write("_Data not available (attachment ");
             writer.write(String.valueOf(attachmentId));
             writer.write(" may have been cleaned up)_\n");
@@ -1282,6 +1287,7 @@ public class AskStroomAIService {
             }
         }
     }
+
     private static String sanitiseFilename(final String name) {
         if (name == null || name.isBlank()) {
             return "chat-history";
