@@ -8,11 +8,12 @@ import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
+import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.FindNamedEntityCriteria;
-import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -169,6 +170,19 @@ public class AskStroomAiClient {
                 .create(RESOURCE)
                 .method(res -> res.cancelProcessing(chatId))
                 .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void downloadChatHistory(final DownloadChatHistoryRequest request,
+                             final Consumer<ResourceGeneration> consumer,
+                             final RestErrorHandler errorHandler,
+                             final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.downloadChatHistory(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

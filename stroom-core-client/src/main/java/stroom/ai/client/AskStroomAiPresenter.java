@@ -25,10 +25,13 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.LocationManager;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
 import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.MarkdownConverter;
@@ -85,6 +88,8 @@ public class AskStroomAiPresenter
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
     private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
+    private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
+    private final LocationManager locationManager;
     private final UserPreferencesManager userPreferencesManager;
     private AskStroomAiContext data;
     private AiChat currentChat;
@@ -104,12 +109,16 @@ public class AskStroomAiPresenter
                                 final AskStroomAiClient askStroomAiClient,
                                 final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
                                 final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
+                                final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
+                                final LocationManager locationManager,
                                 final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
         this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
+        this.downloadChatPresenterProvider = downloadChatPresenterProvider;
+        this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userPreferencesManager = userPreferencesManager;
 
@@ -652,6 +661,7 @@ public class AskStroomAiPresenter
             getView().setEmptyState(true);
             getView().clearContextIndicator();
             getView().setTitle(chat.getTitle());
+            getView().setDownloadEnabled(true);
             getView().focus();
         }, this);
     }
@@ -659,6 +669,31 @@ public class AskStroomAiPresenter
     @Override
     public void onShowHistory() {
         aiChatHistoryPresenterProvider.get().show(this::loadChat);
+    }
+
+    @Override
+    public void onDownloadChat() {
+        if (currentChat == null) {
+            return;
+        }
+        final DownloadChatPresenter dlPresenter = downloadChatPresenterProvider.get();
+        ShowPopupEvent.builder(dlPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Download Options")
+                .onShow(e -> dlPresenter.getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DownloadChatHistoryRequest request = new DownloadChatHistoryRequest(
+                                currentChat.getId(),
+                                dlPresenter.isIncludeDataContexts());
+                        askStroomAiClient.downloadChatHistory(request,
+                                result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result),
+                                error -> showError(error, "Failed to download chat history", null),
+                                this);
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     private void loadChat(final AiChat chat) {
@@ -670,6 +705,7 @@ public class AskStroomAiPresenter
         getView().clearMessages();
         getView().clearContextIndicator();
         getView().setTitle(chat.getTitle());
+        getView().setDownloadEnabled(true);
 
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
@@ -761,6 +797,8 @@ public class AskStroomAiPresenter
         void setContextIndicator(SvgImage icon, String text);
 
         void clearContextIndicator();
+
+        void setDownloadEnabled(boolean enabled);
     }
 
     // ---- Dock preference helpers ----

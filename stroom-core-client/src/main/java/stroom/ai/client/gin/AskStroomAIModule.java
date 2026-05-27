@@ -25,6 +25,9 @@ import stroom.ai.client.AskStroomAiConfigViewImpl;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.client.AskStroomAiViewImpl;
+import stroom.ai.client.DownloadChatPresenter;
+import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
+import stroom.ai.client.DownloadChatViewImpl;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
@@ -45,5 +48,9 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AiChatHistoryPresenter.class,
                 AiChatHistoryView.class,
                 AiChatHistoryViewImpl.class);
+        bindPresenterWidget(
+                DownloadChatPresenter.class,
+                DownloadChatView.class,
+                DownloadChatViewImpl.class);
     }
 }

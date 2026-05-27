@@ -55,6 +55,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     InlineSvgButton chatHistory;
     @UiField
+    InlineSvgButton download;
+    @UiField
     InlineSvgButton configure;
     @UiField
     Label emptyPrompt;
@@ -85,6 +87,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         chatHistory.setTitle("Conversation History");
         chatHistory.setSvg(SvgImage.HISTORY);
         chatHistory.setEnabled(true);
+
+        download.setText("Download");
+        download.setTitle("Download");
+        download.setSvg(SvgImage.DOWN);
+        download.setEnabled(false);
 
         configure.setText("Configure");
         configure.setTitle("Configure");
@@ -191,6 +198,13 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         }
     }
 
+    @UiHandler("download")
+    public void onDownload(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDownloadChat();
+        }
+    }
+
     public void setTitle(final String title) {
         chatTitle.setText(title);
     }
@@ -222,6 +236,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void clearContextIndicator() {
         contextIndicator.setText("");
         contextIndicator.setVisible(false);
+    }
+
+    @Override
+    public void setDownloadEnabled(final boolean enabled) {
+        download.setEnabled(enabled);
     }
 
     private void sendMessage() {

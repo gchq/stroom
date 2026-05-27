@@ -13,6 +13,8 @@
                                    addStyleNames="allow-focus navigation-menu-button"/>
                 <p:InlineSvgButton ui:field="chatHistory" text="Conversation History"
                                    addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="download" text="Download"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
                 <p:InlineSvgButton ui:field="configure" text="Configure"
                                    addStyleNames="allow-focus navigation-menu-button"/>
             </g:FlowPanel>

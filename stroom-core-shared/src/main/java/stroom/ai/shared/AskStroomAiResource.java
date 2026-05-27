@@ -17,6 +17,7 @@
 package stroom.ai.shared;
 
 import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -125,4 +126,12 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             summary = "Cancel in-progress AI batch analysis for a chat",
             operationId = "cancelProcessing")
     Boolean cancelProcessing(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/downloadChatHistory")
+    @Operation(
+            summary = "Download the chat history for a conversation as a Markdown file",
+            operationId = "downloadChatHistory")
+    ResourceGeneration downloadChatHistory(
+            @Parameter(description = "request", required = true) DownloadChatHistoryRequest request);
 }

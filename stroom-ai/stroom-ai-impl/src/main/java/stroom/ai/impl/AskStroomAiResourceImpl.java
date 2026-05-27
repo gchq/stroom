@@ -26,6 +26,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
@@ -41,6 +42,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringCriteria;
 
@@ -428,5 +430,19 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .withType("AiChat")
                 .withId(String.valueOf(chatId))
                 .build();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public ResourceGeneration downloadChatHistory(final DownloadChatHistoryRequest request) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "downloadChatHistory"))
+                .withDescription("Download chat history for AI chat " + request.getChatId())
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .addObject(chatObject(request.getChatId()))
+                        .build())
+                .withSimpleLoggedResult(() ->
+                        askStroomAIServiceProvider.get().downloadChatHistory(request))
+                .getResultAndLog();
     }
 }

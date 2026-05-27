@@ -34,6 +34,7 @@ import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -72,9 +73,13 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -154,7 +159,7 @@ public class AskStroomAIService {
         aiService.verifyOwnership(chatId);
 
         // Stage 1: If context is present, create an attachment (and start async download if needed).
-        if (request.getContext() != null && chatId != null) {
+        if (request.getContext() != null) {
             try {
                 createAttachment(chatId, request.getContext(), request.getConfig());
             } catch (final RuntimeException e) {
@@ -164,7 +169,7 @@ public class AskStroomAIService {
         }
 
         // Stage 2: If a user message is present, process the question.
-        if (request.getMessage() != null && chatId != null) {
+        if (request.getMessage() != null) {
             aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
 
             String responseText;
@@ -1054,5 +1059,127 @@ public class AskStroomAIService {
                 TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
                 config.getMultiSummaryMergePrompt());
         return true;
+    }
+
+    // ---------------------------------------------------------------------
+    // Chat history download
+    // ---------------------------------------------------------------------
+
+    public ResourceGeneration downloadChatHistory(final DownloadChatHistoryRequest request) {
+        final int chatId = request.getChatId();
+        aiService.verifyOwnership(chatId);
+
+        final boolean includeDataContexts = request.isIncludeDataContexts();
+
+        final AiChat chat = aiService.getChat(chatId);
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+
+        final String title = chat != null && chat.getTitle() != null
+                ? chat.getTitle()
+                : "chat-" + chatId;
+        final String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+                .withZone(ZoneOffset.UTC)
+                .format(Instant.now());
+        final DateTimeFormatter msgFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+                .withZone(ZoneOffset.UTC);
+
+        final String filename = sanitiseFilename(title) + ".md";
+        final ResourceKey key = resourceStore.createTempFile(filename);
+        final Path file = resourceStore.getTempFile(key);
+        try (final BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            writer.write("# ");
+            writer.write(title);
+            writer.write("\n\n_Downloaded: ");
+            writer.write(timestamp);
+            writer.write("_\n\n---\n\n");
+
+            for (final AiChatMessage msg : messages) {
+                final String label;
+                switch (msg.getMessageType()) {
+                    case USER_MESSAGE:
+                        label = "**You**";
+                        break;
+                    case AI_RESPONSE:
+                        label = "**AI**";
+                        break;
+                    case ERROR:
+                        label = "**Error**";
+                        break;
+                    case ATTACHMENT:
+                        if (!includeDataContexts || msg.getAttachmentId() == null) {
+                            continue;
+                        }
+                        label = "**Data Context**";
+                        break;
+                    default:
+                        // THINKING, DASHBOARD_DATA, QUERY_DATA, TABLE_DATA are always omitted
+                        // (the actual table data lives in the attachment file store).
+                        continue;
+                }
+
+                final String ts = msgFmt.format(Instant.ofEpochMilli(msg.getCreateTimeMs()));
+                writer.write(label);
+                writer.write(" _(");
+                writer.write(ts);
+                writer.write(")_\n\n");
+
+                if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
+                    // Stream the CSV from the attachment file store as a Markdown table.
+                    writeAttachmentAsMarkdownTable(writer, msg.getAttachmentId(), msg.getMessage());
+                } else {
+                    final String body = msg.getMessage() != null ? msg.getMessage() : "";
+                    writer.write(body);
+                    writer.newLine();
+                }
+                writer.newLine();
+                writer.write("---\n\n");
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return new ResourceGeneration(key, new ArrayList<>());
+    }
+
+    /**
+     * Reads the CSV attachment file for the given attachment ID and writes it as a
+     * Markdown table directly to the supplied writer. If the file is not found or
+     * cannot be read, a fallback description line is written instead.
+     */
+    private void writeAttachmentAsMarkdownTable(final BufferedWriter writer,
+                                                final int attachmentId,
+                                                final String description) throws IOException {
+        final Path csvFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        if (!Files.exists(csvFile)) {
+            writer.write("_Data not available (attachment ");
+            writer.write(String.valueOf(attachmentId));
+            writer.write(" may have been cleaned up)_\n");
+            return;
+        }
+        if (description != null && !description.isBlank()) {
+            writer.write("_");
+            writer.write(description);
+            writer.write("_\n\n");
+        }
+        try (final BufferedReader reader = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
+            final String headerLine = reader.readLine();
+            if (headerLine == null) {
+                writer.write("_Empty data set_\n");
+                return;
+            }
+            // Write Markdown table header + separator row.
+            writer.write(buildMarkdownHeader(headerLine));
+            // Stream data rows without buffering the whole file into memory.
+            String line;
+            while ((line = reader.readLine()) != null) {
+                writer.write(csvLineToMarkdownRow(line));
+            }
+        }
+    }
+    private static String sanitiseFilename(final String name) {
+        if (name == null || name.isBlank()) {
+            return "chat-history";
+        }
+        // Replace characters that are illegal in common filesystems with underscores.
+        return name.replaceAll("[^a-zA-Z0-9._\\-]", "_").replaceAll("_+", "_");
     }
 }

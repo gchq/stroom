@@ -33,4 +33,6 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
     void onNewChat();
 
     void onShowHistory();
+
+    void onDownloadChat();
 }

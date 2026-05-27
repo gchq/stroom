@@ -78,7 +78,7 @@ public class AskStroomAiConfigPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(650, 800))
+                .popupSize(PopupSize.resizable(650, 830))
                 .caption("Configure Ask Stroom AI")
                 .onShow(e -> {
                     read(currentConfig);
