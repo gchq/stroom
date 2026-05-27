@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.common;
+package stroom.aws.common.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,26 +24,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsTag {
+public class AwsPolicyDescriptorType {
 
     @JsonProperty
-    private final String key;
-    @JsonProperty
-    private final String value;
+    private final String arn;
 
     @JsonCreator
-    public AwsTag(@JsonProperty("key") final String key,
-                  @JsonProperty("value") final String value) {
-        this.key = key;
-        this.value = value;
+    public AwsPolicyDescriptorType(@JsonProperty("arn") final String arn) {
+        this.arn = arn;
     }
 
-    public String getKey() {
-        return key;
-    }
-
-    public String getValue() {
-        return value;
+    public String getArn() {
+        return arn;
     }
 
     @Override
@@ -51,13 +43,12 @@ public class AwsTag {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AwsTag awsTag = (AwsTag) o;
-        return Objects.equals(key, awsTag.key)
-               && Objects.equals(value, awsTag.value);
+        final AwsPolicyDescriptorType that = (AwsPolicyDescriptorType) o;
+        return Objects.equals(arn, that.arn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        return Objects.hashCode(arn);
     }
 }

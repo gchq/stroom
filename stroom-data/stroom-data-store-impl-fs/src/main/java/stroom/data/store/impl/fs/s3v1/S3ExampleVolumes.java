@@ -16,7 +16,7 @@
 
 package stroom.data.store.impl.fs.s3v1;
 
-import stroom.aws.common.AwsBasicCredentials;
+import stroom.aws.common.shared.AwsBasicCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.FsVolumeService;

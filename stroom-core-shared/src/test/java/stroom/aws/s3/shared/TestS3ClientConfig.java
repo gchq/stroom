@@ -16,7 +16,7 @@
 
 package stroom.aws.s3.shared;
 
-import stroom.aws.common.AwsBasicCredentials;
+import stroom.aws.common.shared.AwsBasicCredentials;
 import stroom.test.common.TestUtil;
 
 import org.junit.jupiter.api.Test;

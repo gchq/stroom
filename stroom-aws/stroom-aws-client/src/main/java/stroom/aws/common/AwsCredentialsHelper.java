@@ -17,6 +17,18 @@
 package stroom.aws.common;
 
 
+import stroom.aws.common.shared.AwsAnonymousCredentials;
+import stroom.aws.common.shared.AwsAssumeRole;
+import stroom.aws.common.shared.AwsAssumeRoleClientConfig;
+import stroom.aws.common.shared.AwsAssumeRoleRequest;
+import stroom.aws.common.shared.AwsDefaultCredentials;
+import stroom.aws.common.shared.AwsEnvironmentVariableCredentials;
+import stroom.aws.common.shared.AwsPolicyDescriptorType;
+import stroom.aws.common.shared.AwsProfileCredentials;
+import stroom.aws.common.shared.AwsProvidedContext;
+import stroom.aws.common.shared.AwsSystemPropertyCredentials;
+import stroom.aws.common.shared.AwsTag;
+import stroom.aws.common.shared.AwsWebCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -60,7 +72,7 @@ public class AwsCredentialsHelper {
     }
 
     public static AwsCredentialsProvider createCredentialsProvider(
-            final stroom.aws.common.AwsCredentials awsCredentials,
+            final stroom.aws.common.shared.AwsCredentials awsCredentials,
             final AwsAssumeRole awsAssumeRole,
             final String awsRegion) {
 
@@ -92,20 +104,20 @@ public class AwsCredentialsHelper {
     }
 
     private static AwsCredentialsProvider createCredentialsProvider(
-            final stroom.aws.common.AwsCredentials awsCredentials) {
+            final stroom.aws.common.shared.AwsCredentials awsCredentials) {
 
         LOGGER.debug("credentialsProvider() - awsCredentials: {}", awsCredentials);
 
         final AwsCredentialsProvider credentialsProvider = switch (awsCredentials) {
             case null -> getDefaultCredentialsProvider();
             case final AwsAnonymousCredentials ignored -> getAnonCredentialsProvider();
-            case final stroom.aws.common.AwsBasicCredentials awsBasicCredentials ->
+            case final stroom.aws.common.shared.AwsBasicCredentials awsBasicCredentials ->
                     getBasicCredentialsProvider(awsBasicCredentials);
             case final AwsDefaultCredentials ignored -> getDefaultCredentialsProvider();
             case final AwsEnvironmentVariableCredentials ignored -> getEnvironmentVariableCredentialsProvider();
             case final AwsProfileCredentials awsProfileCredentials ->
                     getProfileCredentialsProvider(awsProfileCredentials);
-            case final stroom.aws.common.AwsSessionCredentials awsSessionCredentials ->
+            case final stroom.aws.common.shared.AwsSessionCredentials awsSessionCredentials ->
                     getSessionCredentialsProvider(awsSessionCredentials);
             case final AwsSystemPropertyCredentials ignored -> getSystemPropertyCredentialsProvider();
             case final AwsWebCredentials awsWebCredentials ->
@@ -136,7 +148,7 @@ public class AwsCredentialsHelper {
     }
 
     private static @NonNull StaticCredentialsProvider getSessionCredentialsProvider(
-            final stroom.aws.common.AwsSessionCredentials awsSessionCredentials) {
+            final stroom.aws.common.shared.AwsSessionCredentials awsSessionCredentials) {
         LOGGER.debug("Using AWS session credentials");
         final AwsSessionCredentials credentials = AwsSessionCredentials
                 .builder()
@@ -175,7 +187,7 @@ public class AwsCredentialsHelper {
     }
 
     private static @NonNull StaticCredentialsProvider getBasicCredentialsProvider(
-            final stroom.aws.common.AwsBasicCredentials awsBasicCredentials) {
+            final stroom.aws.common.shared.AwsBasicCredentials awsBasicCredentials) {
         LOGGER.debug("Using AWS basic credentials");
         final AwsCredentials credentials = AwsBasicCredentials
                 .create(awsBasicCredentials.getAccessKeyId(), awsBasicCredentials.getSecretAccessKey());
@@ -192,7 +204,7 @@ public class AwsCredentialsHelper {
     }
 
     private static StsAsyncClient createStsAsyncClient(
-            final stroom.aws.common.AwsCredentials awsCredentials,
+            final stroom.aws.common.shared.AwsCredentials awsCredentials,
             final AwsAssumeRole awsAssumeRole,
             final String awsRegion) {
 

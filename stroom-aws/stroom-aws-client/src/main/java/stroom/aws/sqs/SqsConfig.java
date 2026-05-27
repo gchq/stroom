@@ -17,8 +17,8 @@
 package stroom.aws.sqs;
 
 
-import stroom.aws.common.AwsAssumeRole;
-import stroom.aws.common.AwsCredentials;
+import stroom.aws.common.shared.AwsAssumeRole;
+import stroom.aws.common.shared.AwsCredentials;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsAtomicConfig;
 import stroom.util.shared.IsProxyConfig;

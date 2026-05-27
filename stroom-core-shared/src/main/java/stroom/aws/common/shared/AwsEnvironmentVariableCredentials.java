@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.aws.common;
+package stroom.aws.common.shared;
+
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+@NotInjectableConfig
 @JsonInclude(Include.NON_NULL)
-public final class AwsSystemPropertyCredentials implements AwsCredentials {
+public final class AwsEnvironmentVariableCredentials implements AwsCredentials {
 
-    public AwsSystemPropertyCredentials() {
+    public AwsEnvironmentVariableCredentials() {
     }
 }

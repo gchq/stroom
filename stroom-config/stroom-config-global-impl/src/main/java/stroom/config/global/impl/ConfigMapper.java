@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,13 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
+import stroom.util.shared.IsAtomicConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
@@ -57,6 +59,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -796,6 +799,7 @@ public class ConfigMapper {
                                     type.equals(boolean.class) ||
                                     type.equals(Character.class) ||
                                     type.equals(char.class) ||
+                                    IsAtomicConfig.class.isAssignableFrom(type) ||
                                     Set.class.isAssignableFrom(type) ||
                                     List.class.isAssignableFrom(type) ||
                                     Map.class.isAssignableFrom(type) ||
@@ -919,11 +923,23 @@ public class ConfigMapper {
         }
     }
 
+    private static String serialiseToJson(final Object value) {
+        final JsonMapper jsonMapper = JsonUtil.getMapper(true);
+        return jsonMapper.writeValueAsString(value);
+    }
+
+    private static <T> T deserialiseFromJson(final Class<T> clazz, final String json) {
+        final JsonMapper jsonMapper = JsonUtil.getMapper(true);
+        return jsonMapper.readValue(json, clazz);
+    }
+
     private static String convertToString(final Object value,
                                           final List<String> availableDelimiters) {
         if (value != null) {
             if (isSupportedPropertyType(value.getClass())) {
-                if (value instanceof List) {
+                if (value instanceof IsAtomicConfig) {
+                    return serialiseToJson(value);
+                } else if (value instanceof List) {
                     return listToString((List<?>) value, availableDelimiters);
                 } else if (value instanceof Set) {
                     return setToString((Set<?>) value, availableDelimiters);
@@ -1013,6 +1029,8 @@ public class ConfigMapper {
                 return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
+            } else if (IsAtomicConfig.class.isAssignableFrom(type)) {
+                return deserialiseFromJson(IsAtomicConfig.class, value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 final Class<?> itemType = getGenericsParam(genericType, 0);
@@ -1110,44 +1128,81 @@ public class ConfigMapper {
         }
     }
 
+    private static boolean isAtomicValue(final Collection<?> collection) {
+        if (NullSafe.isEmptyCollection(collection)) {
+            return false;
+        } else {
+            final boolean oneMatches = collection.stream()
+                    .anyMatch(item -> item instanceof IsAtomicConfig);
+
+            if (oneMatches) {
+                final boolean allMatch = collection.stream()
+                        .allMatch(item -> item instanceof IsAtomicConfig);
+                if (allMatch) {
+                    return true;
+                } else {
+                    final Set<String> classNames = collection.stream()
+                            .map(Object::getClass)
+                            .map(Class::getName)
+                            .collect(Collectors.toSet());
+                    throw new RuntimeException("Mixture of classes in collection - " + classNames);
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
 
     private static String listToString(final List<?> list,
                                        final List<String> availableDelimiters) {
 
+        final String str;
         if (list.isEmpty()) {
-            return "";
+            str = "";
+        } else if (isAtomicValue(list)) {
+            str = serialiseToJson(list);
+        } else {
+            final List<String> strList = list.stream()
+                    .map(ConfigMapper::convertToString)
+                    .collect(Collectors.toList());
+
+            final String allText = String.join("", strList);
+
+            final String delimiter = getDelimiter(allText, availableDelimiters);
+
+            // prefix the delimited form with the delimiter so when we deserialise
+            // we know what the delimiter is
+            str = delimiter + String.join(delimiter, strList);
         }
-        final List<String> strList = list.stream()
-                .map(ConfigMapper::convertToString)
-                .collect(Collectors.toList());
-
-        final String allText = String.join("", strList);
-
-        final String delimiter = getDelimiter(allText, availableDelimiters);
-
-        // prefix the delimited form with the delimiter so when we deserialise
-        // we know what the delimiter is
-        return delimiter + String.join(delimiter, strList);
+        LOGGER.trace("listToString()\n{}\n{}", list, str);
+        return str;
     }
 
     private static String setToString(final Set<?> set,
                                       final List<String> availableDelimiters) {
 
+        final String str;
         if (set.isEmpty()) {
-            return "";
+            str = "";
+        } else if (isAtomicValue(set)) {
+            str = serialiseToJson(set);
+        } else {
+            final List<String> strList = set.stream()
+                    .sorted() // ensure consistent serialisation
+                    .map(ConfigMapper::convertToString)
+                    .collect(Collectors.toList());
+
+            final String allText = String.join("", strList);
+
+            final String delimiter = getDelimiter(allText, availableDelimiters);
+
+            // prefix the delimited form with the delimiter so when we deserialise
+            // we know what the delimiter is
+            str = delimiter + String.join(delimiter, strList);
         }
-        final List<String> strList = set.stream()
-                .sorted() // ensure consistent serialisation
-                .map(ConfigMapper::convertToString)
-                .collect(Collectors.toList());
-
-        final String allText = String.join("", strList);
-
-        final String delimiter = getDelimiter(allText, availableDelimiters);
-
-        // prefix the delimited form with the delimiter so when we deserialise
-        // we know what the delimiter is
-        return delimiter + String.join(delimiter, strList);
+        LOGGER.trace("setToString()\n{}\n{}", set, str);
+        return str;
     }
 
 

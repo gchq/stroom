@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
-import stroom.aws.common.AwsBasicCredentials;
+import stroom.aws.common.shared.AwsBasicCredentials;
 import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientPoolImpl;
 import stroom.aws.s3.impl.S3Manager;

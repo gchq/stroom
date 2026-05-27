@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.common;
+package stroom.aws.common.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
