@@ -16,6 +16,23 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  ai:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   analytics:
     db:
       connection:
@@ -115,14 +132,29 @@ appConfig:
     eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
-    chatMemory:
-      timeToLive:
-        time: 1
-        timeUnit: "HOURS"
-      tokenLimit: 30000
+    attachmentDownloadTimeoutMs: 60000
+    chatSystemPrompt: "You are a helpful data analysis assistant within the Stroom\
+      \ data platform. Answer the user's questions using the conversation context\
+      \ provided. If you don't have enough information, say so."
+    maxConversationHistoryMessages: 20
     tableSummary:
-      maximumBatchSize: 16384
-      maximumTableInputRows: 100
+      maxParallelBatches: 4
+      maximumBatchSize: 1000
+      maximumTableInputRows: 10000
+      multiSummaryMergePrompt: "    Merge the following summaries into a single unified,\
+        \ concise summary.     Preserve important details, numerical findings, and\
+        \ remove duplicates.\n\n    {{summaries}}\n"
+      summaryMergePrompt: "    Merge the following TWO summaries into a single improved\
+        \ summary.     Preserve important details and remove duplicates.\n\n    SUMMARY\
+        \ A:\n    {{a}}\n\n    SUMMARY B:\n    {{b}}\n"
+      tableQuerySystemPrompt: "    You are a data analysis AI. You will answer user\
+        \ questions     using ONLY the markdown-formatted DATA TABLE records provided.\
+        \     If the records do not contain relevant details, say \"No relevant information.\"\
+        \n"
+      tableQueryUserPrompt: "    CONVERSATION CONTEXT:\n    {{context}}\n\n    USER\
+        \ QUERY:\n    {{query}}\n\n    DATA TABLE:\n    {{table}}\n\n    Provide findings\
+        \ relevant only to these records, in a concise structured format.     Use\
+        \ the conversation context to understand what has been previously discussed.\n"
   autoContentCreation:
     additionalGroupParentGroupName: "Data Feed Developer"
     additionalGroupTemplate: "grp-${accountid}-dev"

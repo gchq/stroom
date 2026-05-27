@@ -102,21 +102,7 @@
     min-width: 80px;
 }
 
-.askStroomAiViewImpl--docked-right {
-    border-left: 1px solid var(--splitter__background-color);
-}
 
-.askStroomAiViewImpl--docked-left {
-    border-right: 1px solid var(--splitter__background-color);
-}
-
-.askStroomAiViewImpl--docked-top {
-    border-bottom: 1px solid var(--splitter__background-color);
-}
-
-.askStroomAiViewImpl--docked-bottom {
-    border-top: 1px solid var(--splitter__background-color);
-}
 
 /* ---- Message thread ---- */
 

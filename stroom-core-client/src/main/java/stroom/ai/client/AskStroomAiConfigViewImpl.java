@@ -43,23 +43,25 @@ public class AskStroomAiConfigViewImpl
     private final Widget widget;
 
     @UiField
+    SimplePanel modelRef;
+    @UiField
+    Button setDefault;
+    @UiField
     SelectionBox<DockType> dockTypeSelectionBox;
     @UiField
     SelectionBox<DockLocation> dockLocationSelectionBox;
     @UiField
-    ValueSpinner maximumBatchSize;
+    ValueSpinner maxTotalRows;
     @UiField
-    ValueSpinner maximumTableInputRows;
+    ValueSpinner maxRowsPerBatch;
+    @UiField
+    ValueSpinner maxParallelBatches;
     @UiField
     TextArea tableQuerySystemPrompt;
     @UiField
     TextArea tableQueryUserPrompt;
     @UiField
     TextArea summaryMergePrompt;
-    @UiField
-    SimplePanel modelRef;
-    @UiField
-    Button setDefault;
 
     @Inject
     public AskStroomAiConfigViewImpl(final Binder binder) {
@@ -77,10 +79,12 @@ public class AskStroomAiConfigViewImpl
         dockLocationSelectionBox.addItem(DockLocation.BOTTOM);
         dockLocationSelectionBox.setValue(DockLocation.RIGHT);
 
-        maximumBatchSize.setMin(1);
-        maximumBatchSize.setMax(1000000);
-        maximumTableInputRows.setMin(1);
-        maximumTableInputRows.setMax(1000000);
+        maxTotalRows.setMin(1);
+        maxTotalRows.setMax(1000000);
+        maxRowsPerBatch.setMin(1);
+        maxRowsPerBatch.setMax(1000000);
+        maxParallelBatches.setMin(1);
+        maxParallelBatches.setMax(100);
     }
 
     @Override
@@ -90,7 +94,7 @@ public class AskStroomAiConfigViewImpl
 
     @Override
     public void focus() {
-        maximumBatchSize.focus();
+        maxRowsPerBatch.focus();
     }
 
     @Override
@@ -99,23 +103,33 @@ public class AskStroomAiConfigViewImpl
     }
 
     @Override
-    public void setMaximumBatchSize(final int maximumBatchSize) {
-        this.maximumBatchSize.setValue(maximumBatchSize);
+    public void setMaxTotalRows(final int maxTotalRows) {
+        this.maxTotalRows.setValue(maxTotalRows);
     }
 
     @Override
-    public int getMaximumBatchSize() {
-        return maximumBatchSize.getIntValue();
+    public int getMaxTotalRows() {
+        return maxTotalRows.getIntValue();
     }
 
     @Override
-    public void setMaximumTableInputRows(final int maximumTableInputRows) {
-        this.maximumTableInputRows.setValue(maximumTableInputRows);
+    public void setMaxRowsPerBatch(final int maxRowsPerBatch) {
+        this.maxRowsPerBatch.setValue(maxRowsPerBatch);
     }
 
     @Override
-    public int getMaximumTableInputRows() {
-        return maximumTableInputRows.getIntValue();
+    public int getMaxRowsPerBatch() {
+        return maxRowsPerBatch.getIntValue();
+    }
+
+    @Override
+    public void setMaxParallelBatches(final int maxParallelBatches) {
+        this.maxParallelBatches.setValue(maxParallelBatches);
+    }
+
+    @Override
+    public int getMaxParallelBatches() {
+        return maxParallelBatches.getIntValue();
     }
 
     @Override

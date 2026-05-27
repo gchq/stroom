@@ -6,27 +6,6 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="askStroomAiConfigViewImpl max default-min-sizes dock-container-vertical">
-        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">
-            <l:SelectionBox ui:field="dockTypeSelectionBox"/>
-        </form:FormGroup>
-        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">
-            <l:SelectionBox ui:field="dockLocationSelectionBox"/>
-        </form:FormGroup>
-        <form:FormGroup identity="maximumTableInputRows" label="Maximum Table Input Rows">
-            <v:ValueSpinner ui:field="maximumTableInputRows" width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="maximumBatchSize" label="Maximum Table Batch Size">
-            <v:ValueSpinner ui:field="maximumBatchSize" width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
-            <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>
-        </form:FormGroup>
-        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
-            <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
-        </form:FormGroup>
-        <form:FormGroup identity="summaryMergePrompt" label="Summary Merge Prompt">
-            <g:TextArea ui:field="summaryMergePrompt" width="100%" visibleLines="6"/>
-        </form:FormGroup>
         <form:FormGroup identity="model"
                         label="Model">
             <g:FlowPanel>
@@ -36,6 +15,30 @@
                           width="200px"
                           addStyleNames="allow-focus"/>
             </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">
+            <l:SelectionBox ui:field="dockTypeSelectionBox"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">
+            <l:SelectionBox ui:field="dockLocationSelectionBox"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxTotalRows" label="Max Total Rows">
+            <v:ValueSpinner ui:field="maxTotalRows" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch">
+            <v:ValueSpinner ui:field="maxRowsPerBatch" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxParallelBatches" label="Max Parallel Batches">
+            <v:ValueSpinner ui:field="maxParallelBatches" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
+            <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>
+        </form:FormGroup>
+        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
+            <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
+        </form:FormGroup>
+        <form:FormGroup identity="summaryMergePrompt" label="Summary Merge Prompt">
+            <g:TextArea ui:field="summaryMergePrompt" width="100%" visibleLines="6"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

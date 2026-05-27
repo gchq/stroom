@@ -18,7 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.shared.AskStroomAIConfig;
-import stroom.ai.shared.TableSummaryConfig;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.date.DateUtil;
 
@@ -73,14 +73,14 @@ public class TestAskStroomAi {
         final ChatModel chatModel = aiService.getChatModel(modelDoc);
 
         final AskStroomAIConfig modelConfig = new AskStroomAIConfig();
-        final TableSummaryConfig tableSummaryConfig = modelConfig.getTableSummary();
+        final TableAnalysisConfig tableAnalysisConfig = modelConfig.getTableAnalysis();
 
         // Create column header string.
         final String header = writeHeader(columns);
 
         // Batch and summarise user message responses into a combined summary
-        final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
-        final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
+        final int maxBatchSize = tableAnalysisConfig.getMaxRowsPerBatch();
+        final int maximumRowCount = tableAnalysisConfig.getMaxTotalRows();
         final StringBuilder batch = new StringBuilder(header);
         int rowCount = 0;
 
@@ -95,7 +95,7 @@ public class TestAskStroomAi {
 
             final int newBatchSize = batch.length() + rowString.length();
             if (rowCount > 0 && newBatchSize > maxBatchSize) {
-                batchSummaries.add(processBatch(chatModel, tableSummaryConfig,
+                batchSummaries.add(processBatch(chatModel, tableAnalysisConfig,
                         "Explain table", batch.toString()));
                 batch.setLength(0);
                 batch.append(header);
@@ -111,7 +111,7 @@ public class TestAskStroomAi {
         }
 
         if (!batch.isEmpty()) {
-            batchSummaries.add(processBatch(chatModel, tableSummaryConfig,
+            batchSummaries.add(processBatch(chatModel, tableAnalysisConfig,
                     "Explain table", batch.toString()));
         }
 
@@ -119,12 +119,12 @@ public class TestAskStroomAi {
         if (batchSummaries.size() == 1) {
             System.out.println(batchSummaries.getFirst());
         } else {
-            System.out.println(mergeSummaries(chatModel, tableSummaryConfig, batchSummaries));
+            System.out.println(mergeSummaries(chatModel, tableAnalysisConfig, batchSummaries));
         }
     }
 
     private String processBatch(final ChatModel chatModel,
-                                final TableSummaryConfig config,
+                                final TableAnalysisConfig config,
                                 final String query,
                                 final String data) {
         final String userPrompt = config.getTableQueryUserPrompt()
@@ -141,7 +141,7 @@ public class TestAskStroomAi {
     }
 
     private String mergeSummaries(final ChatModel chatModel,
-                                  final TableSummaryConfig config,
+                                  final TableAnalysisConfig config,
                                   final List<String> summaries) {
         final StringBuilder combined = new StringBuilder();
         for (int i = 0; i < summaries.size(); i++) {

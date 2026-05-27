@@ -29,11 +29,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
+@JsonPropertyOrder({
+        AskStroomAIConfig.PROP_NAME_MODEL_REF,
+        AskStroomAIConfig.PROP_NAME_TABLE_SUMMARY,
+        AskStroomAIConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
+        AskStroomAIConfig.PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES,
+        AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS
+})
 public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_MODEL_REF = "modelRef";
-    public static final String PROP_NAME_TABLE_SUMMARY = "tableSummary";
+    public static final String PROP_NAME_TABLE_SUMMARY = "tableAnalysis";
     public static final String PROP_NAME_CHAT_SYSTEM_PROMPT = "chatSystemPrompt";
     public static final String PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES = "maxConversationHistoryMessages";
     public static final String PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = "attachmentDownloadTimeoutMs";
@@ -49,7 +55,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     @JsonProperty(PROP_NAME_MODEL_REF)
     private final DocRef modelRef;
     @JsonProperty(PROP_NAME_TABLE_SUMMARY)
-    private final TableSummaryConfig tableSummary;
+    private final TableAnalysisConfig tableAnalysis;
     @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT)
     private final String chatSystemPrompt;
     @JsonProperty(PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES)
@@ -59,7 +65,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
     public AskStroomAIConfig() {
         modelRef = null;
-        tableSummary = new TableSummaryConfig();
+        tableAnalysis = new TableAnalysisConfig();
         chatSystemPrompt = DEFAULT_CHAT_SYSTEM_PROMPT;
         maxConversationHistoryMessages = DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES;
         attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
@@ -68,12 +74,12 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     @JsonCreator
     public AskStroomAIConfig(
             @JsonProperty(PROP_NAME_MODEL_REF) final DocRef modelRef,
-            @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableSummaryConfig tableSummary,
+            @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableAnalysisConfig tableAnalysis,
             @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT) final String chatSystemPrompt,
             @JsonProperty(PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES) final int maxConversationHistoryMessages,
             @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final long attachmentDownloadTimeoutMs) {
         this.modelRef = modelRef;
-        this.tableSummary = tableSummary;
+        this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
         this.maxConversationHistoryMessages = maxConversationHistoryMessages;
         this.attachmentDownloadTimeoutMs = attachmentDownloadTimeoutMs;
@@ -85,8 +91,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonPropertyDescription("Settings to use for table summarisation.")
-    public TableSummaryConfig getTableSummary() {
-        return tableSummary;
+    public TableAnalysisConfig getTableAnalysis() {
+        return tableAnalysis;
     }
 
     @JsonPropertyDescription("System prompt used for conversational mode (no table attachments).")
@@ -108,7 +114,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     public String toString() {
         return "AskStroomAIConfig{" +
                "modelRef='" + modelRef + "'" +
-               ", tableSummaryConfig=" + tableSummary +
+               ", tableAnalysisConfig=" + tableAnalysis +
                ", chatSystemPrompt='" + chatSystemPrompt + "'" +
                ", maxConversationHistoryMessages=" + maxConversationHistoryMessages +
                ", attachmentDownloadTimeoutMs=" + attachmentDownloadTimeoutMs +
@@ -126,14 +132,14 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     public static class Builder extends AbstractBuilder<AskStroomAIConfig, AskStroomAIConfig.Builder> {
 
         private DocRef modelRef;
-        private TableSummaryConfig tableSummaryConfig;
+        private TableAnalysisConfig tableAnalysisConfig;
         private String chatSystemPrompt;
         private int maxConversationHistoryMessages;
         private long attachmentDownloadTimeoutMs;
 
         private Builder() {
             modelRef = null;
-            tableSummaryConfig = new TableSummaryConfig();
+            tableAnalysisConfig = new TableAnalysisConfig();
             chatSystemPrompt = DEFAULT_CHAT_SYSTEM_PROMPT;
             maxConversationHistoryMessages = DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES;
             attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
@@ -141,7 +147,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
         private Builder(final AskStroomAIConfig askStroomAIConfig) {
             modelRef = askStroomAIConfig.modelRef;
-            tableSummaryConfig = askStroomAIConfig.tableSummary;
+            tableAnalysisConfig = askStroomAIConfig.tableAnalysis;
             chatSystemPrompt = askStroomAIConfig.chatSystemPrompt;
             maxConversationHistoryMessages = askStroomAIConfig.maxConversationHistoryMessages;
             attachmentDownloadTimeoutMs = askStroomAIConfig.attachmentDownloadTimeoutMs;
@@ -152,8 +158,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             return self();
         }
 
-        public Builder tableSummaryConfig(final TableSummaryConfig tableSummaryConfig) {
-            this.tableSummaryConfig = tableSummaryConfig;
+        public Builder tableAnalysisConfig(final TableAnalysisConfig tableAnalysisConfig) {
+            this.tableAnalysisConfig = tableAnalysisConfig;
             return self();
         }
 
@@ -178,7 +184,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         }
 
         public AskStroomAIConfig build() {
-            return new AskStroomAIConfig(modelRef, tableSummaryConfig, chatSystemPrompt,
+            return new AskStroomAIConfig(modelRef, tableAnalysisConfig, chatSystemPrompt,
                     maxConversationHistoryMessages, attachmentDownloadTimeoutMs);
         }
     }

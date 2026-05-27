@@ -27,6 +27,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ai.impl.AiConfig getAiConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.impl.AiConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.ai.shared.AskStroomAIConfig getAskStroomAIConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -36,10 +45,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.ai.shared.TableSummaryConfig getTableSummaryConfig(
+    stroom.ai.shared.TableAnalysisConfig getTableAnalysisConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.ai.shared.TableSummaryConfig.class);
+                stroom.ai.shared.TableAnalysisConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

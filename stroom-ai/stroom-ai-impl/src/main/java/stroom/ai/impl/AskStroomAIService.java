@@ -33,7 +33,7 @@ import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
-import stroom.ai.shared.TableSummaryConfig;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -112,7 +112,7 @@ public class AskStroomAIService {
     private final ExecutorProvider executorProvider;
     private final Provider<AskStroomAIConfig> defaultConfigProvider;
     private final Provider<GlobalConfig> globalConfigProvider;
-    private final Provider<TableSummaryConfig> tableSummaryConfigProvider;
+    private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
     private final TaskContextFactory taskContextFactory;
 
@@ -126,7 +126,7 @@ public class AskStroomAIService {
                               final ExecutorProvider executorProvider,
                               final Provider<AskStroomAIConfig> defaultConfigProvider,
                               final Provider<GlobalConfig> globalConfigProvider,
-                              final Provider<TableSummaryConfig> tableSummaryConfigProvider,
+                              final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
                               final TaskContextFactory taskContextFactory) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
@@ -137,7 +137,7 @@ public class AskStroomAIService {
         this.executorProvider = executorProvider;
         this.defaultConfigProvider = defaultConfigProvider;
         this.globalConfigProvider = globalConfigProvider;
-        this.tableSummaryConfigProvider = tableSummaryConfigProvider;
+        this.tableAnalysisConfigProvider = tableAnalysisConfigProvider;
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -285,9 +285,9 @@ public class AskStroomAIService {
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
                                 null, null, null, false);
 
-                        final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(config);
+                        final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(config);
                         final Supplier<ResourceGeneration> downloadSupplier =
-                                buildDownloadSupplier(context, tableSummaryConfig);
+                                buildDownloadSupplier(context, tableAnalysisConfig);
                         final ResourceGeneration resourceGeneration = downloadSupplier.get();
                         final ResourceKey resourceKey = resourceGeneration.getResourceKey();
 
@@ -297,7 +297,7 @@ public class AskStroomAIService {
                             Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
 
                             // Count rows by streaming the file (skip CSV header).
-                            final int maxRows = tableSummaryConfig.getMaximumTableInputRows();
+                            final int maxRows = tableAnalysisConfig.getMaxTotalRows();
                             int rowCount = 0;
                             try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
                                 reader.readLine(); // skip CSV header
@@ -374,10 +374,10 @@ public class AskStroomAIService {
      * Applies row-limiting via the existing requestedRange on the search request.
      */
     private Supplier<ResourceGeneration> buildDownloadSupplier(final AskStroomAiContext context,
-                                                               final TableSummaryConfig tableSummaryConfig) {
+                                                               final TableAnalysisConfig tableAnalysisConfig) {
         // Request one extra row beyond the limit to detect truncation.
         // If we get maxRows+1 rows back, we know the data is genuinely truncated.
-        final long maxRows = tableSummaryConfig.getMaximumTableInputRows();
+        final long maxRows = tableAnalysisConfig.getMaxTotalRows();
         final OffsetRange probeRange = new OffsetRange(0L, maxRows + 1);
 
         if (context instanceof final DashboardTableContext ctx) {
@@ -488,7 +488,7 @@ public class AskStroomAIService {
         registerCancellation(chatId, cancelled);
 
         try {
-            final TableSummaryConfig tableSummaryConfig = getTableSummaryConfig(request.getConfig());
+            final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(request.getConfig());
             final String conversationContext = buildConversationSummary(chatId);
 
             // Build batches from CSV files on disk.
@@ -501,7 +501,7 @@ public class AskStroomAIService {
                             "Attachment data file not found for attachment " + attachment.getId()
                             + ". Data may have been cleaned up.");
                 }
-                batches.addAll(buildBatchesFromCsv(csvFile, tableSummaryConfig));
+                batches.addAll(buildBatchesFromCsv(csvFile, tableAnalysisConfig));
                 if (attachment.isTruncated()) {
                     anyTruncated = true;
                 }
@@ -514,7 +514,7 @@ public class AskStroomAIService {
             // Include truncation note in the user query if applicable.
             final String userQuery = anyTruncated
                     ? request.getMessage() + "\n\nNote: this data is truncated to the first "
-                      + tableSummaryConfig.getMaximumTableInputRows()
+                      + tableAnalysisConfig.getMaxTotalRows()
                       + " rows of a larger result set."
                     : request.getMessage();
 
@@ -525,15 +525,15 @@ public class AskStroomAIService {
 
             // Process batches in parallel with bounded concurrency.
             final Executor executor = executorProvider.get();
-            final int maxParallel = tableSummaryConfig.getMaxParallelBatches();
+            final int maxParallel = tableAnalysisConfig.getMaxParallelBatches();
             final Semaphore semaphore = new Semaphore(maxParallel);
 
-            final String systemPrompt = tableSummaryConfig.getTableQuerySystemPrompt() != null
-                    ? tableSummaryConfig.getTableQuerySystemPrompt()
-                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
-            final String userPromptTemplate = tableSummaryConfig.getTableQueryUserPrompt() != null
-                    ? tableSummaryConfig.getTableQueryUserPrompt()
-                    : TableSummaryConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
+            final String systemPrompt = tableAnalysisConfig.getTableQuerySystemPrompt() != null
+                    ? tableAnalysisConfig.getTableQuerySystemPrompt()
+                    : TableAnalysisConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
+            final String userPromptTemplate = tableAnalysisConfig.getTableQueryUserPrompt() != null
+                    ? tableAnalysisConfig.getTableQueryUserPrompt()
+                    : TableAnalysisConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
 
             final List<CompletableFuture<String>> futures = new ArrayList<>();
             for (int i = 0; i < totalBatches; i++) {
@@ -598,7 +598,7 @@ public class AskStroomAIService {
             if (summaries.size() == 1) {
                 return summaries.getFirst();
             }
-            return mergeAllSummaries(chatModel, summaries, tableSummaryConfig);
+            return mergeAllSummaries(chatModel, summaries, tableAnalysisConfig);
         } finally {
             deregisterCancellation(chatId);
         }
@@ -609,9 +609,9 @@ public class AskStroomAIService {
      * each respecting the maximum batch size.
      */
     List<String> buildBatchesFromCsv(final Path csvFile,
-                                     final TableSummaryConfig config) {
+                                     final TableAnalysisConfig config) {
         final List<String> batches = new ArrayList<>();
-        final int maxBatchSize = config.getMaximumBatchSize();
+        final int maxBatchSize = config.getMaxRowsPerBatch();
 
         try (final BufferedReader reader = Files.newBufferedReader(csvFile)) {
             final String csvHeader = reader.readLine();
@@ -651,7 +651,7 @@ public class AskStroomAIService {
      */
     private String mergeAllSummaries(final ChatModel chatModel,
                                      final List<String> summaries,
-                                     final TableSummaryConfig config) {
+                                     final TableAnalysisConfig config) {
         final StringBuilder combined = new StringBuilder();
         for (int i = 0; i < summaries.size(); i++) {
             combined.append("--- Summary ").append(i + 1).append(" ---\n");
@@ -660,7 +660,7 @@ public class AskStroomAIService {
 
         final String mergePromptTemplate = config.getMultiSummaryMergePrompt() != null
                 ? config.getMultiSummaryMergePrompt()
-                : TableSummaryConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
+                : TableAnalysisConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
         final String mergePrompt = mergePromptTemplate
                 .replace("{{summaries}}", combined.toString());
 
@@ -894,11 +894,11 @@ public class AskStroomAIService {
         return aiService.getChatModel(openAIModelDoc);
     }
 
-    private TableSummaryConfig getTableSummaryConfig(final AskStroomAIConfig config) {
+    private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAIConfig config) {
         return NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getTableSummary,
-                new TableSummaryConfig());
+                AskStroomAIConfig::getTableAnalysis,
+                new TableAnalysisConfig());
     }
 
 
@@ -1009,7 +1009,7 @@ public class AskStroomAIService {
 
     public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
         setDefaultModel(config.getModelRef());
-        setDefaultTableSummaryConfig(config.getTableSummary());
+        setDefaultTableAnalysisConfig(config.getTableAnalysis());
 
         // Persist chat/attachment config fields.
         final AskStroomAIConfig currentConfig = getDefaultConfig();
@@ -1030,28 +1030,28 @@ public class AskStroomAIService {
         return true;
     }
 
-    private Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
-        final TableSummaryConfig defaultTableSummaryConfig = tableSummaryConfigProvider.get();
-        globalConfigProvider.get().setInt(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
-                config.getMaximumBatchSize());
-        globalConfigProvider.get().setInt(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
-                config.getMaximumTableInputRows());
-        globalConfigProvider.get().setInt(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_MAX_PARALLEL_BATCHES,
+    private Boolean setDefaultTableAnalysisConfig(final TableAnalysisConfig config) {
+        final TableAnalysisConfig defaultTableAnalysisConfig = tableAnalysisConfigProvider.get();
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
+                config.getMaxRowsPerBatch());
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
+                config.getMaxTotalRows());
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAX_PARALLEL_BATCHES,
                 config.getMaxParallelBatches());
-        globalConfigProvider.get().setString(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT,
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT,
                 config.getTableQuerySystemPrompt());
-        globalConfigProvider.get().setString(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_TABLE_QUERY_USER_PROMPT,
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_TABLE_QUERY_USER_PROMPT,
                 config.getTableQueryUserPrompt());
-        globalConfigProvider.get().setString(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_SUMMARY_MERGE_PROMPT,
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_SUMMARY_MERGE_PROMPT,
                 config.getSummaryMergePrompt());
-        globalConfigProvider.get().setString(defaultTableSummaryConfig,
-                TableSummaryConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
                 config.getMultiSummaryMergePrompt());
         return true;
     }

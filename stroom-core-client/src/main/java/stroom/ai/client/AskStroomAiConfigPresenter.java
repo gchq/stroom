@@ -19,7 +19,7 @@ package stroom.ai.client;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAIConfig;
-import stroom.ai.shared.TableSummaryConfig;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -78,7 +78,7 @@ public class AskStroomAiConfigPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(600, 750))
+                .popupSize(PopupSize.resizable(650, 800))
                 .caption("Configure Ask Stroom AI")
                 .onShow(e -> {
                     read(currentConfig);
@@ -119,67 +119,75 @@ public class AskStroomAiConfigPresenter
     }
 
     private void read(final AskStroomAIConfig config) {
-        readTableSummaryConfig(NullSafe.getOrElse(config,
-                AskStroomAIConfig::getTableSummary, new TableSummaryConfig()));
+        readTableAnalysisConfig(NullSafe.getOrElse(config,
+                AskStroomAIConfig::getTableAnalysis, new TableAnalysisConfig()));
         if (config != null && config.getModelRef() != null) {
             docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
         }
     }
 
-    public void readTableSummaryConfig(final TableSummaryConfig config) {
-        getView().setMaximumBatchSize(NullSafe.getOrElse(
+    public void readTableAnalysisConfig(final TableAnalysisConfig config) {
+        getView().setMaxTotalRows(NullSafe.getOrElse(
                 config,
-                TableSummaryConfig::getMaximumBatchSize,
-                TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_BATCH_SIZE));
-        getView().setMaximumTableInputRows(NullSafe.getOrElse(
+                TableAnalysisConfig::getMaxTotalRows,
+                TableAnalysisConfig.DEFAULT_MAX_TOTAL_ROWS));
+        getView().setMaxRowsPerBatch(NullSafe.getOrElse(
                 config,
-                TableSummaryConfig::getMaximumTableInputRows,
-                TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_INPUT_ROWS));
+                TableAnalysisConfig::getMaxRowsPerBatch,
+                TableAnalysisConfig.DEFAULT_MAX_ROWS_PER_BATCH));
+        getView().setMaxParallelBatches(NullSafe.getOrElse(
+                config,
+                TableAnalysisConfig::getMaxParallelBatches,
+                TableAnalysisConfig.DEFAULT_MAX_PARALLEL_BATCHES));
         getView().setTableQuerySystemPrompt(NullSafe.getOrElse(
                 config,
-                TableSummaryConfig::getTableQuerySystemPrompt,
-                TableSummaryConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT));
+                TableAnalysisConfig::getTableQuerySystemPrompt,
+                TableAnalysisConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT));
         getView().setTableQueryUserPrompt(NullSafe.getOrElse(
                 config,
-                TableSummaryConfig::getTableQueryUserPrompt,
-                TableSummaryConfig.DEFAULT_TABLE_QUERY_USER_PROMPT));
+                TableAnalysisConfig::getTableQueryUserPrompt,
+                TableAnalysisConfig.DEFAULT_TABLE_QUERY_USER_PROMPT));
         getView().setSummaryMergePrompt(NullSafe.getOrElse(
                 config,
-                TableSummaryConfig::getSummaryMergePrompt,
-                TableSummaryConfig.DEFAULT_SUMMARY_MERGE_PROMPT));
+                TableAnalysisConfig::getSummaryMergePrompt,
+                TableAnalysisConfig.DEFAULT_SUMMARY_MERGE_PROMPT));
     }
 
     public AskStroomAIConfig write() {
-        final TableSummaryConfig tableSummaryConfig = writeTableSummaryConfig();
+        final TableAnalysisConfig tableAnalysisConfig = writeTableAnalysisConfig();
         return AskStroomAIConfig
                 .builder()
-                .tableSummaryConfig(tableSummaryConfig)
+                .tableAnalysisConfig(tableAnalysisConfig)
                 .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                 .build();
     }
 
-    public TableSummaryConfig writeTableSummaryConfig() {
-        return new TableSummaryConfig(
-                getView().getMaximumBatchSize(),
-                getView().getMaximumTableInputRows(),
-                TableSummaryConfig.DEFAULT_MAX_PARALLEL_BATCHES,
+    public TableAnalysisConfig writeTableAnalysisConfig() {
+        return new TableAnalysisConfig(
+                getView().getMaxTotalRows(),
+                getView().getMaxRowsPerBatch(),
+                getView().getMaxParallelBatches(),
                 getView().getTableQuerySystemPrompt(),
                 getView().getTableQueryUserPrompt(),
                 getView().getSummaryMergePrompt(),
-                TableSummaryConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT);
+                TableAnalysisConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT);
     }
 
     public interface AskStroomAiConfigView extends View, Focus, HasUiHandlers<AskStroomAiConfigUiHandlers> {
 
         void allowSetDefault(boolean allow);
 
-        void setMaximumBatchSize(int maximumBatchSize);
+        void setMaxTotalRows(int maxTotalRows);
 
-        int getMaximumBatchSize();
+        int getMaxTotalRows();
 
-        void setMaximumTableInputRows(int maximumTableInputRows);
+        void setMaxRowsPerBatch(int maxRowsPerBatch);
 
-        int getMaximumTableInputRows();
+        int getMaxRowsPerBatch();
+
+        void setMaxParallelBatches(int maxParallelBatches);
+
+        int getMaxParallelBatches();
 
         void setTableQuerySystemPrompt(String prompt);
 
