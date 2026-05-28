@@ -157,6 +157,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void onMessageKeyDown(final KeyDownEvent event) {
         // Ctrl+Enter send the message.
         if (!event.isShiftKeyDown() && event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            event.preventDefault();
             sendMessage();
         }
     }

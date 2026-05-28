@@ -47,7 +47,6 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -74,6 +73,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.Objects;
 
 public class AskStroomAiPresenter
         extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
@@ -230,7 +231,7 @@ public class AskStroomAiPresenter
                         askStroomAiClient.sendMessage(request,
                                 response -> pollForNewMessages(),
                                 error -> showError(error, "Failed to create attachment", null),
-                                this);
+                                getView());
                     }, getView());
                 }
             });
@@ -292,6 +293,14 @@ public class AskStroomAiPresenter
     }
 
     void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
+        // Idempotency: if the behaviour hasn't changed, nothing to do.
+        // This handles the duplicate call that occurs when a live-preview change
+        // (radio button) is followed by the user clicking OK, which calls the
+        // consumer again with the same value.
+        if (dockBehaviour.equals(currentDockBehaviour)) {
+            return;
+        }
+
         this.currentDockBehaviour = dockBehaviour;
 
         // Persist to user preferences.
@@ -301,30 +310,36 @@ public class AskStroomAiPresenter
             final boolean wasDocked = docked;
             final boolean wantsDock = dockBehaviour.getDockType() == DockType.DOCK;
 
-            if (wasDocked) {
-                if (wantsDock) {
-                    // Location change while docked: undock and re-dock.
+            if (wasDocked && wantsDock) {
+                // Location change while docked: defer so any in-flight settings-dialog
+                // hide sequence completes first, then undock and re-dock.
+                Scheduler.get().scheduleDeferred(() -> {
                     DockEvent.fireUndock(this, this);
                     DockEvent.fire(this, this, dockBehaviour, getDockSize());
                     getView().focus();
-                } else {
-                    // Switching from DOCK to DIALOG: undock then show popup.
+                });
+
+            } else if (wasDocked) {
+                // DOCK → DIALOG: defer so settings dialog closes first.
+                Scheduler.get().scheduleDeferred(() -> {
                     DockEvent.fireUndock(this, this);
                     docked = false;
                     showing = false;
-                    // Re-trigger show as dialog.
                     showAsDialog();
-                }
+                });
+
             } else if (wantsDock) {
-                // Switching from DIALOG to DOCK: hide popup then dock.
-                HidePopupRequestEvent.builder(this).fire();
-                showing = false;
-                docked = false;
-                // Now dock.
-                showing = true;
-                docked = true;
-                DockEvent.fire(this, this, dockBehaviour, getDockSize());
-                getView().focus();
+                // DIALOG → DOCK: use HidePopupEvent (not HidePopupRequestEvent) for a
+                // direct programmatic dismiss that doesn't re-enter onHideRequest.
+                // HidePopupEvent fires synchronously and calls onHide (showing=false),
+                // then the deferred re-enables showing, sets docked, and fires DockEvent.
+                HidePopupEvent.builder(this).fire();
+                Scheduler.get().scheduleDeferred(() -> {
+                    showing = true;
+                    docked = true;
+                    DockEvent.fire(this, this, dockBehaviour, getDockSize());
+                    getView().focus();
+                });
             }
         }
     }
@@ -373,7 +388,7 @@ public class AskStroomAiPresenter
                         maybeGenerateTitle(message);
                     }, error ->
                             showError(error, "Stroom AI request failed", () ->
-                                    getView().setSendButtonLoadingState(false)), this);
+                                    getView().setSendButtonLoadingState(false)), getView());
         }, getView()));
     }
 
@@ -439,7 +454,7 @@ public class AskStroomAiPresenter
         }, error -> {
             // Clear loading state on poll failure so the UI doesn't get stuck.
             getView().setSendButtonLoadingState(false);
-        }, this);
+        }, getView());
     }
 
     void appendToContainer(final HtmlBuilder hb) {
@@ -863,6 +878,10 @@ public class AskStroomAiPresenter
                 .popupSize(PopupSize.resizable(700, 500))
                 .caption("Ask Stroom AI")
                 .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    // Notify MainPresenter so the toolbar toggle button is reset.
+                    ShowAskStroomAiEvent.fire(this, false);
+                })
                 .onHide(e -> showing = false)
                 .fire();
     }
@@ -906,6 +925,21 @@ public class AskStroomAiPresenter
 
         public DockLocation getDockLocation() {
             return dockLocation;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final DockBehaviour that = (DockBehaviour) o;
+            return dockType == that.dockType &&
+                   dockLocation == that.dockLocation;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dockType, dockLocation);
         }
     }
 
