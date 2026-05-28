@@ -6,7 +6,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
-import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -17,7 +17,7 @@ public interface AiDao {
 
     AiChat createChat(UserRef userRef);
 
-    ResultPage<AiChat> listChats(UserRef userRef, FindNamedEntityCriteria criteria);
+    ResultPage<AiChat> listChats(UserRef userRef, FindAiChatHistoryCriteria criteria);
 
     Optional<AiChat> getChat(int chatId);
 

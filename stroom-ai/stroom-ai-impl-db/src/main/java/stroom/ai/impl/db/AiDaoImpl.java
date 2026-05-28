@@ -22,10 +22,19 @@ import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
+import stroom.ai.shared.AiChatHistoryFields;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
-import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -34,7 +43,7 @@ import org.jooq.Condition;
 import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,6 +54,8 @@ import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
 import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 
 public class AiDaoImpl implements AiDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiDaoImpl.class);
 
     private static final Function<Record, AiChat> RECORD_TO_AI_CHAT = record ->
             new AiChat(
@@ -65,10 +76,14 @@ public class AiDaoImpl implements AiDao {
                     record.get(AI_CHAT_MESSAGE.MESSAGE));
 
     private final AiDbConnProvider aiDbConnProvider;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
-    AiDaoImpl(final AiDbConnProvider aiDbConnProvider) {
+    AiDaoImpl(final AiDbConnProvider aiDbConnProvider,
+              final ExpressionMapperFactory expressionMapperFactory) {
         this.aiDbConnProvider = aiDbConnProvider;
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(AiChatHistoryFields.NAME_FIELD, AI_CHAT.TITLE, string -> string);
     }
 
     @Override
@@ -94,10 +109,22 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
-    public ResultPage<AiChat> listChats(final UserRef userRef, final FindNamedEntityCriteria criteria) {
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.of(AI_CHAT.USER_UUID.eq(userRef.getUuid())),
-                JooqUtil.getStringCondition(AI_CHAT.TITLE, criteria.getName()));
+    public ResultPage<AiChat> listChats(final UserRef userRef, final FindAiChatHistoryCriteria criteria) {
+        final List<Condition> conditions = new ArrayList<>();
+        conditions.add(AI_CHAT.USER_UUID.eq(userRef.getUuid()));
+
+        final FieldProvider fieldProvider = new FieldProviderImpl(
+                List.of(AiChatHistoryFields.NAME),
+                List.of(AiChatHistoryFields.NAME));
+        try {
+            final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                    .create(fieldProvider, criteria.getFilter());
+            optionalExpressionOperator.ifPresent(expressionOperator ->
+                    conditions.add(expressionMapper.apply(expressionOperator)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.empty();
+        }
 
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);

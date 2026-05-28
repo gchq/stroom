@@ -27,6 +27,7 @@ import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
@@ -40,11 +41,9 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.StringCriteria;
 
 import event.logging.Chat;
 import event.logging.ComplexLoggedOutcome;
@@ -306,15 +305,14 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public ResultPage<AiChat> listChats(final FindNamedEntityCriteria criteria) {
+    public ResultPage<AiChat> listChats(final FindAiChatHistoryCriteria criteria) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "listChats"))
                 .withDescription("List AI chat conversations")
                 .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(Query.builder()
                                 .withRaw(NullSafe.get(criteria,
-                                        FindNamedEntityCriteria::getName,
-                                        StringCriteria::getMatchString))
+                                        FindAiChatHistoryCriteria::getFilter))
                                 .build())
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {

@@ -23,10 +23,10 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.test.common.StroomCoreServerTestFileUtil;
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.data.document.Metadata;
@@ -166,7 +166,7 @@ public class MockAiService implements AiService {
     }
 
     @Override
-    public ResultPage<AiChat> listChats(final FindNamedEntityCriteria criteria) {
+    public ResultPage<AiChat> listChats(final FindAiChatHistoryCriteria criteria) {
         return aiService.listChats(criteria);
     }
 

@@ -22,9 +22,9 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.model.chat.ChatModel;
@@ -58,7 +58,7 @@ public interface AiService {
 
     AiChat createChat();
 
-    ResultPage<AiChat> listChats(FindNamedEntityCriteria criteria);
+    ResultPage<AiChat> listChats(FindAiChatHistoryCriteria criteria);
 
     AiChat getChat(int chatId);
 

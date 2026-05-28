@@ -16,7 +16,6 @@
 
 package stroom.ai.shared;
 
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -80,7 +79,8 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @Operation(
             summary = "List all AI chat conversations for the current user",
             operationId = "listChats")
-    ResultPage<AiChat> listChats(@Parameter(description = "request", required = true) FindNamedEntityCriteria criteria);
+    ResultPage<AiChat> listChats(@Parameter(description = "request", required = true)
+                                 FindAiChatHistoryCriteria criteria);
 
     @POST
     @Path("/getChat/{chatId}")

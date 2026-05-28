@@ -22,6 +22,8 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

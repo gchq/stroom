@@ -32,6 +32,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
@@ -54,7 +55,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -1049,7 +1049,7 @@ public class AskStroomAIService {
         return aiService.createChat();
     }
 
-    public ResultPage<AiChat> listChats(final FindNamedEntityCriteria criteria) {
+    public ResultPage<AiChat> listChats(final FindAiChatHistoryCriteria criteria) {
         return aiService.listChats(criteria);
     }
 

@@ -9,10 +9,10 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 
@@ -93,7 +93,7 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void listChats(final FindNamedEntityCriteria criteria,
+    void listChats(final FindAiChatHistoryCriteria criteria,
                    final Consumer<ResultPage<AiChat>> consumer,
                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory

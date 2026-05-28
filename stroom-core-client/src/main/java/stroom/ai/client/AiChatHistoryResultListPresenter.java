@@ -17,16 +17,15 @@
 package stroom.ai.client;
 
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.SelectionEventManager;
-import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.StringCriteria;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -97,8 +96,10 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 final boolean filterChange = !Objects.equals(lastFilter, filter);
                 lastFilter = filter;
-                final FindNamedEntityCriteria criteria = new FindNamedEntityCriteria(pageRequest, null,
-                        new StringCriteria(filter));
+                final FindAiChatHistoryCriteria criteria = new FindAiChatHistoryCriteria(
+                        pageRequest,
+                        null,
+                        filter);
 
                 askStroomAiClient
                         .listChats(criteria, resultPage -> {
@@ -151,7 +152,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
 
     public boolean setFilter(final String filter) {
         this.filter = filter;
-        return Objects.equals(filter, lastFilter);
+        return !Objects.equals(filter, lastFilter);
     }
 
     public AiChat getSelected() {
