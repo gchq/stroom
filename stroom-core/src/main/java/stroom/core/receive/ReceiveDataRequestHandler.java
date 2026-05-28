@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,11 +60,11 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Stroom's handler for handling the incoming requests. Proxy has it's own handler.
+ * Stroom's handler for handling the incoming requests. Proxy has its own handler.
  * </p>
  * <p>
  * Performs authentication, passes the attributeMap to the chain of {@link AttributeMapFilter}s
- * then for anything that passes,  streams it to disk.
+ * then for anything that passes, streams it to disk.
  * </p>
  */
 class ReceiveDataRequestHandler implements RequestHandler {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,8 @@ public class ReceiveDataConfig
     private final ReceiveAction fallbackReceiveAction;
     @JsonProperty
     private final ByteSize maxRequestSize;
+    @JsonProperty
+    private final S3EventNotificationConfig s3EventNotification;
 
     public ReceiveDataConfig() {
         // Sort them to ensure consistent order on serialisation
@@ -144,6 +146,7 @@ public class ReceiveDataConfig
         receiptCheckMode = DEFAULT_RECEIPT_CHECK_MODE;
         fallbackReceiveAction = DEFAULT_FALLBACK_RECEIVE_ACTION;
         maxRequestSize = null;
+        s3EventNotification = new S3EventNotificationConfig();
     }
 
     @SuppressWarnings("unused")
@@ -164,7 +167,8 @@ public class ReceiveDataConfig
             @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders,
             @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
             @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction,
-            @JsonProperty("maxRequestSize") final ByteSize maxRequestSize) {
+            @JsonProperty("maxRequestSize") final ByteSize maxRequestSize,
+            @JsonProperty("s3EventNotification") final S3EventNotificationConfig s3EventNotification) {
 
         this.metaTypes = NullSafe.getOrElse(metaTypes, ReceiveDataConfig::cleanSet, DEFAULT_META_TYPES);
         this.enabledAuthenticationTypes = NullSafe.getOrElse(
@@ -193,6 +197,7 @@ public class ReceiveDataConfig
         this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, DEFAULT_RECEIPT_CHECK_MODE);
         this.fallbackReceiveAction = Objects.requireNonNullElse(fallbackReceiveAction, DEFAULT_FALLBACK_RECEIVE_ACTION);
         this.maxRequestSize = maxRequestSize;
+        this.s3EventNotification = Objects.requireNonNullElseGet(s3EventNotification, S3EventNotificationConfig::new);
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -212,7 +217,8 @@ public class ReceiveDataConfig
                 builder.feedNameGenerationMandatoryHeaders,
                 builder.receiptCheckMode,
                 builder.fallbackReceiveAction,
-                builder.maxRequestSize);
+                builder.maxRequestSize,
+                builder.s3EventNotification);
     }
 
     @NotNull
@@ -359,6 +365,10 @@ public class ReceiveDataConfig
         return maxRequestSize;
     }
 
+    public S3EventNotificationConfig getS3EventNotification() {
+        return s3EventNotification;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -497,6 +507,7 @@ public class ReceiveDataConfig
         private ReceiptCheckMode receiptCheckMode;
         private ReceiveAction fallbackReceiveAction;
         private ByteSize maxRequestSize;
+        private S3EventNotificationConfig s3EventNotification;
 
         private Builder() {
         }
@@ -594,6 +605,11 @@ public class ReceiveDataConfig
 
         public Builder withMaxRequestSize(final ByteSize maxRequestSize) {
             this.maxRequestSize = maxRequestSize;
+            return this;
+        }
+
+        public Builder withS3EventNotification(final S3EventNotificationConfig s3EventNotification) {
+            this.s3EventNotification = s3EventNotification;
             return this;
         }
 

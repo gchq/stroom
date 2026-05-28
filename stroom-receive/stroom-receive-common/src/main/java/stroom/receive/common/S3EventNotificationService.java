@@ -1,0 +1,330 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.receive.common;
+
+
+import stroom.aws.sqs.SqsClientFactory;
+import stroom.aws.sqs.SqsConfig;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.concurrent.UniqueId;
+import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import tools.jackson.databind.JsonNode;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+/**
+ * See
+ * <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html">
+ * AWS notification content structure
+ * </a> for details.
+ */
+@Singleton
+public class S3EventNotificationService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3EventNotificationService.class);
+    private static final Pattern DOT_DELIMITER_PATTERN = Pattern.compile("\\.");
+    private static final String EXPECTED_EVENT_MAJOR_VERSION = "2";
+    private static final Set<String> SUPPORTED_EVENT_NAMES = Set.of(
+            "s3:ObjectCreated:Put",
+            "s3:ObjectCreated:Post");
+    public static final String EVENT_FIELD = "Event";
+    public static final String TEST_EVENT_VALUE = "s3:TestEvent";
+    public static final String SERVICE_FIELD = "Service";
+    public static final String TIME_FIELD = "Time";
+    public static final String BUCKET_FIELD = "Bucket";
+    public static final String RECORDS_FIELD = "Records";
+
+    private final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider;
+    private final SqsClientFactory sqsClientFactory;
+    private final ReceiptIdGenerator receiptIdGenerator;
+
+    private volatile S3EventNotificationConfig lastS3EventNotificationConfig = null;
+    private volatile List<ClientState> clients;
+
+    @Inject
+    public S3EventNotificationService(
+            final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider,
+            final SqsClientFactory sqsClientFactory,
+            final ReceiptIdGenerator receiptIdGenerator) {
+        this.s3EventNotificationConfigProvider = s3EventNotificationConfigProvider;
+        this.sqsClientFactory = sqsClientFactory;
+        this.receiptIdGenerator = receiptIdGenerator;
+    }
+
+    public void poll() {
+        LOGGER.debug("poll()");
+        final List<ClientState> clients = getClients();
+        if (NullSafe.hasItems(clients)) {
+            for (final ClientState clientState : clients) {
+                poll(clientState);
+            }
+        }
+    }
+
+    private void poll(final ClientState clientState) {
+        try {
+//            if (queueUrl == null) {
+//                LOGGER.debug(() -> "Getting queue name");
+//                final String queueName = config.getQueueName();
+//                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
+//                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
+//            }
+            // TODO do we want the queueName or queueUrl in the config?
+            //  We can use sqsClient to derive the latter from the former.
+            final SqsConfig sqsConfig = clientState.config;
+            final SqsClient sqsClient = clientState.sqsClient;
+            final String queueUrl = sqsConfig.getQueueUrl();
+            LOGGER.debug(() -> LogUtil.message("poll() - queueName, {}", queueUrl));
+
+            List<Message> messages;
+            do {
+                // receive messages from the queue
+                LOGGER.debug(() -> "Getting messages");
+                // long polling and wait for waitTimeSeconds before timed out
+                final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                        .queueUrl(queueUrl)
+                        .waitTimeSeconds((int) sqsConfig.getPollFrequency().getDuration().toSeconds())
+                        .messageAttributeNames("All") // Message attribute wildcard.
+                        .build();
+
+                messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
+
+                // delete messages from the queue
+                for (final Message message : messages) {
+                    try {
+                        final AttributeMap attributeMap = new AttributeMap();
+                        addReceiptId(attributeMap);
+                        addSqsMessageId(attributeMap, message);
+
+                        // TODO:
+                        //  * Parse the eventTime into a long then write back to a normalDateTimeStr
+                        //    to put in the attribute map
+                        //  * Create class to hold s3 object location info.
+                        //  * Add a table/col to hold the S3 location info as a child of meta.
+                        //  * It is agreed that stroom will not duplicate the data on S3, so will
+                        //    just create the meta rec in the db along with s3 location to read from there.
+                        //  * Build an attr map receipt info + meta obtained from either the ZIP manifest
+                        //    or the s3 metadata (depending on how the s3 forwarder behaves).
+                        //  * Don't need to worry about any auth filtering beyond authenticating to the SQS itself.
+                        //  * Add in attr map filtering.
+                        //  * Add in logging to receive log.
+                        //  * S3 is read only from stroom's POV, so we need a isReadOnly method on the Store api.
+                        processMessage(message.body(), attributeMap);
+
+
+                        // Now delete the msg we have consumed
+                        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                                .queueUrl(queueUrl)
+                                .receiptHandle(message.receiptHandle())
+                                .build();
+                        sqsClient.deleteMessage(deleteMessageRequest);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+                }
+            } while (!messages.isEmpty());
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private static void addSqsMessageId(final AttributeMap attributeMap, final Message message) {
+        final String sqsMessageId = message.messageId();
+        if (NullSafe.isNonBlankString(sqsMessageId)) {
+            LOGGER.debug("sqsMessageId: {}", sqsMessageId);
+            attributeMap.put(StandardHeaderArguments.SQS_MESSAGE_ID, sqsMessageId);
+        }
+    }
+
+    private void addReceiptId(final AttributeMap attributeMap) {
+        final UniqueId receiptId = receiptIdGenerator.generateId();
+        final String receiptIdStr = receiptId.toString();
+        LOGGER.debug("Adding proxy attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+        attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
+        attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
+    }
+
+    private static void addEventTime(final AttributeMap attributeMap, final String eventTime) {
+        try {
+            final long epochMs = DateUtil.parseNormalDateTimeString(eventTime);
+            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, epochMs);
+        } catch (final RuntimeException e) {
+            throw new RuntimeException(LogUtil.message("Unable to parse event time {} - {}",
+                    eventTime, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    private static void processMessage(final String messageBody, final AttributeMap attributeMap) {
+        try {
+            final JsonNode rootNode = JsonUtil.getMapper().readTree(messageBody);
+
+            // Swallow and log the S3 Test Message
+            if (TEST_EVENT_VALUE.equals(JsonUtil.getNodeAsString(rootNode, EVENT_FIELD))) {
+                LOGGER.debug(() -> LogUtil.message("""
+                                processMessage() - Test Message Detected:
+                                  Service: {}
+                                  Event: {}
+                                  Time: {}
+                                  Bucket: {}""",
+                        JsonUtil.getNodeAsString(rootNode, SERVICE_FIELD),
+                        JsonUtil.getNodeAsString(rootNode, EVENT_FIELD),
+                        JsonUtil.getNodeAsString(rootNode, TIME_FIELD),
+                        JsonUtil.getNodeAsString(rootNode, BUCKET_FIELD)));
+
+            } else if (rootNode.has(RECORDS_FIELD)) {
+                // The proper message body
+                final JsonNode recordsNode = rootNode.get(RECORDS_FIELD);
+
+                for (final JsonNode recordsItemNode : recordsNode) {
+                    LOGGER.debug("processMessage() - Processing record");
+
+                    validateEventVersion(JsonUtil.getNodeAsString(recordsItemNode, "eventVersion"));
+
+                    final String eventName = getNodeAsString(recordsItemNode, "eventName");
+                    if (SUPPORTED_EVENT_NAMES.contains(eventName)) {
+                        final String awsRegion = getNodeAsString(recordsItemNode, "awsRegion");
+                        final String eventTime = getNodeAsString(recordsItemNode, "eventTime");
+
+                        addEventTime(attributeMap, eventTime);
+
+                        final JsonNode s3Node = getNode(recordsItemNode, "s3");
+                        final JsonNode s3BucketNode = getNode(s3Node, "bucket");
+
+                        final String bucketName = getNodeAsString(s3BucketNode, "name");
+                        final String bucketArn = getNodeAsString(s3BucketNode, "arn");
+
+                        final JsonNode objectNode = getNode(s3Node, "object");
+
+                        final String objectKey = getNodeAsString(objectNode, "key");
+                        final long objectSize = getNodeAsLong(objectNode, "size");
+
+                        // Print extracted values
+                        LOGGER.debug("processMessage() - awsRegion: {}, eventTime: {}, eventName: {}, " +
+                                     "bucketName: {}, bucketArn: {}, objectKey: {}, objectSize: {}",
+                                awsRegion, eventTime, eventName, bucketName, bucketArn, objectKey, objectSize);
+                    } else {
+                        LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
+                    }
+                }
+            } else {
+                throw new IllegalStateException("Unknown messageBody format, messageBody:\n" + messageBody);
+            }
+        } catch (final Exception e) {
+            throw new IllegalStateException(LogUtil.message(
+                    "Error parsing message body - {}, messageBody:\n{}", LogUtil.exceptionMessage(e), messageBody), e);
+        }
+    }
+
+    private static String getNodeAsString(final JsonNode baseNode, final String fieldName) {
+        final String val = JsonUtil.getNodeAsString(baseNode, fieldName);
+        Objects.requireNonNull(val, () -> LogUtil.message("Field '{}' does not exist or has null value on node {}.",
+                fieldName, baseNode));
+        return val;
+    }
+
+    private static long getNodeAsLong(final JsonNode baseNode, final String fieldName) {
+        final Long val = JsonUtil.getNodeAsLong(baseNode, fieldName);
+        Objects.requireNonNull(val, () -> LogUtil.message("Field '{}' does not exist or has null value on node {}.",
+                fieldName, baseNode));
+        return val;
+    }
+
+    private static JsonNode getNode(final JsonNode baseNode, final String fieldName) {
+        Objects.requireNonNull(baseNode, "baseNode must not be null");
+        final JsonNode childNode = baseNode.get(fieldName);
+        Objects.requireNonNull(childNode, () -> LogUtil.message("Field '{}' does not exist on {}.",
+                fieldName, baseNode));
+        return childNode;
+    }
+
+    private static void validateEventVersion(final String eventVersion) {
+        Objects.requireNonNull(eventVersion, "eventVersion must not be null");
+        final String[] parts = DOT_DELIMITER_PATTERN.split(eventVersion.trim());
+        if (parts.length != 2) {
+            throw new RuntimeException("Unexpected eventVersion value: " + eventVersion);
+        } else {
+            final String majorPart = parts[0];
+            if (!EXPECTED_EVENT_MAJOR_VERSION.equals(majorPart)) {
+                throw new RuntimeException(LogUtil.message("Unexpected major part ({}) in eventVersion {}",
+                        majorPart, eventVersion));
+            }
+        }
+    }
+
+    private List<ClientState> getClients() {
+        // Intentionally use instance equality as the provider will return a different instance
+        // if the config has changed.
+        if (s3EventNotificationConfigProvider.get() != lastS3EventNotificationConfig) {
+            synchronized (this) {
+                final S3EventNotificationConfig newS3EventNotificationConfig = s3EventNotificationConfigProvider.get();
+                if (newS3EventNotificationConfig != lastS3EventNotificationConfig) {
+                    final List<ClientState> oldClients = clients;
+                    closeClients(oldClients);
+                    clients = NullSafe.stream(newS3EventNotificationConfig.getSqsConnectors())
+                            .map(sqsConfig -> {
+                                final SqsClient sqsClient = sqsClientFactory.createSqsClient(sqsConfig);
+                                return new ClientState(sqsClient, sqsConfig);
+                            })
+                            .toList();
+                    LOGGER.debug(() -> LogUtil.message("getClients() - sqsClients.size: {}", clients.size()));
+                }
+            }
+        }
+        return clients;
+    }
+
+    private void closeClients(final List<ClientState> clients) {
+        for (final ClientState clientState : NullSafe.list(clients)) {
+            try {
+                clientState.sqsClient.close();
+            } catch (final Exception e) {
+                LOGGER.error(LogUtil.message("Error closing sqsClient {}, config: {},  - {}",
+                        clientState.sqsClient, clientState.config, LogUtil.exceptionMessage(e)), e);
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ClientState(SqsClient sqsClient, SqsConfig config) {
+
+        private ClientState {
+            Objects.requireNonNull(sqsClient);
+            Objects.requireNonNull(config);
+        }
+    }
+}

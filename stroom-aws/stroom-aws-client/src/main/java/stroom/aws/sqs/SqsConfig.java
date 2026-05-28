@@ -47,10 +47,10 @@ public class SqsConfig
     private final AwsAssumeRole assumeRole;
     @JsonProperty
     private final String awsRegionName;
+    //    @JsonProperty
+//    private final String awsProfileName;
     @JsonProperty
-    private final String awsProfileName;
-    @JsonProperty
-    private final String queueName;
+    private final String queueUrl;
     @JsonProperty
     private final StroomDuration pollFrequency;
 
@@ -58,8 +58,8 @@ public class SqsConfig
         credentials = null;
         assumeRole = null;
         awsRegionName = null;
-        awsProfileName = null;
-        queueName = null;
+//        awsProfileName = null;
+        queueUrl = null;
         pollFrequency = DEFAULT_POLL_FREQUENCY;
     }
 
@@ -68,14 +68,14 @@ public class SqsConfig
     public SqsConfig(@JsonProperty("credentials") final AwsCredentials credentials,
                      @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
                      @JsonProperty("awsRegionName") final String awsRegionName,
-                     @JsonProperty("awsProfileName") final String awsProfileName,
-                     @JsonProperty("queueName") final String queueName,
+//                     @JsonProperty("awsProfileName") final String awsProfileName,
+                     @JsonProperty("queueUrl") final String queueUrl,
                      @JsonProperty("pollFrequency") final StroomDuration pollFrequency) {
         this.credentials = credentials;
         this.assumeRole = assumeRole;
         this.awsRegionName = awsRegionName;
-        this.awsProfileName = awsProfileName;
-        this.queueName = queueName;
+//        this.awsProfileName = awsProfileName;
+        this.queueUrl = queueUrl;
         this.pollFrequency = Objects.requireNonNullElse(pollFrequency, DEFAULT_POLL_FREQUENCY);
     }
 
@@ -95,15 +95,15 @@ public class SqsConfig
         return awsRegionName;
     }
 
-    @JsonProperty
-    public String getAwsProfileName() {
-        return awsProfileName;
-    }
+//    @JsonProperty
+//    public String getAwsProfileName() {
+//        return awsProfileName;
+//    }
 
     @NotBlank
     @JsonProperty
-    public String getQueueName() {
-        return queueName;
+    public String getQueueUrl() {
+        return queueUrl;
     }
 
     @JsonProperty
@@ -133,7 +133,7 @@ public class SqsConfig
         private AwsAssumeRole assumeRole;
         private String awsRegionName;
         private String awsProfileName;
-        private String queueName;
+        private String queueUrl;
         private StroomDuration pollFrequency = DEFAULT_POLL_FREQUENCY;
 
         public Builder() {
@@ -143,8 +143,8 @@ public class SqsConfig
             this.credentials = sqsConfig.credentials;
             this.assumeRole = sqsConfig.assumeRole;
             this.awsRegionName = sqsConfig.awsRegionName;
-            this.awsProfileName = sqsConfig.awsProfileName;
-            this.queueName = sqsConfig.queueName;
+//            this.awsProfileName = sqsConfig.awsProfileName;
+            this.queueUrl = sqsConfig.queueUrl;
             this.pollFrequency = sqsConfig.pollFrequency;
         }
 
@@ -163,13 +163,13 @@ public class SqsConfig
             return this;
         }
 
-        public Builder awsProfileName(final String awsProfileName) {
-            this.awsProfileName = awsProfileName;
-            return this;
-        }
+//        public Builder awsProfileName(final String awsProfileName) {
+//            this.awsProfileName = awsProfileName;
+//            return this;
+//        }
 
-        public Builder queueName(final String queueName) {
-            this.queueName = queueName;
+        public Builder queueUrl(final String queueUrl) {
+            this.queueUrl = queueUrl;
             return this;
         }
 
@@ -183,8 +183,8 @@ public class SqsConfig
                     credentials,
                     assumeRole,
                     awsRegionName,
-                    awsProfileName,
-                    queueName,
+//                    awsProfileName,
+                    queueUrl,
                     pollFrequency
             );
         }

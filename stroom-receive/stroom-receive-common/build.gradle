@@ -38,6 +38,7 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
+    implementation libs.aws.sqs
     implementation libs.bcrypt
     implementation libs.bouncy.castle
     implementation libs.commons.compress

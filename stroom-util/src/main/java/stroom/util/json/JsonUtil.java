@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.core.json.JsonFactory;
 import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -320,5 +322,27 @@ public final class JsonUtil {
             }
             return results;
         }
+    }
+
+    /**
+     * @param jsonNode     The node that is the parent of the required property.
+     * @param propertyName The name of the property to get
+     * @return The value of the required property or null if the property does not exist.
+     */
+    public static String getNodeAsString(final JsonNode jsonNode, final String propertyName) {
+        Objects.requireNonNull(jsonNode, "jsonNode must not be null");
+        Objects.requireNonNull(propertyName, "propertyName must not be null");
+        return NullSafe.get(jsonNode.get(propertyName), JsonNode::asString);
+    }
+
+    /**
+     * @param jsonNode     The node that is the parent of the required property.
+     * @param propertyName The name of the property to get
+     * @return The value of the required property or null if the property does not exist.
+     */
+    public static Long getNodeAsLong(final JsonNode jsonNode, final String propertyName) {
+        Objects.requireNonNull(jsonNode, "jsonNode must not be null");
+        Objects.requireNonNull(propertyName, "propertyName must not be null");
+        return NullSafe.get(jsonNode.get(propertyName), JsonNode::asLong);
     }
 }

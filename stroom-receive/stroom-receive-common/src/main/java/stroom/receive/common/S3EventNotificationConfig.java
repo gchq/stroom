@@ -18,6 +18,9 @@ package stroom.receive.common;
 
 
 import stroom.aws.sqs.SqsConfig;
+import stroom.util.config.annotations.RequiresProxyRestart;
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -28,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class S3EventNotificationConfig
@@ -45,7 +49,30 @@ public class S3EventNotificationConfig
         this.sqsConnectors = Collections.emptyList();
     }
 
+    @RequiresProxyRestart
+    @RequiresRestart(RestartScope.SYSTEM)
     public List<SqsConfig> getSqsConnectors() {
         return sqsConnectors;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final S3EventNotificationConfig that = (S3EventNotificationConfig) o;
+        return Objects.equals(sqsConnectors, that.sqsConnectors);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(sqsConnectors);
+    }
+
+    @Override
+    public String toString() {
+        return "S3EventNotificationConfig{" +
+               "sqsConnectors=" + sqsConnectors +
+               '}';
     }
 }
