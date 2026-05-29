@@ -22,7 +22,12 @@ import org.xml.sax.InputSource;
 
 import java.io.StringReader;
 import java.text.ParseException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Supplier;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -43,6 +48,18 @@ import javax.xml.xpath.XPathFactory;
                         @FunctionArg(
                                 name = "xpath",
                                 description = "The XPath expression to use for extraction.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "prefix",
+                                description = "The namespace prefix.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "uri",
+                                description = "The namespace URI.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "...",
+                                description = "Additional namespace prefix and URI pairs.",
                                 argType = ValString.class)}))
 class XPath extends AbstractManyChildFunction {
 
@@ -52,7 +69,7 @@ class XPath extends AbstractManyChildFunction {
     private static final XPathFactory X_PATH_FACTORY = XPathFactory.newInstance();
 
     public XPath(final String name) {
-        super(name, 2, 2);
+        super(name, 2, Integer.MAX_VALUE);
     }
 
     @Override
@@ -73,13 +90,24 @@ class XPath extends AbstractManyChildFunction {
             final String xml = params[0].toString();
             final String xpathPattern = params[1].toString();
 
-            if (xpathPattern.isEmpty()) {
+            if (params.length > 2 && params.length % 2 != 0) {
+                gen = new StaticValueFunction(ValErr.create(
+                        "Namespaces must be provided as prefix-URI pairs in '" + name + "' function"))
+                        .createGenerator();
+            } else if (xpathPattern.isEmpty()) {
                 gen = new StaticValueFunction(ValErr.create(
                         "An empty XPath expression has been defined for second argument of '" + name + "' function"))
                         .createGenerator();
             } else {
                 try {
                     final javax.xml.xpath.XPath xpath = X_PATH_FACTORY.newXPath();
+                    if (params.length > 2) {
+                        final Map<String, String> namespaces = new HashMap<>();
+                        for (int i = 2; i < params.length; i += 2) {
+                            namespaces.put(params[i].toString(), params[i + 1].toString());
+                        }
+                        xpath.setNamespaceContext(new SimpleNamespaceContext(namespaces));
+                    }
                     final XPathExpression expr = xpath.compile(xpathPattern);
                     try {
                         final String result = expr.evaluate(new InputSource(new StringReader(xml)));
@@ -95,15 +123,36 @@ class XPath extends AbstractManyChildFunction {
             }
 
         } else {
+            if (params.length > 2 && params.length % 2 != 0) {
+                throw new ParseException("Namespaces must be provided as prefix-URI pairs in '" + name + "' function",
+                        0);
+            }
+
             if (params[1] instanceof Val) {
                 // Test XPath is valid.
                 final String xpathPattern = params[1].toString();
                 if (xpathPattern.isEmpty()) {
                     throw new ParseException(
-                            "An empty XPath expression has been defined for second argument of '" + name + "' function", 0);
+                            "An empty XPath expression has been defined for second argument of '" + name
+                                    + "' function", 0);
                 }
                 try {
-                    X_PATH_FACTORY.newXPath().compile(xpathPattern);
+                    final javax.xml.xpath.XPath xpath = X_PATH_FACTORY.newXPath();
+                    // If namespaces are static, we can validate the XPath with them.
+                    boolean allNamespacesStatic = true;
+                    final Map<String, String> namespaces = new HashMap<>();
+                    for (int i = 2; i < params.length; i += 2) {
+                        if (!(params[i] instanceof Val) || !(params[i + 1] instanceof Val)) {
+                            allNamespacesStatic = false;
+                            break;
+                        }
+                        namespaces.put(params[i].toString(), params[i + 1].toString());
+                    }
+
+                    if (allNamespacesStatic && !namespaces.isEmpty()) {
+                        xpath.setNamespaceContext(new SimpleNamespaceContext(namespaces));
+                    }
+                    xpath.compile(xpathPattern);
                 } catch (final XPathExpressionException e) {
                     throw new ParseException("Error in XPath expression: " + e.getMessage(), 0);
                 }
@@ -138,14 +187,32 @@ class XPath extends AbstractManyChildFunction {
 
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
-            // If the XPath pattern is a constant, we can pre-compile it for this generator.
-            if (childGenerators[1] instanceof StaticValueGen staticGen) {
+            // If the XPath pattern and all namespaces are constant, we can pre-compile it for this generator.
+            if (childGenerators[1] instanceof final StaticValueGen staticGen) {
                 final String xpathPattern = staticGen.eval(null, null).toString();
                 if (!xpathPattern.isEmpty()) {
-                    try {
-                        staticExpr = X_PATH_FACTORY.newXPath().compile(xpathPattern);
-                    } catch (XPathExpressionException e) {
-                        // Ignore and re-compile during eval if needed.
+                    boolean allNamespacesStatic = true;
+                    final Map<String, String> namespaces = new HashMap<>();
+                    for (int i = 2; i < childGenerators.length; i += 2) {
+                        if (!(childGenerators[i] instanceof StaticValueGen)
+                                || !(childGenerators[i + 1] instanceof StaticValueGen)) {
+                            allNamespacesStatic = false;
+                            break;
+                        }
+                        namespaces.put(childGenerators[i].eval(null, null).toString(),
+                                childGenerators[i + 1].eval(null, null).toString());
+                    }
+
+                    if (allNamespacesStatic) {
+                        try {
+                            final javax.xml.xpath.XPath xpath = X_PATH_FACTORY.newXPath();
+                            if (!namespaces.isEmpty()) {
+                                xpath.setNamespaceContext(new SimpleNamespaceContext(namespaces));
+                            }
+                            staticExpr = xpath.compile(xpathPattern);
+                        } catch (final XPathExpressionException e) {
+                            // Ignore and re-compile during eval if needed.
+                        }
                     }
                 }
             }
@@ -165,10 +232,19 @@ class XPath extends AbstractManyChildFunction {
             try {
                 final String xml = valXml.toString();
                 final String xpathPattern = valXPath.toString();
-                
+
                 XPathExpression expr = staticExpr;
                 if (expr == null) {
-                    expr = X_PATH_FACTORY.newXPath().compile(xpathPattern);
+                    final javax.xml.xpath.XPath xpath = X_PATH_FACTORY.newXPath();
+                    if (childGenerators.length > 2) {
+                        final Map<String, String> namespaces = new HashMap<>();
+                        for (int i = 2; i < childGenerators.length; i += 2) {
+                            namespaces.put(childGenerators[i].eval(storedValues, childDataSupplier).toString(),
+                                    childGenerators[i + 1].eval(storedValues, childDataSupplier).toString());
+                        }
+                        xpath.setNamespaceContext(new SimpleNamespaceContext(namespaces));
+                    }
+                    expr = xpath.compile(xpathPattern);
                 }
 
                 final String result = expr.evaluate(new InputSource(new StringReader(xml)));
@@ -177,6 +253,40 @@ class XPath extends AbstractManyChildFunction {
             } catch (final Exception e) {
                 return ValErr.create(e.getMessage());
             }
+        }
+    }
+
+
+    private static final class SimpleNamespaceContext implements NamespaceContext {
+
+        private final Map<String, String> prefixToUri;
+        private final Map<String, String> uriToPrefix;
+
+        public SimpleNamespaceContext(final Map<String, String> prefixToUri) {
+            this.prefixToUri = new HashMap<>(prefixToUri);
+            this.uriToPrefix = new HashMap<>();
+            for (final Map.Entry<String, String> entry : prefixToUri.entrySet()) {
+                uriToPrefix.put(entry.getValue(), entry.getKey());
+            }
+        }
+
+        @Override
+        public String getNamespaceURI(final String prefix) {
+            return prefixToUri.get(prefix);
+        }
+
+        @Override
+        public String getPrefix(final String namespaceURI) {
+            return uriToPrefix.get(namespaceURI);
+        }
+
+        @Override
+        public Iterator<String> getPrefixes(final String namespaceURI) {
+            final String prefix = getPrefix(namespaceURI);
+            if (prefix == null) {
+                return Collections.emptyIterator();
+            }
+            return Collections.singletonList(prefix).iterator();
         }
     }
 }

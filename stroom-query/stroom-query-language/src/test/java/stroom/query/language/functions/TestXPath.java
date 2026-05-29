@@ -27,7 +27,8 @@ class TestXPath extends AbstractFunctionTest<XPath> {
 
     @Override
     Stream<TestCase> getTestCases() {
-        final String xml = "<root><element>value</element><nested><item id=\"1\">item1</item><item id=\"2\">item2</item></nested></root>";
+        final String xml = "<root><element>value</element><nested><item id=\"1\">item1</item>"
+                + "<item id=\"2\">item2</item></nested></root>";
         return Stream.of(
                 TestCase.of(
                         "Simple element",
@@ -56,9 +57,32 @@ class TestXPath extends AbstractFunctionTest<XPath> {
                         ValString.create("/root")),
                 TestCase.of(
                         "Invalid XPath",
-                        ValString.create("An empty XPath expression has been defined for second argument of 'XPath' function"),
+                        ValString.create(
+                                "An empty XPath expression has been defined for second argument of 'XPath' function"),
                         ValString.create(xml),
-                        ValString.create(""))
+                        ValString.create("")),
+                TestCase.of(
+                        "Namespace - single",
+                        ValString.create("value"),
+                        ValString.create("<root xmlns=\"ns1\"><element>value</element></root>"),
+                        ValString.create("/ns:root/ns:element"),
+                        ValString.create("ns"),
+                        ValString.create("ns1")),
+                TestCase.of(
+                        "Namespace - multiple",
+                        ValString.create("item2"),
+                        ValString.create("<root xmlns:a=\"nsa\" xmlns:b=\"nsb\"><a:item>item1</a:item><b:item>item2</b:item></root>"),
+                        ValString.create("/root/b:item"),
+                        ValString.create("a"),
+                        ValString.create("nsa"),
+                        ValString.create("b"),
+                        ValString.create("nsb")),
+                TestCase.of(
+                        "Namespace - missing URI",
+                        ValString.create("Namespaces must be provided as prefix-URI pairs in 'xpath' function"),
+                        ValString.create("<root/>"),
+                        ValString.create("/root"),
+                        ValString.create("ns"))
         );
     }
 }

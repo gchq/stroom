@@ -68,7 +68,8 @@ class TestJq extends AbstractFunctionTest<Jq> {
                         ValString.create(".")),
                 TestCase.of(
                         "Invalid JQ",
-                        ValString.create("An empty JQ expression has been defined for second argument of 'Jq' function"),
+                        ValString.create(
+                                "An empty JQ expression has been defined for second argument of 'Jq' function"),
                         ValString.create(json),
                         ValString.create(""))
         );

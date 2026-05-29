@@ -20,10 +20,10 @@ import stroom.query.language.functions.ref.StoredValues;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
-import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
 
 import java.text.ParseException;
@@ -108,7 +108,8 @@ class Jq extends AbstractManyChildFunction {
                 final String jqPattern = params[1].toString();
                 if (jqPattern.isEmpty()) {
                     throw new ParseException(
-                            "An empty JQ expression has been defined for second argument of '" + name + "' function", 0);
+                            "An empty JQ expression has been defined for second argument of '" + name
+                                    + "' function", 0);
                 }
                 try {
                     JsonQuery.compile(jqPattern, Versions.JQ_1_6);
@@ -145,7 +146,7 @@ class Jq extends AbstractManyChildFunction {
             return ValNull.INSTANCE;
         }
         if (nodes.size() == 1) {
-            final JsonNode node = nodes.get(0);
+            final JsonNode node = nodes.getFirst();
             if (node.isNull()) {
                 return ValNull.INSTANCE;
             }
@@ -166,14 +167,14 @@ class Jq extends AbstractManyChildFunction {
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
             // If the JQ pattern is a constant, we can pre-compile it for this generator.
-            if (childGenerators[1] instanceof StaticValueGen staticGen) {
+            if (childGenerators[1] instanceof final StaticValueGen staticGen) {
                 final Val val = staticGen.eval(null, null);
                 if (val.type().isValue()) {
                     final String jqPattern = val.toString();
                     if (!jqPattern.isEmpty()) {
                         try {
                             staticQuery = JsonQuery.compile(jqPattern, Versions.JQ_1_6);
-                        } catch (JsonQueryException e) {
+                        } catch (final JsonQueryException e) {
                             // Ignore and re-compile during eval if needed.
                         }
                     }
@@ -195,7 +196,7 @@ class Jq extends AbstractManyChildFunction {
             try {
                 final String json = valJson.toString();
                 final String jqPattern = valJq.toString();
-                
+
                 if (json == null) {
                     return ValNull.INSTANCE;
                 }
