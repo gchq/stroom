@@ -71,7 +71,8 @@ class TestXPath extends AbstractFunctionTest<XPath> {
                 TestCase.of(
                         "Namespace - multiple",
                         ValString.create("item2"),
-                        ValString.create("<root xmlns:a=\"nsa\" xmlns:b=\"nsb\"><a:item>item1</a:item><b:item>item2</b:item></root>"),
+                        ValString.create("<root xmlns:a=\"nsa\" "
+                                + "xmlns:b=\"nsb\"><a:item>item1</a:item><b:item>item2</b:item></root>"),
                         ValString.create("/root/b:item"),
                         ValString.create("a"),
                         ValString.create("nsa"),
