@@ -89,7 +89,6 @@ public class AskStroomAiConfigPresenter
                     if (e.isOk()) {
                         // Update the local config.
                         final AskStroomAIConfig config = write();
-                        askStroomAiClient.setConfig(config);
                         dockBehaviourConsumer.accept(getView().getDockBehaviour());
                         configConsumer.accept(config);
                     } else {
