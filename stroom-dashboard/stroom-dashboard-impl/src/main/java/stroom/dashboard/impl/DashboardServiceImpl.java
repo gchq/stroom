@@ -18,6 +18,7 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
+import stroom.dashboard.impl.download.MarkdownTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.ColumnValue;
@@ -321,6 +322,7 @@ class DashboardServiceImpl implements DashboardService {
                         case CSV -> new DelimitedTarget(outputStream, ",");
                         case TSV -> new DelimitedTarget(outputStream, "\t");
                         case EXCEL -> new ExcelTarget(outputStream, searchRequest.getDateTimeSettings());
+                        case MARKDOWN -> new MarkdownTarget(outputStream);
                     };
 
                     // Write delimited file.

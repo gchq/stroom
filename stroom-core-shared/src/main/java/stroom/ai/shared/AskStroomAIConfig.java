@@ -46,7 +46,10 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
     public static final String DEFAULT_CHAT_SYSTEM_PROMPT = """
             You are a helpful data analysis assistant within the Stroom data platform. \
-            Answer the user's questions using the conversation context provided. \
+            When table data is attached to the conversation, it appears as markdown \
+            tables prefixed with [Attached Table: ...] labels identifying the source. \
+            Use data from all relevant attached tables to answer the user's questions. \
+            If multiple tables are present, cite the source table name in your answer. \
             If you don't have enough information, say so.\
             """;
     public static final int DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES = 20;

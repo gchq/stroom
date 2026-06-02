@@ -29,6 +29,7 @@ import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.ExcelTarget.KV;
+import stroom.dashboard.impl.download.MarkdownTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.data.shared.StreamTypeNames;
@@ -270,6 +271,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                 case CSV -> new DelimitedTarget(outputStream, ",");
                 case TSV -> new DelimitedTarget(outputStream, "\t");
                 case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+                case MARKDOWN -> new MarkdownTarget(outputStream);
             };
 
             // Write delimited file.

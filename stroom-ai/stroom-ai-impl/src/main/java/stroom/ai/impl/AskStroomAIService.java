@@ -82,6 +82,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -244,7 +245,7 @@ public class AskStroomAIService {
     }
 
     /**
-     * Converts GeneralTableContext (in-memory table data) directly to a CSV file
+     * Converts GeneralTableContext (in-memory table data) directly to a markdown file
      * in the attachment file store and marks the attachment as READY.
      */
     private void processGeneralAttachment(final int attachmentId,
@@ -256,21 +257,27 @@ public class AskStroomAIService {
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
                     null, null, null, false);
 
-            final Path csvFile = attachmentFileStore.createAttachmentFile(attachmentId);
+            final Path mdFile = attachmentFileStore.createAttachmentFile(attachmentId);
             final int[] rowCountHolder = {0};
             LOGGER.logDurationIfDebugEnabled(() -> {
-                try (final BufferedWriter writer = Files.newBufferedWriter(csvFile)) {
-                    // Write CSV header
-                    writer.write(generalTableContext.getColumns().stream()
-                            .map(this::escapeCsvField)
-                            .collect(Collectors.joining(",")));
-                    writer.newLine();
+                try (final BufferedWriter writer = Files.newBufferedWriter(mdFile)) {
+                    // Write markdown header
+                    final List<String> columns = generalTableContext.getColumns();
+                    writer.write(columns.stream()
+                            .map(col -> "| " + escapeMarkdownCell(col) + " ")
+                            .collect(Collectors.joining()));
+                    writer.write("|\n");
+                    // Write separator row
+                    writer.write(columns.stream()
+                            .map(col -> "| --- ")
+                            .collect(Collectors.joining()));
+                    writer.write("|\n");
                     // Write rows
                     for (final List<String> rowValues : generalTableContext.getRows()) {
                         writer.write(rowValues.stream()
-                                .map(this::escapeCsvField)
-                                .collect(Collectors.joining(",")));
-                        writer.newLine();
+                                .map(val -> "| " + escapeMarkdownCell(val) + " ")
+                                .collect(Collectors.joining()));
+                        writer.write("|\n");
                         rowCountHolder[0]++;
                     }
                 } catch (final IOException e) {
@@ -295,8 +302,7 @@ public class AskStroomAIService {
 
     /**
      * Submits an async task to download table data from a Dashboard or Query search
-     * and save the CSV to the attachment file store.
-     * Markdown conversion happens at analysis time, not here.
+     * and save the markdown to the attachment file store.
      */
     private void submitAsyncDownload(final int attachmentId,
                                      final int chatId,
@@ -325,11 +331,13 @@ public class AskStroomAIService {
                             final Path targetFile = attachmentFileStore.createAttachmentFile(attachmentId);
                             Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
 
-                            // Count rows by streaming the file (skip CSV header).
+                            // Count rows by streaming the markdown file
+                            // (skip header line and separator line).
                             final int maxRows = tableAnalysisConfig.getMaxTotalRows();
                             int rowCount = 0;
                             try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
-                                reader.readLine(); // skip CSV header
+                                reader.readLine(); // skip markdown header
+                                reader.readLine(); // skip separator row
                                 while (reader.readLine() != null) {
                                     rowCount++;
                                 }
@@ -348,9 +356,10 @@ public class AskStroomAIService {
                                         final BufferedWriter writer = Files.newBufferedWriter(trimmedFile)) {
                                     int linesWritten = 0;
                                     String line;
+                                    // Keep header + separator + maxRows data lines
+                                    final int maxLines = maxRows + 2;
                                     while ((line = reader.readLine()) != null) {
-                                        // Write header + maxRows data lines
-                                        if (linesWritten <= maxRows) {
+                                        if (linesWritten < maxLines) {
                                             writer.write(line);
                                             writer.newLine();
                                             linesWritten++;
@@ -369,7 +378,7 @@ public class AskStroomAIService {
                             try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
                                 final String header = reader.readLine();
                                 colCount = header != null
-                                        ? parseCsvLine(header).size()
+                                        ? parseMarkdownColumnCount(header)
                                         : 0;
                             }
 
@@ -437,7 +446,7 @@ public class AskStroomAIService {
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("No table component found"));
                 final DownloadSearchResultsRequest downloadRequest = new DownloadSearchResultsRequest(
-                        limitedSearchRequest, componentId, DownloadSearchResultFileType.CSV,
+                        limitedSearchRequest, componentId, DownloadSearchResultFileType.MARKDOWN,
                         false, false, 100);
                 return dashboardService.downloadSearchResults(downloadRequest);
             };
@@ -448,7 +457,7 @@ public class AskStroomAIService {
                         .requestedRange(probeRange)
                         .build();
                 final DownloadQueryResultsRequest downloadRequest = new DownloadQueryResultsRequest(
-                        limitedSearchRequest, DownloadSearchResultFileType.CSV, false, 100);
+                        limitedSearchRequest, DownloadSearchResultFileType.MARKDOWN, false, 100);
                 return queryService.downloadSearchResults(downloadRequest);
             };
         }
@@ -493,18 +502,23 @@ public class AskStroomAIService {
                     .toList();
 
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId
-                               + " readyAttachments=" + readyAttachments.size()
-                               + " -> " + (readyAttachments.isEmpty()
-                    ? "conversational"
-                    : "batch analysis"));
+                               + " readyAttachments=" + readyAttachments.size());
 
-            if (!readyAttachments.isEmpty()) {
-                // Has attachments → full batch analysis with conversation context.
-                return analyseWithAttachments(request, chatModel, readyAttachments,
-                        chatId, thinkingMessageId);
-            } else {
-                // No attachments → pure conversational mode.
-                return processConversational(request, chatModel, chatId);
+            // Unified processing: try single-call first, fall back to batch on overflow.
+            try {
+                return processUnified(request, chatModel, chatId, readyAttachments);
+            } catch (final Exception e) {
+                if (!readyAttachments.isEmpty() && isContextOverflowError(e)) {
+                    LOGGER.info(() -> "Context overflow for chatId=" + chatId
+                                     + ", falling back to batch processing");
+                    final String result = analyseWithAttachments(request, chatModel,
+                            readyAttachments, chatId, thinkingMessageId);
+                    return result + "\n\n---\n*Note: The attached data was too large for "
+                           + "full analysis in a single call. Results were produced using "
+                           + "batch processing and may not capture cross-row patterns or "
+                           + "cross-table comparisons as effectively.*";
+                }
+                throw e;
             }
         } finally {
             // Always clean up the THINKING message when processing is done.
@@ -517,9 +531,10 @@ public class AskStroomAIService {
     }
 
     /**
-     * Performs parallel batch analysis over all READY attachments, reading CSV data
-     * from the attachment file store. Each batch is converted to markdown on-the-fly
-     * and submitted to the LLM concurrently. Results are merged in a single pass.
+     * Performs parallel batch analysis over all READY attachments, reading markdown data
+     * from the attachment file store. Each batch is submitted to the LLM concurrently.
+     * Results are merged in a single pass. Used as a fallback when the unified
+     * single-call approach exceeds the model's context window.
      */
     private String analyseWithAttachments(final AskStroomAiRequest request,
                                           final ChatModel chatModel,
@@ -537,17 +552,17 @@ public class AskStroomAIService {
                                + " attachments=" + attachments.size()
                                + " maxParallel=" + tableAnalysisConfig.getMaxParallelBatches());
 
-            // Build batches from CSV files on disk.
+            // Build batches from markdown files on disk.
             final List<String> batches = new ArrayList<>();
             boolean anyTruncated = false;
             for (final AiChatAttachment attachment : attachments) {
-                final Path csvFile = attachmentFileStore.getAttachmentFile(attachment.getId());
-                if (!Files.exists(csvFile)) {
+                final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+                if (!Files.exists(mdFile)) {
                     throw new RuntimeException(
                             "Attachment data file not found for attachment " + attachment.getId()
                             + ". Data may have been cleaned up.");
                 }
-                batches.addAll(buildBatchesFromCsv(csvFile, tableAnalysisConfig));
+                batches.addAll(buildBatchesFromMarkdown(mdFile, tableAnalysisConfig));
                 if (attachment.isTruncated()) {
                     anyTruncated = true;
                 }
@@ -672,22 +687,27 @@ public class AskStroomAIService {
     }
 
     /**
-     * Reads a CSV file and splits it into markdown-formatted batches,
-     * each respecting the maximum batch size.
+     * Reads a markdown table file and splits it into batches,
+     * each respecting the maximum batch size. The header and separator
+     * rows are preserved at the start of each batch.
      */
-    List<String> buildBatchesFromCsv(final Path csvFile,
-                                     final TableAnalysisConfig config) {
+    List<String> buildBatchesFromMarkdown(final Path mdFile,
+                                          final TableAnalysisConfig config) {
         return LOGGER.logDurationIfDebugEnabled(() -> {
             final List<String> batches = new ArrayList<>();
             final int maxBatchSize = config.getMaxRowsPerBatch();
 
-            try (final BufferedReader reader = Files.newBufferedReader(csvFile)) {
-                final String csvHeader = reader.readLine();
-                if (csvHeader == null) {
+            try (final BufferedReader reader = Files.newBufferedReader(mdFile)) {
+                final String headerLine = reader.readLine();
+                if (headerLine == null) {
+                    return batches;
+                }
+                final String separatorLine = reader.readLine();
+                if (separatorLine == null) {
                     return batches;
                 }
 
-                final String mdHeader = buildMarkdownHeader(csvHeader);
+                final String mdHeader = headerLine + "\n" + separatorLine + "\n";
                 final StringBuilder batch = new StringBuilder(mdHeader);
 
                 String line;
@@ -695,24 +715,24 @@ public class AskStroomAIService {
                     if (line.isEmpty()) {
                         continue;
                     }
-                    final String mdRow = csvLineToMarkdownRow(line);
-                    if (batch.length() + mdRow.length() > maxBatchSize
+                    final String row = line + "\n";
+                    if (batch.length() + row.length() > maxBatchSize
                         && batch.length() > mdHeader.length()) {
                         batches.add(batch.toString());
                         batch.setLength(0);
                         batch.append(mdHeader);
                     }
-                    batch.append(mdRow);
+                    batch.append(row);
                 }
 
                 if (batch.length() > mdHeader.length()) {
                     batches.add(batch.toString());
                 }
             } catch (final IOException e) {
-                throw new UncheckedIOException("Failed to read CSV file: " + csvFile, e);
+                throw new UncheckedIOException("Failed to read markdown file: " + mdFile, e);
             }
             return batches;
-        }, batches -> "buildBatchesFromCsv: file=" + csvFile.getFileName()
+        }, batches -> "buildBatchesFromMarkdown: file=" + mdFile.getFileName()
                       + ", maxRowsPerBatch=" + config.getMaxRowsPerBatch()
                       + ", batch(es)=" + batches.size());
     }
@@ -806,6 +826,125 @@ public class AskStroomAIService {
     }
 
     /**
+     * Unified processing — handles both pure conversation and attachment-based analysis
+     * in a single native multi-turn LLM call. Table data from attachments is read from
+     * disk (already stored as markdown) and injected inline as UserMessages, tagged with
+     * their source description.
+     * <p>
+     * If the total content exceeds the model's context window, the caller catches the
+     * overflow error and falls back to batch processing.
+     */
+    private String processUnified(final AskStroomAiRequest request,
+                                  final ChatModel chatModel,
+                                  final int chatId,
+                                  final List<AiChatAttachment> readyAttachments) {
+        // Build a lookup of attachment ID → attachment for efficient resolution.
+        final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
+                .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
+
+        // Load conversation history.
+        final List<AiChatMessage> history = aiService.getMessages(chatId);
+        final List<ChatMessage> messages = new ArrayList<>();
+
+        LOGGER.debug(() -> "processUnified: chatId=" + chatId
+                           + " historyMessages=" + history.size()
+                           + " attachments=" + readyAttachments.size());
+
+        // System message.
+        messages.add(new SystemMessage(NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAIConfig::getChatSystemPrompt,
+                AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
+
+        // Filter to relevant message types and apply history limit.
+        final int maxHistory = NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAIConfig::getMaxConversationHistoryMessages,
+                AskStroomAIConfig.DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES);
+        final List<AiChatMessage> relevantHistory = history.stream()
+                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                             || m.getMessageType() == AiMessageType.AI_RESPONSE
+                             || m.getMessageType() == AiMessageType.ERROR
+                             || m.getMessageType() == AiMessageType.ATTACHMENT)
+                .toList();
+
+        // Take last N messages (skip the current user message which was just stored).
+        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
+        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
+            final AiChatMessage msg = relevantHistory.get(i);
+            switch (msg.getMessageType()) {
+                case ATTACHMENT -> {
+                    // Read the attachment's markdown file and inject it as a UserMessage
+                    // tagged with the source description.
+                    final Integer attachmentId = msg.getAttachmentId();
+                    final AiChatAttachment attachment = attachmentId != null
+                            ? attachmentMap.get(attachmentId)
+                            : null;
+                    if (attachment != null) {
+                        final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+                        if (Files.exists(mdFile)) {
+                            try {
+                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
+                                final String description = NullSafe.getOrElse(
+                                        attachment, AiChatAttachment::getDescription,
+                                        "Attachment " + attachment.getId());
+                                final StringBuilder tagged = new StringBuilder();
+                                tagged.append("[Attached Table: ").append(description);
+                                if (attachment.getRowCount() != null) {
+                                    tagged.append(" (").append(attachment.getRowCount()).append(" rows)");
+                                }
+                                if (attachment.isTruncated()) {
+                                    tagged.append(" TRUNCATED");
+                                }
+                                tagged.append("]\n").append(markdown);
+                                messages.add(new UserMessage(tagged.toString()));
+                            } catch (final IOException e) {
+                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
+                            }
+                        }
+                    }
+                }
+                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
+                default -> messages.add(new AiMessage(msg.getMessage()));
+            }
+        }
+
+        // Add the current user message.
+        messages.add(new UserMessage(request.getMessage()));
+
+        LOGGER.debug(() -> "processUnified: sending " + messages.size()
+                           + " messages to LLM for chatId=" + chatId);
+
+        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "processUnified chatId=" + chatId
+                     + " responseLength=" + r.aiMessage().text().length());
+        LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
+        return response.aiMessage().text();
+    }
+
+    /**
+     * Checks whether an exception represents a context window overflow error
+     * from the LLM API. These typically come as HTTP 400 errors with messages
+     * about token limits being exceeded.
+     */
+    private boolean isContextOverflowError(final Exception e) {
+        final String message = e.getMessage();
+        if (message == null) {
+            return false;
+        }
+        final String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("maximum context length")
+               || lowerMessage.contains("token limit")
+               || lowerMessage.contains("too many tokens")
+               || lowerMessage.contains("context_length_exceeded")
+               || lowerMessage.contains("max_tokens")
+               || lowerMessage.contains("context window")
+               || lowerMessage.contains("input is too long")
+               || lowerMessage.contains("request too large");
+    }
+
+    /**
      * Waits for any DOWNLOADING attachments to become READY (or ERROR).
      * Polls with a configurable interval and respects the overall timeout.
      * Updates the existing THINKING message in place to give the user progress feedback.
@@ -894,79 +1033,6 @@ public class AskStroomAIService {
         return sb.toString();
     }
 
-
-    /**
-     * Converts a CSV header line into a markdown table header with separator row.
-     */
-    private String buildMarkdownHeader(final String csvHeaderLine) {
-        final List<String> cols = parseCsvLine(csvHeaderLine);
-        final StringBuilder sb = new StringBuilder();
-        for (final String col : cols) {
-            sb.append("| ").append(col.trim()).append(" ");
-        }
-        sb.append("|\n");
-        for (int i = 0; i < cols.size(); i++) {
-            sb.append("| --- ");
-        }
-        sb.append("|\n");
-        return sb.toString();
-    }
-
-    /**
-     * Converts a CSV data line into a markdown table row.
-     */
-    private String csvLineToMarkdownRow(final String csvLine) {
-        final List<String> cells = parseCsvLine(csvLine);
-        final StringBuilder sb = new StringBuilder();
-        for (final String cell : cells) {
-            sb.append("| ").append(cell.trim()).append(" ");
-        }
-        sb.append("|\n");
-        return sb.toString();
-    }
-
-    /**
-     * Parses a single CSV line (RFC 4180) where fields are double-quoted and embedded
-     * quotes are escaped as "". Handles commas and newlines within quoted fields.
-     */
-    static List<String> parseCsvLine(final String line) {
-        final List<String> fields = new ArrayList<>();
-        if (line == null || line.isEmpty()) {
-            return fields;
-        }
-
-        final StringBuilder field = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            final char c = line.charAt(i);
-            if (inQuotes) {
-                if (c == '"') {
-                    // Check for escaped quote (double-quote).
-                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                        field.append('"');
-                        i++; // Skip the second quote.
-                    } else {
-                        inQuotes = false;
-                    }
-                } else {
-                    field.append(c);
-                }
-            } else {
-                if (c == '"') {
-                    inQuotes = true;
-                } else if (c == ',') {
-                    fields.add(field.toString());
-                    field.setLength(0);
-                } else {
-                    field.append(c);
-                }
-            }
-        }
-        fields.add(field.toString());
-        return fields;
-    }
-
-
     private ChatModel getChatModel(final AskStroomAIConfig config) {
         if (config == null || config.getModelRef() == null) {
             throw new RuntimeException("No model specified");
@@ -1001,17 +1067,33 @@ public class AskStroomAIService {
 
 
     /**
-     * Escapes a field value for safe inclusion in a CSV file.
-     * Wraps in double quotes if the value contains commas, quotes, or newlines.
+     * Escapes a cell value for safe inclusion in a markdown table.
+     * Replaces pipe characters that would break the table structure.
      */
-    private String escapeCsvField(final String value) {
+    private String escapeMarkdownCell(final String value) {
         if (value == null) {
             return "";
         }
-        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
+        return value.replace("|", "\\|").replace("\n", " ");
+    }
+
+    /**
+     * Counts the number of columns in a markdown table header line.
+     * Header format is: {@code | col1 | col2 | col3 |}
+     */
+    private int parseMarkdownColumnCount(final String headerLine) {
+        if (headerLine == null || headerLine.isBlank()) {
+            return 0;
         }
-        return value;
+        // Count pipe characters and subtract 1 (there's one more pipe than columns).
+        int pipeCount = 0;
+        for (int i = 0; i < headerLine.length(); i++) {
+            if (headerLine.charAt(i) == '|') {
+                pipeCount++;
+            }
+        }
+        // | col1 | col2 | col3 | has 4 pipes for 3 columns
+        return Math.max(0, pipeCount - 1);
     }
 
     // ---------------------------------------------------------------------
@@ -1067,7 +1149,7 @@ public class AskStroomAIService {
         LOGGER.debug(() -> "deleteChat: chatId=" + chatId + " attachments=" + attachmentIds.size());
 
         aiService.deleteChat(chatId); // CASCADE deletes DB records
-        attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup CSV files
+        attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup attachment files
     }
 
     public void updateChatTitle(final int chatId, final String title) {
@@ -1224,7 +1306,7 @@ public class AskStroomAIService {
                 writer.write(")_\n\n");
 
                 if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
-                    // Stream the CSV from the attachment file store as a Markdown table.
+                    // Stream the markdown from the attachment file store as a Markdown table.
                     writeAttachmentAsMarkdownTable(writer, msg.getAttachmentId(), msg.getMessage());
                 } else {
                     final String body = msg.getMessage() != null
@@ -1251,16 +1333,16 @@ public class AskStroomAIService {
     }
 
     /**
-     * Reads the CSV attachment file for the given attachment ID and writes it as a
+     * Reads the markdown attachment file for the given attachment ID and writes it as a
      * Markdown table directly to the supplied writer. If the file is not found or
      * cannot be read, a fallback description line is written instead.
      */
     private void writeAttachmentAsMarkdownTable(final BufferedWriter writer,
                                                 final int attachmentId,
                                                 final String description) throws IOException {
-        final Path csvFile = attachmentFileStore.getAttachmentFile(attachmentId);
-        if (!Files.exists(csvFile)) {
-            LOGGER.debug(() -> "writeAttachmentAsMarkdownTable: CSV not found for attachmentId="
+        final Path mdFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        if (!Files.exists(mdFile)) {
+            LOGGER.debug(() -> "writeAttachmentAsMarkdownTable: file not found for attachmentId="
                                + attachmentId + " (may have been cleaned up)");
             writer.write("_Data not available (attachment ");
             writer.write(String.valueOf(attachmentId));
@@ -1272,18 +1354,12 @@ public class AskStroomAIService {
             writer.write(description);
             writer.write("_\n\n");
         }
-        try (final BufferedReader reader = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
-            final String headerLine = reader.readLine();
-            if (headerLine == null) {
-                writer.write("_Empty data set_\n");
-                return;
-            }
-            // Write Markdown table header + separator row.
-            writer.write(buildMarkdownHeader(headerLine));
-            // Stream data rows without buffering the whole file into memory.
+        try (final BufferedReader reader = Files.newBufferedReader(mdFile, StandardCharsets.UTF_8)) {
+            // File is already in markdown format — stream it directly.
             String line;
             while ((line = reader.readLine()) != null) {
-                writer.write(csvLineToMarkdownRow(line));
+                writer.write(line);
+                writer.newLine();
             }
         }
     }

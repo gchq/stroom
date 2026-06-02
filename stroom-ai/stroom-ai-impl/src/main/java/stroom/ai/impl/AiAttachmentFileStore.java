@@ -30,9 +30,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Manages local CSV files for AI chat attachments.
+ * Manages local markdown files for AI chat attachments.
  * <p>
- * Files are stored at: {tempDir}/ai-attachments/{attachmentId}.csv
+ * Files are stored at: {tempDir}/ai-attachments/{attachmentId}.md
  * <p>
  * Lifecycle: created during download, deleted when the chat/attachment is deleted.
  * If a file is missing at analysis time, it is treated as an error.
@@ -43,7 +43,7 @@ public class AiAttachmentFileStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiAttachmentFileStore.class);
 
     private static final String ATTACHMENT_DIR_NAME = "ai-attachments";
-    private static final String CSV_EXTENSION = ".csv";
+    private static final String FILE_EXTENSION = ".md";
 
     private final TempDirProvider tempDirProvider;
 
@@ -60,10 +60,10 @@ public class AiAttachmentFileStore {
     }
 
     /**
-     * @return The path to the CSV file for a given attachment ID.
+     * @return The path to the markdown file for a given attachment ID.
      */
     public Path getAttachmentFile(final int attachmentId) {
-        return getAttachmentDir().resolve(attachmentId + CSV_EXTENSION);
+        return getAttachmentDir().resolve(attachmentId + FILE_EXTENSION);
     }
 
     /**
@@ -76,7 +76,7 @@ public class AiAttachmentFileStore {
         try {
             final Path dir = getAttachmentDir();
             Files.createDirectories(dir);
-            return dir.resolve(attachmentId + CSV_EXTENSION);
+            return dir.resolve(attachmentId + FILE_EXTENSION);
         } catch (final IOException e) {
             throw new UncheckedIOException("Failed to create attachment directory for ID " + attachmentId, e);
         }
@@ -108,7 +108,7 @@ public class AiAttachmentFileStore {
     }
 
     /**
-     * @return {@code true} if the CSV file exists on disk for the given attachment ID.
+     * @return {@code true} if the markdown file exists on disk for the given attachment ID.
      */
     public boolean exists(final int attachmentId) {
         return Files.exists(getAttachmentFile(attachmentId));

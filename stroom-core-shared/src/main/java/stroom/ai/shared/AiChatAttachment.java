@@ -29,7 +29,7 @@ import java.util.Objects;
  * Attachments track downloaded table data stored on the local filesystem
  * and have a lifecycle status (PENDING → DOWNLOADING → READY → ERROR).
  * <p>
- * The actual table data (CSV) is stored on the local node filesystem,
+ * The actual table data (markdown) is stored on the local node filesystem,
  * not in the database.
  */
 @JsonInclude(Include.NON_NULL)
