@@ -43,8 +43,6 @@ public class AiConfigTableAnalysisViewImpl
     @UiField
     TextArea tableQueryUserPrompt;
     @UiField
-    TextArea summaryMergePrompt;
-    @UiField
     TextArea multiSummaryMergePrompt;
     @UiField
     ValueSpinner attachmentDownloadTimeoutMs;
@@ -125,16 +123,6 @@ public class AiConfigTableAnalysisViewImpl
     @Override
     public String getTableQueryUserPrompt() {
         return tableQueryUserPrompt.getText();
-    }
-
-    @Override
-    public void setSummaryMergePrompt(final String prompt) {
-        summaryMergePrompt.setText(prompt);
-    }
-
-    @Override
-    public String getSummaryMergePrompt() {
-        return summaryMergePrompt.getText();
     }
 
     @Override

@@ -102,7 +102,7 @@ class StubChatModel implements ChatModel {
         }
 
         // 1. Merge call — batch fallback is combining partial summaries.
-        if (lastUserText.contains("--- Summary ") || lastUserText.contains("SUMMARY A:")) {
+        if (lastUserText.contains("--- Summary ")) {
             sleep(MERGE_LATENCY_MS);
             return buildStubResponse("""
                     [Stub Merged Summary]
@@ -228,7 +228,6 @@ class StubChatModel implements ChatModel {
      */
     private boolean isInternalCall(final String lastUserText) {
         return lastUserText.contains("--- Summary ")
-               || lastUserText.contains("SUMMARY A:")
                || lastUserText.contains("USER QUERY:")
                || lastUserText.contains("Summarise the following")
                || lastUserText.contains("Additional conversation to summarise");

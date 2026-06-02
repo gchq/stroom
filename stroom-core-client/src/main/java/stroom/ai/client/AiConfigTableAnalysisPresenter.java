@@ -60,10 +60,6 @@ public class AiConfigTableAnalysisPresenter
                 config,
                 TableAnalysisConfig::getTableQueryUserPrompt,
                 TableAnalysisConfig.DEFAULT_TABLE_QUERY_USER_PROMPT));
-        getView().setSummaryMergePrompt(NullSafe.getOrElse(
-                config,
-                TableAnalysisConfig::getSummaryMergePrompt,
-                TableAnalysisConfig.DEFAULT_SUMMARY_MERGE_PROMPT));
         getView().setMultiSummaryMergePrompt(NullSafe.getOrElse(
                 config,
                 TableAnalysisConfig::getMultiSummaryMergePrompt,
@@ -81,7 +77,6 @@ public class AiConfigTableAnalysisPresenter
                 getView().getMaxParallelBatches(),
                 getView().getTableQuerySystemPrompt(),
                 getView().getTableQueryUserPrompt(),
-                getView().getSummaryMergePrompt(),
                 getView().getMultiSummaryMergePrompt());
     }
 
@@ -113,10 +108,6 @@ public class AiConfigTableAnalysisPresenter
         void setTableQueryUserPrompt(String prompt);
 
         String getTableQueryUserPrompt();
-
-        void setSummaryMergePrompt(String prompt);
-
-        String getSummaryMergePrompt();
 
         void setMultiSummaryMergePrompt(String prompt);
 

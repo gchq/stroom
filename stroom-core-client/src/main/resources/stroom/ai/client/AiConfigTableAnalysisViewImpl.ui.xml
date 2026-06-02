@@ -22,9 +22,6 @@
         <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
             <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
         </form:FormGroup>
-        <form:FormGroup identity="summaryMergePrompt" label="Summary Merge Prompt">
-            <g:TextArea ui:field="summaryMergePrompt" width="100%" visibleLines="5"/>
-        </form:FormGroup>
         <form:FormGroup identity="multiSummaryMergePrompt" label="Multi-Summary Merge Prompt">
             <g:TextArea ui:field="multiSummaryMergePrompt" width="100%" visibleLines="5"/>
         </form:FormGroup>

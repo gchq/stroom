@@ -1318,9 +1318,6 @@ public class AskStroomAIService {
                 TableAnalysisConfig.PROP_NAME_TABLE_QUERY_USER_PROMPT,
                 config.getTableQueryUserPrompt());
         globalConfigProvider.get().setString(defaultTableAnalysisConfig,
-                TableAnalysisConfig.PROP_NAME_SUMMARY_MERGE_PROMPT,
-                config.getSummaryMergePrompt());
-        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
                 TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
                 config.getMultiSummaryMergePrompt());
         return true;

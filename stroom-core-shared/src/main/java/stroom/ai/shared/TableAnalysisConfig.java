@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         TableAnalysisConfig.PROP_NAME_MAX_PARALLEL_BATCHES,
         TableAnalysisConfig.PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT,
         TableAnalysisConfig.PROP_NAME_TABLE_QUERY_USER_PROMPT,
-        TableAnalysisConfig.PROP_NAME_SUMMARY_MERGE_PROMPT,
         TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT
 })
 public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfig {
@@ -60,16 +59,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
                 Provide findings relevant only to these records, in a concise structured format. \
                 Use the conversation context to understand what has been previously discussed.
             """;
-    public static final String DEFAULT_SUMMARY_MERGE_PROMPT = """
-                Merge the following TWO summaries into a single improved summary. \
-                Preserve important details and remove duplicates.
-
-                SUMMARY A:
-                {{a}}
-
-                SUMMARY B:
-                {{b}}
-            """;
     public static final String DEFAULT_MULTI_SUMMARY_MERGE_PROMPT = """
                 Merge the following summaries into a single unified, concise summary. \
                 Preserve important details, numerical findings, and remove duplicates.
@@ -82,7 +71,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
     public static final String PROP_NAME_MAX_PARALLEL_BATCHES = "maxParallelBatches";
     public static final String PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT = "tableQuerySystemPrompt";
     public static final String PROP_NAME_TABLE_QUERY_USER_PROMPT = "tableQueryUserPrompt";
-    public static final String PROP_NAME_SUMMARY_MERGE_PROMPT = "summaryMergePrompt";
     public static final String PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT = "multiSummaryMergePrompt";
 
     @JsonProperty(PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS)
@@ -95,8 +83,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
     private final String tableQuerySystemPrompt;
     @JsonProperty(PROP_NAME_TABLE_QUERY_USER_PROMPT)
     private final String tableQueryUserPrompt;
-    @JsonProperty(PROP_NAME_SUMMARY_MERGE_PROMPT)
-    private final String summaryMergePrompt;
     @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT)
     private final String multiSummaryMergePrompt;
 
@@ -106,7 +92,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
         maxParallelBatches = DEFAULT_MAX_PARALLEL_BATCHES;
         tableQuerySystemPrompt = DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
         tableQueryUserPrompt = DEFAULT_TABLE_QUERY_USER_PROMPT;
-        summaryMergePrompt = DEFAULT_SUMMARY_MERGE_PROMPT;
         multiSummaryMergePrompt = DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
     }
 
@@ -117,14 +102,12 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES) final int maxParallelBatches,
             @JsonProperty(PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT) final String tableQuerySystemPrompt,
             @JsonProperty(PROP_NAME_TABLE_QUERY_USER_PROMPT) final String tableQueryUserPrompt,
-            @JsonProperty(PROP_NAME_SUMMARY_MERGE_PROMPT) final String summaryMergePrompt,
             @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT) final String multiSummaryMergePrompt) {
         this.maxTotalRows = maxTotalRows;
         this.maxRowsPerBatch = maxRowsPerBatch;
         this.maxParallelBatches = maxParallelBatches;
         this.tableQuerySystemPrompt = tableQuerySystemPrompt;
         this.tableQueryUserPrompt = tableQueryUserPrompt;
-        this.summaryMergePrompt = summaryMergePrompt;
         this.multiSummaryMergePrompt = multiSummaryMergePrompt;
     }
 
@@ -156,13 +139,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @JsonPropertyDescription(
-            "Prompt template for merging partial summaries. Use {{a}} and {{b}} " +
-            "for the two summaries to merge")
-    public String getSummaryMergePrompt() {
-        return summaryMergePrompt;
-    }
-
-    @JsonPropertyDescription(
             "Prompt template for merging multiple summaries at once. Use {{summaries}} " +
             "for the numbered list of summaries to merge")
     public String getMultiSummaryMergePrompt() {
@@ -177,7 +153,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
                ", maxParallelBatches=" + maxParallelBatches +
                ", tableQuerySystemPrompt='" + tableQuerySystemPrompt + '\'' +
                ", tableQueryUserPrompt='" + tableQueryUserPrompt + '\'' +
-               ", summaryMergePrompt='" + summaryMergePrompt + '\'' +
                ", multiSummaryMergePrompt='" + multiSummaryMergePrompt + '\'' +
                '}';
     }
@@ -197,7 +172,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
         private int maxParallelBatches = DEFAULT_MAX_PARALLEL_BATCHES;
         private String tableQuerySystemPrompt = DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
         private String tableQueryUserPrompt = DEFAULT_TABLE_QUERY_USER_PROMPT;
-        private String summaryMergePrompt = DEFAULT_SUMMARY_MERGE_PROMPT;
         private String multiSummaryMergePrompt = DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
 
         private Builder() {
@@ -209,7 +183,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
             maxParallelBatches = tableAnalysisConfig.maxParallelBatches;
             tableQuerySystemPrompt = tableAnalysisConfig.tableQuerySystemPrompt;
             tableQueryUserPrompt = tableAnalysisConfig.tableQueryUserPrompt;
-            summaryMergePrompt = tableAnalysisConfig.summaryMergePrompt;
             multiSummaryMergePrompt = tableAnalysisConfig.multiSummaryMergePrompt;
         }
 
@@ -238,11 +211,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
             return self();
         }
 
-        public Builder summaryMergePrompt(final String summaryMergePrompt) {
-            this.summaryMergePrompt = summaryMergePrompt;
-            return self();
-        }
-
         public Builder multiSummaryMergePrompt(final String multiSummaryMergePrompt) {
             this.multiSummaryMergePrompt = multiSummaryMergePrompt;
             return self();
@@ -260,7 +228,6 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
                     maxParallelBatches,
                     tableQuerySystemPrompt,
                     tableQueryUserPrompt,
-                    summaryMergePrompt,
                     multiSummaryMergePrompt);
         }
     }
