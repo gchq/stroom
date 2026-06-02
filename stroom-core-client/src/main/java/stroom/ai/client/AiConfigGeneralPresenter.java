@@ -18,13 +18,10 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.ai.client.AskStroomAiPresenter.DockLocation;
-import stroom.ai.client.AskStroomAiPresenter.DockType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
@@ -74,10 +71,14 @@ public class AiConfigGeneralPresenter
                 config,
                 AskStroomAIConfig::getChatSystemPrompt,
                 AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT));
-        getView().setMaxConversationHistoryMessages(NullSafe.getOrElse(
+        getView().setHistorySummaryPrompt(NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getMaxConversationHistoryMessages,
-                AskStroomAIConfig.DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES));
+                AskStroomAIConfig::getHistorySummaryPrompt,
+                AskStroomAIConfig.DEFAULT_HISTORY_SUMMARY_PROMPT));
+        getView().setMaxHistorySafetyCapMessages(NullSafe.getOrElse(
+                config,
+                AskStroomAIConfig::getMaxHistorySafetyCapMessages,
+                AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES));
         getView().setDockBehaviour(dockBehaviour);
     }
 
@@ -85,7 +86,8 @@ public class AiConfigGeneralPresenter
         builder
                 .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                 .chatSystemPrompt(getView().getChatSystemPrompt())
-                .maxConversationHistoryMessages(getView().getMaxConversationHistoryMessages());
+                .historySummaryPrompt(getView().getHistorySummaryPrompt())
+                .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages());
     }
 
     public DockBehaviour getDockBehaviour() {
@@ -117,8 +119,12 @@ public class AiConfigGeneralPresenter
 
         String getChatSystemPrompt();
 
-        void setMaxConversationHistoryMessages(int max);
+        void setMaxHistorySafetyCapMessages(int max);
 
-        int getMaxConversationHistoryMessages();
+        int getMaxHistorySafetyCapMessages();
+
+        void setHistorySummaryPrompt(String prompt);
+
+        String getHistorySummaryPrompt();
     }
 }

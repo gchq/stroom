@@ -18,8 +18,11 @@
         <form:FormGroup identity="chatSystemPrompt" label="Chat System Prompt">
             <g:TextArea ui:field="chatSystemPrompt" width="100%" visibleLines="5"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxConversationHistoryMessages" label="Max Conversation History Messages">
-            <v:ValueSpinner ui:field="maxConversationHistoryMessages" width="200px"/>
+        <form:FormGroup identity="historySummaryPrompt" label="History Summary Prompt">
+            <g:TextArea ui:field="historySummaryPrompt" width="100%" visibleLines="3"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxHistorySafetyCapMessages" label="Max History Safety Cap">
+            <v:ValueSpinner ui:field="maxHistorySafetyCapMessages" width="200px"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

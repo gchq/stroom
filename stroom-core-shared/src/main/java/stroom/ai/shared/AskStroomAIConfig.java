@@ -33,7 +33,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         AskStroomAIConfig.PROP_NAME_MODEL_REF,
         AskStroomAIConfig.PROP_NAME_TABLE_SUMMARY,
         AskStroomAIConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
-        AskStroomAIConfig.PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES,
+        AskStroomAIConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
+        AskStroomAIConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
         AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS
 })
 public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig {
@@ -41,7 +42,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     public static final String PROP_NAME_MODEL_REF = "modelRef";
     public static final String PROP_NAME_TABLE_SUMMARY = "tableAnalysis";
     public static final String PROP_NAME_CHAT_SYSTEM_PROMPT = "chatSystemPrompt";
-    public static final String PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES = "maxConversationHistoryMessages";
+    public static final String PROP_NAME_HISTORY_SUMMARY_PROMPT = "historySummaryPrompt";
+    public static final String PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES = "maxHistorySafetyCapMessages";
     public static final String PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = "attachmentDownloadTimeoutMs";
 
     public static final String DEFAULT_CHAT_SYSTEM_PROMPT = """
@@ -52,7 +54,12 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             If multiple tables are present, cite the source table name in your answer. \
             If you don't have enough information, say so.\
             """;
-    public static final int DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES = 20;
+    public static final String DEFAULT_HISTORY_SUMMARY_PROMPT = """
+            Summarise the following conversation history in 2-3 concise sentences. \
+            Preserve key facts, decisions, data findings, and any table names or \
+            sources referenced. Do not include greetings or filler.\
+            """;
+    public static final int DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES = 200;
     public static final long DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = 60_000L;
 
     @JsonProperty(PROP_NAME_MODEL_REF)
@@ -61,8 +68,10 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     private final TableAnalysisConfig tableAnalysis;
     @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT)
     private final String chatSystemPrompt;
-    @JsonProperty(PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES)
-    private final int maxConversationHistoryMessages;
+    @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT)
+    private final String historySummaryPrompt;
+    @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES)
+    private final int maxHistorySafetyCapMessages;
     @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS)
     private final long attachmentDownloadTimeoutMs;
 
@@ -70,7 +79,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         modelRef = null;
         tableAnalysis = new TableAnalysisConfig();
         chatSystemPrompt = DEFAULT_CHAT_SYSTEM_PROMPT;
-        maxConversationHistoryMessages = DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES;
+        historySummaryPrompt = DEFAULT_HISTORY_SUMMARY_PROMPT;
+        maxHistorySafetyCapMessages = DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES;
         attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
     }
 
@@ -79,12 +89,14 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_MODEL_REF) final DocRef modelRef,
             @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableAnalysisConfig tableAnalysis,
             @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT) final String chatSystemPrompt,
-            @JsonProperty(PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES) final int maxConversationHistoryMessages,
+            @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT) final String historySummaryPrompt,
+            @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final int maxHistorySafetyCapMessages,
             @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final long attachmentDownloadTimeoutMs) {
         this.modelRef = modelRef;
         this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
-        this.maxConversationHistoryMessages = maxConversationHistoryMessages;
+        this.historySummaryPrompt = historySummaryPrompt;
+        this.maxHistorySafetyCapMessages = maxHistorySafetyCapMessages;
         this.attachmentDownloadTimeoutMs = attachmentDownloadTimeoutMs;
     }
 
@@ -98,14 +110,22 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         return tableAnalysis;
     }
 
-    @JsonPropertyDescription("System prompt used for conversational mode (no table attachments).")
+    @JsonPropertyDescription("System prompt used for the AI chat assistant.")
     public String getChatSystemPrompt() {
         return chatSystemPrompt;
     }
 
-    @JsonPropertyDescription("Maximum number of recent conversation messages to include in LLM context.")
-    public int getMaxConversationHistoryMessages() {
-        return maxConversationHistoryMessages;
+    @JsonPropertyDescription("System prompt used to summarise older conversation history when "
+            + "progressive trimming is needed to fit the model's context window.")
+    public String getHistorySummaryPrompt() {
+        return historySummaryPrompt;
+    }
+
+    @JsonPropertyDescription("Safety cap on the maximum number of history messages loaded from "
+            + "the database. The actual context boundary is determined by the model's context "
+            + "window via progressive trimming.")
+    public int getMaxHistorySafetyCapMessages() {
+        return maxHistorySafetyCapMessages;
     }
 
     @JsonPropertyDescription("Timeout in milliseconds when waiting for attachment downloads to complete.")
@@ -119,7 +139,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
                "modelRef='" + modelRef + "'" +
                ", tableAnalysisConfig=" + tableAnalysis +
                ", chatSystemPrompt='" + chatSystemPrompt + "'" +
-               ", maxConversationHistoryMessages=" + maxConversationHistoryMessages +
+               ", historySummaryPrompt='" + historySummaryPrompt + "'" +
+               ", maxHistorySafetyCapMessages=" + maxHistorySafetyCapMessages +
                ", attachmentDownloadTimeoutMs=" + attachmentDownloadTimeoutMs +
                '}';
     }
@@ -137,14 +158,16 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         private DocRef modelRef;
         private TableAnalysisConfig tableAnalysisConfig;
         private String chatSystemPrompt;
-        private int maxConversationHistoryMessages;
+        private String historySummaryPrompt;
+        private int maxHistorySafetyCapMessages;
         private long attachmentDownloadTimeoutMs;
 
         private Builder() {
             modelRef = null;
             tableAnalysisConfig = new TableAnalysisConfig();
             chatSystemPrompt = DEFAULT_CHAT_SYSTEM_PROMPT;
-            maxConversationHistoryMessages = DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES;
+            historySummaryPrompt = DEFAULT_HISTORY_SUMMARY_PROMPT;
+            maxHistorySafetyCapMessages = DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES;
             attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
         }
 
@@ -152,7 +175,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             modelRef = askStroomAIConfig.modelRef;
             tableAnalysisConfig = askStroomAIConfig.tableAnalysis;
             chatSystemPrompt = askStroomAIConfig.chatSystemPrompt;
-            maxConversationHistoryMessages = askStroomAIConfig.maxConversationHistoryMessages;
+            historySummaryPrompt = askStroomAIConfig.historySummaryPrompt;
+            maxHistorySafetyCapMessages = askStroomAIConfig.maxHistorySafetyCapMessages;
             attachmentDownloadTimeoutMs = askStroomAIConfig.attachmentDownloadTimeoutMs;
         }
 
@@ -171,8 +195,13 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             return self();
         }
 
-        public Builder maxConversationHistoryMessages(final int maxConversationHistoryMessages) {
-            this.maxConversationHistoryMessages = maxConversationHistoryMessages;
+        public Builder historySummaryPrompt(final String historySummaryPrompt) {
+            this.historySummaryPrompt = historySummaryPrompt;
+            return self();
+        }
+
+        public Builder maxHistorySafetyCapMessages(final int maxHistorySafetyCapMessages) {
+            this.maxHistorySafetyCapMessages = maxHistorySafetyCapMessages;
             return self();
         }
 
@@ -188,7 +217,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
         public AskStroomAIConfig build() {
             return new AskStroomAIConfig(modelRef, tableAnalysisConfig, chatSystemPrompt,
-                    maxConversationHistoryMessages, attachmentDownloadTimeoutMs);
+                    historySummaryPrompt, maxHistorySafetyCapMessages, attachmentDownloadTimeoutMs);
         }
     }
 }

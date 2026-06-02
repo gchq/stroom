@@ -16,7 +16,6 @@
 
 package stroom.ai.client;
 
-import stroom.ai.client.AiConfigGeneralUiHandlers;
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.client.AskStroomAiPresenter.DockLocation;
@@ -50,7 +49,9 @@ public class AiConfigGeneralViewImpl
     @UiField
     TextArea chatSystemPrompt;
     @UiField
-    ValueSpinner maxConversationHistoryMessages;
+    TextArea historySummaryPrompt;
+    @UiField
+    ValueSpinner maxHistorySafetyCapMessages;
 
     @Inject
     public AiConfigGeneralViewImpl(final Binder binder) {
@@ -66,8 +67,8 @@ public class AiConfigGeneralViewImpl
         dockLocationSelectionBox.addItem(DockLocation.BOTTOM);
         dockLocationSelectionBox.setValue(DockLocation.RIGHT);
 
-        maxConversationHistoryMessages.setMin(1);
-        maxConversationHistoryMessages.setMax(200);
+        maxHistorySafetyCapMessages.setMin(1);
+        maxHistorySafetyCapMessages.setMax(500);
     }
 
     @Override
@@ -113,13 +114,23 @@ public class AiConfigGeneralViewImpl
     }
 
     @Override
-    public void setMaxConversationHistoryMessages(final int max) {
-        maxConversationHistoryMessages.setValue(max);
+    public void setMaxHistorySafetyCapMessages(final int max) {
+        maxHistorySafetyCapMessages.setValue(max);
     }
 
     @Override
-    public int getMaxConversationHistoryMessages() {
-        return maxConversationHistoryMessages.getIntValue();
+    public int getMaxHistorySafetyCapMessages() {
+        return maxHistorySafetyCapMessages.getIntValue();
+    }
+
+    @Override
+    public void setHistorySummaryPrompt(final String prompt) {
+        historySummaryPrompt.setText(prompt);
+    }
+
+    @Override
+    public String getHistorySummaryPrompt() {
+        return historySummaryPrompt.getText();
     }
 
     // ---------------------------------------------------------------------

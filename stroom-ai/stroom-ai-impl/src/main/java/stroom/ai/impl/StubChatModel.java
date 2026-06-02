@@ -64,13 +64,20 @@ class StubChatModel implements ChatModel {
      */
     private static final int MERGE_LATENCY_MS = 3_000;
 
+    /**
+     * Character count threshold above which the stub simulates a context overflow error.
+     * Set low enough that a conversation with a large attachment will trigger it,
+     * but high enough that a trimmed conversation will succeed.
+     */
+    private static final int STUB_CONTEXT_OVERFLOW_THRESHOLD = 50_000;
+
     @Override
     public ChatResponse doChat(final ChatRequest chatRequest) {
         // Collect all user messages to detect the call pattern.
         final List<String> userTexts = new ArrayList<>();
         for (final ChatMessage message : chatRequest.messages()) {
-            if (message instanceof UserMessage um) {
-                userTexts.add(um.singleText());
+            if (message instanceof final UserMessage userMessage) {
+                userTexts.add(userMessage.singleText());
             }
         }
 
@@ -78,14 +85,32 @@ class StubChatModel implements ChatModel {
                 ? "(no query)"
                 : userTexts.getLast();
 
+        // Simulate context overflow for testing the progressive trim retry loop.
+        // Internal calls (merge, batch analysis, summarisation) are exempt.
+        if (!isInternalCall(lastUserText)) {
+            int totalChars = 0;
+            for (final ChatMessage message : chatRequest.messages()) {
+                if (message instanceof final UserMessage userMessage) {
+                    totalChars += userMessage.singleText().length();
+                }
+            }
+            if (totalChars > STUB_CONTEXT_OVERFLOW_THRESHOLD) {
+                throw new RuntimeException(
+                        "context_length_exceeded: input too long (stub simulation, "
+                        + totalChars + " chars > " + STUB_CONTEXT_OVERFLOW_THRESHOLD + " limit)");
+            }
+        }
+
         // 1. Merge call — batch fallback is combining partial summaries.
         if (lastUserText.contains("--- Summary ") || lastUserText.contains("SUMMARY A:")) {
             sleep(MERGE_LATENCY_MS);
-            return buildStubResponse("[Stub Merged Summary]\n\n"
-                    + "Combined analysis from multiple batches.\n"
-                    + "- Total patterns identified: 3\n"
-                    + "- Key trend: consistent activity across time window\n"
-                    + "- Anomalies: none detected in stub mode");
+            return buildStubResponse("""
+                    [Stub Merged Summary]
+                    
+                    Combined analysis from multiple batches.
+                    - Total patterns identified: 3
+                    - Key trend: consistent activity across time window
+                    - Anomalies: none detected in stub mode""");
         }
 
         // 2. Batch fallback call — uses the template with USER QUERY: / DATA TABLE: markers.
@@ -94,12 +119,12 @@ class StubChatModel implements ChatModel {
             final String query = extractBetween(lastUserText, "USER QUERY:", "DATA TABLE:");
             sleep(BATCH_LATENCY_MS);
             return buildStubResponse("[Stub Batch Analysis — " + dataRows + " rows]\n\n"
-                    + "**Query**: " + truncate(query, 100) + "\n\n"
-                    + "**Findings**:\n"
-                    + "- Processed " + dataRows + " data rows\n"
-                    + "- Distribution: approximately uniform\n"
-                    + "- Recommendation: review top 5 entries for outliers\n\n"
-                    + "*This is a stub batch response for testing.*");
+                                     + "**Query**: " + truncate(query, 100) + "\n\n"
+                                     + "**Findings**:\n"
+                                     + "- Processed " + dataRows + " data rows\n"
+                                     + "- Distribution: approximately uniform\n"
+                                     + "- Recommendation: review top 5 entries for outliers\n\n"
+                                     + "*This is a stub batch response for testing.*");
         }
 
         // 3. Unified call — the primary path. Attachment data appears as
@@ -122,9 +147,9 @@ class StubChatModel implements ChatModel {
         if (attachmentNames.isEmpty()) {
             // Pure conversation — no attachments.
             return buildStubResponse("[Stub Response]\n\n"
-                    + "You asked: " + truncate(lastUserText, 150) + "\n\n"
-                    + "This is a stub conversational response for testing. "
-                    + "Configure a real model to get actual AI analysis.");
+                                     + "You asked: " + truncate(lastUserText, 150) + "\n\n"
+                                     + "This is a stub conversational response for testing. "
+                                     + "Configure a real model to get actual AI analysis.");
         }
 
         // Unified call with attachment data.
@@ -166,7 +191,9 @@ class StubChatModel implements ChatModel {
     /**
      * Extracts the text between two markers, trimmed.
      */
-    private String extractBetween(final String content, final String startMarker, final String endMarker) {
+    private String extractBetween(final String content,
+                                  final String startMarker,
+                                  final String endMarker) {
         final int start = content.indexOf(startMarker);
         final int end = content.indexOf(endMarker);
         if (start >= 0 && end > start) {
@@ -193,5 +220,17 @@ class StubChatModel implements ChatModel {
         return s.length() <= max
                 ? s
                 : s.substring(0, max) + "...";
+    }
+
+    /**
+     * Returns true if the call is an internal operation (merge, batch analysis,
+     * or summarisation) that should be exempt from overflow simulation.
+     */
+    private boolean isInternalCall(final String lastUserText) {
+        return lastUserText.contains("--- Summary ")
+               || lastUserText.contains("SUMMARY A:")
+               || lastUserText.contains("USER QUERY:")
+               || lastUserText.contains("Summarise the following")
+               || lastUserText.contains("Additional conversation to summarise");
     }
 }

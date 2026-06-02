@@ -51,6 +51,7 @@ import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -213,16 +214,12 @@ public class AskStroomAIService {
     private void createAttachment(final int chatId,
                                   final AskStroomAiContext context,
                                   final AskStroomAIConfig config) {
-        final AiAttachmentType attachmentType;
-        if (context instanceof DashboardTableContext) {
-            attachmentType = AiAttachmentType.DASHBOARD;
-        } else if (context instanceof QueryTableContext) {
-            attachmentType = AiAttachmentType.QUERY;
-        } else if (context instanceof GeneralTableContext) {
-            attachmentType = AiAttachmentType.GENERAL;
-        } else {
-            throw new IllegalStateException("Unsupported context type: " + context.getClass().getName());
-        }
+        final AiAttachmentType attachmentType = switch (context) {
+            case final DashboardTableContext dashboardTableContext -> AiAttachmentType.DASHBOARD;
+            case final QueryTableContext queryTableContext -> AiAttachmentType.QUERY;
+            case final GeneralTableContext generalTableContext -> AiAttachmentType.GENERAL;
+            default -> throw new IllegalStateException("Unsupported context type: " + context.getClass().getName());
+        };
 
         LOGGER.debug(() -> "createAttachment: chatId=" + chatId
                            + " type=" + attachmentType
@@ -269,7 +266,7 @@ public class AskStroomAIService {
                     writer.write("|\n");
                     // Write separator row
                     writer.write(columns.stream()
-                            .map(col -> "| --- ")
+                            .map(_ -> "| --- ")
                             .collect(Collectors.joining()));
                     writer.write("|\n");
                     // Write rows
@@ -312,9 +309,9 @@ public class AskStroomAIService {
                 "Download search results for AI analysis",
                 taskContext -> {
                     try {
-                        LOGGER.debug(() -> "Async download started: attachmentId=" + attachmentId
-                                           + " chatId=" + chatId
-                                           + " contextType=" + context.getClass().getSimpleName());
+                        info(taskContext, () -> "Async download started: attachmentId=" + attachmentId
+                                                + " chatId=" + chatId
+                                                + " contextType=" + context.getClass().getSimpleName());
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
                                 null, null, null, false);
 
@@ -322,7 +319,7 @@ public class AskStroomAIService {
                         final Supplier<ResourceGeneration> downloadSupplier =
                                 buildDownloadSupplier(context, tableAnalysisConfig);
                         final ResourceGeneration resourceGeneration = LOGGER.logDurationIfDebugEnabled(
-                                downloadSupplier::get,
+                                downloadSupplier,
                                 rg -> "Download completed for attachmentId=" + attachmentId);
                         final ResourceKey resourceKey = resourceGeneration.getResourceKey();
 
@@ -388,9 +385,9 @@ public class AskStroomAIService {
                                     ? ", truncated to limit"
                                     : "") + ")";
 
-                            LOGGER.debug(() -> "Async download finished: attachmentId=" + attachmentId
-                                               + " rows=" + reportedRowCount + " cols=" + colCount
-                                               + " truncated=" + truncated);
+                            info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
+                                                    + " rows=" + reportedRowCount + " cols=" + colCount
+                                                    + " truncated=" + truncated);
                             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                                     reportedRowCount, description, null, truncated);
                         } finally {
@@ -408,6 +405,11 @@ public class AskStroomAIService {
                     }
                 });
         executorProvider.get().execute(runnable);
+    }
+
+    private void info(final TaskContext taskContext, final Supplier<String> message) {
+        taskContext.info(message);
+        LOGGER.debug(message);
     }
 
     /**
@@ -471,7 +473,12 @@ public class AskStroomAIService {
     /**
      * Core question processing. Creates a single THINKING message that is updated in place
      * as processing progresses, then deleted when complete. Waits for any in-flight
-     * attachments, then routes to attachment-based batch analysis or pure conversational mode.
+     * attachments, then uses optimistic send with progressive trim and summarisation:
+     * <ol>
+     *     <li>Try sending full conversation history to the LLM.</li>
+     *     <li>On context overflow, summarise the dropped messages and retry with fewer.</li>
+     *     <li>If history is fully trimmed and it still overflows, fall back to batch processing.</li>
+     * </ol>
      */
     private String processQuestion(final AskStroomAiRequest request) {
         final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
@@ -504,21 +511,109 @@ public class AskStroomAIService {
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId
                                + " readyAttachments=" + readyAttachments.size());
 
-            // Unified processing: try single-call first, fall back to batch on overflow.
-            try {
-                return processUnified(request, chatModel, chatId, readyAttachments);
-            } catch (final Exception e) {
-                if (!readyAttachments.isEmpty() && isContextOverflowError(e)) {
+            // Build the full relevant history (filtered and capped by safety limit).
+            final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
+                    .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
+            final List<AiChatMessage> history = aiService.getMessages(chatId);
+            final List<AiChatMessage> relevantHistory = history.stream()
+                    .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                                 || m.getMessageType() == AiMessageType.AI_RESPONSE
+                                 || m.getMessageType() == AiMessageType.ERROR
+                                 || m.getMessageType() == AiMessageType.ATTACHMENT)
+                    .toList();
+
+            final int safetyCap = NullSafe.getOrElse(
+                    defaultConfigProvider.get(),
+                    AskStroomAIConfig::getMaxHistorySafetyCapMessages,
+                    AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+            int maxHistory = Math.min(safetyCap, relevantHistory.size());
+            String contextSummary = null;
+            boolean wasTrimmed = false;
+
+            // Progressive-trim retry loop.
+            for (int attempt = 1; ; attempt++) {
+                final int currentAttempt = attempt;
+                final int currentMaxHistory = maxHistory;
+                final String currentSummary = contextSummary;
+
+                final List<ChatMessage> messages = buildUnifiedMessages(
+                        request, chatId, attachmentMap, relevantHistory,
+                        currentMaxHistory, currentSummary);
+
+                LOGGER.debug(() -> "processQuestion: attempt " + currentAttempt
+                                   + " maxHistory=" + currentMaxHistory
+                                   + " messages=" + messages.size()
+                                   + " hasSummary=" + (currentSummary != null)
+                                   + " chatId=" + chatId);
+
+                try {
+                    final String responseText = processUnified(
+                            chatModel, chatId, messages, currentAttempt);
+
+                    // If we trimmed, append a user-visible note.
+                    if (wasTrimmed) {
+                        return responseText
+                               + "\n\n---\n*Note: Some earlier conversation history was "
+                               + "summarised to fit the model's context window. "
+                               + "The most recent messages and attachments were preserved.*";
+                    }
+                    return responseText;
+
+                } catch (final Exception e) {
+                    if (!isContextOverflowError(e)) {
+                        throw e;
+                    }
+
+                    // Can we trim further?
+                    if (maxHistory <= 0) {
+                        // Nothing left to trim — fall back to batch if there are attachments.
+                        if (!readyAttachments.isEmpty()) {
+                            LOGGER.info(() -> "Context overflow with no history remaining for "
+                                              + "chatId=" + chatId
+                                              + ", falling back to batch processing");
+                            final String result = analyseWithAttachments(request, chatModel,
+                                    readyAttachments, chatId, thinkingMessageId);
+                            return result + "\n\n---\n*Note: The attached data was too large "
+                                   + "for full analysis in a single call. Results were produced "
+                                   + "using batch processing and may not capture cross-row "
+                                   + "patterns or cross-table comparisons as effectively.*";
+                        }
+                        // No attachments and still overflowing — nothing we can do.
+                        throw e;
+                    }
+
+                    // Summarise the messages being dropped before trimming.
+                    wasTrimmed = true;
+                    final int newMaxHistory = Math.max(0, maxHistory - 2);
+                    final int oldStartIdx = Math.max(0,
+                            relevantHistory.size() - maxHistory - 1);
+                    final int newStartIdx = Math.max(0,
+                            relevantHistory.size() - newMaxHistory - 1);
+
+                    // Collect the messages being dropped in this trim step.
+                    final List<AiChatMessage> droppedMessages = new ArrayList<>();
+                    for (int i = oldStartIdx; i < newStartIdx
+                                              && i < relevantHistory.size() - 1; i++) {
+                        droppedMessages.add(relevantHistory.get(i));
+                    }
+
+                    if (!droppedMessages.isEmpty()) {
+                        LOGGER.debug(() -> "processQuestion: trimming " + droppedMessages.size()
+                                           + " messages, summarising for chatId=" + chatId);
+                        try {
+                            contextSummary = summariseDroppedMessages(
+                                    chatModel, contextSummary, droppedMessages, config);
+                        } catch (final Exception sumEx) {
+                            LOGGER.warn(() -> "Failed to summarise dropped messages, "
+                                              + "continuing without summary", sumEx);
+                            // Continue without summary — better than failing entirely.
+                        }
+                    }
+
+                    maxHistory = newMaxHistory;
                     LOGGER.info(() -> "Context overflow for chatId=" + chatId
-                                     + ", falling back to batch processing");
-                    final String result = analyseWithAttachments(request, chatModel,
-                            readyAttachments, chatId, thinkingMessageId);
-                    return result + "\n\n---\n*Note: The attached data was too large for "
-                           + "full analysis in a single call. Results were produced using "
-                           + "batch processing and may not capture cross-row patterns or "
-                           + "cross-table comparisons as effectively.*";
+                                      + ", retrying with maxHistory=" + newMaxHistory);
                 }
-                throw e;
             }
         } finally {
             // Always clean up the THINKING message when processing is done.
@@ -528,6 +623,148 @@ public class AskStroomAIService {
                 LOGGER.debug(() -> "Failed to delete thinking message " + thinkingMessageId, e);
             }
         }
+    }
+
+    /**
+     * Builds the list of ChatMessages for a unified LLM call. Includes system prompt,
+     * optional context summary (from prior trimming), filtered conversation history
+     * with inline attachment data, and the current user message.
+     *
+     * @param maxHistory     maximum number of history messages to include (from the end)
+     * @param contextSummary optional summary of earlier messages that were trimmed
+     */
+    private List<ChatMessage> buildUnifiedMessages(final AskStroomAiRequest request,
+                                                   final int chatId,
+                                                   final Map<Integer, AiChatAttachment> attachmentMap,
+                                                   final List<AiChatMessage> relevantHistory,
+                                                   final int maxHistory,
+                                                   final String contextSummary) {
+        final List<ChatMessage> messages = new ArrayList<>();
+
+        // System message.
+        messages.add(new SystemMessage(NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAIConfig::getChatSystemPrompt,
+                AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
+
+        // If we have a summary of earlier (trimmed) conversation, inject it.
+        if (contextSummary != null && !contextSummary.isBlank()) {
+            messages.add(new UserMessage(
+                    "[Prior conversation summary]: " + contextSummary));
+            messages.add(new AiMessage(
+                    "Understood, I'll keep the prior context in mind."));
+        }
+
+        // Add history messages (skip the current user message which was just stored).
+        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
+        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
+            final AiChatMessage msg = relevantHistory.get(i);
+            switch (msg.getMessageType()) {
+                case ATTACHMENT -> {
+                    // Read the attachment's markdown file and inject it as a UserMessage
+                    // tagged with the source description.
+                    final Integer attachmentId = msg.getAttachmentId();
+                    final AiChatAttachment attachment = attachmentId != null
+                            ? attachmentMap.get(attachmentId)
+                            : null;
+                    if (attachment != null) {
+                        final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+                        if (Files.exists(mdFile)) {
+                            try {
+                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
+                                final String description = NullSafe.getOrElse(
+                                        attachment, AiChatAttachment::getDescription,
+                                        "Attachment " + attachment.getId());
+                                final StringBuilder tagged = new StringBuilder();
+                                tagged.append("[Attached Table: ").append(description);
+                                if (attachment.getRowCount() != null) {
+                                    tagged.append(" (").append(attachment.getRowCount()).append(" rows)");
+                                }
+                                if (attachment.isTruncated()) {
+                                    tagged.append(" TRUNCATED");
+                                }
+                                tagged.append("]\n").append(markdown);
+                                messages.add(new UserMessage(tagged.toString()));
+                            } catch (final IOException e) {
+                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
+                            }
+                        }
+                    }
+                }
+                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
+                default -> messages.add(new AiMessage(msg.getMessage()));
+            }
+        }
+
+        // Add the current user message.
+        messages.add(new UserMessage(request.getMessage()));
+
+        return messages;
+    }
+
+    /**
+     * Sends the pre-built message list to the LLM and returns the response text.
+     */
+    private String processUnified(final ChatModel chatModel,
+                                  final int chatId,
+                                  final List<ChatMessage> messages,
+                                  final int attempt) {
+        LOGGER.debug(() -> "processUnified: sending " + messages.size()
+                           + " messages to LLM for chatId=" + chatId
+                           + " (attempt " + attempt + ")");
+
+        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "processUnified chatId=" + chatId
+                     + " attempt=" + attempt
+                     + " responseLength=" + r.aiMessage().text().length());
+        LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
+        return response.aiMessage().text();
+    }
+
+    /**
+     * Summarises dropped conversation messages so that context is preserved
+     * even after progressive trimming. If a previous summary exists, it is
+     * included so that context accumulates across trim iterations.
+     *
+     * @param existingSummary previous summary from earlier trim iterations (may be null)
+     * @param droppedMessages the messages being dropped in this trim step
+     * @return a concise summary string
+     */
+    private String summariseDroppedMessages(final ChatModel chatModel,
+                                            final String existingSummary,
+                                            final List<AiChatMessage> droppedMessages,
+                                            final AskStroomAIConfig config) {
+        final StringBuilder input = new StringBuilder();
+        if (existingSummary != null && !existingSummary.isBlank()) {
+            input.append("Previous context summary:\n").append(existingSummary).append("\n\n");
+        }
+        input.append("Additional conversation to summarise:\n");
+        for (final AiChatMessage msg : droppedMessages) {
+            switch (msg.getMessageType()) {
+                case USER_MESSAGE -> input.append("User: ").append(msg.getMessage()).append('\n');
+                case AI_RESPONSE -> input.append("Assistant: ").append(msg.getMessage()).append('\n');
+                case ATTACHMENT -> input.append("User attached table: ")
+                        .append(msg.getMessage()).append('\n');
+                default -> input.append("System: ").append(msg.getMessage()).append('\n');
+            }
+        }
+
+        final String systemPrompt = NullSafe.getOrElse(
+                config,
+                AskStroomAIConfig::getHistorySummaryPrompt,
+                AskStroomAIConfig.DEFAULT_HISTORY_SUMMARY_PROMPT);
+
+        final List<ChatMessage> messages = List.of(
+                new SystemMessage(systemPrompt),
+                new UserMessage(input.toString()));
+
+        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "summariseDroppedMessages: responseLength="
+                     + r.aiMessage().text().length());
+        LOGGER.trace(() -> "summariseDroppedMessages response:\n" + response.aiMessage().text());
+        return response.aiMessage().text();
     }
 
     /**
@@ -771,159 +1008,6 @@ public class AskStroomAIService {
     }
 
     /**
-     * Pure conversational mode — no table attachments. Sends recent chat history
-     * and the user's question to the LLM in a multi-turn format.
-     */
-    private String processConversational(final AskStroomAiRequest request,
-                                         final ChatModel chatModel,
-                                         final int chatId) {
-        // Load recent conversation history.
-        final List<AiChatMessage> history = aiService.getMessages(chatId);
-        final List<ChatMessage> messages = new ArrayList<>();
-
-        LOGGER.debug(() -> "processConversational: chatId=" + chatId
-                           + " historyMessages=" + history.size());
-
-        messages.add(new SystemMessage(NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAIConfig::getChatSystemPrompt,
-                AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
-
-        // Add recent message history (skip THINKING, TABLE_DATA, ATTACHMENT types).
-        final int maxHistory = NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAIConfig::getMaxConversationHistoryMessages,
-                AskStroomAIConfig.DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES);
-        final List<AiChatMessage> relevantHistory = history.stream()
-                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
-                             || m.getMessageType() == AiMessageType.AI_RESPONSE
-                             || m.getMessageType() == AiMessageType.ERROR)
-                .toList();
-
-        // Take last N messages (skip the current message which was just stored).
-        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
-        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
-            final AiChatMessage msg = relevantHistory.get(i);
-            if (msg.getMessageType() == AiMessageType.USER_MESSAGE) {
-                messages.add(new UserMessage(msg.getMessage()));
-            } else {
-                messages.add(new AiMessage(msg.getMessage()));
-            }
-        }
-
-        // Add the current user message.
-        messages.add(new UserMessage(request.getMessage()));
-
-        LOGGER.trace(() -> "processConversational: sending " + messages.size()
-                           + " messages to LLM for chatId=" + chatId);
-
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "processConversational chatId=" + chatId
-                     + " responseLength=" + r.aiMessage().text().length());
-        LOGGER.trace(() -> "processConversational response:\n" + response.aiMessage().text());
-        return response.aiMessage().text();
-    }
-
-    /**
-     * Unified processing — handles both pure conversation and attachment-based analysis
-     * in a single native multi-turn LLM call. Table data from attachments is read from
-     * disk (already stored as markdown) and injected inline as UserMessages, tagged with
-     * their source description.
-     * <p>
-     * If the total content exceeds the model's context window, the caller catches the
-     * overflow error and falls back to batch processing.
-     */
-    private String processUnified(final AskStroomAiRequest request,
-                                  final ChatModel chatModel,
-                                  final int chatId,
-                                  final List<AiChatAttachment> readyAttachments) {
-        // Build a lookup of attachment ID → attachment for efficient resolution.
-        final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
-                .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
-
-        // Load conversation history.
-        final List<AiChatMessage> history = aiService.getMessages(chatId);
-        final List<ChatMessage> messages = new ArrayList<>();
-
-        LOGGER.debug(() -> "processUnified: chatId=" + chatId
-                           + " historyMessages=" + history.size()
-                           + " attachments=" + readyAttachments.size());
-
-        // System message.
-        messages.add(new SystemMessage(NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAIConfig::getChatSystemPrompt,
-                AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
-
-        // Filter to relevant message types and apply history limit.
-        final int maxHistory = NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAIConfig::getMaxConversationHistoryMessages,
-                AskStroomAIConfig.DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES);
-        final List<AiChatMessage> relevantHistory = history.stream()
-                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
-                             || m.getMessageType() == AiMessageType.AI_RESPONSE
-                             || m.getMessageType() == AiMessageType.ERROR
-                             || m.getMessageType() == AiMessageType.ATTACHMENT)
-                .toList();
-
-        // Take last N messages (skip the current user message which was just stored).
-        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
-        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
-            final AiChatMessage msg = relevantHistory.get(i);
-            switch (msg.getMessageType()) {
-                case ATTACHMENT -> {
-                    // Read the attachment's markdown file and inject it as a UserMessage
-                    // tagged with the source description.
-                    final Integer attachmentId = msg.getAttachmentId();
-                    final AiChatAttachment attachment = attachmentId != null
-                            ? attachmentMap.get(attachmentId)
-                            : null;
-                    if (attachment != null) {
-                        final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
-                        if (Files.exists(mdFile)) {
-                            try {
-                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
-                                final String description = NullSafe.getOrElse(
-                                        attachment, AiChatAttachment::getDescription,
-                                        "Attachment " + attachment.getId());
-                                final StringBuilder tagged = new StringBuilder();
-                                tagged.append("[Attached Table: ").append(description);
-                                if (attachment.getRowCount() != null) {
-                                    tagged.append(" (").append(attachment.getRowCount()).append(" rows)");
-                                }
-                                if (attachment.isTruncated()) {
-                                    tagged.append(" TRUNCATED");
-                                }
-                                tagged.append("]\n").append(markdown);
-                                messages.add(new UserMessage(tagged.toString()));
-                            } catch (final IOException e) {
-                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
-                            }
-                        }
-                    }
-                }
-                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
-                default -> messages.add(new AiMessage(msg.getMessage()));
-            }
-        }
-
-        // Add the current user message.
-        messages.add(new UserMessage(request.getMessage()));
-
-        LOGGER.debug(() -> "processUnified: sending " + messages.size()
-                           + " messages to LLM for chatId=" + chatId);
-
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "processUnified chatId=" + chatId
-                     + " responseLength=" + r.aiMessage().text().length());
-        LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
-        return response.aiMessage().text();
-    }
-
-    /**
      * Checks whether an exception represents a context window overflow error
      * from the LLM API. These typically come as HTTP 400 errors with messages
      * about token limits being exceeded.
@@ -1017,8 +1101,8 @@ public class AskStroomAIService {
         // Take last N messages for context.
         final int maxHistory = NullSafe.getOrElse(
                 defaultConfigProvider.get(),
-                AskStroomAIConfig::getMaxConversationHistoryMessages,
-                AskStroomAIConfig.DEFAULT_MAX_CONVERSATION_HISTORY_MESSAGES);
+                AskStroomAIConfig::getMaxHistorySafetyCapMessages,
+                AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
         final int startIdx = Math.max(0, relevantMessages.size() - maxHistory);
 
         final StringBuilder sb = new StringBuilder();
@@ -1199,9 +1283,12 @@ public class AskStroomAIService {
         globalConfigProvider.get().setString(currentConfig,
                 AskStroomAIConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
                 config.getChatSystemPrompt());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAIConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
+                config.getHistorySummaryPrompt());
         globalConfigProvider.get().setInt(currentConfig,
-                AskStroomAIConfig.PROP_NAME_MAX_CONVERSATION_HISTORY_MESSAGES,
-                config.getMaxConversationHistoryMessages());
+                AskStroomAIConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
+                config.getMaxHistorySafetyCapMessages());
         globalConfigProvider.get().setString(currentConfig,
                 AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
                 String.valueOf(config.getAttachmentDownloadTimeoutMs()));
