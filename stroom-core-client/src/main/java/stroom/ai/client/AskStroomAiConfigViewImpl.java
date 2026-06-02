@@ -17,74 +17,40 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
-import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.ai.client.AskStroomAiPresenter.DockLocation;
-import stroom.ai.client.AskStroomAiPresenter.DockType;
-import stroom.item.client.SelectionBox;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
-import stroom.widget.valuespinner.client.ValueSpinner;
+import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.LayerContainer;
+import com.gwtplatform.mvp.client.ViewImpl;
+
+import java.util.function.Consumer;
 
 public class AskStroomAiConfigViewImpl
-        extends ViewWithUiHandlers<AskStroomAiConfigUiHandlers>
+        extends ViewImpl
         implements AskStroomAiConfigView {
 
     private final Widget widget;
 
     @UiField
-    SimplePanel modelRef;
+    TabBar tabBar;
+    @UiField
+    LayerContainer layerContainer;
     @UiField
     Button setDefault;
-    @UiField
-    SelectionBox<DockType> dockTypeSelectionBox;
-    @UiField
-    SelectionBox<DockLocation> dockLocationSelectionBox;
-    @UiField
-    ValueSpinner maxTotalRows;
-    @UiField
-    ValueSpinner maxRowsPerBatch;
-    @UiField
-    ValueSpinner maxParallelBatches;
-    @UiField
-    TextArea tableQuerySystemPrompt;
-    @UiField
-    TextArea tableQueryUserPrompt;
-    @UiField
-    TextArea summaryMergePrompt;
+
+    private Consumer<TaskMonitorFactory> onSetDefaultHandler;
 
     @Inject
     public AskStroomAiConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         setDefault.setVisible(false);
-
-        // Only DIALOG and DOCK modes are supported.
-        dockTypeSelectionBox.addItem(DockType.DIALOG);
-        dockTypeSelectionBox.addItem(DockType.DOCK);
-        dockTypeSelectionBox.setValue(DockType.DIALOG);
-
-        dockLocationSelectionBox.addItem(DockLocation.RIGHT);
-        dockLocationSelectionBox.addItem(DockLocation.LEFT);
-        dockLocationSelectionBox.addItem(DockLocation.TOP);
-        dockLocationSelectionBox.addItem(DockLocation.BOTTOM);
-        dockLocationSelectionBox.setValue(DockLocation.RIGHT);
-
-        maxTotalRows.setMin(1);
-        maxTotalRows.setMax(1000000);
-        maxRowsPerBatch.setMin(1);
-        maxRowsPerBatch.setMax(1000000);
-        maxParallelBatches.setMin(1);
-        maxParallelBatches.setMax(100);
     }
 
     @Override
@@ -93,8 +59,13 @@ public class AskStroomAiConfigViewImpl
     }
 
     @Override
-    public void focus() {
-        maxRowsPerBatch.focus();
+    public TabBar getTabBar() {
+        return tabBar;
+    }
+
+    @Override
+    public LayerContainer getLayerContainer() {
+        return layerContainer;
     }
 
     @Override
@@ -103,101 +74,18 @@ public class AskStroomAiConfigViewImpl
     }
 
     @Override
-    public void setMaxTotalRows(final int maxTotalRows) {
-        this.maxTotalRows.setValue(maxTotalRows);
-    }
-
-    @Override
-    public int getMaxTotalRows() {
-        return maxTotalRows.getIntValue();
-    }
-
-    @Override
-    public void setMaxRowsPerBatch(final int maxRowsPerBatch) {
-        this.maxRowsPerBatch.setValue(maxRowsPerBatch);
-    }
-
-    @Override
-    public int getMaxRowsPerBatch() {
-        return maxRowsPerBatch.getIntValue();
-    }
-
-    @Override
-    public void setMaxParallelBatches(final int maxParallelBatches) {
-        this.maxParallelBatches.setValue(maxParallelBatches);
-    }
-
-    @Override
-    public int getMaxParallelBatches() {
-        return maxParallelBatches.getIntValue();
-    }
-
-    @Override
-    public void setTableQuerySystemPrompt(final String prompt) {
-        this.tableQuerySystemPrompt.setText(prompt);
-    }
-
-    @Override
-    public String getTableQuerySystemPrompt() {
-        return tableQuerySystemPrompt.getText();
-    }
-
-    @Override
-    public void setTableQueryUserPrompt(final String prompt) {
-        this.tableQueryUserPrompt.setText(prompt);
-    }
-
-    @Override
-    public String getTableQueryUserPrompt() {
-        return tableQueryUserPrompt.getText();
-    }
-
-    @Override
-    public void setSummaryMergePrompt(final String prompt) {
-        this.summaryMergePrompt.setText(prompt);
-    }
-
-    @Override
-    public String getSummaryMergePrompt() {
-        return summaryMergePrompt.getText();
-    }
-
-    @Override
-    public void setModelRefSelection(final View view) {
-        this.modelRef.setWidget(view.asWidget());
+    public void setOnSetDefault(final Consumer<TaskMonitorFactory> handler) {
+        this.onSetDefaultHandler = handler;
     }
 
     @UiHandler("setDefault")
     public void onSetDefaultClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onSetDefault(setDefault);
+        if (onSetDefaultHandler != null) {
+            onSetDefaultHandler.accept(setDefault);
         }
     }
 
-    @UiHandler("dockTypeSelectionBox")
-    public void onDockTypeSelectionBox(final ValueChangeEvent<DockType> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onDockBehaviourChange(getDockBehaviour());
-        }
-    }
-
-    @UiHandler("dockLocationSelectionBox")
-    public void onDockLocationSelectionBox(final ValueChangeEvent<DockLocation> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onDockBehaviourChange(getDockBehaviour());
-        }
-    }
-
-    @Override
-    public void setDockBehaviour(final DockBehaviour dockBehaviour) {
-        dockTypeSelectionBox.setValue(dockBehaviour.getDockType());
-        dockLocationSelectionBox.setValue(dockBehaviour.getDockLocation());
-    }
-
-    @Override
-    public DockBehaviour getDockBehaviour() {
-        return new DockBehaviour(dockTypeSelectionBox.getValue(), dockLocationSelectionBox.getValue());
-    }
+    // ---------------------------------------------------------------------
 
     public interface Binder extends UiBinder<Widget, AskStroomAiConfigViewImpl> {
 

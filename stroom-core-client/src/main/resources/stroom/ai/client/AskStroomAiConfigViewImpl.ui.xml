@@ -2,43 +2,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:l="urn:import:stroom.item.client"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="askStroomAiConfigViewImpl max default-min-sizes dock-container-vertical">
-        <form:FormGroup identity="model"
-                        label="Model">
-            <g:FlowPanel>
-                <g:SimplePanel ui:field="modelRef"/>
-                <b:Button ui:field="setDefault"
-                          text="Set Default"
-                          width="200px"
-                          addStyleNames="allow-focus"/>
-            </g:FlowPanel>
-        </form:FormGroup>
-        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">
-            <l:SelectionBox ui:field="dockTypeSelectionBox"/>
-        </form:FormGroup>
-        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">
-            <l:SelectionBox ui:field="dockLocationSelectionBox"/>
-        </form:FormGroup>
-        <form:FormGroup identity="maxTotalRows" label="Max Total Rows">
-            <v:ValueSpinner ui:field="maxTotalRows" width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch">
-            <v:ValueSpinner ui:field="maxRowsPerBatch" width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="maxParallelBatches" label="Max Parallel Batches">
-            <v:ValueSpinner ui:field="maxParallelBatches" width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
-            <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>
-        </form:FormGroup>
-        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
-            <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
-        </form:FormGroup>
-        <form:FormGroup identity="summaryMergePrompt" label="Summary Merge Prompt">
-            <g:TextArea ui:field="summaryMergePrompt" width="100%" visibleLines="6"/>
-        </form:FormGroup>
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical form">
+        <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
+            <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
+        </g:FlowPanel>
+        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
+        <g:FlowPanel styleName="dock-min">
+            <b:Button ui:field="setDefault"
+                      text="Set As Default For All Users"
+                      addStyleNames="allow-focus"/>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>
