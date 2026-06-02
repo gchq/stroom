@@ -647,8 +647,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
                 final String dashboardName = NullSafe.get(
                         source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
-                final String tableName = NullSafe.get(
-                        source, SearchRequestSource::getComponentName);
+                final String tableName = NullSafe.getOrElseGet(
+                        source,
+                        SearchRequestSource::getComponentName,
+                        () -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
                 final String description = buildDashboardDescription(dashboardName, tableName);
 
                 AskStroomAiEvent.fire(this,
