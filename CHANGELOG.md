@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.6] - 2026-06-03
+
+* Feature **#5552** : Add additional S3 properties to S3Appender.
+
+
 ## [v7.12.5] - 2026-05-22
 
 * Bug : Fix typo in query snippet name (`Eval first first value` => `Eval first value`).
@@ -2167,7 +2172,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.6...HEAD
+[v7.12.6]: https://github.com/gchq/stroom/compare/v7.12.5...v7.12.6
 [v7.12.5]: https://github.com/gchq/stroom/compare/v7.12.4...v7.12.5
 [v7.12.4]: https://github.com/gchq/stroom/compare/v7.12.3...v7.12.4
 [v7.12.3]: https://github.com/gchq/stroom/compare/v7.12.2...v7.12.3
