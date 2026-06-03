@@ -58,7 +58,8 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     private final Provider<DocumentActionHandlers> documentActionHandlersProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
 
-    private Map<String, Function<DocRef, DocRefInfo>> handlers;
+    private Map<String, Function<DocRef, DocRefInfo>> documentActionHandlerMap;
+    private Map<String, Function<DocRef, DocRefInfo>> explorerActionHandlerMap;
 
     @Inject
     DocRefInfoCache(final CacheManager cacheManager,
@@ -106,7 +107,21 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
         // No type so need to check all handlers and return the one that has it.
         // Hopefully next time it will still be in the cache so this won't be needed
-        final Map<String, Function<DocRef, DocRefInfo>> handlers = getHandlers();
+
+        // Try document handlers first.
+        DocRefInfo docRefInfo = getDocRefInfoWithoutType(docRef, getDocumentActionHandlerMap());
+        if (docRefInfo != null) {
+            return docRefInfo;
+        }
+        // If no document handler then try explorer tree handler.
+        docRefInfo = getDocRefInfoWithoutType(docRef, getExplorerActionHandlerMap());
+        return docRefInfo;
+    }
+
+    private DocRefInfo getDocRefInfoWithoutType(final DocRef docRef,
+                                                final Map<String, Function<DocRef, DocRefInfo>> handlers) {
+        // No type so need to check all handlers and return the one that has it.
+        // Hopefully next time it will still be in the cache so this won't be needed
         for (final Entry<String, Function<DocRef, DocRefInfo>> entry : handlers.entrySet()) {
             try {
                 final String type = entry.getKey();
@@ -124,11 +139,8 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
         return null;
     }
 
-    private Map<String, Function<DocRef, DocRefInfo>> getHandlers() {
-        if (handlers != null) {
-            return handlers;
-
-        } else {
+    private Map<String, Function<DocRef, DocRefInfo>> getDocumentActionHandlerMap() {
+        if (documentActionHandlerMap == null) {
             final Map<String, Function<DocRef, DocRefInfo>> map = new HashMap<>();
             documentActionHandlersProvider.get()
                     .stream()
@@ -136,14 +148,22 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                         final Function<DocRef, DocRefInfo> function = handler::info;
                         map.putIfAbsent(handler.getType(), function);
                     });
+            documentActionHandlerMap = map;
+        }
+        return documentActionHandlerMap;
+    }
+
+    private Map<String, Function<DocRef, DocRefInfo>> getExplorerActionHandlerMap() {
+        if (explorerActionHandlerMap == null) {
+            final Map<String, Function<DocRef, DocRefInfo>> map = new HashMap<>();
             explorerActionHandlers.stream()
                     .forEach(handler -> {
                         final Function<DocRef, DocRefInfo> function = handler::info;
                         map.putIfAbsent(handler.getType(), function);
                     });
-            handlers = map;
+            explorerActionHandlerMap = map;
         }
-        return handlers;
+        return explorerActionHandlerMap;
     }
 
     private DocRef createTypeSpecificDocRef(final String type, final DocRef docRef) {
@@ -156,10 +176,14 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     }
 
     private DocRefInfo getDocRefInfoWithType(final DocRef docRef) {
-        final Map<String, Function<DocRef, DocRefInfo>> handlers = getHandlers();
-        final Function<DocRef, DocRefInfo> function = handlers.get(docRef.getType());
+        // Try document handlers first.
+        Function<DocRef, DocRefInfo> function = getDocumentActionHandlerMap().get(docRef.getType());
         if (function == null) {
-            throw new RuntimeException("No handler found for type: " + docRef.getType());
+            // If no document handler then try explorer tree handler.
+            function = getExplorerActionHandlerMap().get(docRef.getType());
+            if (function == null) {
+                throw new RuntimeException("No handler found for type: " + docRef.getType());
+            }
         }
         return function.apply(docRef);
     }
