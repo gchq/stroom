@@ -188,7 +188,7 @@ class S3Store {
 
             // Upload the zip to S3.
             final S3Manager s3Manager = new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
-            s3Manager.upload(meta, attributeMap, zipFile);
+            s3Manager.upload(meta, attributeMap, zipFile, null);
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);

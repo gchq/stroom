@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Feature **#5552** : Add additional S3 properties to S3Appender.
+
 * Bug : Fix typo in query snippet name (`Eval first first value` => `Eval first value`).
 
 * Bug **#5549** : Make jffi extract its native library to the same dir as the LMDB native library file. Add the config prop `providedJffiLibraryPath` to allow for a provided jffi lib.
