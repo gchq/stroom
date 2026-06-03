@@ -330,20 +330,67 @@ paths:
       summary: Ask Stroom AI a question relating to the current search context
       tags:
       - AI
-  /ai/v1/askStroomAi/{nodeName}:
+  /ai/v1/cancelProcessing/{chatId}:
     post:
-      operationId: askStroomAi_1
+      operationId: cancelProcessing
       parameters:
       - in: path
-        name: nodeName
+        name: chatId
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Cancel in-progress AI batch analysis for a chat
+      tags:
+      - AI
+  /ai/v1/createChat:
+    post:
+      operationId: createChat
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChat"
+          description: default response
+      summary: Create a new AI chat conversation
+      tags:
+      - AI
+  /ai/v1/deleteChat/{chatId}:
+    post:
+      operationId: deleteChat
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete an AI chat conversation
+      tags:
+      - AI
+  /ai/v1/downloadChatHistory:
+    post:
+      operationId: downloadChatHistory
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AskStroomAiRequest"
+              $ref: "#/components/schemas/DownloadChatHistoryRequest"
         description: request
         required: true
       responses:
@@ -351,9 +398,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AskStroomAiResponse"
+                $ref: "#/components/schemas/ResourceGeneration"
           description: default response
-      summary: Ask Stroom AI a question relating to the current search context
+      summary: Download the chat history for a conversation as a Markdown file
+      tags:
+      - AI
+  /ai/v1/getChat/{chatId}:
+    post:
+      operationId: getChat
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChat"
+          description: default response
+      summary: Get an AI chat conversation by ID
       tags:
       - AI
   /ai/v1/getDefaultConfig:
@@ -369,14 +436,84 @@ paths:
       summary: Get the default config to use for asking questions
       tags:
       - AI
-  /ai/v1/setDefaultChatMemoryConfigConfig:
+  /ai/v1/getMessages/{chatId}:
     post:
-      operationId: setDefaultChatMemoryConfigConfig
+      operationId: getMessages
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiChatMessage"
+          description: default response
+      summary: Get messages for an AI chat conversation
+      tags:
+      - AI
+  /ai/v1/listChats:
+    post:
+      operationId: listChats
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ChatMemoryConfig"
+              $ref: "#/components/schemas/FindAiChatHistoryCriteria"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageAiChat"
+          description: default response
+      summary: List all AI chat conversations for the current user
+      tags:
+      - AI
+  /ai/v1/pollMessages/{chatId}:
+    post:
+      operationId: pollMessages
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatPollRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatPollResponse"
+          description: default response
+      summary: Poll for new messages in an AI chat conversation since a given message
+        ID
+      tags:
+      - AI
+  /ai/v1/setDefaultAskStroomAIConfig:
+    post:
+      operationId: setDefaultAskStroomAIConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAIConfig"
         description: config
         required: true
       responses:
@@ -386,18 +523,25 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Set the default chat memory config to use for asking questions
+      summary: Set the default Stroom AI config to use for asking questions
       tags:
       - AI
-  /ai/v1/setDefaultModel:
+  /ai/v1/updateChatTitle/{chatId}:
     post:
-      operationId: setDefaultModel
+      operationId: updateChatTitle
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DocRef"
-        description: modelRef
+              type: string
+        description: title
         required: true
       responses:
         default:
@@ -406,27 +550,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Set the default model to use for asking questions
-      tags:
-      - AI
-  /ai/v1/setDefaultTableSummaryConfig:
-    post:
-      operationId: setDefaultTableSummaryConfig
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TableSummaryConfig"
-        description: config
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Set the default table summary config to use for asking questions
+      summary: Update the title of an AI chat conversation
       tags:
       - AI
   /analyticDataShard/v1/find:
@@ -9472,6 +9596,108 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         userRef:
           $ref: "#/components/schemas/UserRef"
+    AiChat:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int32
+        title:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        userUuid:
+          type: string
+    AiChatAttachment:
+      type: object
+      properties:
+        attachmentType:
+          type: string
+          enum:
+          - DASHBOARD
+          - QUERY
+          - GENERAL
+        chatId:
+          type: integer
+          format: int32
+        createTimeMs:
+          type: integer
+          format: int64
+        description:
+          type: string
+        errorMessage:
+          type: string
+        id:
+          type: integer
+          format: int32
+        rowCount:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+          - PENDING
+          - DOWNLOADING
+          - READY
+          - ERROR
+        truncated:
+          type: boolean
+        updateTimeMs:
+          type: integer
+          format: int64
+    AiChatMessage:
+      type: object
+      properties:
+        attachmentId:
+          type: integer
+          format: int32
+        chatId:
+          type: integer
+          format: int32
+        createTimeMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int32
+        message:
+          type: string
+        messageType:
+          type: string
+          enum:
+          - USER_MESSAGE
+          - AI_RESPONSE
+          - WORKING
+          - ERROR
+          - DASHBOARD_DATA
+          - QUERY_DATA
+          - TABLE_DATA
+          - ATTACHMENT
+          - DEBUG_DETAIL
+          - THINKING
+    AiChatPollRequest:
+      type: object
+      properties:
+        lastSeenMessageId:
+          type: integer
+          format: int32
+    AiChatPollResponse:
+      type: object
+      properties:
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatAttachment"
+        complete:
+          type: boolean
+        newMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatMessage"
     AnalyticDataShard:
       type: object
       properties:
@@ -9680,6 +9906,14 @@ components:
           format: int64
         updateUser:
           $ref: "#/components/schemas/UserRef"
+    AnnotationIdentity:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
     AnnotationTable:
       type: object
       allOf:
@@ -9995,18 +10229,28 @@ components:
     AskStroomAIConfig:
       type: object
       properties:
-        chatMemory:
-          $ref: "#/components/schemas/ChatMemoryConfig"
+        attachmentDownloadTimeoutMs:
+          type: integer
+          format: int64
+        chatSystemPrompt:
+          type: string
+        enableDebugDetail:
+          type: boolean
+        historySummaryPrompt:
+          type: string
+        maxHistorySafetyCapMessages:
+          type: integer
+          format: int32
         modelRef:
           $ref: "#/components/schemas/DocRef"
-        tableSummary:
-          $ref: "#/components/schemas/TableSummaryConfig"
+        tableAnalysis:
+          $ref: "#/components/schemas/TableAnalysisConfig"
     AskStroomAiContext:
       type: object
       discriminator:
         propertyName: type
       properties:
-        chatMemoryId:
+        description:
           type: string
         type:
           type: string
@@ -10015,6 +10259,8 @@ components:
     AskStroomAiRequest:
       type: object
       properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
         config:
           $ref: "#/components/schemas/AskStroomAIConfig"
         context:
@@ -10329,8 +10575,28 @@ components:
         annotationEntryId:
           type: integer
           format: int64
-        annotationRef:
-          $ref: "#/components/schemas/DocRef"
+        annotationEntryType:
+          type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK_EVENT
+          - UNLINK_EVENT
+          - RETENTION_PERIOD
+          - DESCRIPTION
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
+          - DELETE
+        annotationIdentity:
+          $ref: "#/components/schemas/AnnotationIdentity"
         data:
           type: string
     ChangeAssignedTo:
@@ -10401,14 +10667,6 @@ components:
         properties:
           title:
             type: string
-    ChatMemoryConfig:
-      type: object
-      properties:
-        timeToLive:
-          $ref: "#/components/schemas/SimpleDuration"
-        tokenLimit:
-          type: integer
-          format: int32
     CheckDocumentPermissionRequest:
       type: object
       properties:
@@ -10489,6 +10747,8 @@ components:
     ColumnFilter:
       type: object
       properties:
+        enabled:
+          type: boolean
         filter:
           type: string
     ColumnRef:
@@ -11265,6 +11525,8 @@ components:
       - $ref: "#/components/schemas/AskStroomAiContext"
       - type: object
         properties:
+          node:
+            type: string
           searchRequest:
             $ref: "#/components/schemas/DashboardSearchRequest"
     DataGenDoc:
@@ -11508,8 +11770,28 @@ components:
         annotationEntryId:
           type: integer
           format: int64
-        annotationRef:
-          $ref: "#/components/schemas/DocRef"
+        annotationEntryType:
+          type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK_EVENT
+          - UNLINK_EVENT
+          - RETENTION_PERIOD
+          - DESCRIPTION
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
+          - ADD_TABLE_DATA
+          - LINK_ANNOTATION
+          - UNLINK_ANNOTATION
+          - DELETE
+        annotationIdentity:
+          $ref: "#/components/schemas/AnnotationIdentity"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -12091,6 +12373,14 @@ components:
           value:
             type: number
             format: double
+    DownloadChatHistoryRequest:
+      type: object
+      properties:
+        chatId:
+          type: integer
+          format: int32
+        includeDataContexts:
+          type: boolean
     DownloadQueryResultsRequest:
       type: object
       properties:
@@ -12100,6 +12390,7 @@ components:
           - EXCEL
           - CSV
           - TSV
+          - MARKDOWN
         percent:
           type: integer
           format: int32
@@ -12120,6 +12411,7 @@ components:
           - EXCEL
           - CSV
           - TSV
+          - MARKDOWN
         percent:
           type: integer
           format: int32
@@ -12381,6 +12673,12 @@ components:
           - CREATE_EXPLORER_NODE
           - UPDATE_EXPLORER_NODE
           - DELETE_EXPLORER_NODE
+          - LINK
+          - UNLINK
+        data:
+          type: string
+        dataClassName:
+          type: string
         docRef:
           $ref: "#/components/schemas/DocRef"
         oldDocRef:
@@ -13211,6 +13509,20 @@ components:
       properties:
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+    FindAiChatHistoryCriteria:
+      type: object
+      properties:
+        filter:
+          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         sort:
@@ -15543,6 +15855,8 @@ components:
           type: string
         name:
           type: string
+        reasoningEffort:
+          type: string
         type:
           type: string
         updateTimeMs:
@@ -17017,6 +17331,8 @@ components:
       - $ref: "#/components/schemas/AskStroomAiContext"
       - type: object
         properties:
+          node:
+            type: string
           searchRequest:
             $ref: "#/components/schemas/QuerySearchRequest"
     QueryTablePreferences:
@@ -17037,6 +17353,8 @@ components:
           format: int32
         selectionFilter:
           $ref: "#/components/schemas/ExpressionOperator"
+        showValueFilters:
+          type: boolean
     RangeInteger:
       type: object
       properties:
@@ -17357,6 +17675,7 @@ components:
           - EXCEL
           - CSV
           - TSV
+          - MARKDOWN
         sendEmptyReports:
           type: boolean
     ReportUiDefaultConfig:
@@ -17447,6 +17766,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Activity"
+    ResultPageAiChat:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChat"
     ResultPageAnalyticDataShard:
       type: object
       description: A page of results.
@@ -18563,6 +18892,9 @@ components:
     SingleAnnotationChangeRequest:
       type: object
       properties:
+        annotationId:
+          type: integer
+          format: int64
         annotationRef:
           $ref: "#/components/schemas/DocRef"
         change:
@@ -19509,6 +19841,24 @@ components:
           type: string
         sessionId:
           type: string
+    TableAnalysisConfig:
+      type: object
+      properties:
+        maxParallelBatches:
+          type: integer
+          format: int32
+        maxRowsPerBatch:
+          type: integer
+          format: int32
+        maxTotalRows:
+          type: integer
+          format: int32
+        multiSummaryMergePrompt:
+          type: string
+        tableQuerySystemPrompt:
+          type: string
+        tableQueryUserPrompt:
+          type: string
     TableBuilderAnalyticProcessConfig:
       type: object
       allOf:
@@ -19618,6 +19968,8 @@ components:
             items:
               $ref: "#/components/schemas/ComponentSelectionHandler"
           showDetail:
+            type: boolean
+          showValueFilters:
             type: boolean
           useDefaultExtractionPipeline:
             type: boolean
@@ -19750,15 +20102,6 @@ components:
           $ref: "#/components/schemas/QLVisSettings"
         window:
           $ref: "#/components/schemas/Window"
-    TableSummaryConfig:
-      type: object
-      properties:
-        maximumBatchSize:
-          type: integer
-          format: int32
-        maximumTableInputRows:
-          type: integer
-          format: int32
     Tag:
       type: object
       properties:
@@ -20402,6 +20745,13 @@ components:
     UserPreferences:
       type: object
       properties:
+        aiDockLocation:
+          type: string
+        aiDockSize:
+          type: integer
+          format: int32
+        aiDockType:
+          type: string
         dateTimePattern:
           type: string
           description: A date time formatting pattern string conforming to the specification
