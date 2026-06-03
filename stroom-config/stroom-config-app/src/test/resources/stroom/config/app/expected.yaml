@@ -144,17 +144,21 @@ appConfig:
         \ QUERY:\n    {{query}}\n\n    DATA TABLE:\n    {{table}}\n\n    Provide findings\
         \ relevant only to these records, in a concise structured format.     Use\
         \ the conversation context to understand what has been previously discussed.\n"
-      summaryMergePrompt: "    Merge the following TWO summaries into a single improved\
-        \ summary.     Preserve important details and remove duplicates.\n\n    SUMMARY\
-        \ A:\n    {{a}}\n\n    SUMMARY B:\n    {{b}}\n"
       multiSummaryMergePrompt: "    Merge the following summaries into a single unified,\
         \ concise summary.     Preserve important details, numerical findings, and\
         \ remove duplicates.\n\n    {{summaries}}\n"
     chatSystemPrompt: "You are a helpful data analysis assistant within the Stroom\
-      \ data platform. Answer the user's questions using the conversation context\
-      \ provided. If you don't have enough information, say so."
-    maxConversationHistoryMessages: 20
+      \ data platform. When table data is attached to the conversation, it appears\
+      \ as markdown tables prefixed with [Attached Table: ...] labels identifying\
+      \ the source. Use data from all relevant attached tables to answer the user's\
+      \ questions. If multiple tables are present, cite the source table name in your\
+      \ answer. If you don't have enough information, say so."
+    historySummaryPrompt: "Summarise the following conversation history in 2-3 concise\
+      \ sentences. Preserve key facts, decisions, data findings, and any table names\
+      \ or sources referenced. Do not include greetings or filler."
+    maxHistorySafetyCapMessages: 200
     attachmentDownloadTimeoutMs: 60000
+    enableDebugDetail: true
   autoContentCreation:
     additionalGroupParentGroupName: "Data Feed Developer"
     additionalGroupTemplate: "grp-${accountid}-dev"

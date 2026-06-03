@@ -17,6 +17,8 @@
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
+import stroom.ai.impl.AiDao;
+import stroom.ai.impl.MockAiDao;
 import stroom.ai.impl.MockAiModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
@@ -123,6 +125,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockClusterLockModule());
         install(new MockAiModule());
 
+        bind(AiDao.class).to(MockAiDao.class);
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);

@@ -668,7 +668,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindNamedEntityCriteria"
+                "$ref" : "#/components/schemas/FindAiChatHistoryCriteria"
               }
             }
           },
@@ -14051,7 +14051,7 @@
           },
           "messageType" : {
             "type" : "string",
-            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "THINKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT" ]
+            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "WORKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT", "DEBUG_DETAIL", "THINKING" ]
           }
         }
       },
@@ -14594,7 +14594,13 @@
           "chatSystemPrompt" : {
             "type" : "string"
           },
-          "maxConversationHistoryMessages" : {
+          "enableDebugDetail" : {
+            "type" : "boolean"
+          },
+          "historySummaryPrompt" : {
+            "type" : "string"
+          },
+          "maxHistorySafetyCapMessages" : {
             "type" : "integer",
             "format" : "int32"
           },
@@ -17196,7 +17202,7 @@
         "properties" : {
           "fileType" : {
             "type" : "string",
-            "enum" : [ "EXCEL", "CSV", "TSV" ]
+            "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
           "percent" : {
             "type" : "integer",
@@ -17221,7 +17227,7 @@
           },
           "fileType" : {
             "type" : "string",
-            "enum" : [ "EXCEL", "CSV", "TSV" ]
+            "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
           "percent" : {
             "type" : "integer",
@@ -18643,6 +18649,27 @@
           }
         }
       },
+      "FindAiChatHistoryCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindAnalyticDataShardCriteria" : {
         "type" : "object",
         "properties" : {
@@ -19003,27 +19030,6 @@
           },
           "fetchRelationships" : {
             "type" : "boolean"
-          },
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          }
-        }
-      },
-      "FindNamedEntityCriteria" : {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "$ref" : "#/components/schemas/StringCriteria"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -21740,6 +21746,9 @@
           "name" : {
             "type" : "string"
           },
+          "reasoningEffort" : {
+            "type" : "string"
+          },
           "type" : {
             "type" : "string"
           },
@@ -23868,7 +23877,7 @@
         "properties" : {
           "fileType" : {
             "type" : "string",
-            "enum" : [ "EXCEL", "CSV", "TSV" ]
+            "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
           "sendEmptyReports" : {
             "type" : "boolean"
@@ -26742,9 +26751,6 @@
             "format" : "int32"
           },
           "multiSummaryMergePrompt" : {
-            "type" : "string"
-          },
-          "summaryMergePrompt" : {
             "type" : "string"
           },
           "tableQuerySystemPrompt" : {

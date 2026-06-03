@@ -465,7 +465,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FindNamedEntityCriteria"
+              $ref: "#/components/schemas/FindAiChatHistoryCriteria"
         description: request
         required: true
       responses:
@@ -9671,12 +9671,14 @@ components:
           enum:
           - USER_MESSAGE
           - AI_RESPONSE
-          - THINKING
+          - WORKING
           - ERROR
           - DASHBOARD_DATA
           - QUERY_DATA
           - TABLE_DATA
           - ATTACHMENT
+          - DEBUG_DETAIL
+          - THINKING
     AiChatPollRequest:
       type: object
       properties:
@@ -10232,7 +10234,11 @@ components:
           format: int64
         chatSystemPrompt:
           type: string
-        maxConversationHistoryMessages:
+        enableDebugDetail:
+          type: boolean
+        historySummaryPrompt:
+          type: string
+        maxHistorySafetyCapMessages:
           type: integer
           format: int32
         modelRef:
@@ -12384,6 +12390,7 @@ components:
           - EXCEL
           - CSV
           - TSV
+          - MARKDOWN
         percent:
           type: integer
           format: int32
@@ -12404,6 +12411,7 @@ components:
           - EXCEL
           - CSV
           - TSV
+          - MARKDOWN
         percent:
           type: integer
           format: int32
@@ -13510,6 +13518,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    FindAiChatHistoryCriteria:
+      type: object
+      properties:
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
     FindAnalyticDataShardCriteria:
       type: object
       properties:
@@ -13767,20 +13789,6 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         fetchRelationships:
           type: boolean
-        pageRequest:
-          $ref: "#/components/schemas/PageRequest"
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: "#/components/schemas/CriteriaFieldSort"
-    FindNamedEntityCriteria:
-      type: object
-      properties:
-        name:
-          $ref: "#/components/schemas/StringCriteria"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         sort:
@@ -15847,6 +15855,8 @@ components:
           type: string
         name:
           type: string
+        reasoningEffort:
+          type: string
         type:
           type: string
         updateTimeMs:
@@ -17665,6 +17675,7 @@ components:
           - EXCEL
           - CSV
           - TSV
+          - MARKDOWN
         sendEmptyReports:
           type: boolean
     ReportUiDefaultConfig:
@@ -19843,8 +19854,6 @@ components:
           type: integer
           format: int32
         multiSummaryMergePrompt:
-          type: string
-        summaryMergePrompt:
           type: string
         tableQuerySystemPrompt:
           type: string
