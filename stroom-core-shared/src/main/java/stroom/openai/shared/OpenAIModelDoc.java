@@ -47,6 +47,7 @@ import java.util.Objects;
         "apiKeyName",
         "modelId",
         "maxContextWindowTokens",
+        "reasoningEffort",
         "httpClientConfiguration"
 })
 @JsonInclude(Include.NON_NULL)
@@ -66,6 +67,8 @@ public class OpenAIModelDoc extends AbstractDoc {
     @JsonProperty
     private final int maxContextWindowTokens;
     @JsonProperty
+    private final String reasoningEffort;
+    @JsonProperty
     private final HttpClientConfig httpClientConfiguration;
 
     @JsonCreator
@@ -82,6 +85,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("apiKeyName") final String apiKeyName,
             @JsonProperty("modelId") final String modelId,
             @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens,
+            @JsonProperty("reasoningEffort") final String reasoningEffort,
             @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -89,6 +93,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.apiKeyName = apiKeyName;
         this.modelId = modelId;
         this.maxContextWindowTokens = maxContextWindowTokens;
+        this.reasoningEffort = reasoningEffort;
         this.httpClientConfiguration = httpClientConfiguration;
     }
 
@@ -119,6 +124,10 @@ public class OpenAIModelDoc extends AbstractDoc {
         return maxContextWindowTokens;
     }
 
+    public String getReasoningEffort() {
+        return reasoningEffort;
+    }
+
     public HttpClientConfig getHttpClientConfiguration() {
         return httpClientConfiguration;
     }
@@ -137,6 +146,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                Objects.equals(baseUrl, that.baseUrl) &&
                Objects.equals(apiKeyName, that.apiKeyName) &&
                Objects.equals(modelId, that.modelId) &&
+               Objects.equals(reasoningEffort, that.reasoningEffort) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
 
@@ -148,6 +158,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                 apiKeyName,
                 modelId,
                 maxContextWindowTokens,
+                reasoningEffort,
                 httpClientConfiguration);
     }
 
@@ -158,6 +169,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                ", baseUrl='" + baseUrl + '\'' +
                ", modelId='" + apiKeyName + '\'' +
                ", maxContextWindowTokens=" + maxContextWindowTokens +
+               ", reasoningEffort='" + reasoningEffort + '\'' +
                ", httpClientConfiguration=" + httpClientConfiguration +
                '}';
     }
@@ -177,6 +189,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String apiKey;
         private String modelId;
         private int maxContextWindowTokens;
+        private String reasoningEffort;
         private HttpClientConfig httpClientConfiguration;
 
         private Builder() {
@@ -189,6 +202,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.apiKey = openAIModelDoc.apiKeyName;
             this.modelId = openAIModelDoc.modelId;
             this.maxContextWindowTokens = openAIModelDoc.maxContextWindowTokens;
+            this.reasoningEffort = openAIModelDoc.reasoningEffort;
             this.httpClientConfiguration = openAIModelDoc.httpClientConfiguration;
         }
 
@@ -217,6 +231,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder reasoningEffort(final String reasoningEffort) {
+            this.reasoningEffort = reasoningEffort;
+            return self();
+        }
+
         public Builder httpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
             this.httpClientConfiguration = httpClientConfiguration;
             return self();
@@ -241,6 +260,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                     apiKey,
                     modelId,
                     maxContextWindowTokens,
+                    reasoningEffort,
                     httpClientConfiguration);
         }
     }

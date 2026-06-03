@@ -83,6 +83,9 @@ public class AskStroomAiPresenter
     private static final int DEFAULT_DOCK_WIDTH = 350;
     private static final int DEFAULT_DOCK_HEIGHT = 250;
     private static final int MAX_TITLE_LENGTH = 60;
+    private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
+    private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
+    private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -482,15 +485,23 @@ public class AskStroomAiPresenter
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
                         timeMs, false);
                 break;
+            case WORKING:
+                appendDetailsElement(hb, "ai-message ai-message--working",
+                        SvgImage.INFO, "Working...", msg.getMessage(), timeMs);
+                break;
             case THINKING:
-                appendCollapsibleMessage(hb, "ai-message ai-message--thinking",
-                        SvgImage.INFO, "Thinking...", msg.getMessage(), timeMs);
+                appendDetailsElement(hb, "ai-message ai-message--thinking",
+                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs);
                 break;
             case DASHBOARD_DATA:
             case QUERY_DATA:
             case TABLE_DATA:
-                appendCollapsibleMessage(hb, "ai-message ai-message--data",
+                appendDetailsElement(hb, "ai-message ai-message--data",
                         SvgImage.TABLE, "Data context", msg.getMessage(), timeMs);
+                break;
+            case DEBUG_DETAIL:
+                appendDetailsElement(hb, "ai-message ai-message--debug-detail",
+                        SvgImage.INFO, "Request detail", msg.getMessage(), timeMs);
                 break;
             case ATTACHMENT:
                 appendAttachmentMessage(hb, msg, timeMs);
@@ -521,7 +532,7 @@ public class AskStroomAiPresenter
                 if (showCopy) {
                     footer.elem(button ->
                                     setCopyButtonContent(button, SvgImage.COPY, "Copy"),
-                            SafeHtmlUtils.fromSafeConstant("button"),
+                            BUTTON,
                             Attribute.className("ai-message-copy"),
                             new Attribute("data", markdownText));
                 }
@@ -535,30 +546,30 @@ public class AskStroomAiPresenter
 
     /**
      * Append a collapsible details/summary element for thinking and data messages.
+     * Uses native HTML {@code <details>/<summary>} so content is collapsed by default.
      */
-    private void appendCollapsibleMessage(final HtmlBuilder hb,
-                                          final String cssClass,
-                                          final SvgImage icon,
-                                          final String summaryText,
-                                          final String markdownText,
-                                          final long timeMs) {
-        hb.div(details -> {
-
-            details.div(summary -> {
+    private void appendDetailsElement(final HtmlBuilder hb,
+                                      final String cssClass,
+                                      final SvgImage icon,
+                                      final String summaryText,
+                                      final String markdownText,
+                                      final long timeMs) {
+        hb.elem(details -> {
+            details.elem(summary -> {
                 icon(summary, icon);
                 summary.append(summaryText);
-            }, Attribute.className("ai-message-header"));
+            }, SUMMARY, Attribute.className("ai-message-header"));
 
             // Add markdown message.
             details.div(contentDiv -> {
                 contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText));
-            });
+            }, Attribute.className("ai-details-content"));
 
             // Add timestamp footer.
             details.div(footer -> {
                 timestamp(footer, timeMs);
             }, Attribute.className("ai-message-footer"));
-        }, Attribute.className(cssClass));
+        }, DETAILS, Attribute.className(cssClass));
     }
 
     /**

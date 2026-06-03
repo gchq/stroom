@@ -33,7 +33,7 @@ import java.util.List;
  * <p>
  * Activated by setting {@code modelId = "__stub__"} on an OpenAIModel document.
  * <p>
- * Simulates realistic latency so that progress messages, THINKING updates,
+ * Simulates realistic latency so that progress messages, WORKING updates,
  * and attachment download status transitions are visible in the UI during testing.
  * <p>
  * Detects three call patterns:
@@ -55,7 +55,7 @@ class StubChatModel implements ChatModel {
 
     /**
      * Simulated latency for batch analysis calls (per-batch).
-     * Deliberately long enough to see THINKING progress messages update.
+     * Deliberately long enough to see WORKING progress messages update.
      */
     private static final int BATCH_LATENCY_MS = 2_000;
 
@@ -104,13 +104,11 @@ class StubChatModel implements ChatModel {
         // 1. Merge call — batch fallback is combining partial summaries.
         if (lastUserText.contains("--- Summary ")) {
             sleep(MERGE_LATENCY_MS);
-            return buildStubResponse("""
-                    [Stub Merged Summary]
-                    
-                    Combined analysis from multiple batches.
-                    - Total patterns identified: 3
-                    - Key trend: consistent activity across time window
-                    - Anomalies: none detected in stub mode""");
+            return buildStubResponse("[Stub Merged Summary]\n\n" +
+                                     "Combined analysis from multiple batches.\n" +
+                                     "- Total patterns identified: 3\n" +
+                                     "- Key trend: consistent activity across time window\n" +
+                                     "- Anomalies: none detected in stub mode");
         }
 
         // 2. Batch fallback call — uses the template with USER QUERY: / DATA TABLE: markers.

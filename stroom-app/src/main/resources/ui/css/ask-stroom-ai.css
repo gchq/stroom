@@ -135,22 +135,34 @@
     color: #d32f2f;
 }
 
+.ai-message--working summary,
+.ai-message--data summary,
 .ai-message--thinking summary,
-.ai-message--data summary {
+.ai-message--debug-detail summary {
     cursor: pointer;
     color: var(--control__text-color--disabled);
     font-style: italic;
     user-select: none;
 }
 
+.ai-message--working[open],
+.ai-message--data[open],
 .ai-message--thinking[open],
-.ai-message--data[open] {
+.ai-message--debug-detail[open] {
     background: var(--page__background-color);
 }
 
+.ai-message--working summary::marker,
+.ai-message--data summary::marker,
 .ai-message--thinking summary::marker,
-.ai-message--data summary::marker {
+.ai-message--debug-detail summary::marker {
     font-size: 0.8em;
+}
+
+.ai-message--debug-detail .ai-details-content {
+    line-height: 1.4;
+    opacity: 0.9;
+    overflow: auto;
 }
 
 /* ---- Empty state (centered input, ChatGPT-style) ---- */

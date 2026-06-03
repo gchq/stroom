@@ -35,7 +35,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         AskStroomAIConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
         AskStroomAIConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
         AskStroomAIConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
-        AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS
+        AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
+        AskStroomAIConfig.PROP_NAME_ENABLE_DEBUG_DETAIL
 })
 public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -45,6 +46,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     public static final String PROP_NAME_HISTORY_SUMMARY_PROMPT = "historySummaryPrompt";
     public static final String PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES = "maxHistorySafetyCapMessages";
     public static final String PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = "attachmentDownloadTimeoutMs";
+    public static final String PROP_NAME_ENABLE_DEBUG_DETAIL = "enableDebugDetail";
 
     public static final String DEFAULT_CHAT_SYSTEM_PROMPT = """
             You are a helpful data analysis assistant within the Stroom data platform. \
@@ -61,6 +63,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             """;
     public static final int DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES = 200;
     public static final long DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = 60_000L;
+    public static final boolean DEFAULT_ENABLE_DEBUG_DETAIL = true;
 
     @JsonProperty(PROP_NAME_MODEL_REF)
     private final DocRef modelRef;
@@ -74,6 +77,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     private final int maxHistorySafetyCapMessages;
     @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS)
     private final long attachmentDownloadTimeoutMs;
+    @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL)
+    private final boolean enableDebugDetail;
 
     public AskStroomAIConfig() {
         modelRef = null;
@@ -82,6 +87,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         historySummaryPrompt = DEFAULT_HISTORY_SUMMARY_PROMPT;
         maxHistorySafetyCapMessages = DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES;
         attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
+        enableDebugDetail = DEFAULT_ENABLE_DEBUG_DETAIL;
     }
 
     @JsonCreator
@@ -91,13 +97,15 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT) final String chatSystemPrompt,
             @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT) final String historySummaryPrompt,
             @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final int maxHistorySafetyCapMessages,
-            @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final long attachmentDownloadTimeoutMs) {
+            @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final long attachmentDownloadTimeoutMs,
+            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final boolean enableDebugDetail) {
         this.modelRef = modelRef;
         this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
         this.historySummaryPrompt = historySummaryPrompt;
         this.maxHistorySafetyCapMessages = maxHistorySafetyCapMessages;
         this.attachmentDownloadTimeoutMs = attachmentDownloadTimeoutMs;
+        this.enableDebugDetail = enableDebugDetail;
     }
 
     @JsonPropertyDescription("The model to use.")
@@ -133,6 +141,12 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         return attachmentDownloadTimeoutMs;
     }
 
+    @JsonPropertyDescription("When enabled, the full LLM exchange (prompts sent and responses received) "
+            + "is stored and displayed as an expandable detail section beneath each AI response.")
+    public boolean isEnableDebugDetail() {
+        return enableDebugDetail;
+    }
+
     @Override
     public String toString() {
         return "AskStroomAIConfig{" +
@@ -142,6 +156,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
                ", historySummaryPrompt='" + historySummaryPrompt + "'" +
                ", maxHistorySafetyCapMessages=" + maxHistorySafetyCapMessages +
                ", attachmentDownloadTimeoutMs=" + attachmentDownloadTimeoutMs +
+               ", enableDebugDetail=" + enableDebugDetail +
                '}';
     }
 
@@ -161,6 +176,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         private String historySummaryPrompt;
         private int maxHistorySafetyCapMessages;
         private long attachmentDownloadTimeoutMs;
+        private boolean enableDebugDetail;
 
         private Builder() {
             modelRef = null;
@@ -169,6 +185,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             historySummaryPrompt = DEFAULT_HISTORY_SUMMARY_PROMPT;
             maxHistorySafetyCapMessages = DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES;
             attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
+            enableDebugDetail = DEFAULT_ENABLE_DEBUG_DETAIL;
         }
 
         private Builder(final AskStroomAIConfig askStroomAIConfig) {
@@ -178,6 +195,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             historySummaryPrompt = askStroomAIConfig.historySummaryPrompt;
             maxHistorySafetyCapMessages = askStroomAIConfig.maxHistorySafetyCapMessages;
             attachmentDownloadTimeoutMs = askStroomAIConfig.attachmentDownloadTimeoutMs;
+            enableDebugDetail = askStroomAIConfig.enableDebugDetail;
         }
 
         public Builder modelRef(final DocRef modelRef) {
@@ -210,6 +228,11 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             return self();
         }
 
+        public Builder enableDebugDetail(final boolean enableDebugDetail) {
+            this.enableDebugDetail = enableDebugDetail;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -217,7 +240,8 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
         public AskStroomAIConfig build() {
             return new AskStroomAIConfig(modelRef, tableAnalysisConfig, chatSystemPrompt,
-                    historySummaryPrompt, maxHistorySafetyCapMessages, attachmentDownloadTimeoutMs);
+                    historySummaryPrompt, maxHistorySafetyCapMessages, attachmentDownloadTimeoutMs,
+                    enableDebugDetail);
         }
     }
 }

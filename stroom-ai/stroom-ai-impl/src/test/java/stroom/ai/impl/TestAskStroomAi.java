@@ -69,6 +69,7 @@ public class TestAskStroomAi {
                 apiKey,
                 modelId,
                 1000,
+                null,
                 null);
         final ChatModel chatModel = aiService.getChatModel(modelDoc);
 

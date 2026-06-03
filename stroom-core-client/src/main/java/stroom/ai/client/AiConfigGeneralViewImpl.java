@@ -21,6 +21,7 @@ import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.client.AskStroomAiPresenter.DockLocation;
 import stroom.ai.client.AskStroomAiPresenter.DockType;
 import stroom.item.client.SelectionBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -52,6 +53,8 @@ public class AiConfigGeneralViewImpl
     TextArea historySummaryPrompt;
     @UiField
     ValueSpinner maxHistorySafetyCapMessages;
+    @UiField
+    CustomCheckBox enableDebugDetail;
 
     @Inject
     public AiConfigGeneralViewImpl(final Binder binder) {
@@ -131,6 +134,16 @@ public class AiConfigGeneralViewImpl
     @Override
     public String getHistorySummaryPrompt() {
         return historySummaryPrompt.getText();
+    }
+
+    @Override
+    public void setEnableDebugDetail(final boolean enabled) {
+        enableDebugDetail.setValue(enabled);
+    }
+
+    @Override
+    public boolean isEnableDebugDetail() {
+        return enableDebugDetail.getValue();
     }
 
     // ---------------------------------------------------------------------

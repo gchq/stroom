@@ -266,7 +266,7 @@ public class AskStroomAIService {
                     writer.write("|\n");
                     // Write separator row
                     writer.write(columns.stream()
-                            .map(_ -> "| --- ")
+                            .map(val -> "| --- ")
                             .collect(Collectors.joining()));
                     writer.write("|\n");
                     // Write rows
@@ -471,7 +471,7 @@ public class AskStroomAIService {
     // ---------------------------------------------------------------------
 
     /**
-     * Core question processing. Creates a single THINKING message that is updated in place
+     * Core question processing. Creates a single WORKING message that is updated in place
      * as processing progresses, then deleted when complete. Waits for any in-flight
      * attachments, then uses optimistic send with progressive trim and summarisation:
      * <ol>
@@ -490,16 +490,20 @@ public class AskStroomAIService {
 
         final AskStroomAIConfig config = request.getConfig();
         final ChatModel chatModel = getChatModel(config);
+        final boolean debugEnabled = NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAIConfig::isEnableDebugDetail,
+                AskStroomAIConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
 
-        // Create a single THINKING message that will be updated in place.
-        final AiChatMessage thinkingMsg = aiService.storeMessage(
-                chatId, AiMessageType.THINKING, "Thinking...");
-        final int thinkingMessageId = thinkingMsg.getId();
+        // Create a single WORKING message that will be updated in place.
+        final AiChatMessage workingMsg = aiService.storeMessage(
+                chatId, AiMessageType.WORKING, "Working...");
+        final int workingMessageId = workingMsg.getId();
 
         try {
             // Wait for any DOWNLOADING attachments to become READY.
             LOGGER.logDurationIfDebugEnabled(
-                    () -> waitForAttachments(chatId, thinkingMessageId),
+                    () -> waitForAttachments(chatId, workingMessageId),
                     () -> "waitForAttachments chatId=" + chatId);
 
             // Check for READY attachments.
@@ -530,6 +534,11 @@ public class AskStroomAIService {
             String contextSummary = null;
             boolean wasTrimmed = false;
 
+            // Accumulate debug detail across all attempts.
+            final StringBuilder debugLog = debugEnabled
+                    ? new StringBuilder()
+                    : null;
+
             // Progressive-trim retry loop.
             for (int attempt = 1; ; attempt++) {
                 final int currentAttempt = attempt;
@@ -547,21 +556,55 @@ public class AskStroomAIService {
                                    + " chatId=" + chatId);
 
                 try {
-                    final String responseText = processUnified(
+                    final ChatResponse chatResponse = processUnified(
                             chatModel, chatId, messages, currentAttempt);
+                    final String responseText = chatResponse.aiMessage().text();
 
-                    // If we trimmed, append a user-visible note.
-                    if (wasTrimmed) {
-                        return responseText
-                               + "\n\n---\n*Note: Some earlier conversation history was "
-                               + "summarised to fit the model's context window. "
-                               + "The most recent messages and attachments were preserved.*";
+                    // Capture successful attempt.
+                    if (debugLog != null) {
+                        debugLog.append("### Attempt ")
+                                .append(currentAttempt)
+                                .append(" (")
+                                .append(messages.size())
+                                .append(" messages) — SUCCESS\n\n")
+                                .append(formatMessagesAsDebugDetail(messages, responseText));
                     }
-                    return responseText;
+
+                    // Store debug detail.
+                    final String finalResponseText;
+                    if (wasTrimmed) {
+                        finalResponseText = responseText
+                                            + "\n\n---\n*Note: Some earlier conversation history was "
+                                            + "summarised to fit the model's context window. "
+                                            + "The most recent messages and attachments were preserved.*";
+                    } else {
+                        finalResponseText = responseText;
+                    }
+
+                    // Store the debug detail after the AI response will be stored.
+                    if (debugLog != null) {
+                        storeDebugDetail(chatId, debugLog.toString());
+                    }
+
+                    // Store LLM reasoning/thinking content if present.
+                    storeThinkingContent(chatId, chatResponse);
+
+                    return finalResponseText;
 
                 } catch (final Exception e) {
                     if (!isContextOverflowError(e)) {
                         throw e;
+                    }
+
+                    // Capture failed attempt.
+                    if (debugLog != null) {
+                        debugLog.append("### Attempt ")
+                                .append(currentAttempt)
+                                .append(" (")
+                                .append(messages.size())
+                                .append(" messages) — OVERFLOW\n\n")
+                                .append(formatMessagesAsDebugDetail(messages, null))
+                                .append("\n---\n\n");
                     }
 
                     // Can we trim further?
@@ -572,7 +615,11 @@ public class AskStroomAIService {
                                               + "chatId=" + chatId
                                               + ", falling back to batch processing");
                             final String result = analyseWithAttachments(request, chatModel,
-                                    readyAttachments, chatId, thinkingMessageId);
+                                    readyAttachments, chatId, workingMessageId,
+                                    debugLog);
+                            if (debugLog != null) {
+                                storeDebugDetail(chatId, debugLog.toString());
+                            }
                             return result + "\n\n---\n*Note: The attached data was too large "
                                    + "for full analysis in a single call. Results were produced "
                                    + "using batch processing and may not capture cross-row "
@@ -616,11 +663,11 @@ public class AskStroomAIService {
                 }
             }
         } finally {
-            // Always clean up the THINKING message when processing is done.
+            // Always clean up the WORKING message when processing is done.
             try {
-                aiService.deleteMessage(thinkingMessageId);
+                aiService.deleteMessage(workingMessageId);
             } catch (final Exception e) {
-                LOGGER.debug(() -> "Failed to delete thinking message " + thinkingMessageId, e);
+                LOGGER.debug(() -> "Failed to delete working message " + workingMessageId, e);
             }
         }
     }
@@ -676,14 +723,22 @@ public class AskStroomAIService {
                                         attachment, AiChatAttachment::getDescription,
                                         "Attachment " + attachment.getId());
                                 final StringBuilder tagged = new StringBuilder();
-                                tagged.append("[Attached Table: ").append(description);
+                                tagged
+                                        .append("[Attached Table: ")
+                                        .append(description);
                                 if (attachment.getRowCount() != null) {
-                                    tagged.append(" (").append(attachment.getRowCount()).append(" rows)");
+                                    tagged
+                                            .append(" (")
+                                            .append(attachment.getRowCount())
+                                            .append(" rows)");
                                 }
                                 if (attachment.isTruncated()) {
-                                    tagged.append(" TRUNCATED");
+                                    tagged
+                                            .append(" TRUNCATED");
                                 }
-                                tagged.append("]\n").append(markdown);
+                                tagged
+                                        .append("]\n")
+                                        .append(markdown);
                                 messages.add(new UserMessage(tagged.toString()));
                             } catch (final IOException e) {
                                 LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
@@ -703,12 +758,13 @@ public class AskStroomAIService {
     }
 
     /**
-     * Sends the pre-built message list to the LLM and returns the response text.
+     * Sends the pre-built message list to the LLM and returns the full ChatResponse
+     * so callers can access both the response text and any thinking/reasoning content.
      */
-    private String processUnified(final ChatModel chatModel,
-                                  final int chatId,
-                                  final List<ChatMessage> messages,
-                                  final int attempt) {
+    private ChatResponse processUnified(final ChatModel chatModel,
+                                        final int chatId,
+                                        final List<ChatMessage> messages,
+                                        final int attempt) {
         LOGGER.debug(() -> "processUnified: sending " + messages.size()
                            + " messages to LLM for chatId=" + chatId
                            + " (attempt " + attempt + ")");
@@ -719,7 +775,7 @@ public class AskStroomAIService {
                      + " attempt=" + attempt
                      + " responseLength=" + r.aiMessage().text().length());
         LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
-        return response.aiMessage().text();
+        return response;
     }
 
     /**
@@ -737,16 +793,30 @@ public class AskStroomAIService {
                                             final AskStroomAIConfig config) {
         final StringBuilder input = new StringBuilder();
         if (existingSummary != null && !existingSummary.isBlank()) {
-            input.append("Previous context summary:\n").append(existingSummary).append("\n\n");
+            input
+                    .append("Previous context summary:\n")
+                    .append(existingSummary)
+                    .append("\n\n");
         }
         input.append("Additional conversation to summarise:\n");
         for (final AiChatMessage msg : droppedMessages) {
             switch (msg.getMessageType()) {
-                case USER_MESSAGE -> input.append("User: ").append(msg.getMessage()).append('\n');
-                case AI_RESPONSE -> input.append("Assistant: ").append(msg.getMessage()).append('\n');
-                case ATTACHMENT -> input.append("User attached table: ")
-                        .append(msg.getMessage()).append('\n');
-                default -> input.append("System: ").append(msg.getMessage()).append('\n');
+                case USER_MESSAGE -> input
+                        .append("User: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+                case AI_RESPONSE -> input
+                        .append("Assistant: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+                case ATTACHMENT -> input
+                        .append("User attached table: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+                default -> input
+                        .append("System: ")
+                        .append(msg.getMessage())
+                        .append('\n');
             }
         }
 
@@ -777,7 +847,8 @@ public class AskStroomAIService {
                                           final ChatModel chatModel,
                                           final List<AiChatAttachment> attachments,
                                           final int chatId,
-                                          final int thinkingMessageId) {
+                                          final int workingMessageId,
+                                          final StringBuilder debugLog) {
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         registerCancellation(chatId, cancelled);
 
@@ -821,7 +892,7 @@ public class AskStroomAIService {
                     : request.getMessage();
 
             final int totalBatches = batches.size();
-            aiService.updateMessageText(thinkingMessageId,
+            aiService.updateMessageText(workingMessageId,
                     "Analysing " + totalBatches + " batch(es) across "
                     + attachments.size() + " attachment(s)...");
 
@@ -836,6 +907,13 @@ public class AskStroomAIService {
             final String userPromptTemplate = tableAnalysisConfig.getTableQueryUserPrompt() != null
                     ? tableAnalysisConfig.getTableQueryUserPrompt()
                     : TableAnalysisConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
+
+            if (debugLog != null) {
+                debugLog
+                        .append("### Batch Fallback (")
+                        .append(totalBatches)
+                        .append(" batches)\n\n");
+            }
 
             final List<CompletableFuture<String>> futures = new ArrayList<>();
             for (int i = 0; i < totalBatches; i++) {
@@ -858,7 +936,7 @@ public class AskStroomAIService {
                         if (cancelled.get()) {
                             return null;
                         }
-                        aiService.updateMessageText(thinkingMessageId,
+                        aiService.updateMessageText(workingMessageId,
                                 "Analysing batch " + batchNum + " of " + totalBatches + "...");
 
                         final String userPrompt = userPromptTemplate
@@ -880,7 +958,23 @@ public class AskStroomAIService {
                                      + " responseLength=" + r.aiMessage().text().length());
                         LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
                                            + " response:\n" + response.aiMessage().text());
-                        return response.aiMessage().text();
+
+                        final String responseText = response.aiMessage().text();
+
+                        // Capture batch debug detail (synchronized on debugLog).
+                        if (debugLog != null) {
+                            synchronized (debugLog) {
+                                debugLog
+                                        .append("#### Batch ")
+                                        .append(batchNum)
+                                        .append("/")
+                                        .append(totalBatches)
+                                        .append("\n\n")
+                                        .append(formatMessagesAsDebugDetail(messages, responseText));
+                            }
+                        }
+
+                        return responseText;
                     } finally {
                         semaphore.release();
                     }
@@ -917,7 +1011,8 @@ public class AskStroomAIService {
             if (summaries.size() == 1) {
                 return summaries.getFirst();
             }
-            return mergeAllSummaries(chatModel, summaries, tableAnalysisConfig);
+            return mergeAllSummaries(
+                    chatModel, summaries, tableAnalysisConfig, debugLog);
         } finally {
             deregisterCancellation(chatId);
         }
@@ -979,13 +1074,18 @@ public class AskStroomAIService {
      */
     private String mergeAllSummaries(final ChatModel chatModel,
                                      final List<String> summaries,
-                                     final TableAnalysisConfig config) {
+                                     final TableAnalysisConfig config,
+                                     final StringBuilder debugLog) {
         LOGGER.debug(() -> "mergeAllSummaries: merging " + summaries.size() + " summaries");
 
         final StringBuilder combined = new StringBuilder();
         for (int i = 0; i < summaries.size(); i++) {
-            combined.append("--- Summary ").append(i + 1).append(" ---\n");
-            combined.append(summaries.get(i)).append("\n\n");
+            combined
+                    .append("--- Summary ")
+                    .append(i + 1)
+                    .append(" ---\n")
+                    .append(summaries.get(i))
+                    .append("\n\n");
         }
 
         final String mergePromptTemplate = config.getMultiSummaryMergePrompt() != null
@@ -1004,7 +1104,148 @@ public class AskStroomAIService {
                 () -> chatModel.chat(messages),
                 r -> "mergeAllSummaries: responseLength=" + r.aiMessage().text().length());
         LOGGER.trace(() -> "mergeAllSummaries response:\n" + response.aiMessage().text());
-        return response.aiMessage().text();
+
+        final String responseText = response.aiMessage().text();
+
+        if (debugLog != null) {
+            debugLog
+                    .append("#### Merge Step\n\n")
+                    .append(formatMessagesAsDebugDetail(messages, responseText));
+        }
+
+        return responseText;
+    }
+
+    /**
+     * Formats a list of ChatMessages and the LLM response into a readable
+     * markdown string suitable for storage as a DEBUG_DETAIL message.
+     * Table data in user messages is truncated to keep the detail manageable.
+     */
+    private String formatMessagesAsDebugDetail(final List<ChatMessage> messages,
+                                               final String responseText) {
+        final int MAX_TABLE_LINES = 20;
+        final StringBuilder sb = new StringBuilder();
+
+        for (final ChatMessage msg : messages) {
+            if (msg instanceof final SystemMessage systemMessage) {
+                sb
+                        .append("**System Prompt:**\n> ")
+                        .append(systemMessage.text().replace("\n", "\n> "))
+                        .append("\n\n");
+            } else if (msg instanceof final UserMessage userMessage) {
+                final String text = userMessage.singleText();
+                // Truncate table data for readability.
+                final String displayText = truncateTableData(text, MAX_TABLE_LINES);
+                sb
+                        .append("**User:**\n")
+                        .append(displayText)
+                        .append("\n\n");
+            } else if (msg instanceof final AiMessage aiMessage) {
+                sb
+                        .append("**Assistant:**\n")
+                        .append(aiMessage.text())
+                        .append("\n\n");
+            }
+        }
+
+        if (responseText != null) {
+            sb
+                    .append("**Response:**\n")
+                    .append(responseText)
+                    .append("\n\n");
+        } else {
+            sb
+                    .append("*(No response — context overflow)*\n\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Truncates markdown table data in a message to the given number of data rows.
+     * Preserves the header and separator rows, then shows up to maxLines data rows
+     * with a note about truncation.
+     */
+    private String truncateTableData(final String text,
+                                     final int maxLines) {
+        // Only truncate if text contains a markdown table (pipe-delimited lines).
+        if (!text.contains("| ---")) {
+            return text;
+        }
+
+        final String[] lines = text.split("\n");
+        final StringBuilder result = new StringBuilder();
+        boolean inTable = false;
+        int dataRowCount = 0;
+        boolean truncated = false;
+
+        for (final String line : lines) {
+            if (line.startsWith("|")) {
+                if (!inTable) {
+                    inTable = true;
+                    dataRowCount = 0;
+                    result
+                            .append(line)
+                            .append('\n');
+                    continue;
+                }
+                // Separator row (| --- | --- |).
+                if (line.contains("---")) {
+                    result
+                            .append(line)
+                            .append('\n');
+                    continue;
+                }
+                // Data row.
+                dataRowCount++;
+                if (dataRowCount <= maxLines) {
+                    result
+                            .append(line)
+                            .append('\n');
+                } else if (!truncated) {
+                    truncated = true;
+                    result
+                            .append("| *... (remaining rows truncated for display)* |\n");
+                }
+            } else {
+                inTable = false;
+                dataRowCount = 0;
+                result
+                        .append(line)
+                        .append('\n');
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Stores a DEBUG_DETAIL message in the chat history.
+     */
+    private void storeDebugDetail(final int chatId, final String debugDetail) {
+        try {
+            aiService.storeMessage(chatId, AiMessageType.DEBUG_DETAIL, debugDetail);
+        } catch (final Exception e) {
+            LOGGER.warn(() -> "Failed to store debug detail for chatId=" + chatId, e);
+        }
+    }
+
+    /**
+     * Extracts LLM reasoning/thinking content from the ChatResponse and stores it
+     * as a THINKING message. Models that don't produce reasoning tokens will have
+     * null thinking content, which is silently ignored.
+     */
+    private void storeThinkingContent(final int chatId, final ChatResponse chatResponse) {
+        try {
+            final String thinking = chatResponse.aiMessage().thinking();
+            if (thinking != null && !thinking.isBlank()) {
+                aiService.storeMessage(chatId, AiMessageType.THINKING, thinking);
+                LOGGER.debug(() -> "Stored thinking content for chatId=" + chatId
+                                   + " length=" + thinking.length());
+            }
+        } catch (final Exception e) {
+            LOGGER.warn(() -> "Failed to store thinking content for chatId=" + chatId, e);
+        }
     }
 
     /**
@@ -1031,9 +1272,9 @@ public class AskStroomAIService {
     /**
      * Waits for any DOWNLOADING attachments to become READY (or ERROR).
      * Polls with a configurable interval and respects the overall timeout.
-     * Updates the existing THINKING message in place to give the user progress feedback.
+     * Updates the existing WORKING message in place to give the user progress feedback.
      */
-    private void waitForAttachments(final int chatId, final int thinkingMessageId) {
+    private void waitForAttachments(final int chatId, final int workingMessageId) {
         final long timeoutMs = NullSafe.getOrElse(
                 defaultConfigProvider.get(),
                 AskStroomAIConfig::getAttachmentDownloadTimeoutMs,
@@ -1066,7 +1307,7 @@ public class AskStroomAIService {
                                        .map(a -> a.getId() + ":" + a.getStatus())
                                        .collect(java.util.stream.Collectors.joining(",")));
 
-            aiService.updateMessageText(thinkingMessageId,
+            aiService.updateMessageText(workingMessageId,
                     "Waiting for table data download...");
 
             try {
@@ -1079,7 +1320,7 @@ public class AskStroomAIService {
 
         // Timed out — log a warning but continue (the question will use whatever is READY).
         LOGGER.warn(() -> "Timed out waiting for attachment downloads for chat " + chatId);
-        aiService.updateMessageText(thinkingMessageId,
+        aiService.updateMessageText(workingMessageId,
                 "Attachment download timed out, proceeding with available data");
     }
 
@@ -1109,9 +1350,15 @@ public class AskStroomAIService {
         for (int i = startIdx; i < relevantMessages.size(); i++) {
             final AiChatMessage msg = relevantMessages.get(i);
             if (msg.getMessageType() == AiMessageType.USER_MESSAGE) {
-                sb.append("User: ").append(msg.getMessage()).append('\n');
+                sb
+                        .append("User: ")
+                        .append(msg.getMessage())
+                        .append('\n');
             } else {
-                sb.append("AI: ").append(msg.getMessage()).append('\n');
+                sb
+                        .append("AI: ")
+                        .append(msg.getMessage())
+                        .append('\n');
             }
         }
         return sb.toString();
@@ -1255,14 +1502,14 @@ public class AskStroomAIService {
                 chatId, request.getLastSeenMessageId());
         final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
 
-        // Conversation is complete if there are no THINKING messages among the new messages
+        // Conversation is complete if there are no WORKING messages among the new messages
         // AND all attachments have finished downloading.
-        final boolean thinkingComplete = newMessages.stream()
-                .noneMatch(msg -> msg.getMessageType() == AiMessageType.THINKING);
+        final boolean workingComplete = newMessages.stream()
+                .noneMatch(msg -> msg.getMessageType() == AiMessageType.WORKING);
         final boolean attachmentsComplete = attachments.stream()
                 .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
                                 || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
-        final boolean complete = thinkingComplete && attachmentsComplete;
+        final boolean complete = workingComplete && attachmentsComplete;
         return new AiChatPollResponse(newMessages, attachments, complete);
     }
 
@@ -1292,6 +1539,9 @@ public class AskStroomAIService {
         globalConfigProvider.get().setString(currentConfig,
                 AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
                 String.valueOf(config.getAttachmentDownloadTimeoutMs()));
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAIConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
+                String.valueOf(config.isEnableDebugDetail()));
         return true;
     }
 
@@ -1378,8 +1628,10 @@ public class AskStroomAIService {
                         label = "**Data Context**";
                         break;
                     default:
-                        // THINKING, DASHBOARD_DATA, QUERY_DATA, TABLE_DATA are always omitted
-                        // (the actual table data lives in the attachment file store).
+                        // WORKING, DASHBOARD_DATA, QUERY_DATA, TABLE_DATA, THINKING,
+                        // DEBUG_DETAIL are always omitted (the actual table data lives in
+                        // the attachment file store; thinking/debug detail is only for
+                        // in-UI inspection).
                         continue;
                 }
 

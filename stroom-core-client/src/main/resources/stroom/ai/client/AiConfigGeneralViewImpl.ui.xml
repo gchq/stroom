@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
         <form:FormGroup identity="model"
                         label="Model">
@@ -23,6 +24,11 @@
         </form:FormGroup>
         <form:FormGroup identity="maxHistorySafetyCapMessages" label="Max History Safety Cap">
             <v:ValueSpinner ui:field="maxHistorySafetyCapMessages" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="enableDebugDetail"
+                                    identity="enableDebugDetail"
+                                    label="Enable Debug Detail"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -22,12 +22,14 @@ import stroom.util.shared.PrimitiveValueConverter;
 public enum AiMessageType implements HasPrimitiveValue {
     USER_MESSAGE(0),
     AI_RESPONSE(1),
-    THINKING(2),
+    WORKING(2),
     ERROR(3),
     DASHBOARD_DATA(4),
     QUERY_DATA(5),
     TABLE_DATA(6),
-    ATTACHMENT(7);
+    ATTACHMENT(7),
+    DEBUG_DETAIL(8),
+    THINKING(9);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

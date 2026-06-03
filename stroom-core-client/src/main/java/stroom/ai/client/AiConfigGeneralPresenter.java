@@ -79,6 +79,10 @@ public class AiConfigGeneralPresenter
                 config,
                 AskStroomAIConfig::getMaxHistorySafetyCapMessages,
                 AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES));
+        getView().setEnableDebugDetail(NullSafe.getOrElse(
+                config,
+                AskStroomAIConfig::isEnableDebugDetail,
+                AskStroomAIConfig.DEFAULT_ENABLE_DEBUG_DETAIL));
         getView().setDockBehaviour(dockBehaviour);
     }
 
@@ -87,7 +91,8 @@ public class AiConfigGeneralPresenter
                 .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                 .chatSystemPrompt(getView().getChatSystemPrompt())
                 .historySummaryPrompt(getView().getHistorySummaryPrompt())
-                .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages());
+                .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages())
+                .enableDebugDetail(getView().isEnableDebugDetail());
     }
 
     public DockBehaviour getDockBehaviour() {
@@ -126,5 +131,9 @@ public class AiConfigGeneralPresenter
         void setHistorySummaryPrompt(String prompt);
 
         String getHistorySummaryPrompt();
+
+        void setEnableDebugDetail(boolean enabled);
+
+        boolean isEnableDebugDetail();
     }
 }

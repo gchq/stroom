@@ -218,6 +218,10 @@ public class AiServiceImpl implements AiService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
+        if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
+            modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
+        }
+
         return LOGGER.logDurationIfDebugEnabled(
                 modelBuilder::build,
                 r -> "getChatModel: built model '" + modelDoc.getModelId() + "'");
