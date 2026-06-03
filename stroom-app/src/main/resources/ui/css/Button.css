@@ -31,12 +31,22 @@
 /*
 Inner elements
 */
-.Button__margin {
-  margin: 0.2rem;
+.Button__backgroundText {
+  opacity: 0;
+  padding-right: 0.2rem;
+}
+
+.Button__icon {
+  display: none;
+}
+
+.Button__icon--visible {
+  display: flex;
 }
 
 .Button__text {
   padding-top: 1px;
+  padding-right: 0.2rem;
 }
 
 .Button svg {
@@ -50,7 +60,6 @@ Button container to wrap multiple buttons
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  /*margin: -$button-margin;*/
 }
 
 /*
@@ -240,13 +249,14 @@ General button styles
   transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
   /*transition: width 500ms; */
   width: 0;
+  height: 16px;
   overflow: hidden;
   opacity: 0;
   display: flex;
 }
 
 .Button.Button--loading .Button__spinner {
-  width: 2rem;
+  width: 16px;
   opacity: 1;
 }
 
@@ -261,6 +271,7 @@ General button styles
   justify-content: center;
   box-shadow: var(--color-btn-shadow),var(--color-btn-inset-shadow);
   border-radius: 5px;
+  gap: 0.2rem;
 }
 
 .Button.Button--down .Button__content {

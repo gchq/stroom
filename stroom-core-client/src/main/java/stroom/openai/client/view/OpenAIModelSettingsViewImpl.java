@@ -50,6 +50,8 @@ public class OpenAIModelSettingsViewImpl
     @UiField
     ValueSpinner maxContextWindowTokens;
     @UiField
+    TextBox reasoningEffort;
+    @UiField
     Button testModel;
     @UiField
     Button setHttpClientConfig;
@@ -104,11 +106,22 @@ public class OpenAIModelSettingsViewImpl
     }
 
     @Override
+    public String getReasoningEffort() {
+        return reasoningEffort.getValue();
+    }
+
+    @Override
+    public void setReasoningEffort(final String reasoningEffort) {
+        this.reasoningEffort.setValue(reasoningEffort);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         baseUrl.setEnabled(!readOnly);
         apiKey.setEnabled(!readOnly);
         modelId.setEnabled(!readOnly);
         maxContextWindowTokens.setEnabled(!readOnly);
+        reasoningEffort.setEnabled(!readOnly);
     }
 
     private void fireChange() {
@@ -134,6 +147,11 @@ public class OpenAIModelSettingsViewImpl
 
     @UiHandler("maxContextWindowTokens")
     public void onMaxContextWindowTokensValueChange(final ValueChangeEvent<Long> event) {
+        fireChange();
+    }
+
+    @UiHandler("reasoningEffort")
+    public void onReasoningEffort(final ValueChangeEvent<String> event) {
         fireChange();
     }
 

@@ -1,6 +1,5 @@
 package stroom.ai.shared;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -15,14 +14,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 public abstract sealed class AskStroomAiContext permits DashboardTableContext, QueryTableContext, GeneralTableContext {
 
-    @JsonProperty
-    private final String chatMemoryId;
-
-    public AskStroomAiContext(final String chatMemoryId) {
-        this.chatMemoryId = chatMemoryId;
+    public AskStroomAiContext() {
     }
 
-    public String getChatMemoryId() {
-        return chatMemoryId;
-    }
+    /**
+     * Returns a human-readable description of this context suitable for display in the UI,
+     * chat message headers, and audit event logs.
+     */
+    public abstract String getDescription();
 }

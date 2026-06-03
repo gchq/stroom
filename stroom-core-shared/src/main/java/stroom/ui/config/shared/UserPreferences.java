@@ -82,6 +82,18 @@ public class UserPreferences {
     @JsonProperty
     private final Boolean hideConditionalStyles;
 
+    @JsonProperty
+    @JsonPropertyDescription("AI panel dock type: DIALOG or DOCK")
+    private final String aiDockType;
+
+    @JsonProperty
+    @JsonPropertyDescription("AI panel dock location: RIGHT, LEFT, TOP, or BOTTOM")
+    private final String aiDockLocation;
+
+    @JsonProperty
+    @JsonPropertyDescription("AI panel dock size in pixels")
+    private final Integer aiDockSize;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -93,7 +105,10 @@ public class UserPreferences {
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
                            @JsonProperty("timeZone") final UserTimeZone timeZone,
                            @JsonProperty("enableTransparency") final Boolean enableTransparency,
-                           @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles) {
+                           @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles,
+                           @JsonProperty("aiDockType") final String aiDockType,
+                           @JsonProperty("aiDockLocation") final String aiDockLocation,
+                           @JsonProperty("aiDockSize") final Integer aiDockSize) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = Objects.requireNonNullElse(
@@ -107,6 +122,9 @@ public class UserPreferences {
         this.timeZone = timeZone;
         this.enableTransparency = Objects.requireNonNullElse(enableTransparency, true);
         this.hideConditionalStyles = hideConditionalStyles;
+        this.aiDockType = aiDockType;
+        this.aiDockLocation = aiDockLocation;
+        this.aiDockSize = aiDockSize;
     }
 
     public String getTheme() {
@@ -153,6 +171,18 @@ public class UserPreferences {
         return hideConditionalStyles;
     }
 
+    public String getAiDockType() {
+        return aiDockType;
+    }
+
+    public String getAiDockLocation() {
+        return aiDockLocation;
+    }
+
+    public Integer getAiDockSize() {
+        return aiDockSize;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -172,7 +202,10 @@ public class UserPreferences {
                Objects.equals(dateTimePattern, that.dateTimePattern) &&
                Objects.equals(timeZone, that.timeZone) &&
                Objects.equals(enableTransparency, that.enableTransparency) &&
-               Objects.equals(hideConditionalStyles, that.hideConditionalStyles);
+               Objects.equals(hideConditionalStyles, that.hideConditionalStyles) &&
+               Objects.equals(aiDockType, that.aiDockType) &&
+               Objects.equals(aiDockLocation, that.aiDockLocation) &&
+               Objects.equals(aiDockSize, that.aiDockSize);
     }
 
     @Override
@@ -187,7 +220,10 @@ public class UserPreferences {
                 dateTimePattern,
                 timeZone,
                 enableTransparency,
-                hideConditionalStyles);
+                hideConditionalStyles,
+                aiDockType,
+                aiDockLocation,
+                aiDockSize);
     }
 
     @Override
@@ -204,6 +240,9 @@ public class UserPreferences {
                ", timeZone=" + timeZone +
                ", enableTransparency=" + enableTransparency +
                ", hideConditionalStyles=" + hideConditionalStyles +
+               ", aiDockType='" + aiDockType + '\'' +
+               ", aiDockLocation='" + aiDockLocation + '\'' +
+               ", aiDockSize=" + aiDockSize +
                '}';
     }
 
@@ -272,6 +311,9 @@ public class UserPreferences {
         private UserTimeZone timeZone;
         private Boolean enableTransparency;
         private Boolean hideConditionalStyles;
+        private String aiDockType;
+        private String aiDockLocation;
+        private Integer aiDockSize;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -298,6 +340,9 @@ public class UserPreferences {
             this.timeZone = userPreferences.timeZone;
             this.enableTransparency = userPreferences.enableTransparency;
             this.hideConditionalStyles = userPreferences.hideConditionalStyles;
+            this.aiDockType = userPreferences.aiDockType;
+            this.aiDockLocation = userPreferences.aiDockLocation;
+            this.aiDockSize = userPreferences.aiDockSize;
         }
 
         public Builder theme(final String theme) {
@@ -355,6 +400,21 @@ public class UserPreferences {
             return this;
         }
 
+        public Builder aiDockType(final String aiDockType) {
+            this.aiDockType = aiDockType;
+            return this;
+        }
+
+        public Builder aiDockLocation(final String aiDockLocation) {
+            this.aiDockLocation = aiDockLocation;
+            return this;
+        }
+
+        public Builder aiDockSize(final Integer aiDockSize) {
+            this.aiDockSize = aiDockSize;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -367,7 +427,10 @@ public class UserPreferences {
                     dateTimePattern,
                     timeZone,
                     enableTransparency,
-                    hideConditionalStyles);
+                    hideConditionalStyles,
+                    aiDockType,
+                    aiDockLocation,
+                    aiDockSize);
         }
     }
 

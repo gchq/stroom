@@ -17,6 +17,7 @@
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
@@ -82,6 +83,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String ROOT_PROPERTY_NAME = "appConfig";
 
     public static final String PROP_NAME_ACTIVITY = "activity";
+    public static final String PROP_NAME_AI = "ai";
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
     public static final String PROP_NAME_ASK_STROOM_AI = "askStroomAi";
@@ -140,6 +142,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final boolean haltBootOnConfigValidationFailure;
 
     private final CrossModuleConfig crossModuleConfig;
+    private final AiConfig aiConfig;
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
@@ -198,6 +201,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this(true,
                 new CrossModuleConfig(),
                 new ActivityConfig(),
+                new AiConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
                 new AskStroomAIConfig(),
@@ -254,6 +258,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                      @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
+                     @JsonProperty(PROP_NAME_AI) final AiConfig aiConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
                      @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAIConfig askStroomAIConfig,
@@ -306,6 +311,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.crossModuleConfig = crossModuleConfig;
         this.activityConfig = activityConfig;
+        this.aiConfig = aiConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
         this.askStroomAIConfig = askStroomAIConfig;
@@ -377,6 +383,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_ACTIVITY)
     public ActivityConfig getActivityConfig() {
         return activityConfig;
+    }
+
+    @JsonProperty(PROP_NAME_AI)
+    public AiConfig getAiConfig() {
+        return aiConfig;
     }
 
     @JsonProperty(PROP_NAME_ANALYTICS)

@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
+        <form:FormGroup identity="maxTotalRows" label="Max Total Rows">
+            <v:ValueSpinner ui:field="maxTotalRows" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch">
+            <v:ValueSpinner ui:field="maxRowsPerBatch" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxParallelBatches" label="Max Parallel Batches">
+            <v:ValueSpinner ui:field="maxParallelBatches" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="attachmentDownloadTimeoutMs" label="Attachment Download Timeout (ms)">
+            <v:ValueSpinner ui:field="attachmentDownloadTimeoutMs" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
+            <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>
+        </form:FormGroup>
+        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
+            <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
+        </form:FormGroup>
+        <form:FormGroup identity="multiSummaryMergePrompt" label="Multi-Summary Merge Prompt">
+            <g:TextArea ui:field="multiSummaryMergePrompt" width="100%" visibleLines="5"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

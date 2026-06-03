@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.search.elastic'
 
 dependencies {
+    implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
@@ -28,7 +29,6 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')

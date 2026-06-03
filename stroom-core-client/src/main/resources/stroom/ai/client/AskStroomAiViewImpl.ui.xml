@@ -1,31 +1,39 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:p="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical">
-<!--        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">-->
-<!--            <l:SelectionBox ui:field="dockTypeSelectionBox"/>-->
-<!--        </form:FormGroup>-->
-<!--        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">-->
-<!--            <l:SelectionBox ui:field="dockLocationSelectionBox"/>-->
-<!--        </form:FormGroup>-->
-
-        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max markdown-container form-control"/>
-        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-bottom">
-            <g:TextBox ui:field="message" addStyleNames="dock-max w-100"/>
-            <b:Button ui:field="sendMessage" text="Send" addStyleNames="allow-focus Button--contained-primary"/>
-            <b:Button ui:field="clearHistory" text="Clear" addStyleNames="allow-focus"/>
+             xmlns:p="urn:import:stroom.widget.button.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+    <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
+        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
+            <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
+                <g:Label ui:field="chatTitle" text="Agent"/>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
+                <p:InlineSvgButton ui:field="newChat" text="New Conversation"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="chatHistory" text="Conversation History"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="download" text="Download"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="configure" text="Configure"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+            </g:FlowPanel>
         </g:FlowPanel>
-        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-bottom">
-            <g:SimplePanel ui:field="modelRef"/>
-            <b:Button ui:field="setDefaultModel"
-                      text="Set Default"
-                      width="150px"
-                      addStyleNames="allow-focus"/>
-            <p:InlineSvgButton ui:field="configure" addStyleNames="allow-focus"/>
+        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
+        <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
+            <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
+            <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
+                    <g:Label ui:field="contextIndicator"
+                             styleName="askStroomAiViewImpl-contextChip"/>
+                    <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
+                </g:FlowPanel>
+                <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
+                    <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
+                    <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+                    <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
+                </g:FlowPanel>
+            </g:FlowPanel>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

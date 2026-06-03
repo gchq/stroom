@@ -17,141 +17,161 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
+import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAIConfig;
-import stroom.ai.shared.ChatMemoryConfig;
-import stroom.ai.shared.TableSummaryConfig;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.NullSafe;
-import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
 
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+import java.util.function.Consumer;
+
 public class AskStroomAiConfigPresenter
-        extends MyPresenterWidget<AskStroomAiConfigView>
-        implements AskStroomAiConfigUiHandlers {
+        extends MyPresenterWidget<AskStroomAiConfigView> {
+
+    private static final TabData GENERAL = new TabDataImpl("General");
+    private static final TabData TABLE_ANALYSIS = new TabDataImpl("Table Analysis");
+
+    // ---------------------------------------------------------------------
 
     private final AskStroomAiClient askStroomAiClient;
+    private final AiConfigGeneralPresenter generalPresenter;
+    private final AiConfigTableAnalysisPresenter tableAnalysisPresenter;
+    private final ClientSecurityContext clientSecurityContext;
+
+    // ---------------------------------------------------------------------
 
     @Inject
     public AskStroomAiConfigPresenter(final EventBus eventBus,
                                       final AskStroomAiConfigView view,
                                       final AskStroomAiClient askStroomAiClient,
-                                      final ClientSecurityContext clientSecurityContext) {
+                                      final ClientSecurityContext clientSecurityContext,
+                                      final AiConfigGeneralPresenter generalPresenter,
+                                      final AiConfigTableAnalysisPresenter tableAnalysisPresenter) {
         super(eventBus, view);
         this.askStroomAiClient = askStroomAiClient;
-        view.setUiHandlers(this);
+        this.clientSecurityContext = clientSecurityContext;
+        this.generalPresenter = generalPresenter;
+        this.tableAnalysisPresenter = tableAnalysisPresenter;
 
-        // Only allow administrators to set the default model.
-        view.allowSetDefault(clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
+        addTab(GENERAL, generalPresenter);
+        addTab(TABLE_ANALYSIS, tableAnalysisPresenter);
+        view.getTabBar().selectTab(GENERAL);
+        switchTab(GENERAL);
     }
 
-    public void show() {
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getView().getTabBar().addSelectionHandler(e ->
+                switchTab(e.getSelectedItem())));
+    }
+
+    // ---------------------------------------------------------------------
+
+    private void addTab(final TabData tabData, final MyPresenterWidget<?> presenterWidget) {
+        getView().getTabBar().addTab(tabData);
+    }
+
+    private void switchTab(final TabData tabData) {
+        getView().getTabBar().selectTab(tabData);
+        if (Objects.equals(GENERAL, tabData)) {
+            getView().getLayerContainer().show(generalPresenter);
+        } else if (Objects.equals(TABLE_ANALYSIS, tabData)) {
+            getView().getLayerContainer().show(tableAnalysisPresenter);
+        }
+    }
+
+    // ---------------------------------------------------------------------
+
+    public void show(final AskStroomAIConfig currentConfig,
+                     final Consumer<AskStroomAIConfig> configConsumer,
+                     final DockBehaviour snapshotDockBehaviour,
+                     final Consumer<DockBehaviour> dockBehaviourConsumer) {
+
+        // Wire the dock behaviour callback through to the General sub-presenter.
+        generalPresenter.setDockBehaviourChangeHandler(dockBehaviourConsumer);
+
+        final boolean isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
+        getView().allowSetDefault(isAdmin);
+        getView().setOnSetDefault(isAdmin ? this::onSetDefault : null);
+
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(700, 500))
+                .popupSize(PopupSize.resizable(650, 840))
                 .caption("Configure Ask Stroom AI")
                 .onShow(e -> {
-                    // Read the local config or default.
-                    askStroomAiClient.getConfig(config -> {
-                        readChatMemoryConfig(NullSafe.getOrElse(config,
-                                AskStroomAIConfig::getChatMemory, new ChatMemoryConfig()));
-                        readTableSummaryConfig(NullSafe.getOrElse(config,
-                                AskStroomAIConfig::getTableSummary, new TableSummaryConfig()));
-                    }, this);
-                    getView().focus();
+                    read(currentConfig, snapshotDockBehaviour);
+                    generalPresenter.getView().focus();
                 })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        // Update the local config.
-                        askStroomAiClient.getConfig(config -> {
-                            final ChatMemoryConfig chatMemoryConfig = writeChatMemoryConfig();
-                            final TableSummaryConfig tableSummaryConfig = writeTableSummaryConfig();
-                            final AskStroomAIConfig askStroomAIConfig = config
-                                    .copy()
-                                    .tableSummaryConfig(tableSummaryConfig)
-                                    .chatMemoryConfig(chatMemoryConfig)
-                                    .build();
-                            askStroomAiClient.setConfig(askStroomAIConfig);
-                        }, this);
+                        final AskStroomAIConfig config = write();
+                        dockBehaviourConsumer.accept(generalPresenter.getDockBehaviour());
+                        configConsumer.accept(config);
+                    } else {
+                        if (dockBehaviourConsumer != null && snapshotDockBehaviour != null) {
+                            dockBehaviourConsumer.accept(snapshotDockBehaviour);
+                        }
                     }
                     e.hide();
                 })
                 .fire();
     }
 
-    @Override
-    public void onSetDefault(final TaskMonitorFactory taskMonitorFactory) {
-        askStroomAiClient.setDefaultChatMemoryConfigConfig(writeChatMemoryConfig(), success -> {
-            askStroomAiClient.setDefaultTableSummaryConfig(writeTableSummaryConfig(), success2 -> {
-                AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default table config updated", null);
-            }, taskMonitorFactory);
-        }, taskMonitorFactory);
+    // ---------------------------------------------------------------------
+
+    private void onSetDefault(final TaskMonitorFactory taskMonitorFactory) {
+        final AskStroomAIConfig config = write();
+        askStroomAiClient.setDefaultAskStroomAIConfig(config, success ->
+                AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null),
+                taskMonitorFactory);
     }
 
-    public void readTableSummaryConfig(final TableSummaryConfig config) {
-        getView().setMaximumBatchSize(NullSafe.getOrElse(
-                config,
-                TableSummaryConfig::getMaximumBatchSize,
-                TableSummaryConfig.DEFAULT_MAXIMUM_BATCH_SIZE));
-        getView().setMaximumTableInputRows(NullSafe.getOrElse(
-                config,
-                TableSummaryConfig::getMaximumTableInputRows,
-                TableSummaryConfig.DEFAULT_MAXIMUM_TABLE_INPUT_ROWS));
+    private void read(final AskStroomAIConfig config,
+                      final DockBehaviour dockBehaviour) {
+        generalPresenter.read(config, dockBehaviour);
+        final TableAnalysisConfig tableConfig = config != null
+                ? config.getTableAnalysis()
+                : null;
+        tableAnalysisPresenter.read(
+                tableConfig != null ? tableConfig : new TableAnalysisConfig(),
+                config);
     }
 
-    public TableSummaryConfig writeTableSummaryConfig() {
-        return new TableSummaryConfig(
-                getView().getMaximumBatchSize(),
-                getView().getMaximumTableInputRows());
+    private AskStroomAIConfig write() {
+        final AskStroomAIConfig.Builder builder = AskStroomAIConfig.builder();
+        generalPresenter.write(builder);
+        builder.tableAnalysisConfig(tableAnalysisPresenter.write());
+        builder.attachmentDownloadTimeoutMs(tableAnalysisPresenter.getAttachmentDownloadTimeoutMs());
+        return builder.build();
     }
 
-    public void readChatMemoryConfig(final ChatMemoryConfig config) {
-        getView().setMemoryTokenLimit(NullSafe.getOrElse(
-                config,
-                ChatMemoryConfig::getTokenLimit,
-                ChatMemoryConfig.DEFAULT_CHAT_MEMORY_TOKEN_LIMIT));
-        getView().setMemoryTimeToLive(NullSafe.getOrElse(
-                config,
-                ChatMemoryConfig::getTimeToLive,
-                ChatMemoryConfig.DEFAULT_CHAT_MEMORY_TTL));
-    }
+    // ---------------------------------------------------------------------
 
-    public ChatMemoryConfig writeChatMemoryConfig() {
-        return new ChatMemoryConfig(
-                getView().getMemoryTokenLimit(),
-                getView().getMemoryTimeToLive());
-    }
 
-    public interface AskStroomAiConfigView extends View, Focus, HasUiHandlers<AskStroomAiConfigUiHandlers> {
+    public interface AskStroomAiConfigView extends View {
+
+        TabBar getTabBar();
+
+        LayerContainer getLayerContainer();
 
         void allowSetDefault(boolean allow);
 
-        void setMaximumBatchSize(int maximumBatchSize);
-
-        int getMaximumBatchSize();
-
-        void setMaximumTableInputRows(int maximumTableInputRows);
-
-        int getMaximumTableInputRows();
-
-        void setMemoryTokenLimit(int memoryTokenLimit);
-
-        int getMemoryTokenLimit();
-
-        SimpleDuration getMemoryTimeToLive();
-
-        void setMemoryTimeToLive(SimpleDuration memoryTimeToLive);
+        void setOnSetDefault(Consumer<TaskMonitorFactory> handler);
     }
-
 }

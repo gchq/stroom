@@ -15,13 +15,11 @@ import com.google.gwt.event.shared.HasHandlers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public class MyDataGridAiSupport<T> {
 
     private final HasHandlers globalEventBus;
     private final MyDataGrid<T> dataGrid;
-    private final String chatMemoryId = UUID.randomUUID().toString();
 
     public MyDataGridAiSupport(final HasHandlers globalEventBus,
                                final MyDataGrid<T> dataGrid) {
@@ -78,14 +76,21 @@ public class MyDataGridAiSupport<T> {
     }
 
     private void aiCell(final int row, final int col) {
+        final List<String> headers = getHeader(col);
+        final String colName = !headers.isEmpty()
+                ? headers.get(0)
+                : "";
+        final String description = "Cell [" + colName + "]";
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeader(col),
+                new GeneralTableContext(description, headers,
                         Collections.singletonList(Collections.singletonList(dataGrid.getCellText(row, col)))));
     }
 
     private void aiRow(final int row) {
+        final List<String> headers = getHeaders();
+        final String description = "Row (" + headers.size() + " cols)";
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeaders(),
+                new GeneralTableContext(description, headers,
                         Collections.singletonList(getRow(row))));
     }
 
@@ -100,9 +105,10 @@ public class MyDataGridAiSupport<T> {
             }
         }
 
+        final List<String> headers = getHeaders();
+        final String description = "Selected rows (" + rows.size() + " rows, " + headers.size() + " cols)";
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeaders(),
-                        rows));
+                new GeneralTableContext(description, headers, rows));
     }
 
     private void aiColumn(final int col) {
@@ -111,9 +117,13 @@ public class MyDataGridAiSupport<T> {
             rows.add(Collections.singletonList(dataGrid.getCellText(row, col)));
         }
 
+        final List<String> headers = getHeader(col);
+        final String colName = !headers.isEmpty()
+                ? headers.get(0)
+                : "";
+        final String description = "Column [" + colName + "] (" + rows.size() + " rows)";
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeader(col),
-                        rows));
+                new GeneralTableContext(description, headers, rows));
     }
 
     private void aiColumnForSelectedRows(final int col) {
@@ -127,9 +137,13 @@ public class MyDataGridAiSupport<T> {
             }
         }
 
+        final List<String> headers = getHeader(col);
+        final String colName = !headers.isEmpty()
+                ? headers.get(0)
+                : "";
+        final String description = "Column [" + colName + "] (" + rows.size() + " selected rows)";
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeader(col),
-                        rows));
+                new GeneralTableContext(description, headers, rows));
     }
 
     private void aiTable() {
@@ -138,9 +152,10 @@ public class MyDataGridAiSupport<T> {
             rows.add(getRow(row));
         }
 
+        final List<String> headers = getHeaders();
+        final String description = "Table (" + rows.size() + " rows, " + headers.size() + " cols)";
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableContext(chatMemoryId, getHeaders(),
-                        rows));
+                new GeneralTableContext(description, headers, rows));
     }
 
     private List<String> getRow(final int row) {

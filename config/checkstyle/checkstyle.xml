@@ -225,6 +225,9 @@
       stroom.security.impl.db.jooq.tables.StroomUserArchive.*,
       stroom.security.impl.db.jooq.tables.StroomUserGroup.*,
       stroom.storedquery.impl.db.jooq.tables.Query.*,
+      stroom.ai.impl.db.jooq.tables.AiChat.*,
+      stroom.ai.impl.db.jooq.tables.AiChatMessage.*,
+      stroom.ai.impl.db.jooq.tables.AiChatAttachment.*,
 "/>
 <!--      <property name="excludes" value="org.mockito.*"/>-->
 <!--      <property name="excludes" value="java.lang.annotation.ElementType.*"/>-->

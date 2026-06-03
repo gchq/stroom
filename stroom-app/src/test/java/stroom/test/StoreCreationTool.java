@@ -17,6 +17,7 @@
 package stroom.test;
 
 
+import stroom.ai.api.OpenAIModelStore;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -39,7 +40,6 @@ import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.langchain.api.OpenAIModelStore;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;

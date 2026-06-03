@@ -16,9 +16,9 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchConfig;
@@ -35,15 +35,15 @@ class SearchExpressionQueryBuilderFactory {
 
     private final WordListProvider wordListProvider;
     private final Provider<SearchConfig> searchConfigProvider;
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
 
     @Inject
     SearchExpressionQueryBuilderFactory(final WordListProvider wordListProvider,
                                         final Provider<SearchConfig> searchConfigProvider,
-                                        final Provider<OpenAIService> openAIServiceProvider) {
+                                        final Provider<AiService> aiServiceProvider) {
         this.wordListProvider = wordListProvider;
         this.searchConfigProvider = searchConfigProvider;
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
     }
 
     public SearchExpressionQueryBuilder create(final DocRef indexDocRef,
@@ -56,7 +56,7 @@ class SearchExpressionQueryBuilderFactory {
                     indexFieldCache,
                     wordListProvider,
                     dateTimeSettings,
-                    openAIServiceProvider.get());
+                    aiServiceProvider.get());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;

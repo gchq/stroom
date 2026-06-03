@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
+    <g:FlowPanel styleName="FindViewImpl FindViewImpl--dialog max dock-container-vertical">
+        <g:FlowPanel ui:field="topPanel" styleName="FindViewImpl-top dock-min">
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="bottomPanel" styleName="FindViewImpl-bottom dock-max"/>
+    </g:FlowPanel>
+</ui:UiBinder>

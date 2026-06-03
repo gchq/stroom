@@ -16,6 +16,7 @@
 
 package stroom.meta.impl;
 
+import stroom.ai.impl.MockAiModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -23,7 +24,6 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
@@ -69,7 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockOpenAIModule.class)
+@IncludeModule(MockAiModule.class)
 //@IncludeModule(GlobalConfigBootstrapModule.class)
 //@IncludeModule(GlobalConfigDaoModule.class)
 //@IncludeModule(DirProvidersModule.class)

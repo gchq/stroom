@@ -18,31 +18,52 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.LocationManager;
 import stroom.data.client.event.AskStroomAiEvent;
+import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
-import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.main.client.event.DockEvent;
+import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermission;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.DocumentPermission;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.shared.UserPreferences;
+import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.NullSafe;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Size;
 
-import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -53,19 +74,35 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.Objects;
+
 public class AskStroomAiPresenter
         extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
-        implements AskStroomAiUiHandlers, AskStroomAiEvent.Handler {
+        implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
 
-    private static final String MARKDOWN_SECTION_BREAK = "\n\n---\n\n";
+    private static final int DEFAULT_DOCK_WIDTH = 350;
+    private static final int DEFAULT_DOCK_HEIGHT = 250;
+    private static final int MAX_TITLE_LENGTH = 60;
+    private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
+    private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
+    private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
+
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
-    private String node;
+    private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
+    private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
+    private final LocationManager locationManager;
+    private final UserPreferencesManager userPreferencesManager;
     private AskStroomAiContext data;
+    private AiChat currentChat;
+    private boolean titleGenerated;
+    private int lastSeenMessageId;
 
     private boolean showing;
+    private boolean docked;
+    private DockBehaviour currentDockBehaviour;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -74,21 +111,28 @@ public class AskStroomAiPresenter
                                 final DocSelectionBoxPresenter docSelectionBoxPresenter,
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
-                                final ClientSecurityContext clientSecurityContext,
-                                final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider) {
+                                final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
+                                final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
+                                final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
+                                final LocationManager locationManager,
+                                final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
+        this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
+        this.downloadChatPresenterProvider = downloadChatPresenterProvider;
+        this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
+        this.userPreferencesManager = userPreferencesManager;
+
+        // Load dock state from user preferences.
+        this.currentDockBehaviour = loadDockBehaviourFromPrefs();
 
         getView().setModelRefSelection(docSelectionBoxPresenter.getView());
         docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
         docSelectionBoxPresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setUiHandlers(this);
-
-        // Only allow administrators to set the default model.
-        view.allowSetDefault(clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
 
         // Initiate the selection box presenter with the default model if one is set.
         askStroomAiClient.getConfig(config -> {
@@ -109,6 +153,52 @@ public class AskStroomAiPresenter
                             .build();
                     askStroomAiClient.setConfig(newConfig);
                 }, this)));
+
+        registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                // Capture copy click events.
+                final Element button = ElementUtil
+                        .findParent(target, element -> element.getTagName().equalsIgnoreCase("button"),
+                                2);
+                if (button != null) {
+                    final String data = button.getAttribute("data");
+                    if (data != null) {
+                        if (ClipboardUtil.copy(data)) {
+                            // Code to change label
+                            final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
+                            final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
+                            if (copyLabel != null) {
+                                copyIcon.setInnerHTML(SvgImage.OK.getSvg());
+                                copyLabel.setInnerHTML("Copied");
+                                new com.google.gwt.user.client.Timer() {
+                                    @Override
+                                    public void run() {
+                                        copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
+                                        copyLabel.setInnerHTML("Copy");
+                                    }
+                                }.schedule(2000);
+                            }
+                        }
+                    }
+                }
+            }
+        }, ClickEvent.getType()));
+
+        // Listen for dock splitter resize events to persist the new size.
+        addRegisteredHandler(DockResizeEvent.getType(), event -> {
+            if (docked) {
+                final Size newSize = event.getNewSize();
+                final DockLocation loc = currentDockBehaviour.getDockLocation();
+                final int dimension;
+                if (loc == DockLocation.LEFT || loc == DockLocation.RIGHT) {
+                    dimension = (int) newSize.getWidth();
+                } else {
+                    dimension = (int) newSize.getHeight();
+                }
+                saveDockSizeToPrefs(dimension);
+            }
+        });
     }
 
     @Override
@@ -118,34 +208,143 @@ public class AskStroomAiPresenter
 
     @ProxyEvent
     @Override
-    public void onShow(final AskStroomAiEvent event) {
-        if (!showing) {
-            showing = true;
+    public void onAsk(final AskStroomAiEvent event) {
+        // Show if not already showing.
+        ShowAskStroomAiEvent.fire(this, true);
 
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.CLOSE_DIALOG)
-                    .popupSize(PopupSize.resizable(700, 500))
-                    .caption("Ask Stroom AI")
-                    .onShow(e -> {
-                        setContext(event.getNode(),
-                                event.getData());
-                        getView().focus();
-                    })
-                    .onHide(e -> {
-                        showing = false;
-                    })
-                    .fire();
+        Scheduler.get().scheduleDeferred(() -> {
+            // Auto-create a chat if none exists.
+            ensureChat(() -> {
+                setContext(event.getData());
+                getView().focus();
+
+                // Immediately send context-only request to create the attachment on the server
+                // and start the async download. The ATTACHMENT message will appear in the chat
+                // history when we poll for new messages.
+                if (this.data != null) {
+                    getView().setEmptyState(false);
+                    askStroomAiClient.getConfig(config -> {
+                        final AskStroomAiRequest request = new AskStroomAiRequest(
+                                currentChat, config, this.data, null);
+                        // Generate a title from the attachment type.
+                        maybeGenerateTitle(getContextTitle(this.data));
+                        // Clear context so it isn't re-attached when the user sends a question.
+                        this.data = null;
+                        getView().clearContextIndicator();
+                        askStroomAiClient.sendMessage(request,
+                                response -> pollForNewMessages(),
+                                error -> showError(error, "Failed to create attachment", null),
+                                getView());
+                    }, getView());
+                }
+            });
+        });
+    }
+
+    @ProxyEvent
+    @Override
+    public void onShow(final ShowAskStroomAiEvent event) {
+        if (event.isShow()) {
+            if (!showing) {
+                showing = true;
+
+                if (currentDockBehaviour.getDockType() == DockType.DOCK) {
+                    // Dock mode: fire DockEvent to attach to main layout.
+                    final Size size = getDockSize();
+                    DockEvent.fire(this, this, currentDockBehaviour, size);
+                    docked = true;
+                } else {
+                    // Dialog mode: show as popup.
+                    ShowPopupEvent.builder(this)
+                            .popupType(PopupType.CLOSE_DIALOG)
+                            .popupSize(PopupSize.resizable(700, 500))
+                            .caption("Ask Stroom AI")
+                            .onHideRequest(e -> {
+                                ShowAskStroomAiEvent.fire(this, false);
+                            })
+                            .onHide(e -> {
+                                showing = false;
+                            })
+                            .fire();
+                }
+            }
+        } else {
+            if (showing) {
+                showing = false;
+                if (currentDockBehaviour.getDockType() == DockType.DOCK) {
+                    // Dock mode: fire DockEvent to detach to main layout.
+                    docked = false;
+                    DockEvent.fireUndock(this, this);
+                } else {
+                    // Dialog mode: hide popup.
+                    HidePopupEvent.builder(this).fire();
+                }
+            }
         }
     }
 
     @Override
     public void onChangeConfig() {
-        askStroomAiConfigPresenterProvider.get().show();
+        askStroomAiClient.getConfig(config -> {
+            final AskStroomAIConfig newConfig = config
+                    .copy()
+                    .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
+                    .build();
+            askStroomAiConfigPresenterProvider.get().show(
+                    newConfig, askStroomAiClient::setConfig, currentDockBehaviour, this::onDockBehaviourChange);
+        }, this);
     }
 
-    @Override
-    public void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
+    void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
+        // Idempotency: if the behaviour hasn't changed, nothing to do.
+        // This handles the duplicate call that occurs when a live-preview change
+        // (radio button) is followed by the user clicking OK, which calls the
+        // consumer again with the same value.
+        if (dockBehaviour.equals(currentDockBehaviour)) {
+            return;
+        }
 
+        this.currentDockBehaviour = dockBehaviour;
+
+        // Persist to user preferences.
+        saveDockBehaviourToPrefs(dockBehaviour);
+
+        if (showing) {
+            final boolean wasDocked = docked;
+            final boolean wantsDock = dockBehaviour.getDockType() == DockType.DOCK;
+
+            if (wasDocked && wantsDock) {
+                // Location change while docked: defer so any in-flight settings-dialog
+                // hide sequence completes first, then undock and re-dock.
+                Scheduler.get().scheduleDeferred(() -> {
+                    DockEvent.fireUndock(this, this);
+                    DockEvent.fire(this, this, dockBehaviour, getDockSize());
+                    getView().focus();
+                });
+
+            } else if (wasDocked) {
+                // DOCK → DIALOG: defer so settings dialog closes first.
+                Scheduler.get().scheduleDeferred(() -> {
+                    DockEvent.fireUndock(this, this);
+                    docked = false;
+                    showing = false;
+                    showAsDialog();
+                });
+
+            } else if (wantsDock) {
+                // DIALOG → DOCK: use HidePopupEvent (not HidePopupRequestEvent) for a
+                // direct programmatic dismiss that doesn't re-enter onHideRequest.
+                // HidePopupEvent fires synchronously and calls onHide (showing=false),
+                // then the deferred re-enables showing, sets docked, and fires DockEvent.
+                HidePopupEvent.builder(this).fire();
+                Scheduler.get().scheduleDeferred(() -> {
+                    showing = true;
+                    docked = true;
+                    DockEvent.fire(this, this, dockBehaviour, getDockSize());
+                    getView().focus();
+                });
+            }
+        }
     }
 
     @ProxyCodeSplit
@@ -154,44 +353,58 @@ public class AskStroomAiPresenter
     }
 
     @Override
-    public void setContext(final String node, final AskStroomAiContext data) {
-        this.node = node;
+    public void setContext(final AskStroomAiContext data) {
         this.data = data;
-    }
 
-    @Override
-    public void onSetDefaultModel(final TaskMonitorFactory taskMonitorFactory) {
-        final DocRef selected = docSelectionBoxPresenter.getSelectedEntityReference();
-        if (selected != null) {
-            askStroomAiClient.setDefaultModel(selected, success -> {
-                AlertEvent.fireInfo(
-                        AskStroomAiPresenter.this,
-                        "Default model set to '" + selected.getDisplayValue() + "'",
-                        null);
-            }, taskMonitorFactory);
+        // Show attachment-style context indicator using the context's description.
+        if (data != null) {
+            getView().setContextIndicator(SvgImage.CLIPBOARD, data.getDescription());
+        } else {
+            getView().clearContextIndicator();
         }
     }
 
     @Override
     public void onSendMessage(final String message) {
         getView().setSendButtonLoadingState(true);
-        renderMarkdown("> " + message);
+        getView().setEmptyState(false);
+        getView().clearContextIndicator();
+
+        final HtmlBuilder hb = new HtmlBuilder();
+        appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
+                System.currentTimeMillis(), false);
+        appendToContainer(hb);
 
         // Scroll markdown container to bottom, so the user's message is displayed
-        final Element markdownContainer = getView().getMarkdownContainer();
-        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        final SimplePanel markdownContainer = getView().getMarkdownContainer();
+        markdownContainer.getElement().setScrollTop(markdownContainer.getElement().getScrollHeight());
 
-        askStroomAiClient.getConfig(config -> {
-            final AskStroomAiRequest request = new AskStroomAiRequest(config, data, message);
-            askStroomAiClient.sendMessage(node,
-                    request,
+        ensureChat(() -> askStroomAiClient.getConfig(config -> {
+            final AskStroomAiRequest request = new AskStroomAiRequest(
+                    currentChat, config, data, message);
+            // Clear context so follow-up messages don't re-attach the same data.
+            this.data = null;
+            askStroomAiClient.sendMessage(request,
                     response -> {
-                        onMessageReceived(response.getMessage());
-                        getView().setSendButtonLoadingState(false);
+                        // Poll to get the properly typed, persisted messages.
+                        pollForNewMessages();
+                        maybeGenerateTitle(message);
                     }, error ->
                             showError(error, "Stroom AI request failed", () ->
-                                    getView().setSendButtonLoadingState(false)), this);
-        }, this);
+                                    getView().setSendButtonLoadingState(false)), getView());
+        }, getView()));
+    }
+
+    @Override
+    public void onCancelProcessing() {
+        if (currentChat != null) {
+            askStroomAiClient.cancelProcessing(currentChat.getId(),
+                    success -> {
+                        // Server will set the cancellation flag; the poll loop will pick up
+                        // partial results and stop. Reset UI now so the user can type again.
+                        getView().setSendButtonLoadingState(false);
+                    }, getView());
+        }
     }
 
     private void showError(final RestError error,
@@ -204,56 +417,506 @@ public class AskStroomAiPresenter
                 callback);
     }
 
+    /**
+     * Poll for new messages since lastSeenMessageId. Renders any new messages
+     * with type-aware formatting and updates the lastSeenMessageId.
+     */
+    private void pollForNewMessages() {
+        if (currentChat == null) {
+            return;
+        }
+        askStroomAiClient.pollMessages(currentChat.getId(), lastSeenMessageId, response -> {
+            if (response.getNewMessages() != null && !response.getNewMessages().isEmpty()) {
+                final HtmlBuilder hb = new HtmlBuilder();
+                for (final AiChatMessage msg : response.getNewMessages()) {
+                    // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
+                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
+                        renderMessage(hb, msg);
+                    }
+                    // Track the highest seen message ID.
+                    lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
+                }
+                // Scroll to show new content.
+                appendToContainer(hb);
+            }
+
+            // Update attachment status elements in-place.
+            updateAttachmentStatuses(response.getAttachments());
+
+            if (!response.isComplete()) {
+                // If the conversation is still in-flight, schedule another poll after 1s.
+                new com.google.gwt.user.client.Timer() {
+                    @Override
+                    public void run() {
+                        pollForNewMessages();
+                    }
+                }.schedule(1000);
+            } else {
+                getView().setSendButtonLoadingState(false);
+            }
+        }, error -> {
+            // Clear loading state on poll failure so the UI doesn't get stuck.
+            getView().setSendButtonLoadingState(false);
+        }, getView());
+    }
+
+    void appendToContainer(final HtmlBuilder hb) {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        final String current = NullSafe.toString(markdownContainer.getInnerHTML());
+        markdownContainer.setInnerHTML(current + hb.toSafeHtml().asString());
+        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+    }
+
+    /**
+     * Render a single message with type-aware HTML structure.
+     */
+    private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg) {
+        final long timeMs = msg.getCreateTimeMs();
+        switch (msg.getMessageType()) {
+            case USER_MESSAGE:
+                appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
+                        timeMs, false);
+                break;
+            case AI_RESPONSE:
+                appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
+                        timeMs, true);
+                break;
+            case ERROR:
+                appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
+                        timeMs, false);
+                break;
+            case WORKING:
+                appendDetailsElement(hb, "ai-message ai-message--working",
+                        SvgImage.INFO, "Working...", msg.getMessage(), timeMs);
+                break;
+            case THINKING:
+                appendDetailsElement(hb, "ai-message ai-message--thinking",
+                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs);
+                break;
+            case DASHBOARD_DATA:
+            case QUERY_DATA:
+            case TABLE_DATA:
+                appendDetailsElement(hb, "ai-message ai-message--data",
+                        SvgImage.TABLE, "Data context", msg.getMessage(), timeMs);
+                break;
+            case DEBUG_DETAIL:
+                appendDetailsElement(hb, "ai-message ai-message--debug-detail",
+                        SvgImage.INFO, "Request detail", msg.getMessage(), timeMs);
+                break;
+            case ATTACHMENT:
+                appendAttachmentMessage(hb, msg, timeMs);
+                break;
+            default:
+                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, false);
+                break;
+        }
+    }
+
+    /**
+     * Append a message div with the given CSS class, markdown content, and timestamp.
+     * If {@code showCopy} is true, a copy button is added for AI responses.
+     */
+    private void appendMessageHtml(final HtmlBuilder hb,
+                                   final String cssClass,
+                                   final String markdownText,
+                                   final long timeMs,
+                                   final boolean showCopy) {
+        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
+
+        hb.div(wrapper -> {
+            wrapper.append(markdownHtml);
+            // Add message footer (timestamp + optional copy button).
+            wrapper.div(footer -> {
+
+                // Add copy button.
+                if (showCopy) {
+                    footer.elem(button ->
+                                    setCopyButtonContent(button, SvgImage.COPY, "Copy"),
+                            BUTTON,
+                            Attribute.className("ai-message-copy"),
+                            new Attribute("data", markdownText));
+                }
+
+                // Add timestamp.
+                timestamp(footer, timeMs);
+
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className(cssClass));
+    }
+
+    /**
+     * Append a collapsible details/summary element for thinking and data messages.
+     * Uses native HTML {@code <details>/<summary>} so content is collapsed by default.
+     */
+    private void appendDetailsElement(final HtmlBuilder hb,
+                                      final String cssClass,
+                                      final SvgImage icon,
+                                      final String summaryText,
+                                      final String markdownText,
+                                      final long timeMs) {
+        hb.elem(details -> {
+            details.elem(summary -> {
+                icon(summary, icon);
+                summary.append(summaryText);
+            }, SUMMARY, Attribute.className("ai-message-header"));
+
+            // Add markdown message.
+            details.div(contentDiv -> {
+                contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText));
+            }, Attribute.className("ai-details-content"));
+
+            // Add timestamp footer.
+            details.div(footer -> {
+                timestamp(footer, timeMs);
+            }, Attribute.className("ai-message-footer"));
+        }, DETAILS, Attribute.className(cssClass));
+    }
+
+    /**
+     * Render an ATTACHMENT message with a status line that can be updated in-place
+     * via a unique DOM ID.
+     */
+    private void appendAttachmentMessage(final HtmlBuilder hb,
+                                         final AiChatMessage msg,
+                                         final long timeMs) {
+        final Integer attachmentId = msg.getAttachmentId();
+        hb.div(container -> {
+            // Header with icon and description.
+            container.div(header -> {
+                icon(header, SvgImage.TABLE);
+                header.append(NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment"));
+            }, Attribute.className("ai-message-header"));
+
+            // Status line — will be updated in-place by polling.
+            if (attachmentId != null) {
+                container.div(statusDiv -> {
+                    appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading...");
+                }, Attribute.className("ai-attachment-status"), new Attribute("id",
+                        "ai-attachment-status-" +
+                        attachmentId));
+            }
+
+            // Footer with timestamp.
+            container.div(footer -> {
+                timestamp(footer, timeMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--data"));
+    }
+
+    private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
+        icon(hb, icon);
+        hb.div(status -> {
+            status.append(text);
+        }, Attribute.className("ai-attachment-status-text"));
+    }
+
+    /**
+     * Update existing attachment status elements in the DOM with current status.
+     */
+    private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
+        if (attachments == null) {
+            return;
+        }
+        for (final AiChatAttachment attachment : attachments) {
+            final Document doc = Document.get();
+            final Element statusEl = doc.getElementById("ai-attachment-status-" + attachment.getId());
+            if (statusEl != null) {
+                statusEl.setInnerHTML(formatAttachmentStatus(attachment));
+            }
+        }
+    }
+
+    /**
+     * Format a human-readable status string with an appropriate icon for the
+     * given attachment status.
+     */
+    private String formatAttachmentStatus(final AiChatAttachment attachment) {
+        final HtmlBuilder hb = new HtmlBuilder();
+        switch (attachment.getStatus()) {
+            case PENDING -> appendStatus(hb, SvgImage.DOWNLOAD, "Pending...");
+            case DOWNLOADING -> appendStatus(hb, SvgImage.DOWNLOAD, "Downloading...");
+            case READY -> {
+                final StringBuilder sb = new StringBuilder();
+                sb.append(" Ready");
+                if (attachment.getRowCount() != null) {
+                    sb.append(" --- ").append(attachment.getRowCount()).append(" rows");
+                }
+                if (attachment.isTruncated()) {
+                    sb.append(" (truncated to limit)");
+                }
+                appendStatus(hb, SvgImage.OK, sb.toString());
+            }
+            case ERROR -> appendStatus(hb, SvgImage.ERROR, "Error: " +
+                                                           NullSafe.getOrElse(attachment,
+                                                                   AiChatAttachment::getErrorMessage,
+                                                                   "Unknown error"));
+        }
+        return hb.toSafeHtml().asString();
+    }
+
+    private static void icon(final HtmlBuilder hb, final SvgImage icon) {
+        hb.div(div -> {
+            div.appendTrustedString(icon.getSvg());
+        }, Attribute.className("svgIcon " + icon.getClassName()));
+    }
+
+    private void timestamp(final HtmlBuilder html, final long timeMs) {
+        html.div(timestamp -> {
+            timestamp.append(RelativeTimeUtil.formatRelativeTime(timeMs));
+        }, Attribute.className("ai-message-timestamp"));
+    }
+
+    /**
+     * Set the content of a copy button to an SVG icon + label.
+     */
+    private static void setCopyButtonContent(final HtmlBuilder button,
+                                             final SvgImage icon,
+                                             final String label) {
+        icon(button, icon);
+        button.div(text -> text.append(label), Attribute.className("ai-message-copy-label"));
+    }
+
     @Override
-    public void clearHistory() {
-        final Element markdownContainer = getView().getMarkdownContainer();
-        markdownContainer.removeAllChildren();
+    public void onNewChat() {
+        askStroomAiClient.createChat(chat -> {
+            currentChat = chat;
+            titleGenerated = false;
+            lastSeenMessageId = 0;
+            data = null;
+            getView().clearMessages();
+            getView().setEmptyState(true);
+            getView().clearContextIndicator();
+            getView().setTitle(chat.getTitle());
+            getView().setDownloadEnabled(true);
+            getView().focus();
+        }, this);
     }
 
-    private void onMessageReceived(final String message) {
-        final Element markdownContainer = getView().getMarkdownContainer();
-        final int oldScrollHeight = markdownContainer.getScrollHeight();
-
-        renderMarkdown(message);
-
-        // Scroll down a little, to display the start of the response message
-        markdownContainer.setScrollTop(oldScrollHeight + 50);
+    @Override
+    public void onShowHistory() {
+        aiChatHistoryPresenterProvider.get().show(this::loadChat);
     }
 
-    private void renderMarkdown(final String message) {
-        final Element markdownContainer = getView().getMarkdownContainer();
-
-        // Emit the rendered markdown as HTML
-        final StringBuilder sb = new StringBuilder();
-        if (markdownContainer.hasChildNodes()) {
-            sb.append(MARKDOWN_SECTION_BREAK);
+    @Override
+    public void onDownloadChat() {
+        if (currentChat == null) {
+            return;
         }
-        sb.append(message);
-        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(sb.toString());
-        final DivElement newMarkdownContent = Document.get().createDivElement();
-        newMarkdownContent.setInnerSafeHtml(markdownHtml);
+        final DownloadChatPresenter dlPresenter = downloadChatPresenterProvider.get();
+        ShowPopupEvent.builder(dlPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Download Options")
+                .onShow(e -> dlPresenter.getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DownloadChatHistoryRequest request = new DownloadChatHistoryRequest(
+                                currentChat.getId(),
+                                dlPresenter.isIncludeDataContexts());
+                        askStroomAiClient.downloadChatHistory(request,
+                                result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result),
+                                error -> showError(error, "Failed to download chat history", null),
+                                this);
+                    }
+                    e.hide();
+                })
+                .fire();
+    }
 
-        // Append all new markdown nodes to the container
-        while (newMarkdownContent.getFirstChild() != null) {
-            markdownContainer.appendChild(newMarkdownContent.getFirstChild());
+    private void loadChat(final AiChat chat) {
+        currentChat = chat;
+        // A loaded chat already has a title.
+        titleGenerated = true;
+        lastSeenMessageId = 0;
+        data = null;
+        getView().clearMessages();
+        getView().clearContextIndicator();
+        getView().setTitle(chat.getTitle());
+        getView().setDownloadEnabled(true);
+
+        // Load messages for the selected chat.
+        askStroomAiClient.getMessages(chat.getId(), messages -> {
+            final HtmlBuilder hb = new HtmlBuilder();
+            if (messages != null && !messages.isEmpty()) {
+                getView().setEmptyState(false);
+                for (final AiChatMessage msg : messages) {
+                    renderMessage(hb, msg);
+                    lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
+                }
+            } else {
+                getView().setEmptyState(true);
+            }
+            // Scroll to bottom after loading all messages.
+            appendToContainer(hb);
+            getView().focus();
+
+            // Fetch attachment statuses to update status elements rendered above.
+            // For historical chats, attachments are already in their final state (READY/ERROR).
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response -> {
+                updateAttachmentStatuses(response.getAttachments());
+            }, error -> { /* ignore */ }, this);
+        }, this);
+    }
+
+    /**
+     * Ensure a chat exists, creating one if necessary, then run the callback.
+     */
+    private void ensureChat(final Runnable then) {
+        if (currentChat != null) {
+            then.run();
+        } else {
+            askStroomAiClient.createChat(chat -> {
+                currentChat = chat;
+                titleGenerated = false;
+                lastSeenMessageId = 0;
+                getView().setTitle(chat.getTitle());
+                then.run();
+            }, this);
         }
     }
 
-    public interface AskStroomAiView extends View, Focus, HasUiHandlers<AskStroomAiUiHandlers> {
+    /**
+     * Auto-generate a conversation title from the first user message.
+     * Only fires once per conversation.
+     */
+    private void maybeGenerateTitle(final String userMessage) {
+        if (titleGenerated || currentChat == null || userMessage == null) {
+            return;
+        }
+        titleGenerated = true;
 
-        void allowSetDefault(boolean allow);
+        final String title;
+        if (userMessage.length() <= MAX_TITLE_LENGTH) {
+            title = userMessage;
+        } else {
+            title = userMessage.substring(0, MAX_TITLE_LENGTH) + "…";
+        }
+
+        getView().setTitle(title);
+        askStroomAiClient.updateChatTitle(currentChat.getId(), title, success -> {
+            // Title persisted successfully — nothing more to do.
+        }, this);
+    }
+
+    /**
+     * Returns a human-readable title for the given context type.
+     */
+    private String getContextTitle(final AskStroomAiContext context) {
+        return context.getDescription();
+    }
+
+    public interface AskStroomAiView extends View, Focus, TaskMonitorFactory, HasUiHandlers<AskStroomAiUiHandlers> {
 
         void setModelRefSelection(View view);
 
-        Element getMarkdownContainer();
+        SimplePanel getMarkdownContainer();
 
         String getMessage();
 
         void setSendButtonLoadingState(final boolean enabled);
 
-//        void setDockBehaviour(final DockBehaviour dockBehaviour);
-//
-//        DockBehaviour getDockBehaviour();
+        void setTitle(String title);
+
+        void clearMessages();
+
+        void setEmptyState(boolean empty);
+
+        void setContextIndicator(SvgImage icon, String text);
+
+        void clearContextIndicator();
+
+        void setDownloadEnabled(boolean enabled);
+    }
+
+    // ---- Dock preference helpers ----
+
+    private DockBehaviour loadDockBehaviourFromPrefs() {
+        final UserPreferences prefs = userPreferencesManager.getCurrentUserPreferences();
+        if (prefs != null) {
+            final DockType type = parseDockType(prefs.getAiDockType());
+            final DockLocation location = parseDockLocation(prefs.getAiDockLocation());
+            return new DockBehaviour(type, location);
+        }
+        return new DockBehaviour(DockType.DIALOG, DockLocation.RIGHT);
+    }
+
+    private void saveDockBehaviourToPrefs(final DockBehaviour behaviour) {
+        final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
+        if (currentPrefs != null) {
+            final UserPreferences newPrefs = currentPrefs.copy()
+                    .aiDockType(behaviour.getDockType().name())
+                    .aiDockLocation(behaviour.getDockLocation().name())
+                    .build();
+            userPreferencesManager.setCurrentPreferences(newPrefs);
+            userPreferencesManager.update(newPrefs, result -> {
+            }, this);
+        }
+    }
+
+    private void saveDockSizeToPrefs(final int size) {
+        final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
+        if (currentPrefs != null) {
+            final UserPreferences newPrefs = currentPrefs.copy()
+                    .aiDockSize(size)
+                    .build();
+            userPreferencesManager.setCurrentPreferences(newPrefs);
+            userPreferencesManager.update(newPrefs, result -> {
+            }, this);
+        }
+    }
+
+    private Size getDockSize() {
+        final UserPreferences prefs = userPreferencesManager.getCurrentUserPreferences();
+        final DockLocation loc = currentDockBehaviour.getDockLocation();
+        final int defaultSize;
+        if (loc == DockLocation.LEFT || loc == DockLocation.RIGHT) {
+            defaultSize = DEFAULT_DOCK_WIDTH;
+        } else {
+            defaultSize = DEFAULT_DOCK_HEIGHT;
+        }
+        final int size = (prefs != null && prefs.getAiDockSize() != null)
+                ? prefs.getAiDockSize()
+                : defaultSize;
+        return new Size.Builder()
+                .width(size)
+                .height(size)
+                .build();
+    }
+
+    private void showAsDialog() {
+        showing = true;
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(PopupSize.resizable(700, 500))
+                .caption("Ask Stroom AI")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    // Notify MainPresenter so the toolbar toggle button is reset.
+                    ShowAskStroomAiEvent.fire(this, false);
+                })
+                .onHide(e -> showing = false)
+                .fire();
+    }
+
+    private static DockType parseDockType(final String value) {
+        if (value != null) {
+            try {
+                return DockType.valueOf(value);
+            } catch (final IllegalArgumentException e) {
+                // Ignore invalid values.
+            }
+        }
+        return DockType.DIALOG;
+    }
+
+    private static DockLocation parseDockLocation(final String value) {
+        if (value != null) {
+            try {
+                return DockLocation.valueOf(value);
+            } catch (final IllegalArgumentException e) {
+                // Ignore invalid values.
+            }
+        }
+        return DockLocation.RIGHT;
     }
 
     public static class DockBehaviour {
@@ -273,6 +936,21 @@ public class AskStroomAiPresenter
 
         public DockLocation getDockLocation() {
             return dockLocation;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final DockBehaviour that = (DockBehaviour) o;
+            return dockType == that.dockType &&
+                   dockLocation == that.dockLocation;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dockType, dockLocation);
         }
     }
 

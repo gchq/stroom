@@ -11,16 +11,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class QueryTableContext extends AskStroomAiContext {
 
     @JsonProperty
+    private final String description;
+    @JsonProperty
+    private final String node;
+    @JsonProperty
     private final QuerySearchRequest searchRequest;
 
     @JsonCreator
-    public QueryTableContext(@JsonProperty("chatMemoryId") final String chatMemoryId,
+    public QueryTableContext(@JsonProperty("description") final String description,
+                             @JsonProperty("node") final String node,
                              @JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
-        super(chatMemoryId);
+        this.description = description;
+        this.node = node;
         this.searchRequest = searchRequest;
+    }
+
+    @Override
+    public String getDescription() {
+        return description != null
+                ? description
+                : "Query table";
     }
 
     public QuerySearchRequest getSearchRequest() {
         return searchRequest;
+    }
+
+    public String getNode() {
+        return node;
     }
 }

@@ -6,6 +6,7 @@ def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
+    implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
@@ -42,7 +43,6 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-kafka:stroom-kafka-impl')
-    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-impl')
