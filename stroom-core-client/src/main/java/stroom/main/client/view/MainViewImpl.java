@@ -237,6 +237,10 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
             return;
         }
 
+        // Capture the current dock size before tearing down the outer split
+        // so that re-docking restores the user's last splitter position.
+        captureDockSize();
+
         // Get the inner content before tearing down the outer split.
         final Widget innerContent = getInnerContent();
 
@@ -259,7 +263,15 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     }
 
     private void rebuildOuterSplit(final Widget innerContent) {
-        outerSplitPanel = new ThinSplitLayoutPanel();
+        outerSplitPanel = new ThinSplitLayoutPanel() {
+            @Override
+            public void onResize() {
+                super.onResize();
+                // After every resize (including splitter drag), check if the
+                // docked widget size has changed and fire a DockResizeEvent.
+                scheduleDockResizeCheck();
+            }
+        };
         outerSplitPanel.addStyleName("mainViewImpl-outerSplitPanel");
 
         // Add the docked widget on the appropriate edge.
@@ -299,9 +311,24 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
                 outerSplitPanel.forceLayout();
             }
         });
+    }
 
-        // Schedule a deferred check for splitter resize to persist the new size.
-        scheduleDockResizeCheck();
+    /**
+     * Captures the current docked widget size into the dockSize field.
+     * Called before undocking so the position is preserved for re-docking.
+     */
+    private void captureDockSize() {
+        if (dockedWidget != null && dockLocation != null) {
+            final double currentSize;
+            if (dockLocation == DockLocation.LEFT || dockLocation == DockLocation.RIGHT) {
+                currentSize = dockedWidget.getOffsetWidth();
+            } else {
+                currentSize = dockedWidget.getOffsetHeight();
+            }
+            if (currentSize > 0) {
+                dockSize = currentSize;
+            }
+        }
     }
 
     private double getDockDimension(final DockLocation location, final Size size) {
