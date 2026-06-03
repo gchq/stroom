@@ -13,6 +13,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.3] - 2026-06-03
+
+* Dependency : Uplift DropWizard to v5.0.1.
+
+* Dependency : Uplift `net.openhft:zero-allocation-hashing` to `2026.0`.
+
+* Dependency : Add Jackson JSON library `3.1.2` in addition to the existing `2.21.2` version. Stroom/Stroom-Proxy are now using v3 with the exception of a few specific areas that need legacy capability only available in v2. v3 is a significant change from v2 with some breaking changes and some differences in behaviour. Special attention should be paid to the output of JSONParser pipeline element to ensure it is behaving as expected.
+
+* Feature **#5515** : Change JSONParser pipeline element to truncate very long strings values. Currently very long string values can result in Out of Memory errors in Stroom. The following configuration properties have been added to the JSONParser element; `stringTruncateLength` (default 10,000) to truncate very long strings, `maxStringLength` (default 100,000,000) to cause a fatal error if a long string is encountered, `maxDepth` (default 500) to limit the depth of deeply nested documents. The JSONParser has also been changed so that the characters of string values are streamed to the downstream pipeline elements rather than reading the whole string into memory. NOTE: It is still possible for downstream XSLT XPATH functions to result in the entire string being read into memory.
+
+* Bug : Fix DocRef hover copy/open links not appearing.
+
+* Bug **#5535** : Fix simple string values not appearing in Pipeline Property table.
+
+* Bug : Fix Null Pointer type bug on Data Receipt Rules screen.
+
+* Refactor : Change json (de)serialisation to not go via a String when dealing only with byte[] data.
+
+* Dependency : Uplift base docker images to `eclipse-temurin:25.0.3_9-jdk-alpine-3.23`.
+
+* Feature **#5303** : Improve Stroom AI to add dockable panel, chat history, attachments, copy, download, chat details etc.
+
 * Feature **#5552** : Add additional S3 properties to S3Appender.
 
 * Bug : Fix typo in query snippet name (`Eval first first value` => `Eval first value`).
@@ -2235,7 +2257,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.3...HEAD
+[v7.13-beta.3]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v7.13-beta.3
 [v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
 [v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
 [v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
