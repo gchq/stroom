@@ -31,8 +31,6 @@ public interface DocRefInfoService extends DocRefDecorator {
 
     Optional<DocRefInfo> info(DocRef docRef);
 
-    Optional<DocRefInfo> info(String uuid);
-
     Optional<String> name(DocRef docRef);
 
     /**

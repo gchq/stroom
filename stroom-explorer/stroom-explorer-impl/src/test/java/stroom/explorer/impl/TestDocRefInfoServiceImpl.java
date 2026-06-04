@@ -267,26 +267,6 @@ class TestDocRefInfoServiceImpl {
     }
 
     @Test
-    void findSearchableByName_nullTypeExact() {
-        initSearchables();
-
-        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Dual", false);
-
-        assertThat(docRefs)
-                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
-    }
-
-    @Test
-    void findSearchableByName_nullTypeWild() {
-        initSearchables();
-
-        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Du*", true);
-
-        assertThat(docRefs)
-                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
-    }
-
-    @Test
     void findByType() {
         initSearchables();
         final List<DocRef> docRefs = docRefInfoService.findByType(MySpecialDataSource1.TYPE);

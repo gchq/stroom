@@ -35,7 +35,6 @@ import jakarta.inject.Singleton;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -49,7 +48,6 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
-    public static final String UNKNOWN_TYPE = "UNKNOWN";
 
     // Effectively docUuid => optDocRefInfo
     private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
@@ -82,61 +80,11 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
         DocRefInfo docRefInfo = null;
 
         try {
-            docRefInfo = securityContext.asProcessingUserResult(() -> {
-                if (UNKNOWN_TYPE.equals(docRef.getType())) {
-                    return getDocRefInfoWithoutType(docRef);
-                } else {
-                    return getDocRefInfoWithType(docRef);
-                }
-            });
+            docRefInfo = securityContext.asProcessingUserResult(() -> getDocRefInfoWithType(docRef));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
         return Optional.ofNullable(docRefInfo);
-    }
-
-    private DocRefInfo getDocRefInfoWithoutType(final DocRef docRef) {
-        // Throw an exception to find out what calls this code.
-        if (LOGGER.isDebugEnabled()) {
-            try {
-                throw new RuntimeException();
-            } catch (final RuntimeException e) {
-                LOGGER.debug("Getting document info without type for: {}", docRef, e);
-            }
-        }
-
-        // No type so need to check all handlers and return the one that has it.
-        // Hopefully next time it will still be in the cache so this won't be needed
-
-        // Try document handlers first.
-        DocRefInfo docRefInfo = getDocRefInfoWithoutType(docRef, getDocumentActionHandlerMap());
-        if (docRefInfo != null) {
-            return docRefInfo;
-        }
-        // If no document handler then try explorer tree handler.
-        docRefInfo = getDocRefInfoWithoutType(docRef, getExplorerActionHandlerMap());
-        return docRefInfo;
-    }
-
-    private DocRefInfo getDocRefInfoWithoutType(final DocRef docRef,
-                                                final Map<String, Function<DocRef, DocRefInfo>> handlers) {
-        // No type so need to check all handlers and return the one that has it.
-        // Hopefully next time it will still be in the cache so this won't be needed
-        for (final Entry<String, Function<DocRef, DocRefInfo>> entry : handlers.entrySet()) {
-            try {
-                final String type = entry.getKey();
-                final Function<DocRef, DocRefInfo> function = entry.getValue();
-                final DocRef typeFixedDocRef = createTypeSpecificDocRef(type, docRef);
-                final DocRefInfo docRefInfo = function.apply(typeFixedDocRef);
-                if (docRefInfo != null) {
-                    return docRefInfo;
-                }
-            } catch (final Exception e) {
-                LOGGER.debug(e::getMessage, e);
-            }
-        }
-
-        return null;
     }
 
     private Map<String, Function<DocRef, DocRefInfo>> getDocumentActionHandlerMap() {
@@ -164,15 +112,6 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
             explorerActionHandlerMap = map;
         }
         return explorerActionHandlerMap;
-    }
-
-    private DocRef createTypeSpecificDocRef(final String type, final DocRef docRef) {
-        return DocRef
-                .builder()
-                .type(type)
-                .uuid(docRef.getUuid())
-                .name(docRef.getName())
-                .build();
     }
 
     private DocRefInfo getDocRefInfoWithType(final DocRef docRef) {

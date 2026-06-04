@@ -34,8 +34,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -93,27 +91,6 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     }
 
     @Override
-    public Optional<DocRefInfo> info(final String uuid) {
-        final DocRef docRef = DocRef.builder()
-                .type(DocRefInfoCache.UNKNOWN_TYPE)
-                .uuid(uuid)
-                .build();
-
-        return docRefInfoCache.get(docRef)
-                .or(() -> {
-                    // No type so have to loop through all searchable providers
-                    return getSpecialDocRefsByType().values()
-                            .stream()
-                            .flatMap(Collection::stream)
-                            .filter(docRef::equals)
-                            .map(aDocRef -> DocRefInfo.builder()
-                                    .docRef(aDocRef)
-                                    .build())
-                            .findAny();
-                });
-    }
-
-    @Override
     public Optional<String> name(final DocRef docRef) {
         return info(docRef)
                 .map(DocRefInfo::getDocRef)
@@ -124,48 +101,28 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     public List<DocRef> findByName(final String type,
                                    final String nameFilter,
                                    final boolean allowWildCards) {
+        Objects.requireNonNull(type, "Null type");
         if (NullSafe.isEmptyString(nameFilter)) {
             return Collections.emptyList();
         } else {
             return securityContextProvider.get().asProcessingUserResult(() -> {
-                if (type == null) {
-                    // No type so have to search all handlers
-                    final List<DocRef> result = new ArrayList<>();
-                    explorerActionHandlers.forEach((handlerType, handler) ->
-                            result.addAll(handler.findByName(nameFilter, allowWildCards)));
-
-                    final Predicate<DocRef> predicate = PatternUtil.createPredicate(
-                            List.of(nameFilter),
-                            DocRef::getName,
-                            allowWildCards,
-                            true,
-                            true);
-
-                    getSpecialDocRefsByType().values()
-                            .stream()
-                            .flatMap(Collection::stream)
-                            .filter(predicate)
-                            .forEach(result::add);
-                    return result;
+                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+                if (handler != null) {
+                    return handler.findByName(nameFilter, allowWildCards);
                 } else {
-                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
-                    if (handler != null) {
-                        return handler.findByName(nameFilter, allowWildCards);
+                    final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
+                    if (specialDocRefs != null) {
+                        final Predicate<DocRef> predicate = PatternUtil.createPredicate(
+                                List.of(nameFilter),
+                                DocRef::getName,
+                                allowWildCards,
+                                true,
+                                true);
+                        return specialDocRefs.stream()
+                                .filter(predicate)
+                                .collect(Collectors.toList());
                     } else {
-                        final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
-                        if (specialDocRefs != null) {
-                            final Predicate<DocRef> predicate = PatternUtil.createPredicate(
-                                    List.of(nameFilter),
-                                    DocRef::getName,
-                                    allowWildCards,
-                                    true,
-                                    true);
-                            return specialDocRefs.stream()
-                                    .filter(predicate)
-                                    .collect(Collectors.toList());
-                        } else {
-                            throw new RuntimeException("No handler for type " + type);
-                        }
+                        throw new RuntimeException("No handler for type " + type);
                     }
                 }
             });
@@ -176,7 +133,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     public List<DocRef> findByNames(final String type,
                                     final List<String> nameFilters,
                                     final boolean allowWildCards) {
-        Objects.requireNonNull(type);
+        Objects.requireNonNull(type, "Null type");
         if (NullSafe.isEmptyCollection(nameFilters)) {
             return Collections.emptyList();
         } else {
