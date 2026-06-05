@@ -32,9 +32,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 @Singleton
@@ -83,7 +85,7 @@ public class DBPersistence implements Persistence {
               name
             FROM doc
             WHERE type = ?
-            AND name = ?
+            AND name COLLATE utf8mb4_0900_as_cs = ?
             ORDER BY uuid""";
 
     private static final String SELECT_BY_TYPE_NAME_WILDCARD_SQL = """
@@ -92,7 +94,7 @@ public class DBPersistence implements Persistence {
               name
             FROM doc
             WHERE type = ?
-            AND name like ?
+            AND name COLLATE utf8mb4_0900_as_cs LIKE ?
             ORDER BY uuid""";
 
     private static final String SELECT_ID_BY_TYPE_UUID_SQL = """
@@ -317,6 +319,59 @@ public class DBPersistence implements Persistence {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
                 preparedStatement.setString(2, nameFilterSqlValue);
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String uuid = resultSet.getString(1);
+                        final String name = resultSet.getString(2);
+                        list.add(new DocRef(type, uuid, name));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    @Override
+    public List<DocRef> find(final String type,
+                             final List<String> nameFilters,
+                             final boolean allowWildCards) {
+        if (nameFilters == null || nameFilters.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final List<DocRef> list = new ArrayList<>();
+
+        final String sql;
+        final List<String> nameFilterSqlValues;
+        if (allowWildCards) {
+            nameFilterSqlValues = nameFilters.stream()
+                    .map(PatternUtil::createSqlLikeStringFromWildCardFilter)
+                    .collect(Collectors.toList());
+            final String orConditions = nameFilterSqlValues.stream()
+                    .map(v -> "name COLLATE utf8mb4_0900_as_cs LIKE ?")
+                    .collect(Collectors.joining(" OR "));
+            sql = "SELECT DISTINCT uuid, name FROM doc WHERE type = ? AND (" +
+                    orConditions + ") ORDER BY uuid";
+        } else {
+            nameFilterSqlValues = nameFilters;
+            final String placeholders = nameFilterSqlValues.stream()
+                    .map(v -> "?")
+                    .collect(Collectors.joining(", "));
+            sql = "SELECT DISTINCT uuid, name FROM doc WHERE type = ? AND name COLLATE utf8mb4_0900_as_cs IN (" +
+                    placeholders + ") ORDER BY uuid";
+        }
+
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, type);
+                for (int i = 0; i < nameFilterSqlValues.size(); i++) {
+                    preparedStatement.setString(i + 2, nameFilterSqlValues.get(i));
+                }
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {

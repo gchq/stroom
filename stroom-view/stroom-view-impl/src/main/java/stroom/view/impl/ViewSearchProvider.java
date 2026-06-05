@@ -225,6 +225,11 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return viewStore.findByName(name);
+    }
+
+    @Override
     public String getDataSourceType() {
         return ViewDoc.TYPE;
     }

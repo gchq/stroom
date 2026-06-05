@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 class DocRefInfoServiceImpl implements DocRefInfoService {
 
     private final DocRefInfoCache docRefInfoCache;
+    private final DocRefNameCache docRefNameCache;
     private final Provider<SecurityContext> securityContextProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
     private final Set<IsSpecialExplorerDataSource> specialExplorerDataSources;
@@ -56,10 +57,12 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
 
     @Inject
     DocRefInfoServiceImpl(final DocRefInfoCache docRefInfoCache,
+                          final DocRefNameCache docRefNameCache,
                           final Provider<SecurityContext> securityContextProvider,
                           final ExplorerActionHandlers explorerActionHandlers,
                           final Set<IsSpecialExplorerDataSource> specialExplorerDataSources) {
         this.docRefInfoCache = docRefInfoCache;
+        this.docRefNameCache = docRefNameCache;
         this.securityContextProvider = securityContextProvider;
         this.explorerActionHandlers = explorerActionHandlers;
         this.specialExplorerDataSources = specialExplorerDataSources;
@@ -104,29 +107,34 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         Objects.requireNonNull(type, "Null type");
         if (NullSafe.isEmptyString(nameFilter)) {
             return Collections.emptyList();
-        } else {
-            return securityContextProvider.get().asProcessingUserResult(() -> {
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
-                if (handler != null) {
-                    return handler.findByName(nameFilter, allowWildCards);
-                } else {
-                    final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
-                    if (specialDocRefs != null) {
-                        final Predicate<DocRef> predicate = PatternUtil.createPredicate(
-                                List.of(nameFilter),
-                                DocRef::getName,
-                                allowWildCards,
-                                true,
-                                true);
-                        return specialDocRefs.stream()
-                                .filter(predicate)
-                                .collect(Collectors.toList());
-                    } else {
-                        throw new RuntimeException("No handler for type " + type);
-                    }
-                }
-            });
         }
+
+        // Use the name cache for exact (non-wildcard) lookups.
+        if (!allowWildCards) {
+            return docRefNameCache.get(type, nameFilter);
+        }
+
+        return securityContextProvider.get().asProcessingUserResult(() -> {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+            if (handler != null) {
+                return handler.findByName(nameFilter, allowWildCards);
+            } else {
+                final Set<DocRef> specialDocRefs = getSpecialDocRefs(type);
+                if (specialDocRefs != null) {
+                    final Predicate<DocRef> predicate = PatternUtil.createPredicate(
+                            List.of(nameFilter),
+                            DocRef::getName,
+                            allowWildCards,
+                            true,
+                            true);
+                    return specialDocRefs.stream()
+                            .filter(predicate)
+                            .collect(Collectors.toList());
+                } else {
+                    throw new RuntimeException("No handler for type " + type);
+                }
+            }
+        });
     }
 
     @Override
@@ -161,18 +169,6 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         }
     }
 
-    @Override
-    public List<DocRef> decorate(final List<DocRef> docRefs) {
-        if (NullSafe.isEmptyCollection(docRefs)) {
-            return Collections.emptyList();
-        } else {
-            return docRefs.stream()
-                    .filter(Objects::nonNull)
-                    .map(docRef ->
-                            decorate(docRef, false, null))
-                    .collect(Collectors.toList());
-        }
-    }
 
     @Override
     public DocRef decorate(final DocRef docRef,

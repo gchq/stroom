@@ -214,6 +214,11 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return indexStore.findByName(name);
+    }
+
+    @Override
     public String getDataSourceType() {
         return LuceneIndexDoc.TYPE;
     }

@@ -19,7 +19,6 @@ package stroom.explorer.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
@@ -33,7 +32,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(action = {
@@ -41,17 +42,17 @@ import java.util.Optional;
         EntityAction.UPDATE,
         EntityAction.DELETE,
         EntityAction.UPDATE_EXPLORER_NODE})
-class DocRefInfoCache implements EntityEvent.Handler, Clearable {
+class DocRefNameCache implements EntityEvent.Handler, Clearable {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoCache.class);
-    private static final String CACHE_NAME = "Doc Ref Info Cache";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefNameCache.class);
+    private static final String CACHE_NAME = "Doc Ref Name Cache";
 
-    private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
+    private final LoadingStroomCache<TypeAndName, List<DocRef>> cache;
     private final SecurityContext securityContext;
     private final ExplorerActionHandlers explorerActionHandlers;
 
     @Inject
-    DocRefInfoCache(final CacheManager cacheManager,
+    DocRefNameCache(final CacheManager cacheManager,
                     final Provider<ExplorerConfig> explorerConfigProvider,
                     final SecurityContext securityContext,
                     final ExplorerActionHandlers explorerActionHandlers) {
@@ -60,28 +61,32 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> explorerConfigProvider.get().getDocRefInfoCache(),
-                this::loadDocRefInfo);
+                () -> explorerConfigProvider.get().getDocRefNameCache(),
+                this::loadDocRefsByName);
     }
 
-    private Optional<DocRefInfo> loadDocRefInfo(final DocRef docRef) {
+    private List<DocRef> loadDocRefsByName(final TypeAndName typeAndName) {
         return securityContext.asProcessingUserResult(() -> {
-            LOGGER.trace("loadDocRefInfo: {}", docRef);
-            DocRefInfo docRefInfo = null;
+            LOGGER.trace("loadDocRefsByName: {}", typeAndName);
             try {
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(typeAndName.type());
                 if (handler != null) {
-                    docRefInfo = handler.info(docRef);
+                    final List<DocRef> result = handler.findByName(typeAndName.name(), false);
+                    return result != null
+                            ? result
+                            : Collections.emptyList();
                 }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
-            return Optional.ofNullable(docRefInfo);
+            return Collections.emptyList();
         });
     }
 
-    Optional<DocRefInfo> get(final DocRef docRef) {
-        return cache.get(docRef);
+    List<DocRef> get(final String type, final String name) {
+        Objects.requireNonNull(type, "Null type");
+        Objects.requireNonNull(name, "Null name");
+        return cache.get(new TypeAndName(type, name));
     }
 
     @Override
@@ -92,12 +97,14 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     @Override
     public void onChange(final EntityEvent event) {
         if (event != null) {
-            // Need to handle all types as we are caching an optional, e.g.
-            // If you do a delete then an empty is loaded into the cache,
-            // then the same doc is created again, then we need the empty to
-            // be evicted.
-            LOGGER.debug("Invalidating entry for {}", event);
-            cache.invalidate(event.getDocRef());
+            // We don't know the old name on rename/delete, so clear the entire cache.
+            // This is acceptable because entity events are relatively infrequent compared to reads.
+            LOGGER.debug("Clearing all entries due to {}", event);
+            cache.clear();
         }
+    }
+
+    record TypeAndName(String type, String name) {
+
     }
 }

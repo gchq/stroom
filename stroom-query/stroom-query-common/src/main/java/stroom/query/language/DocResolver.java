@@ -20,8 +20,6 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -31,8 +29,6 @@ import java.util.Locale;
 import java.util.Optional;
 
 public class DocResolver {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocResolver.class);
 
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
@@ -46,24 +42,15 @@ public class DocResolver {
 
     public DocRef resolveDataSourceRef(final String name) {
         final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
-        final List<DocRef> dataSourceDocRefs = dataSourceProviderRegistry.getDataSourceDocRefs();
 
-        // Try by uuid.
-        try {
-            return dataSourceDocRefs
-                    .stream()
-                    .filter(docRef -> docRef != null && docRef.getName() != null && docRef.getUuid().equals(name))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Data source not found with uuid \"" + name + "\""));
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
+        // Try by uuid first.
+        final Optional<DocRef> byUuid = dataSourceProviderRegistry.findDataSourceByUuid(name);
+        if (byUuid.isPresent()) {
+            return byUuid.get();
         }
 
         // Now try by name.
-        final List<DocRef> docRefs = dataSourceDocRefs
-                .stream()
-                .filter(docRef -> docRef != null && docRef.getName() != null && docRef.getName().equals(name))
-                .toList();
+        final List<DocRef> docRefs = dataSourceProviderRegistry.findDataSourceByName(name);
         if (docRefs.isEmpty()) {
             throw new RuntimeException("Data source \"" +
                                        name +

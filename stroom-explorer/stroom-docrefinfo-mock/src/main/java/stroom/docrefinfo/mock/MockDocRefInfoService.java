@@ -63,11 +63,6 @@ public class MockDocRefInfoService implements DocRefInfoService {
     }
 
     @Override
-    public List<DocRef> decorate(final List<DocRef> docRefs) {
-        return docRefs;
-    }
-
-    @Override
     public DocRef decorate(final DocRef docRef,
                            final boolean force,
                            final Set<DocumentPermission> requiredPermissions) {

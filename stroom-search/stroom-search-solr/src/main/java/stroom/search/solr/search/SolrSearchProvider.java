@@ -244,6 +244,11 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return solrIndexStore.findByName(name);
+    }
+
+    @Override
     public String getDataSourceType() {
         return SolrIndexDoc.TYPE;
     }

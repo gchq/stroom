@@ -125,6 +125,11 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return stateDocStore.findByName(name);
+    }
+
+    @Override
     public Optional<QueryField> getTimeField(final DocRef docRef) {
         final PlanBDoc doc = getPlanBDoc(docRef);
         return Optional.ofNullable(StateFieldUtil.getTimeField(doc));

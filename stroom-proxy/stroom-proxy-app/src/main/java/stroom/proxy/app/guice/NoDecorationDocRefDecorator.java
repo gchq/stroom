@@ -20,18 +20,12 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.security.shared.DocumentPermission;
 
-import java.util.List;
 import java.util.Set;
 
 /**
  * A decorator that does no actual decoration
  */
 public class NoDecorationDocRefDecorator implements DocRefDecorator {
-
-    @Override
-    public List<DocRef> decorate(final List<DocRef> docRefs) {
-        return docRefs;
-    }
 
     @Override
     public DocRef decorate(final DocRef docRef, final boolean force) {
