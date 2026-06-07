@@ -155,9 +155,9 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
 
         void setModelId(String modelId);
 
-        int getMaxContextWindowTokens();
+        Integer getMaxContextWindowTokens();
 
-        void setMaxContextWindowTokens(int maxContextWindowTokens);
+        void setMaxContextWindowTokens(Integer maxContextWindowTokens);
 
         String getReasoningEffort();
 

@@ -65,7 +65,7 @@ public class OpenAIModelDoc extends AbstractDoc {
     @JsonProperty
     private final String modelId;
     @JsonProperty
-    private final int maxContextWindowTokens;
+    private final Integer maxContextWindowTokens;
     @JsonProperty
     private final String reasoningEffort;
     @JsonProperty
@@ -84,9 +84,9 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("baseUrl") final String baseUrl,
             @JsonProperty("apiKeyName") final String apiKeyName,
             @JsonProperty("modelId") final String modelId,
-            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens,
+            @JsonProperty("maxContextWindowTokens") final Integer maxContextWindowTokens,
             @JsonProperty("reasoningEffort") final String reasoningEffort,
-            @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
+            @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
@@ -120,7 +120,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         return modelId;
     }
 
-    public int getMaxContextWindowTokens() {
+    public Integer getMaxContextWindowTokens() {
         return maxContextWindowTokens;
     }
 
@@ -141,11 +141,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return false;
         }
         final OpenAIModelDoc that = (OpenAIModelDoc) o;
-        return maxContextWindowTokens == that.maxContextWindowTokens &&
-               Objects.equals(description, that.description) &&
+        return Objects.equals(description, that.description) &&
                Objects.equals(baseUrl, that.baseUrl) &&
                Objects.equals(apiKeyName, that.apiKeyName) &&
                Objects.equals(modelId, that.modelId) &&
+               Objects.equals(maxContextWindowTokens, that.maxContextWindowTokens) &&
                Objects.equals(reasoningEffort, that.reasoningEffort) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
@@ -188,7 +188,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String baseUrl;
         private String apiKey;
         private String modelId;
-        private int maxContextWindowTokens;
+        private Integer maxContextWindowTokens;
         private String reasoningEffort;
         private HttpClientConfig httpClientConfiguration;
 
@@ -226,7 +226,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
-        public Builder maxContextWindowTokens(final int maxContextWindowTokens) {
+        public Builder maxContextWindowTokens(final Integer maxContextWindowTokens) {
             this.maxContextWindowTokens = maxContextWindowTokens;
             return self();
         }

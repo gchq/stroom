@@ -96,12 +96,12 @@ public class OpenAIModelSettingsViewImpl
     }
 
     @Override
-    public int getMaxContextWindowTokens() {
+    public Integer getMaxContextWindowTokens() {
         return maxContextWindowTokens.getIntValue();
     }
 
     @Override
-    public void setMaxContextWindowTokens(final int maxContextWindowTokens) {
+    public void setMaxContextWindowTokens(final Integer maxContextWindowTokens) {
         this.maxContextWindowTokens.setValue(maxContextWindowTokens);
     }
 

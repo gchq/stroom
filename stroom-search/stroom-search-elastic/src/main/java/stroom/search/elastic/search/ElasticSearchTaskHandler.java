@@ -423,7 +423,7 @@ public class ElasticSearchTaskHandler {
         }
 
         final ScoringModel scoringModel = aiServiceProvider.get().getJinaScoringModel(rerankModel);
-        final int maxContextWindowTokens = rerankModel.getMaxContextWindowTokens();
+        final Integer maxContextWindowTokens = rerankModel.getMaxContextWindowTokens();
         final ReRankingContentAggregator rerankAggregator = ReRankingContentAggregator.builder()
                 .scoringModel(scoringModel)
                 .minScore(elasticIndex.getRerankScoreMinimum().doubleValue())
@@ -447,7 +447,7 @@ public class ElasticSearchTaskHandler {
                     if (rawFieldValue != null && searchHit.id() != null) {
                         try {
                             String fieldValue = (String) rawFieldValue.to(ArrayList.class).getFirst();
-                            if (maxContextWindowTokens > 0) {
+                            if (maxContextWindowTokens != null && maxContextWindowTokens > 0) {
                                 // Model context window limit is specified, so truncate the field value to fit
                                 final int charLimit = Math.min(fieldValue.length(), maxContextWindowTokens);
                                 fieldValue = fieldValue.substring(0, charLimit);

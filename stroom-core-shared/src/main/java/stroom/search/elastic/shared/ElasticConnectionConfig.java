@@ -48,7 +48,7 @@ public class ElasticConnectionConfig implements Serializable {
     private String caCertificate;
 
     @JsonProperty
-    private boolean useAuthentication = false;
+    private Boolean useAuthentication = false;
 
     @JsonProperty
     private String apiKeyId;
@@ -60,14 +60,14 @@ public class ElasticConnectionConfig implements Serializable {
      * Amount of time to wait when connecting to Elasticsearch
      */
     @JsonProperty
-    private int connectionTimeoutMillis = 3000;
+    private Integer connectionTimeoutMillis = 3000;
 
     /**
      * Amount of time to allow for Elasticsearch requests to complete.
      * If this interval is exceeded, the request is aborted and an `Error` stream is created.
      */
     @JsonProperty
-    private int responseTimeoutMillis = 0;
+    private Integer responseTimeoutMillis = 0;
 
     public ElasticConnectionConfig() {
     }
@@ -75,11 +75,11 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonCreator
     public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
                                    @JsonProperty("caCertificate") final String caCertificate,
-                                   @JsonProperty("useAuthentication") final boolean useAuthentication,
+                                   @JsonProperty("useAuthentication") final Boolean useAuthentication,
                                    @JsonProperty("apiKeyId") final String apiKeyId,
                                    @JsonProperty("apiKeySecret") final String apiKeySecret,
-                                   @JsonProperty("connectionTimeoutMillis") final int connectionTimeoutMillis,
-                                   @JsonProperty("responseTimeoutMillis") final int responseTimeoutMillis) {
+                                   @JsonProperty("connectionTimeoutMillis") final Integer connectionTimeoutMillis,
+                                   @JsonProperty("responseTimeoutMillis") final Integer responseTimeoutMillis) {
         this.connectionUrls = connectionUrls;
         this.caCertificate = caCertificate;
         this.useAuthentication = useAuthentication;
@@ -105,11 +105,11 @@ public class ElasticConnectionConfig implements Serializable {
         this.caCertificate = caCertificate;
     }
 
-    public boolean getUseAuthentication() {
+    public Boolean getUseAuthentication() {
         return useAuthentication;
     }
 
-    public void setUseAuthentication(final boolean useAuthentication) {
+    public void setUseAuthentication(final Boolean useAuthentication) {
         this.useAuthentication = useAuthentication;
     }
 
@@ -129,19 +129,19 @@ public class ElasticConnectionConfig implements Serializable {
         this.apiKeySecret = apiKeySecret;
     }
 
-    public int getConnectionTimeoutMillis() {
+    public Integer getConnectionTimeoutMillis() {
         return connectionTimeoutMillis;
     }
 
-    public void setConnectionTimeoutMillis(final int connectionTimeoutMillis) {
+    public void setConnectionTimeoutMillis(final Integer connectionTimeoutMillis) {
         this.connectionTimeoutMillis = connectionTimeoutMillis;
     }
 
-    public int getResponseTimeoutMillis() {
+    public Integer getResponseTimeoutMillis() {
         return responseTimeoutMillis;
     }
 
-    public void setResponseTimeoutMillis(final int responseTimeoutMillis) {
+    public void setResponseTimeoutMillis(final Integer responseTimeoutMillis) {
         this.responseTimeoutMillis = responseTimeoutMillis;
     }
 

@@ -120,9 +120,9 @@ public class ElasticClusterSettingsPresenter
 
         void setCaCertificate(String caCertificate);
 
-        boolean getUseAuthentication();
+        Boolean getUseAuthentication();
 
-        void setUseAuthentication(boolean useAuthentication);
+        void setUseAuthentication(Boolean useAuthentication);
 
         String getApiKeyId();
 
@@ -132,12 +132,12 @@ public class ElasticClusterSettingsPresenter
 
         void setApiKeySecret(String apiKeySecret);
 
-        int getConnectionTimeoutMillis();
+        Integer getConnectionTimeoutMillis();
 
-        void setConnectionTimeoutMillis(int connectionTimeoutMillis);
+        void setConnectionTimeoutMillis(Integer connectionTimeoutMillis);
 
-        int getResponseTimeoutMillis();
+        Integer getResponseTimeoutMillis();
 
-        void setResponseTimeoutMillis(int responseTimeoutMillis);
+        void setResponseTimeoutMillis(Integer responseTimeoutMillis);
     }
 }

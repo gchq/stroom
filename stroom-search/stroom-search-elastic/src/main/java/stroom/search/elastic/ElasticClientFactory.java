@@ -75,8 +75,12 @@ public class ElasticClientFactory {
         final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
 
         restClientBuilder.setRequestConfigCallback(requestConfig -> {
-            requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
-            requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
+            if (config.getConnectionTimeoutMillis() != null) {
+                requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
+            }
+            if (config.getResponseTimeoutMillis() != null) {
+                requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getResponseTimeoutMillis()));
+            }
         });
 
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster

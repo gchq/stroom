@@ -98,12 +98,12 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
-    public boolean getUseAuthentication() {
+    public Boolean getUseAuthentication() {
         return useAuthentication.getValue();
     }
 
     @Override
-    public void setUseAuthentication(final boolean useAuthentication) {
+    public void setUseAuthentication(final Boolean useAuthentication) {
         this.useAuthentication.setValue(useAuthentication);
         updateAuthenticationControlEnabledState(useAuthentication);
     }
@@ -129,22 +129,22 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
-    public int getConnectionTimeoutMillis() {
+    public Integer getConnectionTimeoutMillis() {
         return connectionTimeoutMillis.getValue();
     }
 
     @Override
-    public void setConnectionTimeoutMillis(final int connectionTimeoutMillis) {
+    public void setConnectionTimeoutMillis(final Integer connectionTimeoutMillis) {
         this.connectionTimeoutMillis.setValue(connectionTimeoutMillis);
     }
 
     @Override
-    public int getResponseTimeoutMillis() {
+    public Integer getResponseTimeoutMillis() {
         return responseTimeoutMillis.getValue();
     }
 
     @Override
-    public void setResponseTimeoutMillis(final int responseTimeoutMillis) {
+    public void setResponseTimeoutMillis(final Integer responseTimeoutMillis) {
         this.responseTimeoutMillis.setValue(responseTimeoutMillis);
     }
 
