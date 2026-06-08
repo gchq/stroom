@@ -955,6 +955,8 @@ appConfig:
     - "Test Events"
     - "Test Reference"
     receiptCheckMode: "FEED_STATUS"
+    s3EventNotification:
+      sqsConnectors: []
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
