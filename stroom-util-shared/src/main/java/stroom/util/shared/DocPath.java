@@ -79,10 +79,10 @@ public class DocPath {
     @JsonCreator
     DocPath(@JsonProperty("parentParts") final List<String> parentParts,
             @JsonProperty("leafPart") final String leafPart,
-            @JsonProperty("absolute") final boolean absolute) {
+            @JsonProperty("absolute") final Boolean absolute) {
         this.parentParts = parentParts;
         this.leafPart = leafPart;
-        this.absolute = absolute;
+        this.absolute = Objects.requireNonNullElse(absolute, DEFAULT_ABSOLUTE_VALUE);
     }
 
     private DocPath(final List<String> parts1, final List<String> parts2) {

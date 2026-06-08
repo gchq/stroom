@@ -72,6 +72,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import jakarta.validation.constraints.AssertTrue;
+import java.util.Objects;
 
 @JsonRootName(AppConfig.NAME)
 @JsonPropertyOrder(alphabetic = true)
@@ -255,7 +256,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+    public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final Boolean haltBootOnConfigValidationFailure,
                      @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_AI) final AiConfig aiConfig,
@@ -308,7 +309,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
                      @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
-        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(haltBootOnConfigValidationFailure, false);
         this.crossModuleConfig = crossModuleConfig;
         this.activityConfig = activityConfig;
         this.aiConfig = aiConfig;

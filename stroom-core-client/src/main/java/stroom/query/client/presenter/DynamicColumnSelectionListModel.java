@@ -164,7 +164,7 @@ public class DynamicColumnSelectionListModel
         if (resultPage == null || resultPage.getValues().isEmpty()) {
             resultPage = new ResultPage<>(Collections.singletonList(
                     new ColumnSelectionItem(null, NONE_TITLE, false)),
-                    new PageResponse(0, 1, 1L, true));
+                    new PageResponse(0L, 1, 1L, true));
         }
 
         return resultPage;

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class EmailConfig extends AbstractConfig implements IsStroomConfig {
@@ -87,14 +88,14 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("passwordResetSubject") final String passwordResetSubject,
                        @JsonProperty("passwordResetText") final String passwordResetText,
                        @JsonProperty("passwordResetUrl") final String passwordResetUrl,
-                       @JsonProperty("allowPasswordResets") final boolean allowPasswordResets) {
+                       @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets) {
         this.smtpConfig = smtpConfig;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
         this.passwordResetSubject = passwordResetSubject;
         this.passwordResetText = passwordResetText;
         this.passwordResetUrl = passwordResetUrl;
-        this.allowPasswordResets = allowPasswordResets;
+        this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, false);
     }
 
     @JsonProperty(PROP_NAME_SMTP)

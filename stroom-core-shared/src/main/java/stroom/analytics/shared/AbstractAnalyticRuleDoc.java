@@ -77,13 +77,13 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     /**
      * A rule's status denotes how reliable it is. There are several stages:
-     *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
-     *  - Testing: More mature than experimental rules. Actively being validated in rela environments.
-     *    Expect some false positives.
-     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
-     *    Expect a reasonable false positive rate.
-     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
-     *    Generally avoid using these in production.
+     * - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
+     * - Testing: More mature than experimental rules. Actively being validated in rela environments.
+     * Expect some false positives.
+     * - Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
+     * Expect a reasonable false positive rate.
+     * - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
+     * Generally avoid using these in production.
      **/
     @JsonProperty
     private final String status;
@@ -108,8 +108,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                                    @JsonProperty("notifications") final List<NotificationConfig> notifications,
                                    @JsonProperty("errorFeed") final DocRef errorFeed,
-                                   @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                                   @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+                                   @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+                                   @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
                                    @JsonProperty("level") final String level,
                                    @JsonProperty("status") final String status) {
@@ -130,8 +130,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.notifications.add(analyticNotificationConfig);
         }
         this.errorFeed = errorFeed;
-        this.rememberNotifications = rememberNotifications;
-        this.suppressDuplicateNotifications = suppressDuplicateNotifications;
+        this.rememberNotifications = Objects.requireNonNullElse(rememberNotifications, false);
+        this.suppressDuplicateNotifications = Objects.requireNonNullElse(suppressDuplicateNotifications, false);
         this.duplicateNotificationConfig = Objects.requireNonNullElseGet(duplicateNotificationConfig,
                 () -> new DuplicateNotificationConfig(
                         rememberNotifications,

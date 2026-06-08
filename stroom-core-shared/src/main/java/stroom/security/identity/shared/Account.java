@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Optional;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class Account implements HasIntegerId {
@@ -87,16 +88,16 @@ public class Account implements HasIntegerId {
                    @JsonProperty("firstName") final String firstName,
                    @JsonProperty("lastName") final String lastName,
                    @JsonProperty("comments") final String comments,
-                   @JsonProperty("loginCount") final int loginCount,
-                   @JsonProperty("loginFailures") final int loginFailures,
+                   @JsonProperty("loginCount") final Integer loginCount,
+                   @JsonProperty("loginFailures") final Integer loginFailures,
                    @JsonProperty("lastLoginMs") final Long lastLoginMs,
                    @JsonProperty("reactivatedMs") final Long reactivatedMs,
-                   @JsonProperty("forcePasswordChange") final boolean forcePasswordChange,
-                   @JsonProperty("neverExpires") final boolean neverExpires,
-                   @JsonProperty("enabled") final boolean enabled,
-                   @JsonProperty("inactive") final boolean inactive,
-                   @JsonProperty("locked") final boolean locked,
-                   @JsonProperty("processingAccount") final boolean processingAccount) {
+                   @JsonProperty("forcePasswordChange") final Boolean forcePasswordChange,
+                   @JsonProperty("neverExpires") final Boolean neverExpires,
+                   @JsonProperty("enabled") final Boolean enabled,
+                   @JsonProperty("inactive") final Boolean inactive,
+                   @JsonProperty("locked") final Boolean locked,
+                   @JsonProperty("processingAccount") final Boolean processingAccount) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -108,16 +109,16 @@ public class Account implements HasIntegerId {
         this.firstName = firstName;
         this.lastName = lastName;
         this.comments = comments;
-        this.loginCount = loginCount;
-        this.loginFailures = loginFailures;
+        this.loginCount = Objects.requireNonNullElse(loginCount, 0);
+        this.loginFailures = Objects.requireNonNullElse(loginFailures, 0);
         this.lastLoginMs = lastLoginMs;
         this.reactivatedMs = reactivatedMs;
-        this.forcePasswordChange = forcePasswordChange;
-        this.neverExpires = neverExpires;
-        this.enabled = enabled;
-        this.inactive = inactive;
-        this.locked = locked;
-        this.processingAccount = processingAccount;
+        this.forcePasswordChange = Objects.requireNonNullElse(forcePasswordChange, false);
+        this.neverExpires = Objects.requireNonNullElse(neverExpires, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.inactive = Objects.requireNonNullElse(inactive, false);
+        this.locked = Objects.requireNonNullElse(locked, false);
+        this.processingAccount = Objects.requireNonNullElse(processingAccount, false);
     }
 
     @Override

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -37,8 +38,8 @@ public class AppenderConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public AppenderConfig(@JsonProperty("maxActiveDestinations") final int maxActiveDestinations) {
-        this.maxActiveDestinations = maxActiveDestinations;
+    public AppenderConfig(@JsonProperty("maxActiveDestinations") final Integer maxActiveDestinations) {
+        this.maxActiveDestinations = Objects.requireNonNullElse(maxActiveDestinations, DEFAULT_MAX_ACTIVE_DESTINATIONS);
     }
 
     @JsonPropertyDescription("The maximum number active destinations that Stroom will allow rolling appenders to be " +

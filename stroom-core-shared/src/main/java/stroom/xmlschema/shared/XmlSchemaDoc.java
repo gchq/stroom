@@ -94,14 +94,14 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
                         @JsonProperty("namespaceURI") final String namespaceURI,
                         @JsonProperty("systemId") final String systemId,
                         @JsonProperty("data") final String data,
-                        @JsonProperty("deprecated") final boolean deprecated,
+                        @JsonProperty("deprecated") final Boolean deprecated,
                         @JsonProperty("schemaGroup") final String schemaGroup) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.namespaceURI = namespaceURI;
         this.systemId = systemId;
         this.data = data;
-        this.deprecated = deprecated;
+        this.deprecated = Objects.requireNonNullElse(deprecated, false);
         this.schemaGroup = schemaGroup;
     }
 

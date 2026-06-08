@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
+import java.util.Objects;
 
 
 @SuppressWarnings("unused")
@@ -101,14 +102,14 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     @SuppressWarnings("unused")
     @JsonCreator
     public ProcessorConfig(@JsonProperty("db") final ProcessorDbConfig dbConfig,
-                           @JsonProperty("assignTasks") final boolean assignTasks,
+                           @JsonProperty("assignTasks") final Boolean assignTasks,
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
-                           @JsonProperty("fillTaskQueue") final boolean fillTaskQueue,
-                           @JsonProperty("queueSize") final int queueSize,
-                           @JsonProperty("tasksToCreate") final int tasksToCreate,
-                           @JsonProperty("createTasksBeyondProcessLimit") final boolean createTasksBeyondProcessLimit,
-                           @JsonProperty("taskCreationThreadCount") final int taskCreationThreadCount,
-                           @JsonProperty("databaseMultiInsertMaxBatchSize") final int databaseMultiInsertMaxBatchSize,
+                           @JsonProperty("fillTaskQueue") final Boolean fillTaskQueue,
+                           @JsonProperty("queueSize") final Integer queueSize,
+                           @JsonProperty("tasksToCreate") final Integer tasksToCreate,
+                           @JsonProperty("createTasksBeyondProcessLimit") final Boolean createTasksBeyondProcessLimit,
+                           @JsonProperty("taskCreationThreadCount") final Integer taskCreationThreadCount,
+                           @JsonProperty("databaseMultiInsertMaxBatchSize") final Integer databaseMultiInsertMaxBatchSize,
                            @JsonProperty("processorCache") final CacheConfig processorCache,
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
@@ -119,14 +120,14 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
                                    skipNonProducingFiltersDuration) {
         this.dbConfig = dbConfig;
-        this.assignTasks = assignTasks;
+        this.assignTasks = Objects.requireNonNullElse(assignTasks, false);
         this.deleteAge = deleteAge;
-        this.fillTaskQueue = fillTaskQueue;
-        this.queueSize = queueSize;
-        this.tasksToCreate = tasksToCreate;
-        this.createTasksBeyondProcessLimit = createTasksBeyondProcessLimit;
-        this.taskCreationThreadCount = taskCreationThreadCount;
-        this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
+        this.fillTaskQueue = Objects.requireNonNullElse(fillTaskQueue, false);
+        this.queueSize = Objects.requireNonNullElse(queueSize, 0);
+        this.tasksToCreate = Objects.requireNonNullElse(tasksToCreate, 0);
+        this.createTasksBeyondProcessLimit = Objects.requireNonNullElse(createTasksBeyondProcessLimit, false);
+        this.taskCreationThreadCount = Objects.requireNonNullElse(taskCreationThreadCount, 0);
+        this.databaseMultiInsertMaxBatchSize = Objects.requireNonNullElse(databaseMultiInsertMaxBatchSize, 0);
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;

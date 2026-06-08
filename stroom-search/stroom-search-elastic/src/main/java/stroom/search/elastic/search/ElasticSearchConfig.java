@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfig {
@@ -43,11 +44,11 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticSearchConfig(@JsonProperty("highlight") final boolean highlight,
+    public ElasticSearchConfig(@JsonProperty("highlight") final Boolean highlight,
                                @JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
                                @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
-        this.highlight = highlight;
+        this.highlight = Objects.requireNonNullElse(highlight, true);
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
         this.suggestConfig = suggestConfig;

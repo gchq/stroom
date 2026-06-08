@@ -120,10 +120,10 @@ public class ConfigProperty implements HasAuditInfoGetters, HasIntegerId, Compar
                           @JsonProperty("databaseOverrideValue") final OverrideValue<String> databaseOverrideValue,
                           @JsonProperty("yamlOverrideValue") final OverrideValue<String> yamlOverrideValue,
                           @JsonProperty("description") final String description,
-                          @JsonProperty("editable") final boolean editable,
-                          @JsonProperty("password") final boolean password,
-                          @JsonProperty("requireRestart") final boolean requireRestart,
-                          @JsonProperty("requireUiRestart") final boolean requireUiRestart,
+                          @JsonProperty("editable") final Boolean editable,
+                          @JsonProperty("password") final Boolean password,
+                          @JsonProperty("requireRestart") final Boolean requireRestart,
+                          @JsonProperty("requireUiRestart") final Boolean requireUiRestart,
                           @JsonProperty("dataTypeName") final String dataTypeName) {
         this.id = id;
         this.version = version;
@@ -136,10 +136,10 @@ public class ConfigProperty implements HasAuditInfoGetters, HasIntegerId, Compar
         this.databaseOverrideValue = databaseOverrideValue;
         this.yamlOverrideValue = yamlOverrideValue;
         this.description = description;
-        this.editable = editable;
-        this.password = password;
-        this.requireRestart = requireRestart;
-        this.requireUiRestart = requireUiRestart;
+        this.editable = Objects.requireNonNullElse(editable, false);
+        this.password = Objects.requireNonNullElse(password, false);
+        this.requireRestart = Objects.requireNonNullElse(requireRestart, false);
+        this.requireUiRestart = Objects.requireNonNullElse(requireUiRestart, false);
         this.dataTypeName = dataTypeName;
     }
 

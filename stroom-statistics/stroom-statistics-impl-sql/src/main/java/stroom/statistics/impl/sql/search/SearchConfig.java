@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -38,10 +39,10 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SearchConfig(@JsonProperty("maxResults") final int maxResults,
-                        @JsonProperty("fetchSize") final int fetchSize) {
-        this.maxResults = maxResults;
-        this.fetchSize = fetchSize;
+    public SearchConfig(@JsonProperty("maxResults") final Integer maxResults,
+                        @JsonProperty("fetchSize") final Integer fetchSize) {
+        this.maxResults = Objects.requireNonNullElse(maxResults, 100000);
+        this.fetchSize = Objects.requireNonNullElse(fetchSize, 5000);
     }
 
     @JsonPropertyDescription("The maximum number of records that can be returned from the statistics DB in a " +

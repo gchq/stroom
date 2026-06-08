@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -36,8 +37,8 @@ public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public LifecycleConfig(@JsonProperty("enabled") final boolean enabled) {
-        this.enabled = enabled;
+    public LifecycleConfig(@JsonProperty("enabled") final Boolean enabled) {
+        this.enabled = Objects.requireNonNullElse(enabled, false);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)

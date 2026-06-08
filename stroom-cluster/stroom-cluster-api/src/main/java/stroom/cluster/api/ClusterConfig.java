@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -45,13 +46,15 @@ public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public ClusterConfig(
-            @JsonProperty("clusterCallUseLocal") final boolean clusterCallUseLocal,
+            @JsonProperty("clusterCallUseLocal") final Boolean clusterCallUseLocal,
             @JsonProperty("clusterCallReadTimeout") final StroomDuration clusterCallReadTimeout,
-            @JsonProperty("clusterCallIgnoreSSLHostnameVerifier") final boolean clusterCallIgnoreSSLHostnameVerifier,
+            @JsonProperty("clusterCallIgnoreSSLHostnameVerifier") final Boolean clusterCallIgnoreSSLHostnameVerifier,
             @JsonProperty("clusterResponseTimeout") final StroomDuration clusterResponseTimeout) {
-        this.clusterCallUseLocal = clusterCallUseLocal;
+        this.clusterCallUseLocal =
+                Objects.requireNonNullElse(clusterCallUseLocal, false);
         this.clusterCallReadTimeout = clusterCallReadTimeout;
-        this.clusterCallIgnoreSSLHostnameVerifier = clusterCallIgnoreSSLHostnameVerifier;
+        this.clusterCallIgnoreSSLHostnameVerifier =
+                Objects.requireNonNullElse(clusterCallIgnoreSSLHostnameVerifier, false);
         this.clusterResponseTimeout = clusterResponseTimeout;
     }
 

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -47,10 +48,10 @@ public class DataRetentionConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @JsonCreator
-    public DataRetentionConfig(@JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                               @JsonProperty("useQueryOptimisation") final boolean useQueryOptimisation) {
-        this.deleteBatchSize = deleteBatchSize;
-        this.useQueryOptimisation = useQueryOptimisation;
+    public DataRetentionConfig(@JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                               @JsonProperty("useQueryOptimisation") final Boolean useQueryOptimisation) {
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, 0);
+        this.useQueryOptimisation = Objects.requireNonNullElse(useQueryOptimisation, false);
     }
 
     public int getDeleteBatchSize() {

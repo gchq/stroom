@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
@@ -50,14 +51,18 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ExtractionConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
-                            @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
-                            @JsonProperty("maxStreamEventMapSize") final int maxStreamEventMapSize,
-                            @JsonProperty("extractionDelayMs") final long extractionDelayMs) {
-        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
-        this.maxThreadsPerTask = maxThreadsPerTask;
-        this.maxStreamEventMapSize = maxStreamEventMapSize;
-        this.extractionDelayMs = extractionDelayMs;
+    public ExtractionConfig(@JsonProperty("maxStoredDataQueueSize") final Integer maxStoredDataQueueSize,
+                            @JsonProperty("maxThreadsPerTask") final Integer maxThreadsPerTask,
+                            @JsonProperty("maxStreamEventMapSize") final Integer maxStreamEventMapSize,
+                            @JsonProperty("extractionDelayMs") final Long extractionDelayMs) {
+        this.maxStoredDataQueueSize =
+                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxThreadsPerTask =
+                Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
+        this.maxStreamEventMapSize =
+                Objects.requireNonNullElse(maxStreamEventMapSize, DEFAULT_MAX_STREAM_EVENT_MAP_SIZE);
+        this.extractionDelayMs =
+                Objects.requireNonNullElse(extractionDelayMs, DEFAULT_EXTRACTION_DELAY_MS);
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +

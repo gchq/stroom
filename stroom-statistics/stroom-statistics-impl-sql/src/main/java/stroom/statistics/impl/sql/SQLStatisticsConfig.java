@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -79,13 +80,13 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("db") final SQLStatisticsDbConfig dbConfig,
             @JsonProperty("docRefType") final String docRefType,
             @JsonProperty("search") final SearchConfig searchConfig,
-            @JsonProperty("inMemAggregatorPoolSize") final int inMemAggregatorPoolSize,
-            @JsonProperty("inMemPooledAggregatorSizeThreshold") final int inMemPooledAggregatorSizeThreshold,
+            @JsonProperty("inMemAggregatorPoolSize") final Integer inMemAggregatorPoolSize,
+            @JsonProperty("inMemPooledAggregatorSizeThreshold") final Integer inMemPooledAggregatorSizeThreshold,
             @JsonProperty("inMemPooledAggregatorAgeThreshold") final StroomDuration inMemPooledAggregatorAgeThreshold,
-            @JsonProperty("inMemFinalAggregatorSizeThreshold") final int inMemFinalAggregatorSizeThreshold,
-            @JsonProperty("statisticFlushBatchSize") final int statisticFlushBatchSize,
-            @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
-            @JsonProperty("statisticAggregationStageTwoBatchSize") final int statisticAggregationStageTwoBatchSize,
+            @JsonProperty("inMemFinalAggregatorSizeThreshold") final Integer inMemFinalAggregatorSizeThreshold,
+            @JsonProperty("statisticFlushBatchSize") final Integer statisticFlushBatchSize,
+            @JsonProperty("statisticAggregationBatchSize") final Integer statisticAggregationBatchSize,
+            @JsonProperty("statisticAggregationStageTwoBatchSize") final Integer statisticAggregationStageTwoBatchSize,
             @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
             @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache,
             @JsonProperty("slowQueryWarningThreshold") final StroomDuration slowQueryWarningThreshold) {
@@ -93,13 +94,19 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         this.dbConfig = dbConfig;
         this.docRefType = docRefType;
         this.searchConfig = searchConfig;
-        this.inMemAggregatorPoolSize = inMemAggregatorPoolSize;
-        this.inMemPooledAggregatorSizeThreshold = inMemPooledAggregatorSizeThreshold;
+        this.inMemAggregatorPoolSize =
+                Objects.requireNonNullElse(inMemAggregatorPoolSize, 10);
+        this.inMemPooledAggregatorSizeThreshold =
+                Objects.requireNonNullElse(inMemPooledAggregatorSizeThreshold, 1_000_000);
         this.inMemPooledAggregatorAgeThreshold = inMemPooledAggregatorAgeThreshold;
-        this.inMemFinalAggregatorSizeThreshold = inMemFinalAggregatorSizeThreshold;
-        this.statisticFlushBatchSize = statisticFlushBatchSize;
-        this.statisticAggregationBatchSize = statisticAggregationBatchSize;
-        this.statisticAggregationStageTwoBatchSize = statisticAggregationStageTwoBatchSize;
+        this.inMemFinalAggregatorSizeThreshold =
+                Objects.requireNonNullElse(inMemFinalAggregatorSizeThreshold, 1_000_000);
+        this.statisticFlushBatchSize =
+                Objects.requireNonNullElse(statisticFlushBatchSize, 8_000);
+        this.statisticAggregationBatchSize =
+                Objects.requireNonNullElse(statisticAggregationBatchSize, 1_000_000);
+        this.statisticAggregationStageTwoBatchSize =
+                Objects.requireNonNullElse(statisticAggregationStageTwoBatchSize, 200_000);
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
         this.slowQueryWarningThreshold = slowQueryWarningThreshold;
