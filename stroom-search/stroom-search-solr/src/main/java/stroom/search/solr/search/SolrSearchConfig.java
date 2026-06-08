@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 
@@ -56,7 +57,7 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
-            "shard and queued prior to further processing")
+                             "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }
@@ -69,8 +70,8 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "SolrSearchConfig{" +
-                "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
-                ", maxBooleanClauseCount=" + maxBooleanClauseCount +
-                '}';
+               "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
+               ", maxBooleanClauseCount=" + maxBooleanClauseCount +
+               '}';
     }
 }

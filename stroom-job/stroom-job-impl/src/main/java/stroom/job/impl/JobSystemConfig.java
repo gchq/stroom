@@ -33,8 +33,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Objects;
 
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

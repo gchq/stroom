@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -66,13 +67,13 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
-            "shard and queued prior to further processing")
+                             "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }
 
     @JsonPropertyDescription("The maximum number of threads per search, per node, used to extract search results " +
-            "from streams using a pipeline")
+                             "from streams using a pipeline")
     public int getMaxThreadsPerTask() {
         return maxThreadsPerTask;
     }
@@ -83,7 +84,7 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("Extraction delay in milliseconds. " +
-            "A delay reduces the chance of a stream being extracted more than once.")
+                             "A delay reduces the chance of a stream being extracted more than once.")
     public long getExtractionDelayMs() {
         return extractionDelayMs;
     }
@@ -91,10 +92,10 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ExtractionConfig{" +
-                "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
-                ", maxThreadsPerTask=" + maxThreadsPerTask +
-                ", maxStreamEventMapSize=" + maxStreamEventMapSize +
-                ", extractionDelayMs=" + extractionDelayMs +
-                '}';
+               "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
+               ", maxThreadsPerTask=" + maxThreadsPerTask +
+               ", maxStreamEventMapSize=" + maxStreamEventMapSize +
+               ", extractionDelayMs=" + extractionDelayMs +
+               '}';
     }
 }

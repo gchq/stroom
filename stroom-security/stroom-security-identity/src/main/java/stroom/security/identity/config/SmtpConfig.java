@@ -30,6 +30,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
+
 import java.util.Objects;
 
 @NotInjectableConfig
@@ -117,11 +118,11 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "SmtpConfig{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", transport='" + transport + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                '}';
+               "host='" + host + '\'' +
+               ", port=" + port +
+               ", transport='" + transport + '\'' +
+               ", username='" + username + '\'' +
+               ", password='" + password + '\'' +
+               '}';
     }
 }

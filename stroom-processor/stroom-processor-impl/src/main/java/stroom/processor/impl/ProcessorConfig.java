@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
+
 import java.util.Objects;
 
 
@@ -109,7 +110,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("tasksToCreate") final Integer tasksToCreate,
                            @JsonProperty("createTasksBeyondProcessLimit") final Boolean createTasksBeyondProcessLimit,
                            @JsonProperty("taskCreationThreadCount") final Integer taskCreationThreadCount,
-                           @JsonProperty("databaseMultiInsertMaxBatchSize") final Integer databaseMultiInsertMaxBatchSize,
+                           @JsonProperty("databaseMultiInsertMaxBatchSize")
+                               final Integer databaseMultiInsertMaxBatchSize,
                            @JsonProperty("processorCache") final CacheConfig processorCache,
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
@@ -117,8 +119,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("processorProfileCache") final CacheConfig processorProfileCache,
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
-                           @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
-                                   skipNonProducingFiltersDuration) {
+                           @JsonProperty("skipNonProducingFiltersDuration")
+                               final StroomDuration skipNonProducingFiltersDuration) {
         this.dbConfig = dbConfig;
         this.assignTasks = Objects.requireNonNullElse(assignTasks, false);
         this.deleteAge = deleteAge;

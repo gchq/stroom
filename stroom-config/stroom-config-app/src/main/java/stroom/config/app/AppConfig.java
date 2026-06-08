@@ -72,6 +72,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import jakarta.validation.constraints.AssertTrue;
+
 import java.util.Objects;
 
 @JsonRootName(AppConfig.NAME)

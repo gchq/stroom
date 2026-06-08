@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -77,10 +78,10 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
-                "highlight=" + highlight +
-                ", scrollDuration='" + scrollDuration + "'" +
-                ", storeSize=" + storeSize +
-                ", suggestConfig=" + suggestConfig +
-                '}';
+               "highlight=" + highlight +
+               ", scrollDuration='" + scrollDuration + "'" +
+               ", storeSize=" + storeSize +
+               ", suggestConfig=" + suggestConfig +
+               '}';
     }
 }

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -66,7 +67,8 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty("omitRecordDetailsLoggingEnabled")
     @JsonPropertyDescription("Suppress standard database record fields " +
-            "'createUser', 'updateUser', 'createTime', 'updateTime' and 'version' being reported within event log.")
+                             "'createUser', 'updateUser', 'createTime', 'updateTime' and " +
+                             "'version' being reported within event log.")
     public boolean isOmitRecordDetailsLoggingEnabled() {
         return omitRecordDetailsLoggingEnabled;
     }
@@ -98,10 +100,10 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "LoggingConfig{" +
-                "maxListElements=" + maxListElements +
-                ", " +
-                "logEveryRestCallEnabled=" + logEveryRestCallEnabled +
-                '}';
+               "maxListElements=" + maxListElements +
+               ", " +
+               "logEveryRestCallEnabled=" + logEveryRestCallEnabled +
+               '}';
     }
 
 }

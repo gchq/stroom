@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 
@@ -43,7 +44,7 @@ public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will " +
-            "try and process files automatically outside of test cases.")
+                             "try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;
     }
@@ -51,7 +52,7 @@ public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "LifecycleConfig{" +
-                "enabled=" + enabled +
-                '}';
+               "enabled=" + enabled +
+               '}';
     }
 }

@@ -30,6 +30,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
+
 import java.util.Objects;
 
 @NotInjectableConfig

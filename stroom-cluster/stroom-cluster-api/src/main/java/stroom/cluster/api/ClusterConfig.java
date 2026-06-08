@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 
@@ -72,7 +73,7 @@ public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("If cluster calls are using SSL then choose if we want to ignore host name " +
-            "verification")
+                             "verification")
     public boolean isClusterCallIgnoreSSLHostnameVerifier() {
         return clusterCallIgnoreSSLHostnameVerifier;
     }
@@ -85,10 +86,10 @@ public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ClusterConfig{" +
-                "clusterCallUseLocal=" + clusterCallUseLocal +
-                ", clusterCallReadTimeout='" + clusterCallReadTimeout + '\'' +
-                ", clusterCallIgnoreSSLHostnameVerifier=" + clusterCallIgnoreSSLHostnameVerifier +
-                ", clusterResponseTimeout='" + clusterResponseTimeout + '\'' +
-                '}';
+               "clusterCallUseLocal=" + clusterCallUseLocal +
+               ", clusterCallReadTimeout='" + clusterCallReadTimeout + '\'' +
+               ", clusterCallIgnoreSSLHostnameVerifier=" + clusterCallIgnoreSSLHostnameVerifier +
+               ", clusterResponseTimeout='" + clusterResponseTimeout + '\'' +
+               '}';
     }
 }

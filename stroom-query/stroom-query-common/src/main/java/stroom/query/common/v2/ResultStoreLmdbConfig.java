@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -72,9 +73,10 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
     @NotNull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path relative to the home directory to use for storing the data stores. " +
-            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
-            "The directory will be created if it doesn't exist." +
-            "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
+                             "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
+                             "The directory will be created if it doesn't exist." +
+                             "If the value is a relative path then it will be treated as being relative to " +
+                             "stroom.path.home.")
     public String getLocalDir() {
         return localDir;
     }
@@ -90,9 +92,11 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum size for the off heap store. There must be " +
-            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
-            "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
-            "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
+                             "available space on the disk to accommodate this size. It can be larger than the " +
+                             "amount of available RAM " +
+                             "and will only be allocated as it is needed. Can be expressed in IEC units " +
+                             "(multiples of 1024), " +
+                             "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
     public ByteSize getMaxStoreSize() {
         return maxStoreSize;
     }
@@ -101,10 +105,13 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonProperty("readAheadEnabled")
     @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
-            "expectation that it will be used at some point. This generally improves performance as more data is " +
-            "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
-            "the actively used data is larger than the available RAM, as this will stop it evicting hot " +
-            "entries to make space for pre-fetched data.")
+                             "expectation that it will be used at some point. This generally improves performance " +
+                             "as more data is " +
+                             "available in the page cache. Read ahead is enabled by default. It may be worth " +
+                             "disabling it if " +
+                             "the actively used data is larger than the available RAM, as this will stop it " +
+                             "evicting hot " +
+                             "entries to make space for pre-fetched data.")
     public boolean isReadAheadEnabled() {
         return isReadAheadEnabled;
     }
@@ -119,11 +126,11 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
     @Override
     public String toString() {
         return "ResultStoreLmdbConfig{" +
-                "localDir='" + localDir + '\'' +
-                ", maxReaders=" + maxReaders +
-                ", maxStoreSize=" + maxStoreSize +
-                ", isReadAheadEnabled=" + isReadAheadEnabled +
-                '}';
+               "localDir='" + localDir + '\'' +
+               ", maxReaders=" + maxReaders +
+               ", maxStoreSize=" + maxStoreSize +
+               ", isReadAheadEnabled=" + isReadAheadEnabled +
+               '}';
     }
 
     public Builder copy() {

@@ -76,10 +76,11 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
 
     @Min(0)
     @JsonPropertyDescription("The maximum number of puts into the store (in a single load) before the " +
-                             "transaction is committed. There is only one write transaction available at a time so reducing " +
-                             "this value allows multiple loads to potentially each load a chunk at a time. However, load times " +
-                             "increase rapidly with values below around 2,000. For maximum performance of a single load set this " +
-                             "value to 0 to only commit at the very end of the load.")
+                             "transaction is committed. There is only one write transaction available at a time " +
+                             "so reducing this value allows multiple loads to potentially each load a chunk at a " +
+                             "time. However, load times increase rapidly with values below around 2,000. For " +
+                             "maximum performance of a single load set this value to 0 to only commit at the very " +
+                             "end of the load.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }

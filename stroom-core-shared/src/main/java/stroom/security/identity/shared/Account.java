@@ -24,8 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(Include.NON_NULL)
 public class Account implements HasIntegerId {
@@ -321,27 +321,27 @@ public class Account implements HasIntegerId {
     @Override
     public String toString() {
         return "Account{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", updateTimeMs=" + updateTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateUser='" + updateUser + '\'' +
-                ", subjectId='" + userId + '\'' +
-                ", email='" + email + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", comments='" + comments + '\'' +
-                ", loginCount=" + loginCount +
-                ", loginFailures=" + loginFailures +
-                ", lastLoginMs=" + lastLoginMs +
-                ", reactivatedMs=" + reactivatedMs +
-                ", forcePasswordChange=" + forcePasswordChange +
-                ", neverExpires=" + neverExpires +
-                ", enabled=" + enabled +
-                ", inactive=" + inactive +
-                ", locked=" + locked +
-                ", processingAccount=" + processingAccount +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", updateTimeMs=" + updateTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateUser='" + updateUser + '\'' +
+               ", subjectId='" + userId + '\'' +
+               ", email='" + email + '\'' +
+               ", firstName='" + firstName + '\'' +
+               ", lastName='" + lastName + '\'' +
+               ", comments='" + comments + '\'' +
+               ", loginCount=" + loginCount +
+               ", loginFailures=" + loginFailures +
+               ", lastLoginMs=" + lastLoginMs +
+               ", reactivatedMs=" + reactivatedMs +
+               ", forcePasswordChange=" + forcePasswordChange +
+               ", neverExpires=" + neverExpires +
+               ", enabled=" + enabled +
+               ", inactive=" + inactive +
+               ", locked=" + locked +
+               ", processingAccount=" + processingAccount +
+               '}';
     }
 }

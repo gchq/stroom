@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
 
@@ -49,7 +50,7 @@ public class ExportConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ExportConfig{" +
-                "enabled=" + enabled +
-                '}';
+               "enabled=" + enabled +
+               '}';
     }
 }

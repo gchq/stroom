@@ -30,8 +30,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
-import java.util.Objects;
 
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class DataStoreServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -63,7 +63,8 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     public DataStoreServiceConfig(@JsonProperty("db") final DataStoreServiceDbConfig dbConfig,
                                   @JsonProperty(PROP_NAME_DELETE_PURGE_AGE) final StroomDuration deletePurgeAge,
                                   @JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
-                                  @JsonProperty(PROP_NAME_DELETE_FAILURE_THRESHOLD) final Integer deleteFailureThreshold,
+                                  @JsonProperty(PROP_NAME_DELETE_FAILURE_THRESHOLD)
+                                      final Integer deleteFailureThreshold,
                                   @JsonProperty("fileSystemCleanBatchSize") final Integer fileSystemCleanBatchSize,
                                   @JsonProperty("fileSystemCleanDeleteOut") final Boolean fileSystemCleanDeleteOut,
                                   @JsonProperty("fileSystemCleanOldAge") final StroomDuration fileSystemCleanOldAge) {

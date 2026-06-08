@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
