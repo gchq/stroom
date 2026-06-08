@@ -29,6 +29,12 @@
             <v:ValueSpinner ui:field="maxContextWindowTokens" width="80px"
                             title="Maximum number of tokens allowed in the model's context window. Set to zero to disable."/>
         </form:FormGroup>
+        <form:FormGroup identity="openAIReasoningEffort"
+                        label="Reasoning Effort (optional)"
+                        helpText="Controls reasoning depth for models that support it (e.g. OpenAI o-series). Values: low, medium, high. Leave blank for default.">
+            <g:TextBox ui:field="reasoningEffort" width="400px"
+                       title="Reasoning effort level: low, medium, or high. Leave blank if the model does not support reasoning."/>
+        </form:FormGroup>
         <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px" addStyleNames="allow-focus"/>
         <b:Button ui:field="testModel" text="Test Model" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>

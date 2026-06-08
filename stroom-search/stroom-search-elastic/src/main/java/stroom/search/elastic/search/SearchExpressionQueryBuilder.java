@@ -16,9 +16,9 @@
 
 package stroom.search.elastic.search;
 
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
@@ -66,7 +66,7 @@ public class SearchExpressionQueryBuilder {
             Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/\\d{1,2})?$");
     private static final Pattern IPV4_CIDR_PATTERN =
             Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d{1,2}$");
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
     private final ElasticIndexDoc indexDoc;
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
@@ -74,12 +74,12 @@ public class SearchExpressionQueryBuilder {
     private final ElasticQueryParams elasticQueryParams;
 
     public SearchExpressionQueryBuilder(
-            final Provider<OpenAIService> openAIServiceProvider,
+            final Provider<AiService> aiServiceProvider,
             final ElasticIndexDoc indexDoc,
             final IndexFieldCache indexFieldCache,
             final WordListProvider wordListProvider,
             final DateTimeSettings dateTimeSettings) {
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
         this.indexDoc = indexDoc;
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
@@ -279,10 +279,10 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Query the embeddings API for a vector representation of the query expression
-        final OpenAIModelDoc modelDoc = openAIServiceProvider.get().getOpenAIModelDoc(
+        final OpenAIModelDoc modelDoc = aiServiceProvider.get().getOpenAIModelDoc(
                 indexDoc.getVectorGenerationModelRef());
         try {
-            final EmbeddingModel embeddingModel = openAIServiceProvider.get().getEmbeddingModel(modelDoc);
+            final EmbeddingModel embeddingModel = aiServiceProvider.get().getEmbeddingModel(modelDoc);
             final List<Float> queryVector = embeddingModel.embed(expression).content().vectorAsList();
             elasticQueryParams.addKnnFieldQuery(fieldName, expression);
             return QueryBuilders.knn(q -> q

@@ -13,16 +13,39 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.12.4] - 2026-05-14
+## [v7.13-beta.3] - 2026-06-03
+
+* Dependency : Uplift DropWizard to v5.0.1.
+
+* Dependency : Uplift `net.openhft:zero-allocation-hashing` to `2026.0`.
+
+* Dependency : Add Jackson JSON library `3.1.2` in addition to the existing `2.21.2` version. Stroom/Stroom-Proxy are now using v3 with the exception of a few specific areas that need legacy capability only available in v2. v3 is a significant change from v2 with some breaking changes and some differences in behaviour. Special attention should be paid to the output of JSONParser pipeline element to ensure it is behaving as expected.
+
+* Feature **#5515** : Change JSONParser pipeline element to truncate very long strings values. Currently very long string values can result in Out of Memory errors in Stroom. The following configuration properties have been added to the JSONParser element; `stringTruncateLength` (default 10,000) to truncate very long strings, `maxStringLength` (default 100,000,000) to cause a fatal error if a long string is encountered, `maxDepth` (default 500) to limit the depth of deeply nested documents. The JSONParser has also been changed so that the characters of string values are streamed to the downstream pipeline elements rather than reading the whole string into memory. NOTE: It is still possible for downstream XSLT XPATH functions to result in the entire string being read into memory.
+
+* Bug : Fix DocRef hover copy/open links not appearing.
+
+* Bug **#5535** : Fix simple string values not appearing in Pipeline Property table.
+
+* Bug : Fix Null Pointer type bug on Data Receipt Rules screen.
+
+* Refactor : Change json (de)serialisation to not go via a String when dealing only with byte[] data.
+
+* Dependency : Uplift base docker images to `eclipse-temurin:25.0.3_9-jdk-alpine-3.23`.
+
+* Feature **#5303** : Improve Stroom AI to add dockable panel, chat history, attachments, copy, download, chat details etc.
+
+* Feature **#5552** : Add additional S3 properties to S3Appender.
+
+* Bug : Fix typo in query snippet name (`Eval first first value` => `Eval first value`).
+
+* Bug **#5549** : Make jffi extract its native library to the same dir as the LMDB native library file. Add the config prop `providedJffiLibraryPath` to allow for a provided jffi lib.
 
 * Refactor : Improve logging and system info output for Data Feed Keys.
 
 * Feature **#5526** : Add event logging to ask stroom AI.
 
 * Bug **#5544** : Fix DocRef bug.
-
-
-## [v7.12.3] - 2026-05-11
 
 * Feature **#5183** : Add title to dashboard link function.
 
@@ -36,20 +59,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Bug : Fix permission exceptions when getting volume system info.
 
-
-## [v7.12.2] - 2026-05-05
-
 * Bug **#5532** : Relax Data Feed Identities validation so salt is optional.
-
-
-## [v7.12.1] - 2026-04-27
 
 * Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
 
 * Feature : Add config prop `stroom.annotation.eventLinkCacheSizeLimit` (default 1,000,000) to protect Stroom from caching too many annotation to event links. If this limit is exceeded, the query will error.
-
-
-## [v7.12.0] - 2026-04-27
 
 * Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
 
@@ -2243,7 +2257,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.3...HEAD
+[v7.13-beta.3]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v7.13-beta.3
 [v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
 [v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
 [v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1

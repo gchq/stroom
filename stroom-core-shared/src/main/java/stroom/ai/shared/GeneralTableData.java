@@ -16,10 +16,8 @@ public final class GeneralTableData extends AskStroomAiData {
     private final List<List<String>> rows;
 
     @JsonCreator
-    public GeneralTableData(@JsonProperty("chatMemoryId") final String chatMemoryId,
-                            @JsonProperty("columns") final List<String> columns,
+    public GeneralTableData(@JsonProperty("columns") final List<String> columns,
                             @JsonProperty("rows") final List<List<String>> rows) {
-        super(chatMemoryId);
         this.columns = columns;
         this.rows = rows;
     }

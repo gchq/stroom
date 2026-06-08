@@ -16,6 +16,7 @@
 
 package stroom.aws.s3.impl;
 
+import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docref.DocRef;
@@ -83,6 +84,10 @@ public class S3Appender extends AbstractAppender {
     private String bucketNamePattern;
     private String keyNamePattern;
     private S3ClientConfig s3ClientConfig;
+    private String cacheControl;
+    private String contentDisposition;
+    private String contentEncoding;
+    private String contentType;
 
     @Inject
     public S3Appender(final ErrorReceiverProxy errorReceiverProxy,
@@ -155,7 +160,19 @@ public class S3Appender extends AbstractAppender {
                         final Meta meta = metaHolder.getMeta();
                         final AttributeMap attributeMap = metaDataHolder.getMetaData();
 
-                        s3Manager.upload(bucketNamePattern, keyNamePattern, meta, attributeMap, tempFile);
+                        final S3UploadProperties uploadProperties = new S3UploadProperties(
+                                cacheControl,
+                                contentDisposition,
+                                contentEncoding,
+                                contentType);
+
+                        s3Manager.upload(
+                                bucketNamePattern,
+                                keyNamePattern,
+                                meta,
+                                attributeMap,
+                                uploadProperties,
+                                tempFile);
                     } catch (final RuntimeException e) {
                         fatal(e.getMessage(), e);
                     } finally {
@@ -236,5 +253,33 @@ public class S3Appender extends AbstractAppender {
             error(e.getMessage(), e);
             throw e;
         }
+    }
+
+    @PipelineProperty(
+            description = "A general header field used to specify caching policies.",
+            displayPriority = 9)
+    public void setCacheControl(final String cacheControl) {
+        this.cacheControl = cacheControl;
+    }
+
+    @PipelineProperty(
+            description = "Object presentational information.",
+            displayPriority = 10)
+    public void setContentDisposition(final String contentDisposition) {
+        this.contentDisposition = contentDisposition;
+    }
+
+    @PipelineProperty(
+            description = "The content encodings (like compression) that have been applied to the object's data.",
+            displayPriority = 11)
+    public void setContentEncoding(final String contentEncoding) {
+        this.contentEncoding = contentEncoding;
+    }
+
+    @PipelineProperty(
+            description = "The object type.",
+            displayPriority = 12)
+    public void setContentType(final String contentType) {
+        this.contentType = contentType;
     }
 }

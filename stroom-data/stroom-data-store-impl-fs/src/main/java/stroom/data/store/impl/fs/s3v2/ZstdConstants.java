@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,9 @@ public class ZstdConstants {
     public static final UUID ZERO_UUID = new UUID(0, 0);
 
     public static final byte[] ZERO_UUID_BYTES = UuidUtil.toByteArray(ZERO_UUID);
+
+    public static final String ZSTD_CONTENT_ENCODING = "zstd";
+    public static final String ZSTD_CONTENT_TYPE = "application/zstd";
 
     private ZstdConstants() {
         // Constants only

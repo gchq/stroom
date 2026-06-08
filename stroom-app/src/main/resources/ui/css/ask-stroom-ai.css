@@ -1,0 +1,267 @@
+.askStroomAiViewImpl {
+    overflow: hidden;
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    display: flex;
+}
+
+.dialog-content .askStroomAiViewImpl {
+  border: 1px solid var(--control__border-color);
+  overflow: auto;
+}
+
+.askStroomAiViewImpl-top {
+    display: flex;
+    border-bottom: 1px solid var(--splitter__background-color);
+    padding: 0 5px;
+    gap: 5px;
+}
+
+.askStroomAiViewImpl-title {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    flex-direction: row;
+}
+
+.askStroomAiViewImpl-buttons {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.askStroomAiViewImpl-middle {
+    padding: 2px 5px;
+}
+
+.askStroomAiViewImpl-bottom {
+    padding: 10px;
+}
+
+.askStroomAiViewImpl-bottom-inner {
+    display: flex;
+    gap: 5px;
+    overflow: hidden;
+    background-color: var(--page__background-color);
+    border: 1px solid var(--splitter__background-color);
+    border-radius: .25rem;
+    padding: 5px;
+}
+
+.askStroomAiViewImpl-messagePane {
+    gap: 5px;
+    align-items: center;
+}
+
+.askStroomAiViewImpl-contextChip {
+    display: none;
+    font-size: 0.75rem;
+    line-height: 1;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background-color: var(--control__border-color);
+    color: var(--control__text-color);
+    white-space: nowrap;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+.askStroomAiViewImpl-messagePane input,
+.askStroomAiViewImpl-modelPane .dropDownView-container {
+    border: 1px solid transparent;
+    background: none;
+}
+
+.askStroomAiViewImpl-modelPane {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.askStroomAiViewImpl-modelPane .play svg {
+    color: #4caf50;
+}
+
+.askStroomAiViewImpl-modelPane .pause svg {
+    color: #2196f3;
+}
+
+.askStroomAiViewImpl-modelPane .stop svg {
+    color: #d32f2f;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-container {
+    width: 100%;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-button {
+    bottom: 3px;
+}
+
+.askStroomAiViewImpl-bottom button.Button {
+    min-width: 80px;
+}
+
+
+
+/* ---- Message thread ---- */
+
+.ai-message {
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 6px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.ai-message--user {
+    background: var(--page__background-color);
+}
+
+.ai-message--user blockquote {
+    border-left: 3px solid var(--control__border-color--focused);
+    margin: 0;
+    padding-left: 8px;
+    word-wrap: break-word;
+}
+
+.ai-message--assistant {
+    /* default background — inherits from container */
+}
+
+.ai-message--error {
+    background: rgba(211, 47, 47, 0.1);
+    border-left: 3px solid #d32f2f;
+    color: #d32f2f;
+}
+
+.ai-message--working summary,
+.ai-message--data summary,
+.ai-message--thinking summary,
+.ai-message--debug-detail summary {
+    cursor: pointer;
+    color: var(--control__text-color--disabled);
+    font-style: italic;
+    user-select: none;
+}
+
+.ai-message--working[open],
+.ai-message--data[open],
+.ai-message--thinking[open],
+.ai-message--debug-detail[open] {
+    background: var(--page__background-color);
+}
+
+.ai-message--working summary::marker,
+.ai-message--data summary::marker,
+.ai-message--thinking summary::marker,
+.ai-message--debug-detail summary::marker {
+    font-size: 0.8em;
+}
+
+.ai-message--debug-detail .ai-details-content {
+    line-height: 1.4;
+    opacity: 0.9;
+    overflow: auto;
+}
+
+/* ---- Empty state (centered input, ChatGPT-style) ---- */
+.askStroomAiViewImpl.empty .markdown-container {
+    display: none;
+}
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom-inner {
+    width: 100%;
+    max-width: 500px;
+}
+
+.askStroomAiViewImpl-emptyPrompt {
+    display: none;
+    font-size: 1.25em;
+    color: var(--control__text-color--disabled);
+    margin-bottom: 16px;
+    text-align: center;
+    user-select: none;
+}
+
+.askStroomAiViewImpl.empty .askStroomAiViewImpl-emptyPrompt {
+    display: block;
+}
+
+/* ---- Message footer (timestamp + copy) ---- */
+
+.ai-message-header,
+.ai-message-footer {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ai-attachment-status {
+    font-size: 0.85em;
+    opacity: 0.8;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-attachment-status .svgIcon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.ai-attachment-status svg {
+    width: 14px;
+    height: 14px;
+}
+
+.ai-message-timestamp {
+    font-size: 0.7em;
+    color: var(--control__text-color--disabled);
+    margin-left: auto;
+}
+
+.ai-message-copy {
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: 1px solid var(--control__border-color);
+    padding: 2px 6px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border-radius: .25rem;
+}
+
+.ai-message-copy:hover {
+    color: var(--control__text-color);
+    border-color: var(--control__text-color);
+}
+
+.aiChatHistoryCell {
+}
+
+.aiChatHistoryCell-row {
+    display: flex;
+    flex-direction: row;
+    padding: 5px;
+    gap: 5px;
+}
+
+.aiChatHistoryCell-title {
+    flex-grow: 1;
+}
+
+.aiChatHistoryCell-age {
+    opacity: 0.6;
+}

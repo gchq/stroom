@@ -68,8 +68,6 @@ public class S3ClientHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ClientHelper.class);
 
-    public static final String ZSTD_CONTENT_ENCODING = "zstd";
-
     private final S3ClientConfig s3ClientConfig;
     private final S3ClientPool s3ClientPool;
 
@@ -91,13 +89,14 @@ public class S3ClientHelper {
                                     final String key,
                                     final Map<String, String> tags,
                                     final Map<CIKey, String> s3Metadata,
+                                    final S3UploadProperties s3UploadProperties,
                                     final Path sourceFile) {
         NullSafe.requireNonBlankString(key, () -> "key must not be blank");
         NullSafe.requireNonBlankString(bucketName, () -> "bucketName must not be blank");
         Objects.requireNonNull(sourceFile);
 
         try {
-            return tryUpload(bucketName, key, tags, s3Metadata, sourceFile);
+            return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);
         } catch (final RuntimeException e) {
             if (s3ClientConfig.isCreateBuckets()) {
                 debug("Error uploading: ", bucketName, key, sourceFile, e);
@@ -105,7 +104,7 @@ public class S3ClientHelper {
                 // If we are creating buckets then try to create the bucket and upload again.
                 try {
                     createBucket(bucketName);
-                    return tryUpload(bucketName, key, tags, s3Metadata, sourceFile);
+                    return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);
                 } catch (final RuntimeException e2) {
                     error("Error uploading: ", bucketName, key, sourceFile, e2);
                     throw e2;
@@ -121,8 +120,10 @@ public class S3ClientHelper {
                                         final String key,
                                         final Map<String, String> tags,
                                         final Map<CIKey, String> s3Metadata,
+                                        final S3UploadProperties s3UploadProperties,
                                         final Path sourceFile) {
-        final PutObjectRequest request = createPutObjectRequest(bucketName, key, tags, s3Metadata, sourceFile);
+        final PutObjectRequest request = createPutObjectRequest(
+                bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);
         logRequest("Uploading: ", bucketName, key, request);
 
         final PutObjectResponse response;
@@ -483,28 +484,26 @@ public class S3ClientHelper {
                                                     final String key,
                                                     final Map<String, String> tags,
                                                     final Map<CIKey, String> s3Metadata,
+                                                    final S3UploadProperties s3UploadProperties,
                                                     final Path source) {
         Objects.requireNonNull(source);
+        LOGGER.debug(
+                "createPutObjectRequest() - bucketName: {}, key: {}, tags: {}, s3Metadata: {}, s3UploadProperties: {}",
+                bucketName, key, tags, s3Metadata, s3UploadProperties);
         final Builder builder = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .tagging(createTags(tags))
                 .metadata(convertS3MetadataMap(s3Metadata));
 
-        if (isZStandardFile(source)) {
-            builder.contentEncoding(ZSTD_CONTENT_ENCODING);
+        if (s3UploadProperties != null) {
+            NullSafe.consumeNonBlankString(s3UploadProperties.cacheControl(), builder::cacheControl);
+            NullSafe.consumeNonBlankString(s3UploadProperties.contentDisposition(), builder::contentDisposition);
+            NullSafe.consumeNonBlankString(s3UploadProperties.contentEncoding(), builder::contentEncoding);
+            NullSafe.consumeNonBlankString(s3UploadProperties.contentType(), builder::contentType);
         }
+
         return builder.build();
-    }
-
-    private boolean isZStandardFile(final Path file) {
-        if (file != null) {
-            final String lowerFilename = file.getFileName().toString().toLowerCase();
-            return lowerFilename.endsWith(".zst") || lowerFilename.endsWith(".zstd");
-        } else {
-            return false;
-        }
-
     }
 
     private Map<String, String> convertS3MetadataMap(final Map<CIKey, String> s3Metadata) {

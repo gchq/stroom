@@ -35,6 +35,7 @@ public class DbConnectionsModule extends AbstractModule {
 
         // All the modules for the DB connections
         install(new stroom.activity.impl.db.ActivityDbModule());
+        install(new stroom.ai.impl.db.AiDbModule());
         install(new stroom.analytics.impl.db.AnalyticsDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());

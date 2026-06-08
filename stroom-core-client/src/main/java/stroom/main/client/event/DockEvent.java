@@ -15,20 +15,28 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
     private final Presenter<?, ?> presenter;
     private final DockBehaviour dockBehaviour;
     private final Size size;
+    private final DockAction action;
 
     private DockEvent(final Presenter<?, ?> presenter,
                       final DockBehaviour dockBehaviour,
-                      final Size size) {
+                      final Size size,
+                      final DockAction action) {
         this.presenter = presenter;
         this.dockBehaviour = dockBehaviour;
         this.size = size;
+        this.action = action;
     }
 
     public static void fire(final HasHandlers handlers,
                             final Presenter<?, ?> presenter,
                             final DockBehaviour dockBehaviour,
                             final Size size) {
-        handlers.fireEvent(new DockEvent(presenter, dockBehaviour, size));
+        handlers.fireEvent(new DockEvent(presenter, dockBehaviour, size, DockAction.DOCK));
+    }
+
+    public static void fireUndock(final HasHandlers handlers,
+                                  final Presenter<?, ?> presenter) {
+        handlers.fireEvent(new DockEvent(presenter, null, null, DockAction.UNDOCK));
     }
 
     public static Type<Handler> getType() {
@@ -58,6 +66,15 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
 
     public Size getSize() {
         return size;
+    }
+
+    public DockAction getAction() {
+        return action;
+    }
+
+    public enum DockAction {
+        DOCK,
+        UNDOCK
     }
 
     public interface Handler extends EventHandler {

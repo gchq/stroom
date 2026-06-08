@@ -16,9 +16,10 @@
 
 package stroom.ai.shared;
 
-import stroom.docref.DocRef;
+import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,6 +32,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
+
 @Tag(name = "AI")
 @Path(AskStroomAiResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -39,27 +42,15 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/ai" + ResourcePaths.V1;
 
-    String NODE_NAME_PATH_PARAM = "/{nodeName}";
     String ASK_STROOM_AI_PATH_PART = "/askStroomAi";
-
-    @POST
-    @Path(ASK_STROOM_AI_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(
-            summary = "Ask Stroom AI a question relating to the current search context",
-            operationId = "askStroomAi")
-    AskStroomAiResponse askStroomAi(
-            @PathParam("nodeName") String nodeName,
-            @Parameter(description = "request", required = true) final AskStroomAiRequest request);
 
     @POST
     @Path(ASK_STROOM_AI_PATH_PART)
     @Operation(
             summary = "Ask Stroom AI a question relating to the current search context",
             operationId = "askStroomAi")
-    default AskStroomAiResponse askStroomAi(
-            @Parameter(description = "request", required = true) final AskStroomAiRequest request) {
-        return askStroomAi(null, request);
-    }
+    AskStroomAiResponse askStroomAi(
+            @Parameter(description = "request", required = true) AskStroomAiRequest request);
 
     @POST
     @Path("/getDefaultConfig")
@@ -69,25 +60,78 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     AskStroomAIConfig getDefaultConfig();
 
     @POST
-    @Path("/setDefaultModel")
+    @Path("/setDefaultAskStroomAIConfig")
     @Operation(
-            summary = "Set the default model to use for asking questions",
-            operationId = "setDefaultModel")
-    Boolean setDefaultModel(@Parameter(description = "modelRef", required = true) final DocRef modelRef);
+            summary = "Set the default Stroom AI config to use for asking questions",
+            operationId = "setDefaultAskStroomAIConfig")
+    Boolean setDefaultAskStroomAIConfig(
+            @Parameter(description = "config", required = true) AskStroomAIConfig config);
 
     @POST
-    @Path("/setDefaultTableSummaryConfig")
+    @Path("/createChat")
     @Operation(
-            summary = "Set the default table summary config to use for asking questions",
-            operationId = "setDefaultTableSummaryConfig")
-    Boolean setDefaultTableSummaryConfig(
-            @Parameter(description = "config", required = true) final TableSummaryConfig config);
+            summary = "Create a new AI chat conversation",
+            operationId = "createChat")
+    AiChat createChat();
 
     @POST
-    @Path("/setDefaultChatMemoryConfigConfig")
+    @Path("/listChats")
     @Operation(
-            summary = "Set the default chat memory config to use for asking questions",
-            operationId = "setDefaultChatMemoryConfigConfig")
-    Boolean setDefaultChatMemoryConfigConfig(
-            @Parameter(description = "config", required = true) final ChatMemoryConfig config);
+            summary = "List all AI chat conversations for the current user",
+            operationId = "listChats")
+    ResultPage<AiChat> listChats(@Parameter(description = "request", required = true)
+                                 FindAiChatHistoryCriteria criteria);
+
+    @POST
+    @Path("/getChat/{chatId}")
+    @Operation(
+            summary = "Get an AI chat conversation by ID",
+            operationId = "getChat")
+    AiChat getChat(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/deleteChat/{chatId}")
+    @Operation(
+            summary = "Delete an AI chat conversation",
+            operationId = "deleteChat")
+    Boolean deleteChat(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/getMessages/{chatId}")
+    @Operation(
+            summary = "Get messages for an AI chat conversation",
+            operationId = "getMessages")
+    List<AiChatMessage> getMessages(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/updateChatTitle/{chatId}")
+    @Operation(
+            summary = "Update the title of an AI chat conversation",
+            operationId = "updateChatTitle")
+    Boolean updateChatTitle(@PathParam("chatId") int chatId,
+                            @Parameter(description = "title", required = true) String title);
+
+    @POST
+    @Path("/pollMessages/{chatId}")
+    @Operation(
+            summary = "Poll for new messages in an AI chat conversation since a given message ID",
+            operationId = "pollMessages")
+    AiChatPollResponse pollMessages(@PathParam("chatId") int chatId,
+                                    @Parameter(description = "request", required = true)
+                                    AiChatPollRequest request);
+
+    @POST
+    @Path("/cancelProcessing/{chatId}")
+    @Operation(
+            summary = "Cancel in-progress AI batch analysis for a chat",
+            operationId = "cancelProcessing")
+    Boolean cancelProcessing(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/downloadChatHistory")
+    @Operation(
+            summary = "Download the chat history for a conversation as a Markdown file",
+            operationId = "downloadChatHistory")
+    ResourceGeneration downloadChatHistory(
+            @Parameter(description = "request", required = true) DownloadChatHistoryRequest request);
 }

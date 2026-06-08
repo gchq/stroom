@@ -16,6 +16,23 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  ai:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   analytics:
     db:
       connection:
@@ -115,14 +132,33 @@ appConfig:
     eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
-    chatMemory:
-      timeToLive:
-        time: 1
-        timeUnit: "HOURS"
-      tokenLimit: 30000
-    tableSummary:
-      maximumBatchSize: 16384
-      maximumTableInputRows: 100
+    tableAnalysis:
+      maxTotalRows: 10000
+      maxRowsPerBatch: 1000
+      maxParallelBatches: 4
+      tableQuerySystemPrompt: "    You are a data analysis AI. You will answer user\
+        \ questions     using ONLY the markdown-formatted DATA TABLE records provided.\
+        \     If the records do not contain relevant details, say \"No relevant information.\"\
+        \n"
+      tableQueryUserPrompt: "    CONVERSATION CONTEXT:\n    {{context}}\n\n    USER\
+        \ QUERY:\n    {{query}}\n\n    DATA TABLE:\n    {{table}}\n\n    Provide findings\
+        \ relevant only to these records, in a concise structured format.     Use\
+        \ the conversation context to understand what has been previously discussed.\n"
+      multiSummaryMergePrompt: "    Merge the following summaries into a single unified,\
+        \ concise summary.     Preserve important details, numerical findings, and\
+        \ remove duplicates.\n\n    {{summaries}}\n"
+    chatSystemPrompt: "You are a helpful data analysis assistant within the Stroom\
+      \ data platform. When table data is attached to the conversation, it appears\
+      \ as markdown tables prefixed with [Attached Table: ...] labels identifying\
+      \ the source. Use data from all relevant attached tables to answer the user's\
+      \ questions. If multiple tables are present, cite the source table name in your\
+      \ answer. If you don't have enough information, say so."
+    historySummaryPrompt: "Summarise the following conversation history in 2-3 concise\
+      \ sentences. Preserve key facts, decisions, data findings, and any table names\
+      \ or sources referenced. Do not include greetings or filler."
+    maxHistorySafetyCapMessages: 200
+    attachmentDownloadTimeoutMs: 60000
+    enableDebugDetail: true
   autoContentCreation:
     additionalGroupParentGroupName: "Data Feed Developer"
     additionalGroupTemplate: "grp-${accountid}-dev"
@@ -588,6 +624,7 @@ appConfig:
   lifecycle:
     enabled: true
   lmdbLibrary:
+    providedJffiLibraryPath: null
     providedSystemLibraryPath: null
     systemLibraryExtractDir: "lmdb_library"
   logging:

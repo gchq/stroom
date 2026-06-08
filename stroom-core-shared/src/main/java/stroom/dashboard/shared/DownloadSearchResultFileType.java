@@ -28,6 +28,7 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
     EXCEL("Excel", "xlsx"),
     CSV("CSV", "csv"),
     TSV("TSV", "tsv"),
+    MARKDOWN("Markdown", "md"),
     ;
 
     private final String displayValue;

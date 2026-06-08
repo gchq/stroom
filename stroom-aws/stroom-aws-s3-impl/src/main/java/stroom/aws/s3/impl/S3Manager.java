@@ -18,6 +18,7 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
+import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.client.S3Util;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.TemplateCache;
@@ -186,19 +187,20 @@ public class S3Manager {
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source) {
-        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, attributeMap, source);
+        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, attributeMap, null, source);
     }
 
     public PutObjectResponse upload(final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
                                     final Path source) {
-        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, s3MetaData, source);
+        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, s3MetaData, null, source);
     }
 
     public PutObjectResponse upload(final String bucketNamePattern,
                                     final String keyNamePattern,
                                     final Meta meta,
                                     final AttributeMap attributeMap,
+                                    final S3UploadProperties uploadProperties,
                                     final Path source) {
         final String bucketName = createBucketName(bucketNamePattern, meta);
         final String key = createKey(keyNamePattern, meta);
@@ -209,6 +211,7 @@ public class S3Manager {
                 key,
                 tags,
                 convertAttributeMapToS3Metadata(attributeMap),
+                uploadProperties,
                 source);
     }
 
@@ -216,16 +219,17 @@ public class S3Manager {
                                     final String keyNamePattern,
                                     final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
+                                    final S3UploadProperties uploadProperties,
                                     final Path source) {
         final String bucketName = createBucketName(bucketNamePattern, meta);
         final String key = createKey(keyNamePattern, meta);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
-
         return s3ClientHelper.upload(
                 bucketName,
                 key,
                 tags,
                 s3MetaData,
+                uploadProperties,
                 source);
     }
 

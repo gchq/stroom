@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
+import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3MetaFieldsMapper;
@@ -64,6 +65,11 @@ public final class S3ZstdTarget implements Target {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdTarget.class);
     private static final int DEFAULT_ZSTD_COMPRESSION_LEVEL = 3;
+    // I think we want to set content-type rather than content-encoding because we are expecting it to
+    // be downloaded as a .zst file, rather than seamlessly de-compressed (which couldn't happen without the dict)
+    private static final S3UploadProperties DEFAULT_UPLOAD_PROPERTIES = S3UploadProperties.builder()
+            .contentType(ZstdConstants.ZSTD_CONTENT_TYPE)
+            .build();
 
     private final MetaService metaService;
     private final S3ZstdStreamStore s3ZstdStreamStore;
@@ -387,7 +393,7 @@ public final class S3ZstdTarget implements Target {
             }
         });
 
-        s3Manager.upload(s3Bucket, s3Key, meta, s3MetaData, tempFilePath);
+        s3Manager.upload(s3Bucket, s3Key, meta, s3MetaData, DEFAULT_UPLOAD_PROPERTIES, tempFilePath);
         LOGGER.debug("close() - Uploaded fileKey: {}, tempFilePath: {}, s3Bucket: {}, " +
                      "s3Key: {}, attributeMap: {}",
                 fileKey, tempFilePath, s3Bucket, s3Key, attributeMap);

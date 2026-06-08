@@ -16,6 +16,7 @@
 
 package stroom.app.guice;
 
+import stroom.ai.impl.AiModule;
 import stroom.app.AdminAccountBootstrap;
 import stroom.app.metrics.StroomAppInfoProvider;
 import stroom.app.uri.UriFactoryModule;
@@ -45,7 +46,7 @@ public class AppModule extends AbstractModule {
 
         install(new UriFactoryModule());
         install(new CoreModule());
-        install(new stroom.langchain.impl.OpenAIModule());
+        install(new AiModule());
         install(new LifecycleServiceModule());
         install(new JobsModule());
         install(new ClusterModule());

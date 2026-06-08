@@ -1,7 +1,3 @@
-plugins {
-    id "com.gradle.develocity" version "4.2.2"
-}
-
 /*
  * Copyright 2016-2026 Crown Copyright
  *
@@ -18,6 +14,10 @@ plugins {
  * limitations under the License.
  */
 
+plugins {
+    id "com.gradle.develocity" version "4.2.2"
+}
+
 // Accept the T&Cs for publishing build scans
 develocity {
     buildScan {
@@ -29,14 +29,19 @@ develocity {
 
 rootProject.name = 'stroom'
 
-
-
 // Activity
 include 'stroom-activity:stroom-activity-api'
 include 'stroom-activity:stroom-activity-impl'
 include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-jooq'
 include 'stroom-activity:stroom-activity-mock'
+
+// AI
+include 'stroom-ai:stroom-ai-api'
+include 'stroom-ai:stroom-ai-impl'
+include 'stroom-ai:stroom-ai-impl-db'
+include 'stroom-ai:stroom-ai-impl-db-jooq'
+include 'stroom-ai:stroom-ai-mock'
 
 // Analytics
 include 'stroom-analytics:stroom-analytics-api'
@@ -200,11 +205,6 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 // Kafka
 include 'stroom-kafka:stroom-kafka-api'
 include 'stroom-kafka:stroom-kafka-impl'
-
-// LangChain (LLM integration)
-include 'stroom-langchain:stroom-langchain-api'
-include 'stroom-langchain:stroom-langchain-impl'
-include 'stroom-langchain:stroom-langchain-mock'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

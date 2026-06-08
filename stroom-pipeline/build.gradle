@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.pipeline'
 
 dependencies {
+    implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-meta:stroom-meta-api')
@@ -14,7 +15,6 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-hadoop')
-    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')

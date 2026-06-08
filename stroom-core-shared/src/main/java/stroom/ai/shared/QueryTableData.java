@@ -14,9 +14,7 @@ public final class QueryTableData extends AskStroomAiData {
     private final QuerySearchRequest searchRequest;
 
     @JsonCreator
-    public QueryTableData(@JsonProperty("chatMemoryId") final String chatMemoryId,
-                          @JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
-        super(chatMemoryId);
+    public QueryTableData(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest) {
         this.searchRequest = searchRequest;
     }
 
