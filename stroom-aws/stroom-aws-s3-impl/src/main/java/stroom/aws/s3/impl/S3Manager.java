@@ -708,18 +708,10 @@ public class S3Manager {
                 .metadata(metadata);
 
         if (uploadProperties != null) {
-            if (NullSafe.isNonBlankString(uploadProperties.cacheControl())) {
-                builder = builder.cacheControl(uploadProperties.cacheControl());
-            }
-            if (NullSafe.isNonBlankString(uploadProperties.contentDisposition())) {
-                builder = builder.contentDisposition(uploadProperties.contentDisposition());
-            }
-            if (NullSafe.isNonBlankString(uploadProperties.contentEncoding())) {
-                builder = builder.contentEncoding(uploadProperties.contentEncoding());
-            }
-            if (NullSafe.isNonBlankString(uploadProperties.contentType())) {
-                builder = builder.contentType(uploadProperties.contentType());
-            }
+            NullSafe.consumeNonBlankString(uploadProperties.cacheControl(), builder::cacheControl);
+            NullSafe.consumeNonBlankString(uploadProperties.contentDisposition(), builder::contentDisposition);
+            NullSafe.consumeNonBlankString(uploadProperties.contentEncoding(), builder::contentEncoding);
+            NullSafe.consumeNonBlankString(uploadProperties.contentType(), builder::contentType);
         }
 
         return builder.build();
