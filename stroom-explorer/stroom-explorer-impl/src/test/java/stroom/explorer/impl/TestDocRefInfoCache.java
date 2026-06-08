@@ -19,14 +19,10 @@ package stroom.explorer.impl;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.DocumentActionHandler;
-import stroom.docstore.api.DocumentActionHandlers;
-import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.util.shared.Document;
 import stroom.util.shared.NullSafe;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +40,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -82,21 +77,30 @@ class TestDocRefInfoCache {
     DocRefInfoCache docRefInfoCache;
 
     @Mock
-    private ExplorerActionHandlers mockExplorerActionHandlers;
+    private ExplorerActionHandlers explorerActionHandlers;
 
     @BeforeEach
     void setUp() {
-        final DocumentActionHandlers documentActionHandlers = new DocumentActionHandlers(
-                Map.of(
-                        new DocumentTypeName(TYPE_FOO), new MyDocumentActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
-                        new DocumentTypeName(TYPE_BAR), new MyDocumentActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
+        final ExplorerActionHandler foo = new MyDocumentActionHandler(Set.of(DOC_REF_1, DOC_REF_2));
+        final ExplorerActionHandler bar = new MyDocumentActionHandler(Set.of(DOC_REF_3, DOC_REF_4));
+        final ExplorerActionHandler folder = new MyFolderExplorerActionHandler();
+        final Map<String, ExplorerActionHandler> handlers = new HashMap<>();
+        handlers.put(foo.getType(), foo);
+        handlers.put(bar.getType(), bar);
+        handlers.put(folder.getType(), folder);
+
+        Mockito.when(explorerActionHandlers.stream()).thenReturn(handlers.values().stream());
+        Mockito.when(explorerActionHandlers.getHandler(Mockito.anyString()))
+                .thenAnswer(invocation -> {
+                    final String capturedString = invocation.getArgument(0);
+                    return handlers.get(capturedString);
+                });
 
         docRefInfoCache = new DocRefInfoCache(
                 cacheManager,
                 ExplorerConfig::new,
                 securityContext,
-                () -> documentActionHandlers,
-                mockExplorerActionHandlers);
+                explorerActionHandlers);
     }
 
     @Test
@@ -115,9 +119,6 @@ class TestDocRefInfoCache {
     @Test
     void testGet_folder() {
         final DocRef docRef = DOC_REF_FOLDER;
-        Mockito.when(mockExplorerActionHandlers.stream()).thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
-        Mockito.when(mockExplorerActionHandlers.getHandler(Mockito.anyString()))
-                .thenReturn(new MyFolderExplorerActionHandler());
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);
 
         assertThat(docRefInfo)
@@ -155,7 +156,7 @@ class TestDocRefInfoCache {
     // --------------------------------------------------------------------------------
 
 
-    private static class MyDocumentActionHandler implements DocumentActionHandler {
+    private static class MyDocumentActionHandler extends MyFolderExplorerActionHandler {
 
         private final Map<DocRef, DocRef> docRefs = new HashMap<>();
         private final String type;
@@ -169,16 +170,6 @@ class TestDocRefInfoCache {
                 throw new IllegalArgumentException("Expecting one type only");
             }
             this.type = types.iterator().next();
-        }
-
-        @Override
-        public Document readDocument(final DocRef docRef) {
-            return null;
-        }
-
-        @Override
-        public Document writeDocument(final Document document) {
-            return null;
         }
 
         @Override

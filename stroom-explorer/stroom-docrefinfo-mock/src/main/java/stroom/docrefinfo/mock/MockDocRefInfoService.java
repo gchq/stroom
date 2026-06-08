@@ -36,13 +36,6 @@ public class MockDocRefInfoService implements DocRefInfoService {
     }
 
     @Override
-    public Optional<DocRefInfo> info(final String uuid) {
-        return Optional.of(DocRefInfo.builder()
-                .docRef(new DocRef("UNKNOWN", uuid))
-                .build());
-    }
-
-    @Override
     public Optional<String> name(final DocRef docRef) {
         return Optional.ofNullable(docRef.getName());
     }
@@ -67,11 +60,6 @@ public class MockDocRefInfoService implements DocRefInfoService {
     @Override
     public DocRef decorate(final DocRef docRef, final boolean force) {
         return docRef;
-    }
-
-    @Override
-    public List<DocRef> decorate(final List<DocRef> docRefs) {
-        return docRefs;
     }
 
     @Override

@@ -27,6 +27,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -96,5 +97,23 @@ public class DataSourceProviderRegistry {
                 .map(DataSourceProvider::getDataSourceDocRefs)
                 .flatMap(List::stream)
                 .toList();
+    }
+
+    public Optional<DocRef> findDataSourceByUuid(final String uuid) {
+        for (final DataSourceProvider provider : dataSourceProviders.values()) {
+            final Optional<DocRef> result = provider.findDataSourceByUuid(uuid);
+            if (result.isPresent()) {
+                return result;
+            }
+        }
+        return Optional.empty();
+    }
+
+    public List<DocRef> findDataSourceByName(final String name) {
+        final List<DocRef> results = new ArrayList<>();
+        for (final DataSourceProvider provider : dataSourceProviders.values()) {
+            results.addAll(provider.findDataSourceByName(name));
+        }
+        return results;
     }
 }

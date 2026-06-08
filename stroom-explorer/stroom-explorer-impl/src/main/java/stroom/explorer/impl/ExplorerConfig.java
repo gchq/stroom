@@ -50,12 +50,17 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
 
     private final ExplorerDbConfig dbConfig;
     private final CacheConfig docRefInfoCache;
+    private final CacheConfig docRefNameCache;
     private final Set<String> suggestedTags;
     private final boolean dependencyWarningsEnabled;
 
     public ExplorerConfig() {
         dbConfig = new ExplorerDbConfig();
         docRefInfoCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        docRefNameCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
@@ -69,10 +74,12 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     @JsonCreator
     public ExplorerConfig(@JsonProperty("db") final ExplorerDbConfig dbConfig,
                           @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
+                          @JsonProperty("docRefNameCache") final CacheConfig docRefNameCache,
                           @JsonProperty("suggestedTags") final Set<String> suggestedTags,
                           @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled) {
         this.dbConfig = dbConfig;
         this.docRefInfoCache = docRefInfoCache;
+        this.docRefNameCache = docRefNameCache;
         // Filter out any blanks
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
@@ -90,6 +97,11 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     @JsonProperty("docRefInfoCache")
     public CacheConfig getDocRefInfoCache() {
         return docRefInfoCache;
+    }
+
+    @JsonProperty("docRefNameCache")
+    public CacheConfig getDocRefNameCache() {
+        return docRefNameCache;
     }
 
     @AllMatchPattern(pattern = ExplorerNode.TAG_PATTERN_STR)

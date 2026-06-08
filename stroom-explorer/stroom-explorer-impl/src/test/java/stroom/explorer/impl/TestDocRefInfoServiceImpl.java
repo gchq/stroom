@@ -29,7 +29,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,6 +78,8 @@ class TestDocRefInfoServiceImpl {
     @Mock
     private DocRefInfoCache mockDocRefInfoCache;
     @Mock
+    private DocRefNameCache mockDocRefNameCache;
+    @Mock
     private ExplorerActionHandlers mockExplorerActionHandlers;
     @Mock
     private Set<IsSpecialExplorerDataSource> mockSpecialDataSources;
@@ -91,6 +92,7 @@ class TestDocRefInfoServiceImpl {
     void setUp() {
         docRefInfoService = new DocRefInfoServiceImpl(
                 mockDocRefInfoCache,
+                mockDocRefNameCache,
                 () -> mockSecurityContext,
                 mockExplorerActionHandlers,
                 mockSpecialDataSources);
@@ -109,69 +111,6 @@ class TestDocRefInfoServiceImpl {
         Mockito.doAnswer(invocation ->
                         Stream.of(new MySpecialDataSource1(), new MySpecialDataSource2()))
                 .when(mockSpecialDataSources).stream();
-    }
-
-    @Test
-    void decorate_list_null() {
-
-        final List<DocRef> docRefs = docRefInfoService.decorate((List<DocRef>) null);
-
-        assertThat(docRefs)
-                .isEmpty();
-    }
-
-    @Test
-    void decorate_list_empty() {
-
-        final List<DocRef> docRefs = docRefInfoService.decorate(Collections.emptyList());
-
-        assertThat(docRefs)
-                .isEmpty();
-    }
-
-    @Test
-    void decorate_list_oneItemUnchanged() {
-
-        final List<DocRef> inputDocRefs = List.of(DOC_REF3);
-
-        final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
-
-        assertThat(outputDocRefs)
-                .containsExactlyElementsOf(inputDocRefs);
-    }
-
-    @Test
-    void decorate_list_twoDecorated() {
-
-        initMockCache();
-
-        final List<DocRef> inputDocRefs = List.of(
-                DOC_REF1.withoutName(),
-                DOC_REF2.withoutName(),
-                DOC_REF3);
-
-        final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
-
-        assertThat(outputDocRefs)
-                .hasSize(3);
-
-        assertThat(outputDocRefs)
-                .extracting(DocRef::getUuid)
-                .containsExactlyElementsOf(DOC_REFS.stream()
-                        .map(DocRef::getUuid)
-                        .toList());
-
-        assertThat(outputDocRefs)
-                .extracting(DocRef::getType)
-                .containsExactlyElementsOf(DOC_REFS.stream()
-                        .map(DocRef::getType)
-                        .toList());
-
-        assertThat(outputDocRefs)
-                .extracting(DocRef::getName)
-                .containsExactlyElementsOf(DOC_REFS.stream()
-                        .map(DocRef::getName)
-                        .toList());
     }
 
     @Test
@@ -261,26 +200,6 @@ class TestDocRefInfoServiceImpl {
 //                .build();
 
         final List<DocRef> docRefs = docRefInfoService.findByName(MySpecialDataSource1.TYPE, "*", true);
-
-        assertThat(docRefs)
-                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
-    }
-
-    @Test
-    void findSearchableByName_nullTypeExact() {
-        initSearchables();
-
-        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Dual", false);
-
-        assertThat(docRefs)
-                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
-    }
-
-    @Test
-    void findSearchableByName_nullTypeWild() {
-        initSearchables();
-
-        final List<DocRef> docRefs = docRefInfoService.findByName(null, "Du*", true);
 
         assertThat(docRefs)
                 .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);

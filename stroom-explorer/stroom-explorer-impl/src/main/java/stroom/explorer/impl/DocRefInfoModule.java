@@ -20,6 +20,7 @@ import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
@@ -31,6 +32,11 @@ public class DocRefInfoModule extends AbstractModule {
         bind(DocRefDecorator.class).to(DocRefInfoServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(DocRefInfoCache.class);
+                .addBinding(DocRefInfoCache.class)
+                .addBinding(DocRefNameCache.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(DocRefInfoCache.class)
+                .addBinding(DocRefNameCache.class);
     }
 }

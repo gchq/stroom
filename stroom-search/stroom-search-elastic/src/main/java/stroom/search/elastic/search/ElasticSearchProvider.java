@@ -473,6 +473,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return elasticIndexStore.findByName(name);
+    }
+
+    @Override
     public String getDataSourceType() {
         return ElasticIndexDoc.TYPE;
     }

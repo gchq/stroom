@@ -312,6 +312,11 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return statisticStoreStore.findByName(name);
+    }
+
+    @Override
     public String getDataSourceType() {
         return StatisticStoreDoc.TYPE;
     }
