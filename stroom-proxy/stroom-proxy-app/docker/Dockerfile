@@ -43,6 +43,12 @@ FROM stroom-base-stage
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
+ENV USER_NAME=proxy
+ENV USER_ID=1000
+# The root group which should be GID 0
+# This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
+ENV GROUP_NAME=root
+ENV GROUP_ID=0
 
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom-proxy
@@ -75,15 +81,20 @@ CMD ["./start.sh"]
 # resolve alpine's apk repo server.
 #RUN echo "151.101.112.249 dl-cdn.alpinelinux.org" >> /etc/hosts && \
 
-# Create a system user/group with no home and no shell and a uid:gid of 1000:1000
+# Create a system user/group with no home and no shell and a uid:gid of 1000:0
+# Set the perms so that the group has the same perms as the user so the container
+# can be run as another user that has GID 0.
+# adduser does not let us do --ingroup with a GID, so have to use 'root'.
 
-# IMPORTANT!!!
-# If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
-# IMPORTANT!!!
 RUN \
-    addgroup -g 1000 -S proxy && \
-    adduser -u 1000 -S -s /bin/false -D -G proxy proxy && \
-    mkdir -p /stroom-proxy && \
+    adduser \
+      --system \
+      --shell /bin/false \
+      --disabled-password \
+      --ingroup "$GROUP_NAME" \
+      --no-create-home \
+      --uid "$USER_ID" \
+      "$USER_NAME" && \
     mkdir -p /stroom-proxy/certs && \
     mkdir -p /stroom-proxy/config && \
     mkdir -p /stroom-proxy/config_fallback && \
@@ -97,18 +108,22 @@ RUN \
     mkdir -p /stroom-proxy/failures && \
     mkdir -p /stroom-proxy/zip_file_ingest && \
     mkdir -p /stroom-proxy/zip_file_ingest_failed && \
-    chown -R proxy:proxy /stroom-proxy
-
-# Copy all the fat jars for the application and connectors
+    chown -R "$USER_ID:$GROUP_ID" /stroom-proxy
+    #chmod -R g+rwX /stroom-proxy
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
-COPY --chown=proxy:proxy *.sh /stroom-proxy/
+
+COPY --chown=$USER_ID:$GROUP_ID *.sh /stroom-proxy/
 
 # This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
-COPY --chown=proxy:proxy build/config.yml /stroom-proxy/config_fallback/config.yml
+COPY --chown=$USER_ID:$GROUP_ID build/config.yml /stroom-proxy/config_fallback/config.yml
 
-COPY --chown=proxy:proxy ./build/stroom-proxy-app-all.jar /stroom-proxy/
+COPY --chown=$USER_ID:$GROUP_ID ./build/stroom-proxy-app-all.jar /stroom-proxy/
+
+# Give the group the same perms as the user so any user with GID 0 can run proxy in
+# the same way as UID 1000
+RUN chmod -R g=u /stroom-proxy
 
 # Label the image so we can see what commit/tag it came from
 ARG GIT_COMMIT=unspecified
@@ -119,3 +134,6 @@ LABEL \
 # Pass the GIT_TAG through to the running container
 # This should not be set at container run time
 ENV GIT_TAG=$GIT_TAG
+
+# Run as our non-root user
+USER "$USER_ID"
