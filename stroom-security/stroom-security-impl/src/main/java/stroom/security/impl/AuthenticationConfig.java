@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class AuthenticationConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -62,12 +64,12 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
             @JsonProperty(PROP_NAME_AUTHENTICATION_STATE_CACHE) final CacheConfig authenticationStateCache,
             @JsonProperty(PROP_NAME_MAX_API_KEY_EXPIRY_AGE) final StroomDuration maxApiKeyExpiryAge,
             @JsonProperty(PROP_NAME_OPENID) final StroomOpenIdConfig openIdConfig,
-            @JsonProperty(PROP_NAME_PREVENT_LOGIN) final boolean preventLogin) {
+            @JsonProperty(PROP_NAME_PREVENT_LOGIN) final Boolean preventLogin) {
         this.apiKeyCache = apiKeyCache;
         this.authenticationStateCache = authenticationStateCache;
         this.maxApiKeyExpiryAge = maxApiKeyExpiryAge;
         this.openIdConfig = openIdConfig;
-        this.preventLogin = preventLogin;
+        this.preventLogin = Objects.requireNonNullElse(preventLogin, false);
     }
 
     @JsonProperty(PROP_NAME_API_KEY_CACHE)

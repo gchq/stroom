@@ -75,18 +75,18 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonCreator
     public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
                                    @JsonProperty("caCertificate") final String caCertificate,
-                                   @JsonProperty("useAuthentication") final boolean useAuthentication,
+                                   @JsonProperty("useAuthentication") final Boolean useAuthentication,
                                    @JsonProperty("apiKeyId") final String apiKeyId,
                                    @JsonProperty("apiKeySecret") final String apiKeySecret,
-                                   @JsonProperty("connectionTimeoutMillis") final int connectionTimeoutMillis,
-                                   @JsonProperty("responseTimeoutMillis") final int responseTimeoutMillis) {
+                                   @JsonProperty("connectionTimeoutMillis") final Integer connectionTimeoutMillis,
+                                   @JsonProperty("responseTimeoutMillis") final Integer responseTimeoutMillis) {
         this.connectionUrls = connectionUrls;
         this.caCertificate = caCertificate;
-        this.useAuthentication = useAuthentication;
+        this.useAuthentication = Objects.requireNonNullElse(useAuthentication, false);
         this.apiKeyId = apiKeyId;
         this.apiKeySecret = apiKeySecret;
-        this.connectionTimeoutMillis = connectionTimeoutMillis;
-        this.responseTimeoutMillis = responseTimeoutMillis;
+        this.connectionTimeoutMillis = Objects.requireNonNullElse(connectionTimeoutMillis, 0);
+        this.responseTimeoutMillis = Objects.requireNonNullElse(responseTimeoutMillis, 0);
     }
 
     public List<String> getConnectionUrls() {

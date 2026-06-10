@@ -72,13 +72,13 @@ public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ActivityConfig(@JsonProperty("enabled") final boolean enabled,
-                          @JsonProperty("chooseOnStartup") final boolean chooseOnStartup,
+    public ActivityConfig(@JsonProperty("enabled") final Boolean enabled,
+                          @JsonProperty("chooseOnStartup") final Boolean chooseOnStartup,
                           @JsonProperty("managerTitle") final String managerTitle,
                           @JsonProperty("editorTitle") final String editorTitle,
                           @JsonProperty("editorBody") final String editorBody) {
-        this.enabled = enabled;
-        this.chooseOnStartup = chooseOnStartup;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.chooseOnStartup = Objects.requireNonNullElse(chooseOnStartup, false);
         this.managerTitle = managerTitle;
         this.editorTitle = editorTitle;
         this.editorBody = editorBody;

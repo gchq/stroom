@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -60,12 +61,12 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
     @SuppressWarnings("unused")
     @JsonCreator
     public JobSystemConfig(@JsonProperty("db") final JobSystemDbConfig dbConfig,
-                           @JsonProperty("enabled") final boolean enabled,
-                           @JsonProperty(PROP_NAME_ENABLE_PROCESSING) final boolean enableJobsOnBootstrap,
+                           @JsonProperty("enabled") final Boolean enabled,
+                           @JsonProperty(PROP_NAME_ENABLE_PROCESSING) final Boolean enableJobsOnBootstrap,
                            @JsonProperty("executionInterval") final String executionInterval) {
         this.dbConfig = dbConfig;
-        this.enabled = enabled;
-        this.enableJobsOnBootstrap = enableJobsOnBootstrap;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enableJobsOnBootstrap = Objects.requireNonNullElse(enableJobsOnBootstrap, false);
         this.executionInterval = executionInterval;
     }
 

@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticIndexingConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -40,23 +42,22 @@ public class ElasticIndexingConfig extends AbstractConfig implements IsStroomCon
     @SuppressWarnings("unused")
     @JsonCreator
     public ElasticIndexingConfig(
-            @JsonProperty("maxNestedElementDepth") final int maxNestedElementDepth,
-            @JsonProperty("initialRetryBackoffPeriodMs") final int initialRetryBackoffPeriodMs,
-            @JsonProperty("retryCount") final int retryCount
-    ) {
-        this.maxNestedElementDepth = maxNestedElementDepth;
-        this.initialRetryBackoffPeriodMs = initialRetryBackoffPeriodMs;
-        this.retryCount = retryCount;
+            @JsonProperty("maxNestedElementDepth") final Integer maxNestedElementDepth,
+            @JsonProperty("initialRetryBackoffPeriodMs") final Integer initialRetryBackoffPeriodMs,
+            @JsonProperty("retryCount") final Integer retryCount) {
+        this.maxNestedElementDepth = Objects.requireNonNullElse(maxNestedElementDepth, 10);
+        this.initialRetryBackoffPeriodMs = Objects.requireNonNullElse(initialRetryBackoffPeriodMs, 1000);
+        this.retryCount = Objects.requireNonNullElse(retryCount, 5);
     }
 
     @JsonPropertyDescription("Maximum allowed depth of JSON XML `array`/`map` elements, that a JSON document " +
-            "may have when being sent to Elasticsearch for indexing.")
+                             "may have when being sent to Elasticsearch for indexing.")
     public int getMaxNestedElementDepth() {
         return maxNestedElementDepth;
     }
 
     @JsonPropertyDescription("Delay in milliseconds, before the indexing request is initially retried. " +
-            "Subsequent retries occur after a multiple of this initial delay.")
+                             "Subsequent retries occur after a multiple of this initial delay.")
     public int getInitialRetryBackoffPeriodMs() {
         return initialRetryBackoffPeriodMs;
     }
@@ -69,9 +70,9 @@ public class ElasticIndexingConfig extends AbstractConfig implements IsStroomCon
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
-                "maxNestedElementDepth=" + maxNestedElementDepth +
-                ", initialRetryBackoffPeriodMs=" + initialRetryBackoffPeriodMs +
-                ", retryCount=" + retryCount +
-                '}';
+               "maxNestedElementDepth=" + maxNestedElementDepth +
+               ", initialRetryBackoffPeriodMs=" + initialRetryBackoffPeriodMs +
+               ", retryCount=" + retryCount +
+               '}';
     }
 }

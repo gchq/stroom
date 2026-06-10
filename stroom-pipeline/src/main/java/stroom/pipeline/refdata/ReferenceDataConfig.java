@@ -30,6 +30,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -63,18 +65,18 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @JsonCreator
-    public ReferenceDataConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
-                               @JsonProperty("maxPurgeDeletesBeforeCommit") final int maxPurgeDeletesBeforeCommit,
+    public ReferenceDataConfig(@JsonProperty("maxPutsBeforeCommit") final Integer maxPutsBeforeCommit,
+                               @JsonProperty("maxPurgeDeletesBeforeCommit") final Integer maxPurgeDeletesBeforeCommit,
                                @JsonProperty("purgeAge") final StroomDuration purgeAge,
-                               @JsonProperty("loadingLockStripes") final int loadingLockStripes,
+                               @JsonProperty("loadingLockStripes") final Integer loadingLockStripes,
                                @JsonProperty("lmdb") final ReferenceDataLmdbConfig lmdbConfig,
                                @JsonProperty("stagingLmdb") final ReferenceDataStagingLmdbConfig stagingLmdbConfig,
                                @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache,
                                @JsonProperty("metaIdToRefStoreCache") final CacheConfig metaIdToRefStoreCache) {
-        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
-        this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
+        this.maxPutsBeforeCommit = Objects.requireNonNullElse(maxPutsBeforeCommit, 0);
+        this.maxPurgeDeletesBeforeCommit = Objects.requireNonNullElse(maxPurgeDeletesBeforeCommit, 0);
         this.purgeAge = purgeAge;
-        this.loadingLockStripes = loadingLockStripes;
+        this.loadingLockStripes = Objects.requireNonNullElse(loadingLockStripes, 0);
         this.lmdbConfig = lmdbConfig;
         this.stagingLmdbConfig = stagingLmdbConfig;
         this.effectiveStreamCache = effectiveStreamCache;

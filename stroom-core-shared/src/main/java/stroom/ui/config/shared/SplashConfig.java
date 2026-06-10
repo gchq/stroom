@@ -56,11 +56,11 @@ public class SplashConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public SplashConfig(@JsonProperty("enabled") final boolean enabled,
+    public SplashConfig(@JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("title") final String title,
                         @JsonProperty("body") final String body,
                         @JsonProperty("version") final String version) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.title = title;
         this.body = body;
         this.version = version;

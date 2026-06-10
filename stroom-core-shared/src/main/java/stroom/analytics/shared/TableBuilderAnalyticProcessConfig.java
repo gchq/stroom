@@ -50,7 +50,7 @@ public final class TableBuilderAnalyticProcessConfig extends AnalyticProcessConf
     private final UserRef runAsUser;
 
     @JsonCreator
-    public TableBuilderAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
+    public TableBuilderAnalyticProcessConfig(@JsonProperty("enabled") final Boolean enabled,
                                              @JsonProperty("node") final String node,
                                              @JsonProperty("errorFeed") final DocRef errorFeed,
                                              @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
@@ -58,7 +58,7 @@ public final class TableBuilderAnalyticProcessConfig extends AnalyticProcessConf
                                              @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                              @JsonProperty("dataRetention") final SimpleDuration dataRetention,
                                              @JsonProperty("runAsUser") final UserRef runAsUser) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.node = node;
         this.errorFeed = errorFeed;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;

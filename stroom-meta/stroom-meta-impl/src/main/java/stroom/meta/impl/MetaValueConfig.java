@@ -62,13 +62,13 @@ public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonCreator
     public MetaValueConfig(@JsonProperty("deleteAge") final StroomDuration deleteAge,
-                           @JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                           @JsonProperty("flushBatchSize") final int flushBatchSize,
-                           @JsonProperty("addAsync") final boolean addAsync) {
+                           @JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                           @JsonProperty("flushBatchSize") final Integer flushBatchSize,
+                           @JsonProperty("addAsync") final Boolean addAsync) {
         this.deleteAge = deleteAge;
-        this.deleteBatchSize = deleteBatchSize;
-        this.flushBatchSize = flushBatchSize;
-        this.addAsync = addAsync;
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, 0);
+        this.flushBatchSize = Objects.requireNonNullElse(flushBatchSize, 0);
+        this.addAsync = Objects.requireNonNullElse(addAsync, false);
     }
 
     public StroomDuration getDeleteAge() {

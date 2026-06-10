@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
         TableAnalysisConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
@@ -97,15 +99,15 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
 
     @JsonCreator
     public TableAnalysisConfig(
-            @JsonProperty(PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS) final int maxTotalRows,
-            @JsonProperty(PROP_NAME_MAXIMUM_BATCH_SIZE) final int maxRowsPerBatch,
-            @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES) final int maxParallelBatches,
+            @JsonProperty(PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS) final Integer maxTotalRows,
+            @JsonProperty(PROP_NAME_MAXIMUM_BATCH_SIZE) final Integer maxRowsPerBatch,
+            @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES) final Integer maxParallelBatches,
             @JsonProperty(PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT) final String tableQuerySystemPrompt,
             @JsonProperty(PROP_NAME_TABLE_QUERY_USER_PROMPT) final String tableQueryUserPrompt,
             @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT) final String multiSummaryMergePrompt) {
-        this.maxTotalRows = maxTotalRows;
-        this.maxRowsPerBatch = maxRowsPerBatch;
-        this.maxParallelBatches = maxParallelBatches;
+        this.maxTotalRows = Objects.requireNonNullElse(maxTotalRows, DEFAULT_MAX_TOTAL_ROWS);
+        this.maxRowsPerBatch = Objects.requireNonNullElse(maxRowsPerBatch, DEFAULT_MAX_ROWS_PER_BATCH);
+        this.maxParallelBatches = Objects.requireNonNullElse(maxParallelBatches, DEFAULT_MAX_PARALLEL_BATCHES);
         this.tableQuerySystemPrompt = tableQuerySystemPrompt;
         this.tableQueryUserPrompt = tableQueryUserPrompt;
         this.multiSummaryMergePrompt = multiSummaryMergePrompt;

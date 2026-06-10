@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -58,12 +59,12 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
     @SuppressWarnings("unused")
     @JsonCreator
     public IndexConfig(@JsonProperty("db") final IndexDbConfig dbConfig,
-                       @JsonProperty("ramBufferSizeMB") final int ramBufferSizeMB,
+                       @JsonProperty("ramBufferSizeMB") final Integer ramBufferSizeMB,
                        @JsonProperty("writer") final IndexWriterConfig indexWriterConfig,
                        @JsonProperty("indexCache") final CacheConfig indexCache,
                        @JsonProperty("indexFieldCache") final CacheConfig indexFieldCache) {
         this.dbConfig = dbConfig;
-        this.ramBufferSizeMB = ramBufferSizeMB;
+        this.ramBufferSizeMB = Objects.requireNonNullElse(ramBufferSizeMB, 0);
         this.indexWriterConfig = indexWriterConfig;
         this.indexCache = indexCache;
         this.indexFieldCache = indexFieldCache;

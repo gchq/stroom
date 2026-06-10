@@ -77,7 +77,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public IdentityConfig(@JsonProperty("autoCreateAdminAccountOnBoot") final Boolean autoCreateAdminAccountOnBoot,
                           @JsonProperty("allowCertificateAuthentication") final Boolean allowCertificateAuthentication,
                           @JsonProperty("certificateCnPattern") final String certificateCnPattern,
-                          @JsonProperty("certificateCnCaptureGroupIndex") final int certificateCnCaptureGroupIndex,
+                          @JsonProperty("certificateCnCaptureGroupIndex") final Integer certificateCnCaptureGroupIndex,
                           @JsonProperty("failedLoginLockThreshold") final Integer failedLoginLockThreshold,
                           @JsonProperty(PROP_NAME_EMAIL) final EmailConfig emailConfig,
                           @JsonProperty(PROP_NAME_TOKEN) final TokenConfig tokenConfig,
@@ -91,7 +91,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                 allowCertificateAuthentication,
                 DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION);
         this.certificateCnPattern = certificateCnPattern;
-        this.certificateCnCaptureGroupIndex = certificateCnCaptureGroupIndex;
+        this.certificateCnCaptureGroupIndex = Objects.requireNonNullElse(certificateCnCaptureGroupIndex, 0);
         this.failedLoginLockThreshold = failedLoginLockThreshold;
         this.emailConfig = emailConfig;
         this.tokenConfig = tokenConfig;

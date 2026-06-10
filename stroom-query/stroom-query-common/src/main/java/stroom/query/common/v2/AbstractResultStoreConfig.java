@@ -24,8 +24,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import jakarta.validation.constraints.Min;
 
+import java.util.Objects;
+
 @NotInjectableConfig
 public abstract class AbstractResultStoreConfig extends AbstractConfig {
+
+    public static final ByteSize DEFAULT_MIN_PAYLOAD_SIZE = ByteSize.ofMebibytes(1);
+    public static final ByteSize DEFAULT_MAX_PAYLOAD_SIZE = ByteSize.ofGibibytes(1);
+    public static final ResultStoreLmdbConfig DEFAULT_RESULT_STORE_LMDB_CONFIG =
+            ResultStoreLmdbConfig.builder().localDir("search_results").build();
 
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
@@ -40,39 +47,40 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     AbstractResultStoreConfig() {
         this(10_000,
                 true,
-                ByteSize.ofMebibytes(1),
-                ByteSize.ofGibibytes(1),
+                DEFAULT_MIN_PAYLOAD_SIZE,
+                DEFAULT_MAX_PAYLOAD_SIZE,
                 1000,
                 10_000,
                 500_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build());
+                DEFAULT_RESULT_STORE_LMDB_CONFIG);
     }
 
-    AbstractResultStoreConfig(final int maxPutsBeforeCommit,
-                              final boolean offHeapResults,
+    AbstractResultStoreConfig(final Integer maxPutsBeforeCommit,
+                              final Boolean offHeapResults,
                               final ByteSize minPayloadSize,
                               final ByteSize maxPayloadSize,
-                              final int maxStringFieldLength,
-                              final int valueQueueSize,
-                              final int maxSortedItems,
+                              final Integer maxStringFieldLength,
+                              final Integer valueQueueSize,
+                              final Integer maxSortedItems,
                               final ResultStoreLmdbConfig lmdbConfig) {
-        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
-        this.offHeapResults = offHeapResults;
-        this.minPayloadSize = minPayloadSize;
-        this.maxPayloadSize = maxPayloadSize;
-        this.maxStringFieldLength = maxStringFieldLength;
-        this.valueQueueSize = valueQueueSize;
-        this.maxSortedItems = maxSortedItems;
-        this.lmdbConfig = lmdbConfig;
+        this.maxPutsBeforeCommit = Objects.requireNonNullElse(maxPutsBeforeCommit, 10_000);
+        this.offHeapResults = Objects.requireNonNullElse(offHeapResults, true);
+        this.minPayloadSize = Objects.requireNonNullElse(minPayloadSize, DEFAULT_MIN_PAYLOAD_SIZE);
+        this.maxPayloadSize = Objects.requireNonNullElse(maxPayloadSize, DEFAULT_MAX_PAYLOAD_SIZE);
+        this.maxStringFieldLength = Objects.requireNonNullElse(maxStringFieldLength, 1000);
+        this.valueQueueSize = Objects.requireNonNullElse(valueQueueSize, 10_000);
+        this.maxSortedItems = Objects.requireNonNullElse(maxSortedItems, 500_000);
+        this.lmdbConfig = Objects.requireNonNullElse(lmdbConfig, DEFAULT_RESULT_STORE_LMDB_CONFIG);
     }
 
 
     @Min(0)
     @JsonPropertyDescription("The maximum number of puts into the store (in a single load) before the " +
-            "transaction is committed. There is only one write transaction available at a time so reducing " +
-            "this value allows multiple loads to potentially each load a chunk at a time. However, load times " +
-            "increase rapidly with values below around 2,000. For maximum performance of a single load set this " +
-            "value to 0 to only commit at the very end of the load.")
+                             "transaction is committed. There is only one write transaction available at a time " +
+                             "so reducing this value allows multiple loads to potentially each load a chunk at a " +
+                             "time. However, load times increase rapidly with values below around 2,000. For " +
+                             "maximum performance of a single load set this value to 0 to only commit at the very " +
+                             "end of the load.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }
@@ -105,7 +113,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     }
 
     @JsonPropertyDescription("Maximum number of results that can be returned in a single page if the results are " +
-            "sorted. This will affect downloading all search results if results are sorted.")
+                             "sorted. This will affect downloading all search results if results are sorted.")
     @JsonProperty("maxSortedItems")
     public int getMaxSortedItems() {
         return maxSortedItems;
@@ -119,14 +127,14 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "AbstractResultStoreConfig{" +
-                "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
-                ", offHeapResults=" + offHeapResults +
-                ", valueQueueSize=" + valueQueueSize +
-                ", minPayloadSize=" + minPayloadSize +
-                ", maxPayloadSize=" + maxPayloadSize +
-                ", maxStringFieldLength=" + maxStringFieldLength +
-                ", maxSortedItems=" + maxSortedItems +
-                ", lmdbConfig=" + lmdbConfig +
-                '}';
+               "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
+               ", offHeapResults=" + offHeapResults +
+               ", valueQueueSize=" + valueQueueSize +
+               ", minPayloadSize=" + minPayloadSize +
+               ", maxPayloadSize=" + maxPayloadSize +
+               ", maxStringFieldLength=" + maxStringFieldLength +
+               ", maxSortedItems=" + maxSortedItems +
+               ", lmdbConfig=" + lmdbConfig +
+               '}';
     }
 }

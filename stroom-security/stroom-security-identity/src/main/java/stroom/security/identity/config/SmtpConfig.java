@@ -31,6 +31,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
 
+import java.util.Objects;
+
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
@@ -71,12 +73,12 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public SmtpConfig(@JsonProperty("host") final String host,
-                      @JsonProperty("port") final int port,
+                      @JsonProperty("port") final Integer port,
                       @JsonProperty("transport") final String transport,
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password) {
         this.host = host;
-        this.port = port;
+        this.port = Objects.requireNonNullElse(port, 0);
         this.transport = transport;
         this.username = username;
         this.password = password;
@@ -116,11 +118,11 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "SmtpConfig{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", transport='" + transport + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                '}';
+               "host='" + host + '\'' +
+               ", port=" + port +
+               ", transport='" + transport + '\'' +
+               ", username='" + username + '\'' +
+               ", password='" + password + '\'' +
+               '}';
     }
 }

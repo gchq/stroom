@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -45,11 +47,11 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     }
 
     @JsonCreator
-    public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
-                                  @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
+    public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final Integer maxDocIdQueueSize,
+                                  @JsonProperty("maxThreadsPerTask") final Integer maxThreadsPerTask,
                                   @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache) {
-        this.maxDocIdQueueSize = maxDocIdQueueSize;
-        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.maxDocIdQueueSize = Objects.requireNonNullElse(maxDocIdQueueSize, 0);
+        this.maxThreadsPerTask = Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
         this.remoteSearchResultCache = remoteSearchResultCache;
     }
 

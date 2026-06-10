@@ -45,12 +45,12 @@ public class SolrConnectionConfig implements Serializable {
 
     @JsonCreator
     public SolrConnectionConfig(@JsonProperty("instanceType") final InstanceType instanceType,
-                                @JsonProperty("useZk") final boolean useZk,
+                                @JsonProperty("useZk") final Boolean useZk,
                                 @JsonProperty("solrUrls") final List<String> solrUrls,
                                 @JsonProperty("zkHosts") final List<String> zkHosts,
                                 @JsonProperty("zkPath") final String zkPath) {
         this.instanceType = instanceType;
-        this.useZk = useZk;
+        this.useZk = Objects.requireNonNullElse(useZk, false);
         this.solrUrls = solrUrls;
         this.zkHosts = zkHosts;
         this.zkPath = zkPath;

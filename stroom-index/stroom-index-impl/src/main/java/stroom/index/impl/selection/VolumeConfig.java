@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
@@ -62,16 +63,18 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
     @JsonCreator
     public VolumeConfig(
             @JsonProperty("volumeSelector") final String volumeSelector,
-            @JsonProperty("createDefaultIndexVolumesOnStart") final boolean createDefaultIndexVolumesOnStart,
+            @JsonProperty("createDefaultIndexVolumesOnStart") final Boolean createDefaultIndexVolumesOnStart,
             @JsonProperty(PROP_NAME_DEFAULT_VOLUME_GROUP_NAME) final String defaultIndexVolumeGroupName,
             @JsonProperty("defaultIndexVolumeGroupPaths") final List<String> defaultIndexVolumeGroupPaths,
-            @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final double defaultIndexVolumeFilesystemUtilisation,
+            @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final Double defaultIndexVolumeFilesystemUtilisation,
             @JsonProperty("volumeSelectorCache") final CacheConfig volumeSelectorCache) {
         this.volumeSelector = volumeSelector;
-        this.createDefaultIndexVolumesOnStart = createDefaultIndexVolumesOnStart;
+        this.createDefaultIndexVolumesOnStart =
+                Objects.requireNonNullElse(createDefaultIndexVolumesOnStart, false);
         this.defaultIndexVolumeGroupName = defaultIndexVolumeGroupName;
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
-        this.defaultIndexVolumeFilesystemUtilisation = defaultIndexVolumeFilesystemUtilisation;
+        this.defaultIndexVolumeFilesystemUtilisation =
+                Objects.requireNonNullElse(defaultIndexVolumeFilesystemUtilisation, 0.9D);
         this.volumeSelectorCache = volumeSelectorCache;
     }
 

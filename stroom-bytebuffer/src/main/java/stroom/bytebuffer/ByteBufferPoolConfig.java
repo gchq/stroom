@@ -29,6 +29,7 @@ import jakarta.validation.constraints.Min;
 
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {
@@ -53,12 +54,12 @@ public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConf
 
     @JsonCreator
     public ByteBufferPoolConfig(
-            @JsonProperty("warningThresholdPercentage") final int warningThresholdPercentage,
+            @JsonProperty("warningThresholdPercentage") final Integer warningThresholdPercentage,
             @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts,
-            @JsonProperty("blockOnExhaustedPool") final boolean blockOnExhaustedPool) {
-        this.warningThresholdPercentage = warningThresholdPercentage;
+            @JsonProperty("blockOnExhaustedPool") final Boolean blockOnExhaustedPool) {
+        this.warningThresholdPercentage = Objects.requireNonNullElse(warningThresholdPercentage, 90);
         this.pooledByteBufferCounts = pooledByteBufferCounts;
-        this.blockOnExhaustedPool = blockOnExhaustedPool;
+        this.blockOnExhaustedPool = Objects.requireNonNullElse(blockOnExhaustedPool, false);
     }
 
     @Max(100)

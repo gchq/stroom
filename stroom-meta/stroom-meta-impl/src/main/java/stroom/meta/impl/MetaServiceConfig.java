@@ -47,6 +47,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -98,7 +99,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                              @JsonProperty("metaTypes") final Set<String> metaTypes,
                              @JsonProperty("rawMetaTypes") final Set<String> rawMetaTypes,
                              @JsonProperty("dataFormats") final Set<String> dataFormats,
-                             @JsonProperty("metaStatusUpdateBatchSize") final int metaStatusUpdateBatchSize) {
+                             @JsonProperty("metaStatusUpdateBatchSize") final Integer metaStatusUpdateBatchSize) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
@@ -107,7 +108,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         this.metaTypes = metaTypes;
         this.rawMetaTypes = rawMetaTypes;
         this.dataFormats = dataFormats;
-        this.metaStatusUpdateBatchSize = metaStatusUpdateBatchSize;
+        this.metaStatusUpdateBatchSize = Objects.requireNonNullElse(metaStatusUpdateBatchSize, 0);
     }
 
     @Override

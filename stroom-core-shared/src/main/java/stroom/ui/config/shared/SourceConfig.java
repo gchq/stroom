@@ -65,15 +65,15 @@ public class SourceConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public SourceConfig(@JsonProperty("maxCharactersInPreviewFetch") final long maxCharactersInPreviewFetch,
-                        @JsonProperty("maxCharactersPerFetch") final long maxCharactersPerFetch,
-                        @JsonProperty("maxCharactersToCompleteLine") final long maxCharactersToCompleteLine,
-                        @JsonProperty("maxHexDumpLines") final int maxHexDumpLines) {
+    public SourceConfig(@JsonProperty("maxCharactersInPreviewFetch") final Long maxCharactersInPreviewFetch,
+                        @JsonProperty("maxCharactersPerFetch") final Long maxCharactersPerFetch,
+                        @JsonProperty("maxCharactersToCompleteLine") final Long maxCharactersToCompleteLine,
+                        @JsonProperty("maxHexDumpLines") final Integer maxHexDumpLines) {
 
-        this.maxCharactersInPreviewFetch = maxCharactersInPreviewFetch;
-        this.maxCharactersPerFetch = maxCharactersPerFetch;
-        this.maxCharactersToCompleteLine = maxCharactersToCompleteLine;
-        this.maxHexDumpLines = maxHexDumpLines;
+        this.maxCharactersInPreviewFetch = Objects.requireNonNullElse(maxCharactersInPreviewFetch, 30_000L);
+        this.maxCharactersPerFetch = Objects.requireNonNullElse(maxCharactersPerFetch, 80_000L);
+        this.maxCharactersToCompleteLine = Objects.requireNonNullElse(maxCharactersToCompleteLine, 10_000L);
+        this.maxHexDumpLines = Objects.requireNonNullElse(maxHexDumpLines, 1_000);
     }
 
     public long getMaxCharactersInPreviewFetch() {

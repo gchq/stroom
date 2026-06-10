@@ -128,7 +128,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             @JsonProperty("maxConnections") final Integer maxConnections,
             @JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
             @JsonProperty("keepAlive") final StroomDuration keepAlive,
-            @JsonProperty("retries") final int retries,
+            @JsonProperty("retries") final Integer retries,
             @JsonProperty("userAgent") final String userAgent,
             @JsonProperty("proxy") final HttpProxyConfiguration proxyConfiguration,
             @JsonProperty("validateAfterInactivityPeriod") final StroomDuration validateAfterInactivityPeriod,
@@ -144,7 +144,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         this.maxConnectionsPerRoute = Objects.requireNonNullElse(
                 maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
         this.keepAlive = Objects.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
-        this.retries = retries;
+        this.retries = Objects.requireNonNullElse(retries, DEFAULT_RETRIES);
         this.userAgent = userAgent;
         this.proxyConfiguration = proxyConfiguration;
         this.validateAfterInactivityPeriod = Objects.requireNonNullElse(

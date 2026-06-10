@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
         AskStroomAIConfig.PROP_NAME_MODEL_REF,
@@ -96,16 +98,19 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableAnalysisConfig tableAnalysis,
             @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT) final String chatSystemPrompt,
             @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT) final String historySummaryPrompt,
-            @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final int maxHistorySafetyCapMessages,
-            @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final long attachmentDownloadTimeoutMs,
-            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final boolean enableDebugDetail) {
+            @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final Integer maxHistorySafetyCapMessages,
+            @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final Long attachmentDownloadTimeoutMs,
+            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail) {
         this.modelRef = modelRef;
         this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
         this.historySummaryPrompt = historySummaryPrompt;
-        this.maxHistorySafetyCapMessages = maxHistorySafetyCapMessages;
-        this.attachmentDownloadTimeoutMs = attachmentDownloadTimeoutMs;
-        this.enableDebugDetail = enableDebugDetail;
+        this.maxHistorySafetyCapMessages = Objects.requireNonNullElse(maxHistorySafetyCapMessages,
+                DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+        this.attachmentDownloadTimeoutMs = Objects.requireNonNullElse(attachmentDownloadTimeoutMs,
+                DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS);
+        this.enableDebugDetail = Objects.requireNonNullElse(enableDebugDetail,
+                DEFAULT_ENABLE_DEBUG_DETAIL);
     }
 
     @JsonPropertyDescription("The model to use.")
@@ -124,14 +129,14 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonPropertyDescription("System prompt used to summarise older conversation history when "
-            + "progressive trimming is needed to fit the model's context window.")
+                             + "progressive trimming is needed to fit the model's context window.")
     public String getHistorySummaryPrompt() {
         return historySummaryPrompt;
     }
 
     @JsonPropertyDescription("Safety cap on the maximum number of history messages loaded from "
-            + "the database. The actual context boundary is determined by the model's context "
-            + "window via progressive trimming.")
+                             + "the database. The actual context boundary is determined by the model's context "
+                             + "window via progressive trimming.")
     public int getMaxHistorySafetyCapMessages() {
         return maxHistorySafetyCapMessages;
     }
@@ -142,7 +147,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonPropertyDescription("When enabled, the full LLM exchange (prompts sent and responses received) "
-            + "is stored and displayed as an expandable detail section beneath each AI response.")
+                             + "is stored and displayed as an expandable detail section beneath each AI response.")
     public boolean isEnableDebugDetail() {
         return enableDebugDetail;
     }

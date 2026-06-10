@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class ParserConfig extends AbstractConfig implements IsStroomConfig {
@@ -48,9 +50,9 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public ParserConfig(@JsonProperty("cache") final CacheConfig cacheConfig,
-                        @JsonProperty("secureProcessing") final boolean secureProcessing) {
+                        @JsonProperty("secureProcessing") final Boolean secureProcessing) {
         this.cacheConfig = cacheConfig;
-        this.secureProcessing = secureProcessing;
+        this.secureProcessing = Objects.requireNonNullElse(secureProcessing, false);
     }
 
     @JsonProperty("cache")
@@ -61,7 +63,7 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
 
     @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("Instructs the implementation to process XML securely. This may set limits on XML " +
-            "constructs to avoid conditions such as denial of service attacks.")
+                             "constructs to avoid conditions such as denial of service attacks.")
     public boolean isSecureProcessing() {
         return secureProcessing;
     }
@@ -69,7 +71,7 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ParserConfig{" +
-                "secureProcessing=" + secureProcessing +
-                '}';
+               "secureProcessing=" + secureProcessing +
+               '}';
     }
 }
