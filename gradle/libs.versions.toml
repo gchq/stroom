@@ -4,7 +4,7 @@ eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 stroomStats = "1.0-alpha.6"
 
 # ------------3rd-party------------
-aws = "2.31.68"
+aws = "2.46.7"
 commons-io = "2.19.0"
 dropwizard = "5.0.1" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.2.1"
@@ -32,7 +32,7 @@ stroomStatsSchema = { module = "uk.gov.gchq.stroom.stats:stroom-stats-schema", v
 #------3rd Party-libs---------------
 assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
 aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.39.4" }
+aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.47.0" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
@@ -87,7 +87,7 @@ gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }
 gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
 gwtp-mvp-client = { module = "com.gwtplatform:gwtp-mvp-client", version = "0.7" }
 #gson = { module = "com.google.code.gson:gson", version = "2.6.2" }
-hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty", version = "4.1.12" } # Needed by our copied HBase classes in stroom.bytebuffer.hbase
+hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty", version = "4.1.13" } # Needed by our copied HBase classes in stroom.bytebuffer.hbase
 hessian = { module = "com.caucho:hessian", version = "4.0.65" }
 hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
