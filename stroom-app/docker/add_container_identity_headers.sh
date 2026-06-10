@@ -25,8 +25,7 @@ add_to_headers() {
 }
 
 main() {
-    [ "$#" -eq 1 ] || (echo "'headers_file' argument not supplied!" && exit 1)
-    headers_file="$1"
+    headers_file="/stroom/logs/extra_headers.txt"
 
     # This command works in alpine linux 3.8, but may be fragile and subject to change
     # with different docker versions.

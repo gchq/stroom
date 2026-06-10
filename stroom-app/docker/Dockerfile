@@ -44,12 +44,19 @@ RUN echo "http_proxy: $http_proxy" && \
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Final build stage
 
-FROM stroom-base-stage
+FROM stroom-base-stage AS main-stage
+
+ARG USER_NAME=proxy
+ARG USER_ID=1000
+# The root group which should be GID 0
+# This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
+ARG GROUP_NAME=root
+ARG GROUP_ID=0
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
+# LANG needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
 ENV IN_DOCKER="true"
 ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
-# Needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
 ENV LANG=en_GB.UTF-8
 
 # This is where stroom will run from and any local data will be
@@ -59,69 +66,38 @@ WORKDIR /stroom
 EXPOSE 8080
 EXPOSE 8081
 
-# A Bind mount volume RO to the container for config files.
-VOLUME /stroom/config/
-
-# Create Docker volume for the content_pack_import dir as this will be mutated on 
-VOLUME /stroom/content_pack_import/
-
-# Create Docker volume for data feed idenity files to be dropped into
-VOLUME /stroom/data_feed_identities/
-
-# Create Docker volume for local checkouts of git repos
-VOLUME /stroom/git_repo/
-
-# Create Docker volume for use by any lmdb data stores.
-VOLUME /stroom/lmdb/
-
-# lmdb binaries that are extracted from the stroom jar on each boot.
-VOLUME /stroom/lmdb_library/
-
-# Create Docker volume for SLF4J output
-VOLUME /stroom/logs/
-
-# Create Docker volume for any output stroom creates, e.g. from file appenders
-VOLUME /stroom/output/
-
-# Create Docker volume for PlanB state store
-VOLUME /stroom/planb/
-
-# Create Docker volume for Stroom's off-heap reference data
-VOLUME /stroom/reference_data/
-
-# Create Docker volume for Stroom's off-heap reference data staging area
-# This could potentiall be mounted as tmpfs (if the host has sufficient memory) as the
-# data is only present for the life of a ref load.
-VOLUME /stroom/reference_staging_data/
-
-# Create Docker volume for Stroom's off-heap search result data
-VOLUME /stroom/search_results/
-
-# Create Docker volume for Stroom's volumes dir
-VOLUME /stroom/volumes/
-
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
-ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
+ENTRYPOINT [ \
+  "/sbin/tini", \
+  "--", \
+  "/stroom/docker-entrypoint.sh"]
 
 # start the app, the config file will either be supplied by a bind mount volume
 # or a fallback version baked into the image
-CMD ["./start.sh", "server"]
+CMD [ \
+  "./start.sh", \
+  "server"]
 
 # https://github.com/gchq/stroom/issues/884
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
 # see https://github.com/docker-library/openjdk/issues/73#issuecomment-207816707
 
-# Create a user with no home and no shell
-# IMPORTANT!!!
-# If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
-# IMPORTANT!!!
+# Create a system user/group with no home and no shell and a uid:gid of 1000:0
+# Set the perms so that the group has the same perms as the user so the container
+# can be run as another user that has GID 0.
+# adduser does not let us do --ingroup with a GID, so have to use 'root'.
 RUN \
     apk add --no-cache \
         ttf-dejavu && \
-    addgroup -g 1000 -S stroom && \
-    adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
-    mkdir -p /stroom && \
+    adduser \
+      --system \
+      --shell /bin/false \
+      --disabled-password \
+      --ingroup "$GROUP_NAME" \
+      --no-create-home \
+      --uid "$USER_ID" \
+      "$USER_NAME" && \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
@@ -137,33 +113,85 @@ RUN \
     mkdir -p /stroom/reference_data && \
     mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
-    chown -R stroom:stroom /stroom
+    chown -R "$USER_ID:$GROUP_ID"  /stroom && \
+    # Give the group the same perms as the user so any user with GID 0 can run proxy in
+    # the same way as UID 1000
+    chmod -R g=u /stroom
 
-# IMPORTANT!!!
-# If you add any new dirs above, make sure you also chown them in docker-entrypoint.sh
-# IMPORTANT!!!
 
 # Those that are most likely to have changed get copied last to speed up build
 
 # Copy in the content packs downloaded by gradle
-COPY --chown=stroom:stroom ./build/content_packs /stroom/content_pack_import
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  ./build/content_packs \
+  /stroom/content_pack_import
 
 # Copy all the distribution scripts
-COPY --chown=stroom:stroom *.sh /stroom/
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  *.sh \
+  /stroom/
 
 # This config file is a fallback for use in development 
 # (or when a stack with the config bind mount is not available)
-COPY --chown=stroom:stroom build/config.yml /stroom/config_fallback/config.yml
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  build/config.yml \
+  /stroom/config_fallback/config.yml
 
 # The application fat jar
-COPY --chown=stroom:stroom ./build/stroom-app-all.jar /stroom/
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  ./build/stroom-app-all.jar \
+  /stroom/
 
-# Label the image so we can see what commit/tag it came from
+# Intentiaonally done near the end because they will often change on each build
 ARG GIT_COMMIT=unspecified
 ARG GIT_TAG=unspecified
-LABEL \
-    git_commit="$GIT_COMMIT" \
-    git_tag="$GIT_TAG"
+
 # Pass the GIT_TAG through to the running container
 # This should not be set at container run time
 ENV GIT_TAG=$GIT_TAG
+
+# Label the image so we can see what commit/tag it came from
+LABEL \
+    git_commit="$GIT_COMMIT" \
+    git_tag="$GIT_TAG"
+
+# A Bind mount volume RO to the container for config files.
+VOLUME /stroom/config/
+# Create Docker volume for the content_pack_import dir as this will be mutated on 
+VOLUME /stroom/content_pack_import/
+# Create Docker volume for data feed idenity files to be dropped into
+VOLUME /stroom/data_feed_identities/
+# Create Docker volume for local checkouts of git repos
+VOLUME /stroom/git_repo/
+# Create Docker volume for use by any lmdb data stores.
+VOLUME /stroom/lmdb/
+# lmdb binaries that are extracted from the stroom jar on each boot.
+VOLUME /stroom/lmdb_library/
+# Create Docker volume for SLF4J output
+VOLUME /stroom/logs/
+# Create Docker volume for any output stroom creates, e.g. from file appenders
+VOLUME /stroom/output/
+# Create Docker volume for PlanB state store
+VOLUME /stroom/planb/
+# Create Docker volume for Stroom's off-heap reference data
+VOLUME /stroom/reference_data/
+VOLUME /stroom/foo/
+# Create Docker volume for Stroom's off-heap reference data staging area
+# This could potentiall be mounted as tmpfs (if the host has sufficient memory) as the
+# data is only present for the life of a ref load.
+VOLUME /stroom/reference_staging_data/
+# Create Docker volume for Stroom's off-heap search result data
+VOLUME /stroom/search_results/
+# Create Docker volume for Stroom's volumes dir
+VOLUME /stroom/volumes/
+
+# Run as our non-root user
+USER "$USER_ID"

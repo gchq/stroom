@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:30d9f87d702c2c1c601ed0d31e0c88ea1ea474ee7676cda7b7a59e759181c4dd AS stroom-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:30d9f87d702c2c1c601ed0d31e0c88ea1ea474ee7676cda7b7a59e759181c4dd AS proxy-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -39,16 +39,17 @@ RUN echo "http_proxy: $http_proxy" && \
 
 # ~~~ Final build stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-FROM stroom-base-stage
+FROM proxy-base-stage AS main-stage
+
+ARG USER_NAME=proxy
+ARG USER_ID=1000
+# The root group which should be GID 0
+# This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
+ARG GROUP_NAME=root
+ARG GROUP_ID=0
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
-ENV USER_NAME=proxy
-ENV USER_ID=1000
-# The root group which should be GID 0
-# This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
-ENV GROUP_NAME=root
-ENV GROUP_ID=0
 
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom-proxy
@@ -57,21 +58,12 @@ WORKDIR /stroom-proxy
 EXPOSE 8090
 EXPOSE 8091
 
-# Create Docker volume to hold all the persistent state (logs, repos, content, config)
-# Volumes need to be defined after the mounts have been created and populated
-VOLUME /stroom-proxy/config/
-VOLUME /stroom-proxy/certs/
-VOLUME /stroom-proxy/content/
-VOLUME /stroom-proxy/data/
-VOLUME /stroom-proxy/data_feed_identities/
-VOLUME /stroom-proxy/logs/
-VOLUME /stroom-proxy/failures/
-VOLUME /stroom-proxy/zip_file_ingest/
-VOLUME /stroom-proxy/zip_file_ingest_failed/
-
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
-ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
+ENTRYPOINT [ \
+  "/sbin/tini", \
+  "--", \
+  "/stroom-proxy/docker-entrypoint.sh" ]
 
 # start the app, the config file will either be supplied by a bind mount volume
 # or a fallback version baked into the image
@@ -108,32 +100,61 @@ RUN \
     mkdir -p /stroom-proxy/failures && \
     mkdir -p /stroom-proxy/zip_file_ingest && \
     mkdir -p /stroom-proxy/zip_file_ingest_failed && \
-    chown -R "$USER_ID:$GROUP_ID" /stroom-proxy
-    #chmod -R g+rwX /stroom-proxy
+    chown -R "$USER_ID:$GROUP_ID" /stroom-proxy && \
+    # Give the group the same perms as the user so any user with GID 0 can run proxy in
+    # the same way as UID 1000
+    chmod -R g=u /stroom-proxy
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 
-COPY --chown=$USER_ID:$GROUP_ID *.sh /stroom-proxy/
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  *.sh \
+  /stroom-proxy/
 
 # This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
-COPY --chown=$USER_ID:$GROUP_ID build/config.yml /stroom-proxy/config_fallback/config.yml
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  build/config.yml \
+  /stroom-proxy/config_fallback/config.yml
 
-COPY --chown=$USER_ID:$GROUP_ID ./build/stroom-proxy-app-all.jar /stroom-proxy/
+COPY \
+  --chown=$USER_ID:$GROUP_ID \
+  --chmod=g=u \
+  ./build/stroom-proxy-app-all.jar \
+  /stroom-proxy/
 
 # Give the group the same perms as the user so any user with GID 0 can run proxy in
 # the same way as UID 1000
-RUN chmod -R g=u /stroom-proxy
+#RUN chmod -R g=u /stroom-proxy
 
-# Label the image so we can see what commit/tag it came from
+# Intentiaonally done near the end because they will often change on each build
 ARG GIT_COMMIT=unspecified
 ARG GIT_TAG=unspecified
-LABEL \
-    git_commit="$GIT_COMMIT" \
-    git_tag="$GIT_TAG"
+
 # Pass the GIT_TAG through to the running container
 # This should not be set at container run time
 ENV GIT_TAG=$GIT_TAG
+
+# Label the image so we can see what commit/tag it came from
+LABEL \
+    git_commit="$GIT_COMMIT" \
+    git_tag="$GIT_TAG"
+
+# Create Docker volume to hold all the persistent state (logs, repos, content, config)
+# Volumes need to be defined after the mounts have been created and populated
+VOLUME /stroom-proxy/config/
+VOLUME /stroom-proxy/certs/
+VOLUME /stroom-proxy/content/
+VOLUME /stroom-proxy/data/
+VOLUME /stroom-proxy/data_feed_identities/
+VOLUME /stroom-proxy/logs/
+VOLUME /stroom-proxy/failures/
+VOLUME /stroom-proxy/zip_file_ingest/
+VOLUME /stroom-proxy/zip_file_ingest_failed/
 
 # Run as our non-root user
 USER "$USER_ID"
