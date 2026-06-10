@@ -6,7 +6,7 @@ stroomStats = "1.0-alpha.6"
 # ------------3rd-party------------
 aws = "2.46.7"
 commons-io = "2.19.0"
-dropwizard = "5.0.1" # used to set the dropwizard-bom version, that controls lots of dependency versions
+dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.2.1"
 flyway = "12.0.0"
 guice = "7.0.0"
