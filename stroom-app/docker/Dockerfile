@@ -58,6 +58,11 @@ ARG GROUP_ID=0
 ENV IN_DOCKER="true"
 ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
 ENV LANG=en_GB.UTF-8
+# Set the user ID into env so entrypoint can see it
+ENV USER_ID=$USER_ID
+ENV GROUP_ID=$GROUP_ID
+# Setting this in case java needs it
+ENV HOME=/stroom
 
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom
