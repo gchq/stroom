@@ -701,7 +701,7 @@ public class S3Manager {
                 .stream()
                 .collect(Collectors.toMap(e -> createS3Name(e.getKey()), Entry::getValue));
 
-        final PutObjectRequest.Builder builder = PutObjectRequest.builder()
+        PutObjectRequest.Builder builder = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .tagging(createTags(meta))

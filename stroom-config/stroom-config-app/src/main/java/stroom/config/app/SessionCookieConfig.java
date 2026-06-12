@@ -23,9 +23,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpCookie.SameSite;
 
-import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class SessionCookieConfig extends AbstractConfig implements IsStroomConfig {
@@ -52,11 +52,11 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SessionCookieConfig(@JsonProperty("secure") final Boolean secure,
-                               @JsonProperty("httpOnly") final Boolean httpOnly,
+    public SessionCookieConfig(@JsonProperty("secure") final boolean secure,
+                               @JsonProperty("httpOnly") final boolean httpOnly,
                                @JsonProperty("sameSite") final SameSite sameSite) {
-        this.secure = Objects.requireNonNullElse(secure, false);
-        this.httpOnly = Objects.requireNonNullElse(httpOnly, false);
+        this.secure = secure;
+        this.httpOnly = httpOnly;
         this.sameSite = sameSite;
     }
 

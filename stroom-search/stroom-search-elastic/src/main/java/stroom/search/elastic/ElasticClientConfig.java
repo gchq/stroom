@@ -25,8 +25,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticClientConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -40,16 +38,15 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
-                               @JsonProperty("maxConnections") final Integer maxConnections) {
-        this.maxConnectionsPerRoute = Objects.requireNonNullElse(maxConnectionsPerRoute, 0);
-        this.maxConnections = Objects.requireNonNullElse(maxConnections, 0);
+    public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final int maxConnectionsPerRoute,
+                               @JsonProperty("maxConnections") final int maxConnections) {
+        this.maxConnectionsPerRoute = maxConnectionsPerRoute;
+        this.maxConnections = maxConnections;
     }
 
     @JsonPropertyDescription("Maximum number of connections maintained by the Elastic Java client pool on a per-" +
-                             "route basis. This should be set to at least the number of concurrent indexing tasks " +
-                             "you expect each " +
-                             "node to be performing against a given index.")
+            "route basis. This should be set to at least the number of concurrent indexing tasks you expect each " +
+            "node to be performing against a given index.")
     public int getMaxConnectionsPerRoute() {
         return maxConnectionsPerRoute;
     }
@@ -62,8 +59,8 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
     @Override
     public String toString() {
         return "ElasticClientConfig{" +
-               "maxConnectionsPerRoute=" + maxConnectionsPerRoute +
-               ", maxConnections=" + maxConnections +
-               "}";
+                "maxConnectionsPerRoute=" + maxConnectionsPerRoute +
+                ", maxConnections=" + maxConnections +
+                "}";
     }
 }

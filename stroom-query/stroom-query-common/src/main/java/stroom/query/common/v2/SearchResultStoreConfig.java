@@ -31,23 +31,23 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
     public SearchResultStoreConfig() {
         this(10_000,
                 true,
-                DEFAULT_MIN_PAYLOAD_SIZE,
-                DEFAULT_MAX_PAYLOAD_SIZE,
+                ByteSize.ofMebibytes(1),
+                ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
                 500_000,
-                DEFAULT_RESULT_STORE_LMDB_CONFIG,
+                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
                 new ResultStoreMapConfig());
     }
 
     @JsonCreator
-    public SearchResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final Integer maxPutsBeforeCommit,
-                                   @JsonProperty("offHeapResults") final Boolean offHeapResults,
+    public SearchResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
+                                   @JsonProperty("offHeapResults") final boolean offHeapResults,
                                    @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
                                    @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
-                                   @JsonProperty("maxStringFieldLength") final Integer maxStringFieldLength,
-                                   @JsonProperty("valueQueueSize") final Integer valueQueueSize,
-                                   @JsonProperty("maxSortedItems") final Integer maxSortedItems,
+                                   @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
+                                   @JsonProperty("valueQueueSize") final int valueQueueSize,
+                                   @JsonProperty("maxSortedItems") final int maxSortedItems,
                                    @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
                                    @JsonProperty("map") final ResultStoreMapConfig mapConfig) {
         super(maxPutsBeforeCommit,

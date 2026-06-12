@@ -258,7 +258,7 @@ class TestAnnotationDaoImpl {
         annotationDao.change(new SingleAnnotationChangeRequest(docRef, new ChangeComment("Comment 3")),
                 currentUser);
         annotationDao.change(new SingleAnnotationChangeRequest(docRef, new ChangeRetentionPeriod(
-                        new SimpleDuration(1L, TimeUnit.YEARS))),
+                        new SimpleDuration(1, TimeUnit.YEARS))),
                 currentUser);
         annotationDao.change(new SingleAnnotationChangeRequest(docRef, new ChangeDescription(
                         "Test Description")),

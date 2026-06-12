@@ -37,10 +37,10 @@ public class LayoutConstraints {
     private final boolean fitHeight;
 
     @JsonCreator
-    public LayoutConstraints(@JsonProperty("fitWidth") final Boolean fitWidth,
-                             @JsonProperty("fitHeight") final Boolean fitHeight) {
-        this.fitWidth = Objects.requireNonNullElse(fitWidth, false);
-        this.fitHeight = Objects.requireNonNullElse(fitHeight, false);
+    public LayoutConstraints(@JsonProperty("fitWidth") final boolean fitWidth,
+                             @JsonProperty("fitHeight") final boolean fitHeight) {
+        this.fitWidth = fitWidth;
+        this.fitHeight = fitHeight;
     }
 
     public boolean isFitWidth() {

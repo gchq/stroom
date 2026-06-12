@@ -58,14 +58,14 @@ public class IndexShardWriterCacheConfig extends AbstractConfig implements IsStr
     @JsonCreator
     public IndexShardWriterCacheConfig(@JsonProperty("timeToLive") final StroomDuration timeToLive,
                                        @JsonProperty("timeToIdle") final StroomDuration timeToIdle,
-                                       @JsonProperty("minItems") final Long minItems,
-                                       @JsonProperty("coreItems") final Long coreItems,
-                                       @JsonProperty("maxItems") final Long maxItems) {
+                                       @JsonProperty("minItems") final long minItems,
+                                       @JsonProperty("coreItems") final long coreItems,
+                                       @JsonProperty("maxItems") final long maxItems) {
         this.timeToLive = timeToLive;
         this.timeToIdle = timeToIdle;
-        this.minItems = Objects.requireNonNullElse(minItems, 0L);
-        this.coreItems = Objects.requireNonNullElse(coreItems, 0L);
-        this.maxItems = Objects.requireNonNullElse(maxItems, 0L);
+        this.minItems = minItems;
+        this.coreItems = coreItems;
+        this.maxItems = maxItems;
     }
 
     @NotNull

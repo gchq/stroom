@@ -64,8 +64,8 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                          final NotificationConfig analyticNotificationConfig,
                      @JsonProperty("notifications") final List<NotificationConfig> notifications,
                      @JsonProperty("errorFeed") final DocRef errorFeed,
-                     @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
-                     @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
+                     @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+                     @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                      @JsonProperty("duplicateNotificationConfig")
                          final DuplicateNotificationConfig duplicateNotificationConfig,
                      @JsonProperty("reportSettings") final ReportSettings reportSettings,

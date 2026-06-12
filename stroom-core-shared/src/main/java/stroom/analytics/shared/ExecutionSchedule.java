@@ -66,19 +66,19 @@ public class ExecutionSchedule {
     @JsonCreator
     public ExecutionSchedule(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
-                             @JsonProperty("enabled") final Boolean enabled,
+                             @JsonProperty("enabled") final boolean enabled,
                              @JsonProperty("nodeName") final String nodeName,
                              @JsonProperty("schedule") final Schedule schedule,
-                             @JsonProperty("contiguous") final Boolean contiguous,
+                             @JsonProperty("contiguous") final boolean contiguous,
                              @JsonProperty("scheduleBounds") final ScheduleBounds scheduleBounds,
                              @JsonProperty("owningDoc") final DocRef owningDoc,
                              @JsonProperty("runAsUser") final UserRef runAsUser) {
         this.uuid = uuid;
         this.name = name;
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = enabled;
         this.nodeName = nodeName;
         this.schedule = schedule;
-        this.contiguous = Objects.requireNonNullElse(contiguous, false);
+        this.contiguous = contiguous;
         this.scheduleBounds = scheduleBounds;
         this.owningDoc = owningDoc;
         this.runAsUser = runAsUser;

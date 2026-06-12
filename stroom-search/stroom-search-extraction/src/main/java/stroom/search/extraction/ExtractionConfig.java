@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -52,28 +50,24 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ExtractionConfig(@JsonProperty("maxStoredDataQueueSize") final Integer maxStoredDataQueueSize,
-                            @JsonProperty("maxThreadsPerTask") final Integer maxThreadsPerTask,
-                            @JsonProperty("maxStreamEventMapSize") final Integer maxStreamEventMapSize,
-                            @JsonProperty("extractionDelayMs") final Long extractionDelayMs) {
-        this.maxStoredDataQueueSize =
-                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
-        this.maxThreadsPerTask =
-                Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
-        this.maxStreamEventMapSize =
-                Objects.requireNonNullElse(maxStreamEventMapSize, DEFAULT_MAX_STREAM_EVENT_MAP_SIZE);
-        this.extractionDelayMs =
-                Objects.requireNonNullElse(extractionDelayMs, DEFAULT_EXTRACTION_DELAY_MS);
+    public ExtractionConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
+                            @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
+                            @JsonProperty("maxStreamEventMapSize") final int maxStreamEventMapSize,
+                            @JsonProperty("extractionDelayMs") final long extractionDelayMs) {
+        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
+        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.maxStreamEventMapSize = maxStreamEventMapSize;
+        this.extractionDelayMs = extractionDelayMs;
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
-                             "shard and queued prior to further processing")
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }
 
     @JsonPropertyDescription("The maximum number of threads per search, per node, used to extract search results " +
-                             "from streams using a pipeline")
+            "from streams using a pipeline")
     public int getMaxThreadsPerTask() {
         return maxThreadsPerTask;
     }
@@ -84,7 +78,7 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("Extraction delay in milliseconds. " +
-                             "A delay reduces the chance of a stream being extracted more than once.")
+            "A delay reduces the chance of a stream being extracted more than once.")
     public long getExtractionDelayMs() {
         return extractionDelayMs;
     }
@@ -92,10 +86,10 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ExtractionConfig{" +
-               "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
-               ", maxThreadsPerTask=" + maxThreadsPerTask +
-               ", maxStreamEventMapSize=" + maxStreamEventMapSize +
-               ", extractionDelayMs=" + extractionDelayMs +
-               '}';
+                "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
+                ", maxThreadsPerTask=" + maxThreadsPerTask +
+                ", maxStreamEventMapSize=" + maxStreamEventMapSize +
+                ", extractionDelayMs=" + extractionDelayMs +
+                '}';
     }
 }

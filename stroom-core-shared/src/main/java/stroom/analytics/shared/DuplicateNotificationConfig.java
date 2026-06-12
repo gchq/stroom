@@ -48,14 +48,14 @@ public class DuplicateNotificationConfig {
 
     @JsonCreator
     public DuplicateNotificationConfig(
-            @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
-            @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
-            @JsonProperty("chooseColumns") final Boolean chooseColumns,
+            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+            @JsonProperty("chooseColumns") final boolean chooseColumns,
             @JsonProperty("columnNames") final List<String> columnNames) {
 
-        this.rememberNotifications = Objects.requireNonNullElse(rememberNotifications, false);
-        this.suppressDuplicateNotifications = Objects.requireNonNullElse(suppressDuplicateNotifications, false);
-        this.chooseColumns = Objects.requireNonNullElse(chooseColumns, false);
+        this.rememberNotifications = rememberNotifications;
+        this.suppressDuplicateNotifications = suppressDuplicateNotifications;
+        this.chooseColumns = chooseColumns;
         this.columnNames = columnNames;
     }
 

@@ -48,7 +48,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("jwksUri") final String jwksUri,
             @JsonProperty("logoutEndpoint") final String logoutEndpoint,
             @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
-            @JsonProperty("formTokenRequest") final Boolean formTokenRequest,
+            @JsonProperty("formTokenRequest") final boolean formTokenRequest,
             @JsonProperty("clientId") final String clientId,
             @JsonProperty("clientSecret") final String clientSecret,
             @JsonProperty("requestScopes") final List<String> requestScopes,

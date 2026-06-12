@@ -54,10 +54,10 @@ public class NodeMonitoringConfig extends AbstractConfig implements IsStroomConf
     }
 
     @JsonCreator
-    public NodeMonitoringConfig(@JsonProperty("pingWarnThreshold") final Integer pingWarnThreshold,
-                                @JsonProperty("pingMaxThreshold") final Integer pingMaxThreshold) {
-        this.pingWarnThreshold = Objects.requireNonNullElse(pingWarnThreshold, 0);
-        this.pingMaxThreshold = Objects.requireNonNullElse(pingMaxThreshold, 0);
+    public NodeMonitoringConfig(@JsonProperty("pingWarnThreshold") final int pingWarnThreshold,
+                                @JsonProperty("pingMaxThreshold") final int pingMaxThreshold) {
+        this.pingWarnThreshold = pingWarnThreshold;
+        this.pingMaxThreshold = pingMaxThreshold;
     }
 
     public int getPingWarnThreshold() {

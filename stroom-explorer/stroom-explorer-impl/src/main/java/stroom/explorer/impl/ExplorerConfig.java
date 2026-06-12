@@ -70,14 +70,14 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     public ExplorerConfig(@JsonProperty("db") final ExplorerDbConfig dbConfig,
                           @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
                           @JsonProperty("suggestedTags") final Set<String> suggestedTags,
-                          @JsonProperty("dependencyWarningsEnabled") final Boolean dependencyWarningsEnabled) {
+                          @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled) {
         this.dbConfig = dbConfig;
         this.docRefInfoCache = docRefInfoCache;
         // Filter out any blanks
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
                 .collect(Collectors.toSet());
-        this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, false);
+        this.dependencyWarningsEnabled = dependencyWarningsEnabled;
     }
 
     @Override

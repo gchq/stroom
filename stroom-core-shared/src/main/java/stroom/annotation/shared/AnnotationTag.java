@@ -47,13 +47,13 @@ public class AnnotationTag {
     private final String tagText;
 
     @JsonCreator
-    public AnnotationTag(@JsonProperty("id") final Integer id,
+    public AnnotationTag(@JsonProperty("id") final int id,
                          @JsonProperty("uuid") final String uuid,
                          @JsonProperty("type") final AnnotationTagType type,
                          @JsonProperty("name") final String name,
                          @JsonProperty("style") final ConditionalFormattingStyle style,
                          @JsonProperty("tagText") final String tagText) {
-        this.id = Objects.requireNonNullElse(id, 0);
+        this.id = id;
         this.uuid = uuid;
         this.type = type;
         this.name = name;

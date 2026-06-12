@@ -84,7 +84,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("baseUrl") final String baseUrl,
             @JsonProperty("apiKeyName") final String apiKeyName,
             @JsonProperty("modelId") final String modelId,
-            @JsonProperty("maxContextWindowTokens") final Integer maxContextWindowTokens,
+            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens,
             @JsonProperty("reasoningEffort") final String reasoningEffort,
             @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
@@ -92,7 +92,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.baseUrl = baseUrl;
         this.apiKeyName = apiKeyName;
         this.modelId = modelId;
-        this.maxContextWindowTokens = Objects.requireNonNullElse(maxContextWindowTokens, 0);
+        this.maxContextWindowTokens = maxContextWindowTokens;
         this.reasoningEffort = reasoningEffort;
         this.httpClientConfiguration = httpClientConfiguration;
     }

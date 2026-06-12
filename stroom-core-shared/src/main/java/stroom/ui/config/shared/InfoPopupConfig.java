@@ -57,10 +57,10 @@ public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public InfoPopupConfig(@JsonProperty("enabled") final Boolean enabled,
+    public InfoPopupConfig(@JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("title") final String title,
                            @JsonProperty("validationRegex") @ValidRegex final String validationRegex) {
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = enabled;
         this.title = title;
         this.validationRegex = validationRegex;
     }

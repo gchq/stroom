@@ -50,15 +50,15 @@ public class NotificationConfig {
     @JsonCreator
     public NotificationConfig(@JsonProperty("uuid") final String uuid,
                               @JsonProperty("enabled") final Boolean enabled,
-                              @JsonProperty("limitNotifications") final Boolean limitNotifications,
-                              @JsonProperty("maxNotifications") final Integer maxNotifications,
+                              @JsonProperty("limitNotifications") final boolean limitNotifications,
+                              @JsonProperty("maxNotifications") final int maxNotifications,
                               @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
                               @JsonProperty("destinationType") final NotificationDestinationType destinationType,
                               @JsonProperty("destination") final NotificationDestination destination) {
         this.uuid = uuid;
         this.enabled = enabled;
-        this.limitNotifications = Objects.requireNonNullElse(limitNotifications, false);
-        this.maxNotifications = Objects.requireNonNullElse(maxNotifications, 0);
+        this.limitNotifications = limitNotifications;
+        this.maxNotifications = maxNotifications;
         this.resumeAfter = resumeAfter;
         this.destinationType = destinationType;
         this.destination = destination;

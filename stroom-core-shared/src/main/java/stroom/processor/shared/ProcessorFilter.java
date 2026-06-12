@@ -137,13 +137,13 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                            @JsonProperty("queryData") final QueryData queryData,
                            @JsonProperty("processor") final Processor processor,
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
-                           @JsonProperty("priority") final Integer priority,
-                           @JsonProperty("maxProcessingTasks") final Integer maxProcessingTasks,
+                           @JsonProperty("priority") final int priority,
+                           @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
                            @JsonProperty("profileName") final String profileName,
-                           @JsonProperty("reprocess") final Boolean reprocess,
-                           @JsonProperty("enabled") final Boolean enabled,
-                           @JsonProperty("deleted") final Boolean deleted,
-                           @JsonProperty("export") final Boolean export,
+                           @JsonProperty("reprocess") final boolean reprocess,
+                           @JsonProperty("enabled") final boolean enabled,
+                           @JsonProperty("deleted") final boolean deleted,
+                           @JsonProperty("export") final boolean export,
                            @JsonProperty("processorType") final ProcessorType processorType,
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
@@ -168,12 +168,12 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         this.priority = priority > 0
                 ? priority
                 : DEFAULT_PRIORITY;
-        this.maxProcessingTasks = Objects.requireNonNullElse(maxProcessingTasks, DEFAULT_MAX_PROCESSING_TASKS);
+        this.maxProcessingTasks = maxProcessingTasks;
         this.profileName = profileName;
-        this.reprocess = Objects.requireNonNullElse(reprocess, false);
-        this.enabled = Objects.requireNonNullElse(enabled, false);
-        this.deleted = Objects.requireNonNullElse(deleted, false);
-        this.export = Objects.requireNonNullElse(export, false);
+        this.reprocess = reprocess;
+        this.enabled = enabled;
+        this.deleted = deleted;
+        this.export = export;
         this.processorType = processorType != null
                 ? processorType
                 : NullSafe.getOrElse(processor, Processor::getProcessorType, ProcessorType.PIPELINE);

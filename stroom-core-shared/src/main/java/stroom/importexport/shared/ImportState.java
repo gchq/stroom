@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This has been put here as import export API is not Serializable.
@@ -58,7 +57,7 @@ public class ImportState {
     public ImportState(@JsonProperty("docRef") final DocRef docRef,
                        @JsonProperty("sourcePath") final String sourcePath,
                        @JsonProperty("destPath") final String destPath,
-                       @JsonProperty("action") final Boolean action,
+                       @JsonProperty("action") final boolean action,
                        @JsonProperty("messageList") final List<Message> messageList,
                        @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
                        @JsonProperty("state") final State state,
@@ -66,7 +65,7 @@ public class ImportState {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
         this.destPath = destPath;
-        this.action = Objects.requireNonNullElse(action, false);
+        this.action = action;
         this.messageList = messageList;
         this.updatedFieldList = updatedFieldList;
         this.state = state;

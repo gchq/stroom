@@ -45,10 +45,10 @@ public final class SplitLayoutConfig extends LayoutConfig {
 
     @JsonCreator
     public SplitLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
-                             @JsonProperty("dimension") final Integer dimension,
+                             @JsonProperty("dimension") final int dimension,
                              @JsonProperty("children") final List<LayoutConfig> children) {
         this.preferredSize = preferredSize;
-        this.dimension = Objects.requireNonNullElse(dimension, 0);
+        this.dimension = dimension;
         this.children = children;
     }
 

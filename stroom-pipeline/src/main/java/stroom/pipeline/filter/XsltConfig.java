@@ -26,8 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class XsltConfig extends AbstractConfig implements IsStroomConfig {
@@ -48,9 +46,9 @@ public class XsltConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public XsltConfig(@JsonProperty("cache") final CacheConfig cacheConfig,
-                      @JsonProperty("maxElements") final Integer maxElements) {
+                      @JsonProperty("maxElements") final int maxElements) {
         this.cacheConfig = cacheConfig;
-        this.maxElements = Objects.requireNonNullElse(maxElements, DEFAULT_MAX_ELEMENTS);
+        this.maxElements = maxElements;
     }
 
     @JsonProperty("cache")

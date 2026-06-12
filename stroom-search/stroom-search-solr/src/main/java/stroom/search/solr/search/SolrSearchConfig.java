@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
@@ -42,22 +40,21 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
     private final int maxBooleanClauseCount;
 
     public SolrSearchConfig() {
+
         maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
         maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final Integer maxStoredDataQueueSize,
-                            @JsonProperty("maxBooleanClauseCount") final Integer maxBooleanClauseCount) {
-        this.maxStoredDataQueueSize =
-                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
-        this.maxBooleanClauseCount =
-                Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
+                            @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount) {
+        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
+        this.maxBooleanClauseCount = maxBooleanClauseCount;
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
-                             "shard and queued prior to further processing")
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }
@@ -70,8 +67,8 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "SolrSearchConfig{" +
-               "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
-               ", maxBooleanClauseCount=" + maxBooleanClauseCount +
-               '}';
+                "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
+                ", maxBooleanClauseCount=" + maxBooleanClauseCount +
+                '}';
     }
 }

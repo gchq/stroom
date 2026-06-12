@@ -29,8 +29,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
 
@@ -58,19 +56,16 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
     @JsonCreator
     public ReferenceDataStagingLmdbConfig(
             @JsonProperty("localDir") final String localDir,
-            @JsonProperty("maxReaders") final Integer maxReaders,
+            @JsonProperty("maxReaders") final int maxReaders,
             @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
-            @JsonProperty("readAheadEnabled") final Boolean isReadAheadEnabled,
-            @JsonProperty("readerBlockedByWriter") final Boolean isReaderBlockedByWriter) {
+            @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
+            @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
 
         this.localDir = localDir;
-        this.maxReaders =
-                Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
+        this.maxReaders = maxReaders;
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled =
-                Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
-        this.isReaderBlockedByWriter =
-                Objects.requireNonNullElse(isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
+        this.isReadAheadEnabled = isReadAheadEnabled;
+        this.isReaderBlockedByWriter = isReaderBlockedByWriter;
     }
 
     @Override

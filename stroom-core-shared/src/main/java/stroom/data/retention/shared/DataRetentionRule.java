@@ -55,22 +55,22 @@ public class DataRetentionRule {
     }
 
     @JsonCreator
-    public DataRetentionRule(@JsonProperty("ruleNumber") final Integer ruleNumber,
-                             @JsonProperty("creationTime") final Long creationTime,
+    public DataRetentionRule(@JsonProperty("ruleNumber") final int ruleNumber,
+                             @JsonProperty("creationTime") final long creationTime,
                              @JsonProperty("name") final String name,
-                             @JsonProperty("enabled") final Boolean enabled,
+                             @JsonProperty("enabled") final boolean enabled,
                              @JsonProperty("expression") final ExpressionOperator expression,
-                             @JsonProperty("age") final Integer age,
+                             @JsonProperty("age") final int age,
                              @JsonProperty("timeUnit") final TimeUnit timeUnit,
-                             @JsonProperty("forever") final Boolean forever) {
-        this.ruleNumber = Objects.requireNonNullElse(ruleNumber, 0);
-        this.creationTime = Objects.requireNonNullElse(creationTime, 0L);
+                             @JsonProperty("forever") final boolean forever) {
+        this.ruleNumber = ruleNumber;
+        this.creationTime = creationTime;
         this.name = name;
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = enabled;
         this.expression = expression;
-        this.age = Objects.requireNonNullElse(age, 0);
+        this.age = age;
         this.timeUnit = timeUnit;
-        this.forever = Objects.requireNonNullElse(forever, false);
+        this.forever = forever;
     }
 
     public static DataRetentionRule foreverRule(final int ruleNumber,

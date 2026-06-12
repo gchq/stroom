@@ -30,8 +30,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 public class StoredQueryConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
@@ -46,11 +44,11 @@ public class StoredQueryConfig extends AbstractConfig implements IsStroomConfig,
     }
 
     @JsonCreator
-    public StoredQueryConfig(@JsonProperty("itemsRetention") final Integer itemsRetention,
-                             @JsonProperty("daysRetention") final Integer daysRetention,
+    public StoredQueryConfig(@JsonProperty("itemsRetention") final int itemsRetention,
+                             @JsonProperty("daysRetention") final int daysRetention,
                              @JsonProperty("db") final StoredQueryDbConfig dbConfig) {
-        this.itemsRetention = Objects.requireNonNullElse(itemsRetention, 100);
-        this.daysRetention = Objects.requireNonNullElse(daysRetention, 365);
+        this.itemsRetention = itemsRetention;
+        this.daysRetention = daysRetention;
         this.dbConfig = dbConfig;
     }
 

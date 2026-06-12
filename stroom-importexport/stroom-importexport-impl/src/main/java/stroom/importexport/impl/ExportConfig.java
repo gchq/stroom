@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class ExportConfig extends AbstractConfig implements IsStroomConfig {
@@ -38,8 +36,8 @@ public class ExportConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ExportConfig(@JsonProperty(ENABLED_PROP_NAME) final Boolean enabled) {
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+    public ExportConfig(@JsonProperty(ENABLED_PROP_NAME) final boolean enabled) {
+        this.enabled = enabled;
     }
 
     @JsonPropertyDescription("Determines if the system will allow configuration to be exported via the export servlet")
@@ -50,7 +48,7 @@ public class ExportConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ExportConfig{" +
-               "enabled=" + enabled +
-               '}';
+                "enabled=" + enabled +
+                '}';
     }
 }

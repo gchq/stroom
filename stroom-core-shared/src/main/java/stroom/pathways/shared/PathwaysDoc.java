@@ -82,10 +82,10 @@ public class PathwaysDoc extends AbstractDoc {
                        @JsonProperty("description") final String description,
                        @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
                        @JsonProperty("pathways") final List<Pathway> pathways,
-                       @JsonProperty("allowPathwayCreation") final Boolean allowPathwayCreation,
-                       @JsonProperty("allowPathwayMutation") final Boolean allowPathwayMutation,
-                       @JsonProperty("allowConstraintCreation") final Boolean allowConstraintCreation,
-                       @JsonProperty("allowConstraintMutation") final Boolean allowConstraintMutation,
+                       @JsonProperty("allowPathwayCreation") final boolean allowPathwayCreation,
+                       @JsonProperty("allowPathwayMutation") final boolean allowPathwayMutation,
+                       @JsonProperty("allowConstraintCreation") final boolean allowConstraintCreation,
+                       @JsonProperty("allowConstraintMutation") final boolean allowConstraintMutation,
                        @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
                        @JsonProperty("infoFeed") final DocRef infoFeed,
                        @JsonProperty("processingNode") final String processingNode) {
@@ -93,10 +93,10 @@ public class PathwaysDoc extends AbstractDoc {
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
-        this.allowPathwayCreation = Objects.requireNonNullElse(allowPathwayCreation, false);
-        this.allowPathwayMutation = Objects.requireNonNullElse(allowPathwayMutation, false);
-        this.allowConstraintCreation = Objects.requireNonNullElse(allowConstraintCreation, false);
-        this.allowConstraintMutation = Objects.requireNonNullElse(allowConstraintMutation, false);
+        this.allowPathwayCreation = allowPathwayCreation;
+        this.allowPathwayMutation = allowPathwayMutation;
+        this.allowConstraintCreation = allowConstraintCreation;
+        this.allowConstraintMutation = allowConstraintMutation;
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
         this.processingNode = processingNode;
@@ -225,7 +225,7 @@ public class PathwaysDoc extends AbstractDoc {
             extends AbstractBuilder<PathwaysDoc, Builder> {
 
         private String description;
-        private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
+        private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);
         private List<Pathway> pathways;
         private boolean allowPathwayCreation = true;
         private boolean allowPathwayMutation = true;

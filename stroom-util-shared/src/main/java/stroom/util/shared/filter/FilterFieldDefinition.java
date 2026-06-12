@@ -53,10 +53,10 @@ public class FilterFieldDefinition {
     @JsonCreator
     public FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
                                  @JsonProperty("filterQualifier") final String filterQualifier,
-                                 @JsonProperty("defaultField") final Boolean defaultField) {
+                                 @JsonProperty("defaultField") final boolean defaultField) {
         this.displayName = Objects.requireNonNull(displayName);
         this.filterQualifier = Objects.requireNonNull(filterQualifier);
-        this.defaultField = Objects.requireNonNullElse(defaultField, false);
+        this.defaultField = defaultField;
     }
 
     /**

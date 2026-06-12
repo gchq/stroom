@@ -68,7 +68,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
-                      @JsonProperty("id") final Long id,
+                      @JsonProperty("id") final long id,
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final AnnotationTag status,
                       @JsonProperty("assignedTo") final UserRef assignedTo,
@@ -80,7 +80,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
                       @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.id = Objects.requireNonNullElse(id, 0L);
+        this.id = id;
         this.subject = subject;
         this.status = status;
         this.assignedTo = assignedTo;

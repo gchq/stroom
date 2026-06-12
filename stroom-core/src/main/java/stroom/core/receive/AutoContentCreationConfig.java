@@ -36,7 +36,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -101,7 +100,7 @@ public class AutoContentCreationConfig
 
     @JsonCreator
     public AutoContentCreationConfig(
-            @JsonProperty("enabled") final Boolean enabled,
+            @JsonProperty("enabled") final boolean enabled,
             @JsonProperty("destinationExplorerPathTemplate") final String destinationExplorerPathTemplate,
             @JsonProperty("destinationExplorerSubPathTemplate") final String destinationExplorerSubPathTemplate,
             @JsonProperty("groupTemplate") final String groupTemplate,
@@ -112,7 +111,7 @@ public class AutoContentCreationConfig
             @JsonProperty("createAsType") final UserType createAsType,
             @JsonProperty("templateMatchFields") final Set<String> templateMatchFields) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = enabled;
         this.destinationExplorerPathTemplate = destinationExplorerPathTemplate;
         this.destinationExplorerSubPathTemplate = destinationExplorerSubPathTemplate;
         this.groupTemplate = NullSafe.nonBlankStringElse(groupTemplate, DEFAULT_GROUP_TEMPLATE);
