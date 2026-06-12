@@ -25,10 +25,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class EmailConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SMTP = "smtp";
+
+    private static final Boolean DEFAULT_ALLOW_PASSWORD_RESETS = false;
 
     @NotNull
     @JsonProperty(PROP_NAME_SMTP)
@@ -76,7 +80,7 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                 "the following URL to reset your password: %s.";
         passwordResetUrl = "/s/resetPassword/?user=%s&token=%s";
         // Defaults to false because this feature needs to be configured and actively turned on before it works.
-        allowPasswordResets = false;
+        allowPasswordResets = DEFAULT_ALLOW_PASSWORD_RESETS;
     }
 
     @SuppressWarnings("unused")
@@ -87,14 +91,14 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("passwordResetSubject") final String passwordResetSubject,
                        @JsonProperty("passwordResetText") final String passwordResetText,
                        @JsonProperty("passwordResetUrl") final String passwordResetUrl,
-                       @JsonProperty("allowPasswordResets") final boolean allowPasswordResets) {
+                       @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets) {
         this.smtpConfig = smtpConfig;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
         this.passwordResetSubject = passwordResetSubject;
         this.passwordResetText = passwordResetText;
         this.passwordResetUrl = passwordResetUrl;
-        this.allowPasswordResets = allowPasswordResets;
+        this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, DEFAULT_ALLOW_PASSWORD_RESETS);
     }
 
     @JsonProperty(PROP_NAME_SMTP)

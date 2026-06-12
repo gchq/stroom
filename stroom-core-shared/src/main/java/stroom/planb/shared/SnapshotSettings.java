@@ -32,6 +32,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SnapshotSettings {
 
+    private static final Boolean DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP = false;
+    private static final Boolean DEFAULT_USE_SNAPSHOTS_FOR_GET = false;
+    private static final Boolean DEFAULT_USE_SNAPSHOTS_FOR_QUERY = false;
+
     @JsonProperty
     private final boolean useSnapshotsForLookup;
     @JsonProperty
@@ -40,18 +44,18 @@ public class SnapshotSettings {
     private final boolean useSnapshotsForQuery;
 
     public SnapshotSettings() {
-        this.useSnapshotsForLookup = false;
-        this.useSnapshotsForGet = false;
-        this.useSnapshotsForQuery = false;
+        this.useSnapshotsForLookup = DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP;
+        this.useSnapshotsForGet = DEFAULT_USE_SNAPSHOTS_FOR_GET;
+        this.useSnapshotsForQuery = DEFAULT_USE_SNAPSHOTS_FOR_QUERY;
     }
 
     @JsonCreator
-    public SnapshotSettings(@JsonProperty("useSnapshotsForLookup") final boolean useSnapshotsForLookup,
-                            @JsonProperty("useSnapshotsForGet") final boolean useSnapshotsForGet,
-                            @JsonProperty("useSnapshotsForQuery") final boolean useSnapshotsForQuery) {
-        this.useSnapshotsForLookup = useSnapshotsForLookup;
-        this.useSnapshotsForGet = useSnapshotsForGet;
-        this.useSnapshotsForQuery = useSnapshotsForQuery;
+    public SnapshotSettings(@JsonProperty("useSnapshotsForLookup") final Boolean useSnapshotsForLookup,
+                            @JsonProperty("useSnapshotsForGet") final Boolean useSnapshotsForGet,
+                            @JsonProperty("useSnapshotsForQuery") final Boolean useSnapshotsForQuery) {
+        this.useSnapshotsForLookup = Objects.requireNonNullElse(useSnapshotsForLookup, DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP);
+        this.useSnapshotsForGet = Objects.requireNonNullElse(useSnapshotsForGet, DEFAULT_USE_SNAPSHOTS_FOR_GET);
+        this.useSnapshotsForQuery = Objects.requireNonNullElse(useSnapshotsForQuery, DEFAULT_USE_SNAPSHOTS_FOR_QUERY);
     }
 
     public boolean isUseSnapshotsForLookup() {

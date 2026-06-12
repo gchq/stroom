@@ -32,8 +32,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ProcessConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final long DEFAULT_TIME_LIMIT = 30L;
-    private static final long DEFAULT_RECORD_LIMIT = 1000000L;
+    private static final Long DEFAULT_TIME_LIMIT = 30L;
+    private static final Long DEFAULT_RECORD_LIMIT = 1000000L;
 
     @JsonProperty
     @JsonPropertyDescription("The default number of minutes that batch search processing will be limited by.")
@@ -50,10 +50,10 @@ public class ProcessConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ProcessConfig(@JsonProperty("defaultTimeLimit") final long defaultTimeLimit,
-                         @JsonProperty("defaultRecordLimit") final long defaultRecordLimit) {
-        this.defaultTimeLimit = defaultTimeLimit;
-        this.defaultRecordLimit = defaultRecordLimit;
+    public ProcessConfig(@JsonProperty("defaultTimeLimit") final Long defaultTimeLimit,
+                         @JsonProperty("defaultRecordLimit") final Long defaultRecordLimit) {
+        this.defaultTimeLimit = Objects.requireNonNullElse(defaultTimeLimit, DEFAULT_TIME_LIMIT);
+        this.defaultRecordLimit = Objects.requireNonNullElse(defaultRecordLimit, DEFAULT_RECORD_LIMIT);
     }
 
     public long getDefaultTimeLimit() {

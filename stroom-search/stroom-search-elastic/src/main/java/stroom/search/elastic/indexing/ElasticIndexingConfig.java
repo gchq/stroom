@@ -24,29 +24,34 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticIndexingConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final int DEFAULT_MAX_NESTED_ELEMENT_DEPTH = 10;
+    private static final int DEFAULT_INITIAL_RETRY_BACKOFF_PERIOD_MS = 1000;
+    private static final int DEFAULT_RETRY_COUNT = 5;
 
     private final int maxNestedElementDepth;
     private final int initialRetryBackoffPeriodMs;
     private final int retryCount;
 
     public ElasticIndexingConfig() {
-        maxNestedElementDepth = 10;
-        initialRetryBackoffPeriodMs = 1000;
-        retryCount = 5;
+        maxNestedElementDepth = DEFAULT_MAX_NESTED_ELEMENT_DEPTH;
+        initialRetryBackoffPeriodMs = DEFAULT_INITIAL_RETRY_BACKOFF_PERIOD_MS;
+        retryCount = DEFAULT_RETRY_COUNT;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ElasticIndexingConfig(
-            @JsonProperty("maxNestedElementDepth") final int maxNestedElementDepth,
-            @JsonProperty("initialRetryBackoffPeriodMs") final int initialRetryBackoffPeriodMs,
-            @JsonProperty("retryCount") final int retryCount
-    ) {
-        this.maxNestedElementDepth = maxNestedElementDepth;
-        this.initialRetryBackoffPeriodMs = initialRetryBackoffPeriodMs;
-        this.retryCount = retryCount;
+            @JsonProperty("maxNestedElementDepth") final Integer maxNestedElementDepth,
+            @JsonProperty("initialRetryBackoffPeriodMs") final Integer initialRetryBackoffPeriodMs,
+            @JsonProperty("retryCount") final Integer retryCount) {
+        this.maxNestedElementDepth = Objects.requireNonNullElse(maxNestedElementDepth, DEFAULT_MAX_NESTED_ELEMENT_DEPTH);
+        this.initialRetryBackoffPeriodMs = Objects.requireNonNullElse(initialRetryBackoffPeriodMs, DEFAULT_INITIAL_RETRY_BACKOFF_PERIOD_MS);
+        this.retryCount = Objects.requireNonNullElse(retryCount, DEFAULT_RETRY_COUNT);
     }
 
     @JsonPropertyDescription("Maximum allowed depth of JSON XML `array`/`map` elements, that a JSON document " +

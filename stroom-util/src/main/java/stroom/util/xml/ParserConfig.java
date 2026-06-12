@@ -28,9 +28,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class ParserConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final Boolean DEFAULT_SECURE_PROCESSING = true;
 
     private final CacheConfig cacheConfig;
 
@@ -42,15 +46,15 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
 
-        secureProcessing = true;
+        secureProcessing = DEFAULT_SECURE_PROCESSING;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ParserConfig(@JsonProperty("cache") final CacheConfig cacheConfig,
-                        @JsonProperty("secureProcessing") final boolean secureProcessing) {
+                        @JsonProperty("secureProcessing") final Boolean secureProcessing) {
         this.cacheConfig = cacheConfig;
-        this.secureProcessing = secureProcessing;
+        this.secureProcessing = Objects.requireNonNullElse(secureProcessing, DEFAULT_SECURE_PROCESSING);
     }
 
     @JsonProperty("cache")

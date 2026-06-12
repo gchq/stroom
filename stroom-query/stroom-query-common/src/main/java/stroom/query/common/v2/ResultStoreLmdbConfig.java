@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
 public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
@@ -58,13 +60,13 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
     @SuppressWarnings("unused")
     @JsonCreator
     public ResultStoreLmdbConfig(@JsonProperty("localDir") final String localDir,
-                                 @JsonProperty("maxReaders") final int maxReaders,
+                                 @JsonProperty("maxReaders") final Integer maxReaders,
                                  @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
-                                 @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled) {
+                                 @JsonProperty("readAheadEnabled") final Boolean isReadAheadEnabled) {
         this.localDir = localDir;
-        this.maxReaders = maxReaders;
+        this.maxReaders = Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled = isReadAheadEnabled;
+        this.isReadAheadEnabled = Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
     }
 
     @Override

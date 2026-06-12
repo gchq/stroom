@@ -23,42 +23,48 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class SearchResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
+
+    private static final ResultStoreMapConfig DEFAULT_MAP_CONFIG = new ResultStoreMapConfig();
+    static final ResultStoreLmdbConfig DEFAULT_LMDB_CONFIG =
+            ResultStoreLmdbConfig.builder().localDir("search_results").build();
 
     private final ResultStoreMapConfig mapConfig;
 
     public SearchResultStoreConfig() {
-        this(10_000,
-                true,
-                ByteSize.ofMebibytes(1),
-                ByteSize.ofGibibytes(1),
-                1000,
-                10_000,
-                500_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
-                new ResultStoreMapConfig());
+        super(DEFAULT_MAX_PUTS_BEFORE_COMMIT,
+                DEFAULT_OFF_HEAP_RESULTS,
+                DEFAULT_MIN_PAYLOAD_SIZE,
+                DEFAULT_MAX_PAYLOAD_SIZE,
+                DEFAULT_MAX_STRING_FIELD_LENGTH,
+                DEFAULT_VALUE_QUEUE_SIZE,
+                DEFAULT_MAX_SORTED_ITEMS,
+                DEFAULT_LMDB_CONFIG);
+        this.mapConfig = DEFAULT_MAP_CONFIG;
     }
 
     @JsonCreator
-    public SearchResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
-                                   @JsonProperty("offHeapResults") final boolean offHeapResults,
+    public SearchResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final Integer maxPutsBeforeCommit,
+                                   @JsonProperty("offHeapResults") final Boolean offHeapResults,
                                    @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
                                    @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
-                                   @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
-                                   @JsonProperty("valueQueueSize") final int valueQueueSize,
-                                   @JsonProperty("maxSortedItems") final int maxSortedItems,
+                                   @JsonProperty("maxStringFieldLength") final Integer maxStringFieldLength,
+                                   @JsonProperty("valueQueueSize") final Integer valueQueueSize,
+                                   @JsonProperty("maxSortedItems") final Integer maxSortedItems,
                                    @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
                                    @JsonProperty("map") final ResultStoreMapConfig mapConfig) {
-        super(maxPutsBeforeCommit,
-                offHeapResults,
-                minPayloadSize,
-                maxPayloadSize,
-                maxStringFieldLength,
-                valueQueueSize,
-                maxSortedItems,
-                lmdbConfig);
-        this.mapConfig = mapConfig;
+        super(Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT),
+                Objects.requireNonNullElse(offHeapResults, DEFAULT_OFF_HEAP_RESULTS),
+                Objects.requireNonNullElse(minPayloadSize, DEFAULT_MIN_PAYLOAD_SIZE),
+                Objects.requireNonNullElse(maxPayloadSize, DEFAULT_MAX_PAYLOAD_SIZE),
+                Objects.requireNonNullElse(maxStringFieldLength, DEFAULT_MAX_STRING_FIELD_LENGTH),
+                Objects.requireNonNullElse(valueQueueSize, DEFAULT_VALUE_QUEUE_SIZE),
+                Objects.requireNonNullElse(maxSortedItems, DEFAULT_MAX_SORTED_ITEMS),
+                Objects.requireNonNullElse(lmdbConfig, DEFAULT_LMDB_CONFIG));
+        this.mapConfig = Objects.requireNonNullElse(mapConfig, DEFAULT_MAP_CONFIG);
     }
 
     @JsonProperty("map")

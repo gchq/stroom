@@ -43,6 +43,12 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
             "https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration for further " +
             "details on configuring the MySQL JDBC driver properties.";
 
+    private static final Boolean DEFAULT_CACHE_PREP_STMTS = false;
+    private static final Integer DEFAULT_PREP_STMT_CACHE_SIZE = 25;
+    private static final Integer DEFAULT_PREP_STMT_CACHE_SQL_LIMIT = 256;
+    private static final Integer DEFAULT_MINIMUM_IDLE = 10;
+    private static final Integer DEFAULT_MAX_POOL_SIZE = 30;
+
     private static final ConnectionPoolConfig DEFAULTS = new ConnectionPoolConfig();
 
     // JDBC driver level props
@@ -61,38 +67,38 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
 
     public ConnectionPoolConfig() {
         // JDBC driver level props
-        cachePrepStmts = false;
-        prepStmtCacheSize = 25;
-        prepStmtCacheSqlLimit = 256;
+        cachePrepStmts = DEFAULT_CACHE_PREP_STMTS;
+        prepStmtCacheSize = DEFAULT_PREP_STMT_CACHE_SIZE;
+        prepStmtCacheSqlLimit = DEFAULT_PREP_STMT_CACHE_SQL_LIMIT;
 
         // Hikari pool props
         connectionTimeout = StroomDuration.ofSeconds(30);
         idleTimeout = StroomDuration.ofMinutes(10);
         maxLifetime = StroomDuration.ofMinutes(30);
         leakDetectionThreshold = StroomDuration.ZERO;
-        minimumIdle = 10;
-        maxPoolSize = 30;
+        minimumIdle = DEFAULT_MINIMUM_IDLE;
+        maxPoolSize = DEFAULT_MAX_POOL_SIZE;
     }
 
     @JsonCreator
-    public ConnectionPoolConfig(@JsonProperty("cachePrepStmts") final boolean cachePrepStmts,
-                                @JsonProperty("prepStmtCacheSize") final int prepStmtCacheSize,
-                                @JsonProperty("prepStmtCacheSqlLimit") final int prepStmtCacheSqlLimit,
+    public ConnectionPoolConfig(@JsonProperty("cachePrepStmts") final Boolean cachePrepStmts,
+                                @JsonProperty("prepStmtCacheSize") final Integer prepStmtCacheSize,
+                                @JsonProperty("prepStmtCacheSqlLimit") final Integer prepStmtCacheSqlLimit,
                                 @JsonProperty("connectionTimeout") final StroomDuration connectionTimeout,
                                 @JsonProperty("idleTimeout") final StroomDuration idleTimeout,
                                 @JsonProperty("maxLifetime") final StroomDuration maxLifetime,
                                 @JsonProperty("leakDetectionThreshold") final StroomDuration leakDetectionThreshold,
-                                @JsonProperty("minimumIdle") final int minimumIdle,
-                                @JsonProperty("maxPoolSize") final int maxPoolSize) {
-        this.cachePrepStmts = cachePrepStmts;
-        this.prepStmtCacheSize = prepStmtCacheSize;
-        this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
+                                @JsonProperty("minimumIdle") final Integer minimumIdle,
+                                @JsonProperty("maxPoolSize") final Integer maxPoolSize) {
+        this.cachePrepStmts = Objects.requireNonNullElse(cachePrepStmts, DEFAULT_CACHE_PREP_STMTS);
+        this.prepStmtCacheSize = Objects.requireNonNullElse(prepStmtCacheSize, DEFAULT_PREP_STMT_CACHE_SIZE);
+        this.prepStmtCacheSqlLimit = Objects.requireNonNullElse(prepStmtCacheSqlLimit, DEFAULT_PREP_STMT_CACHE_SQL_LIMIT);
         this.connectionTimeout = connectionTimeout;
         this.idleTimeout = idleTimeout;
         this.maxLifetime = maxLifetime;
         this.leakDetectionThreshold = leakDetectionThreshold;
-        this.minimumIdle = minimumIdle;
-        this.maxPoolSize = maxPoolSize;
+        this.minimumIdle = Objects.requireNonNullElse(minimumIdle, DEFAULT_MINIMUM_IDLE);
+        this.maxPoolSize = Objects.requireNonNullElse(maxPoolSize, DEFAULT_MAX_POOL_SIZE);
     }
 
     /**

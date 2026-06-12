@@ -30,6 +30,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class DuplicateNotificationConfig {
 
+    private static final boolean DEFAULT_REMEMBER_NOTIFICATIONS = false;
+    private static final boolean DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS = false;
+    private static final boolean DEFAULT_CHOOSE_COLUMNS = false;
+
     @JsonProperty
     private final boolean rememberNotifications;
     @JsonProperty
@@ -40,22 +44,25 @@ public class DuplicateNotificationConfig {
     private final List<String> columnNames;
 
     public DuplicateNotificationConfig() {
-        rememberNotifications = false;
-        suppressDuplicateNotifications = false;
-        chooseColumns = false;
+        rememberNotifications = DEFAULT_REMEMBER_NOTIFICATIONS;
+        suppressDuplicateNotifications = DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS;
+        chooseColumns = DEFAULT_CHOOSE_COLUMNS;
         columnNames = new ArrayList<>();
     }
 
     @JsonCreator
     public DuplicateNotificationConfig(
-            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-            @JsonProperty("chooseColumns") final boolean chooseColumns,
+            @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+            @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
+            @JsonProperty("chooseColumns") final Boolean chooseColumns,
             @JsonProperty("columnNames") final List<String> columnNames) {
 
-        this.rememberNotifications = rememberNotifications;
-        this.suppressDuplicateNotifications = suppressDuplicateNotifications;
-        this.chooseColumns = chooseColumns;
+        this.rememberNotifications = Objects.requireNonNullElse(rememberNotifications,
+                DEFAULT_REMEMBER_NOTIFICATIONS);
+        this.suppressDuplicateNotifications = Objects.requireNonNullElse(suppressDuplicateNotifications,
+                DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS);
+        this.chooseColumns = Objects.requireNonNullElse(chooseColumns,
+                DEFAULT_CHOOSE_COLUMNS);
         this.columnNames = columnNames;
     }
 

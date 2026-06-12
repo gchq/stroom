@@ -32,6 +32,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final Boolean DEFAULT_ENABLED = false;
+
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")
     private final boolean enabled;
@@ -49,18 +51,18 @@ public class SplashConfig extends AbstractConfig implements IsStroomConfig {
     private final String version;
 
     public SplashConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
         title = "Splash Screen";
         body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         version = "v0.1";
     }
 
     @JsonCreator
-    public SplashConfig(@JsonProperty("enabled") final boolean enabled,
+    public SplashConfig(@JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("title") final String title,
                         @JsonProperty("body") final String body,
                         @JsonProperty("version") final String version) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.title = title;
         this.body = body;
         this.version = version;

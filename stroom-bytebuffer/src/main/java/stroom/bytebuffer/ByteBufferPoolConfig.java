@@ -28,17 +28,21 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final Integer DEFAULT_WARNING_THRESHOLD_PERCENTAGE = 90;
+    private static final Boolean DEFAULT_BLOCK_ON_EXHAUSTED_POOL = false;
 
     private final int warningThresholdPercentage;
     private final Map<Integer, Integer> pooledByteBufferCounts;
     private final boolean blockOnExhaustedPool;
 
     public ByteBufferPoolConfig() {
-        warningThresholdPercentage = 90;
+        warningThresholdPercentage = DEFAULT_WARNING_THRESHOLD_PERCENTAGE;
         // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
         pooledByteBufferCounts = new TreeMap<>(Map.of(
                 1, 50,
@@ -48,17 +52,19 @@ public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConf
                 10_000, 50,
                 100_000, 10,
                 1_000_000, 3));
-        blockOnExhaustedPool = false;
+        blockOnExhaustedPool = DEFAULT_BLOCK_ON_EXHAUSTED_POOL;
     }
 
     @JsonCreator
     public ByteBufferPoolConfig(
-            @JsonProperty("warningThresholdPercentage") final int warningThresholdPercentage,
+            @JsonProperty("warningThresholdPercentage") final Integer warningThresholdPercentage,
             @JsonProperty("pooledByteBufferCounts") final Map<Integer, Integer> pooledByteBufferCounts,
-            @JsonProperty("blockOnExhaustedPool") final boolean blockOnExhaustedPool) {
-        this.warningThresholdPercentage = warningThresholdPercentage;
+            @JsonProperty("blockOnExhaustedPool") final Boolean blockOnExhaustedPool) {
+        this.warningThresholdPercentage = Objects.requireNonNullElse(warningThresholdPercentage,
+                DEFAULT_WARNING_THRESHOLD_PERCENTAGE);
         this.pooledByteBufferCounts = pooledByteBufferCounts;
-        this.blockOnExhaustedPool = blockOnExhaustedPool;
+        this.blockOnExhaustedPool = Objects.requireNonNullElse(blockOnExhaustedPool,
+                DEFAULT_BLOCK_ON_EXHAUSTED_POOL);
     }
 
     @Max(100)

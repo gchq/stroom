@@ -31,6 +31,10 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final Integer DEFAULT_DELETE_BATCH_SIZE = 500;
+    private static final Integer DEFAULT_FLUSH_BATCH_SIZE = 500;
+    private static final Boolean DEFAULT_ADD_ASYNC = true;
+
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The age of streams that we store meta data in the database for. " +
@@ -55,20 +59,20 @@ public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
     public MetaValueConfig() {
         deleteAge = StroomDuration.ofDays(30);
-        deleteBatchSize = 500;
-        flushBatchSize = 500;
-        addAsync = true;
+        deleteBatchSize = DEFAULT_DELETE_BATCH_SIZE;
+        flushBatchSize = DEFAULT_FLUSH_BATCH_SIZE;
+        addAsync = DEFAULT_ADD_ASYNC;
     }
 
     @JsonCreator
     public MetaValueConfig(@JsonProperty("deleteAge") final StroomDuration deleteAge,
-                           @JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                           @JsonProperty("flushBatchSize") final int flushBatchSize,
-                           @JsonProperty("addAsync") final boolean addAsync) {
+                           @JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                           @JsonProperty("flushBatchSize") final Integer flushBatchSize,
+                           @JsonProperty("addAsync") final Boolean addAsync) {
         this.deleteAge = deleteAge;
-        this.deleteBatchSize = deleteBatchSize;
-        this.flushBatchSize = flushBatchSize;
-        this.addAsync = addAsync;
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.flushBatchSize = Objects.requireNonNullElse(flushBatchSize, DEFAULT_FLUSH_BATCH_SIZE);
+        this.addAsync = Objects.requireNonNullElse(addAsync, DEFAULT_ADD_ASYNC);
     }
 
     public StroomDuration getDeleteAge() {

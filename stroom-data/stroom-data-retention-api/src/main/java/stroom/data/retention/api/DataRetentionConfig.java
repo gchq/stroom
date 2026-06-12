@@ -24,9 +24,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class DataRetentionConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final Integer DEFAULT_DELETE_BATCH_SIZE = 1_000;
+    private static final Boolean DEFAULT_USE_QUERY_OPTIMISATION = true;
 
     @JsonProperty
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +
@@ -42,15 +47,15 @@ public class DataRetentionConfig extends AbstractConfig implements IsStroomConfi
 
 
     public DataRetentionConfig() {
-        deleteBatchSize = 1_000;
-        useQueryOptimisation = true;
+        deleteBatchSize = DEFAULT_DELETE_BATCH_SIZE;
+        useQueryOptimisation = DEFAULT_USE_QUERY_OPTIMISATION;
     }
 
     @JsonCreator
-    public DataRetentionConfig(@JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                               @JsonProperty("useQueryOptimisation") final boolean useQueryOptimisation) {
-        this.deleteBatchSize = deleteBatchSize;
-        this.useQueryOptimisation = useQueryOptimisation;
+    public DataRetentionConfig(@JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                               @JsonProperty("useQueryOptimisation") final Boolean useQueryOptimisation) {
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.useQueryOptimisation = Objects.requireNonNullElse(useQueryOptimisation, DEFAULT_USE_QUERY_OPTIMISATION);
     }
 
     public int getDeleteBatchSize() {

@@ -36,9 +36,12 @@ public class IndexShardWriterCacheConfig extends AbstractConfig implements IsStr
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheConfig.class);
     protected static final StroomDuration TIME_TO_LIVE_DEFAULT = StroomDuration.ZERO;
     protected static final StroomDuration TIME_TO_IDLE_DEFAULT = StroomDuration.ZERO;
-    protected static final int MIN_ITEMS_DEFAULT = 0;
-    protected static final int CORE_ITEMS_DEFAULT = 10;
-    protected static final int MAX_ITEMS_DEFAULT = 100;
+    protected static final long MIN_ITEMS_DEFAULT = 0;
+    protected static final long CORE_ITEMS_DEFAULT = 10;
+    protected static final long MAX_ITEMS_DEFAULT = 100;
+    private static final Long DEFAULT_MIN_ITEMS = MIN_ITEMS_DEFAULT;
+    private static final Long DEFAULT_CORE_ITEMS = CORE_ITEMS_DEFAULT;
+    private static final Long DEFAULT_MAX_ITEMS = MAX_ITEMS_DEFAULT;
 
     private final StroomDuration timeToLive;
     private final StroomDuration timeToIdle;
@@ -58,14 +61,14 @@ public class IndexShardWriterCacheConfig extends AbstractConfig implements IsStr
     @JsonCreator
     public IndexShardWriterCacheConfig(@JsonProperty("timeToLive") final StroomDuration timeToLive,
                                        @JsonProperty("timeToIdle") final StroomDuration timeToIdle,
-                                       @JsonProperty("minItems") final long minItems,
-                                       @JsonProperty("coreItems") final long coreItems,
-                                       @JsonProperty("maxItems") final long maxItems) {
+                                       @JsonProperty("minItems") final Long minItems,
+                                       @JsonProperty("coreItems") final Long coreItems,
+                                       @JsonProperty("maxItems") final Long maxItems) {
         this.timeToLive = timeToLive;
         this.timeToIdle = timeToIdle;
-        this.minItems = minItems;
-        this.coreItems = coreItems;
-        this.maxItems = maxItems;
+        this.minItems = Objects.requireNonNullElse(minItems, DEFAULT_MIN_ITEMS);
+        this.coreItems = Objects.requireNonNullElse(coreItems, DEFAULT_CORE_ITEMS);
+        this.maxItems = Objects.requireNonNullElse(maxItems, DEFAULT_MAX_ITEMS);
     }
 
     @NotNull

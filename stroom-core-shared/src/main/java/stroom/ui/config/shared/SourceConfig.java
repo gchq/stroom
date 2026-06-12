@@ -32,6 +32,11 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SourceConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final Long DEFAULT_MAX_CHARACTERS_IN_PREVIEW_FETCH = 30_000L;
+    private static final Long DEFAULT_MAX_CHARACTERS_PER_FETCH = 80_000L;
+    private static final Long DEFAULT_MAX_CHARACTERS_TO_COMPLETE_LINE = 10_000L;
+    private static final Integer DEFAULT_MAX_HEX_DUMP_LINES = 1_000;
+
     @Min(1)
     @JsonProperty
     @JsonPropertyDescription("The maximum number of characters of data to display in the Data Preview pane.")
@@ -58,22 +63,22 @@ public class SourceConfig extends AbstractConfig implements IsStroomConfig {
 
     public SourceConfig() {
         // TODO @AT Default values may need increasing
-        maxCharactersInPreviewFetch = 30_000L;
-        maxCharactersPerFetch = 80_000L;
-        maxCharactersToCompleteLine = 10_000L;
-        maxHexDumpLines = 1_000;
+        maxCharactersInPreviewFetch = DEFAULT_MAX_CHARACTERS_IN_PREVIEW_FETCH;
+        maxCharactersPerFetch = DEFAULT_MAX_CHARACTERS_PER_FETCH;
+        maxCharactersToCompleteLine = DEFAULT_MAX_CHARACTERS_TO_COMPLETE_LINE;
+        maxHexDumpLines = DEFAULT_MAX_HEX_DUMP_LINES;
     }
 
     @JsonCreator
-    public SourceConfig(@JsonProperty("maxCharactersInPreviewFetch") final long maxCharactersInPreviewFetch,
-                        @JsonProperty("maxCharactersPerFetch") final long maxCharactersPerFetch,
-                        @JsonProperty("maxCharactersToCompleteLine") final long maxCharactersToCompleteLine,
-                        @JsonProperty("maxHexDumpLines") final int maxHexDumpLines) {
+    public SourceConfig(@JsonProperty("maxCharactersInPreviewFetch") final Long maxCharactersInPreviewFetch,
+                        @JsonProperty("maxCharactersPerFetch") final Long maxCharactersPerFetch,
+                        @JsonProperty("maxCharactersToCompleteLine") final Long maxCharactersToCompleteLine,
+                        @JsonProperty("maxHexDumpLines") final Integer maxHexDumpLines) {
 
-        this.maxCharactersInPreviewFetch = maxCharactersInPreviewFetch;
-        this.maxCharactersPerFetch = maxCharactersPerFetch;
-        this.maxCharactersToCompleteLine = maxCharactersToCompleteLine;
-        this.maxHexDumpLines = maxHexDumpLines;
+        this.maxCharactersInPreviewFetch = Objects.requireNonNullElse(maxCharactersInPreviewFetch, DEFAULT_MAX_CHARACTERS_IN_PREVIEW_FETCH);
+        this.maxCharactersPerFetch = Objects.requireNonNullElse(maxCharactersPerFetch, DEFAULT_MAX_CHARACTERS_PER_FETCH);
+        this.maxCharactersToCompleteLine = Objects.requireNonNullElse(maxCharactersToCompleteLine, DEFAULT_MAX_CHARACTERS_TO_COMPLETE_LINE);
+        this.maxHexDumpLines = Objects.requireNonNullElse(maxHexDumpLines, DEFAULT_MAX_HEX_DUMP_LINES);
     }
 
     public long getMaxCharactersInPreviewFetch() {

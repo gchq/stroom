@@ -32,6 +32,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final Boolean DEFAULT_ENABLED = false;
+    private static final Boolean DEFAULT_CHOOSE_ON_STARTUP = false;
+
     @JsonProperty
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they " +
             "are performing set this property to true.")
@@ -54,8 +57,8 @@ public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
     private final String editorBody;
 
     public ActivityConfig() {
-        enabled = false;
-        chooseOnStartup = false;
+        enabled = DEFAULT_ENABLED;
+        chooseOnStartup = DEFAULT_CHOOSE_ON_STARTUP;
         managerTitle = "Choose Activity";
         editorTitle = "Edit Activity";
         editorBody = "Activity Code:</br>" +
@@ -72,13 +75,13 @@ public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ActivityConfig(@JsonProperty("enabled") final boolean enabled,
-                          @JsonProperty("chooseOnStartup") final boolean chooseOnStartup,
+    public ActivityConfig(@JsonProperty("enabled") final Boolean enabled,
+                          @JsonProperty("chooseOnStartup") final Boolean chooseOnStartup,
                           @JsonProperty("managerTitle") final String managerTitle,
                           @JsonProperty("editorTitle") final String editorTitle,
                           @JsonProperty("editorBody") final String editorBody) {
-        this.enabled = enabled;
-        this.chooseOnStartup = chooseOnStartup;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
+        this.chooseOnStartup = Objects.requireNonNullElse(chooseOnStartup, DEFAULT_CHOOSE_ON_STARTUP);
         this.managerTitle = managerTitle;
         this.editorTitle = editorTitle;
         this.editorBody = editorBody;
