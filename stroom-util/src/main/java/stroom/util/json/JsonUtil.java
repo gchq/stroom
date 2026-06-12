@@ -461,7 +461,8 @@ public final class JsonUtil {
 
             // Logs a warning when a null is mapped to a primitive default path
             LOGGER.error("Found null value for {} primitive JSON property. Using default value '{}' instead. " +
-                         "jsonNodeName: '{}', targetClassName: '{}', enclosingClassName: '{}', beanPropertyName: '{}'. " +
+                         "jsonNodeName: '{}', targetClassName: '{}', enclosingClassName: '{}', " +
+                         "beanPropertyName: '{}'. " +
                          "Please raise an issue at https://github.com/gchq/stroom/issues, including this " +
                          "error in the description.",
                     typeName, defaultValue, jsonNodeName, targetClassName, enclosingClassName, propertyName);
