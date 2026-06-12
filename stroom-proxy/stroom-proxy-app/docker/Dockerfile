@@ -103,13 +103,13 @@ RUN \
     chown -R "$USER_ID:$GROUP_ID" /stroom-proxy && \
     # Give the group the same perms as the user so any user with GID 0 can run proxy in
     # the same way as UID 1000
-    chmod -R g=u /stroom-proxy
+    chmod -R 770 /stroom-proxy
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=770 \
   *.sh \
   /stroom-proxy/
 
@@ -117,13 +117,13 @@ COPY \
 # (or when a stack with the config bind mount is not available)
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=660 \
   build/config.yml \
   /stroom-proxy/config_fallback/config.yml
 
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=660 \
   ./build/stroom-proxy-app-all.jar \
   /stroom-proxy/
 

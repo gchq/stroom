@@ -121,7 +121,7 @@ RUN \
     chown -R "$USER_ID:$GROUP_ID"  /stroom && \
     # Give the group the same perms as the user so any user with GID 0 can run proxy in
     # the same way as UID 1000
-    chmod -R g=u /stroom
+    chmod -R 770 /stroom
 
 
 # Those that are most likely to have changed get copied last to speed up build
@@ -129,14 +129,14 @@ RUN \
 # Copy in the content packs downloaded by gradle
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=660 \
   ./build/content_packs \
   /stroom/content_pack_import
 
 # Copy all the distribution scripts
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=770 \
   *.sh \
   /stroom/
 
@@ -144,14 +144,14 @@ COPY \
 # (or when a stack with the config bind mount is not available)
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=660 \
   build/config.yml \
   /stroom/config_fallback/config.yml
 
 # The application fat jar
 COPY \
   --chown=$USER_ID:$GROUP_ID \
-  --chmod=g=u \
+  --chmod=660 \
   ./build/stroom-app-all.jar \
   /stroom/
 
