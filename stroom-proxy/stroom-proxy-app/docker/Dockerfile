@@ -91,13 +91,13 @@ RUN \
     mkdir -p /stroom-proxy/config && \
     mkdir -p /stroom-proxy/config_fallback && \
     mkdir -p /stroom-proxy/content && \
-    mkdir -p /stroom-proxy/logs/access && \
-    mkdir -p /stroom-proxy/logs/receive && \
-    mkdir -p /stroom-proxy/logs/send && \
-    mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
     mkdir -p /stroom-proxy/data_feed_identities && \
     mkdir -p /stroom-proxy/failures && \
+    mkdir -p /stroom-proxy/logs/access && \
+    mkdir -p /stroom-proxy/logs/app && \
+    mkdir -p /stroom-proxy/logs/receive && \
+    mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/zip_file_ingest && \
     mkdir -p /stroom-proxy/zip_file_ingest_failed && \
     chown -R "$USER_ID:$GROUP_ID" /stroom-proxy && \
@@ -144,15 +144,19 @@ LABEL \
     git_commit="$GIT_COMMIT" \
     git_tag="$GIT_TAG"
 
+# !!! IMPORTANT !!!
+# If you add a new volume, make sure the dir is created in the RUN above,
+# so that it can get the right ownership/perms
+
 # Create Docker volume to hold all the persistent state (logs, repos, content, config)
 # Volumes need to be defined after the mounts have been created and populated
-VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/certs/
+VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
 VOLUME /stroom-proxy/data_feed_identities/
-VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
+VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/zip_file_ingest/
 VOLUME /stroom-proxy/zip_file_ingest_failed/
 

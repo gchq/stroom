@@ -115,7 +115,9 @@ RUN \
     mkdir -p /stroom/logs/migration && \
     mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
+    mkdir -p /stroom/planb && \
     mkdir -p /stroom/reference_data && \
+    mkdir -p /stroom/reference_staging_data && \
     mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
     chown -R "$USER_ID:$GROUP_ID"  /stroom && \
@@ -168,6 +170,10 @@ LABEL \
     git_commit="$GIT_COMMIT" \
     git_tag="$GIT_TAG"
 
+# !!! IMPORTANT !!!
+# If you add a new volume, make sure the dir is created in the RUN above,
+# so that it can get the right ownership/perms
+
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
@@ -188,7 +194,6 @@ VOLUME /stroom/output/
 VOLUME /stroom/planb/
 # Create Docker volume for Stroom's off-heap reference data
 VOLUME /stroom/reference_data/
-VOLUME /stroom/foo/
 # Create Docker volume for Stroom's off-heap reference data staging area
 # This could potentiall be mounted as tmpfs (if the host has sufficient memory) as the
 # data is only present for the life of a ref load.
