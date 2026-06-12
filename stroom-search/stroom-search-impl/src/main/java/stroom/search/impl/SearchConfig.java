@@ -61,8 +61,10 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
                         @JsonProperty("shard") final IndexShardSearchConfig shardConfig,
                         @JsonProperty("resultStore") final SearchResultStoreConfig resultStoreConfig) {
 
-        this.maxStoredDataQueueSize = Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
-        this.maxBooleanClauseCount = Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+        this.maxStoredDataQueueSize =
+                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxBooleanClauseCount =
+                Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.extractionConfig = extractionConfig;
         this.shardConfig = shardConfig;
         this.resultStoreConfig = resultStoreConfig;

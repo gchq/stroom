@@ -56,10 +56,14 @@ public class ExtractionConfig extends AbstractConfig implements IsStroomConfig {
                             @JsonProperty("maxThreadsPerTask") final Integer maxThreadsPerTask,
                             @JsonProperty("maxStreamEventMapSize") final Integer maxStreamEventMapSize,
                             @JsonProperty("extractionDelayMs") final Long extractionDelayMs) {
-        this.maxStoredDataQueueSize = Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
-        this.maxThreadsPerTask = Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
-        this.maxStreamEventMapSize = Objects.requireNonNullElse(maxStreamEventMapSize, DEFAULT_MAX_STREAM_EVENT_MAP_SIZE);
-        this.extractionDelayMs = Objects.requireNonNullElse(extractionDelayMs, DEFAULT_EXTRACTION_DELAY_MS);
+        this.maxStoredDataQueueSize =
+                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxThreadsPerTask =
+                Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
+        this.maxStreamEventMapSize =
+                Objects.requireNonNullElse(maxStreamEventMapSize, DEFAULT_MAX_STREAM_EVENT_MAP_SIZE);
+        this.extractionDelayMs =
+                Objects.requireNonNullElse(extractionDelayMs, DEFAULT_EXTRACTION_DELAY_MS);
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +

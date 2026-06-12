@@ -102,13 +102,23 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         this.dbConfig = dbConfig;
         this.docRefType = docRefType;
         this.searchConfig = searchConfig;
-        this.inMemAggregatorPoolSize = Objects.requireNonNullElse(inMemAggregatorPoolSize, DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE);
-        this.inMemPooledAggregatorSizeThreshold = Objects.requireNonNullElse(inMemPooledAggregatorSizeThreshold, DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD);
+        this.inMemAggregatorPoolSize =
+                Objects.requireNonNullElse(inMemAggregatorPoolSize, DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE);
+        this.inMemPooledAggregatorSizeThreshold =
+                Objects.requireNonNullElse(inMemPooledAggregatorSizeThreshold,
+                        DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD);
         this.inMemPooledAggregatorAgeThreshold = inMemPooledAggregatorAgeThreshold;
-        this.inMemFinalAggregatorSizeThreshold = Objects.requireNonNullElse(inMemFinalAggregatorSizeThreshold, DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD);
-        this.statisticFlushBatchSize = Objects.requireNonNullElse(statisticFlushBatchSize, DEFAULT_STATISTIC_FLUSH_BATCH_SIZE);
-        this.statisticAggregationBatchSize = Objects.requireNonNullElse(statisticAggregationBatchSize, DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE);
-        this.statisticAggregationStageTwoBatchSize = Objects.requireNonNullElse(statisticAggregationStageTwoBatchSize, DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE);
+        this.inMemFinalAggregatorSizeThreshold =
+                Objects.requireNonNullElse(inMemFinalAggregatorSizeThreshold,
+                        DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD);
+        this.statisticFlushBatchSize =
+                Objects.requireNonNullElse(statisticFlushBatchSize, DEFAULT_STATISTIC_FLUSH_BATCH_SIZE);
+        this.statisticAggregationBatchSize =
+                Objects.requireNonNullElse(statisticAggregationBatchSize,
+                        DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE);
+        this.statisticAggregationStageTwoBatchSize =
+                Objects.requireNonNullElse(statisticAggregationStageTwoBatchSize,
+                        DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE);
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
         this.slowQueryWarningThreshold = slowQueryWarningThreshold;

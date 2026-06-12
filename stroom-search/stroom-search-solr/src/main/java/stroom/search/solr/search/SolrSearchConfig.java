@@ -51,8 +51,10 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
     @JsonCreator
     public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final Integer maxStoredDataQueueSize,
                             @JsonProperty("maxBooleanClauseCount") final Integer maxBooleanClauseCount) {
-        this.maxStoredDataQueueSize = Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
-        this.maxBooleanClauseCount = Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+        this.maxStoredDataQueueSize =
+                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxBooleanClauseCount =
+                Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +

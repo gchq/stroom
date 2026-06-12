@@ -45,8 +45,10 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
     @JsonCreator
     public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
                                @JsonProperty("maxConnections") final Integer maxConnections) {
-        this.maxConnectionsPerRoute = Objects.requireNonNullElse(maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
-        this.maxConnections = Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
+        this.maxConnectionsPerRoute =
+                Objects.requireNonNullElse(maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
+        this.maxConnections =
+                Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
     }
 
     @JsonPropertyDescription("Maximum number of connections maintained by the Elastic Java client pool on a per-" +

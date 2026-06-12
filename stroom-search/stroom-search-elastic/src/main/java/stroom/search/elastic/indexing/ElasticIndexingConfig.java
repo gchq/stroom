@@ -49,8 +49,10 @@ public class ElasticIndexingConfig extends AbstractConfig implements IsStroomCon
             @JsonProperty("maxNestedElementDepth") final Integer maxNestedElementDepth,
             @JsonProperty("initialRetryBackoffPeriodMs") final Integer initialRetryBackoffPeriodMs,
             @JsonProperty("retryCount") final Integer retryCount) {
-        this.maxNestedElementDepth = Objects.requireNonNullElse(maxNestedElementDepth, DEFAULT_MAX_NESTED_ELEMENT_DEPTH);
-        this.initialRetryBackoffPeriodMs = Objects.requireNonNullElse(initialRetryBackoffPeriodMs, DEFAULT_INITIAL_RETRY_BACKOFF_PERIOD_MS);
+        this.maxNestedElementDepth =
+                Objects.requireNonNullElse(maxNestedElementDepth, DEFAULT_MAX_NESTED_ELEMENT_DEPTH);
+        this.initialRetryBackoffPeriodMs =
+                Objects.requireNonNullElse(initialRetryBackoffPeriodMs, DEFAULT_INITIAL_RETRY_BACKOFF_PERIOD_MS);
         this.retryCount = Objects.requireNonNullElse(retryCount, DEFAULT_RETRY_COUNT);
     }
 
