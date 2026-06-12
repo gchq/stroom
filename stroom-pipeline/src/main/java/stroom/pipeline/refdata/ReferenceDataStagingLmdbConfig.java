@@ -66,8 +66,10 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
         this.localDir = localDir;
         this.maxReaders = Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled = Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
-        this.isReaderBlockedByWriter = Objects.requireNonNullElse(isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
+        this.isReadAheadEnabled =
+                Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
+        this.isReaderBlockedByWriter =
+                Objects.requireNonNullElse(isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
     }
 
     @Override

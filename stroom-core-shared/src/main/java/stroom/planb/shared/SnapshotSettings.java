@@ -53,9 +53,12 @@ public class SnapshotSettings {
     public SnapshotSettings(@JsonProperty("useSnapshotsForLookup") final Boolean useSnapshotsForLookup,
                             @JsonProperty("useSnapshotsForGet") final Boolean useSnapshotsForGet,
                             @JsonProperty("useSnapshotsForQuery") final Boolean useSnapshotsForQuery) {
-        this.useSnapshotsForLookup = Objects.requireNonNullElse(useSnapshotsForLookup, DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP);
-        this.useSnapshotsForGet = Objects.requireNonNullElse(useSnapshotsForGet, DEFAULT_USE_SNAPSHOTS_FOR_GET);
-        this.useSnapshotsForQuery = Objects.requireNonNullElse(useSnapshotsForQuery, DEFAULT_USE_SNAPSHOTS_FOR_QUERY);
+        this.useSnapshotsForLookup =
+                Objects.requireNonNullElse(useSnapshotsForLookup, DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP);
+        this.useSnapshotsForGet =
+                Objects.requireNonNullElse(useSnapshotsForGet, DEFAULT_USE_SNAPSHOTS_FOR_GET);
+        this.useSnapshotsForQuery =
+                Objects.requireNonNullElse(useSnapshotsForQuery, DEFAULT_USE_SNAPSHOTS_FOR_QUERY);
     }
 
     public boolean isUseSnapshotsForLookup() {

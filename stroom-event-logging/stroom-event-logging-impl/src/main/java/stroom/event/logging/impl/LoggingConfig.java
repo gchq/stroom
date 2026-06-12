@@ -63,10 +63,15 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
                          @JsonProperty("maxListElements") final Integer maxListElements,
                          @JsonProperty("maxDataElementStringLength") final Integer maxDataElementStringLength,
                          @JsonProperty("deviceCache") final CacheConfig deviceCache) {
-        this.logEveryRestCallEnabled = Objects.requireNonNullElse(logEveryRestCallEnabled, DEFAULT_LOG_EVERY_REST_CALL_ENABLED);
-        this.omitRecordDetailsLoggingEnabled = Objects.requireNonNullElse(omitRecordDetailsLoggingEnabled, DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED);
-        this.maxListElements = Objects.requireNonNullElse(maxListElements, DEFAULT_MAX_LIST_ELEMENTS);
-        this.maxDataElementStringLength = Objects.requireNonNullElse(maxDataElementStringLength, DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH);
+        this.logEveryRestCallEnabled =
+                Objects.requireNonNullElse(logEveryRestCallEnabled, DEFAULT_LOG_EVERY_REST_CALL_ENABLED);
+        this.omitRecordDetailsLoggingEnabled =
+                Objects.requireNonNullElse(omitRecordDetailsLoggingEnabled,
+                        DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED);
+        this.maxListElements =
+                Objects.requireNonNullElse(maxListElements, DEFAULT_MAX_LIST_ELEMENTS);
+        this.maxDataElementStringLength =
+                Objects.requireNonNullElse(maxDataElementStringLength, DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH);
         this.deviceCache = deviceCache;
     }
 

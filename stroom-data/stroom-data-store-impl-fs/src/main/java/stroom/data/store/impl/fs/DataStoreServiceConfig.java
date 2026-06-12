@@ -69,16 +69,21 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     public DataStoreServiceConfig(@JsonProperty("db") final DataStoreServiceDbConfig dbConfig,
                                   @JsonProperty(PROP_NAME_DELETE_PURGE_AGE) final StroomDuration deletePurgeAge,
                                   @JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
-                                  @JsonProperty(PROP_NAME_DELETE_FAILURE_THRESHOLD) final Integer deleteFailureThreshold,
+                                  @JsonProperty(PROP_NAME_DELETE_FAILURE_THRESHOLD)
+                                      final Integer deleteFailureThreshold,
                                   @JsonProperty("fileSystemCleanBatchSize") final Integer fileSystemCleanBatchSize,
                                   @JsonProperty("fileSystemCleanDeleteOut") final Boolean fileSystemCleanDeleteOut,
                                   @JsonProperty("fileSystemCleanOldAge") final StroomDuration fileSystemCleanOldAge) {
         this.dbConfig = dbConfig;
         this.deletePurgeAge = deletePurgeAge;
-        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
-        this.deleteFailureThreshold = Objects.requireNonNullElse(deleteFailureThreshold, DEFAULT_DELETE_FAILURE_THRESHOLD);
-        this.fileSystemCleanBatchSize = Objects.requireNonNullElse(fileSystemCleanBatchSize, DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE);
-        this.fileSystemCleanDeleteOut = Objects.requireNonNullElse(fileSystemCleanDeleteOut, DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT);
+        this.deleteBatchSize =
+                Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.deleteFailureThreshold =
+                Objects.requireNonNullElse(deleteFailureThreshold, DEFAULT_DELETE_FAILURE_THRESHOLD);
+        this.fileSystemCleanBatchSize =
+                Objects.requireNonNullElse(fileSystemCleanBatchSize, DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE);
+        this.fileSystemCleanDeleteOut =
+                Objects.requireNonNullElse(fileSystemCleanDeleteOut, DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT);
         this.fileSystemCleanOldAge = fileSystemCleanOldAge;
     }
 

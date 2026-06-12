@@ -110,7 +110,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         this.metaTypes = metaTypes;
         this.rawMetaTypes = rawMetaTypes;
         this.dataFormats = dataFormats;
-        this.metaStatusUpdateBatchSize = Objects.requireNonNullElse(metaStatusUpdateBatchSize, DEFAULT_META_STATUS_UPDATE_BATCH_SIZE);
+        this.metaStatusUpdateBatchSize =
+                Objects.requireNonNullElse(metaStatusUpdateBatchSize, DEFAULT_META_STATUS_UPDATE_BATCH_SIZE);
     }
 
     @Override

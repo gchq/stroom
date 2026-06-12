@@ -68,8 +68,10 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty(PROP_NAME_ENABLE_PROCESSING) final Boolean enableJobsOnBootstrap,
                            @JsonProperty("executionInterval") final String executionInterval) {
         this.dbConfig = dbConfig;
-        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
-        this.enableJobsOnBootstrap = Objects.requireNonNullElse(enableJobsOnBootstrap, DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP);
+        this.enabled =
+                Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
+        this.enableJobsOnBootstrap =
+                Objects.requireNonNullElse(enableJobsOnBootstrap, DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP);
         this.executionInterval = executionInterval;
     }
 

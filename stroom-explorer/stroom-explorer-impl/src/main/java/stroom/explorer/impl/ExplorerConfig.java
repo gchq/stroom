@@ -78,7 +78,8 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
                 .collect(Collectors.toSet());
-        this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, DEFAULT_DEPENDENCY_WARNINGS_ENABLED);
+        this.dependencyWarningsEnabled =
+                Objects.requireNonNullElse(dependencyWarningsEnabled, DEFAULT_DEPENDENCY_WARNINGS_ENABLED);
     }
 
     @Override

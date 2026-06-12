@@ -78,9 +78,11 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache,
                                @JsonProperty("metaIdToRefStoreCache") final CacheConfig metaIdToRefStoreCache) {
         this.maxPutsBeforeCommit = Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT);
-        this.maxPurgeDeletesBeforeCommit = Objects.requireNonNullElse(maxPurgeDeletesBeforeCommit, DEFAULT_MAX_PURGE_DELETES_BEFORE_COMMIT);
+        this.maxPurgeDeletesBeforeCommit =
+                Objects.requireNonNullElse(maxPurgeDeletesBeforeCommit, DEFAULT_MAX_PURGE_DELETES_BEFORE_COMMIT);
         this.purgeAge = purgeAge;
-        this.loadingLockStripes = Objects.requireNonNullElse(loadingLockStripes, DEFAULT_LOADING_LOCK_STRIPES);
+        this.loadingLockStripes =
+                Objects.requireNonNullElse(loadingLockStripes, DEFAULT_LOADING_LOCK_STRIPES);
         this.lmdbConfig = lmdbConfig;
         this.stagingLmdbConfig = stagingLmdbConfig;
         this.effectiveStreamCache = effectiveStreamCache;

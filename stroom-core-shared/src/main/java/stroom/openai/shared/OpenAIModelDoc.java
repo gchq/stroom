@@ -94,7 +94,8 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.baseUrl = baseUrl;
         this.apiKeyName = apiKeyName;
         this.modelId = modelId;
-        this.maxContextWindowTokens = Objects.requireNonNullElse(maxContextWindowTokens, DEFAULT_MAX_CONTEXT_WINDOW_TOKENS);
+        this.maxContextWindowTokens =
+                Objects.requireNonNullElse(maxContextWindowTokens, DEFAULT_MAX_CONTEXT_WINDOW_TOKENS);
         this.reasoningEffort = reasoningEffort;
         this.httpClientConfiguration = httpClientConfiguration;
     }

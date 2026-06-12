@@ -49,7 +49,8 @@ public class RetentionSettings extends DurationSetting {
     public RetentionSettings(@JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("duration") final SimpleDuration duration,
                              @JsonProperty("useStateTime") final Boolean useStateTime) {
-        super(Objects.requireNonNullElse(enabled, DEFAULT_ENABLED), Objects.requireNonNullElse(duration, DEFAULT_DURATION));
+        super(Objects.requireNonNullElse(enabled, DEFAULT_ENABLED),
+                Objects.requireNonNullElse(duration, DEFAULT_DURATION));
         this.useStateTime = Objects.requireNonNullElse(useStateTime, false);
     }
 

@@ -98,10 +98,14 @@ public class PathwaysDoc extends AbstractDoc {
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
-        this.allowPathwayCreation = Objects.requireNonNullElse(allowPathwayCreation, DEFAULT_ALLOW_PATHWAY_CREATION);
-        this.allowPathwayMutation = Objects.requireNonNullElse(allowPathwayMutation, DEFAULT_ALLOW_PATHWAY_MUTATION);
-        this.allowConstraintCreation = Objects.requireNonNullElse(allowConstraintCreation, DEFAULT_ALLOW_CONSTRAINT_CREATION);
-        this.allowConstraintMutation = Objects.requireNonNullElse(allowConstraintMutation, DEFAULT_ALLOW_CONSTRAINT_MUTATION);
+        this.allowPathwayCreation =
+                Objects.requireNonNullElse(allowPathwayCreation, DEFAULT_ALLOW_PATHWAY_CREATION);
+        this.allowPathwayMutation =
+                Objects.requireNonNullElse(allowPathwayMutation, DEFAULT_ALLOW_PATHWAY_MUTATION);
+        this.allowConstraintCreation =
+                Objects.requireNonNullElse(allowConstraintCreation, DEFAULT_ALLOW_CONSTRAINT_CREATION);
+        this.allowConstraintMutation =
+                Objects.requireNonNullElse(allowConstraintMutation, DEFAULT_ALLOW_CONSTRAINT_MUTATION);
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
         this.processingNode = processingNode;
