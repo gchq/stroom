@@ -47,7 +47,7 @@ RUN echo "http_proxy: $http_proxy" && \
 FROM stroom-base-stage AS main-stage
 
 ARG USER_NAME=proxy
-ARG USER_ID=1001
+ARG USER_ID=1000
 # The root group which should be GID 0
 # This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
 ARG GROUP_NAME=root
