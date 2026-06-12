@@ -17,7 +17,8 @@
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
-# the build
+# the build. You need to keep this block identical in both stroom and proxy
+# for them to share the layer.
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
@@ -25,12 +26,15 @@
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
 FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:30d9f87d702c2c1c601ed0d31e0c88ea1ea474ee7676cda7b7a59e759181c4dd AS proxy-base-stage
 
+# bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        bash \
+        jq \
         curl \
         su-exec \
         tini

@@ -17,7 +17,8 @@
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
-# the build
+# the build. You need to keep this block identical in both stroom and proxy
+# for them to share the layer.
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
@@ -46,7 +47,7 @@ RUN echo "http_proxy: $http_proxy" && \
 
 FROM stroom-base-stage AS main-stage
 
-ARG USER_NAME=proxy
+ARG USER_NAME=stroom
 ARG USER_ID=1000
 # The root group which should be GID 0
 # This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
@@ -121,7 +122,7 @@ RUN \
     mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
     chown -R "$USER_ID:$GROUP_ID"  /stroom && \
-    # Give the group the same perms as the user so any user with GID 0 can run proxy in
+    # Give the group the same perms as the user so any user with GID 0 can run stroom in
     # the same way as UID 1000
     chmod -R 770 /stroom
 
