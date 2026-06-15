@@ -30,7 +30,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class AnnotationTag {
 
-    private static final Integer DEFAULT_ID = 0;
+    private static final int DEFAULT_ID = 0;
 
     public static final String TYPE = "AnnotationTag";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_TAG_DOCUMENT_TYPE;

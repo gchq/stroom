@@ -30,8 +30,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class DataRetentionConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_DELETE_BATCH_SIZE = 1_000;
-    private static final Boolean DEFAULT_USE_QUERY_OPTIMISATION = true;
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 1_000;
+    private static final boolean DEFAULT_USE_QUERY_OPTIMISATION = true;
 
     @JsonProperty
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +

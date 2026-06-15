@@ -37,7 +37,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_PORT = 2525;
+    private static final int DEFAULT_PORT = 2525;
 
     @NotNull
     @JsonProperty("host")

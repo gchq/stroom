@@ -32,8 +32,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_CLUSTER_CALL_USE_LOCAL = true;
-    private static final Boolean DEFAULT_CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER = true;
+    private static final boolean DEFAULT_CLUSTER_CALL_USE_LOCAL = true;
+    private static final boolean DEFAULT_CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER = true;
 
     private final boolean clusterCallUseLocal;
     private final StroomDuration clusterCallReadTimeout;

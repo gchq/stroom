@@ -37,7 +37,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
-    private static final Integer DEFAULT_RAM_BUFFER_SIZE_MB = 1024;
+    private static final int DEFAULT_RAM_BUFFER_SIZE_MB = 1024;
 
     private final IndexDbConfig dbConfig;
     private final int ramBufferSizeMB;

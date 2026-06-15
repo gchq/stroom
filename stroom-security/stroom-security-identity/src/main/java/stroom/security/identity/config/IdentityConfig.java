@@ -45,7 +45,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
     private static final boolean DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT = false;
     public static final boolean DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION = false;
-    private static final Integer DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX = 1;
+    private static final int DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX = 1;
 
     private final boolean autoCreateAdminAccountOnBoot;
     private final boolean allowCertificateAuthentication;

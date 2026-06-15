@@ -38,11 +38,11 @@ import java.util.Objects;
 public class MetricValueSchema {
 
     private static final MaxValueSize DEFAULT_MAX_VALUE_SIZE = MaxValueSize.TWO;
-    private static final Boolean DEFAULT_STORE_LATEST_VALUE = true;
-    private static final Boolean DEFAULT_STORE_MIN = false;
-    private static final Boolean DEFAULT_STORE_MAX = false;
-    private static final Boolean DEFAULT_STORE_COUNT = false;
-    private static final Boolean DEFAULT_STORE_SUM = false;
+    private static final boolean DEFAULT_STORE_LATEST_VALUE = true;
+    private static final boolean DEFAULT_STORE_MIN = false;
+    private static final boolean DEFAULT_STORE_MAX = false;
+    private static final boolean DEFAULT_STORE_COUNT = false;
+    private static final boolean DEFAULT_STORE_SUM = false;
 
     @JsonProperty
     private final MaxValueSize valueType;

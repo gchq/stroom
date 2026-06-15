@@ -30,7 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ExportConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_ENABLED = false;
 
     protected static final String ENABLED_PROP_NAME = "enabled";
     private final boolean enabled;

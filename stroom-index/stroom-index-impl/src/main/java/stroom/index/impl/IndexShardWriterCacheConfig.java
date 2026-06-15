@@ -39,9 +39,9 @@ public class IndexShardWriterCacheConfig extends AbstractConfig implements IsStr
     protected static final long MIN_ITEMS_DEFAULT = 0;
     protected static final long CORE_ITEMS_DEFAULT = 10;
     protected static final long MAX_ITEMS_DEFAULT = 100;
-    private static final Long DEFAULT_MIN_ITEMS = MIN_ITEMS_DEFAULT;
-    private static final Long DEFAULT_CORE_ITEMS = CORE_ITEMS_DEFAULT;
-    private static final Long DEFAULT_MAX_ITEMS = MAX_ITEMS_DEFAULT;
+    private static final long DEFAULT_MIN_ITEMS = MIN_ITEMS_DEFAULT;
+    private static final long DEFAULT_CORE_ITEMS = CORE_ITEMS_DEFAULT;
+    private static final long DEFAULT_MAX_ITEMS = MAX_ITEMS_DEFAULT;
 
     private final StroomDuration timeToLive;
     private final StroomDuration timeToIdle;

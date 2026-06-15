@@ -46,8 +46,8 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
 
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
-    private static final Boolean DEFAULT_ENABLED = true;
-    private static final Boolean DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP = false;
+    private static final boolean DEFAULT_ENABLED = true;
+    private static final boolean DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP = false;
 
     private final JobSystemDbConfig dbConfig;
     private final boolean enabled;

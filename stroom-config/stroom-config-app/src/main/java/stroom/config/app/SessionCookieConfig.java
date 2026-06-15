@@ -31,8 +31,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SessionCookieConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_SECURE = true;
-    private static final Boolean DEFAULT_HTTP_ONLY = true;
+    private static final boolean DEFAULT_SECURE = true;
+    private static final boolean DEFAULT_HTTP_ONLY = true;
 
     @JsonProperty
     @JsonPropertyDescription("Marks the session cookies with the secure flag, indicating they " +

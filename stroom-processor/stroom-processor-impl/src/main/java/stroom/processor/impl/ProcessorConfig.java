@@ -39,13 +39,13 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
-    private static final Boolean DEFAULT_ASSIGN_TASKS = true;
-    private static final Boolean DEFAULT_FILL_TASK_QUEUE = true;
-    private static final Integer DEFAULT_QUEUE_SIZE = 1000;
-    private static final Integer DEFAULT_TASKS_TO_CREATE = 1000;
-    private static final Boolean DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT = true;
-    private static final Integer DEFAULT_TASK_CREATION_THREAD_COUNT = 5;
-    private static final Integer DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE = 500;
+    private static final boolean DEFAULT_ASSIGN_TASKS = true;
+    private static final boolean DEFAULT_FILL_TASK_QUEUE = true;
+    private static final int DEFAULT_QUEUE_SIZE = 1000;
+    private static final int DEFAULT_TASKS_TO_CREATE = 1000;
+    private static final boolean DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT = true;
+    private static final int DEFAULT_TASK_CREATION_THREAD_COUNT = 5;
+    private static final int DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE = 500;
 
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;

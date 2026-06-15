@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_ENABLED = false;
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")

@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder(alphabetic = true)
 public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
-    private static final Boolean DEFAULT_DEPENDENCY_WARNINGS_ENABLED = false;
+    private static final boolean DEFAULT_DEPENDENCY_WARNINGS_ENABLED = false;
     private static final Pattern NODE_TAG_PATTERN = Pattern.compile(ExplorerNode.TAG_PATTERN_STR);
 
     private final ExplorerDbConfig dbConfig;

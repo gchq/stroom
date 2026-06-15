@@ -31,9 +31,9 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_DELETE_BATCH_SIZE = 500;
-    private static final Integer DEFAULT_FLUSH_BATCH_SIZE = 500;
-    private static final Boolean DEFAULT_ADD_ASYNC = true;
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 500;
+    private static final int DEFAULT_FLUSH_BATCH_SIZE = 500;
+    private static final boolean DEFAULT_ADD_ASYNC = true;
 
     @NotNull
     @JsonProperty

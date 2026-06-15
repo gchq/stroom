@@ -70,7 +70,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends AbstractDoc {
 
-    private static final Boolean DEFAULT_REFERENCE = false;
+    private static final boolean DEFAULT_REFERENCE = false;
 
     public static final String TYPE = "Feed";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;

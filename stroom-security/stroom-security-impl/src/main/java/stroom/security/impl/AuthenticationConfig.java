@@ -35,7 +35,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
     public static final String PROP_NAME_OPENID = "openId";
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
 
-    private static final Boolean DEFAULT_PREVENT_LOGIN = false;
+    private static final boolean DEFAULT_PREVENT_LOGIN = false;
     public static final String PROP_NAME_API_KEY_CACHE = "apiKeyCache";
     public static final String PROP_NAME_AUTHENTICATION_STATE_CACHE = "authenticationStateCache";
     public static final String PROP_NAME_MAX_API_KEY_EXPIRY_AGE = "maxApiKeyExpiryAge";

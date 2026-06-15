@@ -34,7 +34,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class Annotation extends AbstractDoc {
 
-    private static final Long DEFAULT_ID = 0L;
+    private static final long DEFAULT_ID = 0L;
 
     public static final String TYPE = "Annotation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_DOCUMENT_TYPE;

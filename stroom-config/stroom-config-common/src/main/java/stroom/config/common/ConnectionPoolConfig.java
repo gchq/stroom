@@ -43,11 +43,11 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
                                                   "https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration for further " +
                                                   "details on configuring the MySQL JDBC driver properties.";
 
-    private static final Boolean DEFAULT_CACHE_PREP_STMTS = false;
-    private static final Integer DEFAULT_PREP_STMT_CACHE_SIZE = 25;
-    private static final Integer DEFAULT_PREP_STMT_CACHE_SQL_LIMIT = 256;
-    private static final Integer DEFAULT_MINIMUM_IDLE = 10;
-    private static final Integer DEFAULT_MAX_POOL_SIZE = 30;
+    private static final boolean DEFAULT_CACHE_PREP_STMTS = false;
+    private static final int DEFAULT_PREP_STMT_CACHE_SIZE = 25;
+    private static final int DEFAULT_PREP_STMT_CACHE_SQL_LIMIT = 256;
+    private static final int DEFAULT_MINIMUM_IDLE = 10;
+    private static final int DEFAULT_MAX_POOL_SIZE = 30;
 
     private static final ConnectionPoolConfig DEFAULTS = new ConnectionPoolConfig();
 

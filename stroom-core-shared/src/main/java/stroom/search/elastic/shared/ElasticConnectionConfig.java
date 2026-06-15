@@ -38,9 +38,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
 
-    private static final Boolean DEFAULT_USE_AUTHENTICATION = false;
-    private static final Integer DEFAULT_CONNECTION_TIMEOUT_MILLIS = 3000;
-    private static final Integer DEFAULT_RESPONSE_TIMEOUT_MILLIS = 0;
+    private static final boolean DEFAULT_USE_AUTHENTICATION = false;
+    private static final int DEFAULT_CONNECTION_TIMEOUT_MILLIS = 3000;
+    private static final int DEFAULT_RESPONSE_TIMEOUT_MILLIS = 0;
 
     @JsonProperty
     private List<String> connectionUrls = new ArrayList<>();

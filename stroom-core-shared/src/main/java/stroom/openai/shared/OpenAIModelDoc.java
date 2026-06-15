@@ -53,7 +53,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
 
-    private static final Integer DEFAULT_MAX_CONTEXT_WINDOW_TOKENS = 0;
+    private static final int DEFAULT_MAX_CONTEXT_WINDOW_TOKENS = 0;
 
     public static final String TYPE = "OpenAIModel";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.OPENAI_MODEL_DOCUMENT_TYPE;

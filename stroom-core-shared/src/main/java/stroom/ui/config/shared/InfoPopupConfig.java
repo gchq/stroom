@@ -33,7 +33,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_ENABLED = false;
     private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
     private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
 
