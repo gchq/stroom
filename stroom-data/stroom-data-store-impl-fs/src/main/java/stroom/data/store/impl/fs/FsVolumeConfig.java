@@ -33,6 +33,7 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -40,6 +41,10 @@ import java.util.TreeMap;
 public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_DEFAULT_VOLUME_GROUP_NAME = "defaultStreamVolumeGroupName";
+
+    private static final double DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION = 0.9;
+    private static final boolean DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START = true;
+    private static final int DEFAULT_FIND_ORPHANED_META_BATCH_SIZE = 7_000;
 
     // TreeMap for consistent ordering in the yaml
     private static final Map<String, String> DEFAULT_META_TYPE_EXTENSIONS = new TreeMap<>(Map.of(
@@ -75,9 +80,9 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         volumeSelector = "RoundRobin";
         defaultStreamVolumeGroupName = "Default Volume Group";
         defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
-        defaultStreamVolumeFilesystemUtilisation = 0.9;
-        createDefaultStreamVolumesOnStart = true;
-        findOrphanedMetaBatchSize = 7_000;
+        defaultStreamVolumeFilesystemUtilisation = DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION;
+        createDefaultStreamVolumesOnStart = DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START;
+        findOrphanedMetaBatchSize = DEFAULT_FIND_ORPHANED_META_BATCH_SIZE;
 
         feedPathCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -103,25 +108,25 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     public FsVolumeConfig(
             @JsonProperty("volumeSelector") final String volumeSelector,
             @JsonProperty("defaultStreamVolumePaths") final List<String> defaultStreamVolumePaths,
-            @JsonProperty("defaultStreamVolumeFilesystemUtilisation") final double defaultStreamVolumeFilesystemUtilisation,
-            @JsonProperty("createDefaultStreamVolumesOnStart") final boolean createDefaultStreamVolumesOnStart,
+            @JsonProperty("defaultStreamVolumeFilesystemUtilisation") final Double defaultStreamVolumeFilesystemUtilisation,
+            @JsonProperty("createDefaultStreamVolumesOnStart") final Boolean createDefaultStreamVolumesOnStart,
             @JsonProperty(PROP_NAME_DEFAULT_VOLUME_GROUP_NAME) final String defaultStreamVolumeGroupName,
             @JsonProperty("feedPathCache") final CacheConfig feedPathCache,
             @JsonProperty("typePathCache") final CacheConfig typePathCache,
             @JsonProperty("metaTypeExtensions") final Map<String, String> metaTypeExtensions,
-            @JsonProperty("findOrphanedMetaBatchSize") final int findOrphanedMetaBatchSize,
+            @JsonProperty("findOrphanedMetaBatchSize") final Integer findOrphanedMetaBatchSize,
             @JsonProperty("maxVolumeStateAge") final StroomDuration maxVolumeStateAge,
             @JsonProperty("volumeCache") final CacheConfig volumeCache) {
 
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
-        this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
-        this.createDefaultStreamVolumesOnStart = createDefaultStreamVolumesOnStart;
+        this.defaultStreamVolumeFilesystemUtilisation = Objects.requireNonNullElse(defaultStreamVolumeFilesystemUtilisation, DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION);
+        this.createDefaultStreamVolumesOnStart = Objects.requireNonNullElse(createDefaultStreamVolumesOnStart, DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START);
         this.defaultStreamVolumeGroupName = defaultStreamVolumeGroupName;
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
         this.metaTypeExtensions = metaTypeExtensions;
-        this.findOrphanedMetaBatchSize = findOrphanedMetaBatchSize;
+        this.findOrphanedMetaBatchSize = Objects.requireNonNullElse(findOrphanedMetaBatchSize, DEFAULT_FIND_ORPHANED_META_BATCH_SIZE);
         this.maxVolumeStateAge = maxVolumeStateAge;
         this.volumeCache = volumeCache;
     }

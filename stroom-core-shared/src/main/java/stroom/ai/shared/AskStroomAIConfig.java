@@ -129,14 +129,14 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonPropertyDescription("System prompt used to summarise older conversation history when "
-                             + "progressive trimming is needed to fit the model's context window.")
+            + "progressive trimming is needed to fit the model's context window.")
     public String getHistorySummaryPrompt() {
         return historySummaryPrompt;
     }
 
     @JsonPropertyDescription("Safety cap on the maximum number of history messages loaded from "
-                             + "the database. The actual context boundary is determined by the model's context "
-                             + "window via progressive trimming.")
+            + "the database. The actual context boundary is determined by the model's context "
+            + "window via progressive trimming.")
     public int getMaxHistorySafetyCapMessages() {
         return maxHistorySafetyCapMessages;
     }
@@ -147,7 +147,7 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonPropertyDescription("When enabled, the full LLM exchange (prompts sent and responses received) "
-                             + "is stored and displayed as an expandable detail section beneath each AI response.")
+            + "is stored and displayed as an expandable detail section beneath each AI response.")
     public boolean isEnableDebugDetail() {
         return enableDebugDetail;
     }

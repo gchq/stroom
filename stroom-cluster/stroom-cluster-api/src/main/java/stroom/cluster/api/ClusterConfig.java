@@ -32,15 +32,18 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_CLUSTER_CALL_USE_LOCAL = true;
+    private static final boolean DEFAULT_CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER = true;
+
     private final boolean clusterCallUseLocal;
     private final StroomDuration clusterCallReadTimeout;
     private final boolean clusterCallIgnoreSSLHostnameVerifier;
     private final StroomDuration clusterResponseTimeout;
 
     public ClusterConfig() {
-        clusterCallUseLocal = true;
+        clusterCallUseLocal = DEFAULT_CLUSTER_CALL_USE_LOCAL;
         clusterCallReadTimeout = StroomDuration.ofSeconds(30);
-        clusterCallIgnoreSSLHostnameVerifier = true;
+        clusterCallIgnoreSSLHostnameVerifier = DEFAULT_CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER;
         clusterResponseTimeout = StroomDuration.ofSeconds(30);
     }
 
@@ -51,11 +54,11 @@ public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
             @JsonProperty("clusterCallReadTimeout") final StroomDuration clusterCallReadTimeout,
             @JsonProperty("clusterCallIgnoreSSLHostnameVerifier") final Boolean clusterCallIgnoreSSLHostnameVerifier,
             @JsonProperty("clusterResponseTimeout") final StroomDuration clusterResponseTimeout) {
-        this.clusterCallUseLocal =
-                Objects.requireNonNullElse(clusterCallUseLocal, false);
+        this.clusterCallUseLocal = Objects.requireNonNullElse(clusterCallUseLocal,
+                DEFAULT_CLUSTER_CALL_USE_LOCAL);
         this.clusterCallReadTimeout = clusterCallReadTimeout;
-        this.clusterCallIgnoreSSLHostnameVerifier =
-                Objects.requireNonNullElse(clusterCallIgnoreSSLHostnameVerifier, false);
+        this.clusterCallIgnoreSSLHostnameVerifier = Objects.requireNonNullElse(clusterCallIgnoreSSLHostnameVerifier,
+                DEFAULT_CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER);
         this.clusterResponseTimeout = clusterResponseTimeout;
     }
 
@@ -73,7 +76,7 @@ public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("If cluster calls are using SSL then choose if we want to ignore host name " +
-                             "verification")
+            "verification")
     public boolean isClusterCallIgnoreSSLHostnameVerifier() {
         return clusterCallIgnoreSSLHostnameVerifier;
     }
@@ -86,10 +89,10 @@ public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ClusterConfig{" +
-               "clusterCallUseLocal=" + clusterCallUseLocal +
-               ", clusterCallReadTimeout='" + clusterCallReadTimeout + '\'' +
-               ", clusterCallIgnoreSSLHostnameVerifier=" + clusterCallIgnoreSSLHostnameVerifier +
-               ", clusterResponseTimeout='" + clusterResponseTimeout + '\'' +
-               '}';
+                "clusterCallUseLocal=" + clusterCallUseLocal +
+                ", clusterCallReadTimeout='" + clusterCallReadTimeout + '\'' +
+                ", clusterCallIgnoreSSLHostnameVerifier=" + clusterCallIgnoreSSLHostnameVerifier +
+                ", clusterResponseTimeout='" + clusterResponseTimeout + '\'' +
+                '}';
     }
 }

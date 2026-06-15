@@ -30,26 +30,30 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticClientConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = Rest5ClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
+    private static final int DEFAULT_MAX_CONNECTIONS = Rest5ClientBuilder.DEFAULT_MAX_CONN_TOTAL;
+
     private final int maxConnectionsPerRoute;
     private final int maxConnections;
 
     public ElasticClientConfig() {
-        maxConnectionsPerRoute = Rest5ClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
-        maxConnections = Rest5ClientBuilder.DEFAULT_MAX_CONN_TOTAL;
+        maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+        maxConnections = DEFAULT_MAX_CONNECTIONS;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
                                @JsonProperty("maxConnections") final Integer maxConnections) {
-        this.maxConnectionsPerRoute = Objects.requireNonNullElse(maxConnectionsPerRoute, 0);
-        this.maxConnections = Objects.requireNonNullElse(maxConnections, 0);
+        this.maxConnectionsPerRoute =
+                Objects.requireNonNullElse(maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
+        this.maxConnections =
+                Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
     }
 
     @JsonPropertyDescription("Maximum number of connections maintained by the Elastic Java client pool on a per-" +
-                             "route basis. This should be set to at least the number of concurrent indexing tasks " +
-                             "you expect each " +
-                             "node to be performing against a given index.")
+            "route basis. This should be set to at least the number of concurrent indexing tasks you expect each " +
+            "node to be performing against a given index.")
     public int getMaxConnectionsPerRoute() {
         return maxConnectionsPerRoute;
     }
@@ -62,8 +66,8 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
     @Override
     public String toString() {
         return "ElasticClientConfig{" +
-               "maxConnectionsPerRoute=" + maxConnectionsPerRoute +
-               ", maxConnections=" + maxConnections +
-               "}";
+                "maxConnectionsPerRoute=" + maxConnectionsPerRoute +
+                ", maxConnections=" + maxConnections +
+                "}";
     }
 }

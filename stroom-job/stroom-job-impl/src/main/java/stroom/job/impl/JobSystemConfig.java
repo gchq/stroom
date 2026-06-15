@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
+
 @JsonPropertyOrder(alphabetic = true)
 public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
@@ -45,6 +46,8 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
 
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
+    private static final boolean DEFAULT_ENABLED = true;
+    private static final boolean DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP = false;
 
     private final JobSystemDbConfig dbConfig;
     private final boolean enabled;
@@ -53,8 +56,8 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
 
     public JobSystemConfig() {
         dbConfig = new JobSystemDbConfig();
-        enabled = true;
-        enableJobsOnBootstrap = false;
+        enabled = DEFAULT_ENABLED;
+        enableJobsOnBootstrap = DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP;
         executionInterval = "10s";
     }
 
@@ -65,8 +68,10 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty(PROP_NAME_ENABLE_PROCESSING) final Boolean enableJobsOnBootstrap,
                            @JsonProperty("executionInterval") final String executionInterval) {
         this.dbConfig = dbConfig;
-        this.enabled = Objects.requireNonNullElse(enabled, false);
-        this.enableJobsOnBootstrap = Objects.requireNonNullElse(enableJobsOnBootstrap, false);
+        this.enabled =
+                Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
+        this.enableJobsOnBootstrap =
+                Objects.requireNonNullElse(enableJobsOnBootstrap, DEFAULT_ENABLE_JOBS_ON_BOOTSTRAP);
         this.executionInterval = executionInterval;
     }
 

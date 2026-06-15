@@ -34,6 +34,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ParserConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_SECURE_PROCESSING = true;
+
     private final CacheConfig cacheConfig;
 
     private final boolean secureProcessing;
@@ -44,7 +46,7 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
 
-        secureProcessing = true;
+        secureProcessing = DEFAULT_SECURE_PROCESSING;
     }
 
     @SuppressWarnings("unused")
@@ -52,7 +54,7 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
     public ParserConfig(@JsonProperty("cache") final CacheConfig cacheConfig,
                         @JsonProperty("secureProcessing") final Boolean secureProcessing) {
         this.cacheConfig = cacheConfig;
-        this.secureProcessing = Objects.requireNonNullElse(secureProcessing, false);
+        this.secureProcessing = Objects.requireNonNullElse(secureProcessing, DEFAULT_SECURE_PROCESSING);
     }
 
     @JsonProperty("cache")
@@ -63,7 +65,7 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
 
     @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("Instructs the implementation to process XML securely. This may set limits on XML " +
-                             "constructs to avoid conditions such as denial of service attacks.")
+            "constructs to avoid conditions such as denial of service attacks.")
     public boolean isSecureProcessing() {
         return secureProcessing;
     }
@@ -71,7 +73,7 @@ public class ParserConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ParserConfig{" +
-               "secureProcessing=" + secureProcessing +
-               '}';
+                "secureProcessing=" + secureProcessing +
+                '}';
     }
 }

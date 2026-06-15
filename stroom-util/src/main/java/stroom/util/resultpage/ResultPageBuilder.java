@@ -67,7 +67,7 @@ public class ResultPageBuilder<T> {
     }
 
     public ResultPage<T> build() {
-        final PageResponse response = new PageResponse((long) pageRequest.getOffset(), values.size(), count, exact);
+        final PageResponse response = new PageResponse(pageRequest.getOffset(), values.size(), count, exact);
         return new ResultPage<>(values, response);
     }
 }

@@ -31,6 +31,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class LayoutConstraints {
 
+    private static final boolean DEFAULT_FIT_WIDTH = false;
+    private static final boolean DEFAULT_FIT_HEIGHT = false;
+
     @JsonProperty
     private final boolean fitWidth;
     @JsonProperty
@@ -39,8 +42,8 @@ public class LayoutConstraints {
     @JsonCreator
     public LayoutConstraints(@JsonProperty("fitWidth") final Boolean fitWidth,
                              @JsonProperty("fitHeight") final Boolean fitHeight) {
-        this.fitWidth = Objects.requireNonNullElse(fitWidth, false);
-        this.fitHeight = Objects.requireNonNullElse(fitHeight, false);
+        this.fitWidth = Objects.requireNonNullElse(fitWidth, DEFAULT_FIT_WIDTH);
+        this.fitHeight = Objects.requireNonNullElse(fitHeight, DEFAULT_FIT_HEIGHT);
     }
 
     public boolean isFitWidth() {

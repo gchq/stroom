@@ -30,6 +30,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class AnnotationTag {
 
+    private static final int DEFAULT_ID = 0;
+
     public static final String TYPE = "AnnotationTag";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_TAG_DOCUMENT_TYPE;
 
@@ -53,7 +55,7 @@ public class AnnotationTag {
                          @JsonProperty("name") final String name,
                          @JsonProperty("style") final ConditionalFormattingStyle style,
                          @JsonProperty("tagText") final String tagText) {
-        this.id = Objects.requireNonNullElse(id, 0);
+        this.id = Objects.requireNonNullElse(id, DEFAULT_ID);
         this.uuid = uuid;
         this.type = type;
         this.name = name;

@@ -66,18 +66,18 @@ public class DenseVectorFieldConfig {
     @JsonCreator
     public DenseVectorFieldConfig(@JsonProperty("embeddingModelRef") final DocRef embeddingModelRef,
                                   @JsonProperty("vectorSimilarityFunction") final VectorSimilarityFunctionType vectorSimilarityFunction,
-                                  @JsonProperty("segmentSize") final Integer segmentSize,
-                                  @JsonProperty("overlapSize") final Integer overlapSize,
-                                  @JsonProperty("nearestNeighbourCount") final Integer nearestNeighbourCount,
+                                  @JsonProperty("segmentSize") final int segmentSize,
+                                  @JsonProperty("overlapSize") final int overlapSize,
+                                  @JsonProperty("nearestNeighbourCount") final int nearestNeighbourCount,
                                   @JsonProperty("rerankModelRef") final DocRef rerankModelRef,
                                   @JsonProperty("rerankModelType") final RerankModelType rerankModelType,
                                   @JsonProperty("rerankBatchSize") final Integer rerankBatchSize,
                                   @JsonProperty("rerankScoreMinimum") final Float rerankScoreMinimum) {
         this.embeddingModelRef = embeddingModelRef;
         this.vectorSimilarityFunction = vectorSimilarityFunction;
-        this.segmentSize = Objects.requireNonNullElse(segmentSize, 0);
-        this.nearestNeighbourCount = Objects.requireNonNullElse(nearestNeighbourCount, 0);
-        this.overlapSize = Objects.requireNonNullElse(overlapSize, 0);
+        this.segmentSize = segmentSize;
+        this.nearestNeighbourCount = nearestNeighbourCount;
+        this.overlapSize = overlapSize;
         this.rerankModelRef = rerankModelRef;
         this.rerankModelType = Objects.requireNonNullElse(rerankModelType, DEFAULT_RERANK_MODEL_TYPE);
         this.rerankBatchSize = Objects.requireNonNullElse(rerankBatchSize, DEFAULT_RERANK_BATCH_SIZE);

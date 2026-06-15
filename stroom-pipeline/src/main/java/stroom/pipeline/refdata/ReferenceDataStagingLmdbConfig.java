@@ -64,8 +64,7 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
             @JsonProperty("readerBlockedByWriter") final Boolean isReaderBlockedByWriter) {
 
         this.localDir = localDir;
-        this.maxReaders =
-                Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
+        this.maxReaders = Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
         this.maxStoreSize = maxStoreSize;
         this.isReadAheadEnabled =
                 Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);

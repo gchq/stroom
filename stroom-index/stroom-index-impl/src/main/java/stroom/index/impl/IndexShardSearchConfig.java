@@ -31,6 +31,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_MAX_DOC_ID_QUEUE_SIZE = 1_000_000;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
 
     private final int maxDocIdQueueSize;
@@ -38,7 +39,7 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     private final CacheConfig remoteSearchResultCache;
 
     public IndexShardSearchConfig() {
-        maxDocIdQueueSize = 1_000_000;
+        maxDocIdQueueSize = DEFAULT_MAX_DOC_ID_QUEUE_SIZE;
         maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
         remoteSearchResultCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -50,7 +51,7 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final Integer maxDocIdQueueSize,
                                   @JsonProperty("maxThreadsPerTask") final Integer maxThreadsPerTask,
                                   @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache) {
-        this.maxDocIdQueueSize = Objects.requireNonNullElse(maxDocIdQueueSize, 0);
+        this.maxDocIdQueueSize = Objects.requireNonNullElse(maxDocIdQueueSize, DEFAULT_MAX_DOC_ID_QUEUE_SIZE);
         this.maxThreadsPerTask = Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
         this.remoteSearchResultCache = remoteSearchResultCache;
     }

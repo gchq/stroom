@@ -67,7 +67,7 @@ public class ResultPageFactory {
                     limited.add(fullList.get(i));
                 }
 
-                final PageResponse pageResponse = new PageResponse((long) offset,
+                final PageResponse pageResponse = new PageResponse(offset,
                         limited.size(),
                         (long) fullList.size(),
                         true);
@@ -231,8 +231,8 @@ public class ResultPageFactory {
                                 accumulator,
                                 new PageResponse(
                                         pageRequest != null
-                                                ? (long) pageRequest.getOffset()
-                                                : 0L,
+                                                ? pageRequest.getOffset()
+                                                : 0,
                                         accumulator.size(),
                                         counter,
                                         true));

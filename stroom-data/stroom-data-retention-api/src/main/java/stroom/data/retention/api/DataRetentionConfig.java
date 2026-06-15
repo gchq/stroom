@@ -30,30 +30,32 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class DataRetentionConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 1_000;
+    private static final boolean DEFAULT_USE_QUERY_OPTIMISATION = true;
+
     @JsonProperty
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +
-                             "retention deletion process. This number can be reduced to limit the time database " +
-                             "locks are held for.")
+            "retention deletion process. This number can be reduced to limit the time database locks are " +
+            "held for.")
     private final int deleteBatchSize;
 
     @JsonProperty
     @JsonPropertyDescription("If true stroom will add additional clauses to the data retention deletion SQL in order " +
-                             "to make use of other database indexes in order to improve performance. Due to the " +
-                             "varied nature of possible retention rules and data held on the system, this " +
-                             "optimisation may be counter productive.")
+            "to make use of other database indexes in order to improve performance. Due to the varied nature of " +
+            "possible retention rules and data held on the system, this optimisation may be counter productive.")
     private final boolean useQueryOptimisation;
 
 
     public DataRetentionConfig() {
-        deleteBatchSize = 1_000;
-        useQueryOptimisation = true;
+        deleteBatchSize = DEFAULT_DELETE_BATCH_SIZE;
+        useQueryOptimisation = DEFAULT_USE_QUERY_OPTIMISATION;
     }
 
     @JsonCreator
     public DataRetentionConfig(@JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
                                @JsonProperty("useQueryOptimisation") final Boolean useQueryOptimisation) {
-        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, 0);
-        this.useQueryOptimisation = Objects.requireNonNullElse(useQueryOptimisation, false);
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.useQueryOptimisation = Objects.requireNonNullElse(useQueryOptimisation, DEFAULT_USE_QUERY_OPTIMISATION);
     }
 
     public int getDeleteBatchSize() {

@@ -39,6 +39,14 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
+    private static final boolean DEFAULT_ASSIGN_TASKS = true;
+    private static final boolean DEFAULT_FILL_TASK_QUEUE = true;
+    private static final int DEFAULT_QUEUE_SIZE = 1000;
+    private static final int DEFAULT_TASKS_TO_CREATE = 1000;
+    private static final boolean DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT = true;
+    private static final int DEFAULT_TASK_CREATION_THREAD_COUNT = 5;
+    private static final int DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE = 500;
+
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;
     private final StroomDuration deleteAge;
@@ -64,14 +72,14 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
-        assignTasks = true;
+        assignTasks = DEFAULT_ASSIGN_TASKS;
         deleteAge = StroomDuration.ofDays(1);
-        fillTaskQueue = true;
-        queueSize = 1000;
-        tasksToCreate = 1000;
-        createTasksBeyondProcessLimit = true;
-        taskCreationThreadCount = 5;
-        databaseMultiInsertMaxBatchSize = 500;
+        fillTaskQueue = DEFAULT_FILL_TASK_QUEUE;
+        queueSize = DEFAULT_QUEUE_SIZE;
+        tasksToCreate = DEFAULT_TASKS_TO_CREATE;
+        createTasksBeyondProcessLimit = DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT;
+        taskCreationThreadCount = DEFAULT_TASK_CREATION_THREAD_COUNT;
+        databaseMultiInsertMaxBatchSize = DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE;
 
         processorCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -119,17 +127,25 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("processorProfileCache") final CacheConfig processorProfileCache,
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
-                           @JsonProperty("skipNonProducingFiltersDuration")
-                               final StroomDuration skipNonProducingFiltersDuration) {
+                           @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
+                                   skipNonProducingFiltersDuration) {
         this.dbConfig = dbConfig;
-        this.assignTasks = Objects.requireNonNullElse(assignTasks, false);
+        this.assignTasks =
+                Objects.requireNonNullElse(assignTasks, DEFAULT_ASSIGN_TASKS);
         this.deleteAge = deleteAge;
-        this.fillTaskQueue = Objects.requireNonNullElse(fillTaskQueue, false);
-        this.queueSize = Objects.requireNonNullElse(queueSize, 0);
-        this.tasksToCreate = Objects.requireNonNullElse(tasksToCreate, 0);
-        this.createTasksBeyondProcessLimit = Objects.requireNonNullElse(createTasksBeyondProcessLimit, false);
-        this.taskCreationThreadCount = Objects.requireNonNullElse(taskCreationThreadCount, 0);
-        this.databaseMultiInsertMaxBatchSize = Objects.requireNonNullElse(databaseMultiInsertMaxBatchSize, 0);
+        this.fillTaskQueue =
+                Objects.requireNonNullElse(fillTaskQueue, DEFAULT_FILL_TASK_QUEUE);
+        this.queueSize =
+                Objects.requireNonNullElse(queueSize, DEFAULT_QUEUE_SIZE);
+        this.tasksToCreate =
+                Objects.requireNonNullElse(tasksToCreate, DEFAULT_TASKS_TO_CREATE);
+        this.createTasksBeyondProcessLimit =
+                Objects.requireNonNullElse(createTasksBeyondProcessLimit, DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT);
+        this.taskCreationThreadCount =
+                Objects.requireNonNullElse(taskCreationThreadCount, DEFAULT_TASK_CREATION_THREAD_COUNT);
+        this.databaseMultiInsertMaxBatchSize =
+                Objects.requireNonNullElse(databaseMultiInsertMaxBatchSize,
+                        DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE);
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;

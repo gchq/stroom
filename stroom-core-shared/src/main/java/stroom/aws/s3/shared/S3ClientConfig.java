@@ -88,11 +88,11 @@ public class S3ClientConfig {
                           @JsonProperty("accelerate") final Boolean accelerate,
                           @JsonProperty("forcePathStyle") final Boolean forcePathStyle,
                           @JsonProperty("numRetries") final Integer numRetries,
-                          @JsonProperty("crossRegionAccessEnabled") final Boolean crossRegionAccessEnabled,
+                          @JsonProperty("crossRegionAccessEnabled") final boolean crossRegionAccessEnabled,
                           @JsonProperty("thresholdInBytes") final Long thresholdInBytes,
-                          @JsonProperty("async") final Boolean async,
-                          @JsonProperty("multipart") final Boolean multipart,
-                          @JsonProperty("createBuckets") final Boolean createBuckets,
+                          @JsonProperty("async") final boolean async,
+                          @JsonProperty("multipart") final boolean multipart,
+                          @JsonProperty("createBuckets") final boolean createBuckets,
                           @JsonProperty("bucketName") final String bucketName,
                           @JsonProperty("keyPattern") final String keyPattern) {
         this.credentials = credentials;
@@ -108,11 +108,11 @@ public class S3ClientConfig {
         this.accelerate = accelerate;
         this.forcePathStyle = forcePathStyle;
         this.numRetries = numRetries;
-        this.crossRegionAccessEnabled = Objects.requireNonNullElse(crossRegionAccessEnabled, false);
+        this.crossRegionAccessEnabled = crossRegionAccessEnabled;
         this.thresholdInBytes = thresholdInBytes;
-        this.async = Objects.requireNonNullElse(async, false);
-        this.multipart = Objects.requireNonNullElse(multipart, false);
-        this.createBuckets = Objects.requireNonNullElse(createBuckets, false);
+        this.async = async;
+        this.multipart = multipart;
+        this.createBuckets = createBuckets;
         this.bucketName = bucketName;
         this.keyPattern = keyPattern;
     }

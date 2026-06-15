@@ -66,7 +66,7 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
     public void setMinProcessingDelay(final SimpleDuration minProcessingDelay) {
         if (minProcessingDelay == null) {
             this.minProcessingDelayEnabled.setValue(false);
-            this.minProcessingDelay.setValue(new SimpleDuration(30L, TimeUnit.MINUTES));
+            this.minProcessingDelay.setValue(new SimpleDuration(30, TimeUnit.MINUTES));
         } else {
             this.minProcessingDelayEnabled.setValue(true);
             this.minProcessingDelay.setValue(minProcessingDelay);
@@ -86,7 +86,7 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
     public void setMaxProcessingDelay(final SimpleDuration maxProcessingDelay) {
         if (maxProcessingDelay == null) {
             this.maxProcessingDelayEnabled.setValue(false);
-            this.maxProcessingDelay.setValue(new SimpleDuration(1L, TimeUnit.DAYS));
+            this.maxProcessingDelay.setValue(new SimpleDuration(1, TimeUnit.DAYS));
         } else {
             this.maxProcessingDelayEnabled.setValue(true);
             this.maxProcessingDelay.setValue(maxProcessingDelay);

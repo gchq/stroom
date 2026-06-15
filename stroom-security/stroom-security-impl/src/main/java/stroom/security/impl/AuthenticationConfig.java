@@ -34,6 +34,8 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
 
     public static final String PROP_NAME_OPENID = "openId";
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
+
+    private static final boolean DEFAULT_PREVENT_LOGIN = false;
     public static final String PROP_NAME_API_KEY_CACHE = "apiKeyCache";
     public static final String PROP_NAME_AUTHENTICATION_STATE_CACHE = "authenticationStateCache";
     public static final String PROP_NAME_MAX_API_KEY_EXPIRY_AGE = "maxApiKeyExpiryAge";
@@ -55,7 +57,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
                 .build();
         maxApiKeyExpiryAge = StroomDuration.ofDays(365);
         openIdConfig = new StroomOpenIdConfig();
-        preventLogin = false;
+        preventLogin = DEFAULT_PREVENT_LOGIN;
     }
 
     @JsonCreator
@@ -69,7 +71,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
         this.authenticationStateCache = authenticationStateCache;
         this.maxApiKeyExpiryAge = maxApiKeyExpiryAge;
         this.openIdConfig = openIdConfig;
-        this.preventLogin = Objects.requireNonNullElse(preventLogin, false);
+        this.preventLogin = Objects.requireNonNullElse(preventLogin, DEFAULT_PREVENT_LOGIN);
     }
 
     @JsonProperty(PROP_NAME_API_KEY_CACHE)

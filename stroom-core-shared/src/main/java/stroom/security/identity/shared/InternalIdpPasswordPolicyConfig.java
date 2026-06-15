@@ -28,8 +28,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class InternalIdpPasswordPolicyConfig {
@@ -63,16 +61,16 @@ public class InternalIdpPasswordPolicyConfig {
 
     @JsonCreator
     public InternalIdpPasswordPolicyConfig(
-            @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets,
+            @JsonProperty("allowPasswordResets") final boolean allowPasswordResets,
             @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
-            @JsonProperty("minimumPasswordStrength") final Integer minimumPasswordStrength,
-            @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
+            @JsonProperty("minimumPasswordStrength") final int minimumPasswordStrength,
+            @JsonProperty("minimumPasswordLength") final int minimumPasswordLength,
             @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
 
-        this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, false);
+        this.allowPasswordResets = allowPasswordResets;
         this.passwordComplexityRegex = passwordComplexityRegex;
-        this.minimumPasswordStrength = Objects.requireNonNullElse(minimumPasswordStrength, 0);
-        this.minimumPasswordLength = Objects.requireNonNullElse(minimumPasswordLength, 0);
+        this.minimumPasswordStrength = minimumPasswordStrength;
+        this.minimumPasswordLength = minimumPasswordLength;
         this.passwordPolicyMessage = passwordPolicyMessage;
     }
 

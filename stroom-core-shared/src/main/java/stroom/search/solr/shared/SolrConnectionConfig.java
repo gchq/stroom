@@ -32,6 +32,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SolrConnectionConfig implements Serializable {
 
+    private static final boolean DEFAULT_USE_ZK = false;
+
     @JsonProperty
     private final InstanceType instanceType;
     @JsonProperty
@@ -50,7 +52,7 @@ public class SolrConnectionConfig implements Serializable {
                                 @JsonProperty("zkHosts") final List<String> zkHosts,
                                 @JsonProperty("zkPath") final String zkPath) {
         this.instanceType = instanceType;
-        this.useZk = Objects.requireNonNullElse(useZk, false);
+        this.useZk = Objects.requireNonNullElse(useZk, DEFAULT_USE_ZK);
         this.solrUrls = solrUrls;
         this.zkHosts = zkHosts;
         this.zkPath = zkPath;

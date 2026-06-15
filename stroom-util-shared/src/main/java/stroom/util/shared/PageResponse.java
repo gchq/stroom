@@ -49,14 +49,14 @@ public class PageResponse implements Serializable {
     private final boolean exact;
 
     @JsonCreator
-    public PageResponse(@JsonProperty("offset") final Long offset,
-                        @JsonProperty("length") final Integer length,
+    public PageResponse(@JsonProperty("offset") final long offset,
+                        @JsonProperty("length") final int length,
                         @JsonProperty("total") final Long total,
-                        @JsonProperty("exact") final Boolean exact) {
-        this.offset = Objects.requireNonNullElse(offset, 0L);
-        this.length = Objects.requireNonNullElse(length, 0);
+                        @JsonProperty("exact") final boolean exact) {
+        this.offset = offset;
+        this.length = length;
         this.total = total;
-        this.exact = Objects.requireNonNullElse(exact, false);
+        this.exact = exact;
     }
 
     public long getOffset() {

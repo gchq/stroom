@@ -31,20 +31,22 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_ENABLED = true;
+
     private final boolean enabled;
 
     public LifecycleConfig() {
-        enabled = true;
+        enabled = DEFAULT_ENABLED;
     }
 
     @JsonCreator
     public LifecycleConfig(@JsonProperty("enabled") final Boolean enabled) {
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will " +
-                             "try and process files automatically outside of test cases.")
+            "try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;
     }
@@ -52,7 +54,7 @@ public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "LifecycleConfig{" +
-               "enabled=" + enabled +
-               '}';
+                "enabled=" + enabled +
+                '}';
     }
 }

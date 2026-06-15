@@ -52,7 +52,7 @@ public class ChangeAnnotationEntryRequest {
 
     @SerialisationTestConstructor
     public ChangeAnnotationEntryRequest() {
-        this.annotationIdentity = new AnnotationIdentity("my-uuid", 1L);
+        this.annotationIdentity = new AnnotationIdentity("my-uuid", 1);
         this.annotationEntryId = 1;
         this.annotationEntryType = AnnotationEntryType.COMMENT;
         this.data = null;

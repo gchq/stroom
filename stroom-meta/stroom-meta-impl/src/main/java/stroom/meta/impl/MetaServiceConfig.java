@@ -56,6 +56,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceConfig.class);
 
+    private static final int DEFAULT_META_STATUS_UPDATE_BATCH_SIZE = 0;
+
     private final MetaServiceDbConfig dbConfig;
     private final MetaValueConfig metaValueConfig;
     private final CacheConfig metaFeedCache;
@@ -86,7 +88,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         rawMetaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(
                 StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
         dataFormats = CollectionUtil.asUnmodifiabledConsistentOrderSet(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
-        metaStatusUpdateBatchSize = 0;
+        metaStatusUpdateBatchSize = DEFAULT_META_STATUS_UPDATE_BATCH_SIZE;
     }
 
     @SuppressWarnings("unused")
@@ -108,7 +110,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         this.metaTypes = metaTypes;
         this.rawMetaTypes = rawMetaTypes;
         this.dataFormats = dataFormats;
-        this.metaStatusUpdateBatchSize = Objects.requireNonNullElse(metaStatusUpdateBatchSize, 0);
+        this.metaStatusUpdateBatchSize =
+                Objects.requireNonNullElse(metaStatusUpdateBatchSize, DEFAULT_META_STATUS_UPDATE_BATCH_SIZE);
     }
 
     @Override

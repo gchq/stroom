@@ -37,6 +37,9 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_DEFAULT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
 
+    private static final boolean DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START = true;
+    private static final double DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION = 0.9;
+
     private final String volumeSelector;
     private final boolean createDefaultIndexVolumesOnStart;
     private final String defaultIndexVolumeGroupName;
@@ -46,10 +49,10 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public VolumeConfig() {
         volumeSelector = "RoundRobin";
-        createDefaultIndexVolumesOnStart = true;
+        createDefaultIndexVolumesOnStart = DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START;
         defaultIndexVolumeGroupName = "Default Volume Group";
         defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
-        defaultIndexVolumeFilesystemUtilisation = 0.9;
+        defaultIndexVolumeFilesystemUtilisation = DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION;
         // Most volume selectors hold state (e.g. round-robin position) so we need to cache
         // them. Use a fairly long life do avoid the selector being aged off and the position
         // being lost.
@@ -69,12 +72,10 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
             @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final Double defaultIndexVolumeFilesystemUtilisation,
             @JsonProperty("volumeSelectorCache") final CacheConfig volumeSelectorCache) {
         this.volumeSelector = volumeSelector;
-        this.createDefaultIndexVolumesOnStart =
-                Objects.requireNonNullElse(createDefaultIndexVolumesOnStart, false);
+        this.createDefaultIndexVolumesOnStart = Objects.requireNonNullElse(createDefaultIndexVolumesOnStart, DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START);
         this.defaultIndexVolumeGroupName = defaultIndexVolumeGroupName;
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
-        this.defaultIndexVolumeFilesystemUtilisation =
-                Objects.requireNonNullElse(defaultIndexVolumeFilesystemUtilisation, 0.9D);
+        this.defaultIndexVolumeFilesystemUtilisation = Objects.requireNonNullElse(defaultIndexVolumeFilesystemUtilisation, DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION);
         this.volumeSelectorCache = volumeSelectorCache;
     }
 
