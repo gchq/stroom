@@ -47,6 +47,11 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class PathwaysDoc extends AbstractDoc {
 
+    private static final boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_MUTATION = true;
+
     public static final String TYPE = "Pathways";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;
 
@@ -93,10 +98,14 @@ public class PathwaysDoc extends AbstractDoc {
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
-        this.allowPathwayCreation = Objects.requireNonNullElse(allowPathwayCreation, false);
-        this.allowPathwayMutation = Objects.requireNonNullElse(allowPathwayMutation, false);
-        this.allowConstraintCreation = Objects.requireNonNullElse(allowConstraintCreation, false);
-        this.allowConstraintMutation = Objects.requireNonNullElse(allowConstraintMutation, false);
+        this.allowPathwayCreation =
+                Objects.requireNonNullElse(allowPathwayCreation, DEFAULT_ALLOW_PATHWAY_CREATION);
+        this.allowPathwayMutation =
+                Objects.requireNonNullElse(allowPathwayMutation, DEFAULT_ALLOW_PATHWAY_MUTATION);
+        this.allowConstraintCreation =
+                Objects.requireNonNullElse(allowConstraintCreation, DEFAULT_ALLOW_CONSTRAINT_CREATION);
+        this.allowConstraintMutation =
+                Objects.requireNonNullElse(allowConstraintMutation, DEFAULT_ALLOW_CONSTRAINT_MUTATION);
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
         this.processingNode = processingNode;

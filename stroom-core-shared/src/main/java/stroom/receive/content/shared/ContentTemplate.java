@@ -59,15 +59,15 @@ public class ContentTemplate {
 
     @JsonCreator
     public ContentTemplate(@JsonProperty("enabled") final Boolean enabled,
-                           @JsonProperty("templateNumber") final Integer templateNumber,
+                           @JsonProperty("templateNumber") final int templateNumber,
                            @JsonProperty("expression") final ExpressionOperator expression,
                            @JsonProperty("templateType") final TemplateType templateType,
                            @JsonProperty("copyElementDependencies") final Boolean copyElementDependencies,
                            @JsonProperty("pipeline") final DocRef pipeline,
                            @JsonProperty("name") final String name,
                            @JsonProperty("description") final String description,
-                           @JsonProperty("processorPriority") final Integer processorPriority,
-                           @JsonProperty("processorMaxConcurrent") final Integer processorMaxConcurrent) {
+                           @JsonProperty("processorPriority") final int processorPriority,
+                           @JsonProperty("processorMaxConcurrent") final int processorMaxConcurrent) {
         if (templateNumber < 1) {
             throw new IllegalArgumentException(
                     "Invalid templateNumber " + templateNumber + ". Must be >= 1.");
@@ -79,7 +79,7 @@ public class ContentTemplate {
             throw new IllegalArgumentException("processorMaxConcurrent must be >= 0");
         }
         this.enabled = Objects.requireNonNullElse(enabled, true);
-        this.templateNumber = Objects.requireNonNullElse(templateNumber, 0);
+        this.templateNumber = templateNumber;
         this.expression = Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build());
         this.templateType = Objects.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
@@ -93,8 +93,8 @@ public class ContentTemplate {
         this.pipeline = Objects.requireNonNull(pipeline);
         this.name = name;
         this.description = description;
-        this.processorPriority = Objects.requireNonNullElse(processorPriority, 0);
-        this.processorMaxConcurrent = Objects.requireNonNullElse(processorMaxConcurrent, 0);
+        this.processorPriority = processorPriority;
+        this.processorMaxConcurrent = processorMaxConcurrent;
     }
 
     @SerialisationTestConstructor

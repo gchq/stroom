@@ -33,8 +33,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+
 @JsonPropertyOrder(alphabetic = true)
 public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
+
+    private static final int DEFAULT_RAM_BUFFER_SIZE_MB = 1024;
 
     private final IndexDbConfig dbConfig;
     private final int ramBufferSizeMB;
@@ -44,7 +47,7 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
 
     public IndexConfig() {
         dbConfig = new IndexDbConfig();
-        ramBufferSizeMB = 1024;
+        ramBufferSizeMB = DEFAULT_RAM_BUFFER_SIZE_MB;
         indexWriterConfig = new IndexWriterConfig();
         indexCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -64,7 +67,7 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
                        @JsonProperty("indexCache") final CacheConfig indexCache,
                        @JsonProperty("indexFieldCache") final CacheConfig indexFieldCache) {
         this.dbConfig = dbConfig;
-        this.ramBufferSizeMB = Objects.requireNonNullElse(ramBufferSizeMB, 0);
+        this.ramBufferSizeMB = Objects.requireNonNullElse(ramBufferSizeMB, DEFAULT_RAM_BUFFER_SIZE_MB);
         this.indexWriterConfig = indexWriterConfig;
         this.indexCache = indexCache;
         this.indexFieldCache = indexFieldCache;

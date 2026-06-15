@@ -72,8 +72,8 @@ public final class ForwardFileConfig
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ForwardFileConfig(@JsonProperty("enabled") final Boolean enabled,
-                             @JsonProperty("instant") final Boolean instant,
+    public ForwardFileConfig(@JsonProperty("enabled") final boolean enabled,
+                             @JsonProperty("instant") final boolean instant,
                              @JsonProperty("name") final String name,
                              @JsonProperty("path") final String path,
                              @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final PathTemplateConfig subPathTemplate,
@@ -81,8 +81,8 @@ public final class ForwardFileConfig
                              @JsonProperty("livenessCheckPath") final String livenessCheckPath,
                              @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode,
                              @JsonProperty(PROP_NAME_ATOMIC_MOVE_ENABLED) final Boolean atomicMoveEnabled) {
-        this.enabled = Objects.requireNonNullElse(enabled, false);
-        this.instant = Objects.requireNonNullElse(instant, false);
+        this.enabled = enabled;
+        this.instant = instant;
         this.name = name;
         this.path = path;
         this.subPathTemplate = Objects.requireNonNullElse(subPathTemplate, PathTemplateConfig.DISABLED);

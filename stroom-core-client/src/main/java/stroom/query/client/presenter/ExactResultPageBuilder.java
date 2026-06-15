@@ -59,7 +59,7 @@ public class ExactResultPageBuilder<T> {
     }
 
     public ResultPage<T> build() {
-        final PageResponse response = new PageResponse((long) pageRequest.getOffset(), values.size(), count, true);
+        final PageResponse response = new PageResponse(pageRequest.getOffset(), values.size(), count, true);
         return new ResultPage<>(values, response);
     }
 }

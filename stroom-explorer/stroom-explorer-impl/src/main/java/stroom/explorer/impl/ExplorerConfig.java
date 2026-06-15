@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder(alphabetic = true)
 public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
+    private static final boolean DEFAULT_DEPENDENCY_WARNINGS_ENABLED = false;
     private static final Pattern NODE_TAG_PATTERN = Pattern.compile(ExplorerNode.TAG_PATTERN_STR);
 
     private final ExplorerDbConfig dbConfig;
@@ -62,7 +63,7 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
         suggestedTags = Arrays.stream(StandardExplorerTags.values())
                 .map(StandardExplorerTags::getTagName)
                 .collect(Collectors.toSet());
-        dependencyWarningsEnabled = false;
+        dependencyWarningsEnabled = DEFAULT_DEPENDENCY_WARNINGS_ENABLED;
     }
 
     @SuppressWarnings("unused")
@@ -77,7 +78,8 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
                 .collect(Collectors.toSet());
-        this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, false);
+        this.dependencyWarningsEnabled =
+                Objects.requireNonNullElse(dependencyWarningsEnabled, DEFAULT_DEPENDENCY_WARNINGS_ENABLED);
     }
 
     @Override

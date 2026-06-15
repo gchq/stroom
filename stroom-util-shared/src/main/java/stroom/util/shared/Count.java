@@ -39,9 +39,9 @@ public class Count<T extends Number> {
 
     @JsonCreator
     public Count(@JsonProperty("count") final T count,
-                 @JsonProperty("exact") final Boolean exact) {
+                 @JsonProperty("exact") final boolean exact) {
         this.count = count;
-        this.exact = Objects.requireNonNullElse(exact, false);
+        this.exact = exact;
     }
 
     public static <T extends Number> Count<T> of(final T count, final boolean exact) {

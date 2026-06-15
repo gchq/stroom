@@ -37,6 +37,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_PORT = 2525;
+
     @NotNull
     @JsonProperty("host")
     @JsonPropertyDescription("The fully qualified hostname of the SMTP server.")
@@ -64,7 +66,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     public SmtpConfig() {
         host = "localhost";
-        port = 2525;
+        port = DEFAULT_PORT;
         transport = "plain";
         password = null;
         username = null;
@@ -78,7 +80,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password) {
         this.host = host;
-        this.port = Objects.requireNonNullElse(port, 0);
+        this.port = Objects.requireNonNullElse(port, DEFAULT_PORT);
         this.transport = transport;
         this.username = username;
         this.password = password;
@@ -118,11 +120,11 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "SmtpConfig{" +
-               "host='" + host + '\'' +
-               ", port=" + port +
-               ", transport='" + transport + '\'' +
-               ", username='" + username + '\'' +
-               ", password='" + password + '\'' +
-               '}';
+                "host='" + host + '\'' +
+                ", port=" + port +
+                ", transport='" + transport + '\'' +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                '}';
     }
 }

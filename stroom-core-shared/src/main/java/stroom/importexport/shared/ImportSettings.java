@@ -48,19 +48,19 @@ public class ImportSettings {
 
     @JsonCreator
     public ImportSettings(@JsonProperty("importMode") final ImportMode importMode,
-                          @JsonProperty("enableFilters") final Boolean enableFilters,
+                          @JsonProperty("enableFilters") final boolean enableFilters,
                           @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
-                          @JsonProperty("useImportNames") final Boolean useImportNames,
-                          @JsonProperty("useImportFolders") final Boolean useImportFolders,
+                          @JsonProperty("useImportNames") final boolean useImportNames,
+                          @JsonProperty("useImportFolders") final boolean useImportFolders,
                           @JsonProperty("rootDocRef") final DocRef rootDocRef,
-                          @JsonProperty("mockEnvironment") final Boolean mockEnvironment) {
+                          @JsonProperty("mockEnvironment") final boolean mockEnvironment) {
         this.importMode = importMode;
-        this.enableFilters = Objects.requireNonNullElse(enableFilters, false);
+        this.enableFilters = enableFilters;
         this.enableFiltersFromTime = enableFiltersFromTime;
-        this.useImportNames = Objects.requireNonNullElse(useImportNames, false);
-        this.useImportFolders = Objects.requireNonNullElse(useImportFolders, false);
+        this.useImportNames = useImportNames;
+        this.useImportFolders = useImportFolders;
         this.rootDocRef = rootDocRef;
-        this.mockEnvironment = Objects.requireNonNullElse(mockEnvironment, false);
+        this.mockEnvironment = mockEnvironment;
     }
 
     public ImportMode getImportMode() {

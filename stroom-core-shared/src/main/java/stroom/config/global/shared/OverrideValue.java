@@ -58,9 +58,9 @@ public class OverrideValue<T> {
 
     // pkg private so GWT can see it
     @JsonCreator
-    OverrideValue(@JsonProperty("hasOverride") final Boolean hasOverride,
+    OverrideValue(@JsonProperty("hasOverride") final boolean hasOverride,
                   @JsonProperty("value") final T value) {
-        this.hasOverride = Objects.requireNonNullElse(hasOverride, false);
+        this.hasOverride = hasOverride;
         this.value = value;
     }
 

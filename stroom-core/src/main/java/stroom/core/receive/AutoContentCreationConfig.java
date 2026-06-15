@@ -44,6 +44,8 @@ public class AutoContentCreationConfig
         extends AbstractConfig
         implements IsStroomConfig {
 
+    private static final boolean DEFAULT_ENABLED = false;
+
     public static final String DEFAULT_DESTINATION_BASE_PART = "Feeds";
     public static final String DEFAULT_DESTINATION_ACCOUNT_ID_PART = "${accountid}";
     public static final String DEFAULT_DESTINATION_SUB_DIR = "dev";
@@ -74,7 +76,7 @@ public class AutoContentCreationConfig
     private final Set<String> templateMatchFields;
 
     public AutoContentCreationConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
         destinationExplorerPathTemplate = DocPath.fromParts(
                         DEFAULT_DESTINATION_BASE_PART,
                         DEFAULT_DESTINATION_ACCOUNT_ID_PART)
@@ -112,7 +114,7 @@ public class AutoContentCreationConfig
             @JsonProperty("createAsType") final UserType createAsType,
             @JsonProperty("templateMatchFields") final Set<String> templateMatchFields) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.destinationExplorerPathTemplate = destinationExplorerPathTemplate;
         this.destinationExplorerSubPathTemplate = destinationExplorerSubPathTemplate;
         this.groupTemplate = NullSafe.nonBlankStringElse(groupTemplate, DEFAULT_GROUP_TEMPLATE);

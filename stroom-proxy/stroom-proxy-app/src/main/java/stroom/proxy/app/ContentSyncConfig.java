@@ -28,8 +28,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 
@@ -47,11 +45,11 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ContentSyncConfig(@JsonProperty("contentSyncEnabled") final Boolean isContentSyncEnabled,
+    public ContentSyncConfig(@JsonProperty("contentSyncEnabled") final boolean isContentSyncEnabled,
                              @JsonProperty("receiveDataRulesUrl") final String receiveDataRulesUrl,
                              @JsonProperty("syncFrequency") final StroomDuration syncFrequency,
                              @JsonProperty("apiKey") final String apiKey) {
-        this.isContentSyncEnabled = Objects.requireNonNullElse(isContentSyncEnabled, false);
+        this.isContentSyncEnabled = isContentSyncEnabled;
         this.receiveDataRulesUrl = receiveDataRulesUrl;
         this.syncFrequency = syncFrequency;
         this.apiKey = apiKey;

@@ -31,6 +31,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class NotificationConfig {
 
+    private static final boolean DEFAULT_LIMIT_NOTIFICATIONS = false;
+    private static final int DEFAULT_MAX_NOTIFICATIONS = 1;
+
     @JsonProperty
     private final String uuid;
     @JsonProperty
@@ -57,8 +60,10 @@ public class NotificationConfig {
                               @JsonProperty("destination") final NotificationDestination destination) {
         this.uuid = uuid;
         this.enabled = enabled;
-        this.limitNotifications = Objects.requireNonNullElse(limitNotifications, false);
-        this.maxNotifications = Objects.requireNonNullElse(maxNotifications, 0);
+        this.limitNotifications = Objects.requireNonNullElse(limitNotifications,
+                DEFAULT_LIMIT_NOTIFICATIONS);
+        this.maxNotifications = Objects.requireNonNullElse(maxNotifications,
+                DEFAULT_MAX_NOTIFICATIONS);
         this.resumeAfter = resumeAfter;
         this.destinationType = destinationType;
         this.destination = destination;

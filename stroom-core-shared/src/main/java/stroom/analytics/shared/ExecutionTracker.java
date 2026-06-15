@@ -22,8 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
         "actualExecutionTimeMs",
@@ -40,12 +38,12 @@ public class ExecutionTracker {
     private final long nextEffectiveExecutionTimeMs;
 
     @JsonCreator
-    public ExecutionTracker(@JsonProperty("actualExecutionTimeMs") final Long actualExecutionTimeMs,
-                            @JsonProperty("lastEffectiveExecutionTimeMs") final Long lastEffectiveExecutionTimeMs,
-                            @JsonProperty("nextEffectiveExecutionTimeMs") final Long nextEffectiveExecutionTimeMs) {
-        this.actualExecutionTimeMs = Objects.requireNonNullElse(actualExecutionTimeMs, 0L);
-        this.lastEffectiveExecutionTimeMs = Objects.requireNonNullElse(lastEffectiveExecutionTimeMs, 0L);
-        this.nextEffectiveExecutionTimeMs = Objects.requireNonNullElse(nextEffectiveExecutionTimeMs, 0L);
+    public ExecutionTracker(@JsonProperty("actualExecutionTimeMs") final long actualExecutionTimeMs,
+                            @JsonProperty("lastEffectiveExecutionTimeMs") final long lastEffectiveExecutionTimeMs,
+                            @JsonProperty("nextEffectiveExecutionTimeMs") final long nextEffectiveExecutionTimeMs) {
+        this.actualExecutionTimeMs = actualExecutionTimeMs;
+        this.lastEffectiveExecutionTimeMs = lastEffectiveExecutionTimeMs;
+        this.nextEffectiveExecutionTimeMs = nextEffectiveExecutionTimeMs;
     }
 
     public long getActualExecutionTimeMs() {

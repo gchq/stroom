@@ -31,20 +31,24 @@ import java.util.Objects;
 @NotInjectableConfig
 public class ResultStoreMapConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_TRIMMED_SIZE_LIMIT = 500_000;
+    private static final int DEFAULT_MIN_UNTRIMMED_SIZE = 100_000;
+
     private final int trimmedSizeLimit;
     private final int minUntrimmedSize;
 
 
     public ResultStoreMapConfig() {
-        this(500_000, 100_000);
+        this.trimmedSizeLimit = DEFAULT_TRIMMED_SIZE_LIMIT;
+        this.minUntrimmedSize = DEFAULT_MIN_UNTRIMMED_SIZE;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ResultStoreMapConfig(@JsonProperty("trimmedSizeLimit") final Integer trimmedSizeLimit,
                                 @JsonProperty("minUntrimmedSize") final Integer minUntrimmedSize) {
-        this.trimmedSizeLimit = Objects.requireNonNullElse(trimmedSizeLimit, 500_000);
-        this.minUntrimmedSize = Objects.requireNonNullElse(minUntrimmedSize, 100_000);
+        this.trimmedSizeLimit = Objects.requireNonNullElse(trimmedSizeLimit, DEFAULT_TRIMMED_SIZE_LIMIT);
+        this.minUntrimmedSize = Objects.requireNonNullElse(minUntrimmedSize, DEFAULT_MIN_UNTRIMMED_SIZE);
     }
 
     @JsonPropertyDescription("The trimmed size of sorted results for on heap result stores.")

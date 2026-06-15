@@ -28,7 +28,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SimpleDuration {
 
-    public static SimpleDuration ZERO = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
+    public static SimpleDuration ZERO = new SimpleDuration(0, TimeUnit.NANOSECONDS);
 
     @JsonProperty
     private final long time;
@@ -36,12 +36,11 @@ public class SimpleDuration {
     private final TimeUnit timeUnit;
 
     @JsonCreator
-    public SimpleDuration(@JsonProperty("time") final Long time,
+    public SimpleDuration(@JsonProperty("time") final long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
-        final long t = Objects.requireNonNullElse(time, 0L);
-        this.time = t < 0
+        this.time = time < 0
                 ? 0
-                : t;
+                : time;
         this.timeUnit = timeUnit == null
                 ? TimeUnit.DAYS
                 : timeUnit;

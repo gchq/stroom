@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class CriteriaFieldSort implements Serializable {
@@ -36,11 +35,11 @@ public class CriteriaFieldSort implements Serializable {
 
     @JsonCreator
     public CriteriaFieldSort(@JsonProperty("id") final String id,
-                             @JsonProperty("desc") final Boolean desc,
-                             @JsonProperty("ignoreCase") final Boolean ignoreCase) {
+                             @JsonProperty("desc") final boolean desc,
+                             @JsonProperty("ignoreCase") final boolean ignoreCase) {
         this.id = id;
-        this.desc = Objects.requireNonNullElse(desc, false);
-        this.ignoreCase = Objects.requireNonNullElse(ignoreCase, false);
+        this.desc = desc;
+        this.ignoreCase = ignoreCase;
     }
 
     public String getId() {

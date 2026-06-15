@@ -27,8 +27,12 @@ import org.eclipse.jetty.http.HttpCookie.SameSite;
 
 import java.util.Objects;
 
+
 @JsonPropertyOrder(alphabetic = true)
 public class SessionCookieConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final boolean DEFAULT_SECURE = true;
+    private static final boolean DEFAULT_HTTP_ONLY = true;
 
     @JsonProperty
     @JsonPropertyDescription("Marks the session cookies with the secure flag, indicating they " +
@@ -45,8 +49,8 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
     private final SameSite sameSite;
 
     public SessionCookieConfig() {
-        secure = true;
-        httpOnly = true;
+        secure = DEFAULT_SECURE;
+        httpOnly = DEFAULT_HTTP_ONLY;
         sameSite = SameSite.STRICT;
     }
 
@@ -55,8 +59,8 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
     public SessionCookieConfig(@JsonProperty("secure") final Boolean secure,
                                @JsonProperty("httpOnly") final Boolean httpOnly,
                                @JsonProperty("sameSite") final SameSite sameSite) {
-        this.secure = Objects.requireNonNullElse(secure, false);
-        this.httpOnly = Objects.requireNonNullElse(httpOnly, false);
+        this.secure = Objects.requireNonNullElse(secure, DEFAULT_SECURE);
+        this.httpOnly = Objects.requireNonNullElse(httpOnly, DEFAULT_HTTP_ONLY);
         this.sameSite = sameSite;
     }
 

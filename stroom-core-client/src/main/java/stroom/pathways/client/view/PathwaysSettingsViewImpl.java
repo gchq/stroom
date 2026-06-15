@@ -62,7 +62,7 @@ public class PathwaysSettingsViewImpl
     public PathwaysSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         temporalOrderingTolerance.smallTimeMode();
-        temporalOrderingTolerance.setValue(new SimpleDuration(0L, TimeUnit.NANOSECONDS));
+        temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
     }
 
     @Override
@@ -88,7 +88,7 @@ public class PathwaysSettingsViewImpl
     @Override
     public void setTemporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
         if (temporalOrderingTolerance == null) {
-            this.temporalOrderingTolerance.setValue(new SimpleDuration(0L, TimeUnit.NANOSECONDS));
+            this.temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
         } else {
             this.temporalOrderingTolerance.setValue(temporalOrderingTolerance);
         }

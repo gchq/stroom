@@ -28,18 +28,18 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class AnalyticResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
 
-    public static final ResultStoreLmdbConfig DEFAULT_RESULT_STORE_LMDB_CONFIG =
+    private static final ResultStoreLmdbConfig DEFAULT_LMDB_CONFIG =
             ResultStoreLmdbConfig.builder().localDir("lmdb/analytic_store").build();
 
     public AnalyticResultStoreConfig() {
-        this(10_000,
-                true,
+        super(DEFAULT_MAX_PUTS_BEFORE_COMMIT,
+                DEFAULT_OFF_HEAP_RESULTS,
                 DEFAULT_MIN_PAYLOAD_SIZE,
                 DEFAULT_MAX_PAYLOAD_SIZE,
-                1000,
-                10_000,
-                500_000,
-                DEFAULT_RESULT_STORE_LMDB_CONFIG);
+                DEFAULT_MAX_STRING_FIELD_LENGTH,
+                DEFAULT_VALUE_QUEUE_SIZE,
+                DEFAULT_MAX_SORTED_ITEMS,
+                DEFAULT_LMDB_CONFIG);
     }
 
     @JsonCreator
@@ -51,13 +51,13 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                                      @JsonProperty("valueQueueSize") final Integer valueQueueSize,
                                      @JsonProperty("maxSortedItems") final Integer maxSortedItems,
                                      @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
-        super(maxPutsBeforeCommit,
-                offHeapResults,
-                minPayloadSize,
-                maxPayloadSize,
-                maxStringFieldLength,
-                valueQueueSize,
-                maxSortedItems,
-                Objects.requireNonNullElse(lmdbConfig, DEFAULT_RESULT_STORE_LMDB_CONFIG));
+        super(Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT),
+                Objects.requireNonNullElse(offHeapResults, DEFAULT_OFF_HEAP_RESULTS),
+                Objects.requireNonNullElse(minPayloadSize, DEFAULT_MIN_PAYLOAD_SIZE),
+                Objects.requireNonNullElse(maxPayloadSize, DEFAULT_MAX_PAYLOAD_SIZE),
+                Objects.requireNonNullElse(maxStringFieldLength, DEFAULT_MAX_STRING_FIELD_LENGTH),
+                Objects.requireNonNullElse(valueQueueSize, DEFAULT_VALUE_QUEUE_SIZE),
+                Objects.requireNonNullElse(maxSortedItems, DEFAULT_MAX_SORTED_ITEMS),
+                Objects.requireNonNullElse(lmdbConfig, DEFAULT_LMDB_CONFIG));
     }
 }

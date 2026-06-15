@@ -42,9 +42,9 @@ public class AnnotationIdentity implements HasId, HasUuid {
 
     @JsonCreator
     public AnnotationIdentity(@JsonProperty("uuid") final String uuid,
-                              @JsonProperty("id") final Long id) {
+                              @JsonProperty("id") final long id) {
         this.uuid = Objects.requireNonNull(uuid);
-        this.id = Objects.requireNonNullElse(id, 0L);
+        this.id = id;
     }
 
     public AnnotationIdentity(final DocRef docRef,

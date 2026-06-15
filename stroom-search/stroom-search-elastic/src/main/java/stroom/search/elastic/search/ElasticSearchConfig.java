@@ -31,13 +31,15 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_HIGHLIGHT = true;
+
     private final boolean highlight;
     private final StroomDuration scrollDuration;
     private final String storeSize;
     private final ElasticSuggestConfig suggestConfig;
 
     public ElasticSearchConfig() {
-        highlight = true;
+        highlight = DEFAULT_HIGHLIGHT;
         scrollDuration = StroomDuration.ofMinutes(1);
         storeSize = "1000000,100,10,1";
         suggestConfig = new ElasticSuggestConfig();
@@ -49,7 +51,7 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
                                @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
-        this.highlight = Objects.requireNonNullElse(highlight, true);
+        this.highlight = Objects.requireNonNullElse(highlight, DEFAULT_HIGHLIGHT);
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
         this.suggestConfig = suggestConfig;
@@ -78,10 +80,10 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
-               "highlight=" + highlight +
-               ", scrollDuration='" + scrollDuration + "'" +
-               ", storeSize=" + storeSize +
-               ", suggestConfig=" + suggestConfig +
-               '}';
+                "highlight=" + highlight +
+                ", scrollDuration='" + scrollDuration + "'" +
+                ", storeSize=" + storeSize +
+                ", suggestConfig=" + suggestConfig +
+                '}';
     }
 }

@@ -88,10 +88,10 @@ public class User implements HasAuditInfoGetters, HasIntegerId, HasUserRef {
                 @JsonProperty("updateUser") final String updateUser,
                 @JsonProperty("subjectId") final String subjectId,
                 @JsonProperty("uuid") final String uuid,
-                @JsonProperty("group") final Boolean group,
+                @JsonProperty("group") final boolean group,
                 @JsonProperty("displayName") final String displayName,
                 @JsonProperty("fullName") final String fullName,
-                @JsonProperty("enabled") final Boolean enabled) {
+                @JsonProperty("enabled") final boolean enabled) {
         // Ensure we always have trimmed user identity values
         this.id = id;
         this.version = version;
@@ -101,10 +101,10 @@ public class User implements HasAuditInfoGetters, HasIntegerId, HasUserRef {
         this.updateUser = updateUser;
         this.subjectId = NullSafe.get(subjectId, String::trim);
         this.uuid = uuid;
-        this.group = Objects.requireNonNullElse(group, false);
+        this.group = group;
         this.displayName = NullSafe.get(displayName, String::trim);
         this.fullName = NullSafe.get(fullName, String::trim);
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabled = enabled;
     }
 
     /**

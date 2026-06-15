@@ -45,6 +45,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
     private static final boolean DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT = false;
     public static final boolean DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION = false;
+    private static final int DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX = 1;
 
     private final boolean autoCreateAdminAccountOnBoot;
     private final boolean allowCertificateAuthentication;
@@ -62,7 +63,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
         autoCreateAdminAccountOnBoot = DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT;
         allowCertificateAuthentication = DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION;
         certificateCnPattern = ".*\\((.*)\\)";
-        certificateCnCaptureGroupIndex = 1;
+        certificateCnCaptureGroupIndex = DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX;
         failedLoginLockThreshold = 3;
 
         emailConfig = new EmailConfig();
@@ -91,7 +92,9 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                 allowCertificateAuthentication,
                 DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION);
         this.certificateCnPattern = certificateCnPattern;
-        this.certificateCnCaptureGroupIndex = Objects.requireNonNullElse(certificateCnCaptureGroupIndex, 0);
+        this.certificateCnCaptureGroupIndex = Objects.requireNonNullElse(
+                certificateCnCaptureGroupIndex,
+                DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX);
         this.failedLoginLockThreshold = failedLoginLockThreshold;
         this.emailConfig = emailConfig;
         this.tokenConfig = tokenConfig;

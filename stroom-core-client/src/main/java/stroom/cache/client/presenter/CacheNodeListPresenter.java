@@ -363,7 +363,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             trimmed.add(list.get(i));
         }
         final CacheInfoResponse response = new CacheInfoResponse(trimmed,
-                new PageResponse((long) range.getStart(), trimmed.size(), total, true));
+                new PageResponse(range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 }

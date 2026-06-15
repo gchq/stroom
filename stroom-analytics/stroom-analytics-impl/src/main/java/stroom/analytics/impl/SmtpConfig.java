@@ -38,6 +38,7 @@ import java.util.Objects;
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String DEFAULT_TRANSPORT = "plain";
+    private static final int DEFAULT_PORT = 2525;
 
     @NotNull
     @JsonProperty("host")
@@ -66,7 +67,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     public SmtpConfig() {
         host = "localhost";
-        port = 2525;
+        port = DEFAULT_PORT;
         transport = DEFAULT_TRANSPORT;
         password = null;
         username = null;
@@ -80,7 +81,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password) {
         this.host = host;
-        this.port = Objects.requireNonNullElse(port, 0);
+        this.port = Objects.requireNonNullElse(port, DEFAULT_PORT);
         this.transport = transport;
         this.username = username;
         this.password = password;

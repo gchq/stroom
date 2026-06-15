@@ -82,6 +82,8 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String NAME = "stroom";
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);
 
+    private static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
+
     public static final String ROOT_PROPERTY_NAME = "appConfig";
 
     public static final String PROP_NAME_ACTIVITY = "activity";
@@ -200,59 +202,59 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
      * Will construct a full immutable AppConfig tree will ALL defaults set.
      */
     public AppConfig() {
-        this(true,
-                new CrossModuleConfig(),
-                new ActivityConfig(),
-                new AiConfig(),
-                new AnalyticsConfig(),
-                new AnnotationConfig(),
-                new AskStroomAIConfig(),
-                new AutoContentCreationConfig(),
-                new ByteBufferPoolConfig(),
-                new ClusterConfig(),
-                new ClusterLockConfig(),
-                new CommonDbConfig(),
-                new ContentPackImportConfig(),
-                new ContentStoreConfig(),
-                new CredentialsConfig(),
-                new DashboardConfig(),
-                new DataConfig(),
-                new DocStoreConfig(),
-                new ElasticConfig(),
-                new ExplorerConfig(),
-                new ExportConfig(),
-                new FeedConfig(),
-                new GitRepoConfig(),
-                new IndexConfig(),
-                new JobSystemConfig(),
-                new KafkaConfig(),
-                new LifecycleConfig(),
-                new LmdbLibraryConfig(),
-                new LoggingConfig(),
-                new NodeConfig(),
-                new NodeUriConfig(),
-                new PipelineConfig(),
-                new ProcessorConfig(),
-                new PropertyServiceConfig(),
-                new PublicUriConfig(),
-                new IndexFieldDbConfig(),
-                new ReceiveDataConfig(),
-                new StroomReceiptPolicyConfig(),
-                new S3Config(),
-                new SearchConfig(),
-                new SecurityConfig(),
-                new SessionCookieConfig(),
-                new SessionConfig(),
-                new SolrConfig(),
-                new PlanBConfig(),
-                new StatisticsConfig(),
-                new StoredQueryConfig(),
-                new StroomPathConfig(),
-                new UiConfig(),
-                new UiUriConfig(),
-                new VisualisationAssetConfig(),
-                new VisualisationAssetDbConfig(),
-                new VolumeConfig());
+        this.haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        this.crossModuleConfig = new CrossModuleConfig();
+        this.activityConfig = new ActivityConfig();
+        this.aiConfig = new AiConfig();
+        this.analyticsConfig = new AnalyticsConfig();
+        this.annotationConfig = new AnnotationConfig();
+        this.askStroomAIConfig = new AskStroomAIConfig();
+        this.contentStoreConfig = new ContentStoreConfig();
+        this.autoContentCreationConfig = new AutoContentCreationConfig();
+        this.byteBufferPoolConfig = new ByteBufferPoolConfig();
+        this.clusterConfig = new ClusterConfig();
+        this.clusterLockConfig = new ClusterLockConfig();
+        this.commonDbConfig = new CommonDbConfig();
+        this.contentPackImportConfig = new ContentPackImportConfig();
+        this.credentialsConfig = new CredentialsConfig();
+        this.dashboardConfig = new DashboardConfig();
+        this.dataConfig = new DataConfig();
+        this.docStoreConfig = new DocStoreConfig();
+        this.elasticConfig = new ElasticConfig();
+        this.explorerConfig = new ExplorerConfig();
+        this.exportConfig = new ExportConfig();
+        this.feedConfig = new FeedConfig();
+        this.gitRepoConfig = new GitRepoConfig();
+        this.indexConfig = new IndexConfig();
+        this.jobSystemConfig = new JobSystemConfig();
+        this.kafkaConfig = new KafkaConfig();
+        this.lifecycleConfig = new LifecycleConfig();
+        this.lmdbLibraryConfig = new LmdbLibraryConfig();
+        this.loggingConfig = new LoggingConfig();
+        this.nodeConfig = new NodeConfig();
+        this.nodeUri = new NodeUriConfig();
+        this.pipelineConfig = new PipelineConfig();
+        this.processorConfig = new ProcessorConfig();
+        this.propertyServiceConfig = new PropertyServiceConfig();
+        this.publicUri = new PublicUriConfig();
+        this.queryDataSourceConfig = new IndexFieldDbConfig();
+        this.receiveDataConfig = new ReceiveDataConfig();
+        this.receiptPolicyConfig = new StroomReceiptPolicyConfig();
+        this.s3Config = new S3Config();
+        this.searchConfig = new SearchConfig();
+        this.securityConfig = new SecurityConfig();
+        this.sessionCookieConfig = new SessionCookieConfig();
+        this.sessionConfig = new SessionConfig();
+        this.solrConfig = new SolrConfig();
+        this.planBConfig = new PlanBConfig();
+        this.statisticsConfig = new StatisticsConfig();
+        this.storedQueryConfig = new StoredQueryConfig();
+        this.pathConfig = new StroomPathConfig();
+        this.uiConfig = new UiConfig();
+        this.uiUri = new UiUriConfig();
+        this.visualisationAssetConfig = new VisualisationAssetConfig();
+        this.visualisationAssetDbConfig = new VisualisationAssetDbConfig();
+        this.volumeConfig = new VolumeConfig();
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -310,7 +312,8 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
                      @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
-        this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(haltBootOnConfigValidationFailure, false);
+        this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(haltBootOnConfigValidationFailure,
+                DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);
         this.crossModuleConfig = crossModuleConfig;
         this.activityConfig = activityConfig;
         this.aiConfig = aiConfig;

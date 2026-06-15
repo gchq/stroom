@@ -184,7 +184,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
             trimmed.add(list.get(i));
         }
         final CacheNamesResponse response = new CacheNamesResponse(trimmed,
-                new PageResponse((long) range.getStart(), trimmed.size(), total, true));
+                new PageResponse(range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 
