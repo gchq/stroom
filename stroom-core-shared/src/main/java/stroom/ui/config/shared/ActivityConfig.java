@@ -32,8 +32,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = false;
-    private static final Boolean DEFAULT_CHOOSE_ON_STARTUP = false;
+    private static final boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_CHOOSE_ON_STARTUP = false;
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they " +

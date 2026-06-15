@@ -47,10 +47,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class PathwaysDoc extends AbstractDoc {
 
-    private static final Boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
-    private static final Boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
-    private static final Boolean DEFAULT_ALLOW_CONSTRAINT_CREATION = true;
-    private static final Boolean DEFAULT_ALLOW_CONSTRAINT_MUTATION = true;
+    private static final boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_MUTATION = true;
 
     public static final String TYPE = "Pathways";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;

@@ -31,7 +31,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = true;
+    private static final boolean DEFAULT_ENABLED = true;
 
     private final boolean enabled;
 

@@ -32,7 +32,7 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SMTP = "smtp";
 
-    private static final Boolean DEFAULT_ALLOW_PASSWORD_RESETS = false;
+    private static final boolean DEFAULT_ALLOW_PASSWORD_RESETS = false;
 
     @NotNull
     @JsonProperty(PROP_NAME_SMTP)

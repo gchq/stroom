@@ -37,8 +37,8 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_DEFAULT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
 
-    private static final Boolean DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START = true;
-    private static final Double DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION = 0.9;
+    private static final boolean DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START = true;
+    private static final double DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION = 0.9;
 
     private final String volumeSelector;
     private final boolean createDefaultIndexVolumesOnStart;

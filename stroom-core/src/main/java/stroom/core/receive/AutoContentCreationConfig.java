@@ -44,7 +44,7 @@ public class AutoContentCreationConfig
         extends AbstractConfig
         implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_ENABLED = false;
 
     public static final String DEFAULT_DESTINATION_BASE_PART = "Feeds";
     public static final String DEFAULT_DESTINATION_ACCOUNT_ID_PART = "${accountid}";

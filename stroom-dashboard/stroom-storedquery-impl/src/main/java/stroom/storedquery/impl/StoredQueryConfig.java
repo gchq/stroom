@@ -35,8 +35,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class StoredQueryConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
-    private static final Integer DEFAULT_ITEMS_RETENTION = 100;
-    private static final Integer DEFAULT_DAYS_RETENTION = 365;
+    private static final int DEFAULT_ITEMS_RETENTION = 100;
+    private static final int DEFAULT_DAYS_RETENTION = 365;
 
     private final int itemsRetention;
     private final int daysRetention;

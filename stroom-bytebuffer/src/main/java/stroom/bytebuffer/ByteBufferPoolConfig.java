@@ -34,8 +34,8 @@ import java.util.TreeMap;
 @JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_WARNING_THRESHOLD_PERCENTAGE = 90;
-    private static final Boolean DEFAULT_BLOCK_ON_EXHAUSTED_POOL = false;
+    private static final int DEFAULT_WARNING_THRESHOLD_PERCENTAGE = 90;
+    private static final boolean DEFAULT_BLOCK_ON_EXHAUSTED_POOL = false;
 
     private final int warningThresholdPercentage;
     private final Map<Integer, Integer> pooledByteBufferCounts;

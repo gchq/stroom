@@ -33,7 +33,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ContentPackImportConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_ENABLED = false;
 
     private final boolean enabled;
     private final String importDirectory;

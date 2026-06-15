@@ -30,8 +30,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SearchConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_MAX_RESULTS = 100000;
-    private static final Integer DEFAULT_FETCH_SIZE = 5000;
+    private static final int DEFAULT_MAX_RESULTS = 100000;
+    private static final int DEFAULT_FETCH_SIZE = 5000;
 
     private final int maxResults;
     private final int fetchSize;

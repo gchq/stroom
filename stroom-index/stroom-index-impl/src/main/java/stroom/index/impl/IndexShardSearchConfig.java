@@ -31,8 +31,8 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_MAX_DOC_ID_QUEUE_SIZE = 1_000_000;
-    private static final Integer DEFAULT_MAX_THREADS_PER_TASK = 5;
+    private static final int DEFAULT_MAX_DOC_ID_QUEUE_SIZE = 1_000_000;
+    private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
 
     private final int maxDocIdQueueSize;
     private final int maxThreadsPerTask;

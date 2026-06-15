@@ -38,7 +38,7 @@ import java.util.Objects;
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String DEFAULT_TRANSPORT = "plain";
-    private static final Integer DEFAULT_PORT = 2525;
+    private static final int DEFAULT_PORT = 2525;
 
     @NotNull
     @JsonProperty("host")

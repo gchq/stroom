@@ -82,7 +82,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String NAME = "stroom";
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);
 
-    private static final Boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
+    private static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
 
     public static final String ROOT_PROPERTY_NAME = "appConfig";
 

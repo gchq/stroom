@@ -31,10 +31,10 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_LOG_EVERY_REST_CALL_ENABLED = false;
-    private static final Boolean DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED = true;
-    private static final Integer DEFAULT_MAX_LIST_ELEMENTS = 5;
-    private static final Integer DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH = 500;
+    private static final boolean DEFAULT_LOG_EVERY_REST_CALL_ENABLED = false;
+    private static final boolean DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED = true;
+    private static final int DEFAULT_MAX_LIST_ELEMENTS = 5;
+    private static final int DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH = 500;
 
     private final boolean logEveryRestCallEnabled;
 

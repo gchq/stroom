@@ -31,8 +31,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class LayoutConstraints {
 
-    private static final Boolean DEFAULT_FIT_WIDTH = false;
-    private static final Boolean DEFAULT_FIT_HEIGHT = false;
+    private static final boolean DEFAULT_FIT_WIDTH = false;
+    private static final boolean DEFAULT_FIT_HEIGHT = false;
 
     @JsonProperty
     private final boolean fitWidth;

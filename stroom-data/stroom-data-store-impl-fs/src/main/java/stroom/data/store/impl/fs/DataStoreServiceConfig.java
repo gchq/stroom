@@ -40,10 +40,10 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     public static final String PROP_NAME_DELETE_PURGE_AGE = "deletePurgeAge";
     protected static final String PROP_NAME_DELETE_FAILURE_THRESHOLD = "deleteFailureThreshold";
 
-    private static final Integer DEFAULT_DELETE_BATCH_SIZE = 1000;
-    private static final Integer DEFAULT_DELETE_FAILURE_THRESHOLD = 100;
-    private static final Integer DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE = 20;
-    private static final Boolean DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT = false;
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 1000;
+    private static final int DEFAULT_DELETE_FAILURE_THRESHOLD = 100;
+    private static final int DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE = 20;
+    private static final boolean DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT = false;
 
     private final DataStoreServiceDbConfig dbConfig;
     private StroomDuration deletePurgeAge;

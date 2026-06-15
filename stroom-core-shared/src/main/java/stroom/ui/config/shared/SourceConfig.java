@@ -32,10 +32,10 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SourceConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Long DEFAULT_MAX_CHARACTERS_IN_PREVIEW_FETCH = 30_000L;
-    private static final Long DEFAULT_MAX_CHARACTERS_PER_FETCH = 80_000L;
-    private static final Long DEFAULT_MAX_CHARACTERS_TO_COMPLETE_LINE = 10_000L;
-    private static final Integer DEFAULT_MAX_HEX_DUMP_LINES = 1_000;
+    private static final long DEFAULT_MAX_CHARACTERS_IN_PREVIEW_FETCH = 30_000L;
+    private static final long DEFAULT_MAX_CHARACTERS_PER_FETCH = 80_000L;
+    private static final long DEFAULT_MAX_CHARACTERS_TO_COMPLETE_LINE = 10_000L;
+    private static final int DEFAULT_MAX_HEX_DUMP_LINES = 1_000;
 
     @Min(1)
     @JsonProperty

@@ -56,7 +56,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceConfig.class);
 
-    private static final Integer DEFAULT_META_STATUS_UPDATE_BATCH_SIZE = 0;
+    private static final int DEFAULT_META_STATUS_UPDATE_BATCH_SIZE = 0;
 
     private final MetaServiceDbConfig dbConfig;
     private final MetaValueConfig metaValueConfig;

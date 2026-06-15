@@ -41,12 +41,12 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
-    private static final Integer DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE = 10;
-    private static final Integer DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD = 1_000_000;
-    private static final Integer DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD = 1_000_000;
-    private static final Integer DEFAULT_STATISTIC_FLUSH_BATCH_SIZE = 8_000;
-    private static final Integer DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE = 1_000_000;
-    private static final Integer DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE = 200_000;
+    private static final int DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE = 10;
+    private static final int DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD = 1_000_000;
+    private static final int DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD = 1_000_000;
+    private static final int DEFAULT_STATISTIC_FLUSH_BATCH_SIZE = 8_000;
+    private static final int DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE = 1_000_000;
+    private static final int DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE = 200_000;
 
     private final SQLStatisticsDbConfig dbConfig;
     private final String docRefType;

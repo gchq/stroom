@@ -71,7 +71,7 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
     public static final String FIELD_NAME_COUNT = "Statistic Count";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
-    private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
+    private static final long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
 
     @JsonProperty("description")
     private final String description;

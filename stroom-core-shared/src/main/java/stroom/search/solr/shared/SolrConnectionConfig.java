@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SolrConnectionConfig implements Serializable {
 
-    private static final Boolean DEFAULT_USE_ZK = false;
+    private static final boolean DEFAULT_USE_ZK = false;
 
     @JsonProperty
     private final InstanceType instanceType;

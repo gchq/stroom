@@ -35,7 +35,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RetentionSettings extends DurationSetting {
 
-    private static final Boolean DEFAULT_ENABLED = false;
+    private static final boolean DEFAULT_ENABLED = false;
 
     private static final SimpleDuration DEFAULT_DURATION = SimpleDuration.builder()
             .time(1)

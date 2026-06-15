@@ -42,9 +42,9 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_DEFAULT_VOLUME_GROUP_NAME = "defaultStreamVolumeGroupName";
 
-    private static final Double DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION = 0.9;
-    private static final Boolean DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START = true;
-    private static final Integer DEFAULT_FIND_ORPHANED_META_BATCH_SIZE = 7_000;
+    private static final double DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION = 0.9;
+    private static final boolean DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START = true;
+    private static final int DEFAULT_FIND_ORPHANED_META_BATCH_SIZE = 7_000;
 
     // TreeMap for consistent ordering in the yaml
     private static final Map<String, String> DEFAULT_META_TYPE_EXTENSIONS = new TreeMap<>(Map.of(

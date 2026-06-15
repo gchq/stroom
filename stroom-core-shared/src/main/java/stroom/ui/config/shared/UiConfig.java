@@ -41,7 +41,7 @@ import java.util.Set;
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DEFAULT_USER_GUIDE_BASE_SUB_PATH = "/user-guide";
-    private static final Integer DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES = 1_000;
+    private static final int DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES = 1_000;
 
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +

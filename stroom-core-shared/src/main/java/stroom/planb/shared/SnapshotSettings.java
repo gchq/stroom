@@ -32,9 +32,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SnapshotSettings {
 
-    private static final Boolean DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP = false;
-    private static final Boolean DEFAULT_USE_SNAPSHOTS_FOR_GET = false;
-    private static final Boolean DEFAULT_USE_SNAPSHOTS_FOR_QUERY = false;
+    private static final boolean DEFAULT_USE_SNAPSHOTS_FOR_LOOKUP = false;
+    private static final boolean DEFAULT_USE_SNAPSHOTS_FOR_GET = false;
+    private static final boolean DEFAULT_USE_SNAPSHOTS_FOR_QUERY = false;
 
     @JsonProperty
     private final boolean useSnapshotsForLookup;

@@ -34,7 +34,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ParserConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Boolean DEFAULT_SECURE_PROCESSING = true;
+    private static final boolean DEFAULT_SECURE_PROCESSING = true;
 
     private final CacheConfig cacheConfig;
 

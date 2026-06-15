@@ -33,8 +33,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class NodeMonitoringConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final Integer DEFAULT_PING_WARN_THRESHOLD = 100;
-    private static final Integer DEFAULT_PING_MAX_THRESHOLD = 500;
+    private static final int DEFAULT_PING_WARN_THRESHOLD = 100;
+    private static final int DEFAULT_PING_MAX_THRESHOLD = 500;
 
     @Min(1)
     @JsonProperty
