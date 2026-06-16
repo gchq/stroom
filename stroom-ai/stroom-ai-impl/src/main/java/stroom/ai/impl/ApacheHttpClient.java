@@ -3,6 +3,9 @@ package stroom.ai.impl;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpRequest;
@@ -35,6 +38,8 @@ import java.util.Map;
 
 public class ApacheHttpClient implements HttpClient {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApacheHttpClient.class);
+
     private final HttpClientProviderCache httpClientProviderCache;
     private final HttpClientConfiguration httpClientConfiguration;
 
@@ -63,6 +68,7 @@ public class ApacheHttpClient implements HttpClient {
         final ClassicHttpRequest apacheRequest = createApacheRequest(request);
         try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
             final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
+
             if (httpClient instanceof final CloseableHttpClient closeableHttpClient) {
                 httpClient.execute(apacheRequest, response -> {
                     handleServerSentEvents(response, parser, listener);
@@ -126,6 +132,7 @@ public class ApacheHttpClient implements HttpClient {
                             apacheRequest.addHeader(key, value)));
         }
 
+        LOGGER.debug("createApacheRequest() - method: {}, url: {}, returning: {}", method, url, apacheRequest);
         return apacheRequest;
     }
 
@@ -135,19 +142,29 @@ public class ApacheHttpClient implements HttpClient {
 
             final Map<String, List<String>> headers = new HashMap<>();
             for (final Header header : response.getHeaders()) {
-                headers.computeIfAbsent(header.getName(), k -> new ArrayList<>()).add(header.getValue());
+                headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
+                        .add(header.getValue());
             }
 
             String body = null;
             if (response.getEntity() != null) {
                 body = EntityUtils.toString(response.getEntity());
             }
+            LOGGER.debug("convertResponse() - statusCode: {}, headers: {}, body:\n{}",
+                    statusCode, headers, body);
 
-            return SuccessfulHttpResponse.builder()
-                    .statusCode(statusCode)
-                    .headers(headers)
-                    .body(body)
-                    .build();
+            try {
+                // This will throw if statusCode is not a 2xx
+                return SuccessfulHttpResponse.builder()
+                        .statusCode(statusCode)
+                        .headers(headers)
+                        .body(body)
+                        .build();
+            } catch (final RuntimeException e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Unable to convert HTTP response body, statusCode: {}, headers: {}, body:\n{}",
+                        statusCode, headers, body), e);
+            }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         } catch (final ParseException e) {
