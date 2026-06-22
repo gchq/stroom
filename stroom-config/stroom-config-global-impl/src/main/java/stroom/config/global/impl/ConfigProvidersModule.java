@@ -216,6 +216,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.contentindex.ContentIndexConfig getContentIndexConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.contentindex.ContentIndexConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.contentstore.impl.ContentStoreConfig getContentStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
