@@ -16,10 +16,7 @@
 
 package stroom.pipeline.xmlschema;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -34,20 +31,11 @@ public class XmlSchemaModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(XmlSchemaStore.class).to(XmlSchemaStoreImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(XmlSchemaCache.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(XmlSchemaStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(XmlSchemaStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(XmlSchemaStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(XmlSchemaDoc.TYPE, XmlSchemaStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(XmlSchemaDoc.TYPE, XmlSchemaStore.class, XmlSchemaStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(XmlSchemaResourceImpl.class);

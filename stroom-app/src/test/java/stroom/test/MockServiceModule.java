@@ -32,7 +32,8 @@ import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryStoreImpl;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.impl.DocFinderModule;
+import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;
@@ -53,7 +54,6 @@ import stroom.security.shared.User;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
-import stroom.util.entityevent.EntityEventBus;
 import stroom.util.http.BasicHttpClientFactory;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.HomeDirProvider;
@@ -84,7 +84,6 @@ public class MockServiceModule extends AbstractModule {
         install(new MockSecurityContextModule());
         install(new MockJerseyModule());
         install(new MockActivityModule());
-        install(new MockDocRefInfoModule());
         install(new MockMetricsModule());
         install(new CacheModule());
         install(new CacheServiceModule());
@@ -93,7 +92,8 @@ public class MockServiceModule extends AbstractModule {
         install(new MockStreamStoreModule());
         install(new MockWordListProviderModule());
         install(new MockEnvironmentModule());
-        install(new stroom.docstore.impl.DocStoreModule());
+        install(new DocStoreModule());
+        install(new DocFinderModule());
         install(new stroom.docstore.impl.memory.MemoryPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new MockExplorerModule());
@@ -124,6 +124,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockPlanBModule());
         install(new MockClusterLockModule());
         install(new MockAiModule());
+        install(new stroom.core.entity.event.EntityEventModule());
 
         bind(AiDao.class).to(MockAiDao.class);
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
@@ -178,11 +179,6 @@ public class MockServiceModule extends AbstractModule {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    @Provides
-    EntityEventBus entityEventBus() {
-        return EntityEventBus.NO_OP_EVENT_BUS;
     }
 
     @Provides

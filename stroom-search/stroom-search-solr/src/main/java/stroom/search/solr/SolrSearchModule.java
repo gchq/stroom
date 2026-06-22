@@ -16,10 +16,7 @@
 
 package stroom.search.solr;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
@@ -46,7 +43,9 @@ public class SolrSearchModule extends AbstractModule {
 
         bind(SolrIndexDocCache.class).to(SolrIndexDocCacheImpl.class);
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
-        bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
+
+        DocumentStoreBinder.create(binder())
+                .bind(SolrIndexDoc.TYPE, SolrIndexStore.class, SolrIndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(SolrSearchProvider.class);
@@ -61,16 +60,6 @@ public class SolrSearchModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SolrIndexDocCacheImpl.class)
                 .addBinding(SolrIndexClientCacheImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(SolrIndexStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(SolrIndexStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(SolrIndexStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(SolrIndexDoc.TYPE, SolrIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(SolrIndexResourceImpl.class)

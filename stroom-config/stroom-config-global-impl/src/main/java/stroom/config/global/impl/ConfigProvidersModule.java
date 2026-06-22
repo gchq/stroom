@@ -288,10 +288,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.docstore.impl.db.DocStoreConfig getDocStoreConfig(
+    stroom.docstore.impl.DocStoreConfig getDocStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.docstore.impl.db.DocStoreConfig.class);
+                stroom.docstore.impl.DocStoreConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

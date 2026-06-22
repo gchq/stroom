@@ -36,7 +36,6 @@ public class ExplorerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new DocRefInfoModule());
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
         bind(ExplorerNodePermissionsService.class).to(ExplorerNodePermissionsServiceImpl.class);
         bind(ExplorerSession.class).to(ExplorerSessionImpl.class);

@@ -16,10 +16,7 @@
 
 package stroom.dashboard.impl.visualisation;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -34,19 +31,11 @@ public class VisualisationModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(VisualisationStore.class).to(VisualisationStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(VisualisationDoc.TYPE, VisualisationStore.class, VisualisationStoreImpl.class);
+
         bind(VisualisationTokenConsumer.class).to(VisualisationTokenConsumerImpl.class);
         bind(VisualisationDocCache.class).to(VisualisationDocCacheImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(VisualisationStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(VisualisationStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(VisualisationStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(VisualisationDoc.TYPE, VisualisationStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(VisualisationResourceImpl.class);

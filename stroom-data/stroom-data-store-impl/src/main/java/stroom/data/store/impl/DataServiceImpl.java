@@ -23,10 +23,11 @@ import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
@@ -92,12 +93,12 @@ class DataServiceImpl implements DataService {
     private final ResourceStore resourceStore;
     private final DataUploadTaskHandler dataUploadTaskHandlerProvider;
     private final DataDownloadTaskHandler dataDownloadTaskHandlerProvider;
-    private final DocRefInfoService docRefInfoService;
     private final MetaService metaService;
     private final AttributeMapFactory attributeMapFactory;
     private final TempDirProvider tempDirProvider;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
+    private final DocFinder docFinder;
 
     private final DataFetcher dataFetcher;
 
@@ -105,7 +106,6 @@ class DataServiceImpl implements DataService {
     DataServiceImpl(final ResourceStore resourceStore,
                     final DataUploadTaskHandler dataUploadTaskHandler,
                     final DataDownloadTaskHandler dataDownloadTaskHandler,
-                    final DocRefInfoService docRefInfoService,
                     final MetaService metaService,
                     final AttributeMapFactory attributeMapFactory,
                     final SecurityContext securityContext,
@@ -124,17 +124,18 @@ class DataServiceImpl implements DataService {
                     final PipelineScopeRunnable pipelineScopeRunnable,
                     final SourceConfig sourceConfig,
                     final TaskContextFactory taskContextFactory,
-                    final TempDirProvider tempDirProvider) {
+                    final TempDirProvider tempDirProvider,
+                    final DocFinder docFinder) {
 
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
         this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandler;
-        this.docRefInfoService = docRefInfoService;
         this.metaService = metaService;
         this.attributeMapFactory = attributeMapFactory;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
         this.tempDirProvider = tempDirProvider;
+        this.docFinder = docFinder;
 
         this.dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -212,7 +213,7 @@ class DataServiceImpl implements DataService {
     public ResourceKey upload(final UploadDataRequest request) {
 
         // Feed names are unique so just get the first
-        final DocRef feedDocRef = feedStore.findByName(request.getFeedName())
+        final DocRef feedDocRef = docFinder.findByName(FeedDoc.TYPE, request.getFeedName())
                 .stream()
                 .findFirst()
                 .orElseThrow(() ->
@@ -428,7 +429,7 @@ class DataServiceImpl implements DataService {
     }
 
     private void addEncodingInfo(final Meta meta, final List<Entry> entries) {
-        feedStore.findByName(meta.getFeedName())
+        docFinder.findByName(FeedDoc.TYPE, meta.getFeedName())
                 .stream()
                 .findFirst()
                 .map(feedStore::readDocument)
@@ -472,8 +473,8 @@ class DataServiceImpl implements DataService {
 
     private String getPipelineName(final Meta meta) {
         if (meta.getPipelineUuid() != null) {
-            return docRefInfoService
-                    .name(new DocRef("Pipeline", meta.getPipelineUuid()))
+            return docFinder
+                    .getName(new DocRef("Pipeline", meta.getPipelineUuid()))
                     .orElse(null);
         }
         return null;

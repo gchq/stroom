@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.filter;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -573,7 +572,7 @@ class TestStatisticsFilter implements Statistics {
                         persistence,
                         null,
                         securityContext,
-                        MockDocRefInfoService::new),
+                        null),
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }
 }

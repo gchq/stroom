@@ -245,6 +245,7 @@ class TestDictionaryStoreImpl {
 
         return new DictionaryStoreImpl(
                 mockStoreFactory,
-                mockDictionarySerialiser);
+                mockDictionarySerialiser,
+                null);
     }
 }

@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.explorer.impl;
+package stroom.docstore.impl;
 
-import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
+import stroom.docstore.api.DocumentResourceHelper;
+import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.api.StoreFactory;
+import stroom.event.logging.api.DocumentEventLog;
+import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
-public class DocRefInfoModule extends AbstractModule {
+public class DocFinderModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DocRefInfoService.class).to(DocRefInfoServiceImpl.class);
-        bind(DocRefDecorator.class).to(DocRefInfoServiceImpl.class);
+        bind(DocFinder.class).to(DocFinderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(DocRefInfoCache.class)
-                .addBinding(DocRefNameCache.class);
+                .addBinding(DocRefToNameCache.class)
+                .addBinding(DocRefFromNameCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(DocRefInfoCache.class)
-                .addBinding(DocRefNameCache.class);
+                .addBinding(DocRefToNameCache.class)
+                .addBinding(DocRefFromNameCache.class);
     }
 }

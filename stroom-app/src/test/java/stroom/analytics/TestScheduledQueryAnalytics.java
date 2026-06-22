@@ -31,6 +31,7 @@ import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -65,6 +66,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockAiModule.class)
+@IncludeModule(DocFinderModule.class)
 class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
     @Inject

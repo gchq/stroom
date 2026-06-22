@@ -16,11 +16,12 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -64,8 +65,8 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
         return NullSafe.get(explorerNodeInfo, ExplorerNodeInfo::getExplorerNode, ExplorerNode::getDocRef);
     }
 
-    public DocRefInfo getDocRefInfo() {
-        return explorerNodeInfo.getDocRefInfo();
+    public ResultPage<DocAuditEntry> getAuditEntries() {
+        return explorerNodeInfo.getAuditEntries();
     }
 
     public ExplorerNode getExplorerNode() {

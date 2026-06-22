@@ -16,9 +16,8 @@
 
 package stroom.docstore.impl;
 
-import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docrefinfo.mock.MockDocRefInfoService;
+import stroom.cache.api.CacheManager;
+import stroom.cache.impl.CacheManagerImpl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -63,9 +62,9 @@ class TestDocStoreModule {
                 bind(EntityEventBus.class).toInstance(entityEventBus);
                 bind(SecurityContext.class).toInstance(securityContextMock);
                 bind(DocumentEventLog.class).toProvider(Providers.of(null));
-                bind(DocRefInfoService.class).to(MockDocRefInfoService.class);
-                bind(DocRefDecorator.class).to(MockDocRefInfoService.class);
+                bind(CacheManager.class).toProvider(() -> null);
                 install(new DocStoreModule());
+                install(new DocFinderModule());
             }
         });
 

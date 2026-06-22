@@ -20,8 +20,7 @@ import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexVolumeGroupService;
@@ -45,7 +44,7 @@ class TestModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new DbTestModule());
-        install(new MockDocRefInfoModule());
+        install(new MockDocFinderModule());
 
         // Create a test security context
         final SecurityContext securityContext = mock(SecurityContext.class);
@@ -96,8 +95,7 @@ class TestModule extends AbstractModule {
             }
 
             @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                                final DocRefDecorator docRefDecorator) {
+            public WordList getCombinedWordList(final DocRef dictionaryRef) {
                 return null;
             }
         };

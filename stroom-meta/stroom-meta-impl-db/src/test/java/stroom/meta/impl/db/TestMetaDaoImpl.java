@@ -26,7 +26,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
@@ -163,11 +163,11 @@ class TestMetaDaoImpl {
                         new MockSecurityContextModule(),
                         new MockTaskModule(),
                         new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
                         new MockMetricsModule(),
                         new CacheModule(),
                         new DbTestModule(),
+                        new MockDocFinderModule(),
                         localModule
                 )
                 .injectMembers(this);

@@ -17,8 +17,7 @@
 package stroom.query.language;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 
 import jakarta.inject.Inject;
@@ -28,15 +27,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-public class DocResolver {
+public class DataSourceResolver {
 
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
 
     @Inject
-    public DocResolver(final Provider<DocRefInfoService> docRefInfoServiceProvider,
-                       final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+    public DataSourceResolver(final Provider<DocFinder> docFinderProvider,
+                              final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider) {
+        this.docFinderProvider = docFinderProvider;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
     }
 
@@ -61,18 +60,26 @@ public class DocResolver {
         return docRefs.getFirst();
     }
 
-    public DocRef resolveDocRef(final String type, final String name) {
-        final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+    public DocRef findVisualisationDoc(final String name) {
+        return resolveDocRef("Visualisation", name);
+    }
+
+    public DocRef findDictionaryDoc(final String name) {
+        return resolveDocRef("Dictionary", name);
+    }
+
+    private DocRef resolveDocRef(final String type, final String name) {
+        final DocFinder docFinder = docFinderProvider.get();
 
         // Try by UUID.
         final DocRef docRef = new DocRef(type, name);
-        final Optional<DocRefInfo> optionalDocRef = docRefInfoService.info(docRef);
+        final Optional<DocRef> optionalDocRef = docFinder.decorateIfExists(docRef);
         if (optionalDocRef.isPresent()) {
-            return optionalDocRef.get().getDocRef();
+            return optionalDocRef.get();
         }
 
         // Try by name.
-        final List<DocRef> docRefs = docRefInfoService.findByName(type, name, false);
+        final List<DocRef> docRefs = docFinder.findByName(type, name, false);
         if (docRefs.isEmpty()) {
             throw new RuntimeException(type + " \"" + name + "\" not found");
         } else if (docRefs.size() > 1) {

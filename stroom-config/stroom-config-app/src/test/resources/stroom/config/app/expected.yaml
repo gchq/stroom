@@ -432,6 +432,18 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    docRefInfoCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    docRefNameCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
   elastic:
     client:
       maxConnections: 30
@@ -476,18 +488,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     dependencyWarningsEnabled: false
-    docRefInfoCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    docRefNameCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
     suggestedTags:
     - "reference-loader"
     - "dynamic"

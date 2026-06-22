@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.explorer.impl;
+package stroom.docstore.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -41,46 +38,39 @@ import java.util.Optional;
         EntityAction.UPDATE,
         EntityAction.DELETE,
         EntityAction.UPDATE_EXPLORER_NODE})
-class DocRefInfoCache implements EntityEvent.Handler, Clearable {
+class DocRefToNameCache implements EntityEvent.Handler, Clearable {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoCache.class);
-    private static final String CACHE_NAME = "Doc Ref Info Cache";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefToNameCache.class);
+    private static final String CACHE_NAME = "Doc Ref To Name Cache";
 
-    private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
-    private final SecurityContext securityContext;
-    private final ExplorerActionHandlers explorerActionHandlers;
+    private final LoadingStroomCache<DocRef, Optional<String>> cache;
 
     @Inject
-    DocRefInfoCache(final CacheManager cacheManager,
-                    final Provider<ExplorerConfig> explorerConfigProvider,
-                    final SecurityContext securityContext,
-                    final ExplorerActionHandlers explorerActionHandlers) {
-        this.securityContext = securityContext;
-        this.explorerActionHandlers = explorerActionHandlers;
+    DocRefToNameCache(final CacheManager cacheManager,
+                      final Provider<DocStoreConfig> docStoreConfigProvider,
+                      final Persistence persistence) {
 
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> explorerConfigProvider.get().getDocRefInfoCache(),
-                this::loadDocRefInfo);
+                () -> docStoreConfigProvider.get().getDocRefInfoCache(),
+                docRef -> load(persistence, docRef));
     }
 
-    private Optional<DocRefInfo> loadDocRefInfo(final DocRef docRef) {
-        return securityContext.asProcessingUserResult(() -> {
-            LOGGER.trace("loadDocRefInfo: {}", docRef);
-            DocRefInfo docRefInfo = null;
-            try {
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-                if (handler != null) {
-                    docRefInfo = handler.info(docRef);
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-            }
-            return Optional.ofNullable(docRefInfo);
-        });
+    private Optional<String> load(final Persistence persistence,
+                                  final DocRef docRef) {
+        LOGGER.trace("load: {}", docRef);
+        try {
+            // Persistence has no permission checks, so no asProcessingUser() needed.
+            // The cache stores results for ALL users; permission filtering happens
+            // at the boundary (DocRefInfoServiceImpl).
+            return persistence.getName(docRef);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return Optional.empty();
+        }
     }
 
-    Optional<DocRefInfo> get(final DocRef docRef) {
+    Optional<String> getName(final DocRef docRef) {
         return cache.get(docRef);
     }
 

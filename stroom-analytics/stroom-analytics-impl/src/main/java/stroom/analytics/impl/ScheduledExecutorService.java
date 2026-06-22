@@ -22,7 +22,7 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -96,17 +96,17 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     /**
      * Creates a new scheduled executor service.
      *
-     * @param executorProvider          Provider for executor services.
-     * @param taskContextFactory        Factory for creating task contexts.
-     * @param nodeInfo                  Information about the current node.
-     * @param securityContext           Security context used for permission checks and run-as execution.
-     * @param executionScheduleDao      DAO for execution schedules, trackers, and history.
-     * @param docRefInfoServiceProvider Provider for document reference decoration.
+     * @param executorProvider     Provider for executor services.
+     * @param taskContextFactory   Factory for creating task contexts.
+     * @param nodeInfo             Information about the current node.
+     * @param securityContext      Security context used for permission checks and run-as execution.
+     * @param executionScheduleDao DAO for execution schedules, trackers, and history.
+     * @param docFinderProvider    Provider for document reference decoration.
      */
     @Inject
     ScheduledExecutorService(final ExecutorProvider executorProvider,
@@ -114,13 +114,13 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                              final NodeInfo nodeInfo,
                              final SecurityContext securityContext,
                              final ExecutionScheduleDao executionScheduleDao,
-                             final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                             final Provider<DocFinder> docFinderProvider) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.executionScheduleDao = executionScheduleDao;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
     }
 
     /**
@@ -268,7 +268,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                         .copy()
                         .enabled(false)
                         .scheduleBounds(new ScheduleBounds(effectiveExecutionTime.toEpochMilli(),
-                                                           effectiveExecutionTime.toEpochMilli()))
+                                effectiveExecutionTime.toEpochMilli()))
                         .build()
                 );
             }
@@ -429,7 +429,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
     }
 
     public void executeNow(final ExecutionSchedule executionSchedule,
-                              final ScheduledExecutable<T> scheduledExecutable) {
+                           final ScheduledExecutable<T> scheduledExecutable) {
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         final Runnable runnable = () -> {
             try {
@@ -579,11 +579,11 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                     + userRef.toInfoString());
         }
 
-        final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+        final DocFinder docFinder = docFinderProvider.get();
         return NullSafe.stream(executionScheduleDao.fetchSchedulesByRunAsUser(userRef.getUuid()))
                 .map(executionSchedule -> {
                     DocRef owningDocRef = executionSchedule.getOwningDoc();
-                    owningDocRef = docRefInfoService.decorate(owningDocRef);
+                    owningDocRef = docFinder.decorate(owningDocRef);
                     final String details = LogUtil.message(
                             "{} '{}' has as a scheduled executor named '{}' " +
                             "with a run-as dependency.",

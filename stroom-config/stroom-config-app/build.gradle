@@ -30,7 +30,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-retention-impl')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-impl-db')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl-db')

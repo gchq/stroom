@@ -16,9 +16,8 @@
 
 package stroom.processor.impl;
 
-
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
@@ -51,17 +50,17 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     private static final AppPermission PERMISSION = AppPermission.MANAGE_PROCESSORS_PERMISSION;
 
     private final ProcessorTaskDao processorTaskDao;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
-                             final DocRefInfoService docRefInfoService,
+                             final DocFinder docFinder,
                              final SecurityContext securityContext,
                              final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.processorTaskDao = processorTaskDao;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
@@ -75,7 +74,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
                     .stream()
                     .map(task -> {
                         final DocRef docRef = new DocRef(PipelineDoc.TYPE, task.getProcessorFilter().getPipelineUuid());
-                        final Optional<String> name = docRefInfoService.name(docRef);
+                        final Optional<String> name = docFinder.getName(docRef);
                         return task.copy()
                                 .processorFilter(task.getProcessorFilter().copy()
                                         .pipelineName(name.orElse(null))

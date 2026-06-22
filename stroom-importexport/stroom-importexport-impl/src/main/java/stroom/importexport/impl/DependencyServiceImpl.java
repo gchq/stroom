@@ -17,8 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.importexport.api.ImportExportActionHandlers;
 import stroom.importexport.shared.Dependency;
@@ -112,7 +111,7 @@ public class DependencyServiceImpl implements DependencyService {
     private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(DependencyCriteria.FIELD_DEFINITIONS);
 
     private final ImportExportActionHandlers importExportActionHandlers;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final TaskContextFactory taskContextFactory;
     private final ExplorerDecorator explorerDecorator;
     private final ExpressionPredicateFactory expressionPredicateFactory;
@@ -120,13 +119,13 @@ public class DependencyServiceImpl implements DependencyService {
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
-                                 final DocRefInfoService docRefInfoService,
+                                 final DocFinder docFinder,
                                  final TaskContextFactory taskContextFactory,
                                  final ExplorerDecorator explorerDecorator,
                                  final ExpressionPredicateFactory expressionPredicateFactory,
                                  final ExecutorProvider executorProvider) {
         this.importExportActionHandlers = importExportActionHandlers;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.taskContextFactory = taskContextFactory;
         this.explorerDecorator = explorerDecorator;
         this.expressionPredicateFactory = expressionPredicateFactory;
@@ -220,7 +219,7 @@ public class DependencyServiceImpl implements DependencyService {
                                                    final Map<DocRef, Set<DocRef>> allDependencies,
                                                    final Set<DocRef> pseudoDocRefs,
                                                    final Optional<Comparator<Dependency>> optSortListComparator) {
-        final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
+        final Map<DocRef, Optional<DocRef>> docRefInfoCache = new ConcurrentHashMap<>();
         return expressionPredicateFactory.filterAndSortStream(
                         allDependencies.entrySet()
                                 .stream()
@@ -229,14 +228,14 @@ public class DependencyServiceImpl implements DependencyService {
                                     final Set<DocRef> childDocRefs = entry.getValue();
                                     return childDocRefs.stream().map(childDocRef -> {
                                         // Resolve doc info.
-                                        final Optional<DocRefInfo> parentInfo = docRefInfoCache
-                                                .computeIfAbsent(parentDocRef, docRefInfoService::info);
-                                        final Optional<DocRefInfo> childInfo = docRefInfoCache
-                                                .computeIfAbsent(childDocRef, docRefInfoService::info);
+                                        final Optional<DocRef> parentInfo = docRefInfoCache
+                                                .computeIfAbsent(parentDocRef, docFinder::decorateIfExists);
+                                        final Optional<DocRef> childInfo = docRefInfoCache
+                                                .computeIfAbsent(childDocRef, docFinder::decorateIfExists);
 
                                         return new Dependency(
-                                                parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
-                                                childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
+                                                parentInfo.orElse(parentDocRef),
+                                                childInfo.orElse(childDocRef),
                                                 pseudoDocRefs.contains(childDocRef) ||
                                                 allDependencies.containsKey(childDocRef));
                                     });

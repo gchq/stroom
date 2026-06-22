@@ -18,15 +18,10 @@ package stroom.receive.rules.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -38,7 +33,6 @@ import stroom.security.shared.AppPermission;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -55,14 +49,15 @@ import java.util.Set;
  * A bit of a special store that only ever holds one doc with a hard coded name.
  */
 @Singleton
-public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
+public class ReceiveDataRuleSetStoreImpl
+        extends AbstractDocumentStore<ReceiveDataRules>
+        implements ReceiveDataRuleSetStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetStoreImpl.class);
     private static final String LOCK_NAME = "ReceiveDataRuleSetStore";
 
     private static final String DOC_NAME = "Receive Data Rules";
 
-    private final Store<ReceiveDataRules> store;
     private final SecurityContext securityContext;
     private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
     private final ClusterLockService clusterLockService;
@@ -74,16 +69,14 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
                                        final SecurityContext securityContext,
                                        final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
                                        final ClusterLockService clusterLockService) {
-        this.securityContext = securityContext;
-        this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
-        this.clusterLockService = clusterLockService;
-        final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
-                ReceiveDataRules.class);
-        this.store = storeFactory.createStore(
-                serialiser,
+        super(storeFactory,
+                serialiser2Factory.createSerialiser(ReceiveDataRules.class),
                 ReceiveDataRules.TYPE,
                 ReceiveDataRules::builder,
                 ReceiveDataRules::copy);
+        this.securityContext = securityContext;
+        this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
+        this.clusterLockService = clusterLockService;
     }
 
     @Override
@@ -95,7 +88,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
 
     private DocRef doGetOrCreate() {
         // Should return 0-1 docs of our store's type, unless we have a problem
-        final List<DocRef> docRefs = store.list();
+        final List<DocRef> docRefs = getStore().list();
         final DocRef docRef;
         if (NullSafe.isEmptyCollection(docRefs)) {
             docRef = clusterLockService.lockResult(LOCK_NAME, this::doGetOrCreateUnderLock);
@@ -108,12 +101,12 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
     private DocRef doGetOrCreateUnderLock() {
         // Re-check under lock
         // Should return 0-1 docs of our store's type, unless we have a problem
-        final List<DocRef> docRefs = store.list();
+        final List<DocRef> docRefs = getStore().list();
         final DocRef docRef;
         if (NullSafe.isEmptyCollection(docRefs)) {
             // Not there so create it
             docRef = createDocument(DOC_NAME);
-            final ReceiveDataRules receiveDataRules = store.readDocument(docRef);
+            final ReceiveDataRules receiveDataRules = getStore().readDocument(docRef);
             final StroomReceiptPolicyConfig receiptPolicyConfig = stroomReceiptPolicyConfigProvider.get();
             final List<QueryField> fields = NullSafe.map(receiptPolicyConfig.getReceiptRulesInitialFields())
                     .entrySet()
@@ -137,7 +130,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
                     .filter(Objects::nonNull)
                     .toList();
 
-            store.writeDocument(receiveDataRules.copy().fields(fields).build());
+            getStore().writeDocument(receiveDataRules.copy().fields(fields).build());
             LOGGER.info("Created document {}", docRef);
         } else {
             docRef = getFirst(docRefs);
@@ -156,15 +149,6 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
             }
         }
         return docRef;
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
     }
 
     @Override
@@ -191,19 +175,6 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
     }
 
     @Override
-    public DocRefInfo info(final DocRef docRef) {
-        throw new UnsupportedOperationException("Info not supported by Data Receipt Rules");
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         throw new UnsupportedOperationException("Get Dependencies not supported by Data Receipt Rules");
     }
@@ -214,12 +185,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
     }
 
     @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<ReceiveDataRules> createMapper() {
+    protected DependencyRemapFunction<ReceiveDataRules> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final List<ReceiveDataRule> templates = doc.getRules();
             if (NullSafe.hasItems(templates)) {
@@ -233,18 +199,10 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         };
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
     public ReceiveDataRules readDocument(final DocRef docRef) {
         return securityContext.secureResult(() ->
-                store.readDocument(docRef));
+                getStore().readDocument(docRef));
     }
 
     @Override
@@ -252,59 +210,6 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
         // access it via the proc user (so long as use has MANAGE_DATA_RECEIPT_RULES_PERMISSION)
         return securityContext.secureResult(AppPermission.MANAGE_DATA_RECEIPT_RULES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
-
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
+                () -> securityContext.asProcessingUserResult(() -> getStore().writeDocument(document)));
     }
 }

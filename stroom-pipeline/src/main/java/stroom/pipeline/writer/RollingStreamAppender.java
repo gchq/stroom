@@ -19,7 +19,7 @@ package stroom.pipeline.writer;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
@@ -43,6 +43,7 @@ import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Joins text instances into a single text instance.
@@ -66,7 +67,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private final Store streamStore;
     private final MetaHolder metaHolder;
     private final NodeInfo nodeInfo;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     private DocRef feedRef;
@@ -82,13 +83,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                           final Store streamStore,
                           final MetaHolder metaHolder,
                           final NodeInfo nodeInfo,
-                          final DocRefInfoService docRefInfoService,
+                          final DocFinder docFinder,
                           final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(destinations);
         this.streamStore = streamStore;
         this.metaHolder = metaHolder;
         this.nodeInfo = nodeInfo;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
@@ -133,9 +134,11 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     protected void validateSpecificSettings() {
         if (feed == null) {
             if (feedRef != null) {
-                feed = docRefInfoService.name(feedRef).orElse(null);
-                if (Strings.isNullOrEmpty(feed)) {
+                final Optional<String> name = docFinder.getName(feedRef);
+                if (name.isEmpty()) {
                     fatal("Feed not found");
+                } else {
+                    feed = name.get();
                 }
 
             } else {
@@ -169,7 +172,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     @PipelineProperty(
             description = "The feed that output stream should be written to. If not specified the feed the input " +
-                    "stream belongs to will be used.",
+                          "stream belongs to will be used.",
             displayPriority = 2)
     @PipelinePropertyDocRef(types = FeedDoc.TYPE)
     public void setFeed(final DocRef feedRef) {
@@ -198,7 +201,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     @PipelineProperty(
             description = "Should the output stream be marked with indexed segments to allow fast access to " +
-                    "individual records?",
+                          "individual records?",
             defaultValue = "true",
             displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {

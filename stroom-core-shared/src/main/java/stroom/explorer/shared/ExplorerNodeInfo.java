@@ -16,7 +16,8 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.DocRefInfo;
+import stroom.docref.DocAuditEntry;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -32,34 +33,34 @@ public class ExplorerNodeInfo {
     @JsonProperty
     private final ExplorerNode explorerNode;
     @JsonProperty
-    private final DocRefInfo docRefInfo;
+    private final ResultPage<DocAuditEntry> auditEntries;
 
     @JsonCreator
     public ExplorerNodeInfo(@JsonProperty("explorerNode") final ExplorerNode explorerNode,
-                            @JsonProperty("docRefInfo") final DocRefInfo docRefInfo) {
+                            @JsonProperty("auditEntries") final ResultPage<DocAuditEntry> auditEntries) {
         this.explorerNode = Objects.requireNonNull(explorerNode);
-        this.docRefInfo = Objects.requireNonNull(docRefInfo);
+        this.auditEntries = Objects.requireNonNull(auditEntries);
     }
 
     @SerialisationTestConstructor
     private ExplorerNodeInfo() {
         this.explorerNode = ExplorerNode.builder().build();
-        this.docRefInfo = DocRefInfo.builder().build();
+        this.auditEntries = ResultPage.empty();
     }
 
     public ExplorerNode getExplorerNode() {
         return explorerNode;
     }
 
-    public DocRefInfo getDocRefInfo() {
-        return docRefInfo;
+    public ResultPage<DocAuditEntry> getAuditEntries() {
+        return auditEntries;
     }
 
     @Override
     public String toString() {
         return "ExplorerNodeInfo{" +
-                "explorerNode=" + explorerNode +
-                ", docRefInfo=" + docRefInfo +
-                '}';
+               "explorerNode=" + explorerNode +
+               ", auditEntries=" + auditEntries +
+               '}';
     }
 }

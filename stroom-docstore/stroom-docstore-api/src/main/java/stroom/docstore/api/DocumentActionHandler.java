@@ -18,7 +18,6 @@ package stroom.docstore.api;
 
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.util.shared.Document;
 
 public interface DocumentActionHandler<D extends Document> {
@@ -31,12 +30,4 @@ public interface DocumentActionHandler<D extends Document> {
      * @return The {@link DocRef} type that this handler supports.
      */
     String getType();
-
-    /**
-     * Retrieve the audit information for a particular doc ref
-     *
-     * @param docRef The docRef to return the information for
-     * @return The Audit information about the given DocRef.
-     */
-    DocRefInfo info(DocRef docRef);
 }

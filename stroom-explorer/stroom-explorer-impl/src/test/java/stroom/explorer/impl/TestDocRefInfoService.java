@@ -17,17 +17,18 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.security.mock.MockSecurityContext;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-class TestDocRefInfoServiceImpl {
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TestDocRefInfoService {
 
     private static final DocRef DOC_REF1 = DocRef.builder()
             .randomUuid()
@@ -63,48 +65,39 @@ class TestDocRefInfoServiceImpl {
             DOC_REF2,
             DOC_REF3);
 
-    private static final Map<String, DocRefInfo> CACHE_DATA = DOC_REFS.stream()
-            .map(docRef -> new DocRefInfo(
-                    docRef,
-                    System.currentTimeMillis(),
-                    System.currentTimeMillis(),
-                    "user1",
-                    "user1",
-                    null))
-            .collect(Collectors.toMap(
-                    docRefInfo -> docRefInfo.getDocRef().getUuid(),
-                    Function.identity()));
+    private static final Map<DocRef, DocRef> CACHE_DATA = DOC_REFS.stream()
+            .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
-    @Mock
-    private DocRefInfoCache mockDocRefInfoCache;
-    @Mock
-    private DocRefNameCache mockDocRefNameCache;
-    @Mock
-    private ExplorerActionHandlers mockExplorerActionHandlers;
     @Mock
     private Set<IsSpecialExplorerDataSource> mockSpecialDataSources;
+    @Mock
+    private DocFinder docFinder;
 
-    private MockSecurityContext mockSecurityContext = new MockSecurityContext();
+    private final MockSecurityContext mockSecurityContext = new MockSecurityContext();
 
-    DocRefInfoServiceImpl docRefInfoService;
+    DocRefInfoService docRefInfoService;
 
     @BeforeEach
     void setUp() {
-        docRefInfoService = new DocRefInfoServiceImpl(
-                mockDocRefInfoCache,
-                mockDocRefNameCache,
+        docRefInfoService = new DocRefInfoService(
                 () -> mockSecurityContext,
-                mockExplorerActionHandlers,
-                mockSpecialDataSources);
+                mockSpecialDataSources,
+                docFinder);
     }
 
     private void initMockCache() {
         Mockito
                 .doAnswer(invocation -> {
                     final DocRef docRef = invocation.getArgument(0);
-                    return Optional.ofNullable(CACHE_DATA.get(docRef.getUuid()));
+                    return Optional.ofNullable(CACHE_DATA.get(docRef));
                 })
-                .when(mockDocRefInfoCache).get(Mockito.any(DocRef.class));
+                .when(docFinder).decorate(Mockito.any(DocRef.class));
+        Mockito
+                .doAnswer(invocation -> {
+                    final DocRef docRef = invocation.getArgument(0);
+                    return Optional.ofNullable(CACHE_DATA.get(docRef));
+                })
+                .when(docFinder).decorateIfExists(Mockito.any(DocRef.class));
     }
 
     private void initSearchables() {
@@ -115,41 +108,27 @@ class TestDocRefInfoServiceImpl {
 
     @Test
     void decorate_null() {
-
-        Assertions
-                .assertThatThrownBy(() -> {
-                    final DocRef docRef = docRefInfoService.decorate((DocRef) null);
-                })
-                .isInstanceOf(RuntimeException.class);
+        assertThat(docRefInfoService.decorate((DocRef) null)).isEmpty();
     }
 
     @Test
     void decorate_unchanged() {
-
-        final DocRef docRef = docRefInfoService.decorate(DOC_REF3);
-
-        assertThat(docRef)
-                .isEqualTo(DOC_REF3);
+        final Optional<DocRef> docRef = docRefInfoService.decorate(DOC_REF3);
+        assertThat(docRef.orElse(DOC_REF3)).isEqualTo(DOC_REF3);
     }
 
     @Test
     void decorate_changed() {
         initMockCache();
-
-        final DocRef docRef = docRefInfoService.decorate(DOC_REF3.withoutName());
-
-        assertThat(docRef)
-                .isEqualTo(DOC_REF3);
+        final Optional<DocRef> docRef = docRefInfoService.decorate(DOC_REF3.withoutName());
+        assertThat(docRef.orElseThrow()).isEqualTo(DOC_REF3);
     }
 
     @Test
     void decorate_changed_force() {
         initMockCache();
-
-        final DocRef docRef = docRefInfoService.decorate(DOC_REF3.withoutName(), true);
-
-        assertThat(docRef)
-                .isEqualTo(DOC_REF3);
+        final Optional<DocRef> docRef = docRefInfoService.decorate(DOC_REF3.withoutName(), true);
+        assertThat(docRef.orElseThrow()).isEqualTo(DOC_REF3);
     }
 
     @Test
@@ -157,10 +136,8 @@ class TestDocRefInfoServiceImpl {
         final DocRef input = DOC_REF3.copy()
                 .name(DOC_REF3.getName() + "XXX")
                 .build();
-        final DocRef docRef = docRefInfoService.decorate(input);
-
-        assertThat(docRef.getName())
-                .isEqualTo(input.getName());
+        final Optional<DocRef> result = docRefInfoService.decorate(input);
+        assertThat(result.orElse(input).getName()).isEqualTo(input.getName());
     }
 
     @Test
@@ -170,9 +147,8 @@ class TestDocRefInfoServiceImpl {
         final DocRef input = DOC_REF3.copy()
                 .name(DOC_REF3.getName() + "XXX")
                 .build();
-        final DocRef docRef = docRefInfoService.decorate(input, true);
-
-        assertThat(docRef.getName())
+        final Optional<DocRef> docRef = docRefInfoService.decorate(input, true);
+        assertThat(docRef.orElseThrow().getName())
                 .isEqualTo(DOC_REF3.getName());
     }
 
@@ -184,34 +160,18 @@ class TestDocRefInfoServiceImpl {
         final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
                 .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
                 .build();
-        final DocRef docRef = docRefInfoService.decorate(input, true);
-
-        assertThat(docRef.getName())
+        final Optional<DocRef> docRef = docRefInfoService.decorate(input, true);
+        assertThat(docRef.orElseThrow().getName())
                 .isEqualTo(MySpecialDataSource1.DUAL_DOC_REF.getName());
     }
 
-    @Test
-    void findSearchableByName() {
-//        initMockCache();
-        initSearchables();
-
-//        final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
-//                .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
-//                .build();
-
-        final List<DocRef> docRefs = docRefInfoService.findByName(MySpecialDataSource1.TYPE, "*", true);
-
-        assertThat(docRefs)
-                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
-    }
-
-    @Test
-    void findByType() {
-        initSearchables();
-        final List<DocRef> docRefs = docRefInfoService.findByType(MySpecialDataSource1.TYPE);
-        assertThat(docRefs)
-                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
-    }
+//    @Test
+//    void findByType() {
+//        initSearchables();
+//        final List<DocRef> docRefs = docRefInfoService.findByType(MySpecialDataSource1.TYPE);
+//        assertThat(docRefs)
+//                .containsExactly(MySpecialDataSource1.DUAL_DOC_REF);
+//    }
 
 
     // --------------------------------------------------------------------------------

@@ -20,7 +20,7 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
@@ -45,13 +45,13 @@ public class ToolModule extends AbstractModule {
     protected void configure() {
         install(new MockClusterLockModule());
         install(new MockCollectionModule());
-        install(new MockDocRefInfoModule());
         install(new MockInternalStatisticsModule());
         install(new MockNodeServiceModule());
         install(new MockSecurityContextModule());
         install(new MockServletModule());
         install(new MockTaskModule());
         install(new MockWordListProviderModule());
+        install(new MockDocFinderModule());
         install(new stroom.activity.mock.MockActivityModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());

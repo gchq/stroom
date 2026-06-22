@@ -18,8 +18,7 @@ package stroom.feed.impl;
 
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.feed.api.FeedStore;
@@ -32,7 +31,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -43,12 +41,13 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-public class FeedStoreImpl implements FeedStore {
+public class FeedStoreImpl
+        extends AbstractDocumentStore<FeedDoc>
+        implements FeedStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStoreImpl.class);
 
@@ -66,7 +65,6 @@ public class FeedStoreImpl implements FeedStore {
         SUPPORTED_ENCODINGS = Collections.unmodifiableList(list);
     }
 
-    private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
     private final FeedSerialiser serialiser;
@@ -78,8 +76,7 @@ public class FeedStoreImpl implements FeedStore {
                          final FeedSerialiser serialiser,
                          final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
-        this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 FeedDoc.TYPE,
                 FeedDoc::builder,
@@ -87,11 +84,8 @@ public class FeedStoreImpl implements FeedStore {
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
+        this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
     }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -102,7 +96,7 @@ public class FeedStoreImpl implements FeedStore {
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         }
 
-        final DocRef created = store.createDocument(name);
+        final DocRef created = getStore().createDocument(name);
 
         // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
@@ -110,7 +104,7 @@ public class FeedStoreImpl implements FeedStore {
 
             // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
             // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created));
+            securityContext.asProcessingUser(() -> getStore().deleteDocument(created));
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         } else {
             return created;
@@ -128,12 +122,7 @@ public class FeedStoreImpl implements FeedStore {
         }
 
         final String newName = createUniqueName(name);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
+        return getStore().copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
@@ -145,72 +134,7 @@ public class FeedStoreImpl implements FeedStore {
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         }
 
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public FeedDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public FeedDoc writeDocument(final FeedDoc document) {
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
+        return super.renameDocument(docRef, name);
     }
 
     @Override
@@ -252,43 +176,7 @@ public class FeedStoreImpl implements FeedStore {
                     docRef, e.getMessage()), e);
         }
 
-        return store.importDocument(newDocRef, effectiveDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
-    }
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
+        return getStore().importDocument(newDocRef, effectiveDocument, importState, importSettings);
     }
 
     @Override

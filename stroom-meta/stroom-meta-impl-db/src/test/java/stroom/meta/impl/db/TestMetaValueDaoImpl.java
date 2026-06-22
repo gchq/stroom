@@ -20,7 +20,7 @@ import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
@@ -78,13 +78,13 @@ class TestMetaValueDaoImpl {
                         new MockClusterLockModule(),
                         new MockSecurityContextModule(),
                         new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
                         new MockMetricsModule(),
                         new CacheModule(),
                         new DbTestModule(),
                         new MetaTestModule(),
                         new MockTaskModule(),
+                        new MockDocFinderModule(),
                         new MockStroomEventLoggingModule(),
                         module)
                 .injectMembers(this);

@@ -19,9 +19,8 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
-import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
@@ -99,7 +98,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private final MetaService metaService;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
-    private final FeedStore feedStore;
+    private final DocFinder docFinder;
 
     // feed => refDataOffHeapStore, shouldn't be that many ref feeds
     // Feeds are immutable things too so no TTL needed
@@ -125,14 +124,14 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                                          final MetaService metaService,
                                          final SecurityContext securityContext,
                                          final PathCreator pathCreator,
-                                         final FeedStore feedStore) {
+                                         final DocFinder docFinder) {
         this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataLmdbEnvFactory = refDataLmdbEnvFactory;
         this.refDataOffHeapStoreFactory = refDataOffHeapStoreFactory;
         this.metaService = metaService;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
-        this.feedStore = feedStore;
+        this.docFinder = docFinder;
 
         // Try and ensure up front that the dirs we use for ref data are there and can be written to
         final Path localDir = ensureLmdbDirectories();
@@ -669,10 +668,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             final String feedDocUuid = parts[1];
             final String feedName;
             try {
-                feedName = NullSafe.get(
-                        feedStore.info(DocRef.builder().type(FeedDoc.TYPE).uuid(feedDocUuid).build()),
-                        DocRefInfo::getDocRef,
-                        DocRef::getName);
+                final DocRef docRef = DocRef.builder().type(FeedDoc.TYPE).uuid(feedDocUuid).build();
+                feedName = docFinder.getName(docRef).orElseThrow(() -> new DocumentNotFoundException(docRef));
             } catch (final DocumentNotFoundException e) {
                 LOGGER.error("Feed with UUID '{}' not found for ref store directory {} (parts: {}). " +
                              "Ignoring this directory. Consider deleting it if refers to a non-existent fee.",
@@ -787,7 +784,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     }
 
     private void validateFeedName(final String feedName) {
-        final List<DocRef> docRefs = feedStore.findByName(feedName);
+        final List<DocRef> docRefs = docFinder.findByName(FeedDoc.TYPE, feedName, false);
         if (docRefs.isEmpty()) {
             throw new RuntimeException(LogUtil.message("No feed exists with name '{}'", feedName));
         } else if (docRefs.size() > 1) {
@@ -804,7 +801,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         final String cleanedFeedName = FEED_NAME_CLEAN_PATTERN.matcher(feedName.toUpperCase())
                 .replaceAll(FEED_NAME_CLEAN_REPLACEMENT);
 
-        final List<DocRef> feedDocRefs = feedStore.findByName(feedName);
+        final List<DocRef> feedDocRefs = docFinder.findByName(FeedDoc.TYPE, feedName, false);
         if (feedDocRefs.isEmpty()) {
             throw new RuntimeException(LogUtil.message("Expecting to find feed doc for name " + feedName));
         } else if (feedDocRefs.size() > 1) {

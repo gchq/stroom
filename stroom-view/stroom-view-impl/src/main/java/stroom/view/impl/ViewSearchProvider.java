@@ -17,6 +17,7 @@
 package stroom.view.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
@@ -57,18 +58,21 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
     private final IndexFieldProviders indexFieldProviders;
+    private final DocFinder docFinder;
 
     @Inject
     public ViewSearchProvider(final ViewStore viewStore,
                               final Provider<SearchProviderRegistry> storeFactoryRegistryProvider,
                               final SecurityContext securityContext,
                               final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry,
-                              final IndexFieldProviders indexFieldProviders) {
+                              final IndexFieldProviders indexFieldProviders,
+                              final DocFinder docFinder) {
         this.viewStore = viewStore;
         this.storeFactoryRegistryProvider = storeFactoryRegistryProvider;
         this.securityContext = securityContext;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.indexFieldProviders = indexFieldProviders;
+        this.docFinder = docFinder;
     }
 
     private DocRef getReferencedDataSource(final DocRef viewDocRef) {
@@ -226,7 +230,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public List<DocRef> findDataSourceByName(final String name) {
-        return viewStore.findByName(name);
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

@@ -28,7 +28,7 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -124,7 +124,6 @@ class TestMetaServiceImpl {
                         new MockClusterLockModule(),
                         new MockSecurityContextModule(),
                         new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
                         new MockMetricsModule(),
                         new CacheModule(),
@@ -132,6 +131,7 @@ class TestMetaServiceImpl {
                         new MetaTestModule(),
                         new MockTaskModule(),
                         new MockStroomEventLoggingModule(),
+                        new MockDocFinderModule(),
                         dataRetentionConfigModule)
                 .injectMembers(this);
         // Delete everything

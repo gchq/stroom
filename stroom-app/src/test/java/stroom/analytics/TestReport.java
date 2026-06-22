@@ -39,6 +39,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -79,6 +80,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockAiModule.class)
+@IncludeModule(DocFinderModule.class)
 class TestReport extends AbstractAnalyticsTest {
 
     @Inject

@@ -16,13 +16,20 @@
 
 package stroom.docstore.impl.db;
 
+import stroom.docref.DocAuditEntry;
+import stroom.docref.DocAuditEntry.AuditAction;
+import stroom.docref.DocAuditUser;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
+import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
@@ -36,10 +43,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
@@ -57,6 +66,14 @@ public class DBPersistence implements Persistence {
             FROM doc
             WHERE type = ?
             AND uuid = ?""";
+
+    private static final String SELECT_NAME_BY_TYPE_UUID_SQL = """
+            SELECT
+              name
+            FROM doc
+            WHERE type = ?
+            AND uuid = ?
+            AND ext = 'meta'""";
 
     private static final String SELECT_EXTENSIONS_BY_TYPE_UUID_SQL = """
             SELECT
@@ -81,6 +98,7 @@ public class DBPersistence implements Persistence {
               name
             FROM doc
             WHERE type = ?
+            AND ext = 'meta'
             ORDER BY uuid""";
 
     private static final String SELECT_BY_TYPE_NAME_EQUALS_SQL = """
@@ -90,6 +108,7 @@ public class DBPersistence implements Persistence {
             FROM doc
             WHERE type = ?
             AND name COLLATE utf8mb4_0900_as_cs = ?
+            AND ext = 'meta'
             ORDER BY uuid""";
 
     private static final String SELECT_BY_TYPE_NAME_WILDCARD_SQL = """
@@ -99,6 +118,7 @@ public class DBPersistence implements Persistence {
             FROM doc
             WHERE type = ?
             AND name COLLATE utf8mb4_0900_as_cs LIKE ?
+            AND ext = 'meta'
             ORDER BY uuid""";
 
     private static final String SELECT_ID_BY_TYPE_UUID_SQL = """
@@ -143,6 +163,21 @@ public class DBPersistence implements Persistence {
               and ext = 'meta'
               and parent_uuid = ?""";
 
+    // --- Cross-type query SQL ---
+
+    private static final String READ_INFO_BY_UUID_SQL = """
+            SELECT
+              data
+            FROM doc
+            WHERE uuid = ?
+            AND ext = 'meta'""";
+
+    private static final String EXISTS_BY_UUID_SQL = """
+            SELECT 1
+            FROM doc
+            WHERE uuid = ?
+            LIMIT 1""";
+
     private final DataSource dataSource;
 
     @Inject
@@ -160,6 +195,52 @@ public class DBPersistence implements Persistence {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
+
+    public Optional<String> getName(final DocRef docRef) {
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection
+                    .prepareStatement(SELECT_NAME_BY_TYPE_UUID_SQL)) {
+                preparedStatement.setString(1, docRef.getType());
+                preparedStatement.setString(2, docRef.getUuid());
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        return Optional.of(resultSet.getString(1));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return Optional.empty();
+    }
+
+//    @Override
+//    public List<DocRef> findByName(final String nameFilter) {
+//        final List<DocRef> list = new ArrayList<>();
+//
+//        try (final Connection connection = dataSource.getConnection()) {
+//            try (final PreparedStatement preparedStatement = connection
+//                    .prepareStatement(SELECT_BY_NAME_EQUALS_SQL)) {
+//                preparedStatement.setString(1, nameFilter);
+//
+//                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+//                    while (resultSet.next()) {
+//                        final String type = resultSet.getString(1);
+//                        final String uuid = resultSet.getString(2);
+//                        final String name = resultSet.getString(3);
+//                        list.add(new DocRef(type, uuid, name));
+//                    }
+//                }
+//            }
+//        } catch (final SQLException e) {
+//            LOGGER.debug(e.getMessage(), e);
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
+//
+//        return list;
+//    }
 
     @Override
     public ImportExportDocument read(final DocRef docRef) {
@@ -379,14 +460,14 @@ public class DBPersistence implements Persistence {
                     .map(v -> "name COLLATE utf8mb4_0900_as_cs LIKE ?")
                     .collect(Collectors.joining(" OR "));
             sql = "SELECT DISTINCT uuid, name FROM doc WHERE type = ? AND (" +
-                    orConditions + ") ORDER BY uuid";
+                  orConditions + ") ORDER BY uuid";
         } else {
             nameFilterSqlValues = nameFilters;
             final String placeholders = nameFilterSqlValues.stream()
                     .map(v -> "?")
                     .collect(Collectors.joining(", "));
             sql = "SELECT DISTINCT uuid, name FROM doc WHERE type = ? AND name COLLATE utf8mb4_0900_as_cs IN (" +
-                    placeholders + ") ORDER BY uuid";
+                  placeholders + ") ORDER BY uuid";
         }
 
         try (final Connection connection = dataSource.getConnection()) {
@@ -411,6 +492,160 @@ public class DBPersistence implements Persistence {
 
         return list;
     }
+
+    @Override
+    public List<DocRef> find(final Collection<String> types,
+                             final List<String> nameFilters,
+                             final boolean allowWildCards) {
+        if (nameFilters == null || nameFilters.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final List<DocRef> list = new ArrayList<>();
+        final boolean allTypes = NullSafe.isEmptyCollection(types);
+
+        // Build dynamic SQL
+        final StringBuilder sqlBuilder =
+                new StringBuilder("SELECT DISTINCT type, uuid, name FROM doc WHERE ext = 'meta'");
+        final List<String> params = new ArrayList<>();
+
+        // Type filter
+        if (!allTypes) {
+            final String typePlaceholders = types.stream()
+                    .map(t -> "?")
+                    .collect(Collectors.joining(", "));
+            sqlBuilder.append(" AND type IN (").append(typePlaceholders).append(")");
+            params.addAll(types);
+        }
+
+        // Name filter
+        final List<String> nameFilterSqlValues;
+        if (allowWildCards) {
+            nameFilterSqlValues = nameFilters.stream()
+                    .map(PatternUtil::createSqlLikeStringFromWildCardFilter)
+                    .collect(Collectors.toList());
+            final String orConditions = nameFilterSqlValues.stream()
+                    .map(v -> "name COLLATE utf8mb4_0900_as_cs LIKE ?")
+                    .collect(Collectors.joining(" OR "));
+            sqlBuilder.append(" AND (").append(orConditions).append(")");
+        } else {
+            nameFilterSqlValues = nameFilters;
+            final String placeholders = nameFilterSqlValues.stream()
+                    .map(v -> "?")
+                    .collect(Collectors.joining(", "));
+            sqlBuilder.append(" AND name COLLATE utf8mb4_0900_as_cs IN (").append(placeholders).append(")");
+        }
+        params.addAll(nameFilterSqlValues);
+
+        sqlBuilder.append(" ORDER BY uuid");
+        final String sql = sqlBuilder.toString();
+
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) {
+                    preparedStatement.setString(i + 1, params.get(i));
+                }
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String type = resultSet.getString(1);
+                        final String uuid = resultSet.getString(2);
+                        final String name = resultSet.getString(3);
+                        list.add(new DocRef(type, uuid, name));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    @Override
+    public ResultPage<DocAuditEntry> getAuditInfo(final DocRef docRef) {
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(READ_INFO_BY_UUID_SQL)) {
+                preparedStatement.setString(1, docRef.getUuid());
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        final byte[] data = resultSet.getBytes(1);
+
+                        // TODO : @66 This is just a temporary way to create audit records for now until we add the
+                        //  doc_audit table.
+                        // Deserialise only the common AbstractDoc fields
+                        final GenericDoc document = JsonUtil.readValue(data, GenericDoc.class);
+                        final List<DocAuditEntry> list = new ArrayList<>();
+                        list.add(new DocAuditEntry(document.getCreateTimeMs(),
+                                new DocAuditUser(null, document.getCreateUser()), AuditAction.CREATE));
+                        list.add(new DocAuditEntry(document.getUpdateTimeMs(),
+                                new DocAuditUser(null, document.getUpdateUser()), AuditAction.UPDATE));
+                        return ResultPage.createUnboundedList(list);
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return ResultPage.empty();
+    }
+
+    @Override
+    public List<DocRef> list(final Collection<String> types) {
+        if (NullSafe.isEmptyCollection(types)) {
+            return Collections.emptyList();
+        }
+
+        final List<DocRef> list = new ArrayList<>();
+        final String placeholders = types.stream()
+                .map(t -> "?")
+                .collect(Collectors.joining(", "));
+        final String sql = "SELECT DISTINCT type, uuid, name FROM doc WHERE type IN (" +
+                           placeholders + ") AND ext = 'meta' ORDER BY uuid";
+
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                int idx = 1;
+                for (final String type : types) {
+                    preparedStatement.setString(idx++, type);
+                }
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String type = resultSet.getString(1);
+                        final String uuid = resultSet.getString(2);
+                        final String name = resultSet.getString(3);
+                        list.add(new DocRef(type, uuid, name));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+//    @Override
+//    public boolean exists(final String uuid) {
+//        try (final Connection connection = dataSource.getConnection()) {
+//            try (final PreparedStatement preparedStatement = connection.prepareStatement(EXISTS_BY_UUID_SQL)) {
+//                preparedStatement.setString(1, uuid);
+//
+//                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+//                    return resultSet.next();
+//                }
+//            }
+//        } catch (final SQLException e) {
+//            LOGGER.debug(e.getMessage(), e);
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
+//    }
 
     @Override
     public RWLockFactory getLockFactory() {

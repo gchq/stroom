@@ -19,7 +19,7 @@ package stroom.db.util;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -56,7 +56,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private final ExpressionMapper.MultiConverter<T> converter;
     private final Provider<WordListProvider> wordListProvider;
     private final Provider<CollectionService> collectionServiceProvider;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
     private final boolean useName;
     private final boolean fieldIsCaseSensitive;
 
@@ -65,7 +65,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 final ExpressionMapper.MultiConverter<T> converter,
                 final Provider<WordListProvider> wordListProvider,
                 final Provider<CollectionService> collectionServiceProvider,
-                final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                final Provider<DocFinder> docFinderProvider,
                 final boolean useName,
                 final boolean fieldIsCaseSensitive) {
         this.dataSourceField = dataSourceField;
@@ -73,7 +73,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         this.converter = converter;
         this.wordListProvider = wordListProvider;
         this.collectionServiceProvider = collectionServiceProvider;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
         this.useName = useName;
         this.fieldIsCaseSensitive = fieldIsCaseSensitive;
     }
@@ -258,8 +258,8 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
      */
     private String getDocValue(final ExpressionTerm term, final DocRef docRef) {
         if (useName) {
-            if (docRefInfoServiceProvider != null) {
-                final Optional<String> resolvedName = docRefInfoServiceProvider.get().name(docRef);
+            if (docFinderProvider != null) {
+                final Optional<String> resolvedName = docFinderProvider.get().getName(docRef);
                 if (resolvedName.isEmpty()) {
                     throw new RuntimeException("Unable to find doc with reference '" +
                                                docRef +

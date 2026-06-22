@@ -78,7 +78,7 @@ class EntityEventBusImpl implements EntityEventBus {
     @Override
     public void fire(final EntityEvent event) {
         LOGGER.debug("fire() - event: {}", event);
-        if (started && event != null) {
+        if (event != null) {
             fireGlobally(event);
         }
     }
@@ -86,7 +86,7 @@ class EntityEventBusImpl implements EntityEventBus {
     @Override
     public void fire(final EntityEventBatch events) {
         LOGGER.debug("fire() - events: {}", events);
-        if (started && events != null && events.hasItems()) {
+        if (events != null && events.hasItems()) {
             fireGlobally(events);
         }
     }

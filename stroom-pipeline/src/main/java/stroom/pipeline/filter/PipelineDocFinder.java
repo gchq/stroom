@@ -17,9 +17,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByName;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.PathCreator;
@@ -30,27 +28,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class DocFinder<D extends AbstractDoc> {
+public class PipelineDocFinder<D extends AbstractDoc> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DocFinder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDocFinder.class);
 
     private final String type;
     private final PathCreator pathCreator;
-    private final HasFindDocsByName hasFindDocsByName;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
 
-    public DocFinder(final String type,
-                     final PathCreator pathCreator,
-                     final HasFindDocsByName hasFindDocsByName,
-                     final DocRefInfoService docRefInfoService) {
+    public PipelineDocFinder(final String type,
+                             final PathCreator pathCreator,
+                             final DocFinder docFinder) {
         this.type = type;
         this.pathCreator = pathCreator;
-        this.hasFindDocsByName = hasFindDocsByName;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     public DocRef findDoc(final DocRef defaultRef,
@@ -63,9 +57,10 @@ public class DocFinder<D extends AbstractDoc> {
 
         // In case defaultRef has an out of date name (possible if the name is stored in pipeline source)
         // update it. Also possible for defaultRef to be a broken dependency, i.e. the doc has been deleted.
-        final DocRef updatedDefaultRef = Optional.ofNullable(defaultRef)
-                .flatMap(docRef -> docRefInfoService.info(docRef).map(DocRefInfo::getDocRef))
-                .orElse(null);
+        final DocRef updatedDefaultRef = defaultRef != null
+                ? NullSafe
+                .getOrElse(docFinder, df -> df.decorate(defaultRef), defaultRef)
+                : null;
 
         // Load the document from a name pattern if one has been specified.
         if (NullSafe.isNonBlankString(namePattern)) {
@@ -98,7 +93,7 @@ public class DocFinder<D extends AbstractDoc> {
                 throw ProcessException.create(sb.toString());
             }
 
-            final List<DocRef> docs = hasFindDocsByName.findByName(resolvedName);
+            final List<DocRef> docs = docFinder.findByName(type, resolvedName, false);
             if (NullSafe.isEmptyCollection(docs)) {
                 if (errorConsumer != null && !suppressNotFoundWarnings) {
                     final StringBuilder sb = new StringBuilder()
@@ -123,7 +118,7 @@ public class DocFinder<D extends AbstractDoc> {
                     errorConsumer.accept(sb.toString());
                 }
             } else {
-                doc = docs.get(0);
+                doc = docs.getFirst();
                 if (errorConsumer != null && docs.size() > 1) {
                     final String message = "" +
                                            "Found " + docs.size()

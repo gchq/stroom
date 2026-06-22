@@ -23,7 +23,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-processor:stroom-processor-impl')
@@ -53,6 +53,7 @@ dependencies {
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-api')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-task:stroom-task-mock')

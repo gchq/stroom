@@ -17,8 +17,6 @@
 package stroom.explorer.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByName;
 import stroom.util.shared.HasDependencies;
 
 import java.util.Set;
@@ -29,7 +27,7 @@ import java.util.Set;
  */
 // TODO could move HasFindDocsByName/HasFindDocsByContent into DocumentActionHandler
 //  as they are not specific to docs in the explorer
-public interface ExplorerActionHandler extends HasDependencies, HasFindDocsByName {
+public interface ExplorerActionHandler extends HasDependencies {
 
     /**
      * Called to create a new item in this document store.
@@ -76,14 +74,6 @@ public interface ExplorerActionHandler extends HasDependencies, HasFindDocsByNam
      * @param uuid The uuid of the document you want to delete.
      */
     void deleteDocument(DocRef docRef);
-
-    /**
-     * Retrieve the audit information for a particular doc ref
-     *
-     * @param docRef The docRef to return the information for
-     * @return The Audit information about the given DocRef.
-     */
-    DocRefInfo info(DocRef docRef);
 
     String getType();
 }

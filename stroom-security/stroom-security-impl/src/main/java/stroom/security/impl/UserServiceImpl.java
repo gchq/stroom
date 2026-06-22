@@ -18,7 +18,6 @@ package stroom.security.impl;
 
 import stroom.activity.api.ActivityService;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
@@ -68,7 +67,6 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     private final PermissionChangeEventBus permissionChangeEventBus;
     private final Map<String, Provider<HasUserDependencies>> hasUserDependenciesProviderMap;
     private final UserCache userCache;
-    private final DocRefInfoService docRefInfoService;
     private final StoredQueryService storedQueryService;
     private final UserPreferencesService userPreferencesService;
     private final ActivityService activityService;
@@ -79,7 +77,6 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     final PermissionChangeEventBus permissionChangeEventBus,
                     final Map<String, Provider<HasUserDependencies>> hasDependenciesSet,
                     final UserCache userCache,
-                    final DocRefInfoService docRefInfoService,
                     final StoredQueryService storedQueryService,
                     final UserPreferencesService userPreferencesService,
                     final ActivityService activityService) {
@@ -88,7 +85,6 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         this.permissionChangeEventBus = permissionChangeEventBus;
         this.hasUserDependenciesProviderMap = hasDependenciesSet;
         this.userCache = userCache;
-        this.docRefInfoService = docRefInfoService;
         this.storedQueryService = storedQueryService;
         this.userPreferencesService = userPreferencesService;
         this.activityService = activityService;
@@ -426,7 +422,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                         hasUserDependencies.getUserDependencies(UserRef.forUserUuid(userUuid)).stream())
                 .map(userDependency -> {
                     try {
-                        final DocRef docRef = NullSafe.get(userDependency.getDocRef(), docRefInfoService::decorate);
+                        final DocRef docRef = userDependency.getDocRef();
                         return new UserDependency(
                                 userDependency.getUserRef(),
                                 userDependency.getDetails(),

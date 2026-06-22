@@ -22,7 +22,7 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeInfo;
@@ -105,6 +105,7 @@ class AbstractProcessorTest {
                 new ProcessorDaoModule(),
                 new ProcessorDbModule(),
                 new MockMetricsModule(),
+                new MockDocFinderModule(),
                 new CacheModule(),
                 new MockTaskModule(),
                 new MockClusterLockModule(),
@@ -116,8 +117,6 @@ class AbstractProcessorTest {
                         final ExpressionMapper mockExpressionMapper = bindMock(ExpressionMapper.class);
                         Mockito.when(bindMock(ExpressionMapperFactory.class).create())
                                 .thenReturn(mockExpressionMapper);
-
-                        bindMock(DocRefInfoService.class);
                         bindMock(NodeInfo.class);
                         bindMock(ProcessorTaskQueueManager.class);
                         bindMock(DocumentEventLog.class);

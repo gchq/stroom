@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.docrefinfo.mock;
+package stroom.docstore.mock;
 
-import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 
 import com.google.inject.AbstractModule;
 
-public class MockDocRefInfoModule extends AbstractModule {
+public class MockDocFinderModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DocRefInfoService.class).to(MockDocRefInfoService.class);
-        bind(DocRefDecorator.class).to(MockDocRefInfoService.class);
+        bind(DocFinder.class).to(MockDocFinder.class);
     }
 }

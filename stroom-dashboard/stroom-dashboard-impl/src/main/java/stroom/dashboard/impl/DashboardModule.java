@@ -17,12 +17,8 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.language.functions.FunctionFactory;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -31,19 +27,11 @@ public class DashboardModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DashboardStore.class).to(DashboardStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(DashboardDoc.TYPE, DashboardStore.class, DashboardStoreImpl.class);
+
         bind(DashboardService.class).to(DashboardServiceImpl.class);
         bind(FunctionFactory.class).asEagerSingleton();
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(DashboardStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(DashboardStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(DashboardStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(DashboardDoc.TYPE, DashboardStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DashboardResourceImpl.class);

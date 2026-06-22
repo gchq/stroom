@@ -27,6 +27,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.index.VolumeCreator;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.impl.IndexShardManager;

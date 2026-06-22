@@ -20,7 +20,6 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
@@ -77,8 +76,7 @@ public class TestSearchExpressionQueryBuilder {
             }
 
             @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                                final DocRefDecorator docRefDecorator) {
+            public WordList getCombinedWordList(final DocRef dictionaryRef) {
                 return WordList.builder(true)
                         .addWord("1", dictionaryRef)
                         .addWord("2", dictionaryRef)

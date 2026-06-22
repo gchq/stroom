@@ -18,7 +18,7 @@ package stroom.pipeline.refdata.store;
 
 import stroom.cache.impl.CacheModule;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
@@ -36,10 +36,12 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import org.mockito.Mockito;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class RefDataStoreTestModule extends AbstractModule {
 
@@ -80,7 +82,7 @@ public class RefDataStoreTestModule extends AbstractModule {
 
     private Map<Long, String> metaIdToFeedNameMap = new HashMap<>();
     private Map<DocRef, DocRef> docRefs = new HashMap<>();
-    private Map<String, DocRefInfo> uuidToDocRefInfoMap = new HashMap<>();
+//    private Map<String, DocRefInfo> uuidToDocRefInfoMap = new HashMap<>();
     private Map<String, DocRef> feedNameToDocRefMap = new HashMap<>();
 
     public RefDataStoreTestModule(final Provider<ReferenceDataConfig> referenceDataConfigSupplier,
@@ -124,17 +126,33 @@ public class RefDataStoreTestModule extends AbstractModule {
     private FeedStore getMockFeedStore() {
 
         final FeedStore mockFeedStore = Mockito.mock(FeedStore.class);
+        final DocFinder docFinder = Mockito.mock(DocFinder.class);
 
         Mockito.doAnswer(invocation -> {
-            final String uuid = invocation.getArgument(0, String.class);
-            return uuidToDocRefInfoMap.get(uuid);
-        }).when(mockFeedStore).info(Mockito.any());
-
+            final DocRef docRef = invocation.getArgument(0, DocRef.class);
+            return docRefs.get(docRef);
+        }).when(docFinder).decorate(Mockito.any());
         Mockito.doAnswer(invocation -> {
-            final String feedName = invocation.getArgument(0, String.class);
-            return List.of(feedNameToDocRefMap.get(feedName));
-        }).when(mockFeedStore).findByName(
-                Mockito.anyString());
+            final DocRef docRef = invocation.getArgument(0, DocRef.class);
+            return Optional.ofNullable(docRefs.get(docRef));
+        }).when(docFinder).decorateIfExists(Mockito.any());
+        Mockito.doAnswer(invocation -> {
+            final String feedName = invocation.getArgument(2, String.class);
+            final DocRef docRef = feedNameToDocRefMap.get(feedName);
+            if (docRef == null) {
+                return Collections.emptyList();
+            }
+            return List.of(docRef);
+        }).when(docFinder).findByName(Mockito.eq(FeedDoc.TYPE), Mockito.anyString());
+        Mockito.doAnswer(invocation -> {
+            final String feedName = invocation.getArgument(1, String.class);
+            final DocRef docRef = feedNameToDocRefMap.get(feedName);
+            if (docRef == null) {
+                return Collections.emptyList();
+            }
+            return List.of(docRef);
+        }).when(docFinder).findByName(Mockito.eq(FeedDoc.TYPE), Mockito.anyString(), Mockito.anyBoolean());
+        bind(DocFinder.class).toInstance(docFinder);
 
         return mockFeedStore;
     }
@@ -178,8 +196,8 @@ public class RefDataStoreTestModule extends AbstractModule {
                     throw new RuntimeException(LogUtil.message("Invalid type " + docRef.getType()));
                 }
                 this.docRefs.put(docRef, docRef);
-                this.uuidToDocRefInfoMap.put(docRef.getUuid(), new DocRefInfo(
-                        docRef, 0L, 0L, "user", "user", null));
+//                this.uuidToDocRefInfoMap.put(docRef.getUuid(), new DocRefInfo(
+//                        docRef, 0L, 0L, "user", "user", null));
                 this.feedNameToDocRefMap.put(docRef.getName(), docRef);
             }
         }

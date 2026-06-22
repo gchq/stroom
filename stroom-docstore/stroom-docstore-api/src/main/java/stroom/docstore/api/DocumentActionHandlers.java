@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 @Singleton
-public class DocumentActionHandlers {
+class DocumentActionHandlers {
 
     private final Map<DocumentTypeName, DocumentActionHandler> handlersMap;
 

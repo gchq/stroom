@@ -16,7 +16,7 @@
 
 package stroom.docstore.impl;
 
-import stroom.docrefinfo.api.DocRefDecorator;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -36,17 +36,17 @@ public class StoreFactoryImpl implements StoreFactory {
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
     private final SecurityContext securityContext;
-    private final Provider<DocRefDecorator> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     @Inject
     public StoreFactoryImpl(final Persistence persistence,
                             final EntityEventBus entityEventBus,
                             final SecurityContext securityContext,
-                            final Provider<DocRefDecorator> docRefInfoServiceProvider) {
+                            final Provider<DocFinder> docFinderProvider) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class StoreFactoryImpl implements StoreFactory {
                 persistence,
                 entityEventBus,
                 securityContext,
-                docRefInfoServiceProvider,
+                docFinderProvider,
                 serialiser,
                 type,
                 builderSupplier,

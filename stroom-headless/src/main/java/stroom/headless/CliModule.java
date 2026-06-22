@@ -22,9 +22,9 @@ import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.mock.MockFsVolumeGroupService;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
-import stroom.explorer.impl.DocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
@@ -87,7 +87,6 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.entity.cluster.EntityClusterModule());
 //        install(new EntityClusterTaskModule());
         install(new MockExplorerModule());
-        install(new DocRefInfoModule());
         install(new FeedModule());
         install(new PipelineScopeModule());
         install(new ImportExportModule());
@@ -112,6 +111,7 @@ public class CliModule extends AbstractModule {
 //        install(new DataStoreHandlerModule());
         install(new DataStorePipelineElementModule());
         install(new DocStoreModule());
+        install(new DocFinderModule());
         install(new MockStreamStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());

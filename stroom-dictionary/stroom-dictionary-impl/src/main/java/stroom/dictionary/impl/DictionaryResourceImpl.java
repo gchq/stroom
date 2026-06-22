@@ -20,7 +20,7 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.resource.api.ResourceStore;
@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @AutoLogged
 class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<DictionaryDoc> {
@@ -51,17 +52,17 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
     private final Provider<DictionaryStore> dictionaryStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     @Inject
     DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
                            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                            final Provider<ResourceStore> resourceStoreProvider,
-                           final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                           final Provider<DocFinder> docFinderProvider) {
         this.dictionaryStoreProvider = dictionaryStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
     }
 
     @Override
@@ -70,10 +71,12 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
                 .read(dictionaryStoreProvider.get(), getDocRef(uuid));
 
         if (NullSafe.hasItems(dictionaryDoc.getImports())) {
-            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+            final DocFinder docFinder = docFinderProvider.get();
             final List<DocRef> decoratedImports = dictionaryDoc.getImports()
                     .stream()
-                    .map(importDocRef -> docRefInfoService.decorate(importDocRef, true))
+                    .map(docFinder::decorateIfExists)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
                     .toList();
             return dictionaryDoc.copy().imports(decoratedImports).build();
         }

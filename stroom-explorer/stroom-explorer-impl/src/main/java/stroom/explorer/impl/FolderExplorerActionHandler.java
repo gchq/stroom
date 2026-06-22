@@ -17,8 +17,6 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
@@ -127,24 +125,24 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
         }
     }
 
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
-        if (explorerTreeNode == null) {
-            throw new DocumentNotFoundException(docRef);
-        }
-
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-            throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to read (" + FOLDER + ")");
-        }
-
-        return DocRefInfo
-                .builder()
-                .docRef(explorerTreeNode.getDocRef())
-                .otherInfo("DB ID: " + explorerTreeNode.getId())
-                .build();
-    }
+//    @Override
+//    public DocRefInfo info(final DocRef docRef) {
+//        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
+//        if (explorerTreeNode == null) {
+//            throw new DocumentNotFoundException(docRef);
+//        }
+//
+//        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+//            throw new PermissionException(securityContext.getUserRef(),
+//                    "You do not have permission to read (" + FOLDER + ")");
+//        }
+//
+//        return DocRefInfo
+//                .builder()
+//                .docRef(explorerTreeNode.getDocRef())
+//                .otherInfo("DB ID: " + explorerTreeNode.getId())
+//                .build();
+//    }
 
     @Override
     public String getType() {
@@ -179,13 +177,13 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
     // ---------------------------------------------------------------------
 
 
-    @Override
-    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-        return explorerTreeDao.findByNames(names, allowWildCards)
-                .stream()
-                .map(ExplorerTreeNode::getDocRef)
-                .toList();
-    }
+//    @Override
+//    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+//        return explorerTreeDao.findByNames(names, allowWildCards)
+//                .stream()
+//                .map(ExplorerTreeNode::getDocRef)
+//                .toList();
+//    }
 
     @Override
     public Set<DocRef> listDocuments() {

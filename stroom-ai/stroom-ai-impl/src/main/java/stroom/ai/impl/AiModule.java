@@ -18,12 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -37,17 +33,8 @@ public class AiModule extends AbstractModule {
         bind(AiAttachmentFileStore.class).asEagerSingleton();
 
         // OpenAI Model
-        bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(OpenAIModelStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(OpenAIModelStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(OpenAIModelStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(OpenAIModelDoc.TYPE, OpenAIModelStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(OpenAIModelDoc.TYPE, OpenAIModelStore.class, OpenAIModelStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(OpenAIModelResourceImpl.class)

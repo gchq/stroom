@@ -16,10 +16,8 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.shared.DocumentType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
@@ -62,7 +60,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
@@ -170,17 +167,11 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public ExplorerNodeInfo info(final DocRef docRef) {
-        final DocRefInfo docRefInfo = docRefInfoServiceProvider.get()
-                .info(docRef)
-                .orElse(null);
-
-        if (docRefInfo == null) {
-            return null;
-        } else {
-            final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
-                    .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
-            return new ExplorerNodeInfo(explorerNode, docRefInfo);
-        }
+        final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
+                .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
+        final ResultPage<DocAuditEntry> resultPage = docRefInfoServiceProvider.get()
+                .getAuditInfo(docRef);
+        return new ExplorerNodeInfo(explorerNode, resultPage);
     }
 
     @Override
@@ -193,14 +184,10 @@ class ExplorerResourceImpl implements ExplorerResource {
                     req -> docRefInfoServiceProvider.get()
                             .decorate(req.getDocRef(),
                                     true,
-                                    req.getRequiredPermissions()));
-        } catch (final DocumentNotFoundException | PermissionException e) {
+                                    req.getRequiredPermissions())).orElseThrow();
+        } catch (final Exception e) {
             LOGGER.debug("docRef not found - {}", decorateRequest, e);
             return null;
-        } catch (final Exception e) {
-            // Something unexpected
-            LOGGER.error("Error decorating docRef - {}", decorateRequest, e);
-            throw new RuntimeException(e);
         }
     }
 

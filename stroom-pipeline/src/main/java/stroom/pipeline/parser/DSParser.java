@@ -17,7 +17,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.ParserFactoryPool;
@@ -31,7 +31,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.filter.DocFinder;
+import stroom.pipeline.filter.PipelineDocFinder;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -72,7 +72,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<TextConverterDoc> docFinder;
+    private final PipelineDocFinder<TextConverterDoc> pipelineDocFinder;
 
     private DocRef textConverterRef;
     private String namePattern;
@@ -91,18 +91,17 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
                     final PathCreator pathCreator,
                     final Provider<FeedHolder> feedHolder,
                     final Provider<PipelineHolder> pipelineHolder,
-                    final DocRefInfoService docRefInfoService) {
+                    final DocFinder docFinder) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(
+        this.pipelineDocFinder = new PipelineDocFinder<>(
                 TextConverterDoc.TYPE,
                 pathCreator,
-                textConverterStore,
-                docRefInfoService);
+                docFinder);
     }
 
     @Override
@@ -223,7 +222,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docFinder.findDoc(
+        return pipelineDocFinder.findDoc(
                 textConverterRef,
                 namePattern,
                 feedName,

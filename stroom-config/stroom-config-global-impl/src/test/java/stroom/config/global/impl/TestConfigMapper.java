@@ -46,7 +46,7 @@ import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
