@@ -20,8 +20,10 @@ import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -48,6 +50,7 @@ class DocRefInfoService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoService.class);
 
     private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<ExplorerService> explorerServiceProvider;
     private final Set<IsSpecialExplorerDataSource> specialExplorerDataSources;
     private final DocFinder docFinder;
 
@@ -56,31 +59,24 @@ class DocRefInfoService {
 
     @Inject
     DocRefInfoService(final Provider<SecurityContext> securityContextProvider,
+                      final Provider<ExplorerService> explorerServiceProvider,
                       final Set<IsSpecialExplorerDataSource> specialExplorerDataSources,
                       final DocFinder docFinder) {
         this.securityContextProvider = securityContextProvider;
+        this.explorerServiceProvider = explorerServiceProvider;
         this.specialExplorerDataSources = specialExplorerDataSources;
         this.docFinder = docFinder;
     }
 
     public ResultPage<DocAuditEntry> getAuditInfo(final DocRef docRef) {
-//        if (isSpecialDocRefType(docRef.getType())) {
-//            return getSpecialDocRefInfo(docRef);
-//        }
         return docFinder.getAuditInfo(docRef);
     }
 
     public Optional<DocRef> decorate(final DocRef docRef) {
-        return decorate(docRef, true, null);
+        return decorate(docRef, null);
     }
 
     public Optional<DocRef> decorate(final DocRef docRef,
-                                     final boolean force) {
-        return decorate(docRef, force, null);
-    }
-
-    public Optional<DocRef> decorate(final DocRef docRef,
-                                     final boolean force,
                                      final Set<DocumentPermission> requiredPermissions) {
         try {
             final SecurityContext securityContext = securityContextProvider.get();
@@ -101,6 +97,20 @@ class DocRefInfoService {
                 return Optional.of(ExplorerConstants.SYSTEM_DOC_REF);
             }
 
+            // Special case for folders as they aren't actual documents.
+            if (ExplorerConstants.FOLDER_TYPE.equals(docRef.getType())) {
+                final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
+                        .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
+                return Optional.of(explorerNode.getDocRef());
+            }
+
+            // Treat special docs (Processor Tasks etc) differently.
+            if (isSpecialDocRefType(docRef.getType())) {
+                return streamSpecialDocRefs()
+                        .filter(docRef::equals)
+                        .findAny();
+            }
+
             // Allow decoration by name alone if feed (special case).
             if (FeedDoc.TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
                 final List<DocRef> list = docFinder.findByName(docRef.getType(), docRef.getName());
@@ -111,23 +121,10 @@ class DocRefInfoService {
                 }
             }
 
-            Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
-
             // The passed docRef may have all the parts, but it may be from before a rename, so if force
             // is set, use the cached copy which should be up-to-date.
-            if (NullSafe.isEmptyString(docRef.getType())
-                || NullSafe.isEmptyString(docRef.getName())
-                || force) {
-                return Optional.of(docFinder.decorateIfExists(docRef)
-                        .or(() ->
-                                NullSafe.stream(getSpecialDocRefs(docRef.getType()))
-                                        .filter(docRef::equals)
-                                        .findAny())
-                        .orElseThrow(() ->
-                                new DocumentNotFoundException(docRef)));
-            } else {
-                return Optional.of(docRef);
-            }
+            return Optional.of(docFinder.decorateIfExists(docRef).orElseThrow(() ->
+                    new DocumentNotFoundException(docRef)));
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
         }
@@ -150,35 +147,9 @@ class DocRefInfoService {
         return specialTypes;
     }
 
-    /**
-     * Get the special (non-DB) doc refs for the given type, filtered by the current user's
-     * permissions. Not cached — each implementation's getDataSourceDocRefs() checks the
-     * current user's app permissions.
-     */
-    private Set<DocRef> getSpecialDocRefs(final String type) {
-        if (!isSpecialDocRefType(type)) {
-            return null;
-        }
-        return streamSpecialDocRefs()
-                .filter(docRef -> type.equals(docRef.getType()))
-                .collect(Collectors.toSet());
-    }
-
     private boolean isSpecialDocRefType(final String type) {
         return NullSafe.isNonEmptyString(type) && getSpecialTypes().contains(type);
     }
-
-//    private Optional<DocRefInfo> getSpecialDocRefInfo(final DocRef docRef) {
-//        if (docRef == null) {
-//            return Optional.empty();
-//        }
-//        return streamSpecialDocRefs()
-//                .filter(docRef::equals)
-//                .map(aDocRef -> DocRefInfo.builder()
-//                        .docRef(aDocRef)
-//                        .build())
-//                .findAny();
-//    }
 
     private Stream<DocRef> streamSpecialDocRefs() {
         return NullSafe.stream(specialExplorerDataSources)

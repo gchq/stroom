@@ -27,13 +27,14 @@ public interface DocFinder {
 
     /**
      * Find by case-sensitive match on the name.
-     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}.
+     * <p>Delegates to {@link #findByName(String, String, boolean)} with {@code allowWildCards = false}.</p>
      *
-     * @param type       Can be null. If null all handlers will be searched
-     * @param nameFilter The name of the {@link DocRef}s to filter by. If allowWildCards is true
-     *                   find all matching else find those with an exact case-sensitive name match.
+     * @param type       Can be null. If null all handlers will be searched.
+     * @param nameFilter The name of the {@link DocRef}s to filter by, using an exact
+     *                   case-sensitive match.
+     * @return A list of {@link DocRef}s whose name matches the given filter.
      */
     default List<DocRef> findByName(final String type,
                                     final String nameFilter) {
@@ -42,13 +43,16 @@ public interface DocFinder {
 
     /**
      * Find by case-sensitive match on the name.
-     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
+     * If {@code allowWildCards} is true, '*' can be used to denote a 0-many character wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}.
      *
-     * @param type       Can be null. If null all handlers will be searched
-     * @param nameFilter The name of the {@link DocRef}s to filter by. If allowWildCards is true
-     *                   find all matching else find those with an exact case-sensitive name match.
+     * @param type           Can be null. If null all handlers will be searched.
+     * @param nameFilter     The name of the {@link DocRef}s to filter by. If {@code allowWildCards}
+     *                       is true find all matching, else find those with an exact
+     *                       case-sensitive name match.
+     * @param allowWildCards If true, treat '*' in {@code nameFilter} as a wild card.
+     * @return A list of {@link DocRef}s whose name matches the given filter.
      */
     List<DocRef> findByName(String type,
                             String nameFilter,
@@ -56,14 +60,15 @@ public interface DocFinder {
 
     /**
      * Find by case-sensitive match on the name.
-     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}. Applies all nameFilters using an OR, i.e. returns all docRefs
      * associated with any of the passed nameFilters.
+     * <p>Delegates to {@link #findByNames(String, List, boolean)} with {@code allowWildCards = false}.</p>
      *
      * @param type        The {@link DocRef} type. Mandatory.
-     * @param nameFilters The names of the {@link DocRef}s to filter by. If allowWildCards is true
-     *                    find all matching else find those with an exact case-sensitive name match.
+     * @param nameFilters The names of the {@link DocRef}s to filter by, using exact
+     *                    case-sensitive matching.
+     * @return A list of {@link DocRef}s whose name matches any of the given filters.
      */
     default List<DocRef> findByNames(final String type,
                                      final List<String> nameFilters) {
@@ -72,28 +77,58 @@ public interface DocFinder {
 
     /**
      * Find by case-sensitive match on the name.
-     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
+     * If {@code allowWildCards} is true, '*' can be used to denote a 0-many character wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}. Applies all nameFilters using an OR, i.e. returns all docRefs
      * associated with any of the passed nameFilters.
      *
-     * @param type        The {@link DocRef} type. Mandatory.
-     * @param nameFilters The names of the {@link DocRef}s to filter by. If allowWildCards is true
-     *                    find all matching else find those with an exact case-sensitive name match.
+     * @param type           The {@link DocRef} type. Mandatory.
+     * @param nameFilters    The names of the {@link DocRef}s to filter by. If {@code allowWildCards}
+     *                       is true find all matching, else find those with an exact
+     *                       case-sensitive name match.
+     * @param allowWildCards If true, treat '*' in the name filters as a wild card.
+     * @return A list of {@link DocRef}s whose name matches any of the given filters.
      */
     List<DocRef> findByNames(String type,
                              List<String> nameFilters,
                              boolean allowWildCards);
 
+    /**
+     * Get the name associated with the given {@link DocRef}.
+     *
+     * @param docRef The {@link DocRef} to look up.
+     * @return An {@link Optional} containing the name if the document exists, or empty otherwise.
+     */
     Optional<String> getName(DocRef docRef);
 
+    /**
+     * Return a copy of the given {@link DocRef} with its name populated from the store.
+     * If the document cannot be found, the original {@code docRef} is returned unchanged.
+     *
+     * @param docRef The {@link DocRef} to decorate.
+     * @return A {@link DocRef} with the name set, or the original if the document is not found.
+     */
     default DocRef decorate(final DocRef docRef) {
         return getName(docRef).map(name -> docRef.copy().name(name).build()).orElse(docRef);
     }
 
+    /**
+     * Return a copy of the given {@link DocRef} with its name populated from the store,
+     * only if the document exists.
+     *
+     * @param docRef The {@link DocRef} to decorate.
+     * @return An {@link Optional} containing the decorated {@link DocRef} if the document exists,
+     *         or empty otherwise.
+     */
     default Optional<DocRef> decorateIfExists(final DocRef docRef) {
         return getName(docRef).map(name -> docRef.copy().name(name).build());
     }
 
+    /**
+     * Get the audit information for the given document.
+     *
+     * @param docRef The {@link DocRef} to retrieve audit information for.
+     * @return A {@link ResultPage} of {@link DocAuditEntry} records for the document.
+     */
     ResultPage<DocAuditEntry> getAuditInfo(DocRef docRef);
 }

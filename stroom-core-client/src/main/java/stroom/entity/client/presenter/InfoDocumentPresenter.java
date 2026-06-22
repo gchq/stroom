@@ -121,17 +121,21 @@ public class InfoDocumentPresenter
 //            sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
         }
 
-        final TableBuilder tableBuilder = new TableBuilder();
-        tableBuilder.row("Time", "User", "Action");
-        for (final DocAuditEntry entry : auditEntryResultPage.getValues()) {
-            final String time = dateTimeFormatter.format(entry.getTime());
-            tableBuilder.row(
-                    CopyTextUtil.render(time, false),
-                    CopyTextUtil.render(entry.getUser().getDisplayName(), false),
-                    CopyTextUtil.render(entry.getAction().getDisplayValue(), false)
-            );
+        // Add audit information
+        if (auditEntryResultPage != null && !NullSafe.isEmptyCollection(auditEntryResultPage.getValues())) {
+            hb.div(d -> appendKey("Audit Info", d), Attribute.className("infoLine"));
+            final TableBuilder tableBuilder = new TableBuilder();
+            tableBuilder.row("Time", "User", "Action");
+            for (final DocAuditEntry entry : auditEntryResultPage.getValues()) {
+                final String time = dateTimeFormatter.format(entry.getTime());
+                tableBuilder.row(
+                        CopyTextUtil.render(time, false),
+                        CopyTextUtil.render(entry.getUser().getDisplayName(), false),
+                        CopyTextUtil.render(entry.getAction().getDisplayValue(), false)
+                );
+            }
+            tableBuilder.write(hb);
         }
-        tableBuilder.write(hb);
 
         getView().setInfo(hb.toSafeHtml());
 

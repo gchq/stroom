@@ -81,6 +81,7 @@ class TestDocRefInfoService {
     void setUp() {
         docRefInfoService = new DocRefInfoService(
                 () -> mockSecurityContext,
+                null,
                 mockSpecialDataSources,
                 docFinder);
     }
@@ -127,7 +128,7 @@ class TestDocRefInfoService {
     @Test
     void decorate_changed_force() {
         initMockCache();
-        final Optional<DocRef> docRef = docRefInfoService.decorate(DOC_REF3.withoutName(), true);
+        final Optional<DocRef> docRef = docRefInfoService.decorate(DOC_REF3.withoutName());
         assertThat(docRef.orElseThrow()).isEqualTo(DOC_REF3);
     }
 
@@ -147,7 +148,7 @@ class TestDocRefInfoService {
         final DocRef input = DOC_REF3.copy()
                 .name(DOC_REF3.getName() + "XXX")
                 .build();
-        final Optional<DocRef> docRef = docRefInfoService.decorate(input, true);
+        final Optional<DocRef> docRef = docRefInfoService.decorate(input);
         assertThat(docRef.orElseThrow().getName())
                 .isEqualTo(DOC_REF3.getName());
     }
@@ -160,7 +161,7 @@ class TestDocRefInfoService {
         final DocRef input = MySpecialDataSource1.DUAL_DOC_REF.copy()
                 .name(MySpecialDataSource1.DUAL_DOC_REF.getName() + "XXX")
                 .build();
-        final Optional<DocRef> docRef = docRefInfoService.decorate(input, true);
+        final Optional<DocRef> docRef = docRefInfoService.decorate(input);
         assertThat(docRef.orElseThrow().getName())
                 .isEqualTo(MySpecialDataSource1.DUAL_DOC_REF.getName());
     }

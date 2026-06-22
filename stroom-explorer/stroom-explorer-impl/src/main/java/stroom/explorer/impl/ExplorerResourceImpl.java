@@ -177,14 +177,11 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public DocRef decorate(final DecorateRequest decorateRequest) {
-
         Objects.requireNonNull(decorateRequest);
         try {
-            return NullSafe.get(decorateRequest,
-                    req -> docRefInfoServiceProvider.get()
-                            .decorate(req.getDocRef(),
-                                    true,
-                                    req.getRequiredPermissions())).orElseThrow();
+            return docRefInfoServiceProvider.get()
+                    .decorate(decorateRequest.getDocRef(),
+                            decorateRequest.getRequiredPermissions()).orElseThrow();
         } catch (final Exception e) {
             LOGGER.debug("docRef not found - {}", decorateRequest, e);
             return null;
