@@ -16,9 +16,10 @@
 
 package stroom.node.api;
 
-import java.util.Optional;
+import stroom.node.shared.NodeGroup;
 
-public interface NodeGroupCache {
+import java.util.Set;
 
-    Optional<NodeGroupInfo> getIncludedGroupNodes(String name);
+public record NodeGroupInfo(NodeGroup nodeGroup, Set<String> includedNodes) {
+
 }

@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 import static stroom.node.impl.db.jooq.tables.NodeGroup.NODE_GROUP;
@@ -229,6 +230,19 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
                     return new NodeGroupState(node, groupId != null);
                 });
         return ResultPage.createUnboundedList(list);
+    }
+
+    @Override
+    public Set<String> getNodeGroupIncludedNodes(final Integer nodeGroupId) {
+        return Set.copyOf(JooqUtil.contextResult(nodeDbConnProvider, context ->
+                        context
+                                .select(NODE.NAME)
+                                .from(NODE)
+                                .join(NODE_GROUP_LINK)
+                                .on(NODE_GROUP_LINK.FK_NODE_ID.eq(NODE.ID))
+                                .where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(nodeGroupId))
+                                .fetch())
+                .map(r -> r.get(NODE.NAME)));
     }
 
     @Override
