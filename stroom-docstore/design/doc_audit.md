@@ -562,8 +562,10 @@ JooqUtil.transaction(connProvider, ctx -> {
                 .getId();
     } else if (auditAction == AuditAction.IMPORT) {
         // Import: check if a soft-deleted doc with this UUID exists and undelete it
+        // Lock the row to prevent concurrent modification
         docId = ctx.select(DOC.ID).from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
+                .forUpdate()
                 .fetchOne(DOC.ID);
         if (docId != null) {
             // Undelete and update
@@ -580,11 +582,12 @@ JooqUtil.transaction(connProvider, ctx -> {
                     .getId();
         }
     } else {
-        // Update doc name, get id
+        // Update — lock the doc row to prevent concurrent modification
         docId = ctx.select(DOC.ID).from(DOC)
                 .where(DOC.TYPE.eq(docRef.getType()))
                 .and(DOC.UUID.eq(docRef.getUuid()))
                 .and(DOC.DELETED.isNull())
+                .forUpdate()
                 .fetchOne(DOC.ID);
         ctx.update(DOC).set(DOC.NAME, docRef.getName())
                 .where(DOC.ID.eq(docId)).execute();
@@ -628,10 +631,12 @@ JooqUtil.transaction(connProvider, ctx -> {
 ```java
 JooqUtil.transaction(connProvider, ctx -> {
     final long now = System.currentTimeMillis();
+    // Lock the doc row to prevent concurrent modification
     final Long docId = ctx.select(DOC.ID).from(DOC)
             .where(DOC.TYPE.eq(docRef.getType()))
             .and(DOC.UUID.eq(docRef.getUuid()))
             .and(DOC.DELETED.isNull())
+            .forUpdate()
             .fetchOne(DOC.ID);
 
     // Logical delete — set timestamp
