@@ -17,37 +17,28 @@
 package stroom.view.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.Message;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 @Singleton
-class ViewStoreImpl implements ViewStore {
+class ViewStoreImpl
+        extends AbstractDocumentStore<ViewDoc>
+        implements ViewStore {
 
-    private final Store<ViewDoc> store;
     private final SecurityContext securityContext;
 
     @Inject
     ViewStoreImpl(final StoreFactory storeFactory,
                   final ViewSerialiser serialiser,
                   final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 ViewDoc.TYPE,
                 ViewDoc::builder,
@@ -55,79 +46,21 @@ class ViewStoreImpl implements ViewStore {
         this.securityContext = securityContext;
     }
 
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
     public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
-
-        // Create a dashboard from a template.
+        final DocRef docRef = getStore().createDocument(name);
 
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
-            final ViewDoc dashboardDoc = store.readDocument(docRef);
-            store.writeDocument(dashboardDoc);
+            final ViewDoc dashboardDoc = getStore().readDocument(docRef);
+            getStore().writeDocument(dashboardDoc);
         });
         return docRef;
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<ViewDoc> createMapper() {
+    protected DependencyRemapFunction<ViewDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final ViewDoc.Builder builder = doc.copy();
             if (doc.getDataSource() != null) {
@@ -138,80 +71,5 @@ class ViewStoreImpl implements ViewStore {
             }
             return builder.build();
         };
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public ViewDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public ViewDoc writeDocument(final ViewDoc document) {
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 }

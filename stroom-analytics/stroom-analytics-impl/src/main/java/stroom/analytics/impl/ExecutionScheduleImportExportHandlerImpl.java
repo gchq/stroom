@@ -19,8 +19,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -45,17 +44,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ExecutionScheduleImportExportHandlerImpl implements ImportExportActionHandler, NonExplorerDocRefProvider {
+
     private final Serialiser2<ExecutionSchedule> delegate;
     private final ExecutionScheduleDao executionScheduleDao;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
 
     @Inject
     public ExecutionScheduleImportExportHandlerImpl(final Serialiser2Factory serialiser2Factory,
                                                     final ExecutionScheduleDao executionScheduleDao,
-                                                    final DocRefInfoService docRefInfoService) {
+                                                    final DocFinder docFinder) {
         this.delegate = serialiser2Factory.createSerialiser(ExecutionSchedule.class);
         this.executionScheduleDao = executionScheduleDao;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     private Optional<ExecutionSchedule> findExistingSchedule(final ExecutionSchedule importedSchedule,
@@ -80,9 +80,9 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
 
     @Override
     public DocRef importDocument(final DocRef pseudoDocRef,
-            final ImportExportDocument importExportDocument,
-            final ImportState importState,
-            final ImportSettings importSettings) {
+                                 final ImportExportDocument importExportDocument,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
         final ImportExportAsset importExportAsset = importExportDocument.getExtAsset("meta");
         if (importExportAsset == null) {
             importState.addMessage(Severity.ERROR, "No meta data found for " + pseudoDocRef);
@@ -126,12 +126,13 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-            final boolean omitAuditFields,
-            final List<Message> messageList) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
         try {
             final Optional<ExecutionSchedule> scheduleOpt = executionScheduleDao.fetchScheduleByUuid(docRef.getUuid());
             if (scheduleOpt.isPresent()) {
-                final DocRef owningDoc = docRefInfoService.decorate(scheduleOpt.get().getOwningDoc());
+                DocRef owningDoc = scheduleOpt.get().getOwningDoc();
+                owningDoc = docFinder.decorate(owningDoc);
                 final ExecutionSchedule schedule = scheduleOpt.get().copy().owningDoc(owningDoc).build();
                 return delegate.write(schedule);
             }
@@ -225,22 +226,6 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
     @Override
     public String findNameOfDocRef(final DocRef docRef) {
         return docRef.getName();
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef pseudoDocRef) {
-        try {
-            final Optional<ExecutionSchedule> scheduleOpt = findExistingSchedule(pseudoDocRef);
-            if (scheduleOpt.isPresent()) {
-                return DocRefInfo.builder()
-                    .docRef(pseudoDocRef)
-                    .otherInfo(scheduleOpt.get().getOwningDoc().getName() + " - " + pseudoDocRef.getName())
-                    .build();
-            }
-        } catch (NumberFormatException e) {
-            return null;
-        }
-        return DocRefInfo.builder().docRef(pseudoDocRef).build();
     }
 
     // ---------------------------------------------------------------------

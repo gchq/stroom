@@ -17,13 +17,10 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.api.DocumentStore;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.pipeline.destination.RollingDestinations;
@@ -46,24 +43,17 @@ public class PipelineModule extends AbstractModule {
         install(new XmlSchemaModule());
         install(new XsltModule());
 
-        bind(PipelineStore.class).to(PipelineStoreImpl.class);
         bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(PipelineStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(PipelineStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(PipelineStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(PipelineDoc.TYPE, PipelineStore.class, PipelineStoreImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), DocumentStore.class)
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(PipelineResourceImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(PipelineDoc.TYPE, PipelineStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

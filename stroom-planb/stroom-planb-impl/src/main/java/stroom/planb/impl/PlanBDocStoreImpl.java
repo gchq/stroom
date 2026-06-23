@@ -17,30 +17,25 @@
 package stroom.planb.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-public class PlanBDocStoreImpl implements PlanBDocStore {
+public class PlanBDocStoreImpl
+        extends AbstractDocumentStore<PlanBDoc>
+        implements PlanBDocStore {
 
-    private final Store<PlanBDoc> store;
     private final SecurityContext securityContext;
 
     @Inject
@@ -48,7 +43,7 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             final StoreFactory storeFactory,
             final PlanBDocSerialiser serialiser,
             final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 PlanBDoc.TYPE,
                 PlanBDoc::builder,
@@ -56,15 +51,11 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
         this.securityContext = securityContext;
     }
 
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
     public DocRef createDocument(final String name) {
         validateName(name);
 
-        final DocRef created = store.createDocument(name);
+        final DocRef created = getStore().createDocument(name);
 
         // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
@@ -72,13 +63,13 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
 
             // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
             // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created));
+            securityContext.asProcessingUser(() -> getStore().deleteDocument(created));
             throwNameException(name);
         }
 
-        PlanBDoc doc = store.readDocument(created);
+        PlanBDoc doc = getStore().readDocument(created);
         doc = doc.copy().stateType(StateType.TEMPORAL_STATE).build();
-        store.writeDocument(doc);
+        getStore().writeDocument(doc);
 
         return created;
     }
@@ -96,8 +87,8 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
     }
 
     private boolean checkDuplicateName(final String name, final DocRef whitelistDocRef) {
-        final List<DocRef> list = list();
-        for (final DocRef docRef : list) {
+        final List<DocRef> docRefs = list();
+        for (final DocRef docRef : docRefs) {
             if (name.equals(docRef.getName()) &&
                 (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
@@ -118,7 +109,7 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             throwNameException(name);
         }
 
-        return store.copyDocument(docRef.getUuid(), newName);
+        return getStore().copyDocument(docRef.getUuid(), newName);
     }
 
     private Set<String> getExistingNames() {
@@ -163,11 +154,6 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
     public DocRef renameDocument(final DocRef docRef, final String name) {
         validateName(name);
 
@@ -176,116 +162,12 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             throw new EntityServiceException("A state store named '" + name + "' already exists");
         }
 
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public PlanBDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        return super.renameDocument(docRef, name);
     }
 
     @Override
     public PlanBDoc writeDocument(final PlanBDoc document) {
         validateName(document.getName());
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
+        return super.writeDocument(document);
     }
 }

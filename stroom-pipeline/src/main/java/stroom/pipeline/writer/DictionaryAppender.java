@@ -19,7 +19,7 @@ package stroom.pipeline.writer;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -32,12 +32,12 @@ import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Optional;
 
 @ConfigurableElement(
         type = "DictionaryAppender",
@@ -54,7 +54,7 @@ public class DictionaryAppender extends AbstractAppender {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DictionaryAppender.class);
 
     private final DictionaryStore dictionaryStore;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
 
     private DocRef dictionaryRef;
 
@@ -64,10 +64,10 @@ public class DictionaryAppender extends AbstractAppender {
     @Inject
     public DictionaryAppender(final ErrorReceiverProxy errorReceiverProxy,
                               final DictionaryStore dictionaryStore,
-                              final DocRefInfoService docRefInfoService) {
+                              final DocFinder docFinder) {
         super(errorReceiverProxy);
         this.dictionaryStore = dictionaryStore;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -76,9 +76,8 @@ public class DictionaryAppender extends AbstractAppender {
             fatal("Dictionary not set");
         }
 
-        String dictionaryName = null;
-        dictionaryName = docRefInfoService.name(dictionaryRef).orElse(null);
-        if (Strings.isNullOrEmpty(dictionaryName)) {
+        final Optional<String> name = docFinder.getName(dictionaryRef);
+        if (name.isEmpty()) {
             fatal("Dictionary not found: " + dictionaryRef);
         }
 

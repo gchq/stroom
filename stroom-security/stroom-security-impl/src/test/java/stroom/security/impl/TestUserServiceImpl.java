@@ -48,7 +48,6 @@ class TestUserServiceImpl {
                 null,
                 null,
                 null,
-                null,
                 null);
 
         final UserDesc userDesc = UserDesc.builder(SUBJECT_ID)
@@ -76,7 +75,6 @@ class TestUserServiceImpl {
         final UserServiceImpl userService = new UserServiceImpl(
                 new MockSecurityContext(),
                 mockUserDao,
-                null,
                 null,
                 null,
                 null,

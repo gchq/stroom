@@ -17,9 +17,8 @@
 package stroom.node.api;
 
 import java.util.Optional;
-import java.util.Set;
 
 public interface NodeGroupCache {
 
-    Optional<Set<String>> getIncludedGroupNodes(String name);
+    Optional<NodeGroupInfo> getIncludedGroupNodes(String name);
 }

@@ -23,10 +23,9 @@ import stroom.db.util.JooqUtil;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
-import stroom.index.impl.IndexStore;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
@@ -397,13 +396,13 @@ class IndexShardDaoImpl implements IndexShardDao {
     private static class IndexShardValueMapper {
 
         private final ValueMapper valueMapper;
-        private final DocRefInfoService docRefInfoService;
+        private final DocFinder docFinder;
 
         @Inject
         private IndexShardValueMapper(final ValueMapper valueMapper,
-                                      final DocRefInfoService docRefInfoService) {
+                                      final DocFinder docFinder) {
             this.valueMapper = valueMapper;
-            this.docRefInfoService = docRefInfoService;
+            this.docFinder = docFinder;
 
             valueMapper.map(IndexShardFields.FIELD_NODE, INDEX_SHARD.NODE_NAME, ValString::create);
             valueMapper.map(IndexShardFields.FIELD_INDEX, INDEX_SHARD.INDEX_UUID, this::getDocRefName);
@@ -421,8 +420,8 @@ class IndexShardDaoImpl implements IndexShardDao {
 
         private Val getDocRefName(final String uuid) {
             String val = uuid;
-            if (docRefInfoService != null) {
-                val = docRefInfoService.name(new DocRef(LuceneIndexDoc.TYPE, uuid))
+            if (docFinder != null) {
+                val = docFinder.getName(new DocRef(LuceneIndexDoc.TYPE, uuid))
                         .orElse(uuid);
             }
             return ValString.create(val);
@@ -451,12 +450,12 @@ class IndexShardDaoImpl implements IndexShardDao {
     private static class IndexShardExpressionMapper {
 
         private final ExpressionMapper expressionMapper;
-        private final IndexStore indexStore;
+        private final DocFinder docFinder;
 
         @Inject
         private IndexShardExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
-                                           final IndexStore indexStore) {
-            this.indexStore = indexStore;
+                                           final DocFinder docFinder) {
+            this.docFinder = docFinder;
 
             this.expressionMapper = expressionMapperFactory.create();
             expressionMapper.map(IndexShardFields.FIELD_NODE, INDEX_SHARD.NODE_NAME, value -> value);
@@ -478,7 +477,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         }
 
         private List<String> getIndexUuids(final List<String> indexNames) {
-            return indexStore.findByNames(indexNames, true)
+            return docFinder.findByNames(LuceneIndexDoc.TYPE, indexNames, true)
                     .stream()
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());

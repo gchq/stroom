@@ -16856,6 +16856,33 @@
           }
         }
       },
+      "DocAuditEntry" : {
+        "type" : "object",
+        "properties" : {
+          "action" : {
+            "type" : "string",
+            "enum" : [ "CREATE", "UPDATE", "DELETE" ]
+          },
+          "time" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/DocAuditUser"
+          }
+        }
+      },
+      "DocAuditUser" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "DocContentHighlights" : {
         "type" : "object",
         "properties" : {
@@ -16920,31 +16947,6 @@
           }
         },
         "required" : [ "uuid" ]
-      },
-      "DocRefInfo" : {
-        "type" : "object",
-        "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "otherInfo" : {
-            "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          }
-        }
       },
       "DocRefs" : {
         "type" : "object",
@@ -17891,8 +17893,8 @@
       "ExplorerNodeInfo" : {
         "type" : "object",
         "properties" : {
-          "docRefInfo" : {
-            "$ref" : "#/components/schemas/DocRefInfo"
+          "auditEntries" : {
+            "$ref" : "#/components/schemas/ResultPageDocAuditEntry"
           },
           "explorerNode" : {
             "$ref" : "#/components/schemas/ExplorerNode"
@@ -24165,6 +24167,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Dependency"
+            }
+          }
+        }
+      },
+      "ResultPageDocAuditEntry" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocAuditEntry"
             }
           }
         }

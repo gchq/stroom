@@ -18,6 +18,7 @@ ext.moduleName = 'stroom.docstore.impl.db'
 
 dependencies {
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')

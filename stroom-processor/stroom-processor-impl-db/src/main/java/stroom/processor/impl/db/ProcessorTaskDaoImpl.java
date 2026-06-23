@@ -23,7 +23,7 @@ import stroom.db.util.JooqUtil;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
@@ -160,7 +160,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorConfig processorConfig;
     private final ProcessorDbConnProvider processorDbConnProvider;
     //    private final ProcessorFilterMarshaller marshaller;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final ExpressionMapper expressionMapper;
     private final ValueMapper valueMapper;
 
@@ -172,14 +172,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ProcessorConfig processorConfig,
                          final ProcessorDbConnProvider processorDbConnProvider,
                          final ExpressionMapperFactory expressionMapperFactory,
-                         final DocRefInfoService docRefInfoService) {
+                         final DocFinder docFinder) {
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorFilterCache = processorFilterCache;
         this.processorConfig = processorConfig;
         this.processorDbConnProvider = processorDbConnProvider;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, value ->
@@ -239,8 +239,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private Val getPipelineName(final String uuid) {
         String val = uuid;
-        if (docRefInfoService != null) {
-            val = docRefInfoService.name(new DocRef("Pipeline", uuid)).orElse(uuid);
+        if (docFinder != null) {
+            val = docFinder.getName(new DocRef(PipelineDoc.TYPE, uuid)).orElse(uuid);
         }
         return ValString.create(val);
     }
@@ -852,7 +852,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     PROCESSOR_TASK.STATUS));
             final int count = record.get(COUNT);
             DocRef pipelineDocRef = new DocRef(docType, pipelineUuid);
-            final Optional<String> pipelineName = docRefInfoService.name(pipelineDocRef);
+            final Optional<String> pipelineName = docFinder.getName(pipelineDocRef);
             if (pipelineName.isPresent()) {
                 pipelineDocRef = pipelineDocRef.copy().name(pipelineName.get()).build();
             }
@@ -1205,7 +1205,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByNames(PipelineDoc.TYPE, pipelineNames, true)
+        return docFinder.findByNames(PipelineDoc.TYPE, pipelineNames, true)
                 .stream()
                 .map(DocRef::getUuid)
                 .toList();

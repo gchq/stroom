@@ -25,7 +25,6 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-index:stroom-index-api')
@@ -49,9 +48,9 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
-    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-index:stroom-index-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

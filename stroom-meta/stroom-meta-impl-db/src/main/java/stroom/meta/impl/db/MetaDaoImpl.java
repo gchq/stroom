@@ -30,7 +30,7 @@ import stroom.db.util.TermHandlerFactory;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.EffectiveMetaSet;
@@ -210,7 +210,7 @@ public class MetaDaoImpl implements MetaDao {
     private final MetaKeyDaoImpl metaKeyDao;
     private final Provider<DataRetentionConfig> dataRetentionConfigProvider;
     private final Provider<MetaServiceConfig> metaServiceConfigProvider;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
@@ -224,7 +224,7 @@ public class MetaDaoImpl implements MetaDao {
                 final Provider<DataRetentionConfig> dataRetentionConfigProvider,
                 final Provider<MetaServiceConfig> metaServiceConfigProvider,
                 final ExpressionMapperFactory expressionMapperFactory,
-                final DocRefInfoService docRefInfoService,
+                final DocFinder docFinder,
                 final TermHandlerFactory termHandlerFactory) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.feedDao = feedDao;
@@ -233,7 +233,7 @@ public class MetaDaoImpl implements MetaDao {
         this.metaKeyDao = metaKeyDao;
         this.dataRetentionConfigProvider = dataRetentionConfigProvider;
         this.metaServiceConfigProvider = metaServiceConfigProvider;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
 
         // Extended meta fields.
         metaExpressionMapper = new MetaExpressionMapper(metaKeyDao, termHandlerFactory);
@@ -300,8 +300,8 @@ public class MetaDaoImpl implements MetaDao {
 
     private Val getPipelineName(final String uuid) {
         String val = uuid;
-        if (docRefInfoService != null) {
-            val = docRefInfoService.name(new DocRef(PipelineDoc.TYPE, uuid))
+        if (docFinder != null) {
+            val = docFinder.getName(new DocRef(PipelineDoc.TYPE, uuid))
                     .orElse(uuid);
         }
         return ValString.create(val);
@@ -332,7 +332,7 @@ public class MetaDaoImpl implements MetaDao {
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService.findByNames(PipelineDoc.TYPE, pipelineNames, true)
+        return docFinder.findByNames(PipelineDoc.TYPE, pipelineNames, true)
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());

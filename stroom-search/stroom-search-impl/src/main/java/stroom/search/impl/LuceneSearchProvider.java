@@ -17,6 +17,7 @@
 package stroom.search.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneIndexDocCache;
@@ -61,6 +62,7 @@ public class LuceneSearchProvider implements SearchProvider {
     private final LuceneProviderFactory luceneProviderFactory;
     private final IndexFieldService indexFieldService;
     private final IndexFieldCache indexFieldCache;
+    private final DocFinder docFinder;
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
@@ -72,7 +74,8 @@ public class LuceneSearchProvider implements SearchProvider {
                                 final NodeSearchTaskCreator nodeSearchTaskCreator,
                                 final LuceneProviderFactory luceneProviderFactory,
                                 final IndexFieldService indexFieldService,
-                                final IndexFieldCache indexFieldCache) {
+                                final IndexFieldCache indexFieldCache,
+                                final DocFinder docFinder) {
         this.indexStore = indexStore;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.securityContext = securityContext;
@@ -83,6 +86,7 @@ public class LuceneSearchProvider implements SearchProvider {
         this.luceneProviderFactory = luceneProviderFactory;
         this.indexFieldService = indexFieldService;
         this.indexFieldCache = indexFieldCache;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -211,6 +215,11 @@ public class LuceneSearchProvider implements SearchProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return indexStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

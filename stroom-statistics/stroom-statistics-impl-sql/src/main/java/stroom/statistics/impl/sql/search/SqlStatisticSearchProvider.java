@@ -17,6 +17,7 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchTaskProgress;
@@ -77,6 +78,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     private final ResultStoreFactory resultStoreFactory;
     private final Statistics statistics;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final DocFinder docFinder;
 
     @Inject
     public SqlStatisticSearchProvider(final StatisticStoreStore statisticStoreStore,
@@ -90,7 +92,8 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                                       final CoprocessorsFactory coprocessorsFactory,
                                       final ResultStoreFactory resultStoreFactory,
                                       final Statistics statistics,
-                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                                      final DocFinder docFinder) {
         this.statisticStoreStore = statisticStoreStore;
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
@@ -101,6 +104,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.statistics = statistics;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -309,6 +313,11 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return statisticStoreStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

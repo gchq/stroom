@@ -64,7 +64,7 @@ public class TestSearchRequestFactory extends AbstractQueryTest {
                     .build();
             searchRequest = new SearchRequestFactory(
                     (keywordGroup, parentTableSettings) -> null,
-                    MockDocResolver.getInstance(),
+                    MockDataSourceResolver.getInstance(),
                     () -> criteria -> null,
                     MockSecurityContext.getInstance())
                     .create(input, searchRequest, expressionContext);

@@ -17,12 +17,11 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentStore;
 import stroom.docstore.api.DocumentStoreRegistry;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.api.ImportExportDocument;
@@ -41,7 +40,6 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
-import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -51,14 +49,14 @@ import jakarta.inject.Singleton;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
 @Singleton
-public class PipelineStoreImpl implements PipelineStore {
+public class PipelineStoreImpl
+        extends AbstractDocumentStore<PipelineDoc>
+        implements PipelineStore {
 
-    private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
     private final PipelineDataMigration pipelineDataMigration;
@@ -71,24 +69,15 @@ public class PipelineStoreImpl implements PipelineStore {
                              final Provider<ProcessorService> processorServiceProvider,
                              final PipelineDataMigration pipelineDataMigration,
                              final Provider<DocumentStoreRegistry> documentStoreRegistryProvider) {
-        this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 PipelineDoc.TYPE,
                 PipelineDoc::builder,
                 PipelineDoc::copy);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.processorServiceProvider = processorServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
         this.documentStoreRegistryProvider = documentStoreRegistryProvider;
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
     }
 
     @Override
@@ -98,11 +87,11 @@ public class PipelineStoreImpl implements PipelineStore {
                                final Set<String> existingNames) {
         final DocumentStoreRegistry documentStoreRegistry = documentStoreRegistryProvider.get();
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final DocRef newPipelineDocRef = store.copyDocument(docRef.getUuid(), newName);
+        final DocRef newPipelineDocRef = getStore().copyDocument(docRef.getUuid(), newName);
 
         final PipelineDoc newPipelineDoc = readDocument(newPipelineDocRef);
 
-        store.findDocRefsEmbeddedIn(docRef).forEach(d -> {
+        getStore().findDocRefsEmbeddedIn(docRef).forEach(d -> {
             // copy the embedded doc and set the new parent doc ref on it
             final DocumentStore<?> docStore = documentStoreRegistry.getDocumentStore(d.getType());
             final DocRef newChildDocRef = docStore.copyDocument(d, d.getName(), false, Set.of());
@@ -123,7 +112,7 @@ public class PipelineStoreImpl implements PipelineStore {
             }
         });
 
-        store.writeDocument(newPipelineDoc);
+        getStore().writeDocument(newPipelineDoc);
 
         return newPipelineDocRef;
     }
@@ -138,23 +127,13 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
     public void deleteDocument(final DocRef docRef) {
         // First we need to logically delete any child processors
         // which will in turn also logically delete any associated processor filters
         processorServiceProvider.get().deleteByPipelineUuid(docRef.getUuid());
 
         // delete any embedded docs
-        final PipelineDoc pipelineDoc = store.readDocument(docRef);
+        final PipelineDoc pipelineDoc = getStore().readDocument(docRef);
         NullSafe.consume(pipelineDoc.getPipelineData().getProperties(), properties ->
                 properties.getAdd().stream()
                         .filter(p -> p.getValue() != null && p.getValue().getEntity() != null &&
@@ -168,39 +147,11 @@ public class PipelineStoreImpl implements PipelineStore {
                         })
         );
 
-        store.deleteDocument(docRef);
+        super.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<PipelineDoc> createMapper() {
+    protected DependencyRemapFunction<PipelineDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final PipelineDoc.Builder copy = doc.copy();
             if (doc.getParentPipeline() != null) {
@@ -263,25 +214,12 @@ public class PipelineStoreImpl implements PipelineStore {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public PipelineDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
     @Override
     public PipelineDoc writeDocument(final PipelineDoc document) {
         final List<DocRef> docRefs = document.getPropertyDocRefs();
 
         // delete the embedded docs that are not currently in the pipeline
-        store.findDocRefsEmbeddedIn(document.asDocRef()).stream()
+        getStore().findDocRefsEmbeddedIn(document.asDocRef()).stream()
                 .filter(Predicate.not(docRefs::contains))
                 .forEach(d -> {
                     final DocumentStoreRegistry documentStoreRegistry = documentStoreRegistryProvider.get();
@@ -289,20 +227,7 @@ public class PipelineStoreImpl implements PipelineStore {
                     docStore.deleteDocument(d);
                 });
 
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
+        return super.writeDocument(document);
     }
 
     @Override
@@ -312,14 +237,7 @@ public class PipelineStoreImpl implements PipelineStore {
                                  final ImportSettings importSettings) {
         // Migrate the data we are importing.
         pipelineDataMigration.migrate(importExportDocument);
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
+        return getStore().importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
@@ -336,33 +254,9 @@ public class PipelineStoreImpl implements PipelineStore {
 
             docRefs.addAll(processorFilters);
 
-            docRefs.addAll(store.findDocRefsEmbeddedIn(docRef));
+            docRefs.addAll(getStore().findDocRefsEmbeddedIn(docRef));
         }
 
         return docRefs;
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
-    }
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
     }
 }

@@ -22,13 +22,11 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.StandardExplorerTags;
-import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -47,19 +44,13 @@ import java.util.stream.Collectors;
 public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private static final boolean DEFAULT_DEPENDENCY_WARNINGS_ENABLED = false;
-    private static final Pattern NODE_TAG_PATTERN = Pattern.compile(ExplorerNode.TAG_PATTERN_STR);
 
     private final ExplorerDbConfig dbConfig;
-    private final CacheConfig docRefInfoCache;
     private final Set<String> suggestedTags;
     private final boolean dependencyWarningsEnabled;
 
     public ExplorerConfig() {
         dbConfig = new ExplorerDbConfig();
-        docRefInfoCache = CacheConfig.builder()
-                .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
-                .build();
         suggestedTags = Arrays.stream(StandardExplorerTags.values())
                 .map(StandardExplorerTags::getTagName)
                 .collect(Collectors.toSet());
@@ -69,11 +60,9 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     @SuppressWarnings("unused")
     @JsonCreator
     public ExplorerConfig(@JsonProperty("db") final ExplorerDbConfig dbConfig,
-                          @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
                           @JsonProperty("suggestedTags") final Set<String> suggestedTags,
                           @JsonProperty("dependencyWarningsEnabled") final Boolean dependencyWarningsEnabled) {
         this.dbConfig = dbConfig;
-        this.docRefInfoCache = docRefInfoCache;
         // Filter out any blanks
         this.suggestedTags = NullSafe.stream(suggestedTags)
                 .filter(tag -> !NullSafe.isBlankString(tag))
@@ -86,12 +75,6 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
     @JsonProperty("db")
     public ExplorerDbConfig getDbConfig() {
         return dbConfig;
-    }
-
-
-    @JsonProperty("docRefInfoCache")
-    public CacheConfig getDocRefInfoCache() {
-        return docRefInfoCache;
     }
 
     @AllMatchPattern(pattern = ExplorerNode.TAG_PATTERN_STR)

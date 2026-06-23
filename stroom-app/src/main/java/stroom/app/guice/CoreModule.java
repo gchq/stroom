@@ -72,6 +72,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.documentation.impl.DocumentationHandlerModule());
         install(new stroom.documentation.impl.DocumentationModule());
         install(new stroom.docstore.impl.DocStoreModule());
+        install(new stroom.docstore.impl.DocFinderModule());
         install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
         install(new stroom.dropwizard.common.DropwizardModule());
         install(new stroom.explorer.impl.ExplorerFavModule());

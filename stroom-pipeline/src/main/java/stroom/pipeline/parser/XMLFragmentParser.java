@@ -17,7 +17,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.ParserFactoryPool;
@@ -31,7 +31,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.filter.DocFinder;
+import stroom.pipeline.filter.PipelineDocFinder;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -79,7 +79,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<TextConverterDoc> docFinder;
+    private final PipelineDocFinder<TextConverterDoc> pipelineDocFinder;
     private final Provider<LocationHolder> locationHolderProvider;
 
     private String injectedCode;
@@ -98,7 +98,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
                              final Provider<FeedHolder> feedHolder,
                              final Provider<PipelineHolder> pipelineHolder,
                              final Provider<LocationHolder> locationHolderProvider,
-                             final DocRefInfoService docRefInfoService) {
+                             final DocFinder docFinder) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
@@ -106,11 +106,10 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docFinder = new DocFinder<>(
+        this.pipelineDocFinder = new PipelineDocFinder<>(
                 TextConverterDoc.TYPE,
                 pathCreator,
-                textConverterStore,
-                docRefInfoService);
+                docFinder);
     }
 
     @Override
@@ -246,7 +245,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docFinder.findDoc(
+        return pipelineDocFinder.findDoc(
                 textConverterRef,
                 namePattern,
                 feedName,

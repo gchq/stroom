@@ -21,6 +21,9 @@ dependencies {
     implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
 
     implementation libs.guice

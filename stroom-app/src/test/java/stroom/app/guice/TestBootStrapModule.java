@@ -30,7 +30,6 @@ import io.dropwizard.core.setup.Environment;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import javax.sql.DataSource;
@@ -38,7 +37,7 @@ import javax.sql.DataSource;
 class TestBootStrapModule {
 
     @Test
-    void test() throws IOException {
+    void test() {
 
         final Path configFile = Path.of("Dummy");
 //        final Config config = StroomYamlUtil.readConfig(configFile);

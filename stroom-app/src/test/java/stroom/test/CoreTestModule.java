@@ -23,6 +23,7 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
 import stroom.config.global.impl.db.GlobalConfigDaoModule;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
@@ -56,5 +57,6 @@ public class CoreTestModule extends AbstractModule {
         install(new stroom.test.DatabaseTestControlModule());
         install(new JerseyModule());
         install(new MockAiModule());
+        install(new DocFinderModule());
     }
 }

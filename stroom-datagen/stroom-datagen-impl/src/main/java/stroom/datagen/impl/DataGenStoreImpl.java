@@ -19,32 +19,26 @@ package stroom.datagen.impl;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.datagen.shared.DataGenDoc.Builder;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class DataGenStoreImpl implements DataGenStore {
+class DataGenStoreImpl
+        extends AbstractDocumentStore<DataGenDoc>
+        implements DataGenStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataGenStoreImpl.class);
 
-    private final Store<DataGenDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataGenProcessors> dataGenProcessorsProvider;
 
@@ -53,7 +47,7 @@ class DataGenStoreImpl implements DataGenStore {
                      final DataGenSerialiser serialiser,
                      final SecurityContext securityContext,
                      final Provider<DataGenProcessors> dataGenProcessorsProvider) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 DataGenDoc.TYPE,
                 DataGenDoc::builder,
@@ -64,13 +58,13 @@ class DataGenStoreImpl implements DataGenStore {
 
     @Override
     public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
+        final DocRef docRef = getStore().createDocument(name);
 
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
-            final DataGenDoc dataGenDoc = store.readDocument(docRef);
-            store.writeDocument(dataGenDoc);
+            final DataGenDoc dataGenDoc = getStore().readDocument(docRef);
+            getStore().writeDocument(dataGenDoc);
         });
         return docRef;
     }
@@ -81,8 +75,8 @@ class DataGenStoreImpl implements DataGenStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final DataGenDoc document = store.readDocument(docRef);
-        return store.createDocument(newName,
+        final DataGenDoc document = getStore().readDocument(docRef);
+        return getStore().createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
                             .copy()
@@ -99,95 +93,9 @@ class DataGenStoreImpl implements DataGenStore {
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
     public void deleteDocument(final DocRef docRef) {
         deleteProcessorFilter(docRef);
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
-    }
-
-    @Override
-    public DataGenDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public DataGenDoc writeDocument(final DataGenDoc document) {
-        return store.writeDocument(document);
-    }
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                               final boolean omitAuditFields,
-                                               final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
+        super.deleteDocument(docRef);
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {

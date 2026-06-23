@@ -35,7 +35,7 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
@@ -146,6 +146,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
+    private final DocFinder docFinder;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -162,7 +163,8 @@ class DashboardServiceImpl implements DashboardService {
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
                          final ValPredicateFactory valPredicateFactory,
-                         final QueryNodeResolver queryNodeResolver) {
+                         final QueryNodeResolver queryNodeResolver,
+                         final DocFinder docFinder) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -178,6 +180,7 @@ class DashboardServiceImpl implements DashboardService {
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -392,12 +395,8 @@ class DashboardServiceImpl implements DashboardService {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
         String basename = searchRequestSource.getComponentId();
         if (searchRequestSource.getOwnerDocRef() != null) {
-            final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
-            final String dashboardName = NullSafe.getOrElse(
-                    dashDocRefInfo,
-                    DocRefInfo::getDocRef,
-                    DocRef::getName,
-                    searchRequestSource.getOwnerDocRef().getName());
+            final Optional<String> name = docFinder.getName(searchRequestSource.getOwnerDocRef());
+            final String dashboardName = name.orElse(searchRequestSource.getOwnerDocRef().getName());
             if (dashboardName != null) {
                 basename = dashboardName + "__" + searchRequestSource.getComponentId();
             }

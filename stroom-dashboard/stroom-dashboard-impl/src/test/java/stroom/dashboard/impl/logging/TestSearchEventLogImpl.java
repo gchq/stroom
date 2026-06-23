@@ -17,7 +17,7 @@
 package stroom.dashboard.impl.logging;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.mock.MockDocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Param;
@@ -55,6 +55,8 @@ class TestSearchEventLogImpl {
 
     @Mock
     private StroomEventLoggingService eventLoggingService;
+    @Mock
+    private DocFinder docFinder;
 
     @Captor
     private ArgumentCaptor<EventAction> eventActionCaptor;
@@ -66,7 +68,7 @@ class TestSearchEventLogImpl {
         searchEventLog = new SearchEventLogImpl(
                 eventLoggingService,
                 securityContext,
-                new MockDocRefInfoService());
+                docFinder);
     }
 
     @Test

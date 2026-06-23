@@ -17,7 +17,7 @@
 package stroom.meta.impl;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -40,11 +40,11 @@ class StreamAttributeMapConverter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamAttributeMapConverter.class);
 
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     @Inject
-    StreamAttributeMapConverter(final Provider<DocRefInfoService> docRefInfoServiceProvider) {
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+    StreamAttributeMapConverter(final Provider<DocFinder> docFinderProvider) {
+        this.docFinderProvider = docFinderProvider;
     }
 
     /**
@@ -67,7 +67,7 @@ class StreamAttributeMapConverter {
             // Need to convert the feed name into a docref as the Feed field is of type DocRef
             final String feedName = meta.getFeedName();
             if (NullSafe.isNonBlankString(feedName)) {
-                final List<DocRef> feedDocRefs = docRefInfoServiceProvider.get().findByName(
+                final List<DocRef> feedDocRefs = docFinderProvider.get().findByName(
                         FeedDoc.TYPE, feedName, false);
                 if (NullSafe.hasItems(feedDocRefs)) {
                     if (feedDocRefs.size() > 1) {

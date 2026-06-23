@@ -39,6 +39,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.contentindex.ContentIndexConfig;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
@@ -46,7 +47,7 @@ import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
@@ -957,6 +958,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                 @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                 @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
@@ -1025,6 +1027,7 @@ class TestConfigMapper {
                     clusterLockConfig,
                     commonDbConfig,
                     contentPackImportConfig,
+                    contentIndexConfig,
                     contentStoreConfig,
                     credentialsConfig,
                     dashboardConfig,

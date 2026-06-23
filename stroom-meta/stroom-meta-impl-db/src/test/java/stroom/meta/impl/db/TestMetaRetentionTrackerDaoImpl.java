@@ -22,7 +22,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
@@ -55,9 +55,9 @@ class TestMetaRetentionTrackerDaoImpl {
                         new MockSecurityContextModule(),
                         new MockTaskModule(),
                         new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
                         new MockMetricsModule(),
+                        new MockDocFinderModule(),
                         new CacheModule(),
                         new DbTestModule())
                 .injectMembers(this);

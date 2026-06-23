@@ -29,13 +29,14 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
+import stroom.contentindex.ContentIndexConfig;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
-import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
@@ -91,6 +92,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
     public static final String PROP_NAME_ASK_STROOM_AI = "askStroomAi";
+    public static final String PROP_NAME_CONTENT_INDEX = "contentIndex";
     public static final String PROP_NAME_CONTENT_STORE = "contentStore";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
@@ -152,6 +154,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final AnnotationConfig annotationConfig;
     private final AskStroomAIConfig askStroomAIConfig;
     private final ContentStoreConfig contentStoreConfig;
+    private final ContentIndexConfig contentIndexConfig;
     private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
     private final ClusterConfig clusterConfig;
@@ -209,6 +212,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.analyticsConfig = new AnalyticsConfig();
         this.annotationConfig = new AnnotationConfig();
         this.askStroomAIConfig = new AskStroomAIConfig();
+        this.contentIndexConfig = new ContentIndexConfig();
         this.contentStoreConfig = new ContentStoreConfig();
         this.autoContentCreationConfig = new AutoContentCreationConfig();
         this.byteBufferPoolConfig = new ByteBufferPoolConfig();
@@ -272,6 +276,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                      @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                      @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
@@ -320,6 +325,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
         this.askStroomAIConfig = askStroomAIConfig;
+        this.contentIndexConfig = contentIndexConfig;
         this.contentStoreConfig = contentStoreConfig;
         this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
@@ -408,6 +414,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_ASK_STROOM_AI)
     public AskStroomAIConfig getAskStroomAIConfig() {
         return askStroomAIConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CONTENT_INDEX)
+    public ContentIndexConfig getContentIndexConfig() {
+        return contentIndexConfig;
     }
 
     @JsonProperty(PROP_NAME_CONTENT_STORE)

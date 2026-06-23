@@ -19,6 +19,7 @@ package stroom.feed;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -38,6 +39,8 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private FeedStore feedStore;
+    @Inject
+    private DocFinder docFinder;
 //    @Inject
 //    private PipelineStore pipelineStore;
 //    @Inject
@@ -54,10 +57,10 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
         feedDoc = feedStore.writeDocument(feedDoc);
         feedStore.writeDocument(feedDoc);
 
-        assertThat(feedStore.findByName(feedName).size()).isEqualTo(1);
-        assertThat(feedStore.findByName(feedName + "void").size()).isEqualTo(0);
+        assertThat(docFinder.findByName(FeedDoc.TYPE, feedName).size()).isEqualTo(1);
+        assertThat(docFinder.findByName(FeedDoc.TYPE, feedName + "void").size()).isEqualTo(0);
 
-        final List<DocRef> list = feedStore.findByName(feedName);
+        final List<DocRef> list = docFinder.findByName(FeedDoc.TYPE, feedName);
         assertThat(list.size()).isEqualTo(1);
         feedDoc = feedStore.readDocument(list.getFirst());
         assertThat(feedDoc.getCreateTimeMs()).isNotNull();
@@ -66,7 +69,7 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
 
         feedStore.deleteDocument(list.getFirst());
 
-        assertThat(feedStore.findByName(feedName).size()).isEqualTo(0);
+        assertThat(docFinder.findByName(FeedDoc.TYPE, feedName).size()).isEqualTo(0);
     }
 
 //    /**

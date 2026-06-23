@@ -19,6 +19,7 @@ package stroom.core.receive;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
@@ -122,6 +123,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final CachedValue<Templator, String> cachedDestinationSubPathTemplator;
     private final CachedValue<Templator, String> cachedGroupTemplator;
     private final CachedValue<Templator, String> cachedAdditionalGroupTemplator;
+    private final DocFinder docFinder;
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -139,7 +141,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ProcessorFilterService processorFilterService,
                                           final PipelineService pipelineService,
                                           final ExpressionMatcherFactory expressionMatcherFactory,
-                                          final ExpressionPredicateFactory expressionPredicateFactory) {
+                                          final ExpressionPredicateFactory expressionPredicateFactory,
+                                          final DocFinder docFinder) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
@@ -154,6 +157,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
+        this.docFinder = docFinder;
 
         // TODO change to use ExpressionPredicateFactory
         this.cachedExpressionMatcher = CachedValue.builder()
@@ -239,7 +243,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         Optional<FeedDoc> optFeedDoc = Optional.empty();
         if (NullSafe.isNonBlankString(feedName)) {
             // Should only ever be one
-            optFeedDoc = NullSafe.stream(feedStore.findByName(feedName))
+            optFeedDoc = NullSafe.stream(docFinder.findByName(FeedDoc.TYPE, feedName))
                     .findFirst()
                     .map(feedStore::readDocument);
             LOGGER.debug("tryCreateFeed - feedName: {}, feedDoc: {}",
@@ -302,7 +306,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             LOGGER.debug("Waited {} to obtain lock", timer);
             // Re-test under lock
             DocRef docRef;
-            final List<DocRef> feeds = feedStore.findByName(feedName);
+            final List<DocRef> feeds = docFinder.findByName(FeedDoc.TYPE, feedName);
             if (feeds.isEmpty()) {
                 try {
                     docRef = createFeedAndContent(feedName, userDesc, attributeMap, contentTemplate);
@@ -310,8 +314,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                     // It's possible that another thread/node has created the feed
                     if (NullSafe.containsIgnoringCase(e.getMessage(), "exists")) {
                         // Feeds have unique names, so get first
-                        docRef = feedStore.findByName(feedName)
-                                .get(0);
+                        docRef = docFinder.findByName(FeedDoc.TYPE, feedName)
+                                .getFirst();
                     } else {
                         throw e;
                     }
@@ -319,7 +323,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 return docRef;
             } else {
                 // Feeds have unique name so get first
-                docRef = feeds.get(0);
+                docRef = feeds.getFirst();
             }
             return docRef;
         });

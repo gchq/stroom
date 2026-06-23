@@ -17,7 +17,6 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
@@ -28,7 +27,6 @@ import stroom.util.shared.PermissionException;
 import jakarta.inject.Inject;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -92,13 +90,6 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRefInfo info(final DocRef docRef) {
-        throw new PermissionException(
-                securityContext.getUserRef(),
-                "You cannot get info about the System node");
-    }
-
-    @Override
     public String getType() {
         return ExplorerConstants.SYSTEM;
     }
@@ -124,17 +115,4 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     // ---------------------------------------------------------------------
     // END OF HasDependencies
     // ---------------------------------------------------------------------
-
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        throw new PermissionException(securityContext.getUserRef(),
-                "You cannot perform findByNames on the System node handler");
-    }
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        throw new PermissionException(securityContext.getUserRef(),
-                "You cannot perform listDocuments on the System node handler");
-    }
 }

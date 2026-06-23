@@ -18,7 +18,7 @@ package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.datasource.QueryField;
 
 import com.google.inject.Provider;
@@ -29,15 +29,15 @@ public class TermHandlerFactory {
 
     private final Provider<WordListProvider> wordListProvider;
     private final Provider<CollectionService> collectionService;
-    private final Provider<DocRefInfoService> docRefInfoService;
+    private final Provider<DocFinder> docFinderProvider;
 
     @Inject
     public TermHandlerFactory(final Provider<WordListProvider> wordListProvider,
                               final Provider<CollectionService> collectionService,
-                              final Provider<DocRefInfoService> docRefInfoService) {
+                              final Provider<DocFinder> docFinderProvider) {
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinderProvider = docFinderProvider;
     }
 
     public <T> TermHandler<T> create(final QueryField dataSourceField,
@@ -55,7 +55,7 @@ public class TermHandlerFactory {
                 converter,
                 wordListProvider,
                 collectionService,
-                docRefInfoService,
+                docFinderProvider,
                 useName,
                 false);
     }

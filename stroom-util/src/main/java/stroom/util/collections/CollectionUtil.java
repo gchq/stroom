@@ -164,7 +164,7 @@ public class CollectionUtil {
      * Convert a {@link Collection} of values into a {@link Map} of those values
      * keyed using keyExtractor.
      * <p>
-     * If duplicate values are found, the first value encountered is put in the map.
+     * If duplicate values are found, the behaviour is defined by duplicateMode.
      * </p>
      *
      * @param duplicateMode How to handle multiple values for the same key.
@@ -183,7 +183,7 @@ public class CollectionUtil {
      * Convert an array of values into a {@link EnumMap} of those values
      * keyed using keyExtractor.
      * <p>
-     * If duplicate values are found, the first value encountered is put in the map.
+     * If duplicate values are found, the behaviour is defined by duplicateMode.
      * </p>
      *
      * @param duplicateMode How to handle multiple values for the same key.

@@ -20,19 +20,12 @@ import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,99 +33,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRetentionRulesProvider {
+class DataRetentionRulesServiceImpl
+        extends AbstractDocumentStore<DataRetentionRules>
+        implements DataRetentionRulesService, DataRetentionRulesProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
 
-    private final Store<DataRetentionRules> store;
     private final SecurityContext securityContext;
 
     @Inject
     DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
                                   final Serialiser2Factory serialiser2Factory,
                                   final SecurityContext securityContext) {
-        this.securityContext = securityContext;
-        final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
-                DataRetentionRules.class);
-        this.store = storeFactory.createStore(
-                serialiser,
+        super(storeFactory,
+                serialiser2Factory.createSerialiser(
+                        DataRetentionRules.class),
                 DataRetentionRules.TYPE,
                 DataRetentionRules::builder,
                 DataRetentionRules::copy);
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+        this.securityContext = securityContext;
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<DataRetentionRules> createMapper() {
+    protected DependencyRemapFunction<DataRetentionRules> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final List<DataRetentionRule> rules = doc.getRules();
-            if (rules != null && rules.size() > 0) {
+            if (rules != null && !rules.isEmpty()) {
                 rules.forEach(receiveDataRule -> {
                     if (receiveDataRule.getExpression() != null) {
                         dependencyRemapper.remapExpression(receiveDataRule.getExpression());
@@ -143,18 +74,10 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         };
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
     public DataRetentionRules readDocument(final DocRef docRef) {
         return securityContext.secureResult(() ->
-                store.readDocument(docRef));
+                getStore().readDocument(docRef));
     }
 
     @Override
@@ -162,51 +85,9 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
         // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
         return securityContext.secureResult(AppPermission.MANAGE_POLICIES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
+                () -> securityContext.asProcessingUserResult(() -> getStore().writeDocument(document)));
 
     }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
 
     @Override
     public DataRetentionRules getOrCreate() {
@@ -219,7 +100,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
                     .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
                     .collect(Collectors.toSet());
 
-            if (filtered.size() > 0) {
+            if (!filtered.isEmpty()) {
                 if (filtered.size() > 1) {
                     LOGGER.warn("Found more than one matching set of data retention rules.");
                 }
@@ -228,7 +109,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
                 return readDocument(docRef);
             }
 
-            if (docRefs.size() > 0) {
+            if (!docRefs.isEmpty()) {
                 if (docRefs.size() > 1) {
                     LOGGER.warn("Found more than one matching set of data retention rules.");
                 }
@@ -240,15 +121,5 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
             final DocRef docRef = createDocument(POLICY_NAME);
             return readDocument(docRef);
         });
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 }

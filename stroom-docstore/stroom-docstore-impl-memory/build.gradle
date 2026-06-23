@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.docstore.impl.memory'
 
 dependencies {
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docref')
@@ -27,4 +28,5 @@ dependencies {
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
+    implementation libs.slf4j.api
 }

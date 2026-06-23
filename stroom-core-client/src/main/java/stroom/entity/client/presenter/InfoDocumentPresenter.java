@@ -17,18 +17,20 @@
 package stroom.entity.client.presenter;
 
 import stroom.data.client.presenter.CopyTextUtil;
+import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -88,36 +90,24 @@ public class InfoDocumentPresenter
     @Override
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
         final ExplorerNodeInfo explorerNodeInfo = event.getExplorerNodeInfo();
-        final DocRefInfo info = event.getDocRefInfo();
-        final DocRef docRef = info.getDocRef();
+        final ResultPage<DocAuditEntry> auditEntryResultPage = event.getAuditEntries();
+        final DocRef docRef = explorerNodeInfo.getExplorerNode().getDocRef();
         final ExplorerNode explorerNode = event.getExplorerNode();
 
         final HtmlBuilder hb = new HtmlBuilder();
-        if (info.getOtherInfo() != null) {
-            final int index = info.getOtherInfo().indexOf(":");
-            if (index != -1) {
-                appendLine(info.getOtherInfo().substring(0, index),
-                        info.getOtherInfo().substring(index + 1),
-                        hb);
-            }
-        }
+//        if (info.getOtherInfo() != null) {
+//            final int index = info.getOtherInfo().indexOf(":");
+//            if (index != -1) {
+//                appendLine(info.getOtherInfo().substring(0, index),
+//                        info.getOtherInfo().substring(index + 1),
+//                        hb);
+//            }
+//        }
 
         appendLine("UUID", docRef.getUuid(), hb);
         appendLine("Type", docRef.getType(), hb);
         appendLine("Name", docRef.getName(), hb);
 
-        if (info.getCreateUser() != null) {
-            appendLine("Created By", info.getCreateUser(), hb);
-        }
-        if (info.getCreateTime() != null) {
-            appendLine("Created On", dateTimeFormatter.format(info.getCreateTime()), hb);
-        }
-        if (info.getUpdateUser() != null) {
-            appendLine("Updated By", info.getUpdateUser(), hb);
-        }
-        if (info.getUpdateTime() != null) {
-            appendLine("Updated On", dateTimeFormatter.format(info.getUpdateTime()), hb);
-        }
         if (NullSafe.hasItems(explorerNode.getTags())) {
 //            final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
             appendLine("Tags", "", hb);
@@ -129,6 +119,22 @@ public class InfoDocumentPresenter
                     .forEach(tag ->
                             appendLine("\t", tag, hb));
 //            sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
+        }
+
+        // Add audit information
+        if (auditEntryResultPage != null && !NullSafe.isEmptyCollection(auditEntryResultPage.getValues())) {
+            hb.div(d -> appendKey("Audit Info", d), Attribute.className("infoLine"));
+            final TableBuilder tableBuilder = new TableBuilder();
+            tableBuilder.row("Time", "User", "Action");
+            for (final DocAuditEntry entry : auditEntryResultPage.getValues()) {
+                final String time = dateTimeFormatter.format(entry.getTime());
+                tableBuilder.row(
+                        CopyTextUtil.render(time, false),
+                        CopyTextUtil.render(entry.getUser().getDisplayName(), false),
+                        CopyTextUtil.render(entry.getAction().getDisplayValue(), false)
+                );
+            }
+            tableBuilder.write(hb);
         }
 
         getView().setInfo(hb.toSafeHtml());

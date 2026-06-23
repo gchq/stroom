@@ -19,6 +19,7 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
@@ -210,8 +211,9 @@ class TestTemporalStateDb {
     void testFullProcess(@TempDir final Path rootDir) {
         final StatePaths statePaths = new StatePaths(rootDir);
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
+        final DocFinder docFinder = Mockito.mock(DocFinder.class);
         final PlanBDoc doc = DOC;
-        Mockito.when(planBDocStore.findByName(Mockito.anyString()))
+        Mockito.when(docFinder.findByName(Mockito.eq(PlanBDoc.TYPE), Mockito.anyString()))
                 .thenReturn(Collections.singletonList(doc.asDocRef()));
         Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
                 .thenReturn(doc);

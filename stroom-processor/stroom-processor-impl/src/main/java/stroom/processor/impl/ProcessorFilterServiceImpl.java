@@ -18,8 +18,7 @@ package stroom.processor.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -85,7 +84,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private final ProcessorTaskDao processorTaskDao;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final UserRefLookup userRefLookup;
 
     @Inject
@@ -94,14 +93,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final DocRefInfoService docRefInfoService,
+                               final DocFinder docFinder,
                                final UserRefLookup userRefLookup) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.userRefLookup = userRefLookup;
     }
 
@@ -457,7 +456,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     .type(docType)
                     .uuid(uuid)
                     .build();
-            return docRefInfoService.name(pipelineDocRef);
+            return docFinder.getName(pipelineDocRef);
         } catch (final RuntimeException e) {
             // This error is expected in tests and the pipeline name isn't essential
             // as it is only used in here for logging purposes.
@@ -526,14 +525,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
                     try {
                         if (docRef != null) {
-                            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
-                            if (optionalDocRefInfo.isPresent()) {
+                            final Optional<DocRef> optionalDocRef = docFinder.decorateIfExists(docRef);
+                            if (optionalDocRef.isPresent()) {
                                 expressionTerm = ExpressionTerm.builder()
                                         .enabled(expressionTerm.enabled())
                                         .field(expressionTerm.getField())
                                         .condition(expressionTerm.getCondition())
                                         .value(expressionTerm.getValue())
-                                        .docRef(optionalDocRefInfo.get().getDocRef())
+                                        .docRef(optionalDocRef.orElse(docRef))
                                         .build();
                             }
                         }
@@ -617,9 +616,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private String getPipelineDetails(final String uuid) {
         try {
             final DocRef pipelineDocRef = new DocRef("Pipeline", uuid);
-            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(pipelineDocRef);
-            return optionalDocRefInfo
-                    .map(DocRefInfo::getDocRef)
+            return docFinder.decorateIfExists(pipelineDocRef)
                     .map(DocRef::getName)
                     .map(name -> name + " (" + uuid + ")")
                     .orElse(uuid);
@@ -665,11 +662,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     try {
                         final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
 
-                        DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
-                        pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
-
+                        final DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
+                        final DocRef decorated = docFinder.decorate(pipelineDocRef);
                         final String details = LogUtil.message(
-                                "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
+                                "Pipeline '{}' has a filter with a run-as dependency.",
+                                decorated.getName());
                         return new UserDependency(
                                 userRef,
                                 details,

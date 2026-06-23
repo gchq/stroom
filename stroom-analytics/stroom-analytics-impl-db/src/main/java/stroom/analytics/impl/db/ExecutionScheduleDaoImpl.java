@@ -34,8 +34,7 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindUserContext;
@@ -47,6 +46,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -81,7 +81,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
     private final SecurityContext securityContext;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final ExpressionMapper expressionMapper;
     private final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider;
 
@@ -89,13 +89,13 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider,
                                     final Provider<UserRefLookup> userRefLookupProvider,
                                     final SecurityContext securityContext,
-                                    final DocRefInfoService docRefInfoService,
+                                    final DocFinder docFinder,
                                     final ExpressionMapperFactory expressionMapperFactory,
                                     final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
         this.userRefLookupProvider = userRefLookupProvider;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.executeNowMapProvider = executeNowMapProvider;
 
         expressionMapper = expressionMapperFactory.create();
@@ -141,7 +141,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService
+        return docFinder
                 .findByNames(AnalyticRuleDoc.TYPE, names, true)
                 .stream()
                 .map(DocRef::getUuid)
@@ -153,7 +153,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        return docRefInfoService
+        return docFinder
                 .findByNames(ReportDoc.TYPE, names, true)
                 .stream()
                 .map(DocRef::getUuid)
@@ -272,20 +272,24 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         request.getSortList().forEach(sort -> {
             if (ExecutionScheduleFields.PARENT_DOC.equals(sort.getId())) {
                 list.sort((a, b) -> {
-                    final String aName = docRefInfoService.name(a.getOwningDoc()).orElse("");
-                    final String bName = docRefInfoService.name(b.getOwningDoc()).orElse("");
-                    return sort.isDesc() ? -aName.compareToIgnoreCase(bName) : aName.compareToIgnoreCase(bName);
+                    final String aName = docFinder.getName(a.getOwningDoc()).orElse("");
+                    final String bName = docFinder.getName(b.getOwningDoc()).orElse("");
+                    return sort.isDesc()
+                            ? -aName.compareToIgnoreCase(bName)
+                            : aName.compareToIgnoreCase(bName);
                 });
             }
             if (ExecutionScheduleFields.PARENT_DOC_TYPE.equals(sort.getId())) {
                 list.sort((a, b) -> {
-                    final Optional<DocRefInfo> aInfo = docRefInfoService.info(a.getOwningDoc());
-                    final Optional<DocRefInfo> bInfo = docRefInfoService.info(b.getOwningDoc());
+                    final DocRef aInfo = docFinder.decorate(a.getOwningDoc());
+                    final DocRef bInfo = docFinder.decorate(b.getOwningDoc());
 
-                    final String aType = aInfo.map(docRefInfo -> docRefInfo.getDocRef().getType()).orElse("");
-                    final String bType = bInfo.map(docRefInfo -> docRefInfo.getDocRef().getType()).orElse("");
+                    final String aType = NullSafe.getOrElse(aInfo, DocRef::getType, "");
+                    final String bType = NullSafe.getOrElse(bInfo, DocRef::getType, "");
 
-                    return sort.isDesc() ? -aType.compareToIgnoreCase(bType) : aType.compareToIgnoreCase(bType);
+                    return sort.isDesc()
+                            ? -aType.compareToIgnoreCase(bType)
+                            : aType.compareToIgnoreCase(bType);
                 });
             }
             if (ExecutionScheduleFields.SCHEDULE.equals(sort.getId())) {
@@ -302,7 +306,9 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                     if (aSchedule.getType() == ScheduleType.FREQUENCY) {
                         final Long aFreq = ModelStringUtil.parseDurationString(aSchedule.getExpression());
                         final Long bFreq = ModelStringUtil.parseDurationString(bSchedule.getExpression());
-                        return sort.isDesc() ? -aFreq.compareTo(bFreq) : aFreq.compareTo(bFreq);
+                        return sort.isDesc()
+                                ? -aFreq.compareTo(bFreq)
+                                : aFreq.compareTo(bFreq);
                     } else if (aSchedule.getType() == ScheduleType.CRON) {
                         //Sort by frequency then by time offset from zero.
                         //Treats <0 0 0 0 0> as the earliest, and <59 23 31 12 7> as the latest.
@@ -323,9 +329,13 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                         //No duration difference, so sort by offset
                         if (durationComparison == 0) {
                             final int offsetComparison = aInst1.compareTo(bInst1);
-                            return sort.isDesc() ? -offsetComparison : offsetComparison;
+                            return sort.isDesc()
+                                    ? -offsetComparison
+                                    : offsetComparison;
                         }
-                        return sort.isDesc() ? -durationComparison : durationComparison;
+                        return sort.isDesc()
+                                ? -durationComparison
+                                : durationComparison;
                     }
                     return 0;
                 });
@@ -335,7 +345,9 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 list.sort((a, b) -> {
                     final String aName = a.getRunAsUser().getDisplayName();
                     final String bName = b.getRunAsUser().getDisplayName();
-                    return sort.isDesc() ? -aName.compareToIgnoreCase(bName) : aName.compareToIgnoreCase(bName);
+                    return sort.isDesc()
+                            ? -aName.compareToIgnoreCase(bName)
+                            : aName.compareToIgnoreCase(bName);
                 });
             }
         });
@@ -412,32 +424,32 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         }
 
         JooqUtil.context(analyticsDbConnProvider, context -> context
-                        .insertInto(EXECUTION_SCHEDULE,
-                                EXECUTION_SCHEDULE.UUID,
-                                EXECUTION_SCHEDULE.NAME,
-                                EXECUTION_SCHEDULE.ENABLED,
-                                EXECUTION_SCHEDULE.NODE_NAME,
-                                EXECUTION_SCHEDULE.SCHEDULE_TYPE,
-                                EXECUTION_SCHEDULE.EXPRESSION,
-                                EXECUTION_SCHEDULE.CONTIGUOUS,
-                                EXECUTION_SCHEDULE.START_TIME_MS,
-                                EXECUTION_SCHEDULE.END_TIME_MS,
-                                EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
-                        .values(uuid,
-                                executionSchedule.getName(),
-                                executionSchedule.isEnabled(),
-                                executionSchedule.getNodeName(),
-                                executionSchedule.getSchedule().getType().name(),
-                                executionSchedule.getSchedule().getExpression(),
-                                executionSchedule.isContiguous(),
-                                startTimeMs,
-                                endTimeMs,
-                                executionSchedule.getOwningDoc().getType(),
-                                executionSchedule.getOwningDoc().getUuid(),
-                                runAsUser.getUuid())
-                        .execute());
+                .insertInto(EXECUTION_SCHEDULE,
+                        EXECUTION_SCHEDULE.UUID,
+                        EXECUTION_SCHEDULE.NAME,
+                        EXECUTION_SCHEDULE.ENABLED,
+                        EXECUTION_SCHEDULE.NODE_NAME,
+                        EXECUTION_SCHEDULE.SCHEDULE_TYPE,
+                        EXECUTION_SCHEDULE.EXPRESSION,
+                        EXECUTION_SCHEDULE.CONTIGUOUS,
+                        EXECUTION_SCHEDULE.START_TIME_MS,
+                        EXECUTION_SCHEDULE.END_TIME_MS,
+                        EXECUTION_SCHEDULE.DOC_TYPE,
+                        EXECUTION_SCHEDULE.DOC_UUID,
+                        EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
+                .values(uuid,
+                        executionSchedule.getName(),
+                        executionSchedule.isEnabled(),
+                        executionSchedule.getNodeName(),
+                        executionSchedule.getSchedule().getType().name(),
+                        executionSchedule.getSchedule().getExpression(),
+                        executionSchedule.isContiguous(),
+                        startTimeMs,
+                        endTimeMs,
+                        executionSchedule.getOwningDoc().getType(),
+                        executionSchedule.getOwningDoc().getUuid(),
+                        runAsUser.getUuid())
+                .execute());
 
         final ExecutionSchedule result = fetchScheduleByUuid(uuid).orElseThrow();
         if (result.getSchedule().getType().equals(ScheduleType.INSTANT) && result.isEnabled()) {
@@ -669,7 +681,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         final DocRef docRef = new DocRef(
                 record.get(EXECUTION_SCHEDULE.DOC_TYPE),
                 record.get(EXECUTION_SCHEDULE.DOC_UUID));
-        final DocRef namedDocRef = docRef.copy().name(docRefInfoService.name(docRef).orElse("<ORPHANED>")).build();
+        final DocRef namedDocRef = docRef.copy().name(docFinder.getName(docRef).orElse("<ORPHANED>")).build();
 
         return ExecutionSchedule
                 .builder()

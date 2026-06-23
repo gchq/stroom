@@ -17,8 +17,6 @@
 package stroom.docstore.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
@@ -31,7 +29,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public interface Store<D extends AbstractDoc>
-        extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
+        extends DocumentActionHandler<D>, ContentIndexable {
     // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
     // ---------------------------------------------------------------------
@@ -46,8 +44,6 @@ public interface Store<D extends AbstractDoc>
     DocRef renameDocument(DocRef docRef, String name);
 
     void deleteDocument(DocRef docRef);
-
-    DocRefInfo info(DocRef docRef);
 
     // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler

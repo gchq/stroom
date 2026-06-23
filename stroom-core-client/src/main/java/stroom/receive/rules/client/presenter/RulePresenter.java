@@ -57,12 +57,11 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
 
     ReceiveDataRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new ReceiveDataRule(originalRule.getRuleNumber(),
-                originalRule.getCreationTime(),
-                getView().getName(),
-                originalRule.isEnabled(),
-                expression,
-                getView().getAction());
+        return originalRule.copy()
+                .withName(getView().getName())
+                .withExpression(expression)
+                .withAction(getView().getAction())
+                .build();
     }
 
 

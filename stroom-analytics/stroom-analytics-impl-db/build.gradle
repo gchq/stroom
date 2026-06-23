@@ -23,7 +23,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-impl')

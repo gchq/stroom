@@ -16,10 +16,7 @@
 
 package stroom.planb.impl;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.data.FileTransferClient;
@@ -79,21 +76,13 @@ public class PlanBModule extends AbstractModule {
                 .addBinding(PlanBShardInfoServiceImpl.class);
 
         // State
-        bind(PlanBDocStore.class).to(PlanBDocStoreImpl.class);
         bind(FileTransferClient.class).to(FileTransferClientImpl.class);
         bind(FileTransferService.class).to(FileTransferServiceImpl.class);
 
         bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(PlanBDocStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(PlanBDocStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(PlanBDocStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(PlanBDoc.TYPE, PlanBDocStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(PlanBDoc.TYPE, PlanBDocStore.class, PlanBDocStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(PlanBDocResourceImpl.class)

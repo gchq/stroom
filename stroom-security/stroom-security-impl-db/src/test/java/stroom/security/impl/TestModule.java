@@ -20,7 +20,7 @@ import stroom.activity.api.ActivityService;
 import stroom.cache.impl.CacheModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.UserService;
@@ -56,9 +56,9 @@ public class TestModule extends AbstractModule {
         install(new MockUserIdentityFactoryModule());
         install(new MockTaskModule());
         install(new MockHasUserDependenciesModule());
+        install(new MockDocFinderModule());
 
         install(new MockCollectionModule());
-        install(new MockDocRefInfoModule());
         install(new MockWordListProviderModule());
 
         bind(AppPermissionService.class).to(AppPermissionServiceImpl.class);

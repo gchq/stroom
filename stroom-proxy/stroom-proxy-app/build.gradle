@@ -29,7 +29,6 @@ dependencies {
     implementation project(':stroom-explorer:stroom-collection-api')
     implementation project(':stroom-explorer:stroom-collection-mock')
     implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
