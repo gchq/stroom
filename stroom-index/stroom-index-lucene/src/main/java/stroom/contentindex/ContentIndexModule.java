@@ -29,7 +29,10 @@ public class ContentIndexModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ContentIndex.class).to(LuceneContentIndex.class);
+        // Bind eagerly so it initialises the index on boot
+        bind(ContentIndex.class)
+                .to(LuceneContentIndex.class)
+                .asEagerSingleton();
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(LuceneContentIndex.class);
@@ -38,7 +41,8 @@ public class ContentIndexModule extends AbstractModule {
                 .bindJobTo(IndexContent.class, builder -> builder
                         .name(LuceneContentIndex.RE_INDEX_JOB_NAME)
                         .description("Reindex Stroom content to improve \"Find in Content\" results. " +
-                                     "This only needs to run on nodes serving the user interface.")
+                                     "This only needs to run on nodes serving the user interface. If " +
+                                     "the index is on shared storage, only one node (of any type) needs to run this.")
                         .managed(true)
                         .enabledOnBootstrap(true)
                         .enabled(false)

@@ -19,6 +19,8 @@ ext.moduleName = 'stroom.index.lucene'
 dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-analytics:stroom-analytics-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
