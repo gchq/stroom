@@ -171,7 +171,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     private static final int MAX_GRAM = 2;
     private static final int MAX_HIGHLIGHTS = 100;
 
-    static final String CONTENT_INDEXER_JOB_NAME = "Content Indexer";
+    static final String RE_INDEX_JOB_NAME = "Reindex Content";
 
     private static final String TYPE = "type";
     private static final String UUID = "uuid";
@@ -325,7 +325,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                         LOGGER.debug("ensureIndexAsync() - Acquired cluster lock in {}.", timer);
 
                         LOGGER.info("{} - Executing async initialisation of the content index under cluster lock",
-                                CONTENT_INDEXER_JOB_NAME);
+                                RE_INDEX_JOB_NAME);
                         CompletableFuture.runAsync(() -> {
                             runUnderLock(() -> {
                                 // Re-test under cluster lock
@@ -336,7 +336,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                         }, executor);
                     } else {
                         LOGGER.info("{} - Executing async initialisation of the content index under local lock",
-                                CONTENT_INDEXER_JOB_NAME);
+                                RE_INDEX_JOB_NAME);
                         CompletableFuture.runAsync(this::initIndex, executor);
                     }
                 } else {
@@ -371,7 +371,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             final Analyzer analyzer = Objects.requireNonNullElseGet(this.analyzer, this::buildAnalyzer);
             try {
                 final Path indexDirPath = indexDir.path;
-                LOGGER.info("{} - Initialising content index in {}", CONTENT_INDEXER_JOB_NAME, indexDirPath);
+                LOGGER.info("{} - Initialising content index in {}", RE_INDEX_JOB_NAME, indexDirPath);
 
                 if (Files.exists(indexDirPath)) {
                     LOGGER.debug("initIndex() - {} exists", indexDirPath);
@@ -420,7 +420,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             // This is the runnable to (re-)build the index
             final Runnable runnable = securityContext.asProcessingUserResult(() ->
                     taskContextFactory.context(
-                            CONTENT_INDEXER_JOB_NAME + " (Initialisation)",
+                            RE_INDEX_JOB_NAME + " (Initialisation)",
                             TerminateHandlerFactory.NOOP_FACTORY,
                             ignored -> {
                                 doReindex(typeToIndexableMap);
@@ -451,10 +451,10 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             indexInitialisedLatch.countDown();
 
             if (isSyncRebuildRequired) {
-                LOGGER.info("{} - Initialisation of content index complete", CONTENT_INDEXER_JOB_NAME);
+                LOGGER.info("{} - Initialisation of content index complete", RE_INDEX_JOB_NAME);
             } else {
                 LOGGER.info("{} - Initialisation of content index complete, " +
-                            "(re-)build of the index will continue in the background", CONTENT_INDEXER_JOB_NAME);
+                            "(re-)build of the index will continue in the background", RE_INDEX_JOB_NAME);
             }
         } else {
             LOGGER.debug("Another thread is initialising the index");
@@ -499,7 +499,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         eventQueue = new ArrayBlockingQueue<>(EVENT_QUEUE_SIZE);
         CompletableFuture
                 .runAsync(() -> {
-                    LOGGER.info("{} - Starting background thread to monitor change queue", CONTENT_INDEXER_JOB_NAME);
+                    LOGGER.info("{} - Starting background thread to monitor change queue", RE_INDEX_JOB_NAME);
                     // This runnable is executed at the end of initIndex, so we don't
                     // have to worry about checking if the index is ready
                     try {
@@ -635,7 +635,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             runUnderLock(() ->
                     doReindex(Objects.requireNonNullElseGet(typeToIndexableMap, this::buildTypeToIndexableMap)));
         } else {
-            LOGGER.debug("{} - Index not yet initialised, nothing to re-index", CONTENT_INDEXER_JOB_NAME);
+            LOGGER.debug("{} - Index not yet initialised, nothing to re-index", RE_INDEX_JOB_NAME);
         }
     }
 
@@ -656,7 +656,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                 if ((indexState.lastRebuildEpochMs + minRebuildAge.toMillis()) < System.currentTimeMillis()) {
 
                     taskContextFactory.current().info(() -> "Gathering indexable items");
-                    LOGGER.info("{} - Re-indexing all content", CONTENT_INDEXER_JOB_NAME);
+                    LOGGER.info("{} - Re-indexing all content", RE_INDEX_JOB_NAME);
                     securityContext.asProcessingUser(() -> {
                         final List<EntityEvent> events = typeToindexableMap.values()
                                 .stream()
@@ -683,7 +683,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                 } else {
                     taskContextFactory.current().info(() -> "Skipping re-indexing");
                     LOGGER.info("{} - Skipping Re-indexing, last re-index: {} ({}) is younger than {}",
-                            CONTENT_INDEXER_JOB_NAME,
+                            RE_INDEX_JOB_NAME,
                             DateUtil.createNormalDateTimeString(indexState.lastRebuildEpochMs),
                             Duration.between(indexState.getLastRebuildTime(), Instant.now()),
                             minRebuildAge);
@@ -1065,10 +1065,10 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     private static Predicate<Object> createTaskTerminatedCheck(final TaskContext taskContext) {
         return obj -> {
             if (taskContext.isTerminated()) {
-                LOGGER.info("{} - Task is terminated: '{}'", CONTENT_INDEXER_JOB_NAME, taskContext);
+                LOGGER.info("{} - Task is terminated: '{}'", RE_INDEX_JOB_NAME, taskContext);
                 return false;
             } else if (Thread.currentThread().isInterrupted()) {
-                LOGGER.info("{} - Task thread is interrupted: '{}'", CONTENT_INDEXER_JOB_NAME, taskContext);
+                LOGGER.info("{} - Task thread is interrupted: '{}'", RE_INDEX_JOB_NAME, taskContext);
                 return false;
             } else {
                 return true;
