@@ -160,7 +160,7 @@ CREATE TABLE doc_data_snapshot (
   text_data longtext,
   bin_data  longblob,
   PRIMARY KEY (id),
-  UNIQUE KEY doc_data_snapshot_dedup_idx (fk_doc_id, ext, data_hash),
+  KEY doc_data_snapshot_dedup_idx (fk_doc_id, ext, data_hash),
   KEY doc_data_snapshot_fk_doc_id_idx (fk_doc_id),
   CONSTRAINT doc_data_snapshot_fk_doc_id FOREIGN KEY (fk_doc_id) REFERENCES doc (id)
 );
@@ -180,7 +180,7 @@ CREATE TABLE doc_audit_data_snapshot (
 );
 ```
 
-The `doc_data_snapshot` table stores each **unique data snapshot** after an operation. The `data_hash` column (SHA-256 of the data content) combined with `(fk_doc_id, ext)` forms a unique constraint to prevent storing duplicate content.
+The `doc_data_snapshot` table stores each **unique data snapshot** after an operation. The `data_hash` column (SHA-256 of the data content) combined with `(fk_doc_id, ext)` forms a non-unique index for fast candidate lookup during deduplication. On write, the code looks up candidates by hash, then compares actual data content to confirm a true match before reusing a row. This avoids any risk of hash collision causing incorrect deduplication or insert failure.
 
 The `doc_audit_data_snapshot` link table connects each audit entry to the set of `doc_data_snapshot` rows that represent the document's snapshot **after** that operation. This means:
 - If only XSL changes on an update, the new audit entry links to a NEW snapshot row for `xsl` but the SAME snapshot row for `meta` as the previous audit
@@ -312,8 +312,8 @@ Currently only `CREATE`, `UPDATE`, `DELETE` exist. The new values map to operati
 A Flyway versioned migration that:
 
 1. **Creates `doc_data`** table with sparse typed columns
-2. **Migrates meta JSON** (`ext = 'meta'`) into `json_data` column
-3. **Migrates content JSON** (`ext = 'json'`) into `json_data` column
+2. **Migrates meta JSON** (`ext = 'meta'`) into `json_data` column — validates with `JSON_VALID()` first; invalid rows are diverted to `text_data` for manual review
+3. **Migrates content JSON** (`ext = 'json'`) into `json_data` column — same validation guard; invalid rows diverted to `text_data`
 4. **Migrates text content** (`ext IN ('xsl', 'xsd', 'xml', 'js', 'txt')`) into `text_data` column
 5. **Migrates remaining content** (unknown extensions) into `bin_data` column
 6. **Removes all non-meta rows from `doc`**
@@ -338,19 +338,50 @@ CREATE TABLE IF NOT EXISTS doc_data (
   CONSTRAINT doc_data_fk_doc_id FOREIGN KEY (fk_doc_id) REFERENCES doc (id)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
--- Step 2: Migrate meta JSON → doc_data.json_data (meta row references itself)
--- CAST converts LONGBLOB → JSON, which validates the content
+-- Step 1.5: Pre-migration JSON validation guard
+-- Abort early if any meta/json rows have corrupt UTF-8 bytes (CONVERT returns NULL)
+-- or invalid JSON content. These rows would cause CAST(... AS JSON) to fail.
+-- Instead of failing, invalid rows are diverted to text_data for manual review.
+
+-- Step 2a: Migrate VALID meta JSON → doc_data.json_data (meta row references itself)
 INSERT INTO doc_data (fk_doc_id, ext, data_type, json_data)
 SELECT id, ext, 1, CAST(CONVERT(data USING utf8mb4) AS JSON)
 FROM doc
-WHERE ext = 'meta';
+WHERE ext = 'meta'
+  AND data IS NOT NULL
+  AND CONVERT(data USING utf8mb4) IS NOT NULL
+  AND JSON_VALID(CONVERT(data USING utf8mb4)) = 1;
 
--- Step 3: Migrate content JSON → doc_data.json_data (references the meta row)
+-- Step 2b: Migrate INVALID meta rows → doc_data.text_data as fallback
+-- These rows had data that could not be parsed as JSON.
+-- They are stored as text for manual inspection and correction.
+INSERT INTO doc_data (fk_doc_id, ext, data_type, text_data)
+SELECT id, ext, 2, CONVERT(data USING utf8mb4)
+FROM doc
+WHERE ext = 'meta'
+  AND data IS NOT NULL
+  AND (CONVERT(data USING utf8mb4) IS NULL
+       OR JSON_VALID(CONVERT(data USING utf8mb4)) = 0);
+
+-- Step 3a: Migrate VALID content JSON → doc_data.json_data (references the meta row)
 INSERT INTO doc_data (fk_doc_id, ext, data_type, json_data)
 SELECT dm.id, d.ext, 1, CAST(CONVERT(d.data USING utf8mb4) AS JSON)
 FROM doc d
 JOIN doc dm ON dm.type = d.type AND dm.uuid = d.uuid AND dm.ext = 'meta'
-WHERE d.ext = 'json';
+WHERE d.ext = 'json'
+  AND d.data IS NOT NULL
+  AND CONVERT(d.data USING utf8mb4) IS NOT NULL
+  AND JSON_VALID(CONVERT(d.data USING utf8mb4)) = 1;
+
+-- Step 3b: Migrate INVALID content JSON rows → doc_data.text_data as fallback
+INSERT INTO doc_data (fk_doc_id, ext, data_type, text_data)
+SELECT dm.id, d.ext, 2, CONVERT(d.data USING utf8mb4)
+FROM doc d
+JOIN doc dm ON dm.type = d.type AND dm.uuid = d.uuid AND dm.ext = 'meta'
+WHERE d.ext = 'json'
+  AND d.data IS NOT NULL
+  AND (CONVERT(d.data USING utf8mb4) IS NULL
+       OR JSON_VALID(CONVERT(d.data USING utf8mb4)) = 0);
 
 -- Step 4: Migrate text content → doc_data.text_data
 INSERT INTO doc_data (fk_doc_id, ext, data_type, text_data)
@@ -659,15 +690,24 @@ Write logic (within the same transaction):
 ```java
 for (var asset : document.getAssets()) {
     final String hash = sha256(asset.getData());
-    // Try to find existing snapshot row
-    Long snapshotId = ctx.select(DOC_DATA_SNAPSHOT.ID)
-            .from(DOC_DATA_SNAPSHOT)
+    // Look up candidate snapshot rows by hash
+    final var candidates = ctx.selectFrom(DOC_DATA_SNAPSHOT)
             .where(DOC_DATA_SNAPSHOT.FK_DOC_ID.eq(docId))
             .and(DOC_DATA_SNAPSHOT.EXT.eq(asset.getExt()))
             .and(DOC_DATA_SNAPSHOT.DATA_HASH.eq(hash))
-            .fetchOne(DOC_DATA_SNAPSHOT.ID);
+            .fetch();
+
+    Long snapshotId = null;
+    for (var candidate : candidates) {
+        // Verify actual data matches (guards against hash collision)
+        if (dataEquals(candidate, asset)) {
+            snapshotId = candidate.getId();
+            break;
+        }
+    }
+
     if (snapshotId == null) {
-        // New snapshot — insert
+        // No matching snapshot — insert new row
         snapshotId = ctx.insertInto(DOC_DATA_SNAPSHOT, ...)
                 .values(docId, asset.getExt(), dataType, hash, ...)
                 .returning(DOC_DATA_SNAPSHOT.ID)
