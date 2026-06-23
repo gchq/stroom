@@ -39,7 +39,7 @@ public class ContentIndexModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexContent.class, builder -> builder
-                        .name(LuceneContentIndex.CONTENT_INDEXER_JOB_NAME)
+                        .name(LuceneContentIndex.RE_INDEX_JOB_NAME)
                         .description("Reindex Stroom content to improve \"Find in Content\" results. " +
                                      "This only needs to run on nodes serving the user interface. If " +
                                      "the index is on shared storage, only one node (of any type) needs to run this.")
