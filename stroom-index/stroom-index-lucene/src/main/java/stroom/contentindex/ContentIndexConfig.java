@@ -40,8 +40,11 @@ public class ContentIndexConfig extends AbstractConfig implements IsStroomConfig
     private static final StorageType DEFAULT_STORAGE_TYPE = StorageType.LOCAL;
     private static final StroomDuration DEFAULT_MIN_REBUILD_AGE = StroomDuration.ofMinutes(1);
 
+    @JsonProperty
     private final String contentIndexDir;
+    @JsonProperty
     private final StorageType storageType;
+    @JsonProperty
     private final StroomDuration minRebuildAge;
 
     public ContentIndexConfig() {
