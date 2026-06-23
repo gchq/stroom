@@ -66,6 +66,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class XmlSchemaDoc extends AbstractDoc implements HasData {
 
+    private static final boolean DEFAULT_DEPRECATED = false;
+
     public static final String TYPE = "XMLSchema";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.XML_SCHEMA_DOCUMENT_TYPE;
 
@@ -94,14 +96,14 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
                         @JsonProperty("namespaceURI") final String namespaceURI,
                         @JsonProperty("systemId") final String systemId,
                         @JsonProperty("data") final String data,
-                        @JsonProperty("deprecated") final boolean deprecated,
+                        @JsonProperty("deprecated") final Boolean deprecated,
                         @JsonProperty("schemaGroup") final String schemaGroup) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.namespaceURI = namespaceURI;
         this.systemId = systemId;
         this.data = data;
-        this.deprecated = deprecated;
+        this.deprecated = Objects.requireNonNullElse(deprecated, DEFAULT_DEPRECATED);
         this.schemaGroup = schemaGroup;
     }
 

@@ -41,6 +41,7 @@ import java.util.Set;
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DEFAULT_USER_GUIDE_BASE_SUB_PATH = "/user-guide";
+    private static final int DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES = 1_000;
 
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
@@ -201,7 +202,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
         defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
-        maxEditorCompletionEntries = 1_000;
+        maxEditorCompletionEntries = DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES;
     }
 
     @JsonCreator
@@ -233,7 +234,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
                     @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
-                    @JsonProperty("maxEditorCompletionEntries") final int maxEditorCompletionEntries) {
+                    @JsonProperty("maxEditorCompletionEntries") final Integer maxEditorCompletionEntries) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -261,7 +262,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
-        this.maxEditorCompletionEntries = maxEditorCompletionEntries;
+        this.maxEditorCompletionEntries = Objects.requireNonNullElse(maxEditorCompletionEntries, DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES);
     }
 
     public String getWelcomeHtml() {

@@ -35,6 +35,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RetentionSettings extends DurationSetting {
 
+    private static final boolean DEFAULT_ENABLED = false;
+
     private static final SimpleDuration DEFAULT_DURATION = SimpleDuration.builder()
             .time(1)
             .timeUnit(TimeUnit.YEARS)
@@ -44,10 +46,11 @@ public class RetentionSettings extends DurationSetting {
     private final Boolean useStateTime;
 
     @JsonCreator
-    public RetentionSettings(@JsonProperty("enabled") final boolean enabled,
+    public RetentionSettings(@JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("duration") final SimpleDuration duration,
                              @JsonProperty("useStateTime") final Boolean useStateTime) {
-        super(enabled, Objects.requireNonNullElse(duration, DEFAULT_DURATION));
+        super(Objects.requireNonNullElse(enabled, DEFAULT_ENABLED),
+                Objects.requireNonNullElse(duration, DEFAULT_DURATION));
         this.useStateTime = Objects.requireNonNullElse(useStateTime, false);
     }
 

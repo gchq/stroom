@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
         AskStroomAIConfig.PROP_NAME_MODEL_REF,
@@ -96,16 +98,19 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableAnalysisConfig tableAnalysis,
             @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT) final String chatSystemPrompt,
             @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT) final String historySummaryPrompt,
-            @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final int maxHistorySafetyCapMessages,
-            @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final long attachmentDownloadTimeoutMs,
-            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final boolean enableDebugDetail) {
+            @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final Integer maxHistorySafetyCapMessages,
+            @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final Long attachmentDownloadTimeoutMs,
+            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail) {
         this.modelRef = modelRef;
         this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
         this.historySummaryPrompt = historySummaryPrompt;
-        this.maxHistorySafetyCapMessages = maxHistorySafetyCapMessages;
-        this.attachmentDownloadTimeoutMs = attachmentDownloadTimeoutMs;
-        this.enableDebugDetail = enableDebugDetail;
+        this.maxHistorySafetyCapMessages = Objects.requireNonNullElse(maxHistorySafetyCapMessages,
+                DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+        this.attachmentDownloadTimeoutMs = Objects.requireNonNullElse(attachmentDownloadTimeoutMs,
+                DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS);
+        this.enableDebugDetail = Objects.requireNonNullElse(enableDebugDetail,
+                DEFAULT_ENABLE_DEBUG_DETAIL);
     }
 
     @JsonPropertyDescription("The model to use.")

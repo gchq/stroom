@@ -26,8 +26,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final boolean DEFAULT_LOG_EVERY_REST_CALL_ENABLED = false;
+    private static final boolean DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED = true;
+    private static final int DEFAULT_MAX_LIST_ELEMENTS = 5;
+    private static final int DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH = 500;
 
     private final boolean logEveryRestCallEnabled;
 
@@ -40,10 +47,10 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
     private final CacheConfig deviceCache;
 
     public LoggingConfig() {
-        logEveryRestCallEnabled = false;
-        omitRecordDetailsLoggingEnabled = true;
-        maxListElements = 5;
-        maxDataElementStringLength = 500;
+        logEveryRestCallEnabled = DEFAULT_LOG_EVERY_REST_CALL_ENABLED;
+        omitRecordDetailsLoggingEnabled = DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED;
+        maxListElements = DEFAULT_MAX_LIST_ELEMENTS;
+        maxDataElementStringLength = DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH;
         deviceCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(60))
@@ -51,15 +58,20 @@ public class LoggingConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public LoggingConfig(@JsonProperty("logEveryRestCallEnabled") final boolean logEveryRestCallEnabled,
-                         @JsonProperty("omitRecordDetailsLoggingEnabled") final boolean omitRecordDetailsLoggingEnabled,
-                         @JsonProperty("maxListElements") final int maxListElements,
-                         @JsonProperty("maxDataElementStringLength") final int maxDataElementStringLength,
+    public LoggingConfig(@JsonProperty("logEveryRestCallEnabled") final Boolean logEveryRestCallEnabled,
+                         @JsonProperty("omitRecordDetailsLoggingEnabled") final Boolean omitRecordDetailsLoggingEnabled,
+                         @JsonProperty("maxListElements") final Integer maxListElements,
+                         @JsonProperty("maxDataElementStringLength") final Integer maxDataElementStringLength,
                          @JsonProperty("deviceCache") final CacheConfig deviceCache) {
-        this.logEveryRestCallEnabled = logEveryRestCallEnabled;
-        this.omitRecordDetailsLoggingEnabled = omitRecordDetailsLoggingEnabled;
-        this.maxListElements = maxListElements;
-        this.maxDataElementStringLength = maxDataElementStringLength;
+        this.logEveryRestCallEnabled =
+                Objects.requireNonNullElse(logEveryRestCallEnabled, DEFAULT_LOG_EVERY_REST_CALL_ENABLED);
+        this.omitRecordDetailsLoggingEnabled =
+                Objects.requireNonNullElse(omitRecordDetailsLoggingEnabled,
+                        DEFAULT_OMIT_RECORD_DETAILS_LOGGING_ENABLED);
+        this.maxListElements =
+                Objects.requireNonNullElse(maxListElements, DEFAULT_MAX_LIST_ELEMENTS);
+        this.maxDataElementStringLength =
+                Objects.requireNonNullElse(maxDataElementStringLength, DEFAULT_MAX_DATA_ELEMENT_STRING_LENGTH);
         this.deviceCache = deviceCache;
     }
 

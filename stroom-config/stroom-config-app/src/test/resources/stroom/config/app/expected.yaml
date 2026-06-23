@@ -227,6 +227,10 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
+  contentIndex:
+    contentIndexDir: "content_index"
+    minRebuildAge: "PT1M"
+    storageType: "LOCAL"
   contentPackImport:
     enabled: false
     importAsSubjectId: "Administrators"

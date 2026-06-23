@@ -34,6 +34,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class Annotation extends AbstractDoc {
 
+    private static final long DEFAULT_ID = 0L;
+
     public static final String TYPE = "Annotation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_DOCUMENT_TYPE;
 
@@ -68,7 +70,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
-                      @JsonProperty("id") final long id,
+                      @JsonProperty("id") final Long id,
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final AnnotationTag status,
                       @JsonProperty("assignedTo") final UserRef assignedTo,
@@ -80,7 +82,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
                       @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.id = id;
+        this.id = Objects.requireNonNullElse(id, DEFAULT_ID);
         this.subject = subject;
         this.status = status;
         this.assignedTo = assignedTo;

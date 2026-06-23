@@ -25,23 +25,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticClientConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = Rest5ClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
+    private static final int DEFAULT_MAX_CONNECTIONS = Rest5ClientBuilder.DEFAULT_MAX_CONN_TOTAL;
 
     private final int maxConnectionsPerRoute;
     private final int maxConnections;
 
     public ElasticClientConfig() {
-        maxConnectionsPerRoute = Rest5ClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
-        maxConnections = Rest5ClientBuilder.DEFAULT_MAX_CONN_TOTAL;
+        maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+        maxConnections = DEFAULT_MAX_CONNECTIONS;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final int maxConnectionsPerRoute,
-                               @JsonProperty("maxConnections") final int maxConnections) {
-        this.maxConnectionsPerRoute = maxConnectionsPerRoute;
-        this.maxConnections = maxConnections;
+    public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
+                               @JsonProperty("maxConnections") final Integer maxConnections) {
+        this.maxConnectionsPerRoute =
+                Objects.requireNonNullElse(maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
+        this.maxConnections =
+                Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
     }
 
     @JsonPropertyDescription("Maximum number of connections maintained by the Elastic Java client pool on a per-" +

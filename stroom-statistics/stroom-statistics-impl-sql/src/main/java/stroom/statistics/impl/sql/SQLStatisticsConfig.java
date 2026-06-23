@@ -36,8 +36,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
+
+    private static final int DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE = 10;
+    private static final int DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD = 1_000_000;
+    private static final int DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD = 1_000_000;
+    private static final int DEFAULT_STATISTIC_FLUSH_BATCH_SIZE = 8_000;
+    private static final int DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE = 1_000_000;
+    private static final int DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE = 200_000;
 
     private final SQLStatisticsDbConfig dbConfig;
     private final String docRefType;
@@ -58,13 +67,13 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         dbConfig = new SQLStatisticsDbConfig();
         docRefType = "StatisticStore";
         searchConfig = new SearchConfig();
-        inMemAggregatorPoolSize = 10;
-        inMemPooledAggregatorSizeThreshold = 1_000_000;
+        inMemAggregatorPoolSize = DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE;
+        inMemPooledAggregatorSizeThreshold = DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD;
         inMemPooledAggregatorAgeThreshold = StroomDuration.ofMinutes(5);
-        inMemFinalAggregatorSizeThreshold = 1_000_000;
-        statisticFlushBatchSize = 8_000;
-        statisticAggregationBatchSize = 1_000_000;
-        statisticAggregationStageTwoBatchSize = 200_000;
+        inMemFinalAggregatorSizeThreshold = DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD;
+        statisticFlushBatchSize = DEFAULT_STATISTIC_FLUSH_BATCH_SIZE;
+        statisticAggregationBatchSize = DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE;
+        statisticAggregationStageTwoBatchSize = DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE;
         maxProcessingAge = null;
         dataSourceCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -79,13 +88,13 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("db") final SQLStatisticsDbConfig dbConfig,
             @JsonProperty("docRefType") final String docRefType,
             @JsonProperty("search") final SearchConfig searchConfig,
-            @JsonProperty("inMemAggregatorPoolSize") final int inMemAggregatorPoolSize,
-            @JsonProperty("inMemPooledAggregatorSizeThreshold") final int inMemPooledAggregatorSizeThreshold,
+            @JsonProperty("inMemAggregatorPoolSize") final Integer inMemAggregatorPoolSize,
+            @JsonProperty("inMemPooledAggregatorSizeThreshold") final Integer inMemPooledAggregatorSizeThreshold,
             @JsonProperty("inMemPooledAggregatorAgeThreshold") final StroomDuration inMemPooledAggregatorAgeThreshold,
-            @JsonProperty("inMemFinalAggregatorSizeThreshold") final int inMemFinalAggregatorSizeThreshold,
-            @JsonProperty("statisticFlushBatchSize") final int statisticFlushBatchSize,
-            @JsonProperty("statisticAggregationBatchSize") final int statisticAggregationBatchSize,
-            @JsonProperty("statisticAggregationStageTwoBatchSize") final int statisticAggregationStageTwoBatchSize,
+            @JsonProperty("inMemFinalAggregatorSizeThreshold") final Integer inMemFinalAggregatorSizeThreshold,
+            @JsonProperty("statisticFlushBatchSize") final Integer statisticFlushBatchSize,
+            @JsonProperty("statisticAggregationBatchSize") final Integer statisticAggregationBatchSize,
+            @JsonProperty("statisticAggregationStageTwoBatchSize") final Integer statisticAggregationStageTwoBatchSize,
             @JsonProperty("maxProcessingAge") final StroomDuration maxProcessingAge,
             @JsonProperty("dataSourceCache") final CacheConfig dataSourceCache,
             @JsonProperty("slowQueryWarningThreshold") final StroomDuration slowQueryWarningThreshold) {
@@ -93,13 +102,23 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
         this.dbConfig = dbConfig;
         this.docRefType = docRefType;
         this.searchConfig = searchConfig;
-        this.inMemAggregatorPoolSize = inMemAggregatorPoolSize;
-        this.inMemPooledAggregatorSizeThreshold = inMemPooledAggregatorSizeThreshold;
+        this.inMemAggregatorPoolSize =
+                Objects.requireNonNullElse(inMemAggregatorPoolSize, DEFAULT_IN_MEM_AGGREGATOR_POOL_SIZE);
+        this.inMemPooledAggregatorSizeThreshold =
+                Objects.requireNonNullElse(inMemPooledAggregatorSizeThreshold,
+                        DEFAULT_IN_MEM_POOLED_AGGREGATOR_SIZE_THRESHOLD);
         this.inMemPooledAggregatorAgeThreshold = inMemPooledAggregatorAgeThreshold;
-        this.inMemFinalAggregatorSizeThreshold = inMemFinalAggregatorSizeThreshold;
-        this.statisticFlushBatchSize = statisticFlushBatchSize;
-        this.statisticAggregationBatchSize = statisticAggregationBatchSize;
-        this.statisticAggregationStageTwoBatchSize = statisticAggregationStageTwoBatchSize;
+        this.inMemFinalAggregatorSizeThreshold =
+                Objects.requireNonNullElse(inMemFinalAggregatorSizeThreshold,
+                        DEFAULT_IN_MEM_FINAL_AGGREGATOR_SIZE_THRESHOLD);
+        this.statisticFlushBatchSize =
+                Objects.requireNonNullElse(statisticFlushBatchSize, DEFAULT_STATISTIC_FLUSH_BATCH_SIZE);
+        this.statisticAggregationBatchSize =
+                Objects.requireNonNullElse(statisticAggregationBatchSize,
+                        DEFAULT_STATISTIC_AGGREGATION_BATCH_SIZE);
+        this.statisticAggregationStageTwoBatchSize =
+                Objects.requireNonNullElse(statisticAggregationStageTwoBatchSize,
+                        DEFAULT_STATISTIC_AGGREGATION_STAGE_TWO_BATCH_SIZE);
         this.maxProcessingAge = maxProcessingAge;
         this.dataSourceCache = dataSourceCache;
         this.slowQueryWarningThreshold = slowQueryWarningThreshold;
