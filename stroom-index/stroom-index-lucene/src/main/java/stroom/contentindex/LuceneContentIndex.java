@@ -717,8 +717,10 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             }
             return stateFile;
         } catch (final IOException e) {
-            throw new UncheckedIOException(LogUtil.message("Error ensuring index state file {} -- {}",
-                    stateFile, LogUtil.exceptionMessage(e)), e);
+            final String msg = LogUtil.message("Error ensuring index state file {} -- {}",
+                    stateFile, LogUtil.exceptionMessage(e));
+            LOGGER.error(msg, e);
+            throw new UncheckedIOException(msg, e);
         }
     }
 
@@ -1197,6 +1199,8 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                 // Make the user wait a wee bit if it is not initialised as this gives it a chance
                 // to return a non-zero % so the user gets the impression that it is underway.
                 isInitialised = indexInitialisedLatch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                LOGGER.debug("ensureIndexAndWait() - After wait of {}ms, isInitialised: {}",
+                        LATCH_TIMEOUT_MS, isInitialised);
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

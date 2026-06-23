@@ -106,8 +106,6 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
     @Mock
     ExplorerNodeService explorerNodeService;
     @Mock
-    ContentIndexConfig mockContentIndexConfig;
-    @Mock
     private NodeInfo mockNodeInfo;
     @Mock
     private ClusterNodeManager mockClusterNodeManager;
@@ -192,7 +190,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         final LuceneContentIndex contentIndex = new LuceneContentIndex(
                 tempDirProvider,
                 pathCreator,
-                () -> mockContentIndexConfig,
+                ContentIndexConfig::new,
                 Set.of(xsltStore),
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
