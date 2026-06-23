@@ -305,7 +305,22 @@ Currently only `CREATE`, `UPDATE`, `DELETE` exist. The new values map to operati
 
 ## Proposed Changes
 
-### Migration Script
+Phase 1 is broken into four sub-phases. Each phase builds on the previous and has clear verification points.
+
+| Sub-phase | Summary | Depends on |
+|-----------|---------|-----------|
+| **1a** | Schema, migration, jOOQ module, new enums | — |
+| **1b** | Interface & contract changes (ImportExportAsset, Persistence, StoreImpl, serialisers) | 1a |
+| **1c** | DBPersistence full jOOQ rewrite | 1a, 1b |
+| **1d** | Scheduled physical delete job & config | 1c |
+
+---
+
+### Phase 1a: Schema & Generated Code
+
+This phase creates the database foundation and shared types. After this phase: new tables exist, jOOQ classes are generated, and enums are available for use. No runtime behaviour changes yet.
+
+#### Migration Script
 
 #### [NEW] [V07_14_00_001__split_doc_table.sql](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/resources/stroom/docstore/impl/db/migration/V07_14_00_001__split_doc_table.sql)
 
@@ -403,7 +418,7 @@ DELETE FROM doc WHERE ext != 'meta' OR ext IS NULL;
 
 -- Step 7: Drop data and ext columns, update indexes
 ALTER TABLE doc DROP KEY doc_type_uuid_ext_idx;
-ALTER TABLE doc DROP KEY doc_type_uuid_idx;
+ ALTER TABLE doc DROP KEY doc_type_uuid_idx;
 ALTER TABLE doc DROP KEY doc_uuid_idx;
 ALTER TABLE doc ADD UNIQUE KEY doc_uuid_idx (uuid);
 ALTER TABLE doc DROP COLUMN data;
@@ -448,9 +463,18 @@ Update the `v_doc` and `v_feed_doc` views to use the new schema:
 - `v_doc`: Join `doc` with `doc_data` (where `ext = 'meta'`) for metadata, and `LEFT JOIN` with `doc_data` for content
 - `v_feed_doc`: Same approach, extracting JSON fields from `doc_data.json_data` where `ext = 'meta'`
 
+> [!TIP]
+> **Phase 1a also includes** the [jOOQ Module](#jooq-module) section (new `stroom-docstore-impl-db-jooq` module, `settings.gradle`, `build.gradle` changes) and the [AuditAction Enum](#auditaction-enum-changes) and [DocDataType](#doc-data-table) enum definitions documented earlier in this plan.
+
+**Verification**: Migration runs cleanly on test DB. `./gradlew generateJooq` produces table/record classes. Enums compile.
+
 ---
 
-### Persistence Interface Changes
+### Phase 1b: Interface & Contract Changes
+
+This phase updates the API contracts across the import/export, persistence, store, and serialiser layers. After this phase: all interfaces use `AuditAction` and `DocDataType`, all call sites are updated, and the code compiles and passes existing tests against the **old** DB schema (FS/Memory persistence still works).
+
+#### Persistence Interface Changes
 
 #### [MODIFY] [Persistence.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl/src/main/java/stroom/docstore/impl/Persistence.java)
 
@@ -503,8 +527,6 @@ boolean update = auditAction.isUpdate(); // or check against a set of update act
 ```
 
 These implementations do **not** need audit or history logic — they are filesystem/in-memory stores used for testing and legacy purposes.
-
-### DBPersistence Changes
 
 #### [MODIFY] [DBPersistence.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/DBPersistence.java)
 
@@ -834,7 +856,7 @@ Add jOOQ dependencies:
 
 ---
 
-### ImportExportAsset Changes
+#### ImportExportAsset Changes
 
 #### [MODIFY] [ImportExportAsset.java](file:///home/stroomdev66/work/stroom-7.10/stroom-importexport/stroom-importexport-api/src/main/java/stroom/importexport/api/ImportExportAsset.java)
 
@@ -876,16 +898,21 @@ Each `DocumentSerialiser2` implementation sets the correct `DocDataType` when cr
 
 ---
 
-### No Changes Required
-
-| File | Reason |
-|------|--------|
-| [DocStoreDBPersistenceDbModule.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/DocStoreDBPersistenceDbModule.java) | Flyway config unchanged |
-| [NoLockFactory.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/NoLockFactory.java) | Unrelated |
+**Verification**: Code compiles. Existing FS/Memory persistence tests pass. `AuditAction` used at all `persistence.write()` call sites. All serialisers create assets with `DocDataType`.
 
 ---
 
-### Scheduled Physical Delete Job
+### Phase 1c: DBPersistence Rewrite
+
+This phase rewrites `DBPersistence` to use jOOQ DSL against the new schema. This is the largest sub-phase. After this phase: all DB operations use the new tables, audit logging and snapshot deduplication are active, soft delete and import-of-deleted-doc work correctly.
+
+#### DBPersistence Changes
+
+#### [MODIFY] [DBPersistence.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/DBPersistence.java)
+
+Full jOOQ rewrite — see the [detailed DBPersistence section](#modify-dbpersistencejava) above for all method implementations.
+
+#### Import of Soft-Deleted Documents
 
 #### [MODIFY] [DocStoreDbPersistenceModule.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/DocStoreDbPersistenceModule.java)
 
@@ -959,9 +986,15 @@ Add a configurable retention period for the physical delete job:
 
 This produces a YAML config property at `stroom.docstore.deletedDocRetentionPeriod` with a default of `"30d"`. The scheduled job reads this value on each invocation.
 
+**Verification**: All 12 automated tests pass (see [Verification Plan](#verification-plan)). Manual migration verification passes.
+
 ---
 
-### Import of Soft-Deleted Documents
+### Phase 1d: Scheduled Job & Config
+
+This phase adds the scheduled physical delete job and makes the retention period configurable. After this phase: old soft-deleted documents are automatically cleaned up on a daily schedule.
+
+#### Scheduled Physical Delete Job
 
 When importing a document whose UUID matches an existing soft-deleted doc, the system **undeletes** the doc and performs the import as an update. This is necessary because:
 
