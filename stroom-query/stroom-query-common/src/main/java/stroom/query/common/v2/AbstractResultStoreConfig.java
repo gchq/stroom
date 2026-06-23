@@ -27,6 +27,14 @@ import jakarta.validation.constraints.Min;
 @NotInjectableConfig
 public abstract class AbstractResultStoreConfig extends AbstractConfig {
 
+    static final int DEFAULT_MAX_PUTS_BEFORE_COMMIT = 10_000;
+    static final boolean DEFAULT_OFF_HEAP_RESULTS = true;
+    static final ByteSize DEFAULT_MIN_PAYLOAD_SIZE = ByteSize.ofMebibytes(1);
+    static final ByteSize DEFAULT_MAX_PAYLOAD_SIZE = ByteSize.ofGibibytes(1);
+    static final int DEFAULT_MAX_STRING_FIELD_LENGTH = 1000;
+    static final int DEFAULT_VALUE_QUEUE_SIZE = 10_000;
+    static final int DEFAULT_MAX_SORTED_ITEMS = 500_000;
+
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
     private final int valueQueueSize;
@@ -36,17 +44,6 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     private final int maxSortedItems;
 
     private final ResultStoreLmdbConfig lmdbConfig;
-
-    AbstractResultStoreConfig() {
-        this(10_000,
-                true,
-                ByteSize.ofMebibytes(1),
-                ByteSize.ofGibibytes(1),
-                1000,
-                10_000,
-                500_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build());
-    }
 
     AbstractResultStoreConfig(final int maxPutsBeforeCommit,
                               final boolean offHeapResults,

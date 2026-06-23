@@ -31,12 +31,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class DataStoreServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     public static final String PROP_NAME_DELETE_PURGE_AGE = "deletePurgeAge";
     protected static final String PROP_NAME_DELETE_FAILURE_THRESHOLD = "deleteFailureThreshold";
+
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 1000;
+    private static final int DEFAULT_DELETE_FAILURE_THRESHOLD = 100;
+    private static final int DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE = 20;
+    private static final boolean DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT = false;
 
     private final DataStoreServiceDbConfig dbConfig;
     private StroomDuration deletePurgeAge;
@@ -50,10 +57,10 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     public DataStoreServiceConfig() {
         dbConfig = new DataStoreServiceDbConfig();
         deletePurgeAge = StroomDuration.ofDays(7);
-        deleteBatchSize = 1000;
-        deleteFailureThreshold = 100;
-        fileSystemCleanBatchSize = 20;
-        fileSystemCleanDeleteOut = false;
+        deleteBatchSize = DEFAULT_DELETE_BATCH_SIZE;
+        deleteFailureThreshold = DEFAULT_DELETE_FAILURE_THRESHOLD;
+        fileSystemCleanBatchSize = DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE;
+        fileSystemCleanDeleteOut = DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT;
         fileSystemCleanOldAge = StroomDuration.ofDays(1);
     }
 
@@ -61,17 +68,22 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     @JsonCreator
     public DataStoreServiceConfig(@JsonProperty("db") final DataStoreServiceDbConfig dbConfig,
                                   @JsonProperty(PROP_NAME_DELETE_PURGE_AGE) final StroomDuration deletePurgeAge,
-                                  @JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                                  @JsonProperty(PROP_NAME_DELETE_FAILURE_THRESHOLD) final int deleteFailureThreshold,
-                                  @JsonProperty("fileSystemCleanBatchSize") final int fileSystemCleanBatchSize,
-                                  @JsonProperty("fileSystemCleanDeleteOut") final boolean fileSystemCleanDeleteOut,
+                                  @JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                                  @JsonProperty(PROP_NAME_DELETE_FAILURE_THRESHOLD)
+                                      final Integer deleteFailureThreshold,
+                                  @JsonProperty("fileSystemCleanBatchSize") final Integer fileSystemCleanBatchSize,
+                                  @JsonProperty("fileSystemCleanDeleteOut") final Boolean fileSystemCleanDeleteOut,
                                   @JsonProperty("fileSystemCleanOldAge") final StroomDuration fileSystemCleanOldAge) {
         this.dbConfig = dbConfig;
         this.deletePurgeAge = deletePurgeAge;
-        this.deleteBatchSize = deleteBatchSize;
-        this.deleteFailureThreshold = deleteFailureThreshold;
-        this.fileSystemCleanBatchSize = fileSystemCleanBatchSize;
-        this.fileSystemCleanDeleteOut = fileSystemCleanDeleteOut;
+        this.deleteBatchSize =
+                Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.deleteFailureThreshold =
+                Objects.requireNonNullElse(deleteFailureThreshold, DEFAULT_DELETE_FAILURE_THRESHOLD);
+        this.fileSystemCleanBatchSize =
+                Objects.requireNonNullElse(fileSystemCleanBatchSize, DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE);
+        this.fileSystemCleanDeleteOut =
+                Objects.requireNonNullElse(fileSystemCleanDeleteOut, DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT);
         this.fileSystemCleanOldAge = fileSystemCleanOldAge;
     }
 

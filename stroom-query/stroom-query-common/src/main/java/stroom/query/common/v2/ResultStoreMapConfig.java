@@ -25,24 +25,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
 public class ResultStoreMapConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final int DEFAULT_TRIMMED_SIZE_LIMIT = 500_000;
+    private static final int DEFAULT_MIN_UNTRIMMED_SIZE = 100_000;
 
     private final int trimmedSizeLimit;
     private final int minUntrimmedSize;
 
 
     public ResultStoreMapConfig() {
-        this(500_000, 100_000);
+        this.trimmedSizeLimit = DEFAULT_TRIMMED_SIZE_LIMIT;
+        this.minUntrimmedSize = DEFAULT_MIN_UNTRIMMED_SIZE;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ResultStoreMapConfig(@JsonProperty("trimmedSizeLimit") final int trimmedSizeLimit,
-                                @JsonProperty("minUntrimmedSize") final int minUntrimmedSize) {
-        this.trimmedSizeLimit = trimmedSizeLimit;
-        this.minUntrimmedSize = minUntrimmedSize;
+    public ResultStoreMapConfig(@JsonProperty("trimmedSizeLimit") final Integer trimmedSizeLimit,
+                                @JsonProperty("minUntrimmedSize") final Integer minUntrimmedSize) {
+        this.trimmedSizeLimit = Objects.requireNonNullElse(trimmedSizeLimit, DEFAULT_TRIMMED_SIZE_LIMIT);
+        this.minUntrimmedSize = Objects.requireNonNullElse(minUntrimmedSize, DEFAULT_MIN_UNTRIMMED_SIZE);
     }
 
     @JsonPropertyDescription("The trimmed size of sorted results for on heap result stores.")

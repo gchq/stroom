@@ -26,9 +26,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_MAX_DOC_ID_QUEUE_SIZE = 1_000_000;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
 
     private final int maxDocIdQueueSize;
@@ -36,7 +39,7 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     private final CacheConfig remoteSearchResultCache;
 
     public IndexShardSearchConfig() {
-        maxDocIdQueueSize = 1_000_000;
+        maxDocIdQueueSize = DEFAULT_MAX_DOC_ID_QUEUE_SIZE;
         maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
         remoteSearchResultCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -45,11 +48,11 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     }
 
     @JsonCreator
-    public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
-                                  @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
+    public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final Integer maxDocIdQueueSize,
+                                  @JsonProperty("maxThreadsPerTask") final Integer maxThreadsPerTask,
                                   @JsonProperty("remoteSearchResultCache") final CacheConfig remoteSearchResultCache) {
-        this.maxDocIdQueueSize = maxDocIdQueueSize;
-        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.maxDocIdQueueSize = Objects.requireNonNullElse(maxDocIdQueueSize, DEFAULT_MAX_DOC_ID_QUEUE_SIZE);
+        this.maxThreadsPerTask = Objects.requireNonNullElse(maxThreadsPerTask, DEFAULT_MAX_THREADS_PER_TASK);
         this.remoteSearchResultCache = remoteSearchResultCache;
     }
 

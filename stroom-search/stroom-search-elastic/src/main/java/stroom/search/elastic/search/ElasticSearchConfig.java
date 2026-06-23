@@ -26,8 +26,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final boolean DEFAULT_HIGHLIGHT = true;
 
     private final boolean highlight;
     private final StroomDuration scrollDuration;
@@ -35,7 +39,7 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     private final ElasticSuggestConfig suggestConfig;
 
     public ElasticSearchConfig() {
-        highlight = true;
+        highlight = DEFAULT_HIGHLIGHT;
         scrollDuration = StroomDuration.ofMinutes(1);
         storeSize = "1000000,100,10,1";
         suggestConfig = new ElasticSuggestConfig();
@@ -43,11 +47,11 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticSearchConfig(@JsonProperty("highlight") final boolean highlight,
+    public ElasticSearchConfig(@JsonProperty("highlight") final Boolean highlight,
                                @JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
                                @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
-        this.highlight = highlight;
+        this.highlight = Objects.requireNonNullElse(highlight, DEFAULT_HIGHLIGHT);
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
         this.suggestConfig = suggestConfig;

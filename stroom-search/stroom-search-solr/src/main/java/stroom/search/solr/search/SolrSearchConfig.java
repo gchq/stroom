@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
@@ -47,10 +49,12 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
-                            @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount) {
-        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
-        this.maxBooleanClauseCount = maxBooleanClauseCount;
+    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final Integer maxStoredDataQueueSize,
+                            @JsonProperty("maxBooleanClauseCount") final Integer maxBooleanClauseCount) {
+        this.maxStoredDataQueueSize =
+                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxBooleanClauseCount =
+                Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +

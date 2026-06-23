@@ -23,12 +23,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpCookie.SameSite;
+
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
 public class SessionCookieConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final boolean DEFAULT_SECURE = true;
+    private static final boolean DEFAULT_HTTP_ONLY = true;
 
     @JsonProperty
     @JsonPropertyDescription("Marks the session cookies with the secure flag, indicating they " +
@@ -45,18 +49,18 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
     private final SameSite sameSite;
 
     public SessionCookieConfig() {
-        secure = true;
-        httpOnly = true;
+        secure = DEFAULT_SECURE;
+        httpOnly = DEFAULT_HTTP_ONLY;
         sameSite = SameSite.STRICT;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SessionCookieConfig(@JsonProperty("secure") final boolean secure,
-                               @JsonProperty("httpOnly") final boolean httpOnly,
+    public SessionCookieConfig(@JsonProperty("secure") final Boolean secure,
+                               @JsonProperty("httpOnly") final Boolean httpOnly,
                                @JsonProperty("sameSite") final SameSite sameSite) {
-        this.secure = secure;
-        this.httpOnly = httpOnly;
+        this.secure = Objects.requireNonNullElse(secure, DEFAULT_SECURE);
+        this.httpOnly = Objects.requireNonNullElse(httpOnly, DEFAULT_HTTP_ONLY);
         this.sameSite = sameSite;
     }
 

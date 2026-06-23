@@ -33,6 +33,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class NodeMonitoringConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final int DEFAULT_PING_WARN_THRESHOLD = 100;
+    private static final int DEFAULT_PING_MAX_THRESHOLD = 500;
+
     @Min(1)
     @JsonProperty
     @JsonPropertyDescription("The threshold in milliseconds, above which a node ping response time is " +
@@ -49,15 +52,15 @@ public class NodeMonitoringConfig extends AbstractConfig implements IsStroomConf
     private final int pingMaxThreshold;
 
     public NodeMonitoringConfig() {
-        pingWarnThreshold = 100;
-        pingMaxThreshold = 500;
+        pingWarnThreshold = DEFAULT_PING_WARN_THRESHOLD;
+        pingMaxThreshold = DEFAULT_PING_MAX_THRESHOLD;
     }
 
     @JsonCreator
-    public NodeMonitoringConfig(@JsonProperty("pingWarnThreshold") final int pingWarnThreshold,
-                                @JsonProperty("pingMaxThreshold") final int pingMaxThreshold) {
-        this.pingWarnThreshold = pingWarnThreshold;
-        this.pingMaxThreshold = pingMaxThreshold;
+    public NodeMonitoringConfig(@JsonProperty("pingWarnThreshold") final Integer pingWarnThreshold,
+                                @JsonProperty("pingMaxThreshold") final Integer pingMaxThreshold) {
+        this.pingWarnThreshold = Objects.requireNonNullElse(pingWarnThreshold, DEFAULT_PING_WARN_THRESHOLD);
+        this.pingMaxThreshold = Objects.requireNonNullElse(pingMaxThreshold, DEFAULT_PING_MAX_THRESHOLD);
     }
 
     public int getPingWarnThreshold() {

@@ -50,10 +50,10 @@ public class ProcessConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ProcessConfig(@JsonProperty("defaultTimeLimit") final long defaultTimeLimit,
-                         @JsonProperty("defaultRecordLimit") final long defaultRecordLimit) {
-        this.defaultTimeLimit = defaultTimeLimit;
-        this.defaultRecordLimit = defaultRecordLimit;
+    public ProcessConfig(@JsonProperty("defaultTimeLimit") final Long defaultTimeLimit,
+                         @JsonProperty("defaultRecordLimit") final Long defaultRecordLimit) {
+        this.defaultTimeLimit = Objects.requireNonNullElse(defaultTimeLimit, DEFAULT_TIME_LIMIT);
+        this.defaultRecordLimit = Objects.requireNonNullElse(defaultRecordLimit, DEFAULT_RECORD_LIMIT);
     }
 
     public long getDefaultTimeLimit() {
