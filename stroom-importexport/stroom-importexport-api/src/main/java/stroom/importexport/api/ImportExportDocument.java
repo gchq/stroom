@@ -16,6 +16,8 @@
 
 package stroom.importexport.api;
 
+import stroom.docstore.shared.DocDataType;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -158,7 +160,8 @@ public class ImportExportDocument {
 
         if (data != null) {
             for (final Map.Entry<String, byte[]> entry : data.entrySet()) {
-                final ImportExportAsset asset = new ByteArrayImportExportAsset(entry.getKey(), entry.getValue());
+                final ImportExportAsset asset =
+                        new ByteArrayImportExportAsset(entry.getKey(), DocDataType.BINARY, entry.getValue());
                 importExportDocument.addExtAsset(asset);
             }
         }

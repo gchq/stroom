@@ -16,13 +16,13 @@
 
 package stroom.docstore.impl.memory;
 
-import stroom.docref.DocAuditEntry;
-import stroom.docref.DocAuditEntry.AuditAction;
-import stroom.docref.DocAuditUser;
+import stroom.docstore.shared.DocAuditEntry;
+import stroom.docstore.shared.DocAuditUser;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.AuditAction;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.PredicateUtil;
 import stroom.util.json.JsonUtil;
@@ -65,12 +65,14 @@ public class MemoryPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
-        if (update) {
+    public void write(final DocRef docRef,
+                      final AuditAction auditAction,
+                      final ImportExportDocument importExportDocument) {
+        if (auditAction.isUpdate()) {
             if (!map.containsKey(docRef)) {
                 throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
             }
-        } else if (map.containsKey(docRef)) {
+        } else if (auditAction.isCreate() && map.containsKey(docRef)) {
             throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
 

@@ -16,9 +16,10 @@
 
 package stroom.docstore.impl;
 
-import stroom.docref.DocAuditEntry;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
+import stroom.docstore.shared.AuditAction;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.shared.ResultPage;
 
@@ -35,7 +36,7 @@ public interface Persistence {
 
     ImportExportDocument read(DocRef docRef) throws IOException;
 
-    void write(DocRef docRef, boolean update, ImportExportDocument importExportDocument) throws IOException;
+    void write(DocRef docRef, AuditAction auditAction, ImportExportDocument importExportDocument) throws IOException;
 
     List<DocRef> list(String type);
 

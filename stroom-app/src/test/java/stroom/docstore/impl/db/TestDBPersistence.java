@@ -19,6 +19,8 @@ package stroom.docstore.impl.db;
 
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -54,8 +56,9 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
 
         // Create
         ImportExportDocument importExportDocument = new ImportExportDocument();
-        importExportDocument.addExtAsset(new ByteArrayImportExportAsset("meta", uuid1.getBytes(CHARSET)));
-        persistence.write(docRef, false, importExportDocument);
+        importExportDocument.addExtAsset(
+                new ByteArrayImportExportAsset("meta", DocDataType.JSON, uuid1.getBytes(CHARSET)));
+        persistence.write(docRef, AuditAction.CREATE, importExportDocument);
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
@@ -66,8 +69,9 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
 
         // Update
         importExportDocument = new ImportExportDocument();
-        importExportDocument.addExtAsset(new ByteArrayImportExportAsset("meta", uuid2.getBytes(CHARSET)));
-        persistence.write(docRef, true, importExportDocument);
+        importExportDocument.addExtAsset(
+                new ByteArrayImportExportAsset("meta", DocDataType.JSON, uuid2.getBytes(CHARSET)));
+        persistence.write(docRef, AuditAction.UPDATE, importExportDocument);
 
         // Read
         importExportDocument = persistence.read(docRef);
@@ -123,14 +127,14 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
 
         // Create
         final ImportExportDocument ieDoc1 = new ImportExportDocument();
-        ieDoc1.addExtAsset(new ByteArrayImportExportAsset("meta",
+        ieDoc1.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON,
                 String.format(metaJson1, uuid1, uuid2).getBytes(CHARSET)));
-        persistence.write(docRef1, false, ieDoc1);
+        persistence.write(docRef1, AuditAction.CREATE, ieDoc1);
 
         final ImportExportDocument ieDoc2 = new ImportExportDocument();
-        ieDoc2.addExtAsset(new ByteArrayImportExportAsset("meta",
+        ieDoc2.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON,
                 String.format(metaJson2, uuid2).getBytes(CHARSET)));
-        persistence.write(docRef2, false, ieDoc2);
+        persistence.write(docRef2, AuditAction.CREATE, ieDoc2);
 
         final List<DocRef> docRefs = persistence.findDocRefsEmbeddedIn(docRef2);
         assertThat(docRefs.size()).isEqualTo(1);

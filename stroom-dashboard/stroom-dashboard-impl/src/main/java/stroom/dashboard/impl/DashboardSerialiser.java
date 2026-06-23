@@ -21,6 +21,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
@@ -67,7 +68,7 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
         final ImportExportDocument importExportDocument = delegate.write(document.copy().dashboardConfig(null).build());
         if (dashboardConfig != null) {
             final byte[] jsonBytes = dashboardConfigSerialiser.writeAsBytes(dashboardConfig);
-            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, jsonBytes));
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, DocDataType.JSON, jsonBytes));
         }
         return importExportDocument;
     }
@@ -78,7 +79,7 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
     public DashboardConfig getDashboardConfigFromJson(final byte[] data) throws IOException {
         // Wrap the data in an asset for the serialiser
-        final ByteArrayImportExportAsset asset = new ByteArrayImportExportAsset("dummy", data);
+        final ByteArrayImportExportAsset asset = new ByteArrayImportExportAsset("dummy", DocDataType.JSON, data);
         return dashboardConfigSerialiser.read(asset);
     }
 }

@@ -16,14 +16,15 @@
 
 package stroom.docstore.impl.db;
 
-import stroom.docref.DocAuditEntry;
-import stroom.docref.DocAuditEntry.AuditAction;
-import stroom.docref.DocAuditUser;
+import stroom.docstore.shared.DocAuditEntry;
+import stroom.docstore.shared.DocAuditUser;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
@@ -255,6 +256,7 @@ public class DBPersistence implements Persistence {
                         final ImportExportAsset asset =
                                 new ByteArrayImportExportAsset(
                                         resultSet.getString(1),
+                                        DocDataType.BINARY,
                                         resultSet.getBytes(2));
                         importExportDocument.addExtAsset(asset);
                     }
@@ -273,7 +275,9 @@ public class DBPersistence implements Persistence {
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
+    public void write(final DocRef docRef,
+                      final AuditAction auditAction,
+                      final ImportExportDocument importExportDocument) {
         try (final Connection connection = dataSource.getConnection()) {
             // Get the auto commit status.
             final boolean autoCommit = connection.getAutoCommit();
@@ -283,18 +287,18 @@ public class DBPersistence implements Persistence {
 
             try {
                 final boolean exists = getId(connection, docRef) != null;
-                if (update) {
+                if (auditAction.isUpdate()) {
                     if (!exists) {
                         throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
                     }
-                } else if (exists) {
+                } else if (auditAction.isCreate() && exists) {
                     throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
                 }
 
                 // Get existing ids.
                 final Map<String, Long> existingExtensionToIdMap = getExtensionIds(docRef);
                 for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
-                    if (update) {
+                    if (exists) {
                         final Long existingId = existingExtensionToIdMap.get(asset.getKey());
                         if (existingId != null) {
                             update(connection, existingId, docRef, asset.getKey(), asset.getInputData());

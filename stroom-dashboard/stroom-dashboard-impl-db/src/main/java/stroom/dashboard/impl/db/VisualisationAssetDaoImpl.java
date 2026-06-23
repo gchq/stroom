@@ -3,6 +3,7 @@ package stroom.dashboard.impl.db;
 import stroom.dashboard.impl.db.jooq.Tables;
 import stroom.dashboard.impl.visualisation.VisualisationAssetDao;
 import stroom.db.util.JooqUtil;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.util.io.FileUtil;
@@ -114,7 +115,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     private List<ImportExportAsset> resultToImportExportAssets(final Result<Record2<String, byte[]>> result) {
         final List<ImportExportAsset> assets = new ArrayList<>(result.size());
         for (final Record2<String, byte[]> record : result) {
-            final ImportExportAsset asset = new ByteArrayImportExportAsset(record.value1(), record.value2());
+            final ImportExportAsset asset =
+                    new ByteArrayImportExportAsset(record.value1(), DocDataType.BINARY, record.value2());
             assets.add(asset);
         }
         return assets;

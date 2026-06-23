@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docref;
+package stroom.docstore.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -75,23 +75,6 @@ public class DocAuditEntry {
 
     public Builder copy() {
         return new Builder(this);
-    }
-
-    public enum AuditAction implements HasDisplayValue {
-        CREATE("Created"),
-        UPDATE("Updated"),
-        DELETE("Deleted");
-
-        private final String displayValue;
-
-        AuditAction(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
     }
 
     public static final class Builder {

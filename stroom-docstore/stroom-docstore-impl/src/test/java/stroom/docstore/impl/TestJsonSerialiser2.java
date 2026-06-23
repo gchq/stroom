@@ -17,6 +17,7 @@
 package stroom.docstore.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
@@ -68,11 +69,11 @@ class TestJsonSerialiser2 {
         final DictionaryDoc doc2 = JsonUtil.getMapper().readValue(bytes, DictionaryDoc.class);
         assertThat(doc2)
                 .isEqualTo(doc);
-        final DictionaryDoc doc3 = serialiser2.read(new ByteArrayImportExportAsset("meta", bytes));
+        final DictionaryDoc doc3 = serialiser2.read(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
         assertThat(doc3)
                 .isEqualTo(doc);
         final ImportExportDocument importExportDocument2 = new ImportExportDocument();
-        importExportDocument2.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
+        importExportDocument2.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
         final DictionaryDoc doc4 = serialiser2.read(importExportDocument2);
         assertThat(doc4)
                 .isEqualTo(doc);

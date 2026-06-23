@@ -16,13 +16,14 @@
 
 package stroom.docstore.impl.fs;
 
-import stroom.docref.DocAuditEntry;
-import stroom.docref.DocAuditEntry.AuditAction;
-import stroom.docref.DocAuditUser;
+import stroom.docstore.shared.DocAuditEntry;
+import stroom.docstore.shared.DocAuditUser;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
@@ -58,7 +59,6 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Singleton
 public class FSPersistence implements Persistence, Clearable {
@@ -110,7 +110,8 @@ public class FSPersistence implements Persistence, Clearable {
                     final String ext = fileName.substring(index + 1);
 
                     final byte[] bytes = Files.readAllBytes(file);
-                    importExportDocument.addExtAsset(new ByteArrayImportExportAsset(ext, bytes));
+                    importExportDocument.addExtAsset(
+                            new ByteArrayImportExportAsset(ext, DocDataType.BINARY, bytes));
 
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -128,13 +129,15 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
+    public void write(final DocRef docRef,
+                      final AuditAction auditAction,
+                      final ImportExportDocument importExportDocument) {
         final Path filePath = getPath(docRef, META);
-        if (update) {
+        if (auditAction.isUpdate()) {
             if (!Files.isRegularFile(filePath)) {
                 throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
             }
-        } else if (Files.isRegularFile(filePath)) {
+        } else if (auditAction.isCreate() && Files.isRegularFile(filePath)) {
             throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
 

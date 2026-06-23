@@ -26,6 +26,7 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
+import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
@@ -408,7 +409,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 // Convert the document back into a data map.
                 final ImportExportDocument finalData = serialiser.write(builder.build());
                 // Write the data.
-                persistence.write(docRef, existingDocument != null, finalData);
+                persistence.write(docRef, AuditAction.IMPORT, finalData);
 
                 // Fire an entity event to alert other services of the change.
                 if (existingDocument != null) {
@@ -527,7 +528,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             final ImportExportDocument importExportDocument = serialiser.write(document);
             persistence.getLockFactory().lock(document.getUuid(), () -> {
                 try {
-                    persistence.write(docRef, false, importExportDocument);
+                    persistence.write(docRef, AuditAction.CREATE, importExportDocument);
                     EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -662,7 +663,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                                                    + " has already been updated.");
                     }
 
-                    persistence.write(docRef, true, newData);
+                    persistence.write(docRef, AuditAction.UPDATE, newData);
                     EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -752,7 +753,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                                     final ImportExportDocument migratedDocument =
                                             ImportExportDocument.fromDataMap(newData);
 
-                                    persistence.write(docRef, true, migratedDocument);
+                                    persistence.write(docRef, AuditAction.UPDATE, migratedDocument);
                                 } catch (final Exception e) {
                                     LOGGER.error(e::getMessage, e);
                                 }

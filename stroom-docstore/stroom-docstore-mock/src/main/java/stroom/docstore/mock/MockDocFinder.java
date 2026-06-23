@@ -16,10 +16,8 @@
 
 package stroom.docstore.mock;
 
-import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
-import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,10 +40,5 @@ public class MockDocFinder implements DocFinder {
             return Optional.empty();
         }
         return Optional.ofNullable(docRef.getName());
-    }
-
-    @Override
-    public ResultPage<DocAuditEntry> getAuditInfo(final DocRef docRef) {
-        return ResultPage.empty();
     }
 }

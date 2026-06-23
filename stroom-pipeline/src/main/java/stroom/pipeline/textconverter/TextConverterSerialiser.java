@@ -19,6 +19,7 @@ package stroom.pipeline.textconverter;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -52,7 +53,8 @@ public class TextConverterSerialiser implements DocumentSerialiser2<TextConverte
         final String xml = document.getData();
         final ImportExportDocument importExportDocument = delegate.write(document.copy().data(null).build());
         if (xml != null) {
-            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(XML, EncodingUtil.asBytes(xml)));
+            importExportDocument.addExtAsset(
+                    new ByteArrayImportExportAsset(XML, DocDataType.TEXT, EncodingUtil.asBytes(xml)));
         }
         return importExportDocument;
     }
