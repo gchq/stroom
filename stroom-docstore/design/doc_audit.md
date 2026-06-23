@@ -155,7 +155,7 @@ CREATE TABLE doc_data_snapshot (
   fk_doc_id bigint NOT NULL,
   ext       varchar(255) NOT NULL,
   data_type tinyint NOT NULL,          -- 1=JSON, 2=TEXT, 3=BINARY
-  data_hash varchar(64) NOT NULL,     -- SHA-256 hex of the data content, for deduplication
+  data_hash bigint NOT NULL,          -- XX3 hash of the data content, for dedup candidate lookup
   json_data json,
   text_data longtext,
   bin_data  longblob,
@@ -180,7 +180,7 @@ CREATE TABLE doc_audit_data_snapshot (
 );
 ```
 
-The `doc_data_snapshot` table stores each **unique data snapshot** after an operation. The `data_hash` column (SHA-256 of the data content) combined with `(fk_doc_id, ext)` forms a non-unique index for fast candidate lookup during deduplication. On write, the code looks up candidates by hash, then compares actual data content to confirm a true match before reusing a row. This avoids any risk of hash collision causing incorrect deduplication or insert failure.
+The `doc_data_snapshot` table stores each **unique data snapshot** after an operation. The `data_hash` column (XX3 hash via `LongHashFunction.xx3()`) combined with `(fk_doc_id, ext)` forms a non-unique index for fast candidate lookup during deduplication. On write, the code looks up candidates by hash, then compares actual data content to confirm a true match before reusing a row. This avoids any risk of hash collision causing incorrect deduplication or insert failure.
 
 The `doc_audit_data_snapshot` link table connects each audit entry to the set of `doc_data_snapshot` rows that represent the document's snapshot **after** that operation. This means:
 - If only XSL changes on an update, the new audit entry links to a NEW snapshot row for `xsl` but the SAME snapshot row for `meta` as the previous audit
@@ -403,7 +403,7 @@ DELETE FROM doc WHERE ext != 'meta' OR ext IS NULL;
 
 -- Step 7: Drop data and ext columns, update indexes
 ALTER TABLE doc DROP KEY doc_type_uuid_ext_idx;
- ALTER TABLE doc DROP KEY doc_type_uuid_idx;
+ALTER TABLE doc DROP KEY doc_type_uuid_idx;
 ALTER TABLE doc DROP KEY doc_uuid_idx;
 ALTER TABLE doc ADD UNIQUE KEY doc_uuid_idx (uuid);
 ALTER TABLE doc DROP COLUMN data;
@@ -689,7 +689,7 @@ Note: `getAuditInfo()` intentionally omits the `DELETED.isNull()` filter — thi
 Write logic (within the same transaction):
 ```java
 for (var asset : document.getAssets()) {
-    final String hash = sha256(asset.getData());
+    final long hash = LongHashFunction.xx3().hashBytes(asset.getData());
     // Look up candidate snapshot rows by hash
     final var candidates = ctx.selectFrom(DOC_DATA_SNAPSHOT)
             .where(DOC_DATA_SNAPSHOT.FK_DOC_ID.eq(docId))
