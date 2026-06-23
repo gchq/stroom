@@ -466,7 +466,7 @@ public class DbTestUtil {
         try (final Statement statement = connection.createStatement()) {
             LOGGER.debug("Creating database '{}'", dbName);
             statement.executeUpdate("CREATE DATABASE `" + dbName +
-                                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+                                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;");
 
             LOGGER.debug("Creating DB user '{}'", username);
             statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
