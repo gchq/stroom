@@ -1050,7 +1050,135 @@ CREATE → UPDATE → DELETE → IMPORT (undelete + data replaced)
 
 ---
 
+## Phase 2: Optimistic Concurrency Control
+
+> [!IMPORTANT]
+> This phase is to be implemented **after** Phase 1 is complete and stable. It changes the `Persistence` interface and both implementations, and simplifies `StoreImpl` significantly.
+
+### Problem
+
+The current version checking mechanism has a race condition for DB persistence:
+
+1. [StoreImpl.update()](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl/src/main/java/stroom/docstore/impl/StoreImpl.java#L671-L726) captures the client's version, generates a new version UUID, serialises the doc, then does a **read → check → write** sequence via separate `persistence.read()` and `persistence.write()` calls
+2. [DBPersistence](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/DBPersistence.java) uses [NoLockFactory](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/java/stroom/docstore/impl/db/NoLockFactory.java) — the JVM lock is a **no-op**
+3. The `UPDATE doc SET ... WHERE id = ?` SQL has **no version guard** — last writer wins
+4. The version UUID lives inside the serialised meta JSON blob — it is not a DB column
+
+Two nodes can both read version A, both pass the app-level check, and both write — the second silently overwrites the first.
+
+### Solution: Version Column + Persistence-Level Locking
+
+Push version checking and locking down into each `Persistence` implementation. Add a `version` column to the `doc` table so the DB can enforce optimistic locking atomically.
+
+### Schema Change
+
+```sql
+ALTER TABLE doc ADD COLUMN version varchar(36) NOT NULL DEFAULT '';
+```
+
+### Migration Challenge
+
+The version UUID is currently embedded inside the `meta` extension's JSON blob (the `version` field on [AbstractDoc](file:///home/stroomdev66/work/stroom-7.10/stroom-core-shared/src/main/java/stroom/docstore/shared/AbstractDoc.java#L50-L51)). The version UUID is used externally by import/export, so it must be preserved — not regenerated. Phase 1 will have already migrated meta data into `doc_data.json_data`, so we can extract it with `JSON_EXTRACT`:
+
+```sql
+-- Populate version from existing meta JSON
+UPDATE doc d
+JOIN doc_data dd ON dd.fk_doc_id = d.id AND dd.ext = 'meta'
+SET d.version = JSON_UNQUOTE(JSON_EXTRACT(dd.json_data, '$.version'))
+WHERE dd.json_data IS NOT NULL;
+
+-- Fallback: generate a UUID for any rows that were diverted to text_data
+-- due to invalid JSON (these won't have an extractable version)
+UPDATE doc
+SET version = UUID()
+WHERE version = '';
+
+### Persistence Interface Change
+
+#### [MODIFY] [Persistence.java](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl/src/main/java/stroom/docstore/impl/Persistence.java)
+
+```diff
+-void write(DocRef docRef, AuditAction auditAction, ImportExportDocument data) throws IOException;
++void write(DocRef docRef, AuditAction auditAction, ImportExportDocument data,
++           String expectedVersion, String newVersion) throws IOException;
+```
+
+- **CREATE/COPY**: `expectedVersion = null` — INSERT with `newVersion`, no version check needed
+- **UPDATE/RENAME**: `expectedVersion = currentVersion` — `UPDATE ... WHERE id = ? AND version = ?`
+- **IMPORT**: `expectedVersion = null` — overwrite regardless of existing version
+
+### DBPersistence Changes
+
+The `write()` method uses `SELECT FOR UPDATE` (already in Phase 1) and adds the version to the WHERE clause:
+
+```java
+// UPDATE case — atomic optimistic lock
+int updateCount = ctx.update(DOC)
+        .set(DOC.NAME, docRef.getName())
+        .set(DOC.VERSION, newVersion)
+        .where(DOC.ID.eq(docId))
+        .and(DOC.VERSION.eq(expectedVersion))  // optimistic lock
+        .execute();
+
+if (updateCount == 0) {
+    // Distinguish not-found vs version mismatch
+    boolean exists = ctx.fetchExists(
+            ctx.selectFrom(DOC).where(DOC.ID.eq(docId)).and(DOC.DELETED.isNull()));
+    if (!exists) {
+        throw new DocumentNotFoundException(docRef);
+    }
+    throw new ConcurrentModificationException(
+            docRef + " has been modified by another user");
+}
+```
+
+### FSPersistence Changes
+
+[FSPersistence](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-fs/src/main/java/stroom/docstore/impl/fs/FSPersistence.java) continues using [StripedLockFactory](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-fs/src/main/java/stroom/docstore/impl/fs/StripedLockFactory.java) for JVM-level serialisation. Within the lock, it reads the existing meta file, extracts the version, compares to `expectedVersion`, and throws on mismatch. The version lives in the JSON file content.
+
+### StoreImpl Simplification
+
+With version checking pushed into `persistence.write()`, [StoreImpl.update()](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl/src/main/java/stroom/docstore/impl/StoreImpl.java#L671-L726) no longer needs to:
+
+1. ~~Call `persistence.read(docRef)` just for version checking~~
+2. ~~Deserialise the existing doc to extract the version~~
+3. ~~Use `persistence.getLockFactory().lock()` to wrap the read-check-write~~
+
+The update flow simplifies from:
+
+```java
+// BEFORE: read → check → write (not atomic for DB)
+persistence.getLockFactory().lock(uuid, () -> {
+    existing = persistence.read(docRef);
+    existingDoc = serialiser.read(existing);
+    if (!existingDoc.getVersion().equals(currentVersion)) throw ...;
+    persistence.write(docRef, true, newData);
+});
+```
+
+To:
+
+```java
+// AFTER: single atomic call — persistence layer handles version check
+persistence.write(docRef, AuditAction.UPDATE, newData, currentVersion, newVersion);
+```
+
+### RWLockFactory / NoLockFactory
+
+With version checking in the persistence layer:
+- `NoLockFactory` remains for DB persistence — the DB transaction + version WHERE clause provides atomicity
+- `StripedLockFactory` remains for FS persistence — the JVM lock serialises file access
+- `StoreImpl` no longer calls `getLockFactory().lock()` for updates — the lock responsibility is fully pushed down
+- Consider whether `RWLockFactory` can be removed from the `Persistence` interface entirely, or whether other `StoreImpl` methods still need it
+
+### Version in Meta JSON vs Column
+
+After this phase, the version exists in **both** the `doc.version` column and the meta JSON blob. The column is the **source of truth** for optimistic locking. The JSON copy is retained for backward compatibility with serialisers and clients. Stripping it from JSON is deferred (see Future Work item 3 — removing redundant audit fields from meta could be combined with version removal).
+
+---
+
 ## Future Work
+
 
 Items identified during this design but deferred from the initial implementation:
 
