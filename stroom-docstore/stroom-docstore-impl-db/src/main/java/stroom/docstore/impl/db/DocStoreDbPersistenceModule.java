@@ -16,9 +16,15 @@
 
 package stroom.docstore.impl.db;
 
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.docstore.impl.Persistence;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class DocStoreDbPersistenceModule extends AbstractModule {
 
@@ -27,5 +33,23 @@ public class DocStoreDbPersistenceModule extends AbstractModule {
         super.configure();
 
         bind(Persistence.class).to(DBPersistence.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(PhysicalDeleteOldDocs.class, builder -> builder
+                        .name("Doc Store - Physical Delete")
+                        .description("Physically deletes documents that have been soft-deleted " +
+                                     "for longer than the configured retention period. " +
+                                     "Removes all associated data, audit, and snapshot rows.")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
+    }
+
+    private static class PhysicalDeleteOldDocs extends RunnableWrapper {
+
+        @Inject
+        PhysicalDeleteOldDocs(final DBPersistence dbPersistence,
+                              final Provider<DocStoreConfig> docStoreConfigProvider) {
+            super(() -> dbPersistence.physicalDelete(
+                    docStoreConfigProvider.get().getPhysicalDeleteAge().getDuration()));
+        }
     }
 }

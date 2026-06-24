@@ -25,6 +25,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-db-jooq')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

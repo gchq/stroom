@@ -44,6 +44,7 @@ import org.jooq.impl.DSL;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +52,9 @@ import java.util.Optional;
 
 import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
 import static stroom.docstore.impl.db.jooq.tables.DocAudit.DOC_AUDIT;
+import static stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT;
 import static stroom.docstore.impl.db.jooq.tables.DocData.DOC_DATA;
+import static stroom.docstore.impl.db.jooq.tables.DocDataSnapshot.DOC_DATA_SNAPSHOT;
 
 @Singleton
 public class DBPersistence implements Persistence {
@@ -493,5 +496,62 @@ public class DBPersistence implements Persistence {
     @Override
     public RWLockFactory getLockFactory() {
         return LOCK_FACTORY;
+    }
+
+    /**
+     * Physically delete documents that have been soft-deleted for longer than the given retention period.
+     * Deletes all associated child rows in FK-safe order:
+     * doc_audit_data_snapshot → doc_data_snapshot → doc_audit → doc_data → doc.
+     *
+     * @param retentionPeriod minimum age of soft-delete before physical removal
+     * @return the number of documents physically deleted
+     */
+    public int physicalDelete(final Duration retentionPeriod) {
+        final long cutoff = System.currentTimeMillis() - retentionPeriod.toMillis();
+
+        return JooqUtil.transactionResult(dataSource, context -> {
+            // Find doc IDs soft-deleted before the cutoff
+            final List<Long> docIds = context.select(DOC.ID)
+                    .from(DOC)
+                    .where(DOC.DELETED.isNotNull())
+                    .and(DOC.DELETED.le(cutoff))
+                    .fetch(DOC.ID);
+
+            if (docIds.isEmpty()) {
+                return 0;
+            }
+
+            LOGGER.info("Physically deleting {} soft-deleted doc(s) older than {}",
+                    docIds.size(), retentionPeriod);
+
+            // Delete in FK-safe order: leaves first, root last
+
+            // 1. doc_audit_data_snapshot (references doc_audit and doc_data_snapshot)
+            context.deleteFrom(DOC_AUDIT_DATA_SNAPSHOT)
+                    .where(DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_AUDIT_ID.in(
+                            context.select(DOC_AUDIT.ID).from(DOC_AUDIT)
+                                    .where(DOC_AUDIT.FK_DOC_ID.in(docIds))))
+                    .execute();
+
+            // 2. doc_data_snapshot (references doc)
+            context.deleteFrom(DOC_DATA_SNAPSHOT)
+                    .where(DOC_DATA_SNAPSHOT.FK_DOC_ID.in(docIds))
+                    .execute();
+
+            // 3. doc_audit (references doc)
+            context.deleteFrom(DOC_AUDIT)
+                    .where(DOC_AUDIT.FK_DOC_ID.in(docIds))
+                    .execute();
+
+            // 4. doc_data (references doc)
+            context.deleteFrom(DOC_DATA)
+                    .where(DOC_DATA.FK_DOC_ID.in(docIds))
+                    .execute();
+
+            // 5. doc (root)
+            return context.deleteFrom(DOC)
+                    .where(DOC.ID.in(docIds))
+                    .execute();
+        });
     }
 }
