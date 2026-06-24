@@ -62,6 +62,9 @@ EXPOSE 8081
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
 
+# Create Docker volume for indexed doc content.
+VOLUME /stroom/content_index/
+
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
