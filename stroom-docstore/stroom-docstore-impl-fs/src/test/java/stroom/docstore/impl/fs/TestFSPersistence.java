@@ -48,7 +48,7 @@ class TestFSPersistence {
 
         // Ensure the doc doesn't exist.
         if (persistence.exists(docRef)) {
-            persistence.delete(docRef);
+            persistence.delete(docRef, null);
         }
 
         GenericDoc doc = GenericDoc
@@ -63,7 +63,7 @@ class TestFSPersistence {
         // Create
         final ImportExportDocument ieDoc = new ImportExportDocument();
         ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
-        persistence.write(docRef, AuditAction.CREATE, ieDoc);
+        persistence.write(docRef, AuditAction.CREATE, null, ieDoc);
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
@@ -85,7 +85,7 @@ class TestFSPersistence {
         bytes = mapper.writeValueAsBytes(doc);
         final ImportExportDocument ieDocNewName = new ImportExportDocument();
         ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
-        persistence.write(docRef, AuditAction.UPDATE, ieDocNewName);
+        persistence.write(docRef, AuditAction.UPDATE, null, ieDocNewName);
 
         // Read
         final ImportExportDocument ieDocNewNameRead = persistence.read(docRef);
@@ -100,6 +100,6 @@ class TestFSPersistence {
         assertThat(refs.getFirst().getName()).isEqualTo("New Name");
 
         // Delete
-        persistence.delete(docRef);
+        persistence.delete(docRef, null);
     }
 }

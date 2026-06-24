@@ -16,12 +16,13 @@
 
 package stroom.docstore.impl;
 
-import stroom.docstore.shared.DocAuditEntry;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -32,11 +33,12 @@ public interface Persistence {
 
     boolean exists(DocRef docRef);
 
-    void delete(DocRef docRef);
+    void delete(DocRef docRef, UserRef userRef);
 
     ImportExportDocument read(DocRef docRef) throws IOException;
 
-    void write(DocRef docRef, AuditAction auditAction, ImportExportDocument importExportDocument) throws IOException;
+    void write(DocRef docRef, AuditAction auditAction, UserRef userRef,
+               ImportExportDocument importExportDocument) throws IOException;
 
     List<DocRef> list(String type);
 

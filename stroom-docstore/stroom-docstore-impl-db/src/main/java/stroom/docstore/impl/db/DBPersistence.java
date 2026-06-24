@@ -33,18 +33,23 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import net.openhft.hashing.LongHashFunction;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.JSON;
+import org.jooq.Record;
 import org.jooq.UpdateSetMoreStep;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -77,7 +82,8 @@ public class DBPersistence implements Persistence {
                 .fetchExists(context
                         .selectOne()
                         .from(DOC)
-                        .where(DOC.UUID.eq(docRef.getUuid()))));
+                        .where(DOC.UUID.eq(docRef.getUuid()))
+                        .and(DOC.DELETED.isNull())));
     }
 
     @Override
@@ -87,6 +93,7 @@ public class DBPersistence implements Persistence {
                 .from(DOC)
                 .where(DOC.TYPE.eq(docRef.getType()))
                 .and(DOC.UUID.eq(docRef.getUuid()))
+                .and(DOC.DELETED.isNull())
                 .fetchOptional(DOC.NAME));
     }
 
@@ -101,6 +108,7 @@ public class DBPersistence implements Persistence {
                     .from(DOC)
                     .where(DOC.TYPE.eq(docRef.getType()))
                     .and(DOC.UUID.eq(docRef.getUuid()))
+                    .and(DOC.DELETED.isNull())
                     .fetchOne(DOC.ID);
 
             if (docId == null) {
@@ -152,45 +160,76 @@ public class DBPersistence implements Persistence {
     @Override
     public void write(final DocRef docRef,
                       final AuditAction auditAction,
+                      final UserRef userRef,
                       final ImportExportDocument importExportDocument) {
         JooqUtil.transaction(dataSource, context -> {
-            // Get existing doc id
-            final Long existingDocId = context
-                    .select(DOC.ID)
-                    .from(DOC)
-                    .where(DOC.TYPE.eq(docRef.getType()))
-                    .and(DOC.UUID.eq(docRef.getUuid()))
-                    .fetchOne(DOC.ID);
-
-            if (auditAction.isUpdate()) {
-                if (existingDocId == null) {
-                    throw new RuntimeException(
-                            "Document does not exist with uuid=" + docRef.getUuid());
-                }
-            } else if (auditAction.isCreate() && existingDocId != null) {
-                throw new RuntimeException(
-                        "Document already exists with uuid=" + docRef.getUuid());
-            }
-
             final long docId;
-            if (existingDocId != null) {
-                // Update existing doc name
-                context
-                        .update(DOC)
-                        .set(DOC.NAME, docRef.getName())
-                        .where(DOC.ID.eq(existingDocId))
-                        .execute();
-                docId = existingDocId;
+
+            if (auditAction == AuditAction.IMPORT) {
+                // IMPORT: look up by UUID ignoring deleted filter (find soft-deleted docs too)
+                final Record docRecord = context
+                        .select(DOC.ID, DOC.DELETED)
+                        .from(DOC)
+                        .where(DOC.UUID.eq(docRef.getUuid()))
+                        .fetchOne();
+
+                if (docRecord != null) {
+                    docId = docRecord.get(DOC.ID);
+                    // Undelete if soft-deleted, and update name
+                    context.update(DOC)
+                            .set(DOC.NAME, docRef.getName())
+                            .set(DOC.DELETED, (Long) null)
+                            .where(DOC.ID.eq(docId))
+                            .execute();
+                } else {
+                    // Brand new import — insert
+                    docId = context
+                            .insertInto(DOC)
+                            .set(DOC.TYPE, docRef.getType())
+                            .set(DOC.UUID, docRef.getUuid())
+                            .set(DOC.NAME, docRef.getName())
+                            .returning(DOC.ID)
+                            .fetchOne()
+                            .getId();
+                }
             } else {
-                // Insert new doc row
-                docId = context
-                        .insertInto(DOC)
-                        .set(DOC.TYPE, docRef.getType())
-                        .set(DOC.UUID, docRef.getUuid())
-                        .set(DOC.NAME, docRef.getName())
-                        .returning(DOC.ID)
-                        .fetchOne()
-                        .getId();
+                // CREATE or UPDATE — look up active docs only
+                final Long existingDocId = context
+                        .select(DOC.ID)
+                        .from(DOC)
+                        .where(DOC.TYPE.eq(docRef.getType()))
+                        .and(DOC.UUID.eq(docRef.getUuid()))
+                        .and(DOC.DELETED.isNull())
+                        .fetchOne(DOC.ID);
+
+                if (auditAction.isUpdate()) {
+                    if (existingDocId == null) {
+                        throw new RuntimeException(
+                                "Document does not exist with uuid=" + docRef.getUuid());
+                    }
+                } else if (auditAction.isCreate() && existingDocId != null) {
+                    throw new RuntimeException(
+                            "Document already exists with uuid=" + docRef.getUuid());
+                }
+
+                if (existingDocId != null) {
+                    // Update existing doc name
+                    context.update(DOC)
+                            .set(DOC.NAME, docRef.getName())
+                            .where(DOC.ID.eq(existingDocId))
+                            .execute();
+                    docId = existingDocId;
+                } else {
+                    // Insert new doc row
+                    docId = context
+                            .insertInto(DOC)
+                            .set(DOC.TYPE, docRef.getType())
+                            .set(DOC.UUID, docRef.getUuid())
+                            .set(DOC.NAME, docRef.getName())
+                            .returning(DOC.ID)
+                            .fetchOne()
+                            .getId();
+                }
             }
 
             // Upsert each asset into doc_data
@@ -266,8 +305,9 @@ public class DBPersistence implements Persistence {
                 }
             }
 
-            // Remove stale extensions that are no longer in the document
-            if (existingDocId != null) {
+            // Remove stale extensions that are no longer in the document.
+            // Skip for fresh CREATEs where no stale rows can exist.
+            if (!auditAction.isCreate()) {
                 final List<String> currentExts = importExportDocument.getExtAssets()
                         .stream()
                         .map(ImportExportAsset::getKey)
@@ -280,43 +320,151 @@ public class DBPersistence implements Persistence {
                         .execute();
             }
 
-            // Write audit entry
-            context
+            // Write audit entry and get the audit ID for snapshot linking
+            final long auditId = context
                     .insertInto(DOC_AUDIT)
                     .set(DOC_AUDIT.FK_DOC_ID, docId)
                     .set(DOC_AUDIT.ACTION, auditAction.getPrimitiveValue())
                     .set(DOC_AUDIT.ACTION_TIME, System.currentTimeMillis())
-                    .execute();
+                    .set(DOC_AUDIT.USER_UUID, NullSafe.get(userRef, UserRef::getUuid))
+                    .set(DOC_AUDIT.USER_NAME, NullSafe.get(userRef, UserRef::getDisplayName))
+                    .returning(DOC_AUDIT.ID)
+                    .fetchOne()
+                    .getId();
+
+            // Write deduplicated data snapshots and link to audit entry
+            writeSnapshots(context, docId, auditId, importExportDocument);
         });
     }
 
+    /**
+     * For each data asset in the document, find or create a deduplicated snapshot row
+     * and link it to the given audit entry.
+     */
+    private void writeSnapshots(final DSLContext context,
+                                final long docId,
+                                final long auditId,
+                                final ImportExportDocument importExportDocument) {
+        for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
+            try {
+                final byte[] rawData = asset.getInputData();
+                final DocDataType dataType = asset.getDocDataType();
+                final long dataHash = LongHashFunction.xx3().hashBytes(
+                        rawData != null ? rawData : new byte[0]);
+
+                // Look up candidate snapshot rows by hash
+                final var candidates = context
+                        .select(DOC_DATA_SNAPSHOT.ID,
+                                DOC_DATA_SNAPSHOT.DATA_TYPE,
+                                DOC_DATA_SNAPSHOT.JSON_DATA,
+                                DOC_DATA_SNAPSHOT.TEXT_DATA,
+                                DOC_DATA_SNAPSHOT.BIN_DATA)
+                        .from(DOC_DATA_SNAPSHOT)
+                        .where(DOC_DATA_SNAPSHOT.FK_DOC_ID.eq(docId))
+                        .and(DOC_DATA_SNAPSHOT.EXT.eq(asset.getKey()))
+                        .and(DOC_DATA_SNAPSHOT.DATA_HASH.eq(dataHash))
+                        .fetch();
+
+                Long snapshotId = null;
+                for (final var candidate : candidates) {
+                    // Verify actual data content matches (guards against hash collision)
+                    if (snapshotDataEquals(candidate, dataType, rawData)) {
+                        snapshotId = candidate.get(DOC_DATA_SNAPSHOT.ID);
+                        break;
+                    }
+                }
+
+                if (snapshotId == null) {
+                    // No matching snapshot — insert new row
+                    var insertStep = context
+                            .insertInto(DOC_DATA_SNAPSHOT)
+                            .set(DOC_DATA_SNAPSHOT.FK_DOC_ID, docId)
+                            .set(DOC_DATA_SNAPSHOT.EXT, asset.getKey())
+                            .set(DOC_DATA_SNAPSHOT.DATA_TYPE, dataType.getPrimitiveValue())
+                            .set(DOC_DATA_SNAPSHOT.DATA_HASH, dataHash);
+
+                    if (dataType == DocDataType.JSON) {
+                        insertStep = insertStep.set(DOC_DATA_SNAPSHOT.JSON_DATA,
+                                rawData != null
+                                        ? JSON.json(new String(rawData, StandardCharsets.UTF_8))
+                                        : null);
+                    } else if (dataType == DocDataType.TEXT) {
+                        insertStep = insertStep.set(DOC_DATA_SNAPSHOT.TEXT_DATA,
+                                rawData != null
+                                        ? new String(rawData, StandardCharsets.UTF_8)
+                                        : null);
+                    } else {
+                        insertStep = insertStep.set(DOC_DATA_SNAPSHOT.BIN_DATA, rawData);
+                    }
+
+                    snapshotId = insertStep
+                            .returning(DOC_DATA_SNAPSHOT.ID)
+                            .fetchOne()
+                            .getId();
+                }
+
+                // Link audit entry to snapshot
+                context.insertInto(DOC_AUDIT_DATA_SNAPSHOT)
+                        .set(DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_AUDIT_ID, auditId)
+                        .set(DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_DATA_SNAPSHOT_ID, snapshotId)
+                        .execute();
+
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Compare a candidate snapshot record's data content with the given raw data,
+     * using the appropriate column based on data type.
+     */
+    private boolean snapshotDataEquals(final org.jooq.Record candidate,
+                                      final DocDataType dataType,
+                                      final byte[] rawData) {
+        if (dataType == DocDataType.JSON) {
+            final JSON json = candidate.get(DOC_DATA_SNAPSHOT.JSON_DATA);
+            final byte[] existing = json != null
+                    ? json.data().getBytes(StandardCharsets.UTF_8)
+                    : null;
+            return Arrays.equals(existing, rawData);
+        } else if (dataType == DocDataType.TEXT) {
+            final String text = candidate.get(DOC_DATA_SNAPSHOT.TEXT_DATA);
+            final byte[] existing = text != null
+                    ? text.getBytes(StandardCharsets.UTF_8)
+                    : null;
+            return Arrays.equals(existing, rawData);
+        } else {
+            final byte[] existing = candidate.get(DOC_DATA_SNAPSHOT.BIN_DATA);
+            return Arrays.equals(existing, rawData);
+        }
+    }
+
     @Override
-    public void delete(final DocRef docRef) {
+    public void delete(final DocRef docRef, final UserRef userRef) {
         JooqUtil.transaction(dataSource, context -> {
-            // Get the doc id
+            // Get the doc id (active docs only)
             final Long docId = context
                     .select(DOC.ID)
                     .from(DOC)
                     .where(DOC.TYPE.eq(docRef.getType()))
                     .and(DOC.UUID.eq(docRef.getUuid()))
+                    .and(DOC.DELETED.isNull())
                     .fetchOne(DOC.ID);
 
             if (docId != null) {
-                // Delete doc_data rows (FK cascading is not configured for safety)
-                context
-                        .deleteFrom(DOC_DATA)
-                        .where(DOC_DATA.FK_DOC_ID.eq(docId))
-                        .execute();
-
-                // Write a DELETE audit entry before removing the doc
+                // Write a DELETE audit entry
                 context
                         .insertInto(DOC_AUDIT)
                         .set(DOC_AUDIT.FK_DOC_ID, docId)
                         .set(DOC_AUDIT.ACTION, AuditAction.DELETE.getPrimitiveValue())
                         .set(DOC_AUDIT.ACTION_TIME, System.currentTimeMillis())
+                        .set(DOC_AUDIT.USER_UUID, NullSafe.get(userRef, UserRef::getUuid))
+                        .set(DOC_AUDIT.USER_NAME, NullSafe.get(userRef, UserRef::getDisplayName))
                         .execute();
 
-                // Soft-delete: set the deleted timestamp
+                // Soft-delete: set the deleted timestamp.
+                // doc_data, doc_audit, and snapshot rows are intentionally left intact.
                 context
                         .update(DOC)
                         .set(DOC.DELETED, System.currentTimeMillis())

@@ -31,6 +31,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Singleton;
@@ -67,6 +68,7 @@ public class MemoryPersistence implements Persistence, Clearable {
     @Override
     public void write(final DocRef docRef,
                       final AuditAction auditAction,
+                      final UserRef userRef,
                       final ImportExportDocument importExportDocument) {
         if (auditAction.isUpdate()) {
             if (!map.containsKey(docRef)) {
@@ -80,7 +82,7 @@ public class MemoryPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void delete(final DocRef docRef) {
+    public void delete(final DocRef docRef, final UserRef userRef) {
         map.remove(docRef);
     }
 

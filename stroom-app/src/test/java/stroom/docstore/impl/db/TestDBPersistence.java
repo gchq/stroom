@@ -51,14 +51,14 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
 
         // Ensure the doc doesn't exist.
         if (persistence.exists(docRef)) {
-            persistence.delete(docRef);
+            persistence.delete(docRef, null);
         }
 
         // Create
         ImportExportDocument importExportDocument = new ImportExportDocument();
         importExportDocument.addExtAsset(
                 new ByteArrayImportExportAsset("meta", DocDataType.JSON, uuid1.getBytes(CHARSET)));
-        persistence.write(docRef, AuditAction.CREATE, importExportDocument);
+        persistence.write(docRef, AuditAction.CREATE, null, importExportDocument);
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
@@ -71,7 +71,7 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
         importExportDocument = new ImportExportDocument();
         importExportDocument.addExtAsset(
                 new ByteArrayImportExportAsset("meta", DocDataType.JSON, uuid2.getBytes(CHARSET)));
-        persistence.write(docRef, AuditAction.UPDATE, importExportDocument);
+        persistence.write(docRef, AuditAction.UPDATE, null, importExportDocument);
 
         // Read
         importExportDocument = persistence.read(docRef);
@@ -83,7 +83,7 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
         assertThat(refs.get(0)).isEqualTo(docRef);
 
         // Delete
-        persistence.delete(docRef);
+        persistence.delete(docRef, null);
     }
 
     @Test
@@ -93,8 +93,8 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
         final DocRef docRef1 = new DocRef("test-type1", uuid1, "test-name1");
         final DocRef docRef2 = new DocRef("test-type2", uuid2, "test-name2");
 
-        persistence.delete(docRef1);
-        persistence.delete(docRef2);
+        persistence.delete(docRef1, null);
+        persistence.delete(docRef2, null);
 
         final String metaJson1 = """
                 {
@@ -129,12 +129,12 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
         final ImportExportDocument ieDoc1 = new ImportExportDocument();
         ieDoc1.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON,
                 String.format(metaJson1, uuid1, uuid2).getBytes(CHARSET)));
-        persistence.write(docRef1, AuditAction.CREATE, ieDoc1);
+        persistence.write(docRef1, AuditAction.CREATE, null, ieDoc1);
 
         final ImportExportDocument ieDoc2 = new ImportExportDocument();
         ieDoc2.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON,
                 String.format(metaJson2, uuid2).getBytes(CHARSET)));
-        persistence.write(docRef2, AuditAction.CREATE, ieDoc2);
+        persistence.write(docRef2, AuditAction.CREATE, null, ieDoc2);
 
         final List<DocRef> docRefs = persistence.findDocRefsEmbeddedIn(docRef2);
         assertThat(docRefs.size()).isEqualTo(1);

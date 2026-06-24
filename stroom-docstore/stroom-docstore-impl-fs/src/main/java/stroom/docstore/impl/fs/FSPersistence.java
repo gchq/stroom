@@ -33,6 +33,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
@@ -131,6 +132,7 @@ public class FSPersistence implements Persistence, Clearable {
     @Override
     public void write(final DocRef docRef,
                       final AuditAction auditAction,
+                      final UserRef userRef,
                       final ImportExportDocument importExportDocument) {
         final Path filePath = getPath(docRef, META);
         if (auditAction.isUpdate()) {
@@ -154,7 +156,7 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void delete(final DocRef docRef) {
+    public void delete(final DocRef docRef, final UserRef userRef) {
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
                 docRef.getUuid() + ".*")) {
             stream.forEach(file -> {
