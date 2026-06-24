@@ -128,6 +128,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/content_index && \
     mkdir -p /stroom/data_feed_identities && \
     mkdir -p /stroom/git_repo && \
     mkdir -p /stroom/lmdb && \
