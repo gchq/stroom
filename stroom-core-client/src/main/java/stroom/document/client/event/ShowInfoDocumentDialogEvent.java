@@ -16,8 +16,8 @@
 
 package stroom.document.client.event;
 
-import stroom.docstore.shared.DocAuditEntry;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.util.shared.NullSafe;

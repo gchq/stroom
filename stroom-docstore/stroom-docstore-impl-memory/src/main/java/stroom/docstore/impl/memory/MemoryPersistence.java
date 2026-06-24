@@ -16,13 +16,13 @@
 
 package stroom.docstore.impl.memory;
 
-import stroom.docstore.shared.DocAuditEntry;
-import stroom.docstore.shared.DocAuditUser;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocAuditEntry;
+import stroom.docstore.shared.DocAuditUser;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.PredicateUtil;
 import stroom.util.json.JsonUtil;
