@@ -36,12 +36,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 public class AutoContentCreationConfig
         extends AbstractConfig
         implements IsStroomConfig {
+
+    private static final boolean DEFAULT_ENABLED = false;
 
     public static final String DEFAULT_DESTINATION_BASE_PART = "Feeds";
     public static final String DEFAULT_DESTINATION_ACCOUNT_ID_PART = "${accountid}";
@@ -73,7 +76,7 @@ public class AutoContentCreationConfig
     private final Set<String> templateMatchFields;
 
     public AutoContentCreationConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
         destinationExplorerPathTemplate = DocPath.fromParts(
                         DEFAULT_DESTINATION_BASE_PART,
                         DEFAULT_DESTINATION_ACCOUNT_ID_PART)
@@ -100,7 +103,7 @@ public class AutoContentCreationConfig
 
     @JsonCreator
     public AutoContentCreationConfig(
-            @JsonProperty("enabled") final boolean enabled,
+            @JsonProperty("enabled") final Boolean enabled,
             @JsonProperty("destinationExplorerPathTemplate") final String destinationExplorerPathTemplate,
             @JsonProperty("destinationExplorerSubPathTemplate") final String destinationExplorerSubPathTemplate,
             @JsonProperty("groupTemplate") final String groupTemplate,
@@ -111,7 +114,7 @@ public class AutoContentCreationConfig
             @JsonProperty("createAsType") final UserType createAsType,
             @JsonProperty("templateMatchFields") final Set<String> templateMatchFields) {
 
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.destinationExplorerPathTemplate = destinationExplorerPathTemplate;
         this.destinationExplorerSubPathTemplate = destinationExplorerSubPathTemplate;
         this.groupTemplate = NullSafe.nonBlankStringElse(groupTemplate, DEFAULT_GROUP_TEMPLATE);

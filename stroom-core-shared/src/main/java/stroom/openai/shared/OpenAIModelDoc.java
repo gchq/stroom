@@ -53,6 +53,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
 
+    private static final int DEFAULT_MAX_CONTEXT_WINDOW_TOKENS = 0;
+
     public static final String TYPE = "OpenAIModel";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.OPENAI_MODEL_DOCUMENT_TYPE;
 
@@ -84,7 +86,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("baseUrl") final String baseUrl,
             @JsonProperty("apiKeyName") final String apiKeyName,
             @JsonProperty("modelId") final String modelId,
-            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens,
+            @JsonProperty("maxContextWindowTokens") final Integer maxContextWindowTokens,
             @JsonProperty("reasoningEffort") final String reasoningEffort,
             @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
@@ -92,7 +94,8 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.baseUrl = baseUrl;
         this.apiKeyName = apiKeyName;
         this.modelId = modelId;
-        this.maxContextWindowTokens = maxContextWindowTokens;
+        this.maxContextWindowTokens =
+                Objects.requireNonNullElse(maxContextWindowTokens, DEFAULT_MAX_CONTEXT_WINDOW_TOKENS);
         this.reasoningEffort = reasoningEffort;
         this.httpClientConfiguration = httpClientConfiguration;
     }

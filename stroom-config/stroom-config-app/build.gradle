@@ -40,6 +40,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-impl-db')
+    implementation project(':stroom-index:stroom-index-lucene')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-kafka:stroom-kafka-impl')

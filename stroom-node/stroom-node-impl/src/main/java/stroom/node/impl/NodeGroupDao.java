@@ -22,7 +22,10 @@ import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
 import stroom.util.shared.ResultPage;
 
+import java.util.Set;
+
 public interface NodeGroupDao {
+
     ResultPage<NodeGroup> find(FindNodeGroupRequest request);
 
     NodeGroup create(NodeGroup nodeGroup);
@@ -35,7 +38,30 @@ public interface NodeGroupDao {
 
     void delete(int id);
 
+    /**
+     * Returns all nodes along with their inclusion status for the specified node group.
+     * Each {@link NodeGroupState} pairs a {@link stroom.node.shared.Node} with a boolean
+     * indicating whether that node is a member of the group. This is achieved via a left
+     * outer join, so nodes not in the group are still returned with {@code included = false}.
+     * <p>
+     * Used by the UI to display a list of all nodes with a tick-box for toggling group membership.
+     *
+     * @param id the ID of the node group
+     * @return a {@link ResultPage} containing a {@link NodeGroupState} entry for every node,
+     *         ordered by node name
+     */
     ResultPage<NodeGroupState> getNodeGroupState(Integer id);
+
+    /**
+     * Returns the set of node names that are members of the specified node group.
+     * This is determined by the entries in the {@code node_group_link} table that
+     * associate nodes with the given node group.
+     *
+     * @param nodeGroupId the ID of the node group to query
+     * @return an immutable set of node names included in the group, or an empty set
+     *         if no nodes are linked to the group
+     */
+    Set<String> getNodeGroupIncludedNodes(Integer nodeGroupId);
 
     boolean updateNodeGroupState(NodeGroupChange change);
 }

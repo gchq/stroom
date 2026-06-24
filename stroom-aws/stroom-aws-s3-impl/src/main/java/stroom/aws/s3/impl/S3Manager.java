@@ -680,6 +680,32 @@ public class S3Manager {
                 });
     }
 
+//    private PutObjectRequest createPutObjectRequest(final String bucketName,
+//                                                    final String key,
+//                                                    final Meta meta,
+//                                                    final AttributeMap attributeMap,
+//                                                    final S3UploadProperties uploadProperties) {
+//        final Map<String, String> metadata = attributeMap
+//                .entrySet()
+//                .stream()
+//                .collect(Collectors.toMap(e -> createS3Name(e.getKey()), Entry::getValue));
+//
+//        final PutObjectRequest.Builder builder = PutObjectRequest.builder()
+//                .bucket(bucketName)
+//                .key(key)
+//                .tagging(createTags(meta))
+//                .metadata(metadata);
+//
+//        if (uploadProperties != null) {
+//            NullSafe.consumeNonBlankString(uploadProperties.cacheControl(), builder::cacheControl);
+//            NullSafe.consumeNonBlankString(uploadProperties.contentDisposition(), builder::contentDisposition);
+//            NullSafe.consumeNonBlankString(uploadProperties.contentEncoding(), builder::contentEncoding);
+//            NullSafe.consumeNonBlankString(uploadProperties.contentType(), builder::contentType);
+//                    }
+//                    return ciKey;
+//                });
+//    }
+
     /**
      * Remove a prefix if present.
      *

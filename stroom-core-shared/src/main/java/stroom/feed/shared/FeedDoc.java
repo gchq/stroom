@@ -70,6 +70,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends AbstractDoc {
 
+    private static final boolean DEFAULT_REFERENCE = false;
+
     public static final String TYPE = "Feed";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
 
@@ -113,7 +115,7 @@ public class FeedDoc extends AbstractDoc {
                    @JsonProperty("encoding") final String encoding,
                    @JsonProperty("contextEncoding") final String contextEncoding,
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
-                   @JsonProperty("reference") final boolean reference,
+                   @JsonProperty("reference") final Boolean reference,
                    @JsonProperty("streamType") final String streamType,
                    @JsonProperty("dataFormat") final String dataFormat,
                    @JsonProperty("contextFormat") final String contextFormat,
@@ -127,7 +129,7 @@ public class FeedDoc extends AbstractDoc {
         this.encoding = Objects.requireNonNullElse(encoding, "UTF-8");
         this.contextEncoding = Objects.requireNonNullElse(contextEncoding, "UTF-8");
         this.retentionDayAge = retentionDayAge;
-        this.reference = reference;
+        this.reference = Objects.requireNonNullElse(reference, DEFAULT_REFERENCE);
         this.streamType = Objects.requireNonNullElse(streamType,
                 reference
                         ? StreamTypeNames.RAW_REFERENCE

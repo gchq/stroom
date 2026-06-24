@@ -33,6 +33,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_ENABLED = false;
     private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
     private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
 
@@ -51,16 +52,16 @@ public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
     private final String validationRegex;
 
     public InfoPopupConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
         title = DEFAULT_QUERY_INFO_POPUP_TITLE;
         validationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
     }
 
     @JsonCreator
-    public InfoPopupConfig(@JsonProperty("enabled") final boolean enabled,
+    public InfoPopupConfig(@JsonProperty("enabled") final Boolean enabled,
                            @JsonProperty("title") final String title,
                            @JsonProperty("validationRegex") @ValidRegex final String validationRegex) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.title = title;
         this.validationRegex = validationRegex;
     }

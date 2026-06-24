@@ -61,7 +61,7 @@ public abstract sealed class AbstractPlanBSettings permits
         TraceSettings {
 
     // 10 GiB
-    public static final Long DEFAULT_MAX_STORE_SIZE = 10737418240L;
+    public static final long DEFAULT_MAX_STORE_SIZE = 10737418240L;
 
     @JsonProperty
     private final Long maxStoreSize;

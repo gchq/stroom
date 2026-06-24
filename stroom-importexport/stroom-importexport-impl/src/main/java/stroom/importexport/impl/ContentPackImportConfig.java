@@ -28,8 +28,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ContentPackImportConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final boolean DEFAULT_ENABLED = false;
 
     private final boolean enabled;
     private final String importDirectory;
@@ -37,18 +41,18 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
     private final UserType importAsType;
 
     public ContentPackImportConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
         importDirectory = "content_pack_import";
         importAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         importAsType = UserType.GROUP;
     }
 
     @JsonCreator
-    public ContentPackImportConfig(@JsonProperty("enabled") final boolean enabled,
+    public ContentPackImportConfig(@JsonProperty("enabled") final Boolean enabled,
                                    @JsonProperty("importDirectory") final String importDirectory,
                                    @JsonProperty("importAsSubjectId") final String importAsSubjectId,
                                    @JsonProperty("importAsType") final UserType importAsType) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.importDirectory = importDirectory;
         this.importAsSubjectId = importAsSubjectId;
         this.importAsType = importAsType;

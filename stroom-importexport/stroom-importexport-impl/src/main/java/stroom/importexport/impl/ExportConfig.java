@@ -24,20 +24,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class ExportConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final boolean DEFAULT_ENABLED = false;
 
     protected static final String ENABLED_PROP_NAME = "enabled";
     private final boolean enabled;
 
     public ExportConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
     }
 
     @JsonCreator
-    public ExportConfig(@JsonProperty(ENABLED_PROP_NAME) final boolean enabled) {
-        this.enabled = enabled;
+    public ExportConfig(@JsonProperty(ENABLED_PROP_NAME) final Boolean enabled) {
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
     }
 
     @JsonPropertyDescription("Determines if the system will allow configuration to be exported via the export servlet")

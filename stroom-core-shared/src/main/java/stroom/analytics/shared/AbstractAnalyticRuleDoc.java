@@ -38,6 +38,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
+    private static final boolean DEFAULT_REMEMBER_NOTIFICATIONS = false;
+    private static final boolean DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS = false;
+
     @JsonProperty
     private final String description;
     @JsonProperty
@@ -108,8 +111,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                                    @JsonProperty("notifications") final List<NotificationConfig> notifications,
                                    @JsonProperty("errorFeed") final DocRef errorFeed,
-                                   @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                                   @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+                                   @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+                                   @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
                                    @JsonProperty("level") final String level,
                                    @JsonProperty("status") final String status) {
@@ -130,8 +133,10 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.notifications.add(analyticNotificationConfig);
         }
         this.errorFeed = errorFeed;
-        this.rememberNotifications = rememberNotifications;
-        this.suppressDuplicateNotifications = suppressDuplicateNotifications;
+        this.rememberNotifications = Objects.requireNonNullElse(rememberNotifications,
+                DEFAULT_REMEMBER_NOTIFICATIONS);
+        this.suppressDuplicateNotifications = Objects.requireNonNullElse(suppressDuplicateNotifications,
+                DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS);
         this.duplicateNotificationConfig = Objects.requireNonNullElseGet(duplicateNotificationConfig,
                 () -> new DuplicateNotificationConfig(
                         rememberNotifications,

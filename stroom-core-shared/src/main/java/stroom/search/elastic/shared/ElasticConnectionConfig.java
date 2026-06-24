@@ -38,6 +38,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
 
+    private static final boolean DEFAULT_USE_AUTHENTICATION = false;
+    private static final int DEFAULT_CONNECTION_TIMEOUT_MILLIS = 3000;
+    private static final int DEFAULT_RESPONSE_TIMEOUT_MILLIS = 0;
+
     @JsonProperty
     private List<String> connectionUrls = new ArrayList<>();
 
@@ -48,7 +52,7 @@ public class ElasticConnectionConfig implements Serializable {
     private String caCertificate;
 
     @JsonProperty
-    private boolean useAuthentication = false;
+    private boolean useAuthentication = DEFAULT_USE_AUTHENTICATION;
 
     @JsonProperty
     private String apiKeyId;
@@ -60,14 +64,14 @@ public class ElasticConnectionConfig implements Serializable {
      * Amount of time to wait when connecting to Elasticsearch
      */
     @JsonProperty
-    private int connectionTimeoutMillis = 3000;
+    private int connectionTimeoutMillis = DEFAULT_CONNECTION_TIMEOUT_MILLIS;
 
     /**
      * Amount of time to allow for Elasticsearch requests to complete.
      * If this interval is exceeded, the request is aborted and an `Error` stream is created.
      */
     @JsonProperty
-    private int responseTimeoutMillis = 0;
+    private int responseTimeoutMillis = DEFAULT_RESPONSE_TIMEOUT_MILLIS;
 
     public ElasticConnectionConfig() {
     }
@@ -75,18 +79,21 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonCreator
     public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
                                    @JsonProperty("caCertificate") final String caCertificate,
-                                   @JsonProperty("useAuthentication") final boolean useAuthentication,
+                                   @JsonProperty("useAuthentication") final Boolean useAuthentication,
                                    @JsonProperty("apiKeyId") final String apiKeyId,
                                    @JsonProperty("apiKeySecret") final String apiKeySecret,
-                                   @JsonProperty("connectionTimeoutMillis") final int connectionTimeoutMillis,
-                                   @JsonProperty("responseTimeoutMillis") final int responseTimeoutMillis) {
+                                   @JsonProperty("connectionTimeoutMillis") final Integer connectionTimeoutMillis,
+                                   @JsonProperty("responseTimeoutMillis") final Integer responseTimeoutMillis) {
         this.connectionUrls = connectionUrls;
         this.caCertificate = caCertificate;
-        this.useAuthentication = useAuthentication;
+        this.useAuthentication =
+                Objects.requireNonNullElse(useAuthentication, DEFAULT_USE_AUTHENTICATION);
         this.apiKeyId = apiKeyId;
         this.apiKeySecret = apiKeySecret;
-        this.connectionTimeoutMillis = connectionTimeoutMillis;
-        this.responseTimeoutMillis = responseTimeoutMillis;
+        this.connectionTimeoutMillis =
+                Objects.requireNonNullElse(connectionTimeoutMillis, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
+        this.responseTimeoutMillis =
+                Objects.requireNonNullElse(responseTimeoutMillis, DEFAULT_RESPONSE_TIMEOUT_MILLIS);
     }
 
     public List<String> getConnectionUrls() {
