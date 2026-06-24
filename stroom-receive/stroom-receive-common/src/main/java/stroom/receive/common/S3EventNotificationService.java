@@ -128,8 +128,6 @@ public class S3EventNotificationService {
                         addSqsMessageId(attributeMap, message);
 
                         // TODO:
-                        //  * Parse the eventTime into a long then write back to a normalDateTimeStr
-                        //    to put in the attribute map
                         //  * Create class to hold s3 object location info.
                         //  * Add a table/col to hold the S3 location info as a child of meta.
                         //  * It is agreed that stroom will not duplicate the data on S3, so will
@@ -141,7 +139,6 @@ public class S3EventNotificationService {
                         //  * Add in logging to receive log.
                         //  * S3 is read only from stroom's POV, so we need a isReadOnly method on the Store api.
                         processMessage(message.body(), attributeMap);
-
 
                         // Now delete the msg we have consumed
                         final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
@@ -177,6 +174,8 @@ public class S3EventNotificationService {
 
     private static void addEventTime(final AttributeMap attributeMap, final String eventTime) {
         try {
+            // Parse it to long first so that we know the format is good, then
+            // put it using our standard format
             final long epochMs = DateUtil.parseNormalDateTimeString(eventTime);
             attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, epochMs);
         } catch (final RuntimeException e) {
@@ -189,6 +188,7 @@ public class S3EventNotificationService {
         try {
             final JsonNode rootNode = JsonUtil.getMapper().readTree(messageBody);
 
+            // SQS consumers must support a test message that SQS will probably add to the queue
             // Swallow and log the S3 Test Message
             if (TEST_EVENT_VALUE.equals(JsonUtil.getNodeAsString(rootNode, EVENT_FIELD))) {
                 LOGGER.debug(() -> LogUtil.message("""

@@ -31,7 +31,7 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     /**
      * Uses a posix file system that is mounted locally.
      */
-    STANDARD(0, "Standard"),
+    STANDARD(0, "Standard", false),
 
     /**
      * The first iteration of an S3 stream store implementation.
@@ -39,7 +39,7 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
      * then uploads the file to S3.
      * Reads are done by downloading the zip file from S3 to a temp dir and unzipping it.
      */
-    S3_V1(1, "S3 v1"),
+    S3_V1(1, "S3 v1", false),
 
     /**
      * The second iteration of an S3 stream store implementation.
@@ -47,7 +47,15 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
      * as a separate zstd frame. The segment index is included at the end of the zstd file as a skippable frame.
      * If there is sufficient data to create a dictionary, then a dictionary will be used.
      */
-    S3_V2(2, "S3 v2 (Experimental)"),
+    S3_V2(2, "S3 v2 (Experimental)", false),
+
+    /**
+     * A read only implementation of S3_V1.
+     * Intended for use where the raw data is uploaded to S3 by proxy (in proxy zip format)
+     * and read directly from there.
+     */
+    S3_V1_READ_ONLY(3, "S3 v1 (Read only)", true),
+
     ;
 
     public static final PrimitiveValueConverter<FsVolumeType> PRIMITIVE_VALUE_CONVERTER =
@@ -55,11 +63,14 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
 
     private final int id;
     private final String displayValue;
+    private final boolean readOnly;
 
     FsVolumeType(final int id,
-                 final String displayValue) {
+                 final String displayValue,
+                 final boolean readOnly) {
         this.id = id;
         this.displayValue = displayValue;
+        this.readOnly = readOnly;
     }
 
     public static FsVolumeType fromId(final int id) {
@@ -84,5 +95,9 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     @Override
     public byte getPrimitiveValue() {
         return (byte) id;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
     }
 }
