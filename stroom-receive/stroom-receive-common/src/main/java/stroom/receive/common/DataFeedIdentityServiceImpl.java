@@ -72,10 +72,12 @@ public class DataFeedIdentityServiceImpl implements DataFeedIdentityService {
             final List<IdentityStatus> statuses = new ArrayList<>();
             dataFeedIdentities.forEach(identity -> {
                 final IdentityStatus identityStatus = switch (identity) {
-                    case final HashedDataFeedKey hashedDataFeedKey ->
-                            dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, sourceFile);
-                    case final CertificateIdentity certificateIdentity ->
-                            certificateIdentityService.addCertificateIdentity(certificateIdentity, sourceFile);
+                    case final HashedDataFeedKey hashedDataFeedKey -> dataFeedKeyService.addDataFeedKey(
+                            hashedDataFeedKey, sourceFile);
+                    case final CertificateIdentity certificateIdentity -> {
+                        //noinspection RedundantLabeledSwitchRuleCodeBlock // Stops CS moaning
+                        yield certificateIdentityService.addCertificateIdentity(certificateIdentity, sourceFile);
+                    }
                 };
                 statuses.add(identityStatus);
             });
