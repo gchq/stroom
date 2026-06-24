@@ -16,6 +16,7 @@
 
 package stroom.data.retention.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -32,7 +33,9 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.concurrent.LazyValue;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -41,32 +44,37 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRetentionRulesProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
+    private static final String LOCK_NAME = "DataRetentionRulesCreation";
 
     private final Store<DataRetentionRules> store;
     private final SecurityContext securityContext;
+    private final ClusterLockService clusterLockService;
+    private final LazyValue<DocRef> lazyDocRef = LazyValue.initialisedBy(this::doGetOrCreate);
 
     @Inject
     DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
                                   final Serialiser2Factory serialiser2Factory,
-                                  final SecurityContext securityContext) {
+                                  final SecurityContext securityContext,
+                                  final ClusterLockService clusterLockService) {
         this.securityContext = securityContext;
+        this.clusterLockService = clusterLockService;
         final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules::builder);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
     @Override
     public DocRef createDocument(final String name) {
@@ -102,13 +110,13 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -139,13 +147,13 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
     @Override
     public DataRetentionRules readDocument(final DocRef docRef) {
@@ -162,13 +170,13 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
 
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -203,42 +211,55 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
     @Override
     public DataRetentionRules getOrCreate() {
         // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
         // access it via the proc user.
         return securityContext.asProcessingUserResult(() -> {
-            final Set<DocRef> docRefs = listDocuments();
-            final Set<DocRef> filtered = docRefs
-                    .stream()
-                    .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
-                    .collect(Collectors.toSet());
-
-            if (filtered.size() > 0) {
-                if (filtered.size() > 1) {
-                    LOGGER.warn("Found more than one matching set of data retention rules.");
-                }
-
-                final DocRef docRef = filtered.iterator().next();
-                return readDocument(docRef);
-            }
-
-            if (docRefs.size() > 0) {
-                if (docRefs.size() > 1) {
-                    LOGGER.warn("Found more than one matching set of data retention rules.");
-                }
-
-                final DocRef docRef = docRefs.iterator().next();
-                return readDocument(docRef);
-            }
-
-            final DocRef docRef = createDocument(POLICY_NAME);
+            final DocRef docRef = lazyDocRef.getValueWithLocks();
+            Objects.requireNonNull(docRef);
             return readDocument(docRef);
         });
+    }
+
+    private DocRef doGetOrCreate() {
+        // Should return 0-1 docs of our store's type, unless we have a problem
+        DocRef docRef = getSingletonDoc();
+        if (docRef == null) {
+            docRef = clusterLockService.lockResult(LOCK_NAME, () -> {
+                DocRef docRef2 = getSingletonDoc();
+                if (docRef2 == null) {
+                    // Not there so create it
+                    docRef2 = createDocument(POLICY_NAME);
+                    LOGGER.info("Created document {}", docRef2);
+                }
+                return docRef2;
+            });
+        }
+        return docRef;
+    }
+
+    private DocRef getSingletonDoc() {
+        final List<DocRef> docRefs = store.list();
+        final DocRef docRef;
+        if (NullSafe.isEmptyCollection(docRefs)) {
+            docRef = null;
+        } else {
+            if (docRefs.size() > 1) {
+                throw new RuntimeException("Found multiple documents, expecting one. " + docRefs);
+            } else {
+                docRef = Objects.requireNonNull(docRefs.getFirst());
+                if (!(Objects.equals(POLICY_NAME, docRef.getName())
+                      || Objects.equals(POLICY_NAME, docRef.getUuid()))) {
+                    throw new RuntimeException("Unexpected document " + docRef);
+                }
+            }
+        }
+        return docRef;
     }
 
     @Override
