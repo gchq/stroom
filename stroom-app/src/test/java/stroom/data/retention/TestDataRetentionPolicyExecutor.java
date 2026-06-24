@@ -22,7 +22,6 @@ import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.shared.StreamTypeNames;
-import stroom.docref.DocRef;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -42,7 +41,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,7 +65,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         final long now = System.currentTimeMillis();
         final long timeOutsideRetentionPeriod = now - java.util.concurrent.TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
-                - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
+                                                - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
 
         LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
         LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(
@@ -83,16 +81,18 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
                         .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName2)
                         .build());
 
-        final Set<DocRef> docs = dataRetentionRulesService.listDocuments();
-        DataRetentionRules dataRetentionRules = null;
-        if (docs.size() > 0) {
-            dataRetentionRules = dataRetentionRulesService.readDocument(docs.iterator().next());
-        }
-
-        if (dataRetentionRules == null) {
-            final DocRef docRef = dataRetentionRulesService.createDocument("test");
-            dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
-        }
+//        final Set<DocRef> docs = dataRetentionRulesService.listDocuments();
+//        DataRetentionRules dataRetentionRules = null;
+//        if (docs.size() > 0) {
+//            dataRetentionRules = dataRetentionRulesService.readDocument(docs.iterator().next());
+//        }
+//
+//        if (dataRetentionRules == null) {
+//            final DocRef docRef = dataRetentionRulesService.getOrCreate().asDocRef();
+//            dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+//        }
+//
+        final DataRetentionRules dataRetentionRules = dataRetentionRulesService.getOrCreate();
 
         dataRetentionRules.setRules(List.of(rule1, rule2));
         dataRetentionRulesService.writeDocument(dataRetentionRules);
@@ -185,13 +185,13 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         for (final Meta meta : list) {
             LOGGER.info(() -> "meta: " +
-                    meta +
-                    ", createMs:" +
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    ", statusMs: " +
-                    DateUtil.createNormalDateTimeString(meta.getStatusMs()) +
-                    ", status: " +
-                    meta.getStatus());
+                              meta +
+                              ", createMs:" +
+                              DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                              ", statusMs: " +
+                              DateUtil.createNormalDateTimeString(meta.getStatusMs()) +
+                              ", status: " +
+                              meta.getStatus());
         }
     }
 }
