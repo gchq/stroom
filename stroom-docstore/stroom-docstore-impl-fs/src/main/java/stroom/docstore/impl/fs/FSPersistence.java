@@ -99,76 +99,84 @@ public class FSPersistence implements Persistence, Clearable {
 
     @Override
     public ImportExportDocument read(final DocRef docRef) throws IOException {
-        final ImportExportDocument importExportDocument = new ImportExportDocument();
+        return lockFactory.lockResult(docRef.getUuid(), () -> {
+            final ImportExportDocument importExportDocument = new ImportExportDocument();
 
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
-                docRef.getUuid() + ".*")) {
-            stream.forEach(file -> {
-                try {
-                    final String fileName = file.getFileName().toString();
-                    final int index = fileName.indexOf(".");
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
+                    docRef.getUuid() + ".*")) {
+                stream.forEach(file -> {
+                    try {
+                        final String fileName = file.getFileName().toString();
+                        final int index = fileName.indexOf(".");
 //                    final String uuid = fileName.substring(0, index);
-                    final String ext = fileName.substring(index + 1);
+                        final String ext = fileName.substring(index + 1);
 
-                    final byte[] bytes = Files.readAllBytes(file);
-                    importExportDocument.addExtAsset(
-                            new ByteArrayImportExportAsset(ext, DocDataType.BINARY, bytes));
+                        final byte[] bytes = Files.readAllBytes(file);
+                        importExportDocument.addExtAsset(
+                                new ByteArrayImportExportAsset(ext, DocDataType.BINARY, bytes));
 
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
 
-        if (importExportDocument.getExtAssets().isEmpty()) {
-            return null;
-        }
+            if (importExportDocument.getExtAssets().isEmpty()) {
+                return null;
+            }
 
-        return importExportDocument;
+            return importExportDocument;
+        });
     }
 
     @Override
     public void write(final DocRef docRef,
                       final AuditAction auditAction,
                       final UserRef userRef,
-                      final ImportExportDocument importExportDocument) {
-        final Path filePath = getPath(docRef, META);
-        if (auditAction.isUpdate()) {
-            if (!Files.isRegularFile(filePath)) {
-                throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
-            }
-        } else if (auditAction.isCreate() && Files.isRegularFile(filePath)) {
-            throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
-        }
-
-        for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
-            try {
-                final byte[] data = asset.getInputData();
-                if (data != null) {
-                    Files.write(getPath(docRef, asset.getKey()), data);
+                      final ImportExportDocument importExportDocument,
+                      final String expectedVersion,
+                      final String newVersion) {
+        lockFactory.lock(docRef.getUuid(), () -> {
+            final Path filePath = getPath(docRef, META);
+            if (auditAction.isUpdate()) {
+                if (!Files.isRegularFile(filePath)) {
+                    throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
                 }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+            } else if (auditAction.isCreate() && Files.isRegularFile(filePath)) {
+                throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
             }
-        }
+
+            for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
+                try {
+                    final byte[] data = asset.getInputData();
+                    if (data != null) {
+                        Files.write(getPath(docRef, asset.getKey()), data);
+                    }
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        });
     }
 
     @Override
     public void delete(final DocRef docRef, final UserRef userRef) {
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
-                docRef.getUuid() + ".*")) {
-            stream.forEach(file -> {
-                try {
-                    Files.delete(file);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        lockFactory.lock(docRef.getUuid(), () -> {
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
+                    docRef.getUuid() + ".*")) {
+                stream.forEach(file -> {
+                    try {
+                        Files.delete(file);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     @Override
@@ -307,11 +315,6 @@ public class FSPersistence implements Persistence, Clearable {
                     return ResultPage.createUnboundedList(list);
                 })
                 .orElse(ResultPage.empty());
-    }
-
-    @Override
-    public RWLockFactory getLockFactory() {
-        return lockFactory;
     }
 
     @Override

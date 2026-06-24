@@ -17,7 +17,6 @@
 package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocAuditEntry;
 import stroom.importexport.api.ImportExportDocument;
@@ -29,21 +28,71 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Abstraction over the underlying document storage mechanism (database, filesystem, or in-memory).
+ * Each implementation is responsible for CRUD operations, auditing, listing, and search
+ * across document types. Implementations must handle their own concurrency control
+ * (e.g. database transactions, file-system locks).
+ */
 public interface Persistence {
 
+    /**
+     * Check whether a non-deleted document exists for the given reference.
+     *
+     * @param docRef the document reference to check
+     * @return {@code true} if the document exists and has not been deleted
+     */
     boolean exists(DocRef docRef);
 
+    /**
+     * Delete a document. Database implementations use soft-delete (setting a deleted timestamp);
+     * filesystem implementations physically remove the files.
+     *
+     * @param docRef  the document to delete
+     * @param userRef the user performing the deletion (recorded for audit)
+     */
     void delete(DocRef docRef, UserRef userRef);
 
+    /**
+     * Read all asset data for a document.
+     *
+     * @param docRef the document to read
+     * @return the document's assets (meta, data, etc.), or {@code null} / exception if not found
+     * @throws IOException if there is an error reading the data
+     */
     ImportExportDocument read(DocRef docRef) throws IOException;
 
+    /**
+     * Write document data to storage.
+     *
+     * @param docRef                 the document reference
+     * @param auditAction            the audit action being performed
+     * @param userRef                the user performing the action
+     * @param importExportDocument   the document data to write
+     * @param expectedVersion        for UPDATE/RENAME: the version the caller expects to be current
+     *                               (throws {@link stroom.util.exception.DataChangedException} if stale).
+     *                               For CREATE/COPY/IMPORT: {@code null} (no version check).
+     * @param newVersion             the new version to set on the document after a successful write
+     */
     void write(DocRef docRef, AuditAction auditAction, UserRef userRef,
-               ImportExportDocument importExportDocument) throws IOException;
+               ImportExportDocument importExportDocument,
+               String expectedVersion, String newVersion) throws IOException;
 
+    /**
+     * List all non-deleted documents of the given type.
+     *
+     * @param type the document type to list
+     * @return the matching document references, or an empty list if none found
+     */
     List<DocRef> list(String type);
 
-    RWLockFactory getLockFactory();
-
+    /**
+     * Find document references that are embedded within the given parent document.
+     * For example, a pipeline document may embed references to XSLT or dictionary documents.
+     *
+     * @param parent the parent document to search within
+     * @return the embedded document references, or an empty list if none found
+     */
     List<DocRef> findDocRefsEmbeddedIn(final DocRef parent);
 
     /**
@@ -74,14 +123,6 @@ public interface Persistence {
     List<DocRef> find(Collection<String> types,
                       List<String> nameFilters,
                       boolean allowWildCards);
-
-//    /**
-//     * Get all documents for a given name.
-//     *
-//     * @param name The name to filter documents by.
-//     * @return A list of documents with the supplied name.
-//     */
-//    List<DocRef> findByName(String name);
 
     /**
      * Get the current name for the supplied doc ref.

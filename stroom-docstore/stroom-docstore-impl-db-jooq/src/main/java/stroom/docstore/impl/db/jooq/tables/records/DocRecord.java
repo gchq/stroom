@@ -88,6 +88,20 @@ public class DocRecord extends UpdatableRecordImpl<DocRecord> {
         return (Long) get(4);
     }
 
+    /**
+     * Setter for <code>stroom.doc.version</code>.
+     */
+    public void setVersion(String value) {
+        set(5, value);
+    }
+
+    /**
+     * Getter for <code>stroom.doc.version</code>.
+     */
+    public String getVersion() {
+        return (String) get(5);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -111,7 +125,7 @@ public class DocRecord extends UpdatableRecordImpl<DocRecord> {
     /**
      * Create a detached, initialised DocRecord
      */
-    public DocRecord(Long id, String type, String uuid, String name, Long deleted) {
+    public DocRecord(Long id, String type, String uuid, String name, Long deleted, String version) {
         super(Doc.DOC);
 
         setId(id);
@@ -119,6 +133,7 @@ public class DocRecord extends UpdatableRecordImpl<DocRecord> {
         setUuid(uuid);
         setName(name);
         setDeleted(deleted);
+        setVersion(version);
         resetChangedOnNotNull();
     }
 }

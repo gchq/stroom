@@ -17,7 +17,6 @@
 package stroom.docstore.impl.memory;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.AuditAction;
@@ -50,7 +49,6 @@ import java.util.stream.Collectors;
 @Singleton
 public class MemoryPersistence implements Persistence, Clearable {
 
-    private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MemoryPersistence.class);
 
     private final Map<DocRef, ImportExportDocument> map = new ConcurrentHashMap<>();
@@ -69,7 +67,9 @@ public class MemoryPersistence implements Persistence, Clearable {
     public void write(final DocRef docRef,
                       final AuditAction auditAction,
                       final UserRef userRef,
-                      final ImportExportDocument importExportDocument) {
+                      final ImportExportDocument importExportDocument,
+                      final String expectedVersion,
+                      final String newVersion) {
         if (auditAction.isUpdate()) {
             if (!map.containsKey(docRef)) {
                 throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
@@ -112,10 +112,7 @@ public class MemoryPersistence implements Persistence, Clearable {
 //                .anyMatch(docRef -> docRef.getUuid().equals(uuid));
 //    }
 
-    @Override
-    public RWLockFactory getLockFactory() {
-        return LOCK_FACTORY;
-    }
+
 
     @Override
     public List<DocRef> findDocRefsEmbeddedIn(final DocRef parent) {

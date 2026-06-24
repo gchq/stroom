@@ -63,7 +63,7 @@ class TestFSPersistence {
         // Create
         final ImportExportDocument ieDoc = new ImportExportDocument();
         ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
-        persistence.write(docRef, AuditAction.CREATE, null, ieDoc);
+        persistence.write(docRef, AuditAction.CREATE, null, ieDoc, null, UUID.randomUUID().toString());
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
@@ -85,7 +85,7 @@ class TestFSPersistence {
         bytes = mapper.writeValueAsBytes(doc);
         final ImportExportDocument ieDocNewName = new ImportExportDocument();
         ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
-        persistence.write(docRef, AuditAction.UPDATE, null, ieDocNewName);
+        persistence.write(docRef, AuditAction.UPDATE, null, ieDocNewName, null, UUID.randomUUID().toString());
 
         // Read
         final ImportExportDocument ieDocNewNameRead = persistence.read(docRef);

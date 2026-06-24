@@ -79,6 +79,11 @@ public class Doc extends TableImpl<DocRecord> {
      */
     public final TableField<DocRecord, Long> DELETED = createField(DSL.name("deleted"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>stroom.doc.version</code>.
+     */
+    public final TableField<DocRecord, String> VERSION = createField(DSL.name("version"), SQLDataType.VARCHAR(36).nullable(false).defaultValue(DSL.inline("", SQLDataType.VARCHAR)), this, "");
+
     private Doc(Name alias, Table<DocRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

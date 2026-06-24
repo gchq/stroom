@@ -63,7 +63,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -212,10 +211,8 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                     () -> "document: " + toDocRefDisplayString(docRef));
         }
 
-        persistence.getLockFactory().lock(docRef.getUuid(), () -> {
-            persistence.delete(docRef, securityContext.getUserRef());
-            EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
-        });
+        persistence.delete(docRef, securityContext.getUserRef());
+        EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
     }
 
     // ---------------------------------------------------------------------
@@ -387,43 +384,43 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                              final D existingDocument,
                              final String uuid,
                              final ImportExportDocument convertedImportExportDocument) {
-        return persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                // Turn the data map into a document.
-                final D newDocument = serialiser.read(convertedImportExportDocument);
+        try {
+            // Turn the data map into a document.
+            final D newDocument = serialiser.read(convertedImportExportDocument);
 
-                // Get a builder to mutate the doc.
-                final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
+            // Get a builder to mutate the doc.
+            final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
 
-                // Copy create time and user from the existing document.
-                if (existingDocument != null) {
-                    builder
-                            .name(existingDocument.getName())
-                            .createTimeMs(existingDocument.getCreateTimeMs())
-                            .createUser(existingDocument.getCreateUser());
-                }
-
-                // Stamp audit data on the imported document.
-                builder.stampAudit(securityContext);
-
-                // Convert the document back into a data map.
-                final ImportExportDocument finalData = serialiser.write(builder.build());
-                // Write the data.
-                persistence.write(docRef, AuditAction.IMPORT, securityContext.getUserRef(), finalData);
-
-                // Fire an entity event to alert other services of the change.
-                if (existingDocument != null) {
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
-                } else {
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                }
-
-                return newDocument;
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-                throw new UncheckedIOException(e);
+            // Copy create time and user from the existing document.
+            if (existingDocument != null) {
+                builder
+                        .name(existingDocument.getName())
+                        .createTimeMs(existingDocument.getCreateTimeMs())
+                        .createUser(existingDocument.getCreateUser());
             }
-        });
+
+            // Stamp audit data on the imported document.
+            builder.stampAudit(securityContext);
+
+            final D builtDoc = builder.build();
+            // Convert the document back into a data map.
+            final ImportExportDocument finalData = serialiser.write(builtDoc);
+            // Write the data — import always succeeds, no version check.
+            persistence.write(docRef, AuditAction.IMPORT, securityContext.getUserRef(),
+                    finalData, null, builtDoc.getVersion());
+
+            // Fire an entity event to alert other services of the change.
+            if (existingDocument != null) {
+                EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
+            } else {
+                EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
+            }
+
+            return newDocument;
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedIOException(e);
+        }
     }
 
     private D getExistingDocument(final DocRef docRef) {
@@ -526,15 +523,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         try {
             final DocRef docRef = createDocRef(document);
             final ImportExportDocument importExportDocument = serialiser.write(document);
-            persistence.getLockFactory().lock(document.getUuid(), () -> {
-                try {
-                    persistence.write(docRef, AuditAction.CREATE, securityContext.getUserRef(),
-                            importExportDocument);
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            persistence.write(docRef, AuditAction.CREATE, securityContext.getUserRef(),
+                    importExportDocument, null, document.getVersion());
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
         } catch (final IOException e) {
             LOGGER.error("Error serialising {}", document.getType(), e);
             throw new UncheckedIOException(e);
@@ -630,13 +621,14 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         }
 
         try {
-            // Get the current document version to make sure the document hasn't been changed by
-            // somebody else since we last read it.
+            // Capture the version the caller expects to be current.
             final String currentVersion = updatedDoc.getVersion();
-            // Copy and mutate the doc.
+            final String newVersion = UUID.randomUUID().toString();
+
+            // Copy and mutate the doc with a new version.
             final AbstractBuilder<D, ?> builder = builderFunction
                     .apply(updatedDoc)
-                    .version(UUID.randomUUID().toString());
+                    .version(newVersion);
 
             // Add audit data.
             builder.stampAudit(securityContext);
@@ -644,32 +636,12 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
             final ImportExportDocument newData = serialiser.write(updatedDoc);
 
-            persistence.getLockFactory().lock(updatedDoc.getUuid(), () -> {
-                try {
-                    // Read existing data for this document.
-                    final ImportExportDocument importExportDocument = persistence.read(docRef);
-
-                    // Perform version check to ensure the item hasn't been updated by somebody
-                    // else before we try to update it.
-                    if (importExportDocument == null) {
-                        throw new DocumentNotFoundException(docRef);
-                    }
-
-                    final D existingDocument = serialiser.read(importExportDocument);
-
-                    // Perform version check to ensure the item hasn't been updated by somebody
-                    // else before we try to update it.
-                    if (!existingDocument.getVersion().equals(currentVersion)) {
-                        throw new RuntimeException(toDocRefDisplayString(docRef)
-                                                   + " has already been updated.");
-                    }
-
-                    persistence.write(docRef, AuditAction.UPDATE, securityContext.getUserRef(), newData);
-                    EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            // Single atomic call — persistence layer handles version check.
+            // For DB: UPDATE ... WHERE version = expectedVersion (optimistic lock).
+            // For FS: StripedLockFactory in StoreImpl.readPersistence() serialises access.
+            persistence.write(docRef, AuditAction.UPDATE, securityContext.getUserRef(),
+                    newData, currentVersion, newVersion);
+            EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -726,45 +698,16 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private ImportExportDocument readPersistence(final DocRef docRef) {
-        return persistence.getLockFactory().lockResult(docRef.getUuid(), () -> {
-            try {
-                return persistence.read(docRef);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(
-                        LogUtil.message("Error reading {} from store {}, {}",
-                                toDocRefDisplayString(docRef),
-                                persistence.getClass().getSimpleName(),
-                                e.getMessage()), e);
-            }
-        });
-    }
-
-    @Deprecated // remove once pipelines have been migrated.
-    public void migratePipelines(final Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function) {
-        persistence.list(type).forEach(docRef ->
-                persistence.getLockFactory().lock(docRef.getUuid(), () -> {
-                    final ImportExportDocument importExportDocument = readPersistence(docRef);
-                    if (importExportDocument != null) {
-                        try {
-                            final Map<String, byte[]> mapIn = importExportDocument.toDataMap();
-                            final Optional<Map<String, byte[]>> migrated = function.apply(mapIn);
-                            migrated.ifPresent(newData -> {
-                                try {
-                                    final ImportExportDocument migratedDocument =
-                                            ImportExportDocument.fromDataMap(newData);
-
-                                    persistence.write(docRef, AuditAction.UPDATE,
-                                            securityContext.getUserRef(), migratedDocument);
-                                } catch (final Exception e) {
-                                    LOGGER.error(e::getMessage, e);
-                                }
-                            });
-                        } catch (final Exception e) {
-                            LOGGER.error(e::getMessage, e);
-                        }
-                    }
-                }));
+        try {
+            return persistence.read(docRef);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new UncheckedIOException(
+                    LogUtil.message("Error reading {} from store {}, {}",
+                            toDocRefDisplayString(docRef),
+                            persistence.getClass().getSimpleName(),
+                            e.getMessage()), e);
+        }
     }
 
     private String toDocRefDisplayString(final DocRef docRef) {

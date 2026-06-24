@@ -19,9 +19,8 @@ package stroom.docstore.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
-import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.impl.db.jooq.tables.records.DocDataRecord;
+import stroom.docstore.impl.db.jooq.tables.records.DocDataSnapshotRecord;
 import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocAuditEntry;
 import stroom.docstore.shared.DocAuditUser;
@@ -29,6 +28,7 @@ import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
+import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -41,9 +41,10 @@ import jakarta.inject.Singleton;
 import net.openhft.hashing.LongHashFunction;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.InsertSetMoreStep;
 import org.jooq.JSON;
-import org.jooq.Record;
-import org.jooq.UpdateSetMoreStep;
+import org.jooq.Record5;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
@@ -52,7 +53,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
@@ -66,7 +70,6 @@ public class DBPersistence implements Persistence {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DBPersistence.class);
 
-    private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
     private static final String COLLATION = "utf8mb4_0900_as_cs";
 
     private final DocStoreDbConnProvider dataSource;
@@ -129,21 +132,8 @@ public class DBPersistence implements Persistence {
                         final byte dataTypeByte = record.get(DOC_DATA.DATA_TYPE);
                         final DocDataType dataType =
                                 DocDataType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(dataTypeByte);
-
-                        final byte[] data;
-                        if (dataType == DocDataType.JSON) {
-                            final JSON json = record.get(DOC_DATA.JSON_DATA);
-                            data = json != null
-                                    ? json.data().getBytes(StandardCharsets.UTF_8)
-                                    : null;
-                        } else if (dataType == DocDataType.TEXT) {
-                            final String text = record.get(DOC_DATA.TEXT_DATA);
-                            data = text != null
-                                    ? text.getBytes(StandardCharsets.UTF_8)
-                                    : null;
-                        } else {
-                            data = record.get(DOC_DATA.BIN_DATA);
-                        }
+                        final byte[] data = extractData(record,
+                                DOC_DATA.JSON_DATA, DOC_DATA.TEXT_DATA, DOC_DATA.BIN_DATA, dataType);
 
                         importExportDocument.addExtAsset(
                                 new ByteArrayImportExportAsset(ext, dataType, data));
@@ -161,23 +151,25 @@ public class DBPersistence implements Persistence {
     public void write(final DocRef docRef,
                       final AuditAction auditAction,
                       final UserRef userRef,
-                      final ImportExportDocument importExportDocument) {
+                      final ImportExportDocument importExportDocument,
+                      final String expectedVersion,
+                      final String newVersion) {
         JooqUtil.transaction(dataSource, context -> {
-            final long docId;
+            Long docId;
 
             if (auditAction == AuditAction.IMPORT) {
                 // IMPORT: look up by UUID ignoring deleted filter (find soft-deleted docs too)
-                final Record docRecord = context
+                docId = context
                         .select(DOC.ID, DOC.DELETED)
                         .from(DOC)
                         .where(DOC.UUID.eq(docRef.getUuid()))
-                        .fetchOne();
+                        .fetchOne(DOC.ID);
 
-                if (docRecord != null) {
-                    docId = docRecord.get(DOC.ID);
-                    // Undelete if soft-deleted, and update name
+                if (docId != null) {
+                    // Undelete if soft-deleted, update name and version
                     context.update(DOC)
                             .set(DOC.NAME, docRef.getName())
+                            .set(DOC.VERSION, newVersion)
                             .set(DOC.DELETED, (Long) null)
                             .where(DOC.ID.eq(docId))
                             .execute();
@@ -188,13 +180,46 @@ public class DBPersistence implements Persistence {
                             .set(DOC.TYPE, docRef.getType())
                             .set(DOC.UUID, docRef.getUuid())
                             .set(DOC.NAME, docRef.getName())
+                            .set(DOC.VERSION, newVersion)
                             .returning(DOC.ID)
-                            .fetchOne()
-                            .getId();
+                            .fetchOne(DOC.ID);
                 }
+            } else if (auditAction.isUpdate()) {
+                // UPDATE/RENAME — atomic version-guarded update (optimistic lock)
+                Objects.requireNonNull(expectedVersion, "expectedVersion required for UPDATE");
+                Objects.requireNonNull(newVersion, "newVersion required for UPDATE");
+
+                final int updateCount = context.update(DOC)
+                        .set(DOC.NAME, docRef.getName())
+                        .set(DOC.VERSION, newVersion)
+                        .where(DOC.TYPE.eq(docRef.getType()))
+                        .and(DOC.UUID.eq(docRef.getUuid()))
+                        .and(DOC.DELETED.isNull())
+                        .and(DOC.VERSION.eq(expectedVersion))
+                        .execute();
+
+                if (updateCount == 0) {
+                    // Distinguish not-found vs version mismatch
+                    final boolean exists = context.fetchExists(
+                            context.selectOne().from(DOC)
+                                    .where(DOC.UUID.eq(docRef.getUuid()))
+                                    .and(DOC.DELETED.isNull()));
+                    if (!exists) {
+                        throw new DocumentNotFoundException(docRef);
+                    }
+                    throw new DataChangedException(
+                            docRef + " has been modified by another user");
+                }
+
+                docId = context
+                        .select(DOC.ID)
+                        .from(DOC)
+                        .where(DOC.UUID.eq(docRef.getUuid()))
+                        .fetchOne(DOC.ID);
             } else {
-                // CREATE or UPDATE — look up active docs only
-                final Long existingDocId = context
+                // CREATE/COPY — check doc doesn't already exist, then insert with version
+                Objects.requireNonNull(newVersion, "newVersion required for CREATE");
+                docId = context
                         .select(DOC.ID)
                         .from(DOC)
                         .where(DOC.TYPE.eq(docRef.getType()))
@@ -202,35 +227,23 @@ public class DBPersistence implements Persistence {
                         .and(DOC.DELETED.isNull())
                         .fetchOne(DOC.ID);
 
-                if (auditAction.isUpdate()) {
-                    if (existingDocId == null) {
-                        throw new RuntimeException(
-                                "Document does not exist with uuid=" + docRef.getUuid());
-                    }
-                } else if (auditAction.isCreate() && existingDocId != null) {
+                if (docId != null) {
                     throw new RuntimeException(
                             "Document already exists with uuid=" + docRef.getUuid());
                 }
 
-                if (existingDocId != null) {
-                    // Update existing doc name
-                    context.update(DOC)
-                            .set(DOC.NAME, docRef.getName())
-                            .where(DOC.ID.eq(existingDocId))
-                            .execute();
-                    docId = existingDocId;
-                } else {
-                    // Insert new doc row
-                    docId = context
-                            .insertInto(DOC)
-                            .set(DOC.TYPE, docRef.getType())
-                            .set(DOC.UUID, docRef.getUuid())
-                            .set(DOC.NAME, docRef.getName())
-                            .returning(DOC.ID)
-                            .fetchOne()
-                            .getId();
-                }
+                docId = context
+                        .insertInto(DOC)
+                        .set(DOC.TYPE, docRef.getType())
+                        .set(DOC.UUID, docRef.getUuid())
+                        .set(DOC.NAME, docRef.getName())
+                        .set(DOC.VERSION, newVersion)
+                        .returning(DOC.ID)
+                        .fetchOne(DOC.ID);
             }
+
+            // Ensure doc id is not null.
+            Objects.requireNonNull(docId, "Null doc id");
 
             // Upsert each asset into doc_data
             for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
@@ -248,57 +261,29 @@ public class DBPersistence implements Persistence {
 
                     if (existingDataId != null) {
                         // Update existing row
-                        UpdateSetMoreStep<DocDataRecord> updateStep = context.update(DOC_DATA)
-                                .set(DOC_DATA.DATA_TYPE, dataType.getPrimitiveValue());
-
-                        // Set the appropriate sparse column, null out others
-                        if (dataType == DocDataType.JSON) {
-                            updateStep = updateStep
-                                    .set(DOC_DATA.JSON_DATA, rawData != null
-                                            ? JSON.json(new String(rawData, StandardCharsets.UTF_8))
-                                            : null)
-                                    .setNull(DOC_DATA.TEXT_DATA)
-                                    .setNull(DOC_DATA.BIN_DATA);
-                        } else if (dataType == DocDataType.TEXT) {
-                            updateStep = updateStep
-                                    .setNull(DOC_DATA.JSON_DATA)
-                                    .set(DOC_DATA.TEXT_DATA, rawData != null
-                                            ? new String(rawData, StandardCharsets.UTF_8)
-                                            : null)
-                                    .setNull(DOC_DATA.BIN_DATA);
-                        } else {
-                            updateStep = updateStep
-                                    .setNull(DOC_DATA.JSON_DATA)
-                                    .setNull(DOC_DATA.TEXT_DATA)
-                                    .set(DOC_DATA.BIN_DATA, rawData);
-                        }
-
-                        updateStep
+                        context.update(DOC_DATA)
+                                .set(DOC_DATA.DATA_TYPE, dataType.getPrimitiveValue())
+                                .set(toColumnValues(
+                                        DOC_DATA.JSON_DATA,
+                                        DOC_DATA.TEXT_DATA,
+                                        DOC_DATA.BIN_DATA,
+                                        dataType,
+                                        rawData))
                                 .where(DOC_DATA.ID.eq(existingDataId))
                                 .execute();
                     } else {
                         // Insert new row
-                        var insertStep = context
-                                .insertInto(DOC_DATA)
+                        context.insertInto(DOC_DATA)
                                 .set(DOC_DATA.FK_DOC_ID, docId)
                                 .set(DOC_DATA.EXT, asset.getKey())
-                                .set(DOC_DATA.DATA_TYPE, dataType.getPrimitiveValue());
-
-                        if (dataType == DocDataType.JSON) {
-                            insertStep = insertStep.set(DOC_DATA.JSON_DATA,
-                                    rawData != null
-                                            ? JSON.json(new String(rawData, StandardCharsets.UTF_8))
-                                            : null);
-                        } else if (dataType == DocDataType.TEXT) {
-                            insertStep = insertStep.set(DOC_DATA.TEXT_DATA,
-                                    rawData != null
-                                            ? new String(rawData, StandardCharsets.UTF_8)
-                                            : null);
-                        } else {
-                            insertStep = insertStep.set(DOC_DATA.BIN_DATA, rawData);
-                        }
-
-                        insertStep.execute();
+                                .set(DOC_DATA.DATA_TYPE, dataType.getPrimitiveValue())
+                                .set(toColumnValues(
+                                        DOC_DATA.JSON_DATA,
+                                        DOC_DATA.TEXT_DATA,
+                                        DOC_DATA.BIN_DATA,
+                                        dataType,
+                                        rawData))
+                                .execute();
                     }
                 } catch (final IOException e) {
                     throw new RuntimeException(e.getMessage(), e);
@@ -321,7 +306,7 @@ public class DBPersistence implements Persistence {
             }
 
             // Write audit entry and get the audit ID for snapshot linking
-            final long auditId = context
+            final Long auditId = context
                     .insertInto(DOC_AUDIT)
                     .set(DOC_AUDIT.FK_DOC_ID, docId)
                     .set(DOC_AUDIT.ACTION, auditAction.getPrimitiveValue())
@@ -329,8 +314,9 @@ public class DBPersistence implements Persistence {
                     .set(DOC_AUDIT.USER_UUID, NullSafe.get(userRef, UserRef::getUuid))
                     .set(DOC_AUDIT.USER_NAME, NullSafe.get(userRef, UserRef::getDisplayName))
                     .returning(DOC_AUDIT.ID)
-                    .fetchOne()
-                    .getId();
+                    .fetchOne(DOC_AUDIT.ID);
+
+            Objects.requireNonNull(auditId, "Null audit id");
 
             // Write deduplicated data snapshots and link to audit entry
             writeSnapshots(context, docId, auditId, importExportDocument);
@@ -350,10 +336,12 @@ public class DBPersistence implements Persistence {
                 final byte[] rawData = asset.getInputData();
                 final DocDataType dataType = asset.getDocDataType();
                 final long dataHash = LongHashFunction.xx3().hashBytes(
-                        rawData != null ? rawData : new byte[0]);
+                        rawData != null
+                                ? rawData
+                                : new byte[0]);
 
                 // Look up candidate snapshot rows by hash
-                final var candidates = context
+                final Result<Record5<Long, Byte, JSON, String, byte[]>> candidates = context
                         .select(DOC_DATA_SNAPSHOT.ID,
                                 DOC_DATA_SNAPSHOT.DATA_TYPE,
                                 DOC_DATA_SNAPSHOT.JSON_DATA,
@@ -366,7 +354,7 @@ public class DBPersistence implements Persistence {
                         .fetch();
 
                 Long snapshotId = null;
-                for (final var candidate : candidates) {
+                for (final Record5<Long, Byte, JSON, String, byte[]> candidate : candidates) {
                     // Verify actual data content matches (guards against hash collision)
                     if (snapshotDataEquals(candidate, dataType, rawData)) {
                         snapshotId = candidate.get(DOC_DATA_SNAPSHOT.ID);
@@ -376,31 +364,23 @@ public class DBPersistence implements Persistence {
 
                 if (snapshotId == null) {
                     // No matching snapshot — insert new row
-                    var insertStep = context
+                    InsertSetMoreStep<DocDataSnapshotRecord> insertStep = context
                             .insertInto(DOC_DATA_SNAPSHOT)
                             .set(DOC_DATA_SNAPSHOT.FK_DOC_ID, docId)
                             .set(DOC_DATA_SNAPSHOT.EXT, asset.getKey())
                             .set(DOC_DATA_SNAPSHOT.DATA_TYPE, dataType.getPrimitiveValue())
                             .set(DOC_DATA_SNAPSHOT.DATA_HASH, dataHash);
 
-                    if (dataType == DocDataType.JSON) {
-                        insertStep = insertStep.set(DOC_DATA_SNAPSHOT.JSON_DATA,
-                                rawData != null
-                                        ? JSON.json(new String(rawData, StandardCharsets.UTF_8))
-                                        : null);
-                    } else if (dataType == DocDataType.TEXT) {
-                        insertStep = insertStep.set(DOC_DATA_SNAPSHOT.TEXT_DATA,
-                                rawData != null
-                                        ? new String(rawData, StandardCharsets.UTF_8)
-                                        : null);
-                    } else {
-                        insertStep = insertStep.set(DOC_DATA_SNAPSHOT.BIN_DATA, rawData);
-                    }
+                    insertStep = insertStep.set(toColumnValues(
+                            DOC_DATA_SNAPSHOT.JSON_DATA,
+                            DOC_DATA_SNAPSHOT.TEXT_DATA,
+                            DOC_DATA_SNAPSHOT.BIN_DATA,
+                            dataType,
+                            rawData));
 
                     snapshotId = insertStep
                             .returning(DOC_DATA_SNAPSHOT.ID)
-                            .fetchOne()
-                            .getId();
+                            .fetchOne(DOC_DATA_SNAPSHOT.ID);
                 }
 
                 // Link audit entry to snapshot
@@ -416,28 +396,105 @@ public class DBPersistence implements Persistence {
     }
 
     /**
+     * Extract raw bytes from a record's sparse data columns based on data type.
+     * Used by both {@code doc_data} reads and {@code doc_data_snapshot} comparisons.
+     */
+    private static byte[] extractData(final org.jooq.Record record,
+                                      final org.jooq.Field<JSON> jsonField,
+                                      final org.jooq.Field<String> textField,
+                                      final org.jooq.Field<byte[]> binField,
+                                      final DocDataType dataType) {
+        return switch (dataType) {
+            case JSON -> {
+                final JSON json = record.get(jsonField);
+                if (json == null) {
+                    yield null;
+                }
+                yield json.data().getBytes(StandardCharsets.UTF_8);
+            }
+            case TEXT -> {
+                final String text = record.get(textField);
+                if (text == null) {
+                    yield null;
+                }
+                yield text.getBytes(StandardCharsets.UTF_8);
+            }
+            case BINARY -> record.get(binField);
+        };
+    }
+
+    /**
+     * Convert raw byte data into a column-value map suitable for jOOQ's {@code .set(Map)} method.
+     * Populates the appropriate sparse column (json_data, text_data, or bin_data) and
+     * explicitly nulls the others. Works for both {@code doc_data} and {@code doc_data_snapshot}
+     * tables by accepting field references as parameters.
+     */
+    private static Map<org.jooq.Field<?>, Object> toColumnValues(
+            final org.jooq.Field<JSON> jsonField,
+            final org.jooq.Field<String> textField,
+            final org.jooq.Field<byte[]> binField,
+            final DocDataType dataType,
+            final byte[] rawData) {
+        final Map<org.jooq.Field<?>, Object> values = HashMap.newHashMap(3);
+        switch (dataType) {
+            case JSON -> {
+                values.put(jsonField, toJson(rawData));
+                values.put(textField, null);
+                values.put(binField, null);
+            }
+            case TEXT -> {
+                values.put(jsonField, null);
+                values.put(textField, toText(rawData));
+                values.put(binField, null);
+            }
+            case BINARY -> {
+                values.put(jsonField, null);
+                values.put(textField, null);
+                values.put(binField, rawData);
+            }
+        }
+        return values;
+    }
+
+    private static JSON toJson(final byte[] bytes) {
+        try {
+            if (bytes == null || bytes.length == 0) {
+                return null;
+            }
+            final String string = new String(bytes, StandardCharsets.UTF_8);
+            if (NullSafe.isBlankString(string)) {
+                return null;
+            }
+            return JSON.json(string);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    private static String toText(final byte[] bytes) {
+        try {
+            if (bytes == null || bytes.length == 0) {
+                return null;
+            }
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
      * Compare a candidate snapshot record's data content with the given raw data,
      * using the appropriate column based on data type.
      */
     private boolean snapshotDataEquals(final org.jooq.Record candidate,
-                                      final DocDataType dataType,
-                                      final byte[] rawData) {
-        if (dataType == DocDataType.JSON) {
-            final JSON json = candidate.get(DOC_DATA_SNAPSHOT.JSON_DATA);
-            final byte[] existing = json != null
-                    ? json.data().getBytes(StandardCharsets.UTF_8)
-                    : null;
-            return Arrays.equals(existing, rawData);
-        } else if (dataType == DocDataType.TEXT) {
-            final String text = candidate.get(DOC_DATA_SNAPSHOT.TEXT_DATA);
-            final byte[] existing = text != null
-                    ? text.getBytes(StandardCharsets.UTF_8)
-                    : null;
-            return Arrays.equals(existing, rawData);
-        } else {
-            final byte[] existing = candidate.get(DOC_DATA_SNAPSHOT.BIN_DATA);
-            return Arrays.equals(existing, rawData);
-        }
+                                       final DocDataType dataType,
+                                       final byte[] rawData) {
+        final byte[] existing = extractData(candidate,
+                DOC_DATA_SNAPSHOT.JSON_DATA, DOC_DATA_SNAPSHOT.TEXT_DATA,
+                DOC_DATA_SNAPSHOT.BIN_DATA, dataType);
+        return Arrays.equals(existing, rawData);
     }
 
     @Override
@@ -639,11 +696,6 @@ public class DBPersistence implements Persistence {
                                 String.class, DOC_DATA.JSON_DATA).eq(parent.getUuid()))
                         .fetch(record ->
                                 new DocRef(record.get(DOC.TYPE), record.get(DOC.UUID), record.get(DOC.NAME))));
-    }
-
-    @Override
-    public RWLockFactory getLockFactory() {
-        return LOCK_FACTORY;
     }
 
     /**

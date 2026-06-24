@@ -18,12 +18,14 @@ package stroom.docstore.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocAuditEntry;
 import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.test.common.util.db.DbTestUtil;
+import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
 import static stroom.docstore.impl.db.jooq.tables.DocAudit.DOC_AUDIT;
 import static stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT;
@@ -102,6 +105,37 @@ class TestDBPersistence {
         doc.addExtAsset(new ByteArrayImportExportAsset(
                 "meta", DocDataType.JSON, metaJson.getBytes(CHARSET)));
         return doc;
+    }
+
+    /**
+     * Helper: write with CREATE action, generating a new version.
+     * Returns the version that was set.
+     */
+    private String writeCreate(final DocRef docRef, final ImportExportDocument doc) {
+        final String version = UUID.randomUUID().toString();
+        dbPersistence.write(docRef, AuditAction.CREATE, null, doc, null, version);
+        return version;
+    }
+
+    /**
+     * Helper: write with UPDATE action using optimistic locking.
+     * Returns the new version that was set.
+     */
+    private String writeUpdate(final DocRef docRef, final ImportExportDocument doc,
+                               final String expectedVersion) {
+        final String newVersion = UUID.randomUUID().toString();
+        dbPersistence.write(docRef, AuditAction.UPDATE, null, doc, expectedVersion, newVersion);
+        return newVersion;
+    }
+
+    /**
+     * Helper: write with IMPORT action (no version check).
+     * Returns the version that was set.
+     */
+    private String writeImport(final DocRef docRef, final ImportExportDocument doc) {
+        final String version = UUID.randomUUID().toString();
+        dbPersistence.write(docRef, AuditAction.IMPORT, null, doc, null, version);
+        return version;
     }
 
     private ImportExportDocument createTextAndXslDoc(final String text, final String xsl) {
@@ -249,14 +283,14 @@ class TestDBPersistence {
         final String json2 = "{\"version\":\"" + UUID.randomUUID() + "\"}";
         final DocRef docRef = randomDocRef("test-type");
 
-        dbPersistence.write(docRef, AuditAction.CREATE, null, createMetaDoc(json1));
+        final String version1 = writeCreate(docRef, createMetaDoc(json1));
         assertThat(dbPersistence.exists(docRef)).isTrue();
 
         // Read — MySQL normalises JSON whitespace
         assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("version");
 
-        dbPersistence.write(docRef, AuditAction.UPDATE, null, createMetaDoc(json2));
+        writeUpdate(docRef, createMetaDoc(json2), version1);
         assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("version");
 
@@ -270,7 +304,7 @@ class TestDBPersistence {
      * findDocRefsEmbeddedIn — JSON_VALUE query for embedded doc refs.
      */
     @Test
-    void findDocRefsEmbeddedIn() throws IOException {
+    void findDocRefsEmbeddedIn() {
         final String uuid1 = UUID.randomUUID().toString();
         final String uuid2 = UUID.randomUUID().toString();
         final DocRef docRef1 = new DocRef("test-type1", uuid1, "test-name1");
@@ -305,14 +339,12 @@ class TestDBPersistence {
                   "updateUser": "admin"
                 }""";
 
-        dbPersistence.write(docRef1, AuditAction.CREATE, null,
-                createMetaDoc(String.format(metaJson1, uuid1, uuid2)));
-        dbPersistence.write(docRef2, AuditAction.CREATE, null,
-                createMetaDoc(String.format(metaJson2, uuid2)));
+        writeCreate(docRef1, createMetaDoc(String.format(metaJson1, uuid1, uuid2)));
+        writeCreate(docRef2, createMetaDoc(String.format(metaJson2, uuid2)));
 
         final List<DocRef> docRefs = dbPersistence.findDocRefsEmbeddedIn(docRef2);
         assertThat(docRefs).hasSize(1);
-        assertThat(docRefs.get(0)).isEqualTo(docRef1);
+        assertThat(docRefs.getFirst()).isEqualTo(docRef1);
     }
 
     /**
@@ -320,10 +352,9 @@ class TestDBPersistence {
      * Direct DB queries verify data/snapshot survival (API can't see deleted docs).
      */
     @Test
-    void testLogicalDelete() throws IOException {
+    void testLogicalDelete() {
         final DocRef docRef = randomDocRef("test-del");
-        dbPersistence.write(docRef, AuditAction.CREATE, null,
-                createMetaDoc("{\"name\":\"test\"}"));
+        writeCreate(docRef, createMetaDoc("{\"name\":\"test\"}"));
 
         // Pre-delete: verify via API
         assertThat(dbPersistence.exists(docRef)).isTrue();
@@ -367,7 +398,7 @@ class TestDBPersistence {
                 "meta", DocDataType.JSON, metaJson.getBytes(CHARSET)));
         writeDoc.addExtAsset(new ByteArrayImportExportAsset(
                 "xsl", DocDataType.TEXT, xsl.getBytes(CHARSET)));
-        dbPersistence.write(docRef, AuditAction.CREATE, null, writeDoc);
+        writeCreate(docRef, writeDoc);
 
         // Verify via read — both extensions present with correct content
         final ImportExportDocument readDoc = dbPersistence.read(docRef);
@@ -380,11 +411,11 @@ class TestDBPersistence {
      * Audit trail — CREATE + 2×UPDATE → 3 entries, ascending timestamps.
      */
     @Test
-    void testAuditTrail() throws IOException {
+    void testAuditTrail() {
         final DocRef docRef = randomDocRef("test-audit");
-        dbPersistence.write(docRef, AuditAction.CREATE, null, createMetaDoc("{\"v\":1}"));
-        dbPersistence.write(docRef, AuditAction.UPDATE, null, createMetaDoc("{\"v\":2}"));
-        dbPersistence.write(docRef, AuditAction.UPDATE, null, createMetaDoc("{\"v\":3}"));
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        final String v2 = writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
+        writeUpdate(docRef, createMetaDoc("{\"v\":3}"), v2);
 
         final List<DocAuditEntry> entries = getAuditEntries(docRef);
         assertThat(entries).hasSize(3);
@@ -402,16 +433,14 @@ class TestDBPersistence {
      * Direct DB queries are necessary: no public API exposes snapshot internals.
      */
     @Test
-    void testSnapshotDeduplication() throws IOException {
+    void testSnapshotDeduplication() {
         final DocRef docRef = randomDocRef("test-dedup");
         final String textV1 = "unchanged-content-for-dedup";
         final String xslV1 = "<xsl:stylesheet version=\"1.0\"/>";
         final String xslV2 = "<xsl:stylesheet version=\"2.0\"/>";
 
-        dbPersistence.write(docRef, AuditAction.CREATE, null,
-                createTextAndXslDoc(textV1, xslV1));
-        dbPersistence.write(docRef, AuditAction.UPDATE, null,
-                createTextAndXslDoc(textV1, xslV2));
+        final String v1 = writeCreate(docRef, createTextAndXslDoc(textV1, xslV1));
+        writeUpdate(docRef, createTextAndXslDoc(textV1, xslV2), v1);
 
         // Direct DB: verify snapshot dedup — no public API for this
         final long docId = getDocId(docRef.getUuid());
@@ -437,30 +466,29 @@ class TestDBPersistence {
      * Import snapshot — IMPORT audit entry with snapshot links.
      */
     @Test
-    void testImportSnapshot() throws IOException {
+    void testImportSnapshot() {
         final DocRef docRef = randomDocRef("test-import");
-        dbPersistence.write(docRef, AuditAction.IMPORT, null,
-                createMetaDoc("{\"name\":\"imported\"}"));
+        writeImport(docRef, createMetaDoc("{\"name\":\"imported\"}"));
 
         // Verify via API
         final List<DocAuditEntry> entries = getAuditEntries(docRef);
         assertThat(entries).hasSize(1);
-        assertThat(entries.get(0).getAction()).isEqualTo(AuditAction.IMPORT);
+        assertThat(entries.getFirst().getAction()).isEqualTo(AuditAction.IMPORT);
 
         // Direct DB: verify snapshot link exists — no public API
         final long docId = getDocId(docRef.getUuid());
         final List<Long> auditIds = getAuditIds(docId);
-        assertThat(countAuditSnapshotLinks(auditIds.get(0))).isEqualTo(1);
+        assertThat(countAuditSnapshotLinks(auditIds.getFirst())).isEqualTo(1);
     }
 
     /**
      * AuditAction precision — each operation → correct action.
      */
     @Test
-    void testAuditActionPrecision() throws IOException {
+    void testAuditActionPrecision() {
         final DocRef docRef = randomDocRef("test-action");
-        dbPersistence.write(docRef, AuditAction.CREATE, null, createMetaDoc("{\"v\":1}"));
-        dbPersistence.write(docRef, AuditAction.UPDATE, null, createMetaDoc("{\"v\":2}"));
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
         dbPersistence.delete(docRef, null);
 
         final List<AuditAction> actions = getAuditEntries(docRef).stream()
@@ -471,8 +499,8 @@ class TestDBPersistence {
 
         // Separate test for IMPORT
         final DocRef importDocRef = randomDocRef("test-action-import");
-        dbPersistence.write(importDocRef, AuditAction.IMPORT, null, createMetaDoc("{\"v\":1}"));
-        assertThat(getAuditEntries(importDocRef).get(0).getAction())
+        writeImport(importDocRef, createMetaDoc("{\"v\":1}"));
+        assertThat(getAuditEntries(importDocRef).getFirst().getAction())
                 .isEqualTo(AuditAction.IMPORT);
     }
 
@@ -481,13 +509,13 @@ class TestDBPersistence {
      * Direct DB queries verify complete row removal from all tables.
      */
     @Test
-    void testPhysicalDelete() throws IOException {
+    void testPhysicalDelete() {
         final DocRef docRef = randomDocRef("test-phys-del");
         final DocRef keepDocRef = randomDocRef("test-phys-keep");
 
-        dbPersistence.write(docRef, AuditAction.CREATE, null, createMetaDoc("{\"v\":1}"));
-        dbPersistence.write(docRef, AuditAction.UPDATE, null, createMetaDoc("{\"v\":2}"));
-        dbPersistence.write(keepDocRef, AuditAction.CREATE, null, createMetaDoc("{\"v\":1}"));
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
+        writeCreate(keepDocRef, createMetaDoc("{\"v\":1}"));
 
         dbPersistence.delete(docRef, null);
         final long docId = getDocId(docRef.getUuid());
@@ -515,17 +543,23 @@ class TestDBPersistence {
     @Test
     void testImportOfSoftDeletedDoc() throws IOException {
         final DocRef docRef = randomDocRef("test-undelete");
-        dbPersistence.write(docRef, AuditAction.CREATE, null,
-                createMetaDoc("{\"name\":\"original\"}"));
+        writeCreate(docRef, createMetaDoc("{\"name\":\"original\"}"));
         dbPersistence.delete(docRef, null);
         assertThat(dbPersistence.exists(docRef)).isFalse();
 
         // Import same UUID with new content
-        dbPersistence.write(docRef, AuditAction.IMPORT, null,
-                createMetaDoc("{\"name\":\"reimported\"}"));
+        final String importVersion = writeImport(docRef, createMetaDoc("{\"name\":\"reimported\"}"));
 
         // Direct DB: deleted timestamp cleared
         assertThat(getDeletedTimestamp(docRef.getUuid())).isNull();
+
+        // Direct DB: version column matches the imported version
+        final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
+                .select(DOC.VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.VERSION));
+        assertThat(storedVersion).isEqualTo(importVersion);
 
         // API: visible again with new content
         assertThat(dbPersistence.exists(docRef)).isTrue();
@@ -554,8 +588,7 @@ class TestDBPersistence {
     @Test
     void testUndelete() throws IOException {
         final DocRef docRef = randomDocRef("test-undelete2");
-        dbPersistence.write(docRef, AuditAction.CREATE, null,
-                createMetaDoc("{\"name\":\"alive\"}"));
+        writeCreate(docRef, createMetaDoc("{\"name\":\"alive\"}"));
         dbPersistence.delete(docRef, null);
         assertThat(dbPersistence.exists(docRef)).isFalse();
 
@@ -576,5 +609,147 @@ class TestDBPersistence {
     void testPhysicalDeleteCallable() {
         assertThat(dbPersistence.physicalDelete(Duration.ofDays(365)))
                 .isGreaterThanOrEqualTo(0);
+    }
+
+    // --- Optimistic Concurrency Control Tests ---
+
+    /**
+     * Version column populated on CREATE — doc.version matches the version passed to write().
+     */
+    @Test
+    void testVersionColumnPopulatedOnCreate() {
+        final DocRef docRef = randomDocRef("test-version-create");
+        final String version = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+
+        final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
+                .select(DOC.VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.VERSION));
+        assertThat(storedVersion).isEqualTo(version);
+    }
+
+    /**
+     * Version updated on UPDATE — doc.version changes to newVersion after successful update.
+     */
+    @Test
+    void testVersionUpdatedOnUpdate() {
+        final DocRef docRef = randomDocRef("test-version-update");
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        final String v2 = writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
+
+        final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
+                .select(DOC.VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.VERSION));
+        assertThat(storedVersion).isEqualTo(v2);
+        assertThat(storedVersion).isNotEqualTo(v1);
+    }
+
+    /**
+     * Optimistic lock success — update with correct expectedVersion succeeds.
+     */
+    @Test
+    void testOptimisticLockSuccess() throws IOException {
+        final DocRef docRef = randomDocRef("test-opt-lock-ok");
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        final String v2 = writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
+
+        // Verify doc was updated
+        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+                .contains("\"v\": 2");
+
+        // Verify version column
+        final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
+                .select(DOC.VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.VERSION));
+        assertThat(storedVersion).isEqualTo(v2);
+    }
+
+    /**
+     * Optimistic lock — stale version throws DataChangedException.
+     */
+    @Test
+    void testOptimisticLockStaleVersion() {
+        final DocRef docRef = randomDocRef("test-opt-lock-stale");
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        // Update to V2
+        writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
+
+        // Attempt update with stale expectedVersion (V1) — should throw
+        assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":3}"), v1))
+                .isInstanceOf(DataChangedException.class)
+                .hasMessageContaining("modified by another user");
+    }
+
+    /**
+     * Optimistic lock — non-existent doc throws DocumentNotFoundException.
+     */
+    @Test
+    void testOptimisticLockDocNotFound() {
+        final DocRef docRef = new DocRef("test-type", UUID.randomUUID().toString(), "ghost");
+
+        assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":1}"),
+                UUID.randomUUID().toString()))
+                .isInstanceOf(DocumentNotFoundException.class);
+    }
+
+    /**
+     * Optimistic lock — soft-deleted doc throws DocumentNotFoundException on update.
+     */
+    @Test
+    void testOptimisticLockDeletedDoc() {
+        final DocRef docRef = randomDocRef("test-opt-lock-deleted");
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+        dbPersistence.delete(docRef, null);
+
+        assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1))
+                .isInstanceOf(DocumentNotFoundException.class);
+    }
+
+    /**
+     * Import ignores version — import succeeds regardless of current version.
+     */
+    @Test
+    void testImportIgnoresVersion() throws IOException {
+        final DocRef docRef = randomDocRef("test-import-noversion");
+        writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+
+        // Import with no version check — should succeed
+        final String importVersion = writeImport(docRef, createMetaDoc("{\"v\":\"imported\"}"));
+
+        // Verify version column matches import version
+        final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
+                .select(DOC.VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.VERSION));
+        assertThat(storedVersion).isEqualTo(importVersion);
+
+        // Verify content was replaced
+        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+                .contains("imported");
+    }
+
+    /**
+     * Version survives logical delete — doc.version is unchanged by soft-delete.
+     */
+    @Test
+    void testVersionSurvivesDelete() {
+        final DocRef docRef = randomDocRef("test-version-survives");
+        final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
+
+        dbPersistence.delete(docRef, null);
+
+        // Version column should still be V1
+        final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
+                .select(DOC.VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.VERSION));
+        assertThat(storedVersion).isEqualTo(v1);
     }
 }

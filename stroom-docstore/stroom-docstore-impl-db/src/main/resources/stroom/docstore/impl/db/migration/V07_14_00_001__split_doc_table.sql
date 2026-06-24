@@ -20,6 +20,9 @@
 -- doc_audit_data_snapshot (audit-to-snapshot links)
 -- ============================================================================
 
+-- stop note level warnings about objects (not)? existing
+SET @old_sql_notes=@@sql_notes, sql_notes=0;
+
 -- ---------------------------------------------------------------------------
 -- Step 1: Create doc_data table with sparse typed columns
 -- ---------------------------------------------------------------------------
@@ -200,3 +203,6 @@ FROM doc d
 JOIN doc_data dd ON dd.fk_doc_id = d.id AND dd.ext = 'meta'
 WHERE dd.json_data IS NOT NULL
   AND JSON_VALUE(dd.json_data, '$.updateTimeMs' RETURNING SIGNED) IS NOT NULL;
+
+-- Reset to the original value
+SET SQL_NOTES=@OLD_SQL_NOTES;
