@@ -18,7 +18,9 @@ ext.moduleName = 'stroom.activity.impl'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
+    implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-query:stroom-query-api')
@@ -32,6 +34,13 @@ dependencies {
     implementation libs.guice
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
+
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-security:stroom-security-mock')
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

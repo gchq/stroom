@@ -4,16 +4,16 @@
 package stroom.ai.impl.db.jooq;
 
 
-import stroom.ai.impl.db.jooq.tables.AiChat;
-import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
-import stroom.ai.impl.db.jooq.tables.AiChatMessage;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
+import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 
 /**

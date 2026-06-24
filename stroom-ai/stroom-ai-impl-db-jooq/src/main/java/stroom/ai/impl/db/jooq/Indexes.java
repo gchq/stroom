@@ -4,14 +4,14 @@
 package stroom.ai.impl.db.jooq;
 
 
-import stroom.ai.impl.db.jooq.tables.AiChat;
-import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
-import stroom.ai.impl.db.jooq.tables.AiChatMessage;
-
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.ai.impl.db.jooq.tables.AiChat;
+import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
+import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 
 /**

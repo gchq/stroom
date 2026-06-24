@@ -16,18 +16,15 @@
 
 ext.moduleName = 'stroom.activity.impl.db'
 
-dependencies {
-    implementation project(':stroom-activity:stroom-activity-api')
-    implementation project(':stroom-activity:stroom-activity-impl')
-    implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+// JOOQ codegen config — see gradle/jooq-codegen.gradle and jooq-codegen.xml
+ext.jooqMigrationLocation = 'stroom/activity/impl/db/migration'
+ext.jooqFlywayTable = 'activity_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
 
+dependencies {
+    implementation libs.jakarta.annotation.api
+
+    implementation libs.jooq
     implementation libs.flyway.core
     implementation libs.flyway.mysql
     implementation libs.guice
@@ -35,15 +32,12 @@ dependencies {
     implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.inject
-    implementation libs.jooq
     implementation libs.slf4j.api
 
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
     runtimeOnly libs.mysql.connector.java
-
-    testImplementation project(':stroom-test-common')
-    testImplementation project(':stroom-security:stroom-security-api')
-    testImplementation project(':stroom-security:stroom-security-mock')
-
-    testImplementation libs.bundles.common.test.implementation
-    testRuntimeOnly libs.bundles.common.test.runtime
 }

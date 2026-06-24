@@ -33,7 +33,6 @@ rootProject.name = 'stroom'
 include 'stroom-activity:stroom-activity-api'
 include 'stroom-activity:stroom-activity-impl'
 include 'stroom-activity:stroom-activity-impl-db'
-include 'stroom-activity:stroom-activity-impl-db-jooq'
 include 'stroom-activity:stroom-activity-mock'
 
 // AI

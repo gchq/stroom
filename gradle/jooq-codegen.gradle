@@ -1,0 +1,157 @@
+/*
+ * Shared JOOQ codegen script plugin.
+ *
+ * Apply from any -impl-db module's build.gradle after setting:
+ *   ext.jooqMigrationLocation  - Flyway migration resource path
+ *   ext.jooqFlywayTable        - Flyway schema history table name
+ *
+ * The module must also have a jooq-codegen.xml file alongside its build.gradle.
+ *
+ * Usage in module build.gradle:
+ *
+ *   ext.jooqMigrationLocation = 'stroom/activity/impl/db/migration'
+ *   ext.jooqFlywayTable = 'activity_schema_history'
+ *   apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+ */
+
+configurations {
+    jooqCodegen
+}
+
+dependencies {
+    jooqCodegen libs.jooq.codegen
+    jooqCodegen libs.jooq.meta
+    jooqCodegen libs.mysql.connector.java
+}
+
+// ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
+
+def jooqConfigFile = file('jooq-codegen.xml')
+
+def buildJooqConfig = { String jdbcUrlVal, String inputSchemaVal ->
+    def xml = jooqConfigFile.text
+        .replace('__JDBC_URL__', jdbcUrlVal)
+        .replace('__INPUT_SCHEMA__', inputSchemaVal)
+        .replace('__OUTPUT_DIR__', "${projectDir}/src/main/java" as String)
+    def tmpFile = file("${buildDir}/tmp/jooq-codegen-resolved.xml")
+    tmpFile.parentFile.mkdirs()
+    tmpFile.text = xml
+    return tmpFile
+}
+
+// ---------------------------------------------------------------------------
+// generateJooq — runs codegen against an existing local DB (e.g. SetupDevEnv)
+// ---------------------------------------------------------------------------
+
+tasks.register('generateJooq') {
+    group = 'jooq'
+    description = 'Generates JOOQ code from an existing local MySQL database (parsed from local.yml).'
+
+    doLast {
+        def resolved = buildJooqConfig(jdbcUrl, dbSchema)
+        logger.lifecycle("Running JOOQ codegen against local DB: ${dbSchema}")
+
+        project.javaexec {
+            mainClass = 'org.jooq.codegen.GenerationTool'
+            classpath = configurations.jooqCodegen
+            args resolved.absolutePath
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// regenerateJooq — creates a fresh temp DB, runs Flyway, then codegen
+// ---------------------------------------------------------------------------
+// Requires a running MySQL instance on localhost:3307 with root/my-secret-pw
+// (same as the test infrastructure).
+
+tasks.register('regenerateJooq') {
+    dependsOn classes
+    group = 'jooq'
+    description = 'Creates a fresh MySQL DB, runs Flyway migrations, ' +
+                  'regenerates JOOQ code, then drops the DB.'
+
+    doLast {
+        def rootJdbcUrl = 'jdbc:mysql://localhost:3307?useUnicode=yes&characterEncoding=UTF-8'
+        def rootUser = 'root'
+        def rootPassword = 'my-secret-pw'
+        def dbName = "jooq_regen_${project.name}_${System.currentTimeMillis()}"
+
+        if (project.hasProperty('jooqDbHost')) {
+            rootJdbcUrl = "jdbc:mysql://${project.jooqDbHost}?useUnicode=yes&characterEncoding=UTF-8"
+        }
+        if (project.hasProperty('jooqDbRootUser')) {
+            rootUser = project.jooqDbRootUser
+        }
+        if (project.hasProperty('jooqDbRootPassword')) {
+            rootPassword = project.jooqDbRootPassword
+        }
+
+        logger.lifecycle("Creating temporary database: ${dbName}")
+        def conn = java.sql.DriverManager.getConnection(rootJdbcUrl, rootUser, rootPassword)
+        try {
+            def stmt = conn.createStatement()
+            stmt.executeUpdate(
+                "CREATE DATABASE `${dbName}` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci")
+            stmt.executeUpdate(
+                "GRANT ALL PRIVILEGES ON `${dbName}`.* TO 'stroomuser'@'%'")
+            stmt.executeUpdate("FLUSH PRIVILEGES")
+        } finally {
+            conn.close()
+        }
+
+        def tempJdbcUrl = "jdbc:mysql://localhost:3307/${dbName}?useUnicode=yes&characterEncoding=UTF-8"
+
+        try {
+            // Run Flyway migrations
+            logger.lifecycle("  Running Flyway: ${jooqMigrationLocation}")
+
+            def classpathUrls = []
+            sourceSets.main.output.classesDirs.each { dir ->
+                if (dir.exists()) {
+                    classpathUrls.add(dir.toURI().toURL())
+                }
+            }
+            def resourcesDir = sourceSets.main.output.resourcesDir
+            if (resourcesDir?.exists()) {
+                classpathUrls.add(resourcesDir.toURI().toURL())
+            }
+            configurations.runtimeClasspath.resolve().each { file ->
+                classpathUrls.add(file.toURI().toURL())
+            }
+
+            def classLoader = new URLClassLoader(
+                classpathUrls.toArray(new URL[0]),
+                Thread.currentThread().getContextClassLoader()
+            )
+
+            org.flywaydb.core.Flyway.configure(classLoader)
+                .dataSource(tempJdbcUrl, 'stroomuser', 'stroompassword1')
+                .locations("classpath:${jooqMigrationLocation}")
+                .table(jooqFlywayTable)
+                .load()
+                .migrate()
+
+            // Run JOOQ codegen against the temp DB
+            logger.lifecycle("  Running JOOQ codegen against ${dbName}")
+
+            def resolved = buildJooqConfig(tempJdbcUrl, dbName)
+
+            project.javaexec {
+                mainClass = 'org.jooq.codegen.GenerationTool'
+                classpath = configurations.jooqCodegen
+                args resolved.absolutePath
+            }
+        } finally {
+            logger.lifecycle("Dropping temporary database: ${dbName}")
+            def dropConn = java.sql.DriverManager.getConnection(rootJdbcUrl, rootUser, rootPassword)
+            try {
+                dropConn.createStatement().executeUpdate("DROP DATABASE IF EXISTS `${dbName}`")
+            } finally {
+                dropConn.close()
+            }
+        }
+    }
+}

@@ -4,18 +4,18 @@
 package stroom.ai.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.records.AiChatAttachmentRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**

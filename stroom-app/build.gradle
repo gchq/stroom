@@ -58,7 +58,6 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-activity:stroom-activity-impl')
     implementation project(':stroom-activity:stroom-activity-impl-db')
-    implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-ai:stroom-ai-impl-db')
