@@ -5,6 +5,7 @@ def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-impl')
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-ai:stroom-ai-impl-db')

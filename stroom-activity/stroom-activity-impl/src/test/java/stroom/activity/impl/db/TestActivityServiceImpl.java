@@ -20,7 +20,6 @@ package stroom.activity.impl.db;
 import stroom.activity.api.ActivityService;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityServiceImpl;
-import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;

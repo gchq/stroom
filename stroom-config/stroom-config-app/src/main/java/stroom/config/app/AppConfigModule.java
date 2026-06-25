@@ -17,9 +17,9 @@
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
-import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
+import stroom.activity.impl.db.ActivityDbConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
+import stroom.annotation.impl.AnnotationDBConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
@@ -27,7 +27,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.docstore.impl.DocStoreConfig;
-import stroom.docstore.impl.DocStoreConfig.DocStoreDbConfig;
+import stroom.docstore.impl.DocStoreDbConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
 import stroom.index.impl.IndexConfig;

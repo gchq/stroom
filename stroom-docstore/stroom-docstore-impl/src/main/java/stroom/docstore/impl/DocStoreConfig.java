@@ -16,13 +16,9 @@
 
 package stroom.docstore.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -86,22 +82,5 @@ public class DocStoreConfig extends AbstractConfig implements IsStroomConfig, Ha
                              "In ISO-8601 duration format, e.g. 'P30D' for 30 days.")
     public StroomDuration getPhysicalDeleteAge() {
         return physicalDeleteAge;
-    }
-
-
-    @BootStrapConfig
-    public static class DocStoreDbConfig extends AbstractDbConfig {
-
-        public DocStoreDbConfig() {
-            super();
-        }
-
-        @SuppressWarnings("unused")
-        @JsonCreator
-        public DocStoreDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }
