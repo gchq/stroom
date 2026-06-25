@@ -4,18 +4,18 @@
 package stroom.node.impl.db.jooq;
 
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.node.impl.db.jooq.tables.Node;
 import stroom.node.impl.db.jooq.tables.NodeGroup;
 import stroom.node.impl.db.jooq.tables.NodeGroupLink;
 import stroom.node.impl.db.jooq.tables.records.NodeGroupLinkRecord;
 import stroom.node.impl.db.jooq.tables.records.NodeGroupRecord;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

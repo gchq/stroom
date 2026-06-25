@@ -28,13 +28,11 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.Record;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 

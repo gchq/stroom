@@ -217,7 +217,6 @@ include 'stroom-node:stroom-node-api'
 include 'stroom-node:stroom-node-impl'
 include 'stroom-node:stroom-node-mock'
 include 'stroom-node:stroom-node-impl-db'
-include 'stroom-node:stroom-node-impl-db-jooq'
 
 // Pipeline
 include 'stroom-pipeline'
