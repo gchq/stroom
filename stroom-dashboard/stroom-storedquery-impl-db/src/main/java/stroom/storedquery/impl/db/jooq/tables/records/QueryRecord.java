@@ -161,15 +161,15 @@ public class QueryRecord extends UpdatableRecordImpl<QueryRecord> {
     /**
      * Setter for <code>stroom.query.favourite</code>.
      */
-    public void setFavourite(Byte value) {
+    public void setFavourite(Boolean value) {
         set(10, value);
     }
 
     /**
      * Getter for <code>stroom.query.favourite</code>.
      */
-    public Byte getFavourite() {
-        return (Byte) get(10);
+    public Boolean getFavourite() {
+        return (Boolean) get(10);
     }
 
     /**
@@ -223,7 +223,7 @@ public class QueryRecord extends UpdatableRecordImpl<QueryRecord> {
     /**
      * Create a detached, initialised QueryRecord
      */
-    public QueryRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String dashboardUuid, String componentId, String name, String data, Byte favourite, String ownerUuid, String uuid) {
+    public QueryRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String dashboardUuid, String componentId, String name, String data, Boolean favourite, String ownerUuid, String uuid) {
         super(Query.QUERY);
 
         setId(id);

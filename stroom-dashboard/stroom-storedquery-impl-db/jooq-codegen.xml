@@ -28,6 +28,15 @@
             <excludes>query_schema_history</excludes>
             <!-- Specify 'version' for use in optimistic concurrency control -->
             <recordVersionFields>version</recordVersionFields>
+            <!-- Treat some tinyint columns as booleans -->
+            <forcedTypes>
+                <forcedType>
+                    <name>BOOLEAN</name>
+                    <includeExpression>.*\.query\.favourite</includeExpression>
+                    <!-- see https://github.com/jOOQ/jOOQ/issues/9405 -->
+                    <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
+                </forcedType>
+            </forcedTypes>
         </database>
         <generate>
             <!-- Implicit joins are syntactic sugar that we don't need -->
