@@ -297,21 +297,13 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
      * @return An active and non-full volume selected by the configured volume selector
      */
     public FsVolume getVolume(final String volumeGroupName) {
-        final String volumeGroup;
-
-        // Use the default volume group if null.
-        if (volumeGroupName == null || volumeGroupName.isBlank()) {
-            LOGGER.debug("Using default volume group");
-            volumeGroup = volumeConfigProvider.get().getDefaultStreamVolumeGroupName();
-        } else {
-            volumeGroup = volumeGroupName;
-        }
+        final String effectiveVolumeGroupName = getOrDefaultVolumeGroupName(volumeGroupName);
 
         return securityContext.insecureResult(() -> {
             // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
             ensureDefaultVolumes();
 
-            final Set<FsVolume> set = getVolumeSet(volumeGroup, VolumeUseStatus.ACTIVE);
+            final Set<FsVolume> set = getVolumeSet(effectiveVolumeGroupName, VolumeUseStatus.ACTIVE);
             if (!set.isEmpty()) {
                 final FsVolume volume = set.iterator().next();
                 LOGGER.trace("Using volume {}", volume);
@@ -321,10 +313,53 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         });
     }
 
+    /**
+     * Gets a {@link FsVolume} matching the supplied fsVolumeType, regionName, bucketName.
+     */
+    public FsVolume getS3Volume(final FsVolumeType fsVolumeType,
+                                final String regionName,
+                                final String bucketName) {
+        Objects.requireNonNull(fsVolumeType);
+        Objects.requireNonNull(regionName);
+        Objects.requireNonNull(bucketName);
+        final FsVolume s3Volume = getCurrentVolumes()
+                .getGroupToVolumesMap()
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .filter(fsVolume -> fsVolume.getStatus() == VolumeUseStatus.ACTIVE)
+                .filter(fsVolume -> fsVolume.getVolumeType() == fsVolumeType)
+                .filter(fsVolume -> {
+                    final S3ClientConfig s3ClientConfig = fsVolume.getS3ClientConfig();
+                    if (s3ClientConfig != null) {
+                        return Objects.equals(s3ClientConfig.getBucketName(), bucketName)
+                               && Objects.equals(s3ClientConfig.getRegion(), regionName);
+                    } else {
+                        return false;
+                    }
+                })
+                .findAny()
+                .orElse(null);
+
+        LOGGER.debug("getS3Volume() - fsVolumeType: {}, regionName: {}, bucketName: {}, s3Volume: {}",
+                fsVolumeType, regionName, bucketName, s3Volume);
+        return s3Volume;
+    }
+
+    private String getOrDefaultVolumeGroupName(final String volumeGroupName) {
+        // Use the default volume group if null.
+        if (NullSafe.isBlankString(volumeGroupName)) {
+            LOGGER.debug("Using default volume group");
+            return volumeConfigProvider.get().getDefaultStreamVolumeGroupName();
+        } else {
+            return volumeGroupName;
+        }
+    }
+
     private Set<FsVolume> getVolumeSet(final String volumeGroup, final VolumeUseStatus streamStatus) {
         final HasCapacitySelector volumeSelector = getVolumeSelector();
         final List<FsVolume> allVolumeList = getCurrentVolumes()
-                .getMap()
+                .getGroupToVolumesMap()
                 .getOrDefault(volumeGroup, Collections.emptyList());
         LOGGER.trace("allVolumeList {}", allVolumeList);
         final List<FsVolume> freeVolumes = FsVolumeListUtil.removeFullVolumes(allVolumeList);
@@ -765,7 +800,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         final Volumes volumes = securityContext.asProcessingUserResult(this::getCurrentVolumes);
         final List<Map<String, Object>> volInfoList = volumes
-                .getMap()
+                .getGroupToVolumesMap()
                 .values()
                 .stream()
                 .flatMap(List::stream)
@@ -906,18 +941,23 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return pathCreator.toAppPath(volume.getPath());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Volumes {
 
         private final long createTime;
-        private final Map<String, List<FsVolume>> map;
+        private final Map<String, List<FsVolume>> groupToVolumesMap;
 
-        Volumes(final long createTime, final Map<String, List<FsVolume>> map) {
+        Volumes(final long createTime,
+                final Map<String, List<FsVolume>> groupToVolumesMap) {
             this.createTime = createTime;
-            this.map = map;
+            this.groupToVolumesMap = groupToVolumesMap;
         }
 
-        public Map<String, List<FsVolume>> getMap() {
-            return map;
+        public Map<String, List<FsVolume>> getGroupToVolumesMap() {
+            return groupToVolumesMap;
         }
 
         public long getCreateTime() {

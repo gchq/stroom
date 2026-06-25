@@ -297,6 +297,7 @@ public class S3EventNotificationService {
                                 return new ClientState(sqsClient, sqsConfig);
                             })
                             .toList();
+                    lastS3EventNotificationConfig = newS3EventNotificationConfig;
                     LOGGER.debug(() -> LogUtil.message("getClients() - sqsClients.size: {}", clients.size()));
                 }
             }
