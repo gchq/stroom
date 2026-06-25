@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,26 @@
 
 ext.moduleName = 'stroom.ai.impl.db'
 
-dependencies {
-    implementation project(':stroom-ai:stroom-ai-impl')
-    implementation project(':stroom-ai:stroom-ai-impl-db-jooq')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+// JOOQ codegen config — see gradle/jooq-codegen.gradle and jooq-codegen.xml
+ext.jooqMigrationLocation = 'stroom/ai/impl/db/migration'
+ext.jooqFlywayTable = 'ai_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
 
+dependencies {
+    implementation libs.jakarta.annotation.api
+
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.slf4j.api
 
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
     runtimeOnly libs.mysql.connector.java
-
-    testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.commons.lang
-
-    testImplementation libs.bundles.common.test.implementation
-    testRuntimeOnly libs.bundles.common.test.runtime
 }

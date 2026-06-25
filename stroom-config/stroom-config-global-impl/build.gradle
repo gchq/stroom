@@ -19,6 +19,7 @@ ext.moduleName = 'stroom.config.global.impl'
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-ai:stroom-ai-impl')
+    implementation project(':stroom-ai:stroom-ai-impl-db')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')

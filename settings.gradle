@@ -39,7 +39,6 @@ include 'stroom-activity:stroom-activity-mock'
 include 'stroom-ai:stroom-ai-api'
 include 'stroom-ai:stroom-ai-impl'
 include 'stroom-ai:stroom-ai-impl-db'
-include 'stroom-ai:stroom-ai-impl-db-jooq'
 include 'stroom-ai:stroom-ai-mock'
 
 // Analytics
