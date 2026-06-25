@@ -97,12 +97,15 @@ include 'stroom-core-shared'
 
 // Credentials Store
 include 'stroom-credentials:stroom-credentials-api'
+include 'stroom-credentials:stroom-credentials-impl'
 include 'stroom-credentials:stroom-credentials-impl-db'
 
 // Dashboard
 include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-impl'
+include 'stroom-dashboard:stroom-dashboard-impl-db'
+include 'stroom-dashboard:stroom-dashboard-impl-db-jooq'
 include 'stroom-dashboard:stroom-storedquery-api'
 include 'stroom-dashboard:stroom-storedquery-impl'
 include 'stroom-dashboard:stroom-storedquery-impl-db'
@@ -322,8 +325,3 @@ include 'stroom-contentstore'
 include 'stroom-gitrepo:stroom-gitrepo-impl-db'
 include 'stroom-gitrepo:stroom-gitrepo-impl-db-jooq'
 include 'stroom-gitrepo:stroom-gitrepo-mock'
-
-include 'stroom-credentials:stroom-credentials-impl'
-include 'stroom-credentials:stroom-credentials-impl-db-jooq'
-include 'stroom-dashboard:stroom-dashboard-impl-db'
-include 'stroom-dashboard:stroom-dashboard-impl-db-jooq'
