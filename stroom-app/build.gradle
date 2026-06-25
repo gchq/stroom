@@ -96,7 +96,6 @@ dependencies {
     implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
-    implementation project(':stroom-dashboard:stroom-storedquery-impl-db-jooq')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-retention-impl')
     implementation project(':stroom-data:stroom-data-store-api')

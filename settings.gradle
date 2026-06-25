@@ -107,7 +107,6 @@ include 'stroom-dashboard:stroom-dashboard-impl-db'
 include 'stroom-dashboard:stroom-storedquery-api'
 include 'stroom-dashboard:stroom-storedquery-impl'
 include 'stroom-dashboard:stroom-storedquery-impl-db'
-include 'stroom-dashboard:stroom-storedquery-impl-db-jooq'
 
 // Data projects
 include 'stroom-data:stroom-data-retention-api'
