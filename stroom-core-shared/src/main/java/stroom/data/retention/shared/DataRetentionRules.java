@@ -125,6 +125,10 @@ public class DataRetentionRules extends AbstractDoc {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder
             extends AbstractBuilder<DataRetentionRules, Builder> {
 
