@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  JOOQ codegen configuration for the security module.
+
+  Placeholder tokens are substituted at runtime by the Gradle tasks:
+    __JDBC_URL__      - JDBC connection URL
+    __INPUT_SCHEMA__  - MySQL schema name to read from
+    __OUTPUT_DIR__    - Absolute path to the output source directory
+-->
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.19.0.xsd">
+    <logging>WARN</logging>
+    <jdbc>
+        <driver>com.mysql.cj.jdbc.Driver</driver>
+        <url>__JDBC_URL__</url>
+        <user>stroomuser</user>
+        <password>stroompassword1</password>
+    </jdbc>
+    <generator>
+        <name>org.jooq.codegen.JavaGenerator</name>
+        <database>
+            <name>org.jooq.meta.mysql.MySQLDatabase</name>
+            <inputSchema>__INPUT_SCHEMA__</inputSchema>
+            <outputSchema>stroom</outputSchema>
+            <includes>api_key|stroom_user|stroom_user_archive|stroom_user_group|permission_app|permission_app_id|permission_doc|permission_doc_id|permission_doc_create|permission_doc_type_id</includes>
+            <excludes>security_schema_history</excludes>
+            <recordVersionFields>version</recordVersionFields>
+            <forcedTypes>
+                <forcedType>
+                    <name>BOOLEAN</name>
+                    <includeExpression>.*\.api_key\.enabled|.*\.stroom_user\.is_group|.*\.stroom_user\.enabled|.*\.stroom_user_archive\.is_group</includeExpression>
+                    <!-- see https://github.com/jOOQ/jOOQ/issues/9405 -->
+                    <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
+                </forcedType>
+            </forcedTypes>
+        </database>
+        <generate>
+            <implicitJoinPathsToOne>false</implicitJoinPathsToOne>
+            <implicitJoinPathsToMany>false</implicitJoinPathsToMany>
+        </generate>
+        <target>
+            <packageName>stroom.security.impl.db.jooq</packageName>
+            <directory>__OUTPUT_DIR__</directory>
+        </target>
+    </generator>
+</configuration>
