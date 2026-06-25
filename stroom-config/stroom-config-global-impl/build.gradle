@@ -28,6 +28,7 @@ dependencies {
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cluster:stroom-cluster-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')

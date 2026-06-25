@@ -16,38 +16,25 @@
 
 ext.moduleName = 'stroom.cluster.lock.impl.db'
 
+ext.jooqMigrationLocation = 'stroom/cluster/lock/impl/db/migration'
+ext.jooqFlywayTable = 'cluster_lock_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+
 dependencies {
-//    implementation project(':stroom-core-shared')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db-jooq')
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation libs.jakarta.annotation.api
+
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
+    implementation libs.jooq
+    implementation libs.slf4j.api
+
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
-    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-//    implementation project(':stroom-docref')
-
-//    implementation libs.flyway.core
-    implementation libs.guice
-//    implementation libs.hikari
-    implementation libs.jackson.annotations
-//    implementation libs.jackson.databind
-    implementation libs.jakarta.inject
-    implementation libs.jooq
-    implementation libs.mysql.connector.java
-    implementation libs.restygwt
-    implementation libs.slf4j.api
-    implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
-
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.bundles.common.test.implementation
-    testRuntimeOnly libs.bundles.common.test.runtime
+    runtimeOnly libs.mysql.connector.java
 }

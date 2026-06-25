@@ -21,6 +21,7 @@ dependencies {
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
     implementation project(':stroom-cluster:stroom-cluster-task-impl')
     implementation project(':stroom-config:stroom-config-common')
