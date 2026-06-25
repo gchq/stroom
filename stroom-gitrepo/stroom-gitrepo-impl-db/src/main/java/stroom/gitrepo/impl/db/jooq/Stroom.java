@@ -4,14 +4,14 @@
 package stroom.gitrepo.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

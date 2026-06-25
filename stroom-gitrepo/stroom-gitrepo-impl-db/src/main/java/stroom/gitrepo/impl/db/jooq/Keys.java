@@ -4,13 +4,13 @@
 package stroom.gitrepo.impl.db.jooq;
 
 
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
+import stroom.gitrepo.impl.db.jooq.tables.records.GitRepoRecord;
+
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
-import stroom.gitrepo.impl.db.jooq.tables.records.GitRepoRecord;
 
 
 /**

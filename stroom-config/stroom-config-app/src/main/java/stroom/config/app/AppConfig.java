@@ -40,7 +40,7 @@ import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
-import stroom.gitrepo.api.GitRepoConfig;
+import stroom.gitrepo.impl.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;

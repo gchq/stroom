@@ -4,7 +4,9 @@
 package stroom.gitrepo.impl.db.jooq.tables;
 
 
-import java.util.Collection;
+import stroom.gitrepo.impl.db.jooq.Keys;
+import stroom.gitrepo.impl.db.jooq.Stroom;
+import stroom.gitrepo.impl.db.jooq.tables.records.GitRepoRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -23,9 +25,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.gitrepo.impl.db.jooq.Keys;
-import stroom.gitrepo.impl.db.jooq.Stroom;
-import stroom.gitrepo.impl.db.jooq.tables.records.GitRepoRecord;
+import java.util.Collection;
 
 
 /**

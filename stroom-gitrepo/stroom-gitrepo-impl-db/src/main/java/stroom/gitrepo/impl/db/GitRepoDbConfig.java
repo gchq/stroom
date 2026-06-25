@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.gitrepo.api;
+package stroom.gitrepo.impl.db;
 
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
