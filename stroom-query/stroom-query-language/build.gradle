@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+plugins {
+    id 'java-test-fixtures'
+}
+
 ext.moduleName = 'stroom.expression'
 
 dependencies {
@@ -37,4 +41,9 @@ dependencies {
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
+
+    testFixturesImplementation platform(libs.junit.bom)
+    testFixturesImplementation platform(libs.dropwizard.dependencies)
+    testFixturesImplementation libs.assertj.core
+    testFixturesImplementation libs.junit.jupiter.api
 }

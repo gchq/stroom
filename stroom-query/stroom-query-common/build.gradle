@@ -48,7 +48,7 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.zero.allocation.hashing
 
-    testImplementation project(':stroom-query:stroom-query-language').sourceSets.test.output
+    testImplementation testFixtures(project(':stroom-query:stroom-query-language'))
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
