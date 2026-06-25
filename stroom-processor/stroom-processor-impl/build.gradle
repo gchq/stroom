@@ -24,6 +24,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -34,6 +35,7 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-processor:stroom-processor-api')
+    implementation project(':stroom-processor:stroom-processor-impl-db')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common') // TODO : Turn back into API
@@ -45,19 +47,34 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard.metrics.healthchecks
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.hikari
     implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
     implementation libs.jakarta.inject
     implementation libs.jakarta.validation.api
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
+    implementation libs.vavr
     implementation libs.ws.rs.api
 
-    testImplementation libs.commons.lang
-    testImplementation libs.jackson.databind
-
     runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-api')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-task:stroom-task-mock')
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.commons.lang
+    testImplementation libs.eventLogging
+    testImplementation libs.jaxb.api
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

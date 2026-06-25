@@ -18,9 +18,11 @@ ext.moduleName = 'stroom.ai.impl'
 
 dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
+    implementation project(':stroom-ai:stroom-ai-impl-db')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-docref')
@@ -31,6 +33,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-query:stroom-query-impl')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -50,13 +53,20 @@ dependencies {
     implementation libs.langchain4j.jina
     implementation libs.langchain4j.open.ai
     implementation libs.openai
+    implementation libs.jakarta.validation.api
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
+    runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
+
+    testImplementation libs.commons.lang
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

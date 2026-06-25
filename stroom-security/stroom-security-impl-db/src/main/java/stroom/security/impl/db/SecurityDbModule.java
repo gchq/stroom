@@ -18,7 +18,7 @@ package stroom.security.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.security.impl.AuthorisationConfig.AuthorisationDbConfig;
+import stroom.security.impl.AuthorisationDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

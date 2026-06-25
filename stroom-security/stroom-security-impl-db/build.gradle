@@ -16,45 +16,25 @@
 
 ext.moduleName = 'stroom.security.impl.db'
 
-dependencies {
-    implementation project(':stroom-activity:stroom-activity-api')
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-dashboard:stroom-storedquery-api')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-impl')
-    implementation project(':stroom-security:stroom-security-impl-db-jooq')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+ext.jooqMigrationLocation = 'stroom/security/impl/db/migration'
+ext.jooqFlywayTable = 'security_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
 
-    implementation libs.commons.lang
+dependencies {
+    implementation libs.jakarta.annotation.api
+
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.jooq
-    implementation libs.mysql.connector.java
     implementation libs.slf4j.api
 
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    testImplementation project(':stroom-cache:stroom-cache-api')
-    testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
-    testImplementation project(':stroom-docstore:stroom-docstore-mock')
-    testImplementation project(':stroom-explorer:stroom-collection-mock')
-    testImplementation project(':stroom-explorer:stroom-explorer-api')
-    testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-task:stroom-task-mock')
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.guice.extension
-    testImplementation libs.slf4j.api
-
-    testImplementation libs.bundles.common.test.implementation
-    testRuntimeOnly libs.bundles.common.test.runtime
+    runtimeOnly libs.mysql.connector.java
 }

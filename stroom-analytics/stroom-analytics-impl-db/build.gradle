@@ -16,49 +16,29 @@
 
 ext.moduleName = 'stroom.analytics.impl.db'
 
-dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-analytics:stroom-analytics-api')
-    implementation project(':stroom-analytics:stroom-analytics-impl')
-    implementation project(':stroom-analytics:stroom-analytics-impl-db-jooq')
-    implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-user-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+ext.jooqMigrationLocation = 'stroom/analytics/impl/db/migration'
+ext.jooqFlywayTable = 'analytics_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
 
-    implementation libs.dropwizard.metrics.healthchecks
+dependencies {
+    implementation libs.jakarta.annotation.api
+
     implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
-    implementation libs.hikari
     implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.slf4j.api
-    implementation libs.vavr
 
-    testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
-    testImplementation project(':stroom-event-logging:stroom-event-logging-api')
-    testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-task:stroom-task-mock')
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.eventLogging
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
     runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

@@ -16,7 +16,7 @@
 
 package stroom.data.store.impl.fs.db;
 
-import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
+import stroom.data.store.impl.fs.DataStoreServiceDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

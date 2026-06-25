@@ -27,6 +27,8 @@ dependencies {
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-impl')
+    implementation project(':stroom-data:stroom-data-store-impl-fs-db')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
@@ -48,11 +50,18 @@ dependencies {
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.vavr
 
+    runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-api')
+    testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-statistics:stroom-statistics-api')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation

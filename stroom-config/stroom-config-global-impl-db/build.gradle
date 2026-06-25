@@ -16,29 +16,30 @@
 
 ext.moduleName = 'stroom.config.global.impl.db'
 
+ext.jooqMigrationLocation = 'stroom/config/global/impl/db/migration'
+ext.jooqFlywayTable = 'config_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+
 dependencies {
-    implementation project(':stroom-config:stroom-config-app')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-config:stroom-config-global-impl')
-    implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    implementation libs.jakarta.annotation.api
 
     implementation libs.flyway.core
     implementation libs.flyway.mysql
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
-    implementation libs.hikari
+    implementation libs.jakarta.inject
     implementation libs.jooq
+    implementation libs.slf4j.api
+
+    implementation project(':stroom-config:stroom-config-app')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-test-common')
-
-    testImplementation libs.guice.extension
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

@@ -16,15 +16,11 @@
 
 package stroom.analytics.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -119,21 +115,4 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
         return executionHistoryRetention;
     }
 
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class AnalyticsDbConfig extends AbstractDbConfig implements IsStroomConfig {
-
-        public AnalyticsDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public AnalyticsDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
-    }
 }

@@ -333,10 +333,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.gitrepo.api.GitRepoConfig getGitRepoConfig(
+    stroom.gitrepo.impl.GitRepoConfig getGitRepoConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.gitrepo.api.GitRepoConfig.class);
+                stroom.gitrepo.impl.GitRepoConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

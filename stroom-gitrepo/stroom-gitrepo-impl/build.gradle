@@ -21,25 +21,37 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+
     implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
     implementation libs.jakarta.inject
     implementation libs.jakarta.validation.api
     implementation libs.jgit
     implementation libs.jgitssh
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
 
-    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
+    runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
+
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

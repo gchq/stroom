@@ -16,7 +16,7 @@
 
 package stroom.app.db.migration;
 
-import stroom.config.app.CrossModuleConfig.CrossModuleDbConfig;
+import stroom.config.app.CrossModuleDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
