@@ -152,7 +152,6 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-impl')
     implementation project(':stroom-meta:stroom-meta-impl-db')
-    implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-meta:stroom-meta-statistics-impl')
     implementation project(':stroom-node:stroom-node-api')

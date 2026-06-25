@@ -16,47 +16,25 @@
 
 ext.moduleName = 'stroom.meta.impl.db'
 
+ext.jooqMigrationLocation = 'stroom/meta/impl/db/migration'
+ext.jooqFlywayTable = 'meta_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+
 dependencies {
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-data:stroom-data-retention-api')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-meta:stroom-meta-impl')
-    implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
-    implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    implementation libs.jakarta.annotation.api
 
     implementation libs.flyway.core
     implementation libs.flyway.mysql
     implementation libs.guice
-    implementation libs.hikari
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.jooq
-    implementation libs.vavr
+    implementation libs.slf4j.api
 
-    testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
-    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
-    testImplementation project(':stroom-docstore:stroom-docstore-mock')
-    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
-    testImplementation project(':stroom-explorer:stroom-collection-mock')
-    testImplementation project(':stroom-search:stroom-searchable-api')
-    testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-task:stroom-task-mock')
-    testImplementation project(':stroom-test-common')
-    testImplementation project(':stroom-util')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    testImplementation libs.bundles.common.test.implementation
-    testRuntimeOnly libs.bundles.common.test.runtime
+    runtimeOnly libs.mysql.connector.java
 }
