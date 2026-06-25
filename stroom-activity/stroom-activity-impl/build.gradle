@@ -19,6 +19,7 @@ ext.moduleName = 'stroom.activity.impl'
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-activity:stroom-activity-impl-db')
+    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-event-logging:stroom-event-logging-api')

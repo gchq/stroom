@@ -20,10 +20,13 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
@@ -33,9 +36,12 @@ dependencies {
     implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.inject
+    implementation libs.jooq
     implementation libs.slf4j.api
+    implementation libs.zero.allocation.hashing
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
