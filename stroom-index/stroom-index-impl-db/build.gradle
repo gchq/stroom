@@ -16,41 +16,36 @@
 
 ext.moduleName = 'stroom.index.impl.db'
 
+ext.jooqMigrationLocation = 'stroom/index/impl/db/migration'
+ext.jooqFlywayTable = 'index_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+
 dependencies {
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-index:stroom-index-api')
-    implementation project(':stroom-index:stroom-index-impl')
-    implementation project(':stroom-index:stroom-index-impl-db-jooq')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+    implementation libs.jakarta.annotation.api
 
     implementation libs.flyway.core
     implementation libs.flyway.mysql
     implementation libs.guice
-    implementation libs.hikari
     implementation libs.jackson.annotations
+    implementation libs.jackson.databind
     implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.slf4j.api
 
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-test-common')
-    testImplementation project(':stroom-index:stroom-index-mock')
-    testImplementation project(':stroom-docstore:stroom-docstore-mock')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

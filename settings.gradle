@@ -187,7 +187,6 @@ include 'stroom-index:stroom-index-lucene553'
 include 'stroom-index:stroom-index-lucene'
 include 'stroom-index:stroom-index-mock'
 include 'stroom-index:stroom-index-impl-db'
-include 'stroom-index:stroom-index-impl-db-jooq'
 
 // Scheduled jobs
 include 'stroom-job:stroom-job-api'

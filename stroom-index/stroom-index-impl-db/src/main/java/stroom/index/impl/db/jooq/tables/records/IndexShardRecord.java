@@ -4,10 +4,10 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
+import stroom.index.impl.db.jooq.tables.IndexShard;
+
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.index.impl.db.jooq.tables.IndexShard;
 
 
 /**
