@@ -19,6 +19,7 @@ package stroom.dashboard.impl.visualisation;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
@@ -54,7 +55,8 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
         final String settings = document.getSettings();
         final ImportExportDocument importExportDocument = delegate.write(document.copy().settings(null).build());
         if (settings != null) {
-            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, EncodingUtil.asBytes(settings)));
+            importExportDocument.addExtAsset(
+                    new ByteArrayImportExportAsset(JSON, DocDataType.JSON, EncodingUtil.asBytes(settings)));
         }
         return importExportDocument;
     }

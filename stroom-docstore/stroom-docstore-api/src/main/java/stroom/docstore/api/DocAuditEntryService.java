@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.db;
+package stroom.docstore.api;
 
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocAuditEntry;
+import stroom.util.shared.ResultPage;
 
-import stroom.docstore.api.RWLockFactory;
+public interface DocAuditEntryService {
 
-import java.util.function.Supplier;
-
-class NoLockFactory implements RWLockFactory {
-
-    @Override
-    public void lock(final String uuid, final Runnable runnable) {
-        runnable.run();
-    }
-
-    @Override
-    public <T> T lockResult(final String uuid, final Supplier<T> supplier) {
-        return supplier.get();
-    }
+    /**
+     * Get the audit information for the given document.
+     *
+     * @param docRef The {@link DocRef} to retrieve audit information for.
+     * @return A {@link ResultPage} of {@link DocAuditEntry} records for the document.
+     */
+    ResultPage<DocAuditEntry> getAuditInfo(DocRef docRef);
 }

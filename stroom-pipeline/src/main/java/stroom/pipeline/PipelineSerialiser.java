@@ -19,6 +19,7 @@ package stroom.pipeline;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.pipeline.shared.PipelineDoc;
@@ -65,7 +66,7 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         }
 
         importExportDocument.addExtAsset(
-                new ByteArrayImportExportAsset(JSON, getJsonFromPipelineDataAsBytes(pipelineData)));
+                new ByteArrayImportExportAsset(JSON, DocDataType.JSON, getJsonFromPipelineDataAsBytes(pipelineData)));
 
         return importExportDocument;
     }

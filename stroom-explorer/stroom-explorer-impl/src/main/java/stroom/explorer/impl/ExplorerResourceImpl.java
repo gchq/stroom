@@ -16,8 +16,8 @@
 
 package stroom.explorer.impl;
 
-import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.docstore.shared.DocumentType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;

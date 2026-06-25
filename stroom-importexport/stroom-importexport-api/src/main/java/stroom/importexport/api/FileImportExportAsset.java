@@ -16,6 +16,8 @@
 
 package stroom.importexport.api;
 
+import stroom.docstore.shared.DocDataType;
+
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -34,23 +36,34 @@ public class FileImportExportAsset implements ImportExportAsset {
 
     private final String key;
 
+    private final DocDataType docDataType;
+
     private final @Nullable Path file;
 
     /**
      * Constructor.
      * @param key The key associated with the asset. Might represent the extension of a
      *            file or the path to the file, depending on context. Must not be null.
+     * @param docDataType The data type of this asset (JSON, TEXT, or BINARY).
      * @param file The contents of the asset. Can be null if no data is associated with the
      *             asset (e.g. this represents a folder).
      */
-    public FileImportExportAsset(final String key, final @Nullable Path file) {
+    public FileImportExportAsset(final String key,
+                                 final DocDataType docDataType,
+                                 final @Nullable Path file) {
         this.key = key;
+        this.docDataType = docDataType;
         this.file = file;
     }
 
     @Override
     public String getKey() {
         return key;
+    }
+
+    @Override
+    public DocDataType getDocDataType() {
+        return docDataType;
     }
 
     @Override

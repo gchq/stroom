@@ -82,29 +82,29 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
 
     @Test
     void testSecurityFilter() {
-        securityContext.asProcessingUser(() -> {
-            final User user = userService.getOrCreateUser(TEST_USER);
+        final User user = securityContext.asProcessingUserResult(() -> userService.getOrCreateUser(TEST_USER));
 
+        securityContext.asUser(user.asRef(), () -> {
             final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
             final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
 
-            documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
-            documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
-
-            securityContext.asUser(user.asRef(), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
-                        DocumentPermission.USE,
-                        FEED_FIELDS);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
-                        DocumentPermission.VIEW,
-                        FEED_FIELDS);
-
-                assertThat(useExpression).isNotEmpty();
-                assertThat(useExpression.get().getChildren().size() == 1);
-                assertThat(readExpression).isNotEmpty();
-                assertThat(readExpression.get().getChildren().size() == 1);
+            securityContext.asProcessingUser(() -> {
+                documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
+                documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
             });
+
+            final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                    DocumentPermission.USE,
+                    FEED_FIELDS);
+            final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                    DocumentPermission.VIEW,
+                    FEED_FIELDS);
+
+            assertThat(useExpression).isNotEmpty();
+            assertThat(useExpression.get().getChildren().size() == 1);
+            assertThat(readExpression).isNotEmpty();
+            assertThat(readExpression.get().getChildren().size() == 1);
         });
     }
 }

@@ -16861,7 +16861,7 @@
         "properties" : {
           "action" : {
             "type" : "string",
-            "enum" : [ "CREATE", "UPDATE", "DELETE" ]
+            "enum" : [ "CREATE", "UPDATE", "DELETE", "IMPORT", "EXPORT", "COPY", "MOVE", "RENAME" ]
           },
           "time" : {
             "type" : "integer",
