@@ -28,6 +28,7 @@ dependencies {
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
     implementation project(':stroom-data:stroom-data-retention-api')
