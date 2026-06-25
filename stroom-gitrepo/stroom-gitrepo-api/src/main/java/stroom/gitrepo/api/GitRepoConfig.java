@@ -16,13 +16,9 @@
 
 package stroom.gitrepo.api;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -96,26 +92,5 @@ public class GitRepoConfig extends AbstractConfig implements IsStroomConfig, Has
     @Override
     public String toString() {
         return "GitRepoConfig { localDir='" + localDir + "'}";
-    }
-
-    /**
-     * DB configuration.
-     */
-    @BootStrapConfig
-    public static class GitRepoDbConfig extends AbstractDbConfig {
-        public GitRepoDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        @SuppressWarnings("unused")
-        public GitRepoDbConfig(
-                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION)
-                final ConnectionConfig connectionConfig,
-                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION_POOL)
-                final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
-
     }
 }

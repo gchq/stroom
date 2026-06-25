@@ -16,7 +16,6 @@
 
 package stroom.cluster.lock.impl.db;
 
-import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

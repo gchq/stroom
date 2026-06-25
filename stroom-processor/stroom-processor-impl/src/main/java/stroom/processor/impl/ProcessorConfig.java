@@ -16,13 +16,9 @@
 
 package stroom.processor.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -280,20 +276,5 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
                '}';
-    }
-
-    @BootStrapConfig
-    public static class ProcessorDbConfig extends AbstractDbConfig implements IsStroomConfig {
-
-        public ProcessorDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public ProcessorDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

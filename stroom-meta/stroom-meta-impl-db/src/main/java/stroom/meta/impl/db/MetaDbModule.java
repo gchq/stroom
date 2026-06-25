@@ -18,7 +18,7 @@ package stroom.meta.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
+import stroom.meta.impl.MetaServiceDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

@@ -45,7 +45,7 @@ import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
-import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetDbConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;

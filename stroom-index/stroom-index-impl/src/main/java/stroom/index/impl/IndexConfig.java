@@ -16,13 +16,9 @@
 
 package stroom.index.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -105,20 +101,5 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
                 ", indexWriterConfig=" + indexWriterConfig +
                 ", indexStructureCache=" + indexFieldCache +
                 '}';
-    }
-
-    @BootStrapConfig
-    public static class IndexDbConfig extends AbstractDbConfig {
-
-        public IndexDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public IndexDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

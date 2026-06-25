@@ -18,7 +18,7 @@ package stroom.gitrepo.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.gitrepo.api.GitRepoConfig.GitRepoDbConfig;
+import stroom.gitrepo.api.GitRepoDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

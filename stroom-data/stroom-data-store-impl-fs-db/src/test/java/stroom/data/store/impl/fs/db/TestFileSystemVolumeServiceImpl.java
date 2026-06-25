@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs.db;
 
 
 import stroom.data.store.api.FsVolumeGroupService;
-import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
+import stroom.data.store.impl.fs.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;

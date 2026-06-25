@@ -18,7 +18,7 @@ package stroom.storedquery.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
+import stroom.storedquery.impl.StoredQueryDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

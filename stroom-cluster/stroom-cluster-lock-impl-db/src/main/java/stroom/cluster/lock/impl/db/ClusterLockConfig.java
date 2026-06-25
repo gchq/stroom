@@ -16,12 +16,8 @@
 
 package stroom.cluster.lock.impl.db;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -61,22 +57,6 @@ public class ClusterLockConfig extends AbstractConfig implements IsStroomConfig,
             "This allows a timeout to be set that is greater than that configured on the database, but not less. ")
     public StroomDuration getLockTimeout() {
         return lockTimeout;
-    }
-
-    @BootStrapConfig
-    public static class ClusterLockDbConfig extends AbstractDbConfig implements IsStroomConfig {
-
-        public ClusterLockDbConfig() {
-            super();
-        }
-
-        @SuppressWarnings("unused")
-        @JsonCreator
-        public ClusterLockDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 
     @Override

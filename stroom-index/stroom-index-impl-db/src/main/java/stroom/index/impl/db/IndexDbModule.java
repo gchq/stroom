@@ -18,7 +18,7 @@ package stroom.index.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.index.impl.IndexConfig.IndexDbConfig;
+import stroom.index.impl.IndexDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

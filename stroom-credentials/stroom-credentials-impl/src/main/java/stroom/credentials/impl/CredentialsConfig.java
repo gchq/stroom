@@ -1,11 +1,7 @@
 package stroom.credentials.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -61,26 +57,6 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
     /**
      * DB configuration class.
      */
-    @BootStrapConfig
-    public static class CredentialsDbConfig extends AbstractDbConfig {
-
-        /**
-         * Default constructor called from CredentialsConfig default constructor.
-         */
-        public CredentialsDbConfig() {
-            super();
-        }
-
-        @SuppressWarnings("unused")
-        @JsonCreator
-        public CredentialsDbConfig(
-                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION)
-                final ConnectionConfig connectionConfig,
-                @JsonProperty(AbstractDbConfig.PROP_NAME_CONNECTION_POOL)
-                final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
-    }
 
     @Override
     public boolean equals(final Object o) {
