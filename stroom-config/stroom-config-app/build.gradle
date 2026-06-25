@@ -59,6 +59,7 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-processor:stroom-processor-impl')
+    implementation project(':stroom-processor:stroom-processor-impl-db')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-search:stroom-search-elastic')
