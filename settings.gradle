@@ -47,7 +47,6 @@ include 'stroom-analytics:stroom-analytics-impl'
 include 'stroom-analytics:stroom-analytics-mock'
 include 'stroom-analytics:stroom-analytics-rule-impl'
 include 'stroom-analytics:stroom-analytics-impl-db'
-include 'stroom-analytics:stroom-analytics-impl-db-jooq'
 
 // Annotations
 include 'stroom-annotation:stroom-annotation-impl'

@@ -64,7 +64,7 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl-db')
-    implementation project(':stroom-analytics:stroom-analytics-impl-db-jooq')
+    implementation project(':stroom-analytics:stroom-analytics-impl-db')
     implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')

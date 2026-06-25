@@ -4,12 +4,12 @@
 package stroom.analytics.impl.db.jooq;
 
 
+import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
+
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
 
 
 /**
