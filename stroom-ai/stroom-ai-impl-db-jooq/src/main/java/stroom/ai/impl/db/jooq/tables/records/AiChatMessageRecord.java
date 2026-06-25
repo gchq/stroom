@@ -4,10 +4,10 @@
 package stroom.ai.impl.db.jooq.tables.records;
 
 
-import stroom.ai.impl.db.jooq.tables.AiChatMessage;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 
 
 /**

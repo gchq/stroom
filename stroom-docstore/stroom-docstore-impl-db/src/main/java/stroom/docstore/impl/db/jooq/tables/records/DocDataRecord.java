@@ -150,6 +150,6 @@ public class DocDataRecord extends UpdatableRecordImpl<DocDataRecord> {
         setJsonData(jsonData);
         setTextData(textData);
         setBinData(binData);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

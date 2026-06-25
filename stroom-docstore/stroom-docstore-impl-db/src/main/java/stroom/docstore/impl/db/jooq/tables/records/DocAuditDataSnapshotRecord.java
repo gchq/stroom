@@ -91,6 +91,6 @@ public class DocAuditDataSnapshotRecord extends UpdatableRecordImpl<DocAuditData
         setId(id);
         setFkDocAuditId(fkDocAuditId);
         setFkDocDataSnapshotId(fkDocDataSnapshotId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

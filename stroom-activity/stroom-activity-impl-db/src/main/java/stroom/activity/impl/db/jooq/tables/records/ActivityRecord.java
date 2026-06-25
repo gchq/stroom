@@ -164,6 +164,6 @@ public class ActivityRecord extends UpdatableRecordImpl<ActivityRecord> {
         setUpdateUser(updateUser);
         setJson(json);
         setUserUuid(userUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

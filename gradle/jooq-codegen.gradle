@@ -24,6 +24,24 @@ dependencies {
     jooqCodegen libs.mysql.connector.java
 }
 
+// In Gradle 9+, project.javaexec() is removed. ExecOperations must be
+// obtained via @Inject, which requires an abstract class instantiated
+// through project.objects.newInstance().
+abstract class JooqExec {
+    @javax.inject.Inject
+    abstract org.gradle.process.ExecOperations getExecOperations()
+
+    void run(org.gradle.api.file.FileCollection classpath, File configFile) {
+        execOperations.javaexec {
+            it.mainClass.set('org.jooq.codegen.GenerationTool')
+            it.classpath = classpath
+            it.args configFile.absolutePath
+        }
+    }
+}
+
+def jooqExec = objects.newInstance(JooqExec)
+
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
@@ -31,8 +49,10 @@ dependencies {
 def jooqConfigFile = file('jooq-codegen.xml')
 
 def buildJooqConfig = { String jdbcUrlVal, String inputSchemaVal ->
+    // Escape '&' for XML — JDBC URLs contain bare '&' which is invalid in XML
+    def safeUrl = jdbcUrlVal.replace('&', '&amp;')
     def xml = jooqConfigFile.text
-        .replace('__JDBC_URL__', jdbcUrlVal)
+        .replace('__JDBC_URL__', safeUrl)
         .replace('__INPUT_SCHEMA__', inputSchemaVal)
         .replace('__OUTPUT_DIR__', "${projectDir}/src/main/java" as String)
     def tmpFile = file("${buildDir}/tmp/jooq-codegen-resolved.xml")
@@ -53,11 +73,7 @@ tasks.register('generateJooq') {
         def resolved = buildJooqConfig(jdbcUrl, dbSchema)
         logger.lifecycle("Running JOOQ codegen against local DB: ${dbSchema}")
 
-        project.javaexec {
-            mainClass = 'org.jooq.codegen.GenerationTool'
-            classpath = configurations.jooqCodegen
-            args resolved.absolutePath
-        }
+        jooqExec.run(configurations.jooqCodegen, resolved)
     }
 }
 
@@ -139,11 +155,7 @@ tasks.register('regenerateJooq') {
 
             def resolved = buildJooqConfig(tempJdbcUrl, dbName)
 
-            project.javaexec {
-                mainClass = 'org.jooq.codegen.GenerationTool'
-                classpath = configurations.jooqCodegen
-                args resolved.absolutePath
-            }
+            jooqExec.run(configurations.jooqCodegen, resolved)
         } finally {
             logger.lifecycle("Dropping temporary database: ${dbName}")
             def dropConn = java.sql.DriverManager.getConnection(rootJdbcUrl, rootUser, rootPassword)

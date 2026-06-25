@@ -134,6 +134,6 @@ public class DocRecord extends UpdatableRecordImpl<DocRecord> {
         setName(name);
         setDeleted(deleted);
         setVersion(version);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

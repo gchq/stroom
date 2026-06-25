@@ -134,6 +134,6 @@ public class DocAuditRecord extends UpdatableRecordImpl<DocAuditRecord> {
         setActionTime(actionTime);
         setUserUuid(userUuid);
         setUserName(userName);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

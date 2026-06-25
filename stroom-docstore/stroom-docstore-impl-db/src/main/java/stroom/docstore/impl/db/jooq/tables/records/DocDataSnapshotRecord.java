@@ -165,6 +165,6 @@ public class DocDataSnapshotRecord extends UpdatableRecordImpl<DocDataSnapshotRe
         setJsonData(jsonData);
         setTextData(textData);
         setBinData(binData);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

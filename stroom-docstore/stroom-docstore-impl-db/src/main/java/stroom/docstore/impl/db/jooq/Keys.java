@@ -9,6 +9,7 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.docstore.impl.db.jooq.tables.DocAudit;
@@ -45,9 +46,9 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<DocAuditRecord, DocRecord> DOC_AUDIT_FK_DOC_ID = Internal.createForeignKey(DocAudit.DOC_AUDIT, DSL.name("doc_audit_fk_doc_id"), new TableField[] { DocAudit.DOC_AUDIT.FK_DOC_ID }, Keys.KEY_DOC_PRIMARY, new TableField[] { Doc.DOC.ID }, true);
-    public static final ForeignKey<DocAuditDataSnapshotRecord, DocAuditRecord> DOC_AUDIT_DATA_SNAPSHOT_FK_DOC_AUDIT_ID = Internal.createForeignKey(DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT, DSL.name("doc_audit_data_snapshot_fk_doc_audit_id"), new TableField[] { DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_AUDIT_ID }, Keys.KEY_DOC_AUDIT_PRIMARY, new TableField[] { DocAudit.DOC_AUDIT.ID }, true);
-    public static final ForeignKey<DocAuditDataSnapshotRecord, DocDataSnapshotRecord> DOC_AUDIT_DATA_SNAPSHOT_FK_DOC_DATA_SNAPSHOT_ID = Internal.createForeignKey(DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT, DSL.name("doc_audit_data_snapshot_fk_doc_data_snapshot_id"), new TableField[] { DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_DATA_SNAPSHOT_ID }, Keys.KEY_DOC_DATA_SNAPSHOT_PRIMARY, new TableField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.ID }, true);
-    public static final ForeignKey<DocDataRecord, DocRecord> DOC_DATA_FK_DOC_ID = Internal.createForeignKey(DocData.DOC_DATA, DSL.name("doc_data_fk_doc_id"), new TableField[] { DocData.DOC_DATA.FK_DOC_ID }, Keys.KEY_DOC_PRIMARY, new TableField[] { Doc.DOC.ID }, true);
-    public static final ForeignKey<DocDataSnapshotRecord, DocRecord> DOC_DATA_SNAPSHOT_FK_DOC_ID = Internal.createForeignKey(DocDataSnapshot.DOC_DATA_SNAPSHOT, DSL.name("doc_data_snapshot_fk_doc_id"), new TableField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.FK_DOC_ID }, Keys.KEY_DOC_PRIMARY, new TableField[] { Doc.DOC.ID }, true);
+    public static final ForeignKey<DocAuditRecord, DocRecord> DOC_AUDIT_FK_DOC_ID = Internal.createForeignKey(DocAudit.DOC_AUDIT, DSL.name("doc_audit_fk_doc_id"), new TableField[] { DocAudit.DOC_AUDIT.FK_DOC_ID }, Keys.KEY_DOC_PRIMARY, new TableField[] { Doc.DOC.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<DocAuditDataSnapshotRecord, DocAuditRecord> DOC_AUDIT_DATA_SNAPSHOT_FK_DOC_AUDIT_ID = Internal.createForeignKey(DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT, DSL.name("doc_audit_data_snapshot_fk_doc_audit_id"), new TableField[] { DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_AUDIT_ID }, Keys.KEY_DOC_AUDIT_PRIMARY, new TableField[] { DocAudit.DOC_AUDIT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<DocAuditDataSnapshotRecord, DocDataSnapshotRecord> DOC_AUDIT_DATA_SNAPSHOT_FK_DOC_DATA_SNAPSHOT_ID = Internal.createForeignKey(DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT, DSL.name("doc_audit_data_snapshot_fk_doc_data_snapshot_id"), new TableField[] { DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT.FK_DOC_DATA_SNAPSHOT_ID }, Keys.KEY_DOC_DATA_SNAPSHOT_PRIMARY, new TableField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<DocDataRecord, DocRecord> DOC_DATA_FK_DOC_ID = Internal.createForeignKey(DocData.DOC_DATA, DSL.name("doc_data_fk_doc_id"), new TableField[] { DocData.DOC_DATA.FK_DOC_ID }, Keys.KEY_DOC_PRIMARY, new TableField[] { Doc.DOC.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<DocDataSnapshotRecord, DocRecord> DOC_DATA_SNAPSHOT_FK_DOC_ID = Internal.createForeignKey(DocDataSnapshot.DOC_DATA_SNAPSHOT, DSL.name("doc_data_snapshot_fk_doc_id"), new TableField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.FK_DOC_ID }, Keys.KEY_DOC_PRIMARY, new TableField[] { Doc.DOC.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }
