@@ -192,7 +192,6 @@ include 'stroom-index:stroom-index-impl-db'
 include 'stroom-job:stroom-job-api'
 include 'stroom-job:stroom-job-impl'
 include 'stroom-job:stroom-job-impl-db'
-include 'stroom-job:stroom-job-impl-db-jooq'
 
 // Kafka
 include 'stroom-kafka:stroom-kafka-api'
