@@ -33,6 +33,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-api')
+    implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-impl')
@@ -40,6 +41,7 @@ dependencies {
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
@@ -89,11 +91,13 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
+    implementation libs.hikari
     implementation libs.jackson.annotations
     implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.vavr
