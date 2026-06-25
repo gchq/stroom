@@ -75,6 +75,6 @@ public class PermissionAppIdRecord extends UpdatableRecordImpl<PermissionAppIdRe
 
         setId(id);
         setPermission(permission);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -89,6 +89,6 @@ public class AnnotationSubscriptionRecord extends UpdatableRecordImpl<Annotation
         setId(id);
         setFkAnnotationId(fkAnnotationId);
         setUserUuid(userUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

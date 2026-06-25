@@ -9,6 +9,7 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
@@ -46,6 +47,6 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<ExplorerFavouriteRecord, ExplorerNodeRecord> EXPLORER_FAVOURITE_EXPLORER_NODE_ID = Internal.createForeignKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("explorer_favourite_explorer_node_id"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.EXPLORER_NODE_ID }, Keys.KEY_EXPLORER_NODE_PRIMARY, new TableField[] { ExplorerNode.EXPLORER_NODE.ID }, true);
-    public static final ForeignKey<TabSessionDocRefRecord, TabSessionRecord> TAB_SESSION_DOC_REF_TAB_SESSION_ID = Internal.createForeignKey(TabSessionDocRef.TAB_SESSION_DOC_REF, DSL.name("tab_session_doc_ref_tab_session_id"), new TableField[] { TabSessionDocRef.TAB_SESSION_DOC_REF.TAB_SESSION_ID }, Keys.KEY_TAB_SESSION_PRIMARY, new TableField[] { TabSession.TAB_SESSION.ID }, true);
+    public static final ForeignKey<ExplorerFavouriteRecord, ExplorerNodeRecord> EXPLORER_FAVOURITE_EXPLORER_NODE_ID = Internal.createForeignKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("explorer_favourite_explorer_node_id"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.EXPLORER_NODE_ID }, Keys.KEY_EXPLORER_NODE_PRIMARY, new TableField[] { ExplorerNode.EXPLORER_NODE.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<TabSessionDocRefRecord, TabSessionRecord> TAB_SESSION_DOC_REF_TAB_SESSION_ID = Internal.createForeignKey(TabSessionDocRef.TAB_SESSION_DOC_REF, DSL.name("tab_session_doc_ref_tab_session_id"), new TableField[] { TabSessionDocRef.TAB_SESSION_DOC_REF.TAB_SESSION_ID }, Keys.KEY_TAB_SESSION_PRIMARY, new TableField[] { TabSession.TAB_SESSION.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
 }

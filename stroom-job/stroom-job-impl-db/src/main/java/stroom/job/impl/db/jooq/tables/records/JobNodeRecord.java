@@ -4,10 +4,10 @@
 package stroom.job.impl.db.jooq.tables.records;
 
 
-import stroom.job.impl.db.jooq.tables.JobNode;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.job.impl.db.jooq.tables.JobNode;
 
 
 /**
@@ -224,6 +224,6 @@ public class JobNodeRecord extends UpdatableRecordImpl<JobNodeRecord> {
         setTaskLimit(taskLimit);
         setSchedule(schedule);
         setEnabled(enabled);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

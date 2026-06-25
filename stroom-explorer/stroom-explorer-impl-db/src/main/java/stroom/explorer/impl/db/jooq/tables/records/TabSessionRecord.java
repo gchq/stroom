@@ -89,6 +89,6 @@ public class TabSessionRecord extends UpdatableRecordImpl<TabSessionRecord> {
         setId(id);
         setName(name);
         setUserUuid(userUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

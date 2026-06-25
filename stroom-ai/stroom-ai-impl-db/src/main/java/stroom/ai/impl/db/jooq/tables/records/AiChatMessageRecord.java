@@ -134,6 +134,6 @@ public class AiChatMessageRecord extends UpdatableRecordImpl<AiChatMessageRecord
         setMessageType(messageType);
         setFkAttachmentId(fkAttachmentId);
         setMessage(message);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

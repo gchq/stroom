@@ -346,6 +346,6 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         setRunAsUserUuid(runAsUserUuid);
         setExport(export);
         setProfileName(profileName);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

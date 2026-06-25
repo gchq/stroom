@@ -164,6 +164,6 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         setUpdateUser(updateUser);
         setUserUuid(userUuid);
         setTitle(title);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

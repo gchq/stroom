@@ -134,6 +134,6 @@ public class StroomUserArchiveRecord extends UpdatableRecordImpl<StroomUserArchi
         setDisplayName(displayName);
         setFullName(fullName);
         setIsGroup(isGroup);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

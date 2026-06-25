@@ -91,6 +91,6 @@ public class MetaRetentionTrackerRecord extends UpdatableRecordImpl<MetaRetentio
         setRetentionRulesVersion(retentionRulesVersion);
         setRuleAge(ruleAge);
         setLastRunTime(lastRunTime);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

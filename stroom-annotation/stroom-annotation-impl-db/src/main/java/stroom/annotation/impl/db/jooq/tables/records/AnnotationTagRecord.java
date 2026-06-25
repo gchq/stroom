@@ -149,6 +149,6 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
         setStyleId(styleId);
         setDeleted(deleted);
         setTagText(tagText);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -120,7 +120,7 @@ public class PermissionApp extends TableImpl<PermissionAppRecord> {
 
     @Override
     public List<ForeignKey<PermissionAppRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.PERMISSION_APP_USER_UUID, Keys.PERMISSION_APP_PERMISSION_ID);
+        return Arrays.asList(Keys.PERMISSION_APP_PERMISSION_ID, Keys.PERMISSION_APP_USER_UUID);
     }
 
     @Override

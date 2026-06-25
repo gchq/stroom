@@ -224,6 +224,6 @@ public class ProcessorTaskRecord extends UpdatableRecordImpl<ProcessorTaskRecord
         setStatusTimeMs(statusTimeMs);
         setMetaId(metaId);
         setData(data);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

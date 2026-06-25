@@ -141,7 +141,7 @@ public class VisualisationAssetsDraft extends TableImpl<VisualisationAssetsDraft
 
     @Override
     public List<UniqueKey<VisualisationAssetsDraftRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_VISUALISATION_ASSETS_DRAFT_K_VISUALISATION_ASSETS_DRAFT, Keys.KEY_VISUALISATION_ASSETS_DRAFT_K_ASSET_UUID);
+        return Arrays.asList(Keys.KEY_VISUALISATION_ASSETS_DRAFT_K_ASSET_UUID, Keys.KEY_VISUALISATION_ASSETS_DRAFT_K_VISUALISATION_ASSETS_DRAFT);
     }
 
     @Override

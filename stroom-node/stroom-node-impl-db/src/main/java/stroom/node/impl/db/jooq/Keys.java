@@ -4,18 +4,19 @@
 package stroom.node.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
+
 import stroom.node.impl.db.jooq.tables.Node;
 import stroom.node.impl.db.jooq.tables.NodeGroup;
 import stroom.node.impl.db.jooq.tables.NodeGroupLink;
 import stroom.node.impl.db.jooq.tables.records.NodeGroupLinkRecord;
 import stroom.node.impl.db.jooq.tables.records.NodeGroupRecord;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**
@@ -39,6 +40,6 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<NodeGroupLinkRecord, NodeGroupRecord> NODE_GROUP_LINK_FK_NODE_GROUP_ID = Internal.createForeignKey(NodeGroupLink.NODE_GROUP_LINK, DSL.name("node_group_link_fk_node_group_id"), new TableField[] { NodeGroupLink.NODE_GROUP_LINK.FK_NODE_GROUP_ID }, Keys.KEY_NODE_GROUP_PRIMARY, new TableField[] { NodeGroup.NODE_GROUP.ID }, true);
-    public static final ForeignKey<NodeGroupLinkRecord, NodeRecord> NODE_GROUP_LINK_FK_NODE_ID = Internal.createForeignKey(NodeGroupLink.NODE_GROUP_LINK, DSL.name("node_group_link_fk_node_id"), new TableField[] { NodeGroupLink.NODE_GROUP_LINK.FK_NODE_ID }, Keys.KEY_NODE_PRIMARY, new TableField[] { Node.NODE.ID }, true);
+    public static final ForeignKey<NodeGroupLinkRecord, NodeGroupRecord> NODE_GROUP_LINK_FK_NODE_GROUP_ID = Internal.createForeignKey(NodeGroupLink.NODE_GROUP_LINK, DSL.name("node_group_link_fk_node_group_id"), new TableField[] { NodeGroupLink.NODE_GROUP_LINK.FK_NODE_GROUP_ID }, Keys.KEY_NODE_GROUP_PRIMARY, new TableField[] { NodeGroup.NODE_GROUP.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<NodeGroupLinkRecord, NodeRecord> NODE_GROUP_LINK_FK_NODE_ID = Internal.createForeignKey(NodeGroupLink.NODE_GROUP_LINK, DSL.name("node_group_link_fk_node_id"), new TableField[] { NodeGroupLink.NODE_GROUP_LINK.FK_NODE_ID }, Keys.KEY_NODE_PRIMARY, new TableField[] { Node.NODE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

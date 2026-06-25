@@ -4,6 +4,13 @@
 package stroom.index.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
+
 import stroom.index.impl.db.jooq.tables.IndexField;
 import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
@@ -14,12 +21,6 @@ import stroom.index.impl.db.jooq.tables.records.IndexFieldSourceRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**
@@ -46,7 +47,7 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<IndexFieldRecord, IndexFieldSourceRecord> INDEX_FIELD_FK_INDEX_FIELD_SOURCE_ID = Internal.createForeignKey(IndexField.INDEX_FIELD, DSL.name("index_field_fk_index_field_source_id"), new TableField[] { IndexField.INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID }, Keys.KEY_INDEX_FIELD_SOURCE_PRIMARY, new TableField[] { IndexFieldSource.INDEX_FIELD_SOURCE.ID }, true);
-    public static final ForeignKey<IndexShardRecord, IndexVolumeRecord> INDEX_SHARD_FK_VOLUME_ID = Internal.createForeignKey(IndexShard.INDEX_SHARD, DSL.name("index_shard_fk_volume_id"), new TableField[] { IndexShard.INDEX_SHARD.FK_VOLUME_ID }, Keys.KEY_INDEX_VOLUME_PRIMARY, new TableField[] { IndexVolume.INDEX_VOLUME.ID }, true);
-    public static final ForeignKey<IndexVolumeRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_LINK_FK_GROUP_NAME = Internal.createForeignKey(IndexVolume.INDEX_VOLUME, DSL.name("index_volume_group_link_fk_group_name"), new TableField[] { IndexVolume.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID }, Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, new TableField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.ID }, true);
+    public static final ForeignKey<IndexFieldRecord, IndexFieldSourceRecord> INDEX_FIELD_FK_INDEX_FIELD_SOURCE_ID = Internal.createForeignKey(IndexField.INDEX_FIELD, DSL.name("index_field_fk_index_field_source_id"), new TableField[] { IndexField.INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID }, Keys.KEY_INDEX_FIELD_SOURCE_PRIMARY, new TableField[] { IndexFieldSource.INDEX_FIELD_SOURCE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<IndexShardRecord, IndexVolumeRecord> INDEX_SHARD_FK_VOLUME_ID = Internal.createForeignKey(IndexShard.INDEX_SHARD, DSL.name("index_shard_fk_volume_id"), new TableField[] { IndexShard.INDEX_SHARD.FK_VOLUME_ID }, Keys.KEY_INDEX_VOLUME_PRIMARY, new TableField[] { IndexVolume.INDEX_VOLUME.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<IndexVolumeRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_LINK_FK_GROUP_NAME = Internal.createForeignKey(IndexVolume.INDEX_VOLUME, DSL.name("index_volume_group_link_fk_group_name"), new TableField[] { IndexVolume.INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID }, Keys.KEY_INDEX_VOLUME_GROUP_PRIMARY, new TableField[] { IndexVolumeGroup.INDEX_VOLUME_GROUP.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

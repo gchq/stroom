@@ -134,7 +134,7 @@ public class PermissionDocCreate extends TableImpl<PermissionDocCreateRecord> {
 
     @Override
     public List<ForeignKey<PermissionDocCreateRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.PERMISSION_DOC_CREATE_USER_UUID, Keys.PERMISSION_DOC_CREATE_DOC_TYPE_ID);
+        return Arrays.asList(Keys.PERMISSION_DOC_CREATE_DOC_TYPE_ID, Keys.PERMISSION_DOC_CREATE_USER_UUID);
     }
 
     @Override

@@ -205,7 +205,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
     @Override
     public List<ForeignKey<ProcessorFilterRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID);
+        return Arrays.asList(Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID, Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID);
     }
 
     @Override

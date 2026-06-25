@@ -113,7 +113,7 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
 
     @Override
     public List<UniqueKey<MetaProcessorRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_META_PROCESSOR_PROCESSOR_UUID, Keys.KEY_META_PROCESSOR_PIPELINE_UUID_IDX);
+        return Arrays.asList(Keys.KEY_META_PROCESSOR_PIPELINE_UUID_IDX, Keys.KEY_META_PROCESSOR_PROCESSOR_UUID);
     }
 
     @Override

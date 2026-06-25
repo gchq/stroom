@@ -254,6 +254,6 @@ public class ApiKeyRecord extends UpdatableRecordImpl<ApiKeyRecord> {
         setComments(comments);
         setEnabled(enabled);
         setHashAlgorithm(hashAlgorithm);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

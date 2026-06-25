@@ -180,6 +180,6 @@ public class ProcessorProfileRecord extends UpdatableRecordImpl<ProcessorProfile
         setName(name);
         setNodeGroupName(nodeGroupName);
         setPeriods(periods);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

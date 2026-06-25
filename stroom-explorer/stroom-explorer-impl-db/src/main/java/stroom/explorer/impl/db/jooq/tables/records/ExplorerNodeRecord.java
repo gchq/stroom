@@ -119,6 +119,6 @@ public class ExplorerNodeRecord extends UpdatableRecordImpl<ExplorerNodeRecord> 
         setUuid(uuid);
         setName(name);
         setTags(tags);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

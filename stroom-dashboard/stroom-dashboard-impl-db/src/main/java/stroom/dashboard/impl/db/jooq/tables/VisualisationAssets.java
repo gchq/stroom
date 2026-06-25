@@ -140,7 +140,7 @@ public class VisualisationAssets extends TableImpl<VisualisationAssetsRecord> {
 
     @Override
     public List<UniqueKey<VisualisationAssetsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_VISUALISATION_ASSETS_K_VISUALISATION_ASSETS, Keys.KEY_VISUALISATION_ASSETS_K_ASSET_UUID);
+        return Arrays.asList(Keys.KEY_VISUALISATION_ASSETS_K_ASSET_UUID, Keys.KEY_VISUALISATION_ASSETS_K_VISUALISATION_ASSETS);
     }
 
     @Override

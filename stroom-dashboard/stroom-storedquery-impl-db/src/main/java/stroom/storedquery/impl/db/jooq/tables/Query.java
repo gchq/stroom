@@ -107,7 +107,7 @@ public class Query extends TableImpl<QueryRecord> {
     /**
      * The column <code>stroom.query.favourite</code>.
      */
-    public final TableField<QueryRecord, Boolean> FAVOURITE = createField(DSL.name("favourite"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+    public final TableField<QueryRecord, Byte> FAVOURITE = createField(DSL.name("favourite"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     /**
      * The column <code>stroom.query.owner_uuid</code>.

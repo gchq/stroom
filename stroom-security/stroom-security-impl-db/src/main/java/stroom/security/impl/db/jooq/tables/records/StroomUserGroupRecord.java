@@ -89,6 +89,6 @@ public class StroomUserGroupRecord extends UpdatableRecordImpl<StroomUserGroupRe
         setId(id);
         setUserUuid(userUuid);
         setGroupUuid(groupUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -104,6 +104,6 @@ public class TabSessionDocRefRecord extends UpdatableRecordImpl<TabSessionDocRef
         setTabIndex(tabIndex);
         setDocRefType(docRefType);
         setDocRefId(docRefId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

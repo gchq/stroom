@@ -4,11 +4,11 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
-import stroom.index.impl.db.jooq.tables.IndexField;
-
 import org.jooq.JSON;
 import org.jooq.Record2;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.index.impl.db.jooq.tables.IndexField;
 
 
 /**
@@ -180,6 +180,6 @@ public class IndexFieldRecord extends UpdatableRecordImpl<IndexFieldRecord> {
         setTermPositions(termPositions);
         setCaseSensitive(caseSensitive);
         setDenseVector(denseVector);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

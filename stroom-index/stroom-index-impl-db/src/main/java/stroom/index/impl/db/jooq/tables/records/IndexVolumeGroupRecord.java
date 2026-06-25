@@ -4,10 +4,10 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
-import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 
 
 /**
@@ -149,6 +149,6 @@ public class IndexVolumeGroupRecord extends UpdatableRecordImpl<IndexVolumeGroup
         setUpdateTimeMs(updateTimeMs);
         setUpdateUser(updateUser);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

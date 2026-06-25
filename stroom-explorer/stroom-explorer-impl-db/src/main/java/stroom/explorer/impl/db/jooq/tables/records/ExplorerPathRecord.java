@@ -104,6 +104,6 @@ public class ExplorerPathRecord extends UpdatableRecordImpl<ExplorerPathRecord> 
         setDescendant(descendant);
         setDepth(depth);
         setOrderIndex(orderIndex);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -4,10 +4,10 @@
 package stroom.analytics.impl.db.jooq.tables.records;
 
 
-import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
 
 
 /**
@@ -138,6 +138,6 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
         setStatus(status);
         setMessage(message);
         setFkExecutionScheduleUuid(fkExecutionScheduleUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

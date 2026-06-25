@@ -210,6 +210,6 @@ public class CredentialRecord extends UpdatableRecordImpl<CredentialRecord> {
         setExpiryTimeMs(expiryTimeMs);
         setSecretJson(secretJson);
         setKeyStore(keyStore);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

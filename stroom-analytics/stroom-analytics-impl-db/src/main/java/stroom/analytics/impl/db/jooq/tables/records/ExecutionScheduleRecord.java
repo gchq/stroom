@@ -4,9 +4,9 @@
 package stroom.analytics.impl.db.jooq.tables.records;
 
 
-import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
-
 import org.jooq.impl.TableRecordImpl;
+
+import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
 
 
 /**
@@ -214,6 +214,6 @@ public class ExecutionScheduleRecord extends TableRecordImpl<ExecutionScheduleRe
         setDocUuid(docUuid);
         setRunAsUserUuid(runAsUserUuid);
         setUuid(uuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

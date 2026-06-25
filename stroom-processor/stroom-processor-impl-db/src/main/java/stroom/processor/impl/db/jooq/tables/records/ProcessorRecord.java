@@ -209,6 +209,6 @@ public class ProcessorRecord extends UpdatableRecordImpl<ProcessorRecord> {
         setPipelineUuid(pipelineUuid);
         setEnabled(enabled);
         setDeleted(deleted);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

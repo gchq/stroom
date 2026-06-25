@@ -194,6 +194,6 @@ public class OauthClientRecord extends UpdatableRecordImpl<OauthClientRecord> {
         setClientId(clientId);
         setClientSecret(clientSecret);
         setUriPattern(uriPattern);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -166,6 +166,6 @@ public class VisualisationAssetsDraftRecord extends UpdatableRecordImpl<Visualis
         setPathHash(pathHash);
         setIsFolder(isFolder);
         setData(data);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

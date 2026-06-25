@@ -4,15 +4,16 @@
 package stroom.job.impl.db.jooq;
 
 
-import stroom.job.impl.db.jooq.tables.Job;
-import stroom.job.impl.db.jooq.tables.JobNode;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
+import org.jooq.impl.DSL;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.job.impl.db.jooq.tables.Job;
+import stroom.job.impl.db.jooq.tables.JobNode;
 
 
 /**
@@ -42,7 +43,7 @@ public class Stroom extends SchemaImpl {
      * No further instances allowed
      */
     private Stroom() {
-        super("stroom", null);
+        super(DSL.name("stroom"), null, DSL.comment(""));
     }
 
 

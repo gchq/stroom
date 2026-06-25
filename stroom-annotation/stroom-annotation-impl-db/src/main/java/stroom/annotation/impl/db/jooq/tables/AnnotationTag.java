@@ -133,7 +133,7 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
 
     @Override
     public List<UniqueKey<AnnotationTagRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX, Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_TYPE_ID_NAME_IDX);
+        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_TYPE_ID_NAME_IDX, Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX);
     }
 
     @Override

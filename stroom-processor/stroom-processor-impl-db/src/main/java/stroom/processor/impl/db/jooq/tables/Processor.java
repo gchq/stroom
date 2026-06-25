@@ -153,7 +153,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
 
     @Override
     public List<UniqueKey<ProcessorRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_PROCESSOR_PROCESSOR_UUID, Keys.KEY_PROCESSOR_PROCESSOR_TASK_TYPE_PIPELINE_UUID);
+        return Arrays.asList(Keys.KEY_PROCESSOR_PROCESSOR_TASK_TYPE_PIPELINE_UUID, Keys.KEY_PROCESSOR_PROCESSOR_UUID);
     }
 
     @Override

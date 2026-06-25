@@ -105,6 +105,6 @@ public class PermissionDocRecord extends UpdatableRecordImpl<PermissionDocRecord
         setUserUuid(userUuid);
         setDocUuid(docUuid);
         setPermissionId(permissionId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

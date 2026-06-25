@@ -119,7 +119,7 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
     @Override
     public List<ForeignKey<StroomUserGroupRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.STROOM_USER_GROUP_FK_USER_UUID, Keys.STROOM_USER_GROUP_FK_GROUP_UUID);
+        return Arrays.asList(Keys.STROOM_USER_GROUP_FK_GROUP_UUID, Keys.STROOM_USER_GROUP_FK_USER_UUID);
     }
 
     @Override

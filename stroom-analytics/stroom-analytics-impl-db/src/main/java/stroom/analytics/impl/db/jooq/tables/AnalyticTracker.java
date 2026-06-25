@@ -4,9 +4,7 @@
 package stroom.analytics.impl.db.jooq.tables;
 
 
-import stroom.analytics.impl.db.jooq.Keys;
-import stroom.analytics.impl.db.jooq.Stroom;
-import stroom.analytics.impl.db.jooq.tables.records.AnalyticTrackerRecord;
+import java.util.Collection;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -25,7 +23,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Collection;
+import stroom.analytics.impl.db.jooq.Keys;
+import stroom.analytics.impl.db.jooq.Stroom;
+import stroom.analytics.impl.db.jooq.tables.records.AnalyticTrackerRecord;
 
 
 /**

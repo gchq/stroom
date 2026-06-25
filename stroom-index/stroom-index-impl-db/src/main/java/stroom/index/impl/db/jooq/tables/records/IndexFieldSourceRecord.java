@@ -4,10 +4,10 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
-import stroom.index.impl.db.jooq.tables.IndexFieldSource;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 
 
 /**
@@ -104,6 +104,6 @@ public class IndexFieldSourceRecord extends UpdatableRecordImpl<IndexFieldSource
         setType(type);
         setUuid(uuid);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

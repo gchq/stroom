@@ -9,6 +9,7 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.meta.impl.db.jooq.tables.Meta;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
@@ -54,7 +55,7 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<MetaRecord, MetaFeedRecord> META_FEED_ID = Internal.createForeignKey(Meta.META, DSL.name("meta_feed_id"), new TableField[] { Meta.META.FEED_ID }, Keys.KEY_META_FEED_PRIMARY, new TableField[] { MetaFeed.META_FEED.ID }, true);
-    public static final ForeignKey<MetaRecord, MetaProcessorRecord> META_PROCESSOR_ID = Internal.createForeignKey(Meta.META, DSL.name("meta_processor_id"), new TableField[] { Meta.META.PROCESSOR_ID }, Keys.KEY_META_PROCESSOR_PRIMARY, new TableField[] { MetaProcessor.META_PROCESSOR.ID }, true);
-    public static final ForeignKey<MetaRecord, MetaTypeRecord> META_TYPE_ID = Internal.createForeignKey(Meta.META, DSL.name("meta_type_id"), new TableField[] { Meta.META.TYPE_ID }, Keys.KEY_META_TYPE_PRIMARY, new TableField[] { MetaType.META_TYPE.ID }, true);
+    public static final ForeignKey<MetaRecord, MetaFeedRecord> META_FEED_ID = Internal.createForeignKey(Meta.META, DSL.name("meta_feed_id"), new TableField[] { Meta.META.FEED_ID }, Keys.KEY_META_FEED_PRIMARY, new TableField[] { MetaFeed.META_FEED.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<MetaRecord, MetaProcessorRecord> META_PROCESSOR_ID = Internal.createForeignKey(Meta.META, DSL.name("meta_processor_id"), new TableField[] { Meta.META.PROCESSOR_ID }, Keys.KEY_META_PROCESSOR_PRIMARY, new TableField[] { MetaProcessor.META_PROCESSOR.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<MetaRecord, MetaTypeRecord> META_TYPE_ID = Internal.createForeignKey(Meta.META, DSL.name("meta_type_id"), new TableField[] { Meta.META.TYPE_ID }, Keys.KEY_META_TYPE_PRIMARY, new TableField[] { MetaType.META_TYPE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

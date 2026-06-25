@@ -4,10 +4,10 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
-import stroom.index.impl.db.jooq.tables.IndexVolume;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.index.impl.db.jooq.tables.IndexVolume;
 
 
 /**
@@ -269,6 +269,6 @@ public class IndexVolumeRecord extends UpdatableRecordImpl<IndexVolumeRecord> {
         setBytesFree(bytesFree);
         setBytesTotal(bytesTotal);
         setStatusMs(statusMs);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

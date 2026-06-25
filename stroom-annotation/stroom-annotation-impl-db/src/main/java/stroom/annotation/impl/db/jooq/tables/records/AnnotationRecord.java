@@ -284,6 +284,6 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
         setRetentionUnit(retentionUnit);
         setRetainUntilMs(retainUntilMs);
         setParentId(parentId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -89,6 +89,6 @@ public class ClusterLockRecord extends UpdatableRecordImpl<ClusterLockRecord> {
         setId(id);
         setVersion(version);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

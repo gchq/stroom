@@ -9,6 +9,7 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.security.identity.db.jooq.tables.Account;
 import stroom.security.identity.db.jooq.tables.JsonWebKey;
@@ -43,5 +44,5 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<JsonWebKeyRecord, TokenTypeRecord> JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Internal.createForeignKey(JsonWebKey.JSON_WEB_KEY, DSL.name("json_web_key_fk_token_type_id"), new TableField[] { JsonWebKey.JSON_WEB_KEY.FK_TOKEN_TYPE_ID }, Keys.KEY_TOKEN_TYPE_PRIMARY, new TableField[] { TokenType.TOKEN_TYPE.ID }, true);
+    public static final ForeignKey<JsonWebKeyRecord, TokenTypeRecord> JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Internal.createForeignKey(JsonWebKey.JSON_WEB_KEY, DSL.name("json_web_key_fk_token_type_id"), new TableField[] { JsonWebKey.JSON_WEB_KEY.FK_TOKEN_TYPE_ID }, Keys.KEY_TOKEN_TYPE_PRIMARY, new TableField[] { TokenType.TOKEN_TYPE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

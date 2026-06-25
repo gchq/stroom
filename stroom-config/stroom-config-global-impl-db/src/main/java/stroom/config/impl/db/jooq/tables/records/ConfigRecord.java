@@ -164,6 +164,6 @@ public class ConfigRecord extends UpdatableRecordImpl<ConfigRecord> {
         setUpdateUser(updateUser);
         setName(name);
         setVal(val);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

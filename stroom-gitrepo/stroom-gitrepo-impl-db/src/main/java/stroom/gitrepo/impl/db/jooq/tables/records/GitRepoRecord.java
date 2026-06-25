@@ -4,10 +4,10 @@
 package stroom.gitrepo.impl.db.jooq.tables.records;
 
 
-import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 
 
 /**
@@ -74,6 +74,6 @@ public class GitRepoRecord extends UpdatableRecordImpl<GitRepoRecord> {
 
         setGitRepoUuid(gitRepoUuid);
         setGitCommitHash(gitCommitHash);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

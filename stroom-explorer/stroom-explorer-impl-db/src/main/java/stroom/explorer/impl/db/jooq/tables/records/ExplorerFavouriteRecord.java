@@ -104,6 +104,6 @@ public class ExplorerFavouriteRecord extends UpdatableRecordImpl<ExplorerFavouri
         setExplorerNodeId(explorerNodeId);
         setUserUuid(userUuid);
         setCreateTimeMs(createTimeMs);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

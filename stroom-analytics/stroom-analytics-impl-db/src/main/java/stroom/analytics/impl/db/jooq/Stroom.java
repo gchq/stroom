@@ -4,17 +4,18 @@
 package stroom.analytics.impl.db.jooq;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SchemaImpl;
+
 import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
 import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
 import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
 import stroom.analytics.impl.db.jooq.tables.ExecutionTracker;
-
-import org.jooq.Catalog;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -54,7 +55,7 @@ public class Stroom extends SchemaImpl {
      * No further instances allowed
      */
     private Stroom() {
-        super("stroom", null);
+        super(DSL.name("stroom"), null, DSL.comment(""));
     }
 
 

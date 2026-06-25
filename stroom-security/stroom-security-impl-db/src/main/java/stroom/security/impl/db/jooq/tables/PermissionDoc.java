@@ -132,7 +132,7 @@ public class PermissionDoc extends TableImpl<PermissionDocRecord> {
 
     @Override
     public List<ForeignKey<PermissionDocRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.PERMISSION_DOC_USER_UUID, Keys.PERMISSION_DOC_PERMISSION_ID);
+        return Arrays.asList(Keys.PERMISSION_DOC_PERMISSION_ID, Keys.PERMISSION_DOC_USER_UUID);
     }
 
     @Override

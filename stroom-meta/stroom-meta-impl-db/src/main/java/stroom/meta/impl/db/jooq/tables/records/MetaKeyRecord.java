@@ -89,6 +89,6 @@ public class MetaKeyRecord extends UpdatableRecordImpl<MetaKeyRecord> {
         setId(id);
         setName(name);
         setFieldType(fieldType);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

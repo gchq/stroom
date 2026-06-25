@@ -4,9 +4,9 @@
 package stroom.node.impl.db.jooq.tables;
 
 
-import stroom.node.impl.db.jooq.Keys;
-import stroom.node.impl.db.jooq.Stroom;
-import stroom.node.impl.db.jooq.tables.records.NodeGroupLinkRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -27,9 +27,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.node.impl.db.jooq.Keys;
+import stroom.node.impl.db.jooq.Stroom;
+import stroom.node.impl.db.jooq.tables.records.NodeGroupLinkRecord;
 
 
 /**
@@ -114,7 +114,7 @@ public class NodeGroupLink extends TableImpl<NodeGroupLinkRecord> {
 
     @Override
     public List<ForeignKey<NodeGroupLinkRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.NODE_GROUP_LINK_FK_NODE_ID, Keys.NODE_GROUP_LINK_FK_NODE_GROUP_ID);
+        return Arrays.asList(Keys.NODE_GROUP_LINK_FK_NODE_GROUP_ID, Keys.NODE_GROUP_LINK_FK_NODE_ID);
     }
 
     @Override

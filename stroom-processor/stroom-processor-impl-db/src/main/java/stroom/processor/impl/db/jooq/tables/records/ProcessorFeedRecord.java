@@ -74,6 +74,6 @@ public class ProcessorFeedRecord extends UpdatableRecordImpl<ProcessorFeedRecord
 
         setId(id);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

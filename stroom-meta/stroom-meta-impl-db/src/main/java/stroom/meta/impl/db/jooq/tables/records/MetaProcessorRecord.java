@@ -89,6 +89,6 @@ public class MetaProcessorRecord extends UpdatableRecordImpl<MetaProcessorRecord
         setId(id);
         setProcessorUuid(processorUuid);
         setPipelineUuid(pipelineUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

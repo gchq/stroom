@@ -74,6 +74,6 @@ public class ConfigUpdateTrackerRecord extends UpdatableRecordImpl<ConfigUpdateT
 
         setId(id);
         setUpdateTimeMs(updateTimeMs);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

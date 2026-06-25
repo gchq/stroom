@@ -164,6 +164,6 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> {
         setUpdateUser(updateUser);
         setUserUuid(userUuid);
         setDat(dat);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

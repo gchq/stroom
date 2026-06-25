@@ -209,6 +209,6 @@ public class MetaRecord extends UpdatableRecordImpl<MetaRecord> {
         setProcessorId(processorId);
         setProcessorFilterId(processorFilterId);
         setProcessorTaskId(processorTaskId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

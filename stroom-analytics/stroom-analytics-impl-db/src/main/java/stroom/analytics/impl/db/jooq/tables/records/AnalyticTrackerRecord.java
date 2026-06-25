@@ -4,10 +4,10 @@
 package stroom.analytics.impl.db.jooq.tables.records;
 
 
-import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
 
 
 /**
@@ -74,6 +74,6 @@ public class AnalyticTrackerRecord extends UpdatableRecordImpl<AnalyticTrackerRe
 
         setFkAnalyticUuid(fkAnalyticUuid);
         setData(data);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

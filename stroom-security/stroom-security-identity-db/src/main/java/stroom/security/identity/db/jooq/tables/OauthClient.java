@@ -148,7 +148,7 @@ public class OauthClient extends TableImpl<OauthClientRecord> {
 
     @Override
     public List<UniqueKey<OauthClientRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_OAUTH_CLIENT_NAME, Keys.KEY_OAUTH_CLIENT_CLIENT_ID);
+        return Arrays.asList(Keys.KEY_OAUTH_CLIENT_CLIENT_ID, Keys.KEY_OAUTH_CLIENT_NAME);
     }
 
     @Override

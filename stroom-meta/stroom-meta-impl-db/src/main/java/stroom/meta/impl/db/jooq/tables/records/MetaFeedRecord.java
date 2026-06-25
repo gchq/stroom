@@ -74,6 +74,6 @@ public class MetaFeedRecord extends UpdatableRecordImpl<MetaFeedRecord> {
 
         setId(id);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

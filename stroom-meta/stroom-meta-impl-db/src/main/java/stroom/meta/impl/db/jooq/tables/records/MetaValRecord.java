@@ -119,6 +119,6 @@ public class MetaValRecord extends UpdatableRecordImpl<MetaValRecord> {
         setMetaId(metaId);
         setMetaKeyId(metaKeyId);
         setVal(val);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

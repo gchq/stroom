@@ -4,16 +4,17 @@
 package stroom.job.impl.db.jooq;
 
 
-import stroom.job.impl.db.jooq.tables.Job;
-import stroom.job.impl.db.jooq.tables.JobNode;
-import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
-import stroom.job.impl.db.jooq.tables.records.JobRecord;
-
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
+
+import stroom.job.impl.db.jooq.tables.Job;
+import stroom.job.impl.db.jooq.tables.JobNode;
+import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
+import stroom.job.impl.db.jooq.tables.records.JobRecord;
 
 
 /**
@@ -35,5 +36,5 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<JobNodeRecord, JobRecord> JOB_ID = Internal.createForeignKey(JobNode.JOB_NODE, DSL.name("job_id"), new TableField[] { JobNode.JOB_NODE.JOB_ID }, Keys.KEY_JOB_PRIMARY, new TableField[] { Job.JOB.ID }, true);
+    public static final ForeignKey<JobNodeRecord, JobRecord> JOB_ID = Internal.createForeignKey(JobNode.JOB_NODE, DSL.name("job_id"), new TableField[] { JobNode.JOB_NODE.JOB_ID }, Keys.KEY_JOB_PRIMARY, new TableField[] { Job.JOB.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

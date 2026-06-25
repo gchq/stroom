@@ -166,7 +166,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
     @Override
     public List<ForeignKey<ProcessorTaskRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID);
+        return Arrays.asList(Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID);
     }
 
     @Override

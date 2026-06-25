@@ -224,6 +224,6 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> {
         setEnabled(enabled);
         setDisplayName(displayName);
         setFullName(fullName);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

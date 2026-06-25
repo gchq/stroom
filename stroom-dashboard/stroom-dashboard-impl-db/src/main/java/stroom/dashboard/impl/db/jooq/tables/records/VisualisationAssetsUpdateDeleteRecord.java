@@ -93,6 +93,6 @@ public class VisualisationAssetsUpdateDeleteRecord extends UpdatableRecordImpl<V
         setId(id);
         setDraftUserUuid(draftUserUuid);
         setOwnerDocUuid(ownerDocUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

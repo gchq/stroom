@@ -119,7 +119,7 @@ public class AnnotationLink extends TableImpl<AnnotationLinkRecord> {
 
     @Override
     public List<ForeignKey<AnnotationLinkRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ANNOTATION_LINK_FK_ANNOTATION_SRC_ID, Keys.ANNOTATION_LINK_FK_ANNOTATION_DST_ID);
+        return Arrays.asList(Keys.ANNOTATION_LINK_FK_ANNOTATION_DST_ID, Keys.ANNOTATION_LINK_FK_ANNOTATION_SRC_ID);
     }
 
     @Override

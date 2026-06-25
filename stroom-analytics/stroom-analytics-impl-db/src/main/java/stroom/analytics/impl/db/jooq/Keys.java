@@ -4,6 +4,13 @@
 package stroom.analytics.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
+
 import stroom.analytics.impl.db.jooq.tables.AnalyticTracker;
 import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
 import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
@@ -12,12 +19,6 @@ import stroom.analytics.impl.db.jooq.tables.records.AnalyticTrackerRecord;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionHistoryRecord;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionTrackerRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**
@@ -40,6 +41,6 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<ExecutionHistoryRecord, ExecutionScheduleRecord> EXECUTION_HISTORY_FK_EXECUTION_SCHEDULE_UUID = Internal.createForeignKey(ExecutionHistory.EXECUTION_HISTORY, DSL.name("execution_history_fk_execution_schedule_uuid"), new TableField[] { ExecutionHistory.EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID }, Keys.KEY_EXECUTION_SCHEDULE_UUID, new TableField[] { ExecutionSchedule.EXECUTION_SCHEDULE.UUID }, true);
-    public static final ForeignKey<ExecutionTrackerRecord, ExecutionScheduleRecord> EXECUTION_TRACKER_FK_EXECUTION_SCHEDULE_UUID = Internal.createForeignKey(ExecutionTracker.EXECUTION_TRACKER, DSL.name("execution_tracker_fk_execution_schedule_uuid"), new TableField[] { ExecutionTracker.EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_UUID }, Keys.KEY_EXECUTION_SCHEDULE_UUID, new TableField[] { ExecutionSchedule.EXECUTION_SCHEDULE.UUID }, true);
+    public static final ForeignKey<ExecutionHistoryRecord, ExecutionScheduleRecord> EXECUTION_HISTORY_FK_EXECUTION_SCHEDULE_UUID = Internal.createForeignKey(ExecutionHistory.EXECUTION_HISTORY, DSL.name("execution_history_fk_execution_schedule_uuid"), new TableField[] { ExecutionHistory.EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID }, Keys.KEY_EXECUTION_SCHEDULE_UUID, new TableField[] { ExecutionSchedule.EXECUTION_SCHEDULE.UUID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ExecutionTrackerRecord, ExecutionScheduleRecord> EXECUTION_TRACKER_FK_EXECUTION_SCHEDULE_UUID = Internal.createForeignKey(ExecutionTracker.EXECUTION_TRACKER, DSL.name("execution_tracker_fk_execution_schedule_uuid"), new TableField[] { ExecutionTracker.EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_UUID }, Keys.KEY_EXECUTION_SCHEDULE_UUID, new TableField[] { ExecutionSchedule.EXECUTION_SCHEDULE.UUID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

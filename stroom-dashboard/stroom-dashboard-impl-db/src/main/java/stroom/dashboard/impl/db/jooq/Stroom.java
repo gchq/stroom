@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
+import org.jooq.impl.DSL;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.dashboard.impl.db.jooq.tables.VisualisationAssets;
@@ -48,7 +49,7 @@ public class Stroom extends SchemaImpl {
      * No further instances allowed
      */
     private Stroom() {
-        super("stroom", null);
+        super(DSL.name("stroom"), null, DSL.comment(""));
     }
 
 

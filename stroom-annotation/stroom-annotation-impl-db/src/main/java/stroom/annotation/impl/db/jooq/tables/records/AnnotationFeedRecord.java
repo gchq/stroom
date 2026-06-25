@@ -74,6 +74,6 @@ public class AnnotationFeedRecord extends UpdatableRecordImpl<AnnotationFeedReco
 
         setId(id);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -9,6 +9,7 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
@@ -37,7 +38,7 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<AiChatAttachmentRecord, AiChatRecord> FK_AI_CHAT_ATTACHMENT_CHAT = Internal.createForeignKey(AiChatAttachment.AI_CHAT_ATTACHMENT, DSL.name("fk_ai_chat_attachment_chat"), new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true);
-    public static final ForeignKey<AiChatMessageRecord, AiChatAttachmentRecord> FK_AI_CHAT_MESSAGE_ATTACHMENT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_attachment"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_ATTACHMENT_ID }, Keys.KEY_AI_CHAT_ATTACHMENT_PRIMARY, new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true);
-    public static final ForeignKey<AiChatMessageRecord, AiChatRecord> FK_AI_CHAT_MESSAGE_CHAT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_chat"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true);
+    public static final ForeignKey<AiChatAttachmentRecord, AiChatRecord> FK_AI_CHAT_ATTACHMENT_CHAT = Internal.createForeignKey(AiChatAttachment.AI_CHAT_ATTACHMENT, DSL.name("fk_ai_chat_attachment_chat"), new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<AiChatMessageRecord, AiChatAttachmentRecord> FK_AI_CHAT_MESSAGE_ATTACHMENT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_attachment"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_ATTACHMENT_ID }, Keys.KEY_AI_CHAT_ATTACHMENT_PRIMARY, new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true, ForeignKeyRule.SET_NULL, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<AiChatMessageRecord, AiChatRecord> FK_AI_CHAT_MESSAGE_CHAT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_chat"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
 }

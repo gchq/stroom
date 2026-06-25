@@ -89,6 +89,6 @@ public class AnnotationTagLinkRecord extends UpdatableRecordImpl<AnnotationTagLi
         setId(id);
         setFkAnnotationId(fkAnnotationId);
         setFkAnnotationTagId(fkAnnotationTagId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

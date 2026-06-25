@@ -4,10 +4,10 @@
 package stroom.node.impl.db.jooq.tables.records;
 
 
-import stroom.node.impl.db.jooq.tables.Node;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.node.impl.db.jooq.tables.Node;
 
 
 /**
@@ -224,6 +224,6 @@ public class NodeRecord extends UpdatableRecordImpl<NodeRecord> {
         setEnabled(enabled);
         setBuildVersion(buildVersion);
         setLastBootMs(lastBootMs);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

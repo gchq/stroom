@@ -176,7 +176,7 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
 
     @Override
     public List<UniqueKey<ApiKeyRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX, Keys.KEY_API_KEY_API_KEY_API_KEY_HASH_IDX);
+        return Arrays.asList(Keys.KEY_API_KEY_API_KEY_API_KEY_HASH_IDX, Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX);
     }
 
     @Override

@@ -209,6 +209,6 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
         setRowCount(rowCount);
         setTruncated(truncated);
         setErrorMessage(errorMessage);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

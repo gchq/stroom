@@ -89,6 +89,6 @@ public class FsTypePathRecord extends UpdatableRecordImpl<FsTypePathRecord> {
         setId(id);
         setName(name);
         setPath(path);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

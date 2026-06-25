@@ -9,6 +9,7 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
@@ -53,6 +54,6 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<FsVolumeRecord, FsVolumeStateRecord> FS_VOLUME_FK_FS_VOLUME_STATE_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_fk_fs_volume_state_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_STATE_ID }, Keys.KEY_FS_VOLUME_STATE_PRIMARY, new TableField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true);
-    public static final ForeignKey<FsVolumeRecord, FsVolumeGroupRecord> FS_VOLUME_GROUP_FK_FS_VOLUME_GROUP_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_group_fk_fs_volume_group_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_GROUP_ID }, Keys.KEY_FS_VOLUME_GROUP_PRIMARY, new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.ID }, true);
+    public static final ForeignKey<FsVolumeRecord, FsVolumeStateRecord> FS_VOLUME_FK_FS_VOLUME_STATE_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_fk_fs_volume_state_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_STATE_ID }, Keys.KEY_FS_VOLUME_STATE_PRIMARY, new TableField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<FsVolumeRecord, FsVolumeGroupRecord> FS_VOLUME_GROUP_FK_FS_VOLUME_GROUP_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_group_fk_fs_volume_group_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_GROUP_ID }, Keys.KEY_FS_VOLUME_GROUP_PRIMARY, new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

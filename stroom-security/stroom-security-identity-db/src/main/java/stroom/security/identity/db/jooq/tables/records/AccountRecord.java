@@ -389,6 +389,6 @@ public class AccountRecord extends UpdatableRecordImpl<AccountRecord> {
         setInactive(inactive);
         setLocked(locked);
         setProcessingAccount(processingAccount);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -119,6 +119,6 @@ public class AnnotationDataLinkRecord extends UpdatableRecordImpl<AnnotationData
         setStreamId(streamId);
         setEventId(eventId);
         setFeedId(feedId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

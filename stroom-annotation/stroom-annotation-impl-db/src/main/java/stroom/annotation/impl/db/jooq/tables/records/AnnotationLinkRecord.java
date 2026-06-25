@@ -89,6 +89,6 @@ public class AnnotationLinkRecord extends UpdatableRecordImpl<AnnotationLinkReco
         setId(id);
         setFkAnnotationSrcId(fkAnnotationSrcId);
         setFkAnnotationDstId(fkAnnotationDstId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -4,9 +4,9 @@
 package stroom.job.impl.db.jooq.tables;
 
 
-import stroom.job.impl.db.jooq.Keys;
-import stroom.job.impl.db.jooq.Stroom;
-import stroom.job.impl.db.jooq.tables.records.JobRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -26,9 +26,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.job.impl.db.jooq.Keys;
+import stroom.job.impl.db.jooq.Stroom;
+import stroom.job.impl.db.jooq.tables.records.JobRecord;
 
 
 /**

@@ -136,7 +136,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
 
     @Override
     public List<ForeignKey<AiChatMessageRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.FK_AI_CHAT_MESSAGE_CHAT, Keys.FK_AI_CHAT_MESSAGE_ATTACHMENT);
+        return Arrays.asList(Keys.FK_AI_CHAT_MESSAGE_ATTACHMENT, Keys.FK_AI_CHAT_MESSAGE_CHAT);
     }
 
     @Override

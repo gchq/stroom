@@ -89,6 +89,6 @@ public class FsFeedPathRecord extends UpdatableRecordImpl<FsFeedPathRecord> {
         setId(id);
         setName(name);
         setPath(path);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

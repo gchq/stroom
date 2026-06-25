@@ -245,6 +245,6 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
         setMetaCount(metaCount);
         setEventCount(eventCount);
         setStatus(status);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

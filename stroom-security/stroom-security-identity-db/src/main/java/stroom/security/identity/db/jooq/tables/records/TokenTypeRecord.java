@@ -74,6 +74,6 @@ public class TokenTypeRecord extends UpdatableRecordImpl<TokenTypeRecord> {
 
         setId(id);
         setType(type);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

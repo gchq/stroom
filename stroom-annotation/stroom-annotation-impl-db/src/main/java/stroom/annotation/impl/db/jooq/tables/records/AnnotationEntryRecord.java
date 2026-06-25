@@ -194,6 +194,6 @@ public class AnnotationEntryRecord extends UpdatableRecordImpl<AnnotationEntryRe
         setParentId(parentId);
         setUpdateTimeMs(updateTimeMs);
         setUpdateUserUuid(updateUserUuid);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

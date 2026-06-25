@@ -161,7 +161,7 @@ public class Meta extends TableImpl<MetaRecord> {
 
     @Override
     public List<ForeignKey<MetaRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.META_FEED_ID, Keys.META_TYPE_ID, Keys.META_PROCESSOR_ID);
+        return Arrays.asList(Keys.META_FEED_ID, Keys.META_PROCESSOR_ID, Keys.META_TYPE_ID);
     }
 
     @Override

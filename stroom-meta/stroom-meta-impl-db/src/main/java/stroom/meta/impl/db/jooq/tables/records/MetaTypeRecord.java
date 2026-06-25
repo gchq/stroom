@@ -74,6 +74,6 @@ public class MetaTypeRecord extends UpdatableRecordImpl<MetaTypeRecord> {
 
         setId(id);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -224,6 +224,6 @@ public class JsonWebKeyRecord extends UpdatableRecordImpl<JsonWebKeyRecord> {
         setExpiresOnMs(expiresOnMs);
         setComments(comments);
         setEnabled(enabled);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }
