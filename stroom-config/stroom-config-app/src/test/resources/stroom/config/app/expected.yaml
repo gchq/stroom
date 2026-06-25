@@ -448,6 +448,7 @@ appConfig:
       maximumSize: 1000000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    physicalDeleteAge: "P30D"
   elastic:
     client:
       maxConnections: 30

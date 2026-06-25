@@ -11923,6 +11923,11 @@ components:
           - CREATE
           - UPDATE
           - DELETE
+          - IMPORT
+          - EXPORT
+          - COPY
+          - MOVE
+          - RENAME
         time:
           type: integer
           format: int64

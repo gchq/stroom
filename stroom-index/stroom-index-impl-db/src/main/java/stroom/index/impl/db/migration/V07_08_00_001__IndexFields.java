@@ -19,6 +19,7 @@ package stroom.index.impl.db.migration;
 import stroom.docref.DocRef;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.index.shared.LuceneIndexDoc;
@@ -183,7 +184,7 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
         LuceneIndexDoc doc = null;
         try {
             final ImportExportAsset asset =
-                    new ByteArrayImportExportAsset("dummy", data.getBytes(StandardCharsets.UTF_8));
+                    new ByteArrayImportExportAsset("dummy", DocDataType.BINARY, data.getBytes(StandardCharsets.UTF_8));
             doc = indexDocSerialiser.read(asset);
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);

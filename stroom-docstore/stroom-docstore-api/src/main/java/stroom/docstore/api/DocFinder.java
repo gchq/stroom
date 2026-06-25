@@ -16,9 +16,7 @@
 
 package stroom.docstore.api;
 
-import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
-import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -118,17 +116,9 @@ public interface DocFinder {
      *
      * @param docRef The {@link DocRef} to decorate.
      * @return An {@link Optional} containing the decorated {@link DocRef} if the document exists,
-     *         or empty otherwise.
+     * or empty otherwise.
      */
     default Optional<DocRef> decorateIfExists(final DocRef docRef) {
         return getName(docRef).map(name -> docRef.copy().name(name).build());
     }
-
-    /**
-     * Get the audit information for the given document.
-     *
-     * @param docRef The {@link DocRef} to retrieve audit information for.
-     * @return A {@link ResultPage} of {@link DocAuditEntry} records for the document.
-     */
-    ResultPage<DocAuditEntry> getAuditInfo(DocRef docRef);
 }

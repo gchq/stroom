@@ -16,13 +16,11 @@
 
 package stroom.docstore.impl;
 
-import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
@@ -88,14 +86,6 @@ class DocFinderImpl implements DocFinder {
             return docRefToNameCache.getName(docRef);
         }
         return Optional.empty();
-    }
-
-    @Override
-    public ResultPage<DocAuditEntry> getAuditInfo(final DocRef docRef) {
-        if (canView(docRef)) {
-            return persistence.getAuditInfo(docRef);
-        }
-        return ResultPage.empty();
     }
 
     private boolean canView(final DocRef docRef) {

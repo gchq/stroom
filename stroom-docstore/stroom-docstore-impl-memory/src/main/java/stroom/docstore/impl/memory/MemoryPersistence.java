@@ -16,13 +16,12 @@
 
 package stroom.docstore.impl.memory;
 
-import stroom.docref.DocAuditEntry;
-import stroom.docref.DocAuditEntry.AuditAction;
-import stroom.docref.DocAuditUser;
 import stroom.docref.DocRef;
-import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocAuditEntry;
+import stroom.docstore.shared.DocAuditUser;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.PredicateUtil;
 import stroom.util.json.JsonUtil;
@@ -31,6 +30,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Singleton;
@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
 @Singleton
 public class MemoryPersistence implements Persistence, Clearable {
 
-    private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MemoryPersistence.class);
 
     private final Map<DocRef, ImportExportDocument> map = new ConcurrentHashMap<>();
@@ -65,12 +64,17 @@ public class MemoryPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
-        if (update) {
+    public void write(final DocRef docRef,
+                      final AuditAction auditAction,
+                      final UserRef userRef,
+                      final ImportExportDocument importExportDocument,
+                      final String expectedVersion,
+                      final String newVersion) {
+        if (auditAction.isUpdate()) {
             if (!map.containsKey(docRef)) {
                 throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
             }
-        } else if (map.containsKey(docRef)) {
+        } else if (auditAction.isCreate() && map.containsKey(docRef)) {
             throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
 
@@ -78,7 +82,7 @@ public class MemoryPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void delete(final DocRef docRef) {
+    public void delete(final DocRef docRef, final UserRef userRef) {
         map.remove(docRef);
     }
 
@@ -108,10 +112,7 @@ public class MemoryPersistence implements Persistence, Clearable {
 //                .anyMatch(docRef -> docRef.getUuid().equals(uuid));
 //    }
 
-    @Override
-    public RWLockFactory getLockFactory() {
-        return LOCK_FACTORY;
-    }
+
 
     @Override
     public List<DocRef> findDocRefsEmbeddedIn(final DocRef parent) {

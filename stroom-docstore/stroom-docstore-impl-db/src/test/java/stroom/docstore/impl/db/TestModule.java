@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.memory;
+package stroom.docstore.impl.db;
 
-import stroom.docstore.api.RWLockFactory;
+import stroom.test.common.util.db.DbTestModule;
 
-import java.util.function.Supplier;
+import com.google.inject.AbstractModule;
 
-class NoLockFactory implements RWLockFactory {
+/**
+ * Minimal Guice module for unit-testing {@link DBPersistence} without
+ * booting the full application. Follows the same pattern used by
+ * TestAnnotationDaoImpl, TestNodeDaoImpl, etc.
+ */
+public class TestModule extends AbstractModule {
 
     @Override
-    public void lock(final String uuid, final Runnable runnable) {
-        runnable.run();
-    }
-
-    @Override
-    public <T> T lockResult(final String uuid, final Supplier<T> supplier) {
-        return supplier.get();
+    protected void configure() {
+        super.configure();
+        install(new DocStoreDBPersistenceDbModule());
+        install(new DbTestModule());
     }
 }
