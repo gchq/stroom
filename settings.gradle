@@ -51,7 +51,6 @@ include 'stroom-analytics:stroom-analytics-impl-db'
 // Annotations
 include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
-include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
 
 include 'stroom-contentstore:stroom-contentstore-api'

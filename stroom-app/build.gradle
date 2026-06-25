@@ -68,7 +68,6 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
-    implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-annotation:stroom-annotation-pipeline')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
