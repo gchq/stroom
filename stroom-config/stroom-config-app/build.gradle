@@ -34,6 +34,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-retention-impl')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-data:stroom-data-store-impl-fs-db')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
