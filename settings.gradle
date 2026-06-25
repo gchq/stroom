@@ -161,7 +161,6 @@ include 'stroom-explorer:stroom-collection-mock'
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
-include 'stroom-explorer:stroom-explorer-impl-db-jooq'
 
 // Feed
 include 'stroom-feed:stroom-feed-api'
