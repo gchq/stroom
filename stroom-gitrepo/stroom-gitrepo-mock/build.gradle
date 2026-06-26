@@ -23,7 +23,6 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
-    implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
     implementation libs.guice
