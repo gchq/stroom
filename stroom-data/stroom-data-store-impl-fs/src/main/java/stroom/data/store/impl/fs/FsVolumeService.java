@@ -17,9 +17,11 @@
 package stroom.data.store.impl.fs;
 
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.cache.api.CacheManager;
 import stroom.cache.api.TemplateCache;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.api.FsVolumeGroupService;
+import stroom.data.store.api.S3VolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
@@ -63,6 +65,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -90,11 +93,12 @@ import java.util.stream.Collectors;
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {
         EntityAction.CREATE,
         EntityAction.DELETE})
-public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
+public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
+    private static final String CACHE_NAME = "S3 Volume Cache";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
@@ -132,7 +136,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final TemplateCache templateCache,
                            final NodeInfo nodeInfo,
                            final TaskContextFactory taskContextFactory,
-                           final HasCapacitySelectorFactory hasCapacitySelectorFactory) {
+                           final HasCapacitySelectorFactory hasCapacitySelectorFactory,
+                           final CacheManager cacheManager) {
         this.fsVolumeDao = fsVolumeDao;
         this.fsVolumeGroupService = fsVolumeGroupService;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
@@ -147,7 +152,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.taskContextFactory = taskContextFactory;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
 
-        // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
+        cacheManager.createLoadingCache(
+                CACHE_NAME)
     }
 
     public FsVolume create(final FsVolume fsVolume) {
@@ -316,19 +322,22 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     /**
      * Gets a {@link FsVolume} matching the supplied fsVolumeType, regionName, bucketName.
      */
-    public FsVolume getS3Volume(final FsVolumeType fsVolumeType,
-                                final String regionName,
-                                final String bucketName) {
-        Objects.requireNonNull(fsVolumeType);
+    @NullMarked
+    @Override
+    public Optional<FsVolume> getS3Volume(final String regionName,
+                                          final String bucketName) {
         Objects.requireNonNull(regionName);
         Objects.requireNonNull(bucketName);
-        final FsVolume s3Volume = getCurrentVolumes()
+        final Optional<FsVolume> s3Volume = getCurrentVolumes()
                 .getGroupToVolumesMap()
                 .values()
                 .stream()
                 .flatMap(List::stream)
-                .filter(fsVolume -> fsVolume.getStatus() == VolumeUseStatus.ACTIVE)
-                .filter(fsVolume -> fsVolume.getVolumeType() == fsVolumeType)
+                .filter(fsVolume ->
+                        fsVolume.getStatus() == VolumeUseStatus.ACTIVE)
+                .filter(fsVolume ->
+                        fsVolume.getVolumeType() != null
+                        && FsVolumeType.getS3_VOLUME_TYPES().contains(fsVolume.getVolumeType()))
                 .filter(fsVolume -> {
                     final S3ClientConfig s3ClientConfig = fsVolume.getS3ClientConfig();
                     if (s3ClientConfig != null) {
@@ -338,11 +347,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         return false;
                     }
                 })
-                .findAny()
-                .orElse(null);
+                .findAny();
 
-        LOGGER.debug("getS3Volume() - fsVolumeType: {}, regionName: {}, bucketName: {}, s3Volume: {}",
-                fsVolumeType, regionName, bucketName, s3Volume);
+        LOGGER.debug("getS3Volume() - regionName: {}, bucketName: {}, s3Volume: {}", regionName, bucketName, s3Volume);
         return s3Volume;
     }
 
@@ -962,6 +969,19 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         public long getCreateTime() {
             return createTime;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @NullMarked
+    private record S3CacheKey(String regionName, String bucketName) {
+
+        private S3CacheKey {
+            Objects.requireNonNull(regionName);
+            Objects.requireNonNull(bucketName);
         }
     }
 }

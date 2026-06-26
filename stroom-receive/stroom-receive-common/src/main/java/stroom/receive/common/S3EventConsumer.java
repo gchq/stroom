@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.data.store.api'
+package stroom.receive.common;
 
-dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
 
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
-    implementation libs.jspecify
-    implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
+import java.util.function.Consumer;
+
+/**
+ * Consumes S3 put events, i.e. as captured by {@link S3EventNotificationService}.
+ * <p>
+ * It is the responsibility of the implementation to capture any of the object's
+ * metadata
+ * </p>
+ */
+public interface S3EventConsumer extends Consumer<S3CreateEvent> {
+
 }

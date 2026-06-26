@@ -18,6 +18,8 @@ package stroom.data.store.api;
 
 import stroom.meta.api.MetaProperties;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.Collection;
 
 /**
@@ -47,6 +49,18 @@ public interface Store {
      * @return the stream to write to
      */
     Target openTarget(MetaProperties metaProperties, String volumeGroup) throws DataException;
+
+    /**
+     * <p>
+     * Adds a source of data to the store that already exists on S3 storage.
+     * </p>
+     *
+     * @param metaProperties The properties of the data.
+     * @param s3Location     The location of the data file in S3.
+     */
+    @NullMarked
+    void addExistingS3Source(MetaProperties metaProperties,
+                             S3Location s3Location) throws DataException;
 
     /**
      * <p>
@@ -92,4 +106,10 @@ public interface Store {
      * @throws DataException Could be thrown if no volume
      */
     Source openSource(long streamId, boolean anyStatus) throws DataException;
+
+
+    // --------------------------------------------------------------------------------
+
+
 }
+

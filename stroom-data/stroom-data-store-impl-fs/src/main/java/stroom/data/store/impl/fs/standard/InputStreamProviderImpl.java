@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.standard;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.meta.shared.Meta;
+import stroom.util.shared.NullSafe;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class InputStreamProviderImpl implements InputStreamProvider {
         this.meta = meta;
         this.factory = factory;
         this.index = index;
-        root = factory.getSegmentInputStreamProvider(null);
+        this.root = factory.getSegmentInputStreamProvider(null);
     }
 
     private void logDebug(final String msg) {
@@ -69,12 +70,9 @@ public class InputStreamProviderImpl implements InputStreamProvider {
             logDebug("get() - " + streamTypeName);
         }
 
-        final SegmentInputStreamProvider segmentInputStreamProvider = factory.getSegmentInputStreamProvider(
-                streamTypeName);
-        if (segmentInputStreamProvider == null) {
-            return null;
-        }
-        return segmentInputStreamProvider.get(index);
+        return NullSafe.get(
+                factory.getSegmentInputStreamProvider(streamTypeName),
+                segmentInputStreamProvider -> segmentInputStreamProvider.get(index));
     }
 
     @Override

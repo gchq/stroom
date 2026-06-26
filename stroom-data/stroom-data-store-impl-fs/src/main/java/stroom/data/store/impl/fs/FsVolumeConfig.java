@@ -77,6 +77,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     private final Map<String, String> metaTypeExtensionsReverseMap;
     private final StroomDuration maxVolumeStateAge;
     private final CacheConfig volumeCache;
+    private final CacheConfig s3VolumeCache;
 
     public FsVolumeConfig() {
         volumeSelector = "RoundRobin";
@@ -104,6 +105,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        s3VolumeCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
     }
 
     @JsonCreator
@@ -123,14 +128,18 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
-        this.defaultStreamVolumeFilesystemUtilisation = Objects.requireNonNullElse(defaultStreamVolumeFilesystemUtilisation, DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION);
-        this.createDefaultStreamVolumesOnStart = Objects.requireNonNullElse(createDefaultStreamVolumesOnStart, DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START);
+        this.defaultStreamVolumeFilesystemUtilisation = Objects.requireNonNullElse(
+                defaultStreamVolumeFilesystemUtilisation,
+                DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION);
+        this.createDefaultStreamVolumesOnStart = Objects.requireNonNullElse(createDefaultStreamVolumesOnStart,
+                DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START);
         this.defaultStreamVolumeGroupName = defaultStreamVolumeGroupName;
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
         this.metaTypeExtensions = metaTypeExtensions;
         this.metaTypeExtensionsReverseMap = buildReverseMap(metaTypeExtensions);
-        this.findOrphanedMetaBatchSize = Objects.requireNonNullElse(findOrphanedMetaBatchSize, DEFAULT_FIND_ORPHANED_META_BATCH_SIZE);
+        this.findOrphanedMetaBatchSize = Objects.requireNonNullElse(findOrphanedMetaBatchSize,
+                DEFAULT_FIND_ORPHANED_META_BATCH_SIZE);
         this.maxVolumeStateAge = maxVolumeStateAge;
         this.volumeCache = volumeCache;
     }

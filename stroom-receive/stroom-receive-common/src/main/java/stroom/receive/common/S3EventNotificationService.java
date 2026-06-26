@@ -19,6 +19,7 @@ package stroom.receive.common;
 
 import stroom.aws.sqs.SqsClientFactory;
 import stroom.aws.sqs.SqsConfig;
+import stroom.data.store.api.S3Location;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.concurrent.UniqueId;
@@ -38,9 +39,9 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import tools.jackson.databind.JsonNode;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -55,9 +56,10 @@ public class S3EventNotificationService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3EventNotificationService.class);
     private static final Pattern DOT_DELIMITER_PATTERN = Pattern.compile("\\.");
     private static final String EXPECTED_EVENT_MAJOR_VERSION = "2";
-    private static final Set<String> SUPPORTED_EVENT_NAMES = Set.of(
-            "s3:ObjectCreated:Put",
-            "s3:ObjectCreated:Post");
+    private static final String SUPPORTED_EVENT_NAME_PREFIX = "ObjectCreated:";
+    //    private static final Set<String> SUPPORTED_EVENT_NAMES = Set.of(
+//            "ObjectCreated:Put",
+//            "ObjectCreated:Post");
     public static final String EVENT_FIELD = "Event";
     public static final String TEST_EVENT_VALUE = "s3:TestEvent";
     public static final String SERVICE_FIELD = "Service";
@@ -68,6 +70,8 @@ public class S3EventNotificationService {
     private final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider;
     private final SqsClientFactory sqsClientFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
+    private final S3EventConsumer s3EventConsumer;
+    private final AttributeMapFilterFactory attributeMapFilterFactory;
 
     private volatile S3EventNotificationConfig lastS3EventNotificationConfig = null;
     private volatile List<ClientState> clients;
@@ -76,10 +80,14 @@ public class S3EventNotificationService {
     public S3EventNotificationService(
             final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider,
             final SqsClientFactory sqsClientFactory,
-            final ReceiptIdGenerator receiptIdGenerator) {
+            final ReceiptIdGenerator receiptIdGenerator,
+            final S3EventConsumer s3EventConsumer,
+            final AttributeMapFilterFactory attributeMapFilterFactory) {
         this.s3EventNotificationConfigProvider = s3EventNotificationConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;
+        this.s3EventConsumer = s3EventConsumer;
+        this.attributeMapFilterFactory = attributeMapFilterFactory;
     }
 
     public void poll() {
@@ -120,6 +128,8 @@ public class S3EventNotificationService {
 
                 messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
 
+                final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
+
                 // delete messages from the queue
                 for (final Message message : messages) {
                     try {
@@ -138,7 +148,11 @@ public class S3EventNotificationService {
                         //  * Add in attr map filtering.
                         //  * Add in logging to receive log.
                         //  * S3 is read only from stroom's POV, so we need a isReadOnly method on the Store api.
-                        processMessage(message.body(), attributeMap);
+                        final S3CreateEvent s3CreateEvent = convertMessage(message.body(), attributeMap);
+
+                        NullSafe.consume(s3CreateEvent,
+                                s3CreateEvent1 ->
+                                        handleEvent(s3CreateEvent1, attributeMapFilter));
 
                         // Now delete the msg we have consumed
                         final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
@@ -153,6 +167,29 @@ public class S3EventNotificationService {
             } while (!messages.isEmpty());
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private void handleEvent(final S3CreateEvent s3CreateEvent,
+                             final AttributeMapFilter attributeMapFilter) {
+
+        try {
+            final boolean isAllowed;
+            try {
+                isAllowed = attributeMapFilter.filter(s3CreateEvent.attributeMap());
+                LOGGER.debug("handleEvent() - s3CreateEvent: {}, isAllowed: {}", s3CreateEvent, isAllowed);
+                if (isAllowed) {
+                    s3EventConsumer.accept(s3CreateEvent);
+                } else {
+                    // TODO log the drop
+                }
+            } catch (final StroomStreamException e) {
+                // TODO log the rejection
+                LOGGER.debug("handleEvent() - s3CreateEvent: {}, stroomStreamException: {}",
+                        s3CreateEvent, LogUtil.exceptionMessage(e));
+            }
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -176,15 +213,17 @@ public class S3EventNotificationService {
         try {
             // Parse it to long first so that we know the format is good, then
             // put it using our standard format
-            final long epochMs = DateUtil.parseNormalDateTimeString(eventTime);
-            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, epochMs);
+            final Instant time = DateUtil.parseNormalDateTimeStringToInstant(eventTime);
+            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, time);
+            attributeMap.appendDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, time);
         } catch (final RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Unable to parse event time {} - {}",
                     eventTime, LogUtil.exceptionMessage(e)), e);
         }
     }
 
-    private static void processMessage(final String messageBody, final AttributeMap attributeMap) {
+    private S3CreateEvent convertMessage(final String messageBody, final AttributeMap attributeMap) {
+        S3CreateEvent s3CreateEvent = null;
         try {
             final JsonNode rootNode = JsonUtil.getMapper().readTree(messageBody);
 
@@ -201,7 +240,6 @@ public class S3EventNotificationService {
                         JsonUtil.getNodeAsString(rootNode, EVENT_FIELD),
                         JsonUtil.getNodeAsString(rootNode, TIME_FIELD),
                         JsonUtil.getNodeAsString(rootNode, BUCKET_FIELD)));
-
             } else if (rootNode.has(RECORDS_FIELD)) {
                 // The proper message body
                 final JsonNode recordsNode = rootNode.get(RECORDS_FIELD);
@@ -212,27 +250,33 @@ public class S3EventNotificationService {
                     validateEventVersion(JsonUtil.getNodeAsString(recordsItemNode, "eventVersion"));
 
                     final String eventName = getNodeAsString(recordsItemNode, "eventName");
-                    if (SUPPORTED_EVENT_NAMES.contains(eventName)) {
+                    if (eventName != null && eventName.startsWith(SUPPORTED_EVENT_NAME_PREFIX)) {
                         final String awsRegion = getNodeAsString(recordsItemNode, "awsRegion");
                         final String eventTime = getNodeAsString(recordsItemNode, "eventTime");
 
                         addEventTime(attributeMap, eventTime);
 
                         final JsonNode s3Node = getNode(recordsItemNode, "s3");
-                        final JsonNode s3BucketNode = getNode(s3Node, "bucket");
 
+                        final JsonNode s3BucketNode = getNode(s3Node, "bucket");
                         final String bucketName = getNodeAsString(s3BucketNode, "name");
                         final String bucketArn = getNodeAsString(s3BucketNode, "arn");
 
                         final JsonNode objectNode = getNode(s3Node, "object");
-
                         final String objectKey = getNodeAsString(objectNode, "key");
                         final long objectSize = getNodeAsLong(objectNode, "size");
 
+                        attributeMap.put(StandardHeaderArguments.CONTENT_LENGTH, String.valueOf(objectSize));
+
                         // Print extracted values
                         LOGGER.debug("processMessage() - awsRegion: {}, eventTime: {}, eventName: {}, " +
-                                     "bucketName: {}, bucketArn: {}, objectKey: {}, objectSize: {}",
-                                awsRegion, eventTime, eventName, bucketName, bucketArn, objectKey, objectSize);
+                                     "bucketName: {}, bucketArn: {}, objectKey: {}, objectSize: {}, attributeMap: {}",
+                                awsRegion, eventTime, eventName, bucketName,
+                                bucketArn, objectKey, objectSize, attributeMap);
+
+                        s3CreateEvent = new S3CreateEvent(
+                                new S3Location(awsRegion, bucketName, objectKey),
+                                attributeMap);
                     } else {
                         LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
                     }
@@ -244,6 +288,7 @@ public class S3EventNotificationService {
             throw new IllegalStateException(LogUtil.message(
                     "Error parsing message body - {}, messageBody:\n{}", LogUtil.exceptionMessage(e), messageBody), e);
         }
+        return s3CreateEvent;
     }
 
     private static String getNodeAsString(final JsonNode baseNode, final String fieldName) {

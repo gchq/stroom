@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.data.store.api'
+package stroom.data.store.api;
 
-dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
 
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
-    implementation libs.jspecify
-    implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
+import stroom.data.store.impl.fs.shared.FsVolume;
+
+import org.jspecify.annotations.NullMarked;
+
+import java.util.Optional;
+
+public interface S3VolumeService {
+
+    /**
+     * Gets a {@link FsVolume} matching the supplied fsVolumeType, regionName, bucketName.
+     */
+    @NullMarked
+    Optional<FsVolume> getS3Volume(final String regionName,
+                                   final String bucketName);
 }

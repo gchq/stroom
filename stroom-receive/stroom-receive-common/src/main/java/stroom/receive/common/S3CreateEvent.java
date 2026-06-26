@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.data.store.api'
+package stroom.receive.common;
 
-dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
 
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
-    implementation libs.jspecify
-    implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
+import stroom.data.store.api.S3Location;
+import stroom.meta.api.AttributeMap;
+
+import org.jspecify.annotations.NullMarked;
+
+import java.util.Objects;
+
+@NullMarked
+public record S3CreateEvent(
+        S3Location s3Location, AttributeMap attributeMap
+) {
+
+    public S3CreateEvent {
+        Objects.requireNonNull(attributeMap);
+        Objects.requireNonNull(s3Location);
+    }
 }

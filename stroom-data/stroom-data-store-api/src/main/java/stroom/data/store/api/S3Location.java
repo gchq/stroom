@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.data.store.api'
+package stroom.data.store.api;
 
-dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
+import org.jspecify.annotations.NullMarked;
 
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
-    implementation libs.jspecify
-    implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
+import java.util.Objects;
+
+// TODO In theory we don't need region name as bucketName is globally unique in AWS.
+@NullMarked
+public record S3Location(String regionName,
+                         String bucketName,
+                         String objectKey) {
+
+    public S3Location {
+        Objects.requireNonNull(regionName);
+        Objects.requireNonNull(bucketName);
+        Objects.requireNonNull(objectKey);
+    }
 }

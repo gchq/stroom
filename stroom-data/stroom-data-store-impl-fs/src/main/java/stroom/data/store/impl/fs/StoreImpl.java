@@ -20,6 +20,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.S3Location;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
@@ -105,6 +106,16 @@ public class StoreImpl implements Store, AttributeMapFactory {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    @Override
+    public void addExistingS3Source(final MetaProperties metaProperties,
+                                    final S3Location s3Location) throws DataException {
+        final FsVolume volume = volumeService.getS3Volume(
+                s3Location.regionName(), s3Location.bucketName())
+                .orElseThrow(() -> );
+
+
     }
 
     @Override
