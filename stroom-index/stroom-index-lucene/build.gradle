@@ -18,7 +18,6 @@ ext.moduleName = 'stroom.index.lucene'
 
 dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
-    implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
@@ -43,21 +42,15 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
-    implementation "org.apache.lucene:lucene-backward-codecs:10.3.2"
-    implementation "org.apache.lucene:lucene-core:10.3.2"
     implementation "org.apache.lucene:lucene-memory:10.3.2"
     implementation "org.apache.lucene:lucene-queryparser:10.3.2"
     implementation "org.apache.lucene:lucene-highlighter:10.3.2"
 
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.guice
     implementation libs.langchain4j
-    implementation libs.slf4j.api
     implementation libs.vavr
 
-    testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation

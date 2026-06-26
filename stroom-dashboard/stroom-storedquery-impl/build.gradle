@@ -36,9 +36,7 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
@@ -46,7 +44,6 @@ dependencies {
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
-    testImplementation project(':stroom-security:stroom-security-user-api')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation

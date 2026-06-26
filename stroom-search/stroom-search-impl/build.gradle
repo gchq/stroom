@@ -19,10 +19,8 @@ ext.moduleName = 'stroom.search.impl'
 dependencies {
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docref')
@@ -32,13 +30,10 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-search:stroom-search-api')
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -48,15 +43,12 @@ dependencies {
     implementation libs.dropwizard.metrics.annotation
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.kryo
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
     testImplementation project(':stroom-lmdb')
-    testImplementation project(':stroom-test-common')
-
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

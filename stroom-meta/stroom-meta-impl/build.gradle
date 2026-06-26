@@ -19,7 +19,6 @@ ext.moduleName = 'stroom.meta.impl'
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-mock')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-retention-api')
@@ -45,13 +44,8 @@ dependencies {
     implementation libs.dropwizard.validation
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
-    implementation libs.slf4j.api
-    implementation libs.swagger.annotations
     implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java
@@ -62,7 +56,6 @@ dependencies {
     testImplementation project(':stroom-docstore:stroom-docstore-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
-    testImplementation project(':stroom-search:stroom-searchable-api')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-task:stroom-task-mock')
     testImplementation project(':stroom-test-common')

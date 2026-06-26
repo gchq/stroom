@@ -17,12 +17,9 @@
 ext.moduleName = 'stroom.index.impl'
 
 dependencies {
-    implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
@@ -35,7 +32,6 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl-db')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-language')
@@ -49,17 +45,8 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.dropwizard.metrics.annotation
-    implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.hikari
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.saxon.he
@@ -73,8 +60,6 @@ dependencies {
     testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-test-common')
-
-    testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

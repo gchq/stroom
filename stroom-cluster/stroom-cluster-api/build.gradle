@@ -22,5 +22,4 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
 }

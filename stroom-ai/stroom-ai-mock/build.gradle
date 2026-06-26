@@ -27,9 +27,6 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
-    implementation libs.langchain4j
-    implementation libs.langchain4j.cohere
-    implementation libs.langchain4j.jina
     implementation libs.langchain4j.open.ai
     implementation project(':stroom-test-common')
 }

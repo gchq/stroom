@@ -19,7 +19,6 @@ ext.moduleName = 'stroom.docstore.mock'
 dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-util-shared')
 
     implementation libs.guice
 }

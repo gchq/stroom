@@ -29,7 +29,6 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
@@ -45,27 +44,17 @@ dependencies {
 
     implementation libs.commons.pool2
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.metrics.annotation
-    implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.restygwt
     implementation libs.saxon.he
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.vavr
-    implementation libs.ws.rs.api
 
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.commons.lang
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

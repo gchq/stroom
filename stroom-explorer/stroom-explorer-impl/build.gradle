@@ -17,7 +17,6 @@
 ext.moduleName = 'stroom.explorer.impl'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
@@ -32,31 +31,21 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-search:stroom-expression-matcher')
-    implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.dropwizard.validation
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.hikari
-    implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
-    implementation libs.jersey.common
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
-    implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
-    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 

@@ -24,7 +24,6 @@ dependencies {
     // Seem to need this else it moans it can't see HasName in AbstractStroomCacheImpl
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -32,8 +31,6 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.ws.rs.api

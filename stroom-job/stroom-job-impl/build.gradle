@@ -37,8 +37,6 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.jakarta.validation.api
     implementation libs.jooq
     implementation libs.restygwt
@@ -50,7 +48,6 @@ dependencies {
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.commons.lang
     testImplementation libs.dropwizard.testing
 
     testImplementation libs.bundles.common.test.implementation

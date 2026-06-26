@@ -17,7 +17,6 @@
 ext.moduleName = 'stroom.searchable.impl'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -33,10 +32,7 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.dropwizard.metrics.annotation
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api

@@ -24,34 +24,16 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.assertj.core // needed for DiffUtil
-    implementation libs.commons.codec
     implementation libs.commons.compress
     implementation libs.commons.csv
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.core
-    implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jspecify
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
-    implementation libs.jackson2.core
-    implementation libs.jackson2.databind
-    implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.validation.api
-    implementation libs.javassist
-    implementation libs.jakarta.inject
     implementation libs.quartz
     implementation libs.saxon.he
-    implementation libs.slf4j.api
-    implementation libs.ws.rs.api
     implementation libs.xerces
 
     testImplementation project(':stroom-test-common')
-    testImplementation libs.commons.lang
-    testImplementation libs.jmh.core
     testImplementation libs.jmh.generator.annprocess
     testImplementation libs.vavr
 

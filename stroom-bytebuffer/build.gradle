@@ -19,19 +19,16 @@ ext.moduleName = 'stroom.bytebuffer'
 dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-//
+
     implementation libs.guice.assistedinject
-    implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jaxb.api
     implementation libs.kryo
     implementation libs.zero.allocation.hashing
     implementation libs.slf4j.api
-//
-    testImplementation project(':stroom-test-common')
 
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

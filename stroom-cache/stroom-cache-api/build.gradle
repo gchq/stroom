@@ -17,9 +17,6 @@
 ext.moduleName = 'stroom.cache.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-
-    implementation libs.jackson.annotations
 }

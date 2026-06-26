@@ -25,27 +25,17 @@ dependencies {
 
     implementation libs.assertj.core
     implementation libs.classgraph
-    implementation libs.commons.codec
     implementation libs.commons.compress
-    implementation libs.commons.lang
     implementation libs.data.faker
-    implementation libs.dropwizard.jersey
     implementation libs.dropwizard.testing
-    implementation libs.flyway.core
     implementation libs.flyway.mysql
-    implementation libs.guava
     implementation libs.guice
     implementation libs.hikari
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
     implementation libs.jgit
     implementation libs.jooq
-    implementation libs.junit.jupiter.api
     implementation libs.junit.platform.launcher
-    implementation libs.mockito.core
     implementation libs.mockito.junit.jupiter
-    implementation libs.slf4j.api
     implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java

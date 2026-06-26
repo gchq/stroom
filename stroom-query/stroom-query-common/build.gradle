@@ -18,12 +18,10 @@ ext.moduleName = 'stroom.query.common'
 
 dependencies {
     implementation project(':stroom-bytebuffer')
-    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
-    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
@@ -36,7 +34,6 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject

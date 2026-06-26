@@ -26,9 +26,7 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
     implementation libs.jackson.databind
-    implementation libs.jakarta.inject
     implementation libs.slf4j.api
 
     testImplementation libs.bundles.common.test.implementation

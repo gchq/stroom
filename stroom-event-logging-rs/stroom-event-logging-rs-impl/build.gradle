@@ -27,13 +27,10 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.slf4j.api
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
     implementation libs.jersey.common
-    implementation libs.ws.rs.api
 
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
