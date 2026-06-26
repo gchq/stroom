@@ -103,11 +103,11 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
         volumeCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
         s3VolumeCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
     }
 
@@ -124,7 +124,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
             @JsonProperty("metaTypeExtensions") final Map<String, String> metaTypeExtensions,
             @JsonProperty("findOrphanedMetaBatchSize") final Integer findOrphanedMetaBatchSize,
             @JsonProperty("maxVolumeStateAge") final StroomDuration maxVolumeStateAge,
-            @JsonProperty("volumeCache") final CacheConfig volumeCache) {
+            @JsonProperty("volumeCache") final CacheConfig volumeCache,
+            @JsonProperty("s3VolumeCache") final CacheConfig s3VolumeCache) {
 
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
@@ -142,6 +143,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 DEFAULT_FIND_ORPHANED_META_BATCH_SIZE);
         this.maxVolumeStateAge = maxVolumeStateAge;
         this.volumeCache = volumeCache;
+        this.s3VolumeCache = s3VolumeCache;
     }
 
     @JsonPropertyDescription(
@@ -155,8 +157,9 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing stream volumes are present default volumes will be created on " +
-                             "application start.  Use property defaultStreamVolumePaths to define the volumes created.")
+    @JsonPropertyDescription(
+            "If no existing stream volumes are present default volumes will be created on " +
+            "application start.  Use property defaultStreamVolumePaths to define the volumes created.")
     public boolean isCreateDefaultStreamVolumesOnStart() {
         return createDefaultStreamVolumesOnStart;
     }
@@ -214,7 +217,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 metaTypeExtensions,
                 findOrphanedMetaBatchSize,
                 maxVolumeStateAge,
-                volumeCache);
+                volumeCache,
+                s3VolumeCache);
     }
 
     public FsVolumeConfig withVolumeSelector(final String volumeSelector) {
@@ -229,7 +233,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 metaTypeExtensions,
                 findOrphanedMetaBatchSize,
                 maxVolumeStateAge,
-                volumeCache);
+                volumeCache,
+                s3VolumeCache);
     }
 
     @JsonPropertyDescription(
@@ -281,6 +286,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         return volumeCache;
     }
 
+    public CacheConfig getS3VolumeCache() {
+        return s3VolumeCache;
+    }
+
     @Override
     public String toString() {
         return "FsVolumeConfig{" +
@@ -295,6 +304,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                ", metaTypeExtensions=" + metaTypeExtensions +
                ", maxVolumeStateAge=" + maxVolumeStateAge +
                ", volumeCache=" + volumeCache +
+               ", s3VolumeCache=" + s3VolumeCache +
                '}';
     }
 

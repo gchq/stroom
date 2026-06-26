@@ -66,7 +66,8 @@ public class StroomS3EventConsumer implements S3EventConsumer {
             canReceive = attributeMapFilter.filter(s3CreateEvent.attributeMap());
             LOGGER.debug("handleEvent() - s3CreateEvent: {}, isAllowed: {}", s3CreateEvent, canReceive);
             if (canReceive) {
-                store.addExistingS3Source();
+                // TODO
+//                store.addExistingS3Source();
             } else {
                 LOGGER.debug("handleEvent() - s3CreateEvent: {}, isAllowed: {}", s3CreateEvent, canReceive);
                 // TODO log the drop

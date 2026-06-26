@@ -111,9 +111,9 @@ public class StoreImpl implements Store, AttributeMapFactory {
     @Override
     public void addExistingS3Source(final MetaProperties metaProperties,
                                     final S3Location s3Location) throws DataException {
-        final FsVolume volume = volumeService.getS3Volume(
-                s3Location.regionName(), s3Location.bucketName())
-                .orElseThrow(() -> );
+//        final FsVolume volume = volumeService.getS3Volume(
+//                s3Location.regionName(), s3Location.bucketName())
+//                .orElseThrow(() -> );
 
 
     }

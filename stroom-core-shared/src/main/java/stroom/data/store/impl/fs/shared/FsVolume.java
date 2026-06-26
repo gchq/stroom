@@ -433,7 +433,9 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         }
     }
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Essentially a read-only view of some parts of {@link FsVolume}

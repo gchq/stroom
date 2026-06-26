@@ -92,6 +92,7 @@ import java.util.stream.Collectors;
 @Singleton
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {
         EntityAction.CREATE,
+        EntityAction.UPDATE,
         EntityAction.DELETE})
 public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
 
@@ -100,7 +101,6 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     private static final String CACHE_NAME = "S3 Volume Cache";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
-    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
@@ -152,8 +152,8 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         this.taskContextFactory = taskContextFactory;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
 
-        cacheManager.createLoadingCache(
-                CACHE_NAME)
+//        cacheManager.createLoadingCache(
+//                CACHE_NAME)
     }
 
     public FsVolume create(final FsVolume fsVolume) {
@@ -217,9 +217,9 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
                         volPath, msg), e);
             }
 
-            fireChange(EntityAction.CREATE);
-
-            return builder.build();
+            final FsVolume result = builder.build();
+            fireChange(NullSafe.get(result, FsVolume::getId), EntityAction.CREATE);
+            return result;
         });
     }
 
@@ -269,7 +269,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
             final FsVolume result = fsVolumeDao.update(fileVolume.copy()
                     .stampAudit(securityContext)
                     .build());
-            fireChange(EntityAction.UPDATE);
+            fireChange(result.getId(), EntityAction.UPDATE);
             return result;
         });
     }
@@ -278,7 +278,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             final int result = fsVolumeDao.delete(id);
 
-            fireChange(EntityAction.DELETE);
+            fireChange(id, EntityAction.DELETE);
 
             return result;
         });
@@ -312,10 +312,12 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
             final Set<FsVolume> set = getVolumeSet(effectiveVolumeGroupName, VolumeUseStatus.ACTIVE);
             if (!set.isEmpty()) {
                 final FsVolume volume = set.iterator().next();
-                LOGGER.trace("Using volume {}", volume);
+                LOGGER.trace("getVolume() - Using volume {}", volume);
                 return volume;
+            } else {
+                LOGGER.trace("getVolume() - No volume found for group {}", effectiveVolumeGroupName);
+                return null;
             }
-            return null;
         });
     }
 
@@ -329,7 +331,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         Objects.requireNonNull(regionName);
         Objects.requireNonNull(bucketName);
         final Optional<FsVolume> s3Volume = getCurrentVolumes()
-                .getGroupToVolumesMap()
+                .groupNameToVolumesMap()
                 .values()
                 .stream()
                 .flatMap(List::stream)
@@ -366,7 +368,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
     private Set<FsVolume> getVolumeSet(final String volumeGroup, final VolumeUseStatus streamStatus) {
         final HasCapacitySelector volumeSelector = getVolumeSelector();
         final List<FsVolume> allVolumeList = getCurrentVolumes()
-                .getGroupToVolumesMap()
+                .groupNameToVolumesMap()
                 .getOrDefault(volumeGroup, Collections.emptyList());
         LOGGER.trace("allVolumeList {}", allVolumeList);
         final List<FsVolume> freeVolumes = FsVolumeListUtil.removeFullVolumes(allVolumeList);
@@ -405,7 +407,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
             LOGGER.debug(() -> LogUtil.message("All FS Volumes:\n{}",
                     generateAllVolumesAsciiTable(allVolumeList)));
         }
-
+        LOGGER.trace("getVolumeSet() - volumeGroup: {}, streamStatus: {}, set: {}", volumeGroup, streamStatus, set);
         return set;
     }
 
@@ -482,6 +484,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
 
     @Override
     public void onChange(final EntityEvent event) {
+        LOGGER.debug("onChange() - event: {}", event);
         clearCurrentVolumeList();
     }
 
@@ -490,18 +493,31 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         currentVolumes.set(null);
     }
 
-    private void fireChange(final EntityAction action) {
+    private void fireChange(final Integer id, final EntityAction action) {
+        LOGGER.debug("fireChange() - id: {}, action: {}", id, action);
         clearCurrentVolumeList();
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
                 if (entityEventBus != null) {
-                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
+                    entityEventBus.fire(createEntityEvent(id, action));
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
+    }
+
+    private EntityEvent createEntityEvent(final Integer id, final EntityAction action) {
+        // Abuse the uuid field with id as we have no uuid.
+        final String uuid = NullSafe.getOrElse(id, String::valueOf, ENTITY_TYPE);
+        return new EntityEvent(
+                DocRef.builder()
+                        .type(ENTITY_TYPE)
+                        .uuid(uuid)
+                        .name(ENTITY_TYPE)
+                        .build(),
+                action);
     }
 
     /**
@@ -571,7 +587,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         ensureDefaultVolumes();
 
         final Instant now = Instant.now();
-        final Map<String, List<FsVolume>> volumes = new HashMap<>();
+        final Map<String, List<FsVolume>> groupNameToVolumesMap = new HashMap<>();
 
         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
@@ -601,7 +617,8 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
                 // Record some statistics for the use of this volume.
                 recordStats(updated);
                 final String groupName = groupNameMap.get(updated.getVolumeGroupId());
-                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(updated);
+                groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
+                        .add(updated);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
@@ -609,11 +626,11 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
             for (final FsVolume volume : dbVolumes) {
                 final String groupName = groupNameMap.get(volume.getVolumeGroupId());
-                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
+                groupNameToVolumesMap.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
             }
         }
 
-        final Volumes newList = new Volumes(now.toEpochMilli(), volumes);
+        final Volumes newList = new Volumes(now.toEpochMilli(), groupNameToVolumesMap);
         final Volumes currentList = currentVolumes.get();
         if (currentList == null || currentList.createTime < newList.createTime) {
             currentVolumes.set(newList);
@@ -806,8 +823,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
     public SystemInfoResult getSystemInfo() {
 
         final Volumes volumes = securityContext.asProcessingUserResult(this::getCurrentVolumes);
-        final List<Map<String, Object>> volInfoList = volumes
-                .getGroupToVolumesMap()
+        final List<Map<String, Object>> volInfoList = volumes.groupNameToVolumesMap()
                 .values()
                 .stream()
                 .flatMap(List::stream)
@@ -836,7 +852,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
 
         return SystemInfoResult.builder(this)
                 .addDetail("volumeSelector", volumeConfigProvider.get().getVolumeSelector())
-                .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumes.getCreateTime()))
+                .addDetail("volumeListCreateTime", DateUtil.createNormalDateTimeString(volumes.createTime()))
                 .addDetail("volumeList", volInfoList)
                 .build();
     }
@@ -952,24 +968,9 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
     // --------------------------------------------------------------------------------
 
 
-    private static class Volumes {
+    private record Volumes(long createTime,
+                           Map<String, List<FsVolume>> groupNameToVolumesMap) {
 
-        private final long createTime;
-        private final Map<String, List<FsVolume>> groupToVolumesMap;
-
-        Volumes(final long createTime,
-                final Map<String, List<FsVolume>> groupToVolumesMap) {
-            this.createTime = createTime;
-            this.groupToVolumesMap = groupToVolumesMap;
-        }
-
-        public Map<String, List<FsVolume>> getGroupToVolumesMap() {
-            return groupToVolumesMap;
-        }
-
-        public long getCreateTime() {
-            return createTime;
-        }
     }
 
 

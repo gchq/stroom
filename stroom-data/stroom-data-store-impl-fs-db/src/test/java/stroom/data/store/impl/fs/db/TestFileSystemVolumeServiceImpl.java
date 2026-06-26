@@ -124,7 +124,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 nodeInfo,
                 new SimpleTaskContextFactory(),
-                new HasCapacitySelectorFactory());
+                new HasCapacitySelectorFactory(),
+                new CacheManagerImpl());
 
 //        volumeService.volumeList = volumeList;
     }
