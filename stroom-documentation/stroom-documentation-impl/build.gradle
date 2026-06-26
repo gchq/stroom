@@ -33,5 +33,4 @@ dependencies {
     implementation libs.restygwt
     implementation libs.jakarta.inject
     implementation libs.slf4j.api
-    implementation libs.ws.rs.api
 }

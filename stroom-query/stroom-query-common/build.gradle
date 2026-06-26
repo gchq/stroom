@@ -34,13 +34,10 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
-    implementation libs.jackson.core
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
     implementation libs.kryo

@@ -46,21 +46,17 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.dropwizard.metrics.annotation
-    implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.kryo
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
-    implementation libs.vavr
     implementation libs.ws.rs.api
 
     testImplementation project(':stroom-lmdb')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.dropwizard.client
-    testImplementation libs.dropwizard.testing
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

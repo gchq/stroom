@@ -28,7 +28,6 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.slf4j.api
     implementation libs.jakarta.servlet.api

@@ -33,7 +33,6 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.dropwizard.metrics.annotation
-    implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
     implementation libs.jackson.annotations

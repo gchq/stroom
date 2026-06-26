@@ -37,7 +37,6 @@ dependencies {
     testImplementation libs.guice
     testImplementation libs.gwt.dev
     testImplementation libs.slf4j.api
-    testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

@@ -25,18 +25,14 @@ dependencies {
     implementation libs.dropwizard.client
     implementation libs.dropwizard.core
     implementation libs.dropwizard.jersey
-    implementation libs.dropwizard.jetty
     implementation libs.dropwizard.lifecycle
     implementation libs.dropwizard.metrics.healthchecks
-    //implementation libs.dropwizard.websockets
     implementation libs.guice
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
     implementation libs.jetty.servlet
     implementation libs.logback.classic
     implementation libs.slf4j.api
-    implementation libs.vavr
     implementation libs.ws.rs.api
 }

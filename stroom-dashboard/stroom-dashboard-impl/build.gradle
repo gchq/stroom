@@ -42,17 +42,13 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.commons.text
-    implementation libs.dropwizard.jersey
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
     implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
-    implementation libs.jersey.client
-    implementation libs.jersey.common
     implementation libs.poi
     implementation libs.poi.ooxml
     implementation libs.jooq

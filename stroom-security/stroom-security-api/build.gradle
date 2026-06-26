@@ -26,5 +26,4 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
     implementation libs.slf4j.api
-    implementation libs.ws.rs.api
 }

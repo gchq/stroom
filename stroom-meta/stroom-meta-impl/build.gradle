@@ -45,7 +45,6 @@ dependencies {
     implementation libs.dropwizard.validation
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.hikari
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
@@ -54,7 +53,6 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.vavr
-    implementation libs.ws.rs.api
 
     runtimeOnly libs.mysql.connector.java
 

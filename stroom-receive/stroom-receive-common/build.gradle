@@ -44,7 +44,6 @@ dependencies {
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.validation
     implementation libs.guice
-    implementation libs.hessian
     implementation libs.jackson.annotations
     implementation libs.jackson.core
     implementation libs.jackson.databind

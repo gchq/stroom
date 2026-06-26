@@ -23,5 +23,4 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
 }

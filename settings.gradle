@@ -70,6 +70,7 @@ include 'stroom-bytebuffer'
 // Cache
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'
+include 'stroom-cache:stroom-cache-service-impl'
 
 // Cluster
 include 'stroom-cluster:stroom-cluster-api'
@@ -166,7 +167,10 @@ include 'stroom-feed:stroom-feed-api'
 include 'stroom-feed:stroom-feed-impl'
 
 // GitRepo
-include 'stroom-gitrepo'
+include 'stroom-gitrepo:stroom-gitrepo-api'
+include 'stroom-gitrepo:stroom-gitrepo-impl'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db'
+include 'stroom-gitrepo:stroom-gitrepo-mock'
 
 // Hadoop
 include 'stroom-hadoop'
@@ -180,7 +184,7 @@ include 'stroom-importexport:stroom-importexport-impl'
 
 // Index
 include 'stroom-index:lucene553-shaded'
-//include 'stroom-index:lucene980-shaded'
+include 'stroom-index:stroom-index-api'
 include 'stroom-index:stroom-index-impl'
 include 'stroom-index:stroom-index-lucene553'
 include 'stroom-index:stroom-index-lucene'
@@ -273,11 +277,13 @@ include 'stroom-security:stroom-security-common-impl'
 include 'stroom-security:stroom-security-identity'
 include 'stroom-security:stroom-security-identity-db'
 include 'stroom-security:stroom-security-impl'
-include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-mock'
 include 'stroom-security:stroom-security-openid-api'
 include 'stroom-security:stroom-security-user-api'
+
+// SSL Tests
+include 'stroom-ssl-test'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
@@ -299,16 +305,5 @@ include 'stroom-util'
 include 'stroom-util-shared'
 
 // View
-include 'stroom-view:stroom-view-impl'
-
-include 'stroom-ssl-test'
 include 'stroom-view:stroom-view-api'
-include 'stroom-index:stroom-index-api'
-include 'stroom-cache:stroom-cache-service-impl'
-include 'stroom-gitrepo:stroom-gitrepo-impl'
-include 'stroom-gitrepo:stroom-gitrepo-api'
-
-include 'stroom-contentstore:stroom-contentstore-api'
-include 'stroom-contentstore'
-include 'stroom-gitrepo:stroom-gitrepo-impl-db'
-include 'stroom-gitrepo:stroom-gitrepo-mock'
+include 'stroom-view:stroom-view-impl'

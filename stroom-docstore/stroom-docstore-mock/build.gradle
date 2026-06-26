@@ -17,26 +17,9 @@
 ext.moduleName = 'stroom.docstore.mock'
 
 dependencies {
-//    implementation project(':stroom-cache:stroom-cache-api')
-//    implementation project(':stroom-config:stroom-config-common')
-//    implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
-//    implementation project(':stroom-event-logging:stroom-event-logging-api')
-//    implementation project(':stroom-importexport:stroom-importexport-api')
-//    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
-//    implementation project(':stroom-util')
-//
+
     implementation libs.guice
-//    implementation libs.jackson.annotations
-//    implementation libs.jackson.core
-//    implementation libs.jackson.databind
-//    implementation libs.jakarta.inject
-//    implementation libs.slf4j.api
-//
-//    testImplementation project(':stroom-cache:stroom-cache-impl')
-//
-//    testImplementation libs.bundles.common.test.implementation
-//    testRuntimeOnly libs.bundles.common.test.runtime
 }

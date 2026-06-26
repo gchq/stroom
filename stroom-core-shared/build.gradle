@@ -34,7 +34,6 @@ dependencies {
 
     testImplementation libs.classgraph
     testImplementation libs.guice // For TypeLiteral in DynamicTestBuilder
-    testImplementation libs.jackson.core
     testImplementation libs.jackson.databind
     testImplementation libs.slf4j.api
     testImplementation libs.vavr

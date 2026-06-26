@@ -30,13 +30,11 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-importexport:stroom-importexport-api')
 
-    implementation libs.dropwizard.metrics.annotation
     implementation libs.guice
     implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
