@@ -94,7 +94,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
         volumeCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
     }
 
@@ -126,7 +126,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         this.volumeCache = volumeCache;
     }
 
-    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
+    @JsonPropertyDescription(
+            "How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
             "default is 'RoundRobin'")
@@ -136,14 +137,15 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing stream volumes are present default volumes will be created on " +
+    @JsonPropertyDescription(
+            "If no existing stream volumes are present default volumes will be created on " +
             "application start.  Use property defaultStreamVolumePaths to define the volumes created.")
     public boolean isCreateDefaultStreamVolumesOnStart() {
         return createDefaultStreamVolumesOnStart;
     }
 
     @JsonPropertyDescription("The name of the default stream volume group that is created if none exist on " +
-            "application start.")
+                             "application start.")
     public String getDefaultStreamVolumeGroupName() {
         return defaultStreamVolumeGroupName;
     }
@@ -160,7 +162,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         return typePathCache;
     }
 
-    @JsonPropertyDescription("The paths used if the default stream volumes are created on application start." +
+    @JsonPropertyDescription(
+            "The paths used if the default stream volumes are created on application start." +
             "If a path is a relative path then it will be treated as being relative to stroom.path.home.")
     public List<String> getDefaultStreamVolumePaths() {
         return defaultStreamVolumePaths;
@@ -172,7 +175,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonPropertyDescription("Fraction of the filesystem beyond which the system will stop writing to the " +
-            "default stream volumes that may be created on application start.")
+                             "default stream volumes that may be created on application start.")
     public double getDefaultStreamVolumeFilesystemUtilisation() {
         return defaultStreamVolumeFilesystemUtilisation;
     }
@@ -212,7 +215,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 volumeCache);
     }
 
-    @JsonPropertyDescription("Map of meta type names to their file extension. " +
+    @JsonPropertyDescription(
+            "Map of meta type names to their file extension. " +
             "You should only change this property if you need to support legacy file extensions used " +
             "before Stroom v7. If a meta type does not have an entry in this map then the extension " +
             "'dat' will be used. The extension is entered without the leading dot. Changing the extension for a " +
@@ -225,15 +229,16 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     @JsonIgnore
     public Optional<String> getMetaTypeExtension(final String metaTypeName) {
         if (metaTypeExtensions == null
-                || metaTypeName == null
-                || metaTypeName.isBlank()) {
+            || metaTypeName == null
+            || metaTypeName.isBlank()) {
             return Optional.empty();
         } else {
             return Optional.ofNullable(metaTypeExtensions.get(metaTypeName));
         }
     }
 
-    @JsonPropertyDescription("When refreshing the local cache of volumes, the state will only be updated in the " +
+    @JsonPropertyDescription(
+            "When refreshing the local cache of volumes, the state will only be updated in the " +
             "database if it is older then this threshold age. Value must be less than the period of the job " +
             "'File System Volume Status'.")
     public StroomDuration getMaxVolumeStateAge() {
@@ -247,17 +252,17 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "FsVolumeConfig{" +
-                "volumeSelector='" + volumeSelector + '\'' +
-                ", defaultStreamVolumePaths=" + defaultStreamVolumePaths +
-                ", defaultStreamVolumeFilesystemUtilisation=" + defaultStreamVolumeFilesystemUtilisation +
-                ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
-                ", defaultStreamVolumeGroupName=" + "\"" + defaultStreamVolumeGroupName + "\"" +
-                ", findOrphanedMetaBatchSize=" + findOrphanedMetaBatchSize +
-                ", feedPathCache=" + feedPathCache +
-                ", typePathCache=" + typePathCache +
-                ", metaTypeExtensions=" + metaTypeExtensions +
-                ", maxVolumeStateAge=" + maxVolumeStateAge +
-                ", volumeCache=" + volumeCache +
-                '}';
+               "volumeSelector='" + volumeSelector + '\'' +
+               ", defaultStreamVolumePaths=" + defaultStreamVolumePaths +
+               ", defaultStreamVolumeFilesystemUtilisation=" + defaultStreamVolumeFilesystemUtilisation +
+               ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
+               ", defaultStreamVolumeGroupName=" + "\"" + defaultStreamVolumeGroupName + "\"" +
+               ", findOrphanedMetaBatchSize=" + findOrphanedMetaBatchSize +
+               ", feedPathCache=" + feedPathCache +
+               ", typePathCache=" + typePathCache +
+               ", metaTypeExtensions=" + metaTypeExtensions +
+               ", maxVolumeStateAge=" + maxVolumeStateAge +
+               ", volumeCache=" + volumeCache +
+               '}';
     }
 }

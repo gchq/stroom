@@ -19,16 +19,26 @@ package stroom.data.store.impl.fs;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+@EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.DELETE})
 @Singleton
-public class FsVolumeCache implements Clearable {
+public class FsVolumeCache implements EntityEvent.Handler, Clearable {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeCache.class);
     private static final String CACHE_NAME = "Volume Cache";
+
     private final LoadingStroomCache<Integer, FsVolume> cache;
     private final FsVolumeDao fsVolumeDao;
 
@@ -47,15 +57,42 @@ public class FsVolumeCache implements Clearable {
     }
 
     public FsVolume get(final int id) {
-        return cache.get(id);
+        final FsVolume fsVolume = cache.get(id);
+        LOGGER.debug("get() - id: {}, fsVolume: {}", id, fsVolume);
+        return fsVolume;
     }
 
     private FsVolume create(final int id) {
-        return fsVolumeDao.fetch(id);
+        final FsVolume fsVolume = fsVolumeDao.fetch(id);
+        LOGGER.debug("create() - id: {}, fsVolume: {}", id, fsVolume);
+        return fsVolume;
     }
 
     @Override
     public void clear() {
+        LOGGER.debug("clear()");
         cache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        LOGGER.debug("onChange() - event: {}", event);
+        if (event != null) {
+            if (event.getDocRef() != null) {
+                try {
+                    // Abuse of uuid for the volume ID, but if the ID is not know, the
+                    // UUID will be same as the type.
+                    final int id = Integer.parseInt(event.getDocRef().getUuid());
+                    LOGGER.debug("onChange() - Invalidating entry with ID {}, event: {}", id, event);
+                    cache.invalidate(id);
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug("onChange() - No ID, clearing cache, event: {}", event);
+                    cache.clear();
+                }
+            } else {
+                LOGGER.debug("onChange() - No docRef, clearing cache, event: {}", event);
+                cache.clear();
+            }
+        }
     }
 }
