@@ -160,6 +160,11 @@ public class S3Appender extends AbstractAppender {
                                 attributeMap,
                                 tempFile,
                                 uploadProperties);
+
+                        LOGGER.debug(
+                                "createOutput() - Uploaded tempFile '{}' to S3, meta: {}, bucketNamePattern: '{}', " +
+                                "keyNamePattern: '{}'",
+                                tempFile, meta, bucketNamePattern, keyNamePattern);
                     } catch (final RuntimeException e) {
                         fatal(e.getMessage(), e);
                     } finally {
