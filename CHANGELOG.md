@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.7] - 2026-06-29
+
+* Bug **#5584** : Change the way the special singleton documents `DataRetentionRules`, `ReceiveDataRuleSet` and `ContentTemplates` are created for the first time. Now uses a cluster lock to ensure only one of each is ever created.
+
+* Bug **#5592** : Fix `Volume Cache` so entries are invalidated when a data volume is changed/deleted. Also fix data volume selection so that the cached map of available volumes is cleared when a volume is changed/deleted/created. Default value for `stroom.data.filesystemVolume.volumeCache.expireAfterAccess` has changed from PT10M to null and `stroom.data.filesystemVolume.volumeCache.expireAfterWrite` has changed from null to PT10M. This is to ensure that cached items are not held indefinitely.
+
+* Bug **#5596** : Change S3Appender to support the standard context variables (e.g. `partNo`, `pipeline`, etc.) and `uuid` in the key name pattern string.
+
+
 ## [v7.12.6] - 2026-06-03
 
 * Feature **#5552** : Add additional S3 properties to S3Appender.
@@ -2172,7 +2181,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.7...HEAD
+[v7.12.7]: https://github.com/gchq/stroom/compare/v7.12.6...v7.12.7
 [v7.12.6]: https://github.com/gchq/stroom/compare/v7.12.5...v7.12.6
 [v7.12.5]: https://github.com/gchq/stroom/compare/v7.12.4...v7.12.5
 [v7.12.4]: https://github.com/gchq/stroom/compare/v7.12.3...v7.12.4
