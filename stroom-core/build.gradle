@@ -17,16 +17,11 @@
 ext.moduleName = 'stroom.core'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-data:stroom-data-store-api')
-    implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-db-util')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -42,54 +37,29 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-receive:stroom-receive-common')
-    implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-meta:stroom-meta-statistics-api')
-    implementation project(':stroom-data:stroom-data-store-api')
-    implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-impl')
-    implementation project(':stroom-job:stroom-job-api')
 
     implementation libs.commons.compress
-    implementation libs.commons.io
-    implementation libs.commons.lang
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.lifecycle
-    implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
-    implementation libs.flyway.core
-    implementation libs.flyway.mysql
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.hikari
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
-    implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.validation.api
-    implementation libs.javassist
-    implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.saxon.he
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
 
     runtimeOnly libs.jackson.annotations
     runtimeOnly libs.jackson.core
     runtimeOnly libs.jaxb.impl
     runtimeOnly libs.mysql.connector.java
 
-    testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 

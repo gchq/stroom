@@ -36,7 +36,6 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jakarta.inject
     implementation libs.jakarta.servlet.api
     implementation libs.restygwt
     implementation libs.slf4j.api

@@ -19,7 +19,6 @@ ext.moduleName = 'stroom.analytics.impl'
 dependencies {
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-impl-db')
-    implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
@@ -49,7 +48,6 @@ dependencies {
     implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-search:stroom-search-impl')
     implementation project(':stroom-search:stroom-search-extraction')
-    implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
@@ -57,13 +55,10 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-//    implementation project(':stroom-view:stroom-view-impl')
     implementation project(':stroom-view:stroom-view-api')
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.jakarta.validation.api
     implementation libs.jooq
     implementation libs.jinjava
@@ -72,16 +67,10 @@ dependencies {
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.simple.java.mail
-    implementation libs.simple.java.mail.batch.module
-    implementation libs.slf4j.api
     implementation libs.ws.rs.api
     implementation libs.zero.allocation.hashing
 
     runtimeOnly libs.mysql.connector.java
-
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.guice.extension
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

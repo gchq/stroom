@@ -31,7 +31,6 @@ dependencies {
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
@@ -44,21 +43,15 @@ dependencies {
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.validation
     implementation libs.guice
-    implementation libs.hessian
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
     implementation libs.restygwt
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.commons.lang
     testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation

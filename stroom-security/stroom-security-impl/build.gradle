@@ -25,11 +25,8 @@ dependencies {
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-dashboard:stroom-storedquery-api')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
@@ -44,33 +41,22 @@ dependencies {
 
     implementation libs.bcrypt
     implementation libs.bouncy.castle
-    implementation libs.caffeine
-    implementation libs.commons.codec
     implementation libs.commons.csv
     implementation libs.commons.lang
-    implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.lifecycle
     implementation libs.dropwizard.validation
     implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
     implementation libs.http.client
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
-    implementation libs.jetty.http
     implementation libs.jooq
     implementation libs.jose4j
     implementation libs.mysql.connector.java
     implementation libs.restygwt
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
-    testImplementation project(':stroom-cache:stroom-cache-api')
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-mock')

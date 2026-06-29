@@ -19,19 +19,14 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-impl')
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
-//    implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
     implementation project(':stroom-dropwizard-common')
-    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    implementation project(':stroom-explorer:stroom-collection-api')
     implementation project(':stroom-explorer:stroom-collection-mock')
-    implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-proxy:stroom-proxy-repo')
     implementation project(':stroom-query:stroom-query-api')
@@ -40,37 +35,18 @@ dependencies {
     implementation project(':stroom-security:stroom-security-common-impl')
     implementation project(':stroom-security:stroom-security-mock')
     implementation project(':stroom-security:stroom-security-openid-api')
-    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.aws.sqs
     implementation libs.commons.compress
-    implementation libs.dropwizard.assets
-    implementation libs.dropwizard.core
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.jersey
-    implementation libs.dropwizard.jetty
-    implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.dropwizard.servlets
-    implementation libs.dropwizard.metrics.core
-    implementation libs.dropwizard.metrics.annotation
-    implementation libs.dropwizard.configuration
     implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
-    implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
-    implementation libs.jetty.server
     implementation libs.jose4j
     implementation libs.kafka.clients
-    implementation libs.kryo
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.vavr
 
@@ -81,11 +57,8 @@ dependencies {
     testImplementation libs.classgraph
     testImplementation libs.data.faker
     testImplementation libs.dropwizard.testing
-    testImplementation libs.dropwizard.validation
-    testImplementation libs.guice.extension
     testImplementation libs.guice.grapher
     testImplementation libs.jinjava
-    testImplementation libs.jmh.core
     testImplementation libs.jmh.generator.annprocess
     testImplementation libs.mbknor.jackson.jsonSchema
     testImplementation libs.wiremock

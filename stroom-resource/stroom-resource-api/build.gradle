@@ -18,6 +18,4 @@ ext.moduleName = 'stroom.resource.api'
 
 dependencies {
     implementation project(':stroom-util-shared')
-
-    implementation libs.jackson.annotations
 }

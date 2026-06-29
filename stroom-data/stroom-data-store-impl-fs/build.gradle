@@ -39,29 +39,21 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.aws.crt
     implementation libs.aws.s3.transfer.manager
     implementation libs.commons.compress
     implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.hikari
-    implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
-    implementation libs.slf4j.api
     implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-cluster:stroom-cluster-lock-api')
     testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-statistics:stroom-statistics-api')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation

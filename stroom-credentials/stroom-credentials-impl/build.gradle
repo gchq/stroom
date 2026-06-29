@@ -23,22 +23,15 @@ dependencies {
     implementation project(':stroom-credentials:stroom-credentials-impl-db')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-security:stroom-security-impl')
-    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api

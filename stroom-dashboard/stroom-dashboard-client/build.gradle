@@ -17,19 +17,4 @@
 ext.moduleName = 'stroom.dashboard.client'
 
 dependencies {
-    implementation project(':stroom-core-client')
-    implementation project(':stroom-core-client-widget')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-util-shared')
-
-    implementation libs.gin
-    implementation libs.guice.gwt
-    implementation libs.gwt.user
-    implementation libs.gwtp.mvp.client
-    implementation libs.jackson.annotations
-    implementation libs.javax.inject.gwt
-    implementation libs.restygwt
 }

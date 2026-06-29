@@ -20,10 +20,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-api')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.ws.rs.api
 
-    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

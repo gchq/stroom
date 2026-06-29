@@ -25,7 +25,4 @@ dependencies {
 
     implementation libs.dropwizard.lifecycle
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
-    implementation libs.slf4j.api
 }

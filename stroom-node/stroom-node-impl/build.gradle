@@ -19,7 +19,6 @@ ext.moduleName = 'stroom.node.impl'
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-api')
-    implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
@@ -30,7 +29,6 @@ dependencies {
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-node:stroom-node-impl-db')
     implementation project(':stroom-pipeline')
-    implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
@@ -40,13 +38,7 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.hikari
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
-    implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
@@ -54,7 +46,6 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
-    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
     testImplementation libs.jersey.server
 

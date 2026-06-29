@@ -24,20 +24,15 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.gin
-    implementation libs.guice.gwt
     implementation libs.gwt.user
     implementation libs.gwtp.mvp.client
-    implementation libs.jackson.annotations
-    implementation libs.javax.inject.gwt
     implementation libs.restygwt
     implementation libs.ws.rs.api.gwt
 
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')
-    testImplementation libs.guice
     testImplementation libs.gwt.dev
     testImplementation libs.slf4j.api
-    testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

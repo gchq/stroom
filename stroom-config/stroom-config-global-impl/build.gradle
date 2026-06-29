@@ -18,18 +18,14 @@ ext.moduleName = 'stroom.config.global.impl'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl')
-    implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-ai:stroom-ai-impl')
-    implementation project(':stroom-ai:stroom-ai-impl-db')
     implementation project(':stroom-analytics:stroom-analytics-impl')
-    implementation project(':stroom-analytics:stroom-analytics-impl-db')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl')
-    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-api')
@@ -45,13 +41,11 @@ dependencies {
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-feed:stroom-feed-impl')
-    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-impl-db')
@@ -67,7 +61,6 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-processor:stroom-processor-impl')
-    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
@@ -75,7 +68,6 @@ dependencies {
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-impl')
     implementation project(':stroom-search:stroom-search-solr')
-    implementation project(':stroom-search:stroom-searchable-impl')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-common-impl')
     implementation project(':stroom-security:stroom-security-identity')
@@ -91,27 +83,16 @@ dependencies {
     implementation libs.dropwizard.lifecycle
     implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.hikari
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.restygwt
-    implementation libs.slf4j.api
     implementation libs.vavr
     implementation libs.ws.rs.api
 
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
-    testImplementation libs.dropwizard.configuration
     testImplementation libs.dropwizard.core
-    testImplementation libs.dropwizard.jackson
-    testImplementation libs.dropwizard.jersey
-    testImplementation libs.dropwizard.validation
     testImplementation libs.guice.extension
 
     testImplementation libs.bundles.common.test.implementation

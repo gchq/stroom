@@ -21,7 +21,5 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jackson.annotations
-
     testRuntimeOnly libs.bundles.common.test.runtime
 }
