@@ -26,6 +26,7 @@ dependencies {
     implementation libs.fast.infoset
     implementation libs.guava
     implementation libs.jackson.annotations
+    implementation libs.jackson.jq
     implementation libs.kryo
     implementation libs.slf4j.api
     implementation libs.vavr
