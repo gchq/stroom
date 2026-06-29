@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.processor.impl.db.ProcessorDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -29,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
-
 
 @SuppressWarnings("unused")
 @JsonPropertyOrder(alphabetic = true)

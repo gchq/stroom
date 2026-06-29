@@ -16,10 +16,9 @@
 
 package stroom.data.store.impl.fs.db;
 
-
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.store.impl.fs.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.dao.FsTypePathDaoImpl;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 

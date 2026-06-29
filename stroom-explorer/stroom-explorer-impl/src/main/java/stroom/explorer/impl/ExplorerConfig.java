@@ -17,6 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.explorer.impl.db.ExplorerDbConfig;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.util.shared.AbstractConfig;
@@ -34,7 +35,6 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

@@ -16,7 +16,6 @@
 
 package stroom.ai.impl.db;
 
-import stroom.ai.impl.AiDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

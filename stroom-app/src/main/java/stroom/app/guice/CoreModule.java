@@ -66,7 +66,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
-        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
         install(new stroom.dictionary.impl.DictionaryHandlerModule());
         install(new stroom.dictionary.impl.DictionaryModule());
         install(new stroom.documentation.impl.DocumentationHandlerModule());
@@ -123,7 +123,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.searchable.impl.SearchableModule());
         install(new stroom.security.identity.IdentityModule());
-        install(new stroom.security.identity.db.IdentityDaoModule());
+        install(new stroom.security.identity.dao.IdentityDaoModule());
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.security.impl.SessionSecurityModule());
         install(new stroom.security.impl.dao.SecurityDaoModule());

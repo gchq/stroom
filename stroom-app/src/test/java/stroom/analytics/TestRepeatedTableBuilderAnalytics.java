@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;

@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.security.impl.db.AuthorisationDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -25,7 +26,6 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class AuthorisationConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

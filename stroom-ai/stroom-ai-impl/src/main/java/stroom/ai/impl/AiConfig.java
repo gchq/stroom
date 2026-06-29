@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.db.AiDbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;

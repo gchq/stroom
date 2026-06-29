@@ -17,7 +17,7 @@
 package stroom.explorer.impl.db.migration;
 
 import stroom.db.util.AbstractFlyWayDbModule;
-import stroom.explorer.impl.ExplorerDbConfig;
+import stroom.explorer.impl.db.ExplorerDbConfig;
 import stroom.explorer.impl.db.ExplorerDbConnProvider;
 import stroom.explorer.impl.db.ExplorerDbModule;
 import stroom.test.common.util.db.AbstractSingleFlywayMigrationTest;

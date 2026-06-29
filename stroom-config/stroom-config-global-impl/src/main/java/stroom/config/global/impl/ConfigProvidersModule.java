@@ -369,10 +369,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.index.impl.IndexFieldDbConfig getIndexFieldDbConfig(
+    stroom.index.impl.db.IndexFieldDbConfig getIndexFieldDbConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.index.impl.IndexFieldDbConfig.class);
+                stroom.index.impl.db.IndexFieldDbConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

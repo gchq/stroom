@@ -17,7 +17,7 @@
 package stroom.storedquery.impl.db.migration;
 
 import stroom.db.util.AbstractFlyWayDbModule;
-import stroom.storedquery.impl.StoredQueryDbConfig;
+import stroom.storedquery.impl.db.StoredQueryDbConfig;
 import stroom.storedquery.impl.db.StoredQueryDbConnProvider;
 import stroom.storedquery.impl.db.StoredQueryDbModule;
 import stroom.test.common.util.db.AbstractSingleFlywayMigrationTest;

@@ -18,8 +18,8 @@ package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
 import stroom.ai.impl.AiDao;
-import stroom.ai.impl.MockAiDao;
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiDao;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;

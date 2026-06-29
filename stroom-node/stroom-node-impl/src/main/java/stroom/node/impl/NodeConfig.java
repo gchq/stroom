@@ -17,6 +17,7 @@
 package stroom.node.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.node.impl.db.NodeDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
