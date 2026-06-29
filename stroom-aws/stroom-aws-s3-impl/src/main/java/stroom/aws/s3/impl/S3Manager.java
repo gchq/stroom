@@ -646,6 +646,7 @@ public class S3Manager {
         keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
         // Parse for stuff like partNo, pipeline, node, etc.
         keyName = pathCreator.replaceContextVars(keyName);
+        keyName = pathCreator.replaceUUIDVars(keyName);
         keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
         keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
         keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
