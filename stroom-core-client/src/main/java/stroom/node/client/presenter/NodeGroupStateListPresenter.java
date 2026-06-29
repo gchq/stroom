@@ -134,8 +134,8 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
 
         // Status.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((
-                                final NodeStatusResult result) -> {
+                DataGridUtil
+                        .textColumnBuilder((final NodeStatusResult result) -> {
                             boolean selected = selectedNodes.contains(result.getNode().getId());
                             if (invertSelection) {
                                 selected = !selected;

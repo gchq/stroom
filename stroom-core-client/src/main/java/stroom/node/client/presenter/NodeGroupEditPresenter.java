@@ -95,26 +95,27 @@ public class NodeGroupEditPresenter
             opening = true;
 
             nodeClient.fetchNodeStatus(response -> {
-                        allNodes = response.getValues()
-                                .stream()
-                                .map(NodeStatusResult::getNode)
-                                .map(Node::getId)
-                                .collect(Collectors.toSet());
+                allNodes = response.getValues()
+                        .stream()
+                        .map(NodeStatusResult::getNode)
+                        .map(Node::getId)
+                        .collect(Collectors.toSet());
 
-                        nodeGroupStateListPresenter.setAllNodes(allNodes);
-                        nodeGroupStateListPresenter.setSelectedNodes(selected);
-                        nodeGroupStateListPresenter.setInvertSelection(nodeGroup.isInvertSelection());
-                        invertSelection = nodeGroup.isInvertSelection();
+                nodeGroupStateListPresenter.setAllNodes(allNodes);
+                nodeGroupStateListPresenter.setSelectedNodes(selected);
+                nodeGroupStateListPresenter.setInvertSelection(nodeGroup.isInvertSelection());
+                invertSelection = nodeGroup.isInvertSelection();
 
-                        nodeGroupClient.getNodeGroupState(nodeGroup.getId(),
-                                result -> {
-                                    selected.clear();
-                                    selected.addAll(result.getSelected());
-                                    nodeGroupStateListPresenter.refresh();
-                                    open(nodeGroup, title, consumer);
-                                },
-                                this);
-                    }, null, new FindNodeStatusCriteria(PageRequest.unlimited(), null),
+                nodeGroupClient.getNodeGroupState(nodeGroup.getId(),
+                        result -> {
+                            selected.clear();
+                            selected.addAll(result.getSelected());
+                            nodeGroupStateListPresenter.refresh();
+                            open(nodeGroup, title, consumer);
+                        },
+                        this);
+            }, null,
+                    new FindNodeStatusCriteria(PageRequest.unlimited(), null),
                     NodeGroupEditPresenter.this);
         }
     }
