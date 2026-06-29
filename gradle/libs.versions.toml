@@ -94,6 +94,7 @@ jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations
 jackson-core = { module = "tools.jackson.core:jackson-core" } # version controlled by jackson-bom
 jackson-databind = { module = "tools.jackson.core:jackson-databind" } # version controlled by jackson-bom
 jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by jackson-bom
+jackson-jq = { module = "net.thisptr:jackson-jq", version = "1.2.0" }
 
 # This is legacy Jackson v2 for anything that needs the old version, e.g. mbknor-jackson-jsonSchema
 # jackson-annotations is the same for both and is included above
