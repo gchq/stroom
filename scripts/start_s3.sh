@@ -65,7 +65,7 @@ main() {
   echo -e '    "type" : "basic",'
   echo -e '    "accessKeyId" : "minioadmin",'
   echo -e '    "secretAccessKey" : "minioadmin"'
-  echo -e '  },'
+  echo -e '  }'
   echo -e '}'
   echo -en "${NC}"
 
