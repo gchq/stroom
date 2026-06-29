@@ -81,29 +81,6 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
         registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
-//    public void show() {
-//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                hide();
-//            }
-//        };
-//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-//        ShowPopupEvent.fire(
-//                this,
-//                this,
-//                PopupType.CLOSE_DIALOG,
-//                null,
-//                popupSize,
-//                "Node Groups",
-//                popupUiHandlers,
-//                null);
-//    }
-//
-//    public void hide() {
-//        HidePopupEvent.fire(this, this, false, true);
-//    }
-
     private void add() {
         final NewNodeGroupPresenter presenter = newNodeGroupPresenterProvider.get();
         presenter.show("", nodeGroup -> {

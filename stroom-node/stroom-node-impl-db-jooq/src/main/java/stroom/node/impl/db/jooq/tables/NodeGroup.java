@@ -92,6 +92,11 @@ public class NodeGroup extends TableImpl<NodeGroupRecord> {
      */
     public final TableField<NodeGroupRecord, Boolean> ENABLED = createField(DSL.name("enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.node_group.invert_selection</code>.
+     */
+    public final TableField<NodeGroupRecord, Boolean> INVERT_SELECTION = createField(DSL.name("invert_selection"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+
     private NodeGroup(Name alias, Table<NodeGroupRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

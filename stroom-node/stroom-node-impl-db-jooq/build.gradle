@@ -67,7 +67,8 @@ jooq {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
                                     '.*\\.node\\.enabled|' +
-                                    '.*\\.node_group\\.enabled'
+                                    '.*\\.node_group\\.enabled|' +
+                                    '.*\\.node_group\\.invert_selection'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

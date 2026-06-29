@@ -87,7 +87,7 @@ public interface NodeGroupResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Gets node group states",
             operationId = "getNodeGroupState")
-    ResultPage<NodeGroupState> getNodeGroupState(@PathParam("id") Integer id);
+    NodeGroupState getNodeGroupState(@PathParam("id") Integer id);
 
     @POST
     @Path("/updateNodeGroupState")

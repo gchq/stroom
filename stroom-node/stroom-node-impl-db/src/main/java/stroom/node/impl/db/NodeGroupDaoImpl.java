@@ -19,7 +19,6 @@ package stroom.node.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.node.impl.NodeGroupDao;
 import stroom.node.shared.FindNodeGroupRequest;
-import stroom.node.shared.Node;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
@@ -36,6 +35,7 @@ import org.jooq.exception.DataAccessException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,7 +47,6 @@ import static stroom.node.impl.db.jooq.tables.NodeGroupLink.NODE_GROUP_LINK;
 
 public class NodeGroupDaoImpl implements NodeGroupDao {
 
-    private static final RecordToNodeMapper RECORD_TO_NODE_MAPPER = new RecordToNodeMapper();
     private static final RecordToNodeGroupMapper RECORD_TO_NODE_GROUP_MAPPER = new RecordToNodeGroupMapper();
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
@@ -83,27 +82,6 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
         return ResultPage.createCriterialBasedList(list, request);
     }
 
-
-//    @Override
-//    public List<String> getNames() {
-//        return JooqUtil.contextResult(nodeDbConnProvider, context -> context
-//                .select(NODE_GROUP.NAME)
-//                .from(NODE_GROUP)
-//                .orderBy(NODE_GROUP.NAME)
-//                .fetch(NODE_GROUP.NAME));
-//    }
-//
-//    @Override
-//    public List<NodeGroup> getAll() {
-//        return JooqUtil.contextResult(nodeDbConnProvider, context -> context
-//                        .select()
-//                        .from(NODE_GROUP)
-//                        .orderBy(NODE_GROUP.NAME)
-//                        .fetch())
-//                .map(RECORD_TO_NODE_GROUP_MAPPER::apply);
-//    }
-
-
     @Override
     public NodeGroup create(final NodeGroup nodeGroup) {
         final Integer id = JooqUtil.contextResult(nodeDbConnProvider, context -> context
@@ -114,14 +92,16 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
                         NODE_GROUP.UPDATE_USER,
                         NODE_GROUP.UPDATE_TIME_MS,
                         NODE_GROUP.NAME,
-                        NODE_GROUP.ENABLED)
+                        NODE_GROUP.ENABLED,
+                        NODE_GROUP.INVERT_SELECTION)
                 .values(1,
                         nodeGroup.getCreateUser(),
                         nodeGroup.getCreateTimeMs(),
                         nodeGroup.getUpdateUser(),
                         nodeGroup.getUpdateTimeMs(),
                         nodeGroup.getName(),
-                        nodeGroup.isEnabled())
+                        nodeGroup.isEnabled(),
+                        nodeGroup.isInvertSelection())
                 .returning(NODE_GROUP.ID)
                 .fetchOne(NODE_GROUP.ID));
         Objects.requireNonNull(id, "Id is null");
@@ -161,6 +141,7 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
                         .set(NODE_GROUP.UPDATE_TIME_MS, nodeGroup.getUpdateTimeMs())
                         .set(NODE_GROUP.NAME, nodeGroup.getName())
                         .set(NODE_GROUP.ENABLED, nodeGroup.isEnabled())
+                        .set(NODE_GROUP.INVERT_SELECTION, nodeGroup.isInvertSelection())
                         .where(NODE_GROUP.ID.eq(nodeGroup.getId()))
                         .execute();
                 if (count == 0) {
@@ -193,83 +174,75 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
     }
 
     @Override
-    public ResultPage<NodeGroupState> getNodeGroupState(final Integer id) {
-//        final Collection<Condition> conditions = JooqUtil.conditions(
-//                JooqUtil.getStringCondition(NODE.NAME, criteria.getName()),
-//                JooqUtil.getBooleanCondition(NODE.ENABLED, criteria.isEnabled()));
-//
-//        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-//        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
-//        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
-        final List<NodeGroupState> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
-                        context
-                                .select(NODE.ID,
-                                        NODE.VERSION,
-                                        NODE.CREATE_TIME_MS,
-                                        NODE.CREATE_USER,
-                                        NODE.UPDATE_TIME_MS,
-                                        NODE.UPDATE_USER,
-                                        NODE.NAME,
-                                        NODE.URL,
-                                        NODE.PRIORITY,
-                                        NODE.ENABLED,
-                                        NODE.BUILD_VERSION,
-                                        NODE.LAST_BOOT_MS,
-                                        NODE_GROUP_LINK.ID)
-                                .from(NODE)
-                                .leftOuterJoin(NODE_GROUP_LINK)
-                                .on(NODE_GROUP_LINK.FK_NODE_ID.eq(NODE.ID).and(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(id)))
-                                .orderBy(NODE.NAME)
-//                                .where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(id))
-//                                .orderBy(orderFields)
-//                                .limit(offset, limit)
-                                .fetch())
-                .map(r -> {
-                    final Node node = RECORD_TO_NODE_MAPPER.apply(r);
-                    final Integer groupId = r.get(NODE_GROUP_LINK.ID);
-                    return new NodeGroupState(node, groupId != null);
-                });
-        return ResultPage.createUnboundedList(list);
+    public NodeGroupState getNodeGroupState(final Integer id) {
+        final Set<Integer> set = JooqUtil.contextResult(nodeDbConnProvider, context -> context
+                .select(NODE_GROUP_LINK.FK_NODE_ID)
+                .from(NODE_GROUP_LINK)
+                .where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(id))
+                .fetchSet(NODE_GROUP_LINK.FK_NODE_ID));
+        return new NodeGroupState(set);
     }
 
     @Override
-    public Set<String> getNodeGroupIncludedNodes(final Integer nodeGroupId) {
-        return Set.copyOf(JooqUtil.contextResult(nodeDbConnProvider, context ->
-                        context
-                                .select(NODE.NAME)
-                                .from(NODE)
-                                .join(NODE_GROUP_LINK)
-                                .on(NODE_GROUP_LINK.FK_NODE_ID.eq(NODE.ID))
-                                .where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(nodeGroupId))
-                                .fetch())
-                .map(r -> r.get(NODE.NAME)));
-    }
+    public Boolean updateNodeGroupState(final NodeGroupChange change) {
+        JooqUtil.transaction(nodeDbConnProvider, context -> {
+            final NodeGroup nodeGroup = change.getNodeGroup();
+            try {
+                final int count = context
+                        .update(NODE_GROUP)
+                        .set(NODE_GROUP.VERSION, NODE_GROUP.VERSION.plus(1))
+                        .set(NODE_GROUP.UPDATE_USER, nodeGroup.getUpdateUser())
+                        .set(NODE_GROUP.UPDATE_TIME_MS, nodeGroup.getUpdateTimeMs())
+                        .set(NODE_GROUP.NAME, nodeGroup.getName())
+                        .set(NODE_GROUP.ENABLED, nodeGroup.isEnabled())
+                        .set(NODE_GROUP.INVERT_SELECTION, nodeGroup.isInvertSelection())
+                        .where(NODE_GROUP.ID.eq(nodeGroup.getId()))
+                        .execute();
+                if (count == 0) {
+                    throw new DataChangedException("This node group has already been updated");
+                }
 
-    @Override
-    public boolean updateNodeGroupState(final NodeGroupChange change) {
-        if (change.isIncluded()) {
-            return JooqUtil.contextResult(nodeDbConnProvider, context ->
+                // Delete all node selections from node group.
+                context
+                        .deleteFrom(NODE_GROUP_LINK)
+                        .where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(nodeGroup.getId()))
+                        .execute();
+
+                // Add selections
+                for (final Integer nodeId : change.getSelectedNodes()) {
                     context
-                            .insertInto(NODE_GROUP_LINK,
-                                    NODE_GROUP_LINK.FK_NODE_ID,
-                                    NODE_GROUP_LINK.FK_NODE_GROUP_ID)
-                            .values(change.getNodeId(),
-                                    change.getNodeGroupId())
+                            .insertInto(NODE_GROUP_LINK, NODE_GROUP_LINK.FK_NODE_ID, NODE_GROUP_LINK.FK_NODE_GROUP_ID)
+                            .values(nodeId, nodeGroup.getId())
                             .onDuplicateKeyUpdate()
-                            .set(NODE_GROUP_LINK.FK_NODE_ID,
-                                    change.getNodeId())
-                            .set(NODE_GROUP_LINK.FK_NODE_GROUP_ID,
-                                    change.getNodeGroupId())
-                            .execute() > 0);
-        } else {
-            return JooqUtil.contextResult(nodeDbConnProvider, context ->
-                    context
-                            .deleteFrom(NODE_GROUP_LINK)
-                            .where(NODE_GROUP_LINK.FK_NODE_ID.eq(
-                                    change.getNodeId()))
-                            .and(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(
-                                    change.getNodeGroupId()))
-                            .execute() > 0);
-        }
+                            .set(NODE_GROUP_LINK.FK_NODE_ID, nodeId)
+                            .set(NODE_GROUP_LINK.FK_NODE_GROUP_ID, nodeGroup.getId())
+                            .execute();
+                }
+
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null
+                    && e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
+                    if (sqlEx.getErrorCode() == 1062
+                        && sqlEx.getMessage().contains("Duplicate entry")
+                        && sqlEx.getMessage().contains("key")
+                        && sqlEx.getMessage().contains(NODE_GROUP.NAME.getName())) {
+                        throw new RuntimeException("An node group already exists with name '"
+                                                   + nodeGroup.getName() + "'");
+                    }
+                }
+                throw e;
+            }
+        });
+        return true;
+    }
+
+    @Override
+    public Set<String> getSelectedNodesForGroup(final Integer id) {
+        return Collections.unmodifiableSet(JooqUtil.contextResult(nodeDbConnProvider, context -> context
+                .select(NODE.NAME)
+                .from(NODE)
+                .join(NODE_GROUP_LINK).on(NODE.ID.eq(NODE_GROUP_LINK.FK_NODE_ID))
+                .where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(id))
+                .fetchSet(NODE.NAME)));
     }
 }

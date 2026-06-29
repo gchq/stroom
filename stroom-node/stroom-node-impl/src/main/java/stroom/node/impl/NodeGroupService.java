@@ -40,7 +40,7 @@ public interface NodeGroupService {
 
     void delete(int id);
 
-    ResultPage<NodeGroupState> getNodeGroupState(Integer id);
+    NodeGroupState getNodeGroupState(Integer id);
 
-    boolean updateNodeGroupState(NodeGroupChange change);
+    Boolean updateNodeGroupState(NodeGroupChange change);
 }

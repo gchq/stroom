@@ -130,6 +130,20 @@ public class NodeGroupRecord extends UpdatableRecordImpl<NodeGroupRecord> {
         return (Boolean) get(7);
     }
 
+    /**
+     * Setter for <code>stroom.node_group.invert_selection</code>.
+     */
+    public void setInvertSelection(Boolean value) {
+        set(8, value);
+    }
+
+    /**
+     * Getter for <code>stroom.node_group.invert_selection</code>.
+     */
+    public Boolean getInvertSelection() {
+        return (Boolean) get(8);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -153,7 +167,7 @@ public class NodeGroupRecord extends UpdatableRecordImpl<NodeGroupRecord> {
     /**
      * Create a detached, initialised NodeGroupRecord
      */
-    public NodeGroupRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, Boolean enabled) {
+    public NodeGroupRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, Boolean enabled, Boolean invertSelection) {
         super(NodeGroup.NODE_GROUP);
 
         setId(id);
@@ -164,6 +178,7 @@ public class NodeGroupRecord extends UpdatableRecordImpl<NodeGroupRecord> {
         setUpdateUser(updateUser);
         setName(name);
         setEnabled(enabled);
+        setInvertSelection(invertSelection);
         resetChangedOnNotNull();
     }
 }

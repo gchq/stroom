@@ -48,20 +48,11 @@ public interface NodeGroupDao {
      *
      * @param id the ID of the node group
      * @return a {@link ResultPage} containing a {@link NodeGroupState} entry for every node,
-     *         ordered by node name
+     * ordered by node name
      */
-    ResultPage<NodeGroupState> getNodeGroupState(Integer id);
+    NodeGroupState getNodeGroupState(Integer id);
 
-    /**
-     * Returns the set of node names that are members of the specified node group.
-     * This is determined by the entries in the {@code node_group_link} table that
-     * associate nodes with the given node group.
-     *
-     * @param nodeGroupId the ID of the node group to query
-     * @return an immutable set of node names included in the group, or an empty set
-     *         if no nodes are linked to the group
-     */
-    Set<String> getNodeGroupIncludedNodes(Integer nodeGroupId);
+    Boolean updateNodeGroupState(NodeGroupChange change);
 
-    boolean updateNodeGroupState(NodeGroupChange change);
+    Set<String> getSelectedNodesForGroup(Integer id);
 }
