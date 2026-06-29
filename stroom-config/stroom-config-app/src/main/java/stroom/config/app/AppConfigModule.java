@@ -16,11 +16,11 @@
 
 package stroom.config.app;
 
-import stroom.activity.impl.db.ActivityConfig;
+import stroom.activity.impl.dao.ActivityConfig;
 import stroom.activity.impl.db.ActivityDbConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDBConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
 import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;

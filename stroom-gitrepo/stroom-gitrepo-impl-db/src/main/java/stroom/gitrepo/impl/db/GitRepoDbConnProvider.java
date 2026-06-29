@@ -21,6 +21,6 @@ import javax.sql.DataSource;
 /**
  * Interface for hooking into Flyway
  */
-interface GitRepoDbConnProvider extends DataSource {
+public interface GitRepoDbConnProvider extends DataSource {
     // No code
 }

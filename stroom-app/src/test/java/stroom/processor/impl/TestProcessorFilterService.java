@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -24,7 +23,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.impl.db.QueryDataSerialiser;
+import stroom.processor.impl.dao.QueryDataSerialiser;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;

@@ -18,10 +18,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.activity.impl.db.ActivityConfig getActivityConfig(
+    stroom.activity.impl.dao.ActivityConfig getActivityConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.activity.impl.db.ActivityConfig.class);
+                stroom.activity.impl.dao.ActivityConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -108,10 +108,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.cluster.lock.impl.db.ClusterLockConfig getClusterLockConfig(
+    stroom.cluster.lock.impl.dao.ClusterLockConfig getClusterLockConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.cluster.lock.impl.db.ClusterLockConfig.class);
+                stroom.cluster.lock.impl.dao.ClusterLockConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

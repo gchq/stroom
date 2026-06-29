@@ -19,6 +19,7 @@ package stroom.docstore.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;

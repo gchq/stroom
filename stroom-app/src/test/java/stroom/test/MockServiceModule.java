@@ -27,7 +27,7 @@ import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
-import stroom.credentials.impl.db.MockCredentialsDaoModule;
+import stroom.credentials.impl.dao.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryStoreImpl;

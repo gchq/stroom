@@ -16,7 +16,7 @@
 
 package stroom.config.app;
 
-import stroom.activity.impl.db.ActivityConfig;
+import stroom.activity.impl.dao.ActivityConfig;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.analytics.impl.AnalyticsConfig;
@@ -24,7 +24,7 @@ import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;

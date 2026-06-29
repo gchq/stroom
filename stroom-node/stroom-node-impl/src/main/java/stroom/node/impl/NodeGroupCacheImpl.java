@@ -20,6 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
 import stroom.node.api.NodeGroupInfo;
+import stroom.node.impl.db.jooq.tables.Node;
 import stroom.node.shared.NodeGroup;
 import stroom.util.shared.Clearable;
 

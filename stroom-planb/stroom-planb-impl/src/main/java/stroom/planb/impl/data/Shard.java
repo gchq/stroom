@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.Db;
+import stroom.planb.impl.dao.Db;
 import stroom.planb.shared.PlanBDoc;
 
 import java.nio.file.Path;

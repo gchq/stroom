@@ -34,7 +34,7 @@
     <logger name="stroom.statistics.internal.DoNothingInternalStatisticsReceiver" level="ERROR" />
     <logger name="stroom.processor.impl" level="INFO" />
     <logger name="stroom.processor.impl.ProcessorTaskManagerImpl" level="INFO" />
-    <logger name="stroom.processor.impl.db.ProcessorTaskDaoImpl" level="INFO" />
+    <logger name="stroom.processor.impl.dao.ProcessorTaskDaoImpl" level="INFO" />
 
 <!--    <logger name="stroom.pipeline.refdata" level="DEBUG" />-->
 

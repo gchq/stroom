@@ -18,6 +18,6 @@ package stroom.index.impl.db;
 
 import javax.sql.DataSource;
 
-interface IndexDbConnProvider extends DataSource {
+public interface IndexDbConnProvider extends DataSource {
 
 }

@@ -60,7 +60,7 @@ public class ToolModule extends AbstractModule {
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.MetaModule());
-        install(new stroom.meta.impl.db.MetaDaoModule());
+        install(new stroom.meta.impl.dao.MetaDaoModule());
         install(new stroom.meta.impl.db.MetaDbModule());
 
         bind(PathCreator.class).to(SimplePathCreator.class);

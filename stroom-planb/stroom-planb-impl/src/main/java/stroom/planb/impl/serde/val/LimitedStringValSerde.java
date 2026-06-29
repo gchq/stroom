@@ -17,8 +17,8 @@
 package stroom.planb.impl.serde.val;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.KeyLength;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.KeyLength;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 

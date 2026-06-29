@@ -20,6 +20,7 @@ import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.gitrepo.api.GitRepoStore;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 import stroom.gitrepo.shared.GitRepoDoc;
 
 import jakarta.inject.Inject;

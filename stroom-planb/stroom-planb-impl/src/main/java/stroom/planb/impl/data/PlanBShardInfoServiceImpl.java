@@ -27,7 +27,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBDocStore;
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.dao.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.query.api.Column;
