@@ -645,13 +645,13 @@ public class S3Manager {
         final String idPadded = padId(meta.getId());
         keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
         // Parse for stuff like partNo, pipeline, node, etc.
-        keyName = pathCreator.replaceContextVars(keyName);
-        keyName = pathCreator.replaceUUIDVars(keyName);
         keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
         keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
         keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
         keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
         keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
+        keyName = pathCreator.replaceContextVars(keyName);
+        keyName = pathCreator.replaceUUIDVars(keyName);
 
         keyName = S3_KEY_NAME_PATTERN.matcher(keyName).replaceAll("-");
         keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
