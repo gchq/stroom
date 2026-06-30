@@ -7342,7 +7342,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageNodeGroupState"
+                  "$ref" : "#/components/schemas/NodeGroupState"
                 }
               }
             },
@@ -21440,6 +21440,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "invertSelection" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
@@ -21459,27 +21462,29 @@
       "NodeGroupChange" : {
         "type" : "object",
         "properties" : {
-          "included" : {
-            "type" : "boolean"
+          "nodeGroup" : {
+            "$ref" : "#/components/schemas/NodeGroup"
           },
-          "nodeGroupId" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "nodeId" : {
-            "type" : "integer",
-            "format" : "int32"
+          "selectedNodes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
           }
         }
       },
       "NodeGroupState" : {
         "type" : "object",
         "properties" : {
-          "included" : {
-            "type" : "boolean"
-          },
-          "node" : {
-            "$ref" : "#/components/schemas/Node"
+          "selected" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
           }
         }
       },
@@ -24420,21 +24425,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/NodeGroup"
-            }
-          }
-        }
-      },
-      "ResultPageNodeGroupState" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NodeGroupState"
             }
           }
         }

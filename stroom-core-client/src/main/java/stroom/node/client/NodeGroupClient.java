@@ -133,7 +133,7 @@ public class NodeGroupClient {
     }
 
     public void getNodeGroupState(final int id,
-                                  final Consumer<ResultPage<NodeGroupState>> consumer,
+                                  final Consumer<NodeGroupState> consumer,
                                   final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
@@ -145,11 +145,13 @@ public class NodeGroupClient {
 
     public void updateNodeGroupState(final NodeGroupChange change,
                                      final Consumer<Boolean> consumer,
+                                     final RestErrorHandler errorHandler,
                                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.updateNodeGroupState(change))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

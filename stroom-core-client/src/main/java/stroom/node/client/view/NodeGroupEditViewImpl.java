@@ -16,26 +16,36 @@
 
 package stroom.node.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
+import stroom.node.shared.NodeInclusionBehaviour;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class NodeGroupEditViewImpl extends ViewImpl implements NodeGroupEditView {
+import java.util.List;
+
+public class NodeGroupEditViewImpl
+        extends ViewWithUiHandlers<NodeGroupEditUiHandlers>
+        implements NodeGroupEditView {
 
     private final Widget widget;
 
     @UiField
     TextBox name;
-//    @UiField
-//    CustomCheckBox enabled;
+    @UiField
+    CustomCheckBox enabled;
+    @UiField
+    SelectionBox<NodeInclusionBehaviour> nodeInclusionBehaviour;
     @UiField
     SimplePanel list;
 
@@ -43,6 +53,9 @@ public class NodeGroupEditViewImpl extends ViewImpl implements NodeGroupEditView
     public NodeGroupEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         name.setEnabled(false);
+        nodeInclusionBehaviour.addItems(List.of(
+                NodeInclusionBehaviour.INCLUDE_SELECTED,
+                NodeInclusionBehaviour.EXCLUDE_SELECTED));
     }
 
     @Override
@@ -65,19 +78,38 @@ public class NodeGroupEditViewImpl extends ViewImpl implements NodeGroupEditView
         this.name.setText(name);
     }
 
-//    @Override
-//    public boolean isEnabled() {
-//        return enabled.getValue();
-//    }
-//
-//    @Override
-//    public void setEnabled(final boolean enabled) {
-//        this.enabled.setValue(enabled);
-//    }
+    @Override
+    public boolean isEnabled() {
+        return enabled.getValue();
+    }
+
+    @Override
+    public void setEnabled(final boolean enabled) {
+        this.enabled.setValue(enabled);
+    }
+
+    @Override
+    public boolean isInvertSelection() {
+        return NodeInclusionBehaviour.EXCLUDE_SELECTED.equals(nodeInclusionBehaviour.getValue());
+    }
+
+    @Override
+    public void setInvertSelection(final boolean invertSelection) {
+        if (invertSelection) {
+            this.nodeInclusionBehaviour.setValue(NodeInclusionBehaviour.EXCLUDE_SELECTED);
+        } else {
+            this.nodeInclusionBehaviour.setValue(NodeInclusionBehaviour.INCLUDE_SELECTED);
+        }
+    }
 
     @Override
     public void setListView(final View listView) {
         list.setWidget(listView.asWidget());
+    }
+
+    @UiHandler("nodeInclusionBehaviour")
+    void onNodeInclusionBehaviourClick(final ValueChangeEvent<NodeInclusionBehaviour> event) {
+        getUiHandlers().onInvertSelectionChange();
     }
 
     public interface Binder extends UiBinder<Widget, NodeGroupEditViewImpl> {

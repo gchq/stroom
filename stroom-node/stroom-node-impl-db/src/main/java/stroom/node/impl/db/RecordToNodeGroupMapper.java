@@ -38,6 +38,7 @@ class RecordToNodeGroupMapper implements Function<Record, NodeGroup> {
                 .updateUser(record.get(NODE_GROUP.UPDATE_USER))
                 .name(record.get(NODE_GROUP.NAME))
                 .enabled(record.get(NODE_GROUP.ENABLED))
+                .invertSelection(record.get(NODE_GROUP.INVERT_SELECTION))
                 .build();
     }
 }

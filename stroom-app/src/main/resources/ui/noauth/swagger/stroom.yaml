@@ -5013,7 +5013,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResultPageNodeGroupState"
+                $ref: "#/components/schemas/NodeGroupState"
           description: default response
       summary: Gets node group states
       tags:
@@ -15633,6 +15633,8 @@ components:
         id:
           type: integer
           format: int32
+        invertSelection:
+          type: boolean
         name:
           type: string
         updateTimeMs:
@@ -15646,21 +15648,23 @@ components:
     NodeGroupChange:
       type: object
       properties:
-        included:
-          type: boolean
-        nodeGroupId:
-          type: integer
-          format: int32
-        nodeId:
-          type: integer
-          format: int32
+        nodeGroup:
+          $ref: "#/components/schemas/NodeGroup"
+        selectedNodes:
+          type: array
+          items:
+            type: integer
+            format: int32
+          uniqueItems: true
     NodeGroupState:
       type: object
       properties:
-        included:
-          type: boolean
-        node:
-          $ref: "#/components/schemas/Node"
+        selected:
+          type: array
+          items:
+            type: integer
+            format: int32
+          uniqueItems: true
     NodeInfo:
       type: object
       properties:
@@ -18046,16 +18050,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeGroup"
-    ResultPageNodeGroupState:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/NodeGroupState"
     ResultPageProcessorProfile:
       type: object
       description: A page of results.

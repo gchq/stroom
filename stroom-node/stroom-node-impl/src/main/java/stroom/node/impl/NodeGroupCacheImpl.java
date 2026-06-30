@@ -19,7 +19,7 @@ package stroom.node.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
-import stroom.node.api.NodeGroupInfo;
+import stroom.node.api.NodeGroupState;
 import stroom.node.shared.NodeGroup;
 import stroom.util.shared.Clearable;
 
@@ -35,7 +35,7 @@ public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
 
     private static final String CACHE_NAME = "Node Group Cache";
 
-    private final LoadingStroomCache<String, Optional<NodeGroupInfo>> cache;
+    private final LoadingStroomCache<String, Optional<NodeGroupState>> cache;
     private final NodeGroupDao nodeGroupDao;
 
     @Inject
@@ -50,17 +50,17 @@ public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
     }
 
     @Override
-    public Optional<NodeGroupInfo> getIncludedGroupNodes(final String name) {
+    public Optional<NodeGroupState> getSelectedGroupNodes(final String name) {
         return cache.get(name);
     }
 
-    private Optional<NodeGroupInfo> create(final String name) {
+    private Optional<NodeGroupState> create(final String name) {
         final NodeGroup nodeGroup = nodeGroupDao.fetchByName(name);
         if (nodeGroup == null) {
             return Optional.empty();
         }
-        final Set<String> includedNodes = nodeGroupDao.getNodeGroupIncludedNodes(nodeGroup.getId());
-        return Optional.of(new NodeGroupInfo(nodeGroup, includedNodes));
+        final Set<String> selectedNodes = nodeGroupDao.getSelectedNodesForGroup(nodeGroup.getId());
+        return Optional.of(new NodeGroupState(nodeGroup, selectedNodes));
     }
 
     @Override
