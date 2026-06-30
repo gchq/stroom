@@ -19,7 +19,7 @@ package stroom.planb.impl.pipeline;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.GetRequest;
 import stroom.planb.impl.data.PlanBQueryService;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
@@ -60,7 +60,7 @@ public class StateProviderImpl implements StateProvider {
     public Val getState(final String mapName, final String keyName, final long effectiveTimeMs) {
         try {
             final String docName = mapName.toLowerCase(Locale.ROOT);
-            final Optional<PlanBDoc> stateOptional = securityContext.useAsReadResult(() ->
+            final Optional<PlanBDocument> stateOptional = securityContext.useAsReadResult(() ->
                     Optional.ofNullable(stateDocCache.get(docName)));
             return stateOptional
                     .map(stateDoc -> {

@@ -30,7 +30,7 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.planb.impl.serde.val.ValSerdeUtil.Addition;
 import stroom.planb.impl.serde.val.VariableValType;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.query.language.functions.Val;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -50,14 +50,14 @@ public class VariableKeySerde implements TemporalKeySerde {
 
     private static final int USE_HASH_LOOKUP_THRESHOLD = Db.MAX_KEY_LENGTH;
 
-    private final PlanBDoc doc;
+    private final PlanBDocument doc;
     private final int uidLookupThreshold;
     private final UidLookupDb uidLookupDb;
     private final HashLookupDb hashLookupDb;
     private final ByteBuffers byteBuffers;
     private final TimeSerde timeSerde;
 
-    public VariableKeySerde(final PlanBDoc doc,
+    public VariableKeySerde(final PlanBDocument doc,
                             final UidLookupDb uidLookupDb,
                             final HashLookupDb hashLookupDb,
                             final ByteBuffers byteBuffers,

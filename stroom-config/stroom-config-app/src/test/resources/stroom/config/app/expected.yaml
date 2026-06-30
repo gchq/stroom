@@ -759,6 +759,15 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
+    defaultShardCounts:
+      STATE: 16
+      TEMPORAL_STATE: 32
+      RANGED_STATE: 16
+      TEMPORAL_RANGED_STATE: 32
+      SESSION: 32
+      HISTOGRAM: 16
+      METRIC: 16
+      TRACE: 64
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []

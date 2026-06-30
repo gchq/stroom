@@ -32,6 +32,7 @@ import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
+import stroom.planb.impl.data.ArchivalGranularityUtil;
 import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Count;
@@ -53,8 +54,11 @@ import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanKeySerde;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.impl.serde.trace.SpanValueSerde;
-import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.PlanBDocument;
+import stroom.planb.shared.StateKeySchema;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -73,11 +77,15 @@ import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -96,6 +104,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private final ByteBufferFactory byteBufferFactory;
     private final KeySerde<SpanKey> keySerde;
     private final Serde<SpanValue> valueSerde;
+    // Typed reference to the same object as valueSerde, held so that
+    // archiveOldData / deleteOldData can call readInsertTime() without
+    // going through the UID lookup table.
+    private final SpanValueSerde spanValueSerde;
     private final UsedLookupsRecorder keyRecorder;
     private final UsedLookupsRecorder valueRecorder;
     private final Dbi<ByteBuffer> traceRootsDbi;
@@ -108,8 +120,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final ByteBufferFactory byteBufferFactory,
-                    final PlanBDoc doc,
-                    final StateSettings settings,
+                    final PlanBDocument doc,
+                    final TraceSettings settings,
                     final KeySerde<SpanKey> keySerde,
                     final Serde<SpanValue> valueSerde,
                     final HashClashCommitRunnable hashClashCommitRunnable) {
@@ -120,11 +132,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 hashClashCommitRunnable,
                 new SchemaInfo(
                         CURRENT_SCHEMA_VERSION,
-                        JsonUtil.writeValueAsString(settings.getKeySchema()),
-                        JsonUtil.writeValueAsString(settings.getValueSchema())));
+                        JsonUtil.writeValueAsString(new StateKeySchema.Builder().build()),
+                        JsonUtil.writeValueAsString(new StateValueSchema.Builder().build())));
         this.byteBufferFactory = byteBufferFactory;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        this.spanValueSerde = (SpanValueSerde) valueSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
         this.valueRecorder = valueSerde.getUsedLookupsRecorder(env);
 
@@ -141,13 +154,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     public static TraceDb create(final Path path,
                                  final ByteBuffers byteBuffers,
                                  final ByteBufferFactory byteBufferFactory,
-                                 final PlanBDoc doc,
+                                 final PlanBDocument doc,
                                  final boolean readOnly) {
-        final StateSettings settings;
-        if (doc.getSettings() instanceof final StateSettings stateSettings) {
-            settings = stateSettings;
+        final TraceSettings settings;
+        if (doc.getSettings() instanceof final TraceSettings traceSettings) {
+            settings = traceSettings;
         } else {
-            settings = new StateSettings.Builder().build();
+            settings = new TraceSettings.Builder().build();
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
@@ -384,6 +397,140 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         };
     }
 
+    /**
+     * Archives trace entries whose insert time is older than archiveBefore
+     * into dated LMDB environments under archiveBaseDir, then deletes them from
+     * the main environment.
+     *
+     * Three passes:
+     * 1. Read all span+root entries to archive, grouped by date label.
+     * 2. Write each group to a new archive LMDB environment.
+     * 3. Delete the archived entries from the main environment.
+     */
+    @Override
+    public long archiveOldData(final Instant archiveBefore,
+                               final ArchivalGranularity granularity,
+                               final Path archiveBaseDir) {
+        final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(archiveBefore);
+
+        // Pass 1: collect raw key/value bytes to archive, grouped by date label.
+        //
+        // We read insertTime from the first 8 bytes of the value (NanoTimeSerde
+        // writes a single long) via readInsertTime(), which does NOT touch the
+        // UID lookup table.  This avoids "Unable to find value for UID" errors
+        // that would be thrown by the full valueSerde.read() path.
+        final Map<String, List<byte[][]>> toArchive = new LinkedHashMap<>();
+        env.read(readTxn -> {
+            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
+                if (insertTime.isBefore(nanoTimeBefore)) {
+                    final Instant insertInstant = NanoTimeUtil.toInstant(insertTime);
+                    final String label = ArchivalGranularityUtil.label(granularity, insertInstant);
+                    // Copy raw bytes — LMDB buffers are only valid for the lifetime
+                    // of the enclosing read transaction.
+                    final byte[] rawKey = new byte[key.remaining()];
+                    key.duplicate().get(rawKey);
+                    final byte[] rawVal = new byte[val.remaining()];
+                    val.duplicate().get(rawVal);
+                    toArchive.computeIfAbsent(label, l -> new ArrayList<>())
+                            .add(new byte[][]{rawKey, rawVal});
+                }
+            });
+            return null;
+        });
+
+        if (toArchive.isEmpty()) {
+            return 0L;
+        }
+
+        // Pass 2: write raw bytes to archive LMDB environments.
+        //
+        // We bypass insert() / valueSerde.write() because we are doing a
+        // verbatim byte copy — the UID integers embedded in the value bytes
+        // already reference the source shard's lookup table.  After writing
+        // the span data we call copyLookupsTo() to replicate those lookup
+        // tables into the archive so it remains independently queryable.
+        for (final Map.Entry<String, List<byte[][]>> entry : toArchive.entrySet()) {
+            final Path archiveDir = archiveBaseDir.resolve(entry.getKey());
+            try {
+                Files.createDirectories(archiveDir);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            try (final TraceDb archiveDb =
+                         TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
+                archiveDb.env.write(archiveWriter -> {
+                    for (final byte[][] rawKV : entry.getValue()) {
+                        // lmdbjava requires direct (off-heap) ByteBuffers.
+                        final ByteBuffer directKey =
+                                ByteBuffer.allocateDirect(rawKV[0].length);
+                        directKey.put(rawKV[0]).flip();
+                        final ByteBuffer directVal =
+                                ByteBuffer.allocateDirect(rawKV[1].length);
+                        directVal.put(rawKV[1]).flip();
+                        archiveDb.dbi.put(archiveWriter.getWriteTxn(), directKey, directVal);
+                    }
+                    return null;
+                });
+                // Copy UID / hash lookup tables and trace-root index so the
+                // archive is independently queryable without the source shard.
+                copyLookupsTo(archiveDb);
+            }
+        }
+
+        // Pass 3: delete archived entries from the main environment.
+        return env.write(writer -> {
+            final long count = deleteOldData(writer, nanoTimeBefore);
+            if (count > 0 && !Thread.currentThread().isInterrupted()) {
+                env.read(readTxn -> {
+                    keyRecorder.deleteUnused(readTxn, writer);
+                    valueRecorder.deleteUnused(readTxn, writer);
+                    return null;
+                });
+            }
+            return count;
+        });
+    }
+
+    /**
+     * Copies all lookup named-DBs (UID forward/reverse maps, hash map) and
+     * the trace-root index from this shard's LMDB environment to the archive
+     * shard's environment.  The archive thereby becomes self-contained and
+     * queryable without access to the source shard.
+     */
+    private void copyLookupsTo(final TraceDb archive) {
+        // UidLookupDb  → lookup-keyToUid, lookup-uidToKey, lookup-info
+        // HashLookupDb → lookup-hash
+        // TraceDb      → trace-roots
+        for (final String name : List.of(
+                "lookup-keyToUid", "lookup-uidToKey", "lookup-info",
+                "lookup-hash",
+                "trace-roots")) {
+            copyNamedDbi(name, this.env, archive.env);
+        }
+    }
+
+    /**
+     * Iterates every entry in the named DBI of {@code srcEnv} and puts them
+     * verbatim into the same-named DBI of {@code dstEnv}.  Both envs must
+     * already have the DBI open (i.e. the owning {@link TraceDb} must have
+     * been constructed before this is called).
+     */
+    private static void copyNamedDbi(final String name,
+                                     final PlanBEnv srcEnv,
+                                     final PlanBEnv dstEnv) {
+        final Dbi<ByteBuffer> srcDbi = srcEnv.openDbi(name, DbiFlags.MDB_CREATE);
+        final Dbi<ByteBuffer> dstDbi = dstEnv.openDbi(name, DbiFlags.MDB_CREATE);
+        srcEnv.read(readTxn -> {
+            dstEnv.write(writer -> {
+                LmdbIterable.iterate(readTxn, srcDbi, (key, val) ->
+                        dstDbi.put(writer.getWriteTxn(), key, val));
+                return null;
+            });
+            return null;
+        });
+    }
+
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
@@ -408,15 +555,18 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             final Count changeCount = new Count();
 
             // Delete old spans.
+            // Use readInsertTime() rather than the full valueSerde.read() to
+            // avoid "Unable to find value for UID" errors when the UID lookup
+            // table is incomplete (e.g. after a cross-node shard sync).
             LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                final SpanValue value = valueSerde.read(readTxn, val.duplicate());
+                final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
 
-                if (value.getInsertTime().isBefore(deleteBefore)) {
+                if (insertTime.isBefore(deleteBefore)) {
                     // If this is data we no longer want to retain then delete it.
                     dbi.delete(writer.getWriteTxn(), key);
                     changeCount.increment();
                 } else {
-                    // Record used lookup keys.
+                    // Record used lookup keys (raw val bytes, no UID lookup needed).
                     keyRecorder.recordUsed(writer, key);
                     valueRecorder.recordUsed(writer, val);
                 }

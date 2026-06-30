@@ -18,6 +18,8 @@ package stroom.planb.impl.data;
 
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileInfo;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -303,7 +305,7 @@ public class MergeProcessor {
                           final String uuid) {
         try {
             final Shard shard = shardManager.getShardForDocUuid(uuid);
-            final String name = NullSafe.get(shard, Shard::getDoc, PlanBDoc::getName);
+            final String name = NullSafe.get(shard, Shard::getDoc, doc -> doc.getName());
             taskContextFactory.context("Merging Plan B Data '" + name + "'", taskContext -> {
                 taskContext.info(() -> "Merging data into '" + name + "'");
                 shard.merge(path);

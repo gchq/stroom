@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+    <g:FlowPanel styleName="form-group">
+        <form:FormGroup label="Enable Shared File Store"
+                        helpText="Write data to a shared file store. Note: This cannot be modified after data has been written.">
+            <tickbox:CustomCheckBox ui:field="enableSharedFileStore" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="sharedPathFormGroup"
+                        label="Path"
+                        helpText="Path to the shared file store.">
+            <g:TextBox ui:field="sharedPath" addStyleNames="gwt-TextBox allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Shard Count"
+                        helpText="The number of shards to partition the data across. Use 1 for no sharding.">
+            <v:ValueSpinner ui:field="shardCount" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

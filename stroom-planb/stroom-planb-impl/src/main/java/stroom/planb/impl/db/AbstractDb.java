@@ -21,7 +21,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.stream.LmdbIterable.EntryConsumer;
 import stroom.planb.impl.db.PlanBEnv.EnvInf;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -56,14 +56,14 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     protected final PlanBEnv env;
     protected final ByteBuffers byteBuffers;
-    protected final PlanBDoc doc;
+    protected final PlanBDocument doc;
     protected final Dbi<ByteBuffer> dbi;
     protected final Dbi<ByteBuffer> infoDbi;
     protected final SchemaInfo schemaInfo;
 
     public AbstractDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
-                      final PlanBDoc doc,
+                      final PlanBDocument doc,
                       final Boolean overwrite,
                       final HashClashCommitRunnable hashClashCommitRunnable,
                       final SchemaInfo schema) {

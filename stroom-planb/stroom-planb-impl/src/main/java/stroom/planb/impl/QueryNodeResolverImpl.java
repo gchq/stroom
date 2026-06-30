@@ -17,8 +17,10 @@
 package stroom.planb.impl;
 
 import stroom.docref.DocRef;
+import stroom.pathways.shared.TracesDoc;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SnapshotSettings;
 import stroom.query.api.QueryNodeResolver;
 import stroom.util.shared.NullSafe;
@@ -42,14 +44,14 @@ public class QueryNodeResolverImpl implements QueryNodeResolver {
 
     @Override
     public String getNode(final DocRef docRef) {
-        if (docRef == null || !PlanBDoc.TYPE.equals(docRef.getType())) {
+        if (docRef == null || (!PlanBDoc.TYPE.equals(docRef.getType()) && !TracesDoc.TYPE.equals(docRef.getType()))) {
             return null;
         }
 
-        final PlanBDoc doc = planBDocCache.get(docRef.getName());
+        final PlanBDocument doc = planBDocCache.get(docRef.getName());
         final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
                 doc,
-                PlanBDoc::getSettings,
+                PlanBDocument::getSettings,
                 AbstractPlanBSettings::getSnapshotSettings,
                 SnapshotSettings::new);
         if (snapshotSettings.isUseSnapshotsForQuery()) {

@@ -18,6 +18,7 @@ package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.shared.ArchivalGranularity;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -46,6 +47,12 @@ public interface Db<K, V> extends AutoCloseable {
 
     long deleteOldData(Instant deleteBefore,
                        boolean useStateTime);
+
+    default long archiveOldData(final Instant archiveBefore,
+                                final ArchivalGranularity granularity,
+                                final Path archiveBaseDir) {
+        return 0L;
+    }
 
     long condense(Instant condenseBefore);
 

@@ -19,7 +19,9 @@ package stroom.planb.impl.data;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.docstore.api.DocumentTypeName;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
@@ -27,8 +29,12 @@ import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.data.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
+import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.fs.SharedFileStoreShard;
+import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -68,6 +74,7 @@ public class ShardManager {
     private final ByteBufferFactory byteBufferFactory;
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
+    private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
     private final NodeInfo nodeInfo;
     private final Provider<PlanBConfig> configProvider;
@@ -86,11 +93,13 @@ public class ShardManager {
                         final StatePaths statePaths,
                         final FileTransferClient fileTransferClient,
                         final TaskContextFactory taskContextFactory,
-                        final ExecutorProvider executorProvider) {
+                        final ExecutorProvider executorProvider,
+                        final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider) {
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
         this.planBDocCache = planBDocCache;
         this.planBDocStore = planBDocStore;
+        this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.nodeInfo = nodeInfo;
         this.configProvider = configProvider;
         this.statePaths = statePaths;
@@ -118,29 +127,21 @@ public class ShardManager {
         try {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             shardMap.values().forEach(shard -> {
-                final PlanBDoc doc = shard.getDoc();
+                final PlanBDocument doc = shard.getDoc();
                 final Runnable runnable = taskContextFactory
                         .childContext(parentTaskContext, "Maintain shard: " + doc.getName(), taskContext -> {
                             try {
                                 try {
-                                    final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
-                                    // If we can't get the doc then we must have deleted it so delete the shard.
-                                    if (loaded == null) {
-                                        taskContext.info(() -> "Deleting shard");
-                                        if (shard.delete()) {
-                                            shardMap.remove(shard.getDoc().getUuid());
-                                        }
-                                    } else {
-                                        long total = 0;
-                                        taskContext.info(() -> "Condensing data");
-                                        total += shard.condense(loaded);
-                                        taskContext.info(() -> "Deleting old data");
-                                        total += shard.deleteOldData(loaded);
-                                        if (total > 0) {
-                                            // If we removed data then compact the shard.
-                                            taskContext.info(() -> "Compacting shard");
-                                            shard.compact();
-                                        }
+                                    final PlanBDocument loaded = planBDocCache.get(doc.getName());
+                                    long total = 0;
+                                    taskContext.info(() -> "Condensing data");
+                                    total += shard.condense(loaded);
+                                    taskContext.info(() -> "Deleting old data");
+                                    total += shard.deleteOldData(loaded);
+                                    if (total > 0) {
+                                        // If we removed data then compact the shard.
+                                        taskContext.info(() -> "Compacting shard");
+                                        shard.compact();
                                     }
                                 } catch (final DocumentNotFoundException e) {
                                     LOGGER.debug(e::getMessage, e);
@@ -168,18 +169,11 @@ public class ShardManager {
         try {
             shardMap.values().forEach(shard -> {
                 try {
-                    final PlanBDoc doc = shard.getDoc();
+                    final PlanBDocument doc = shard.getDoc();
                     try {
-                        final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
-                        // If we can't get the doc then we must have deleted it so delete the shard.
-                        if (loaded == null) {
-                            if (shard.delete()) {
-                                shardMap.remove(shard.getDoc().getUuid());
-                            }
-                        } else {
-                            // If we removed data then compact the shard.
-                            shard.compact();
-                        }
+                        planBDocCache.get(doc.getName());
+                        // Doc exists — compact the shard.
+                        shard.compact();
                     } catch (final DocumentNotFoundException e) {
                         LOGGER.debug(e::getMessage, e);
                         // If we can't get the doc then we must have deleted it so delete the shard.
@@ -200,7 +194,9 @@ public class ShardManager {
     public void checkSnapshotStatus(final SnapshotRequest request) {
         try {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
-            shard.checkSnapshotStatus(request);
+            if (shard instanceof final SnapshotCapable snapshotCapable) {
+                snapshotCapable.checkSnapshotStatus(request);
+            }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Debug checking snapshot status: {} {}",
                     request.getPlanBDocRef(), e.getMessage()), e);
@@ -211,8 +207,11 @@ public class ShardManager {
     public void createSnapshots() {
         try {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
-            shardMap.values().forEach(shard ->
-                    futures.add(CompletableFuture.runAsync(shard::createSnapshot, executor)));
+            shardMap.values().forEach(shard -> {
+                if (shard instanceof final SnapshotCapable snapshotCapable) {
+                    futures.add(CompletableFuture.runAsync(snapshotCapable::createSnapshot, executor));
+                }
+            });
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
@@ -227,9 +226,8 @@ public class ShardManager {
 
                 // Check if the doc has been deleted.
                 try {
-                    final PlanBDoc loaded = planBDocStore.readDocument(
-                            DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build());
-                    docDeleted = loaded == null;
+                    planBDocCache.get(shard.getDoc().getName());
+                    docDeleted = false;
                 } catch (final DocumentNotFoundException e) {
                     LOGGER.debug(e::getMessage, e);
                     docDeleted = true;
@@ -257,9 +255,9 @@ public class ShardManager {
     public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
         try {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
-            if (shard instanceof final StoreShard storeShard) {
+            if (shard instanceof final RestStoreShard restShard) {
                 try {
-                    final Path path = storeShard.getSnapshotZip();
+                    final Path path = restShard.getSnapshotZip();
                     if (Files.exists(path)) {
                         StreamUtil.streamToStream(Files.newInputStream(path), outputStream);
                     }
@@ -291,28 +289,70 @@ public class ShardManager {
         }
     }
 
-    public Shard getShardForMapName(final String mapName) {
-        final PlanBDoc doc = planBDocCache.get(mapName);
+    public <R> R get(final String mapName, final String key, final Function<Db<?, ?>, R> function) {
+        final PlanBDocument doc = planBDocCache.get(mapName);
         if (doc == null) {
             LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
             throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
         }
-        return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
+        if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+            final int shardIndex = ShardKeyRouter.computeShardIndex(key, doc.getShardCount());
+            return get(mapName, shardIndex, function);
+        } else {
+            return get(mapName, function);
+        }
     }
 
+    public <R> R get(final String mapName, final int shardIndex, final Function<Db<?, ?>, R> function) {
+        try {
+            final Shard shard = getShardForMapNameAndShard(mapName, shardIndex);
+            return shard.get(function);
+        } catch (final SnapshotShard.ShardClosedException e) {
+            LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName + "_" + shardIndex);
+            final Shard shard = getShardForMapNameAndShard(mapName, shardIndex);
+            return shard.get(function);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Error getting shard for map: {} shard: {} {}",
+                    mapName, shardIndex, e.getMessage()), e);
+            throw e;
+        }
+    }
+
+
+    public Shard getShardForMapName(final String mapName) {
+        return getShardForMapNameAndShard(mapName, -1);
+    }
+
+    public Shard getShardForMapNameAndShard(final String mapName, final int shardIndex) {
+        final PlanBDocument doc = planBDocCache.get(mapName);
+        if (doc == null) {
+            LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
+            throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
+        }
+        final String cacheKey = shardIndex >= 0 ? doc.getUuid() + "_" + shardIndex : doc.getUuid();
+        return shardMap.computeIfAbsent(cacheKey, k -> createShard(doc, shardIndex));
+    }
+
+
     public Shard getShardForDocUuid(final String docUuid) throws DocumentNotFoundException {
-        return shardMap.computeIfAbsent(docUuid, k -> {
-            final PlanBDoc doc = planBDocStore.readDocument(DocRef.builder().type(PlanBDoc.TYPE).uuid(k).build());
+        return getShardForDocUuidAndShard(docUuid, -1);
+    }
+
+    public Shard getShardForDocUuidAndShard(final String docUuid,
+                                            final int shardIndex) throws DocumentNotFoundException {
+        final String cacheKey = shardIndex >= 0 ? docUuid + "_" + shardIndex : docUuid;
+        return shardMap.computeIfAbsent(cacheKey, k -> {
+            final PlanBDocument doc = readPlanBDoc(docUuid);
             if (doc == null) {
                 LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
-                throw new DocumentNotFoundException(DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build());
+                throw new DocumentNotFoundException(DocRef.builder().uuid(docUuid).build());
             }
-            return createShard(doc);
+            return createShard(doc, shardIndex);
         });
     }
 
-    private Shard createShard(final PlanBDoc doc) {
-        if (isSnapshotNode()) {
+    private Shard createShard(final PlanBDocument doc, final int shardIndex) {
+        if (isSnapshotNode() && (doc.getSharedPath() == null || doc.getShardCount() == 0)) {
             return new SnapshotShard(
                     byteBuffers,
                     byteBufferFactory,
@@ -323,11 +363,69 @@ public class ShardManager {
                     DB_FACTORY,
                     executor);
         }
-        return new StoreShard(
+        if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+            return new SharedFileStoreShard(
+                    byteBuffers,
+                    byteBufferFactory,
+                    configProvider,
+                    statePaths,
+                    doc,
+                    shardIndex);
+        }
+        return new RestStoreShard(
                 byteBuffers,
                 byteBufferFactory,
                 configProvider,
                 statePaths,
-                doc);
+                doc,
+                shardIndex);
+    }
+
+    private PlanBDocument readPlanBDoc(final DocRef docRef) {
+        if (documentActionHandlersProvider != null && !documentActionHandlersProvider.get().isEmpty()) {
+            final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
+                    .get(new DocumentTypeName(docRef.getType()));
+            if (handler != null) {
+                try {
+                    final Object loaded = handler.readDocument(docRef);
+                    if (loaded instanceof PlanBDocument planBStoredDoc) {
+                        return planBStoredDoc;
+                    }
+                } catch (final DocumentNotFoundException e) {
+                    LOGGER.debug(() -> "Document not found: " + docRef, e);
+                }
+            }
+        }
+        if (planBDocStore != null) {
+            try {
+                return planBDocStore.readDocument(docRef);
+            } catch (final DocumentNotFoundException e) {
+                LOGGER.debug(() -> "Document not found: " + docRef, e);
+            }
+        }
+        return null;
+    }
+
+    private PlanBDocument readPlanBDoc(final String uuid) {
+        if (documentActionHandlersProvider != null) {
+            for (final DocumentTypeName typeName : documentActionHandlersProvider.get().keySet()) {
+                final PlanBDocument doc = readPlanBDoc(
+                        DocRef.builder().type(typeName.toString()).uuid(uuid).build());
+                if (doc != null) {
+                    return doc;
+                }
+            }
+        }
+        if (planBDocStore != null) {
+            try {
+                return planBDocStore.readDocument(DocRef.builder()
+                        .type(PlanBDoc.TYPE)
+                        .uuid(uuid)
+                        .build());
+            } catch (final DocumentNotFoundException e) {
+                LOGGER.debug(() -> "Document not found by UUID: " + uuid, e);
+            }
+        }
+        return null;
     }
 }

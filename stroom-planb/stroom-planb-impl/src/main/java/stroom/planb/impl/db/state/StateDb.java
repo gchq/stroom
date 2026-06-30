@@ -39,7 +39,7 @@ import stroom.planb.impl.serde.keyprefix.KeyPrefixSerdeFactory;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -72,7 +72,7 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
 
     private StateDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
-                    final PlanBDoc doc,
+                    final PlanBDocument doc,
                     final StateSettings settings,
                     final KeySerde<KeyPrefix> keySerde,
                     final ValTimeSerde valueSerde,
@@ -94,7 +94,7 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
 
     public static StateDb create(final Path path,
                                  final ByteBuffers byteBuffers,
-                                 final PlanBDoc doc,
+                                 final PlanBDocument doc,
                                  final boolean readOnly) {
         // Ensure all settings are non null.
         final StateSettings settings;

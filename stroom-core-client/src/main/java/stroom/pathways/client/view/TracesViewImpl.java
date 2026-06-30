@@ -16,7 +16,7 @@
 
 package stroom.pathways.client.view;
 
-import stroom.pathways.client.presenter.TracesPresenter.TracesView;
+import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,8 +32,6 @@ public class TracesViewImpl
         implements TracesView {
 
     @UiField
-    SimplePanel dataSource;
-    @UiField
     Label label;
     @UiField
     SimplePanel topWidget;
@@ -45,11 +43,6 @@ public class TracesViewImpl
     @Inject
     public TracesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    public void setDataSourceView(final View view) {
-        dataSource.setWidget(view.asWidget());
     }
 
     @Override

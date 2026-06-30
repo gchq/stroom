@@ -18,21 +18,27 @@ package stroom.planb.impl;
 
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
-import stroom.planb.impl.data.FileTransferClient;
-import stroom.planb.impl.data.FileTransferClientImpl;
-import stroom.planb.impl.data.FileTransferResourceImpl;
-import stroom.planb.impl.data.FileTransferService;
-import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.data.TracesRemoteQueryResourceImpl;
+import stroom.planb.impl.db.BatchDestination;
+import stroom.planb.impl.db.DefaultBatchDestination;
+import stroom.planb.impl.fs.SharedFileStoreCleaner;
+import stroom.planb.impl.fs.SharedFileStoreDocStore;
+import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateFetcherImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
+import stroom.planb.impl.rest.FileTransferClient;
+import stroom.planb.impl.rest.FileTransferClientImpl;
+import stroom.planb.impl.rest.FileTransferResourceImpl;
+import stroom.planb.impl.rest.FileTransferService;
+import stroom.planb.impl.rest.FileTransferServiceImpl;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.datasource.DataSourceProvider;
@@ -49,6 +55,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import jakarta.inject.Inject;
 
 public class PlanBModule extends AbstractModule {
@@ -64,6 +71,9 @@ public class PlanBModule extends AbstractModule {
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);
 
+        Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
+                .addBinding().toInstance(PlanBDoc.TYPE);
+
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(PlanBDocCacheImpl.class);
 
@@ -76,8 +86,10 @@ public class PlanBModule extends AbstractModule {
                 .addBinding(PlanBShardInfoServiceImpl.class);
 
         // State
+        bind(BatchDestination.class).to(DefaultBatchDestination.class);
         bind(FileTransferClient.class).to(FileTransferClientImpl.class);
         bind(FileTransferService.class).to(FileTransferServiceImpl.class);
+        bind(SharedFileStoreMergeProcessor.class);
 
         bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
 
@@ -121,6 +133,28 @@ public class PlanBModule extends AbstractModule {
                         .description("Plan B snapshot cleanup")
                         .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
                         .advanced(true));
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(SharedFileStoreMergeRunnable.class, builder -> builder
+                        .name("Plan B Shared FS Merge")
+                        .description("Distributed merge of sharded Plan B batch stores on the shared file store")
+                        .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
+                        .advanced(true));
+
+        GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class);
+
+        bind(SharedFileStoreCleaner.class).asEagerSingleton();
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ShardHousekeepingRunnable.class, builder -> builder
+                        .name("Plan B Shard Housekeeping")
+                        .description("Detects orphaned shard directories on the shared filesystem and "
+                                + "moves them to trash, then drains trash entries from previous runs. "
+                                + "Covers all PlanB doc types (PlanBDoc, TracesDoc, etc.).")
+                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
+                        .advanced(true));
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(CleanerStartup.class);
     }
 
     private static class StateMergeRunnable extends RunnableWrapper {
@@ -152,6 +186,34 @@ public class PlanBModule extends AbstractModule {
         @Inject
         ShardManagerCleanupRunnable(final ShardManager shardManager) {
             super(shardManager::cleanup);
+        }
+    }
+
+    private static class SharedFileStoreMergeRunnable extends RunnableWrapper {
+
+        @Inject
+        SharedFileStoreMergeRunnable(final SharedFileStoreMergeProcessor mergeProcessor) {
+            super(mergeProcessor::merge);
+        }
+    }
+
+    private static class ShardHousekeepingRunnable extends RunnableWrapper {
+
+        @Inject
+        ShardHousekeepingRunnable(final SharedFileStoreCleaner executor) {
+            super(executor::exec);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class CleanerStartup extends RunnableWrapper {
+
+        @Inject
+        CleanerStartup(final SharedFileStoreCleaner cleaner) {
+            super(cleaner::startup);
         }
     }
 }

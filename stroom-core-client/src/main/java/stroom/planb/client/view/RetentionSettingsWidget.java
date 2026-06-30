@@ -81,6 +81,8 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                 .build();
     }
 
+    private boolean shardingEnabled;
+
     @Override
     public void setRetention(final RetentionSettings retention) {
         final RetentionSettings settings = new RetentionSettings.Builder(retention).build();
@@ -92,33 +94,42 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
             this.retentionTimeUnit.setValue(settings.getDuration().getTimeUnit());
         }
         this.useStateTime.setValue(settings.useStateTime());
-        setRetentionEnabled(retentionEnabled.getValue());
+        updateStates();
     }
 
-    private void setRetentionEnabled(final boolean enabled) {
-        if (!readOnly) {
-            if (enabled) {
+    public void setShardingEnabled(final boolean shardingEnabled) {
+        this.shardingEnabled = shardingEnabled;
+        if (shardingEnabled) {
+            useStateTime.setValue(false);
+        }
+        updateStates();
+    }
+
+    private void updateStates() {
+        final boolean editable = !readOnly;
+        retentionEnabled.setEnabled(editable);
+
+        final boolean retentionOn = retentionEnabled.getValue();
+        if (editable) {
+            if (retentionOn) {
                 retentionAgePanel.getElement().getStyle().setOpacity(1);
             } else {
                 retentionAgePanel.getElement().getStyle().setOpacity(0.5);
             }
-            retentionAge.setEnabled(enabled);
-            retentionTimeUnit.setEnabled(enabled);
-            useStateTime.setEnabled(enabled);
         }
+        retentionAge.setEnabled(editable && retentionOn);
+        retentionTimeUnit.setEnabled(editable && retentionOn);
+        useStateTime.setEnabled(editable && retentionOn && !shardingEnabled);
     }
 
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        retentionEnabled.setEnabled(!readOnly);
-        retentionAge.setEnabled(!readOnly);
-        retentionTimeUnit.setEnabled(!readOnly);
-        useStateTime.setEnabled(!readOnly);
+        updateStates();
     }
 
     @UiHandler("retentionEnabled")
     public void onRetentionEnabled(final ValueChangeEvent<Boolean> event) {
-        setRetentionEnabled(retentionEnabled.getValue());
+        updateStates();
         getUiHandlers().onChange();
     }
 

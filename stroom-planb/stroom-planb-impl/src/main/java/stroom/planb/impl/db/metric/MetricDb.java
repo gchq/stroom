@@ -50,7 +50,7 @@ import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.MetricValueSchema;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
@@ -93,7 +93,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
 
     private MetricDb(final PlanBEnv env,
                      final ByteBuffers byteBuffers,
-                     final PlanBDoc doc,
+                     final PlanBDocument doc,
                      final MetricSettings settings,
                      final TemporalResolution temporalResolution,
                      final TemporalKeySerde keySerde,
@@ -116,7 +116,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
 
     public static MetricDb create(final Path path,
                                   final ByteBuffers byteBuffers,
-                                  final PlanBDoc doc,
+                                  final PlanBDocument doc,
                                   final boolean readOnly) {
         // Ensure all settings are non null.
         final MetricSettings settings;

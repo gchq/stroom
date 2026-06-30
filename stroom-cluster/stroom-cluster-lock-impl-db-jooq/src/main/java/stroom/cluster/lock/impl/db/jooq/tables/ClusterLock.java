@@ -67,6 +67,26 @@ public class ClusterLock extends TableImpl<ClusterLockRecord> {
      */
     public final TableField<ClusterLockRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
+    /**
+     * The column <code>stroom.cluster_lock.lock_time_ms</code>.
+     */
+    public final TableField<ClusterLockRecord, Long> LOCK_TIME_MS = createField(DSL.name("lock_time_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.cluster_lock.node_name</code>.
+     */
+    public final TableField<ClusterLockRecord, String> NODE_NAME = createField(DSL.name("node_name"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.cluster_lock.thread_name</code>.
+     */
+    public final TableField<ClusterLockRecord, String> THREAD_NAME = createField(DSL.name("thread_name"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.cluster_lock.lease_ms</code>.
+     */
+    public final TableField<ClusterLockRecord, Long> LEASE_MS = createField(DSL.name("lease_ms"), SQLDataType.BIGINT, this, "");
+
     private ClusterLock(Name alias, Table<ClusterLockRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

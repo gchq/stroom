@@ -1,21 +1,6 @@
-/*
- * Copyright 2016-2025 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.planb.impl;
 
+import stroom.planb.shared.StateType;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -39,6 +24,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     private final StroomDuration minTimeToKeepSnapshots;
     private final StroomDuration minTimeToKeepSnapshotEnv;
     private final StroomDuration snapshotRetryFetchInterval;
+    private final java.util.Map<StateType, Integer> defaultShardCounts;
 
     public PlanBConfig() {
         this("planb");
@@ -54,7 +40,33 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 path,
                 StroomDuration.ofMinutes(10),
                 StroomDuration.ofMinutes(20),
-                StroomDuration.ofMinutes(1));
+                StroomDuration.ofMinutes(1),
+                java.util.Map.of(
+                        StateType.STATE, 16,
+                        StateType.TEMPORAL_STATE, 32,
+                        StateType.RANGED_STATE, 16,
+                        StateType.TEMPORAL_RANGED_STATE, 32,
+                        StateType.SESSION, 32,
+                        StateType.HISTOGRAM, 16,
+                        StateType.METRIC, 16,
+                        StateType.TRACE, 64
+                ));
+    }
+
+    @Deprecated
+    public PlanBConfig(final CacheConfig stateDocCache,
+                       final List<String> nodeList,
+                       final String path,
+                       final StroomDuration minTimeToKeepSnapshots,
+                       final StroomDuration minTimeToKeepSnapshotEnv,
+                       final StroomDuration snapshotRetryFetchInterval) {
+        this(stateDocCache,
+             nodeList,
+             path,
+             minTimeToKeepSnapshots,
+             minTimeToKeepSnapshotEnv,
+             snapshotRetryFetchInterval,
+             null);
     }
 
     @SuppressWarnings("unused")
@@ -64,13 +76,24 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("path") final String path,
                        @JsonProperty("minTimeToKeepSnapshots") final StroomDuration minTimeToKeepSnapshots,
                        @JsonProperty("minTimeToKeepSnapshotEnv") final StroomDuration minTimeToKeepSnapshotEnv,
-                       @JsonProperty("snapshotRetryFetchInterval") final StroomDuration snapshotRetryFetchInterval) {
+                       @JsonProperty("snapshotRetryFetchInterval") final StroomDuration snapshotRetryFetchInterval,
+                       @JsonProperty("defaultShardCounts") final java.util.Map<StateType, Integer> defaultShardCounts) {
         this.stateDocCache = stateDocCache;
         this.nodeList = nodeList;
         this.path = path;
         this.minTimeToKeepSnapshots = minTimeToKeepSnapshots;
         this.minTimeToKeepSnapshotEnv = minTimeToKeepSnapshotEnv;
         this.snapshotRetryFetchInterval = snapshotRetryFetchInterval;
+        this.defaultShardCounts = defaultShardCounts != null ? defaultShardCounts : java.util.Map.of(
+                StateType.STATE, 16,
+                StateType.TEMPORAL_STATE, 32,
+                StateType.RANGED_STATE, 16,
+                StateType.TEMPORAL_RANGED_STATE, 32,
+                StateType.SESSION, 32,
+                StateType.HISTOGRAM, 16,
+                StateType.METRIC, 16,
+                StateType.TRACE, 64
+        );
     }
 
     @JsonProperty
@@ -112,6 +135,12 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         return snapshotRetryFetchInterval;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Default shard counts by state type.")
+    public java.util.Map<StateType, Integer> getDefaultShardCounts() {
+        return defaultShardCounts;
+    }
+
     @Override
     public String toString() {
         return "PlanBConfig{" +
@@ -121,6 +150,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                ", minTimeToKeepSnapshots=" + minTimeToKeepSnapshots +
                ", minTimeToKeepSnapshotEnv=" + minTimeToKeepSnapshotEnv +
                ", snapshotRetryFetchInterval=" + snapshotRetryFetchInterval +
+               ", defaultShardCounts=" + defaultShardCounts +
                '}';
     }
 
@@ -138,7 +168,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                Objects.equals(path, that.path) &&
                Objects.equals(minTimeToKeepSnapshots, that.minTimeToKeepSnapshots) &&
                Objects.equals(minTimeToKeepSnapshotEnv, that.minTimeToKeepSnapshotEnv) &&
-               Objects.equals(snapshotRetryFetchInterval, that.snapshotRetryFetchInterval);
+               Objects.equals(snapshotRetryFetchInterval, that.snapshotRetryFetchInterval) &&
+               Objects.equals(defaultShardCounts, that.defaultShardCounts);
     }
 
     @Override
@@ -149,7 +180,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 path,
                 minTimeToKeepSnapshots,
                 minTimeToKeepSnapshotEnv,
-                snapshotRetryFetchInterval);
+                snapshotRetryFetchInterval,
+                defaultShardCounts);
     }
 
     public static Builder builder() {
@@ -168,6 +200,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         private StroomDuration minTimeToKeepSnapshots;
         private StroomDuration minTimeToKeepSnapshotEnv;
         private StroomDuration snapshotRetryFetchInterval;
+        private java.util.Map<StateType, Integer> defaultShardCounts;
 
         public Builder() {
             // Set defaults
@@ -181,6 +214,16 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.minTimeToKeepSnapshots = StroomDuration.ofMinutes(10);
             this.minTimeToKeepSnapshotEnv = StroomDuration.ofMinutes(20);
             this.snapshotRetryFetchInterval = StroomDuration.ofMinutes(1);
+            this.defaultShardCounts = java.util.Map.of(
+                    StateType.STATE, 16,
+                    StateType.TEMPORAL_STATE, 32,
+                    StateType.RANGED_STATE, 16,
+                    StateType.TEMPORAL_RANGED_STATE, 32,
+                    StateType.SESSION, 32,
+                    StateType.HISTOGRAM, 16,
+                    StateType.METRIC, 16,
+                    StateType.TRACE, 64
+            );
         }
 
         public Builder(final PlanBConfig config) {
@@ -190,6 +233,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.minTimeToKeepSnapshots = config.minTimeToKeepSnapshots;
             this.minTimeToKeepSnapshotEnv = config.minTimeToKeepSnapshotEnv;
             this.snapshotRetryFetchInterval = config.snapshotRetryFetchInterval;
+            this.defaultShardCounts = config.defaultShardCounts;
         }
 
         public Builder stateDocCache(final CacheConfig stateDocCache) {
@@ -222,6 +266,11 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             return this;
         }
 
+        public Builder defaultShardCounts(final java.util.Map<StateType, Integer> defaultShardCounts) {
+            this.defaultShardCounts = defaultShardCounts;
+            return this;
+        }
+
         public PlanBConfig build() {
             return new PlanBConfig(
                     stateDocCache,
@@ -229,7 +278,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                     path,
                     minTimeToKeepSnapshots,
                     minTimeToKeepSnapshotEnv,
-                    snapshotRetryFetchInterval);
+                    snapshotRetryFetchInterval,
+                    defaultShardCounts);
         }
     }
 }

@@ -16,22 +16,31 @@
 
 package stroom.planb.impl.data;
 
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentActionHandler;
+import stroom.docstore.api.DocumentTypeName;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Trace;
+import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.trace.TraceDb;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.task.api.ExecutorProvider;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
@@ -45,7 +54,13 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Singleton
 public class TracesStoreImpl implements TracesStore {
@@ -58,6 +73,9 @@ public class TracesStoreImpl implements TracesStore {
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
+    private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
+    private final SecurityContext securityContext;
+    private final Executor executor;
 
     @Inject
     public TracesStoreImpl(final PlanBDocCache planBDocCache,
@@ -65,22 +83,29 @@ public class TracesStoreImpl implements TracesStore {
                            final ShardManager shardManager,
                            final Provider<NodeService> nodeServiceProvider,
                            final Provider<NodeInfo> nodeInfoProvider,
-                           final Provider<WebTargetFactory> webTargetFactoryProvider) {
+                           final Provider<WebTargetFactory> webTargetFactoryProvider,
+                           final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
+                           final SecurityContext securityContext,
+                           final ExecutorProvider executorProvider) {
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.shardManager = shardManager;
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
+        this.documentActionHandlersProvider = documentActionHandlersProvider;
+        this.securityContext = securityContext;
+        this.executor = executorProvider.get();
     }
 
     @Override
     public TracesResultPage findTraces(final FindTraceCriteria criteria) {
-        final String name = criteria.getDataSourceRef().getName();
-        final PlanBDoc doc = planBDocCache.get(name);
+        final DocRef docRef = criteria.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+
         if (doc == null) {
-            LOGGER.warn(() -> "No Plan B doc found for '" + name + "'");
-            throw new RuntimeException("No Plan B doc found for '" + name + "'");
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
         }
         final boolean local = !shardManager.isSnapshotNode();
         return findTraces(criteria, local);
@@ -124,21 +149,112 @@ public class TracesStoreImpl implements TracesStore {
     }
 
     public TracesResultPage getLocalTraces(final FindTraceCriteria criteria) {
-        return shardManager.get(criteria.getDataSourceRef().getName(), reader -> {
-            if (reader instanceof final TraceDb traceDb) {
-                return traceDb.findTraces(criteria);
+        final DocRef docRef = criteria.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+
+        if (doc == null) {
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
+        }
+
+        if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            final List<CompletableFuture<TracesResultPage>> futures = new ArrayList<>();
+
+            final FindTraceCriteria shardCriteria = new FindTraceCriteria(
+                    PageRequest.unlimited(),
+                    criteria.getSortList(),
+                    criteria.getDataSourceRef(),
+                    criteria.getFilter(),
+                    criteria.getPathway(),
+                    criteria.getTemporalOrderingTolerance());
+
+            for (int i = 0; i < doc.getShardCount(); i++) {
+                final int shardIndex = i;
+                futures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return securityContext.asUserResult(userIdentity, () ->
+                                shardManager.get(doc.getName(), shardIndex, reader -> {
+                                    if (reader instanceof final TraceDb traceDb) {
+                                        return traceDb.findTraces(shardCriteria);
+                                    }
+                                    throw new IllegalStateException("Unexpected value: " + reader);
+                                }));
+                    } catch (final Exception e) {
+                        LOGGER.error("Error querying shard " + shardIndex + " for doc " + doc.getName(), e);
+                        return null;
+                    }
+                }, executor));
             }
-            throw new IllegalStateException("Unexpected value: " + reader);
-        });
+
+            final List<TraceRoot> allTraceRoots = new ArrayList<>();
+            int total = 0;
+            boolean exact = true;
+
+            // Wait for all shard queries to complete concurrently
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            for (final CompletableFuture<TracesResultPage> future : futures) {
+                try {
+                    final TracesResultPage page = future.get();
+                    if (page != null) {
+                        if (page.getValues() != null) {
+                            allTraceRoots.addAll(page.getValues());
+                        }
+                        if (page.getPageResponse() != null) {
+                            total += page.getPageResponse().getTotal();
+                            if (!page.getPageResponse().isExact()) {
+                                exact = false;
+                            }
+                        }
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error("Failed to retrieve query result page from future", e);
+                }
+            }
+
+            // Sort lexicographically by traceId
+            allTraceRoots.sort(Comparator.comparing(TraceRoot::getTraceId));
+
+            // Apply pagination manually
+            final int offset = criteria.getPageRequest() != null ? criteria.getPageRequest().getOffset() : 0;
+            final int length = criteria.getPageRequest() != null
+                    ? criteria.getPageRequest().getLength()
+                    : Integer.MAX_VALUE;
+
+            final List<TraceRoot> paginatedList;
+            if (offset >= allTraceRoots.size()) {
+                paginatedList = Collections.emptyList();
+            } else {
+                final int toIndex = Math.min(offset + length, allTraceRoots.size());
+                paginatedList = allTraceRoots.subList(offset, toIndex);
+            }
+
+            final stroom.util.shared.PageResponse pageResponse = new stroom.util.shared.PageResponse(
+                    (long) offset,
+                    paginatedList.size(),
+                    (long) total,
+                    exact
+            );
+            return new TracesResultPage(paginatedList, pageResponse);
+        } else {
+            return shardManager.get(criteria.getDataSourceRef().getName(), reader -> {
+                if (reader instanceof final TraceDb traceDb) {
+                    return traceDb.findTraces(criteria);
+                }
+                throw new IllegalStateException("Unexpected value: " + reader);
+            });
+        }
     }
 
     @Override
     public Trace getTrace(final GetTraceRequest request) {
-        final String name = request.getDataSourceRef().getName();
-        final PlanBDoc doc = planBDocCache.get(name);
+        final DocRef docRef = request.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+
         if (doc == null) {
-            LOGGER.warn(() -> "No Plan B doc found for '" + name + "'");
-            throw new RuntimeException("No Plan B doc found for '" + name + "'");
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
         }
         final boolean local = !shardManager.isSnapshotNode();
         return findTrace(request, local);
@@ -182,11 +298,32 @@ public class TracesStoreImpl implements TracesStore {
     }
 
     public Trace getLocalTrace(final GetTraceRequest request) {
-        return shardManager.get(request.getDataSourceRef().getName(), reader -> {
+        return shardManager.get(request.getDataSourceRef().getName(), request.getTraceId(), reader -> {
             if (reader instanceof final TraceDb traceDb) {
                 return traceDb.getTrace(request);
             }
             throw new IllegalStateException("Unexpected value: " + reader);
         });
+    }
+
+    private PlanBDocument getPlanBDoc(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        if (TracesDoc.TYPE.equals(docRef.getType())) {
+            try {
+                final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
+                        .get(new DocumentTypeName(TracesDoc.TYPE));
+                if (handler == null) {
+                    throw new IllegalStateException("No handler found for type: " + TracesDoc.TYPE);
+                }
+                return (PlanBDocument) handler.readDocument(docRef);
+            } catch (final Exception e) {
+                LOGGER.error("Failed to read TracesDoc " + docRef, e);
+                throw new RuntimeException("Failed to read TracesDoc '" + docRef.getName() + "'", e);
+            }
+        } else {
+            return planBDocCache.get(docRef.getName());
+        }
     }
 }

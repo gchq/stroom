@@ -116,6 +116,11 @@ public final class PropertyUtil {
                         LOGGER.trace(() -> LogUtil.message("{}Ignoring Collection value of type {}",
                                 indent + "  ",
                                 childValue.getClass().getSimpleName()));
+                    } else if (childValue instanceof Map<?, ?>) {
+                        // We don't want to recurse into map types
+                        LOGGER.trace(() -> LogUtil.message("{}Ignoring Map value of type {}",
+                                indent + "  ",
+                                childValue.getClass().getSimpleName()));
                     } else {
                         // descend into the prop, which may or may not have its own props
                         walkObjectTree(

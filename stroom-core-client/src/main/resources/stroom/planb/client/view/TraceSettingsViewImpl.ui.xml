@@ -9,5 +9,7 @@
                           ui:field="snapshotPanel"/>
         <sg:SettingsGroup label="Data Retention"
                           ui:field="retentionPanel"/>
+        <sg:SettingsGroup label="Shared File Store"
+                          ui:field="shardingArchivingPanel"/>
     </g:FlowPanel>
 </ui:UiBinder> 

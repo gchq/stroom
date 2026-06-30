@@ -18,11 +18,13 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
+import stroom.planb.shared.ArchivalSettings;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SnapshotSettings;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -33,8 +35,10 @@ public class TraceSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
+    private final SharedFileStoreSettingsWidget shardingSettingsWidget;
     private final SnapshotSettingsWidget snapshotSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
+    private final ArchivalSettingsWidget archivalSettingsWidget;
 
     @UiField
     SettingsGroup generalPanel;
@@ -42,27 +46,49 @@ public class TraceSettingsViewImpl
     SettingsGroup snapshotPanel;
     @UiField
     SettingsGroup retentionPanel;
+    @UiField
+    SettingsGroup shardingArchivingPanel;
 
     @Inject
     public TraceSettingsViewImpl(final Binder binder,
                                  final GeneralSettingsWidget generalSettingsWidget,
+                                 final SharedFileStoreSettingsWidget shardingSettingsWidget,
                                  final SnapshotSettingsWidget snapshotSettingsWidget,
-                                 final RetentionSettingsWidget retentionSettingsWidget) {
+                                 final RetentionSettingsWidget retentionSettingsWidget,
+                                 final ArchivalSettingsWidget archivalSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
+        this.shardingSettingsWidget = shardingSettingsWidget;
         this.snapshotSettingsWidget = snapshotSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
+        this.archivalSettingsWidget = archivalSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
         snapshotPanel.add(snapshotSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
+
+        final FlowPanel shardingArchivingContent = new FlowPanel();
+        shardingArchivingContent.add(shardingSettingsWidget.asWidget());
+        shardingArchivingContent.add(archivalSettingsWidget.asWidget());
+        shardingArchivingPanel.add(shardingArchivingContent);
     }
 
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
+        // When the Enable Shared File Store checkbox or path changes, propagate the
+        // enable state to the archival widget so the Archiving Enabled checkbox
+        // is gated on the same condition.
+        shardingSettingsWidget.setUiHandlers(() -> {
+            archivalSettingsWidget.setHasSharedPath(
+                    shardingSettingsWidget.isEnableSharedFileStore());
+            if (uiHandlers != null) {
+                uiHandlers.onChange();
+            }
+        });
         snapshotSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
+        archivalSettingsWidget.setUiHandlers(uiHandlers);
     }
 
     @Override
@@ -101,6 +127,44 @@ public class TraceSettingsViewImpl
     }
 
     @Override
+    public String getSharedPath() {
+        return shardingSettingsWidget.getSharedPath();
+    }
+
+    @Override
+    public void setSharedPath(final String sharedPath) {
+        shardingSettingsWidget.setSharedPath(sharedPath);
+    }
+
+    @Override
+    public boolean isEnableSharedFileStore() {
+        return shardingSettingsWidget.isEnableSharedFileStore();
+    }
+
+    @Override
+    public void setEnableSharedFileStore(final boolean enable) {
+        shardingSettingsWidget.setEnableSharedFileStore(enable);
+        // Archiving is only available when the shared file store is enabled —
+        // propagate immediately so setArchival() doesn't need to worry about ordering.
+        archivalSettingsWidget.setHasSharedPath(enable);
+    }
+
+    @Override
+    public void setSharedFileStorePathLocked(final boolean locked) {
+        shardingSettingsWidget.setSharedFileStorePathLocked(locked);
+    }
+
+    @Override
+    public int getShardCount() {
+        return shardingSettingsWidget.getShardCount();
+    }
+
+    @Override
+    public void setShardCount(final int count) {
+        shardingSettingsWidget.setShardCount(count);
+    }
+
+    @Override
     public RetentionSettings getRetention() {
         return retentionSettingsWidget.getRetention();
     }
@@ -121,10 +185,34 @@ public class TraceSettingsViewImpl
     }
 
     @Override
+    public ArchivalSettings getArchival() {
+        return archivalSettingsWidget.getArchival();
+    }
+
+    @Override
+    public void setArchival(final ArchivalSettings archival) {
+        archivalSettingsWidget.setArchival(archival);
+    }
+
+    @Override
+    public void setShardingEnabled(final boolean shardingEnabled) {
+        generalSettingsWidget.setShardingEnabled(shardingEnabled);
+        retentionSettingsWidget.setShardingEnabled(shardingEnabled);
+        snapshotSettingsWidget.setShardingEnabled(shardingEnabled);
+    }
+
+    @Override
+    public void setShardCountLocked(final boolean locked) {
+        shardingSettingsWidget.setShardCountLocked(locked);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
+        shardingSettingsWidget.onReadOnly(readOnly);
         snapshotSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
+        archivalSettingsWidget.onReadOnly(readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, TraceSettingsViewImpl> {

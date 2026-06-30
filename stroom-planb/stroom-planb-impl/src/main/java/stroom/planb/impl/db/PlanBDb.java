@@ -26,13 +26,13 @@ import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.trace.TraceDb;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 
 import java.nio.file.Path;
 
 public class PlanBDb {
 
-    public static Db<?, ?> open(final PlanBDoc doc,
+    public static Db<?, ?> open(final PlanBDocument doc,
                                 final Path targetPath,
                                 final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,

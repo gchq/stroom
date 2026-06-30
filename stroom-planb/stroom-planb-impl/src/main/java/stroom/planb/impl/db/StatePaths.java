@@ -17,6 +17,7 @@
 package stroom.planb.impl.db;
 
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBConstants;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
@@ -53,13 +54,13 @@ public class StatePaths {
 
     public StatePaths(final Path rootDir) {
         this.rootDir = rootDir;
-        writerDir = rootDir.resolve("writer");
-        receiveDir = rootDir.resolve("receive");
-        stagingDir = rootDir.resolve("staging");
-        unzipDir = rootDir.resolve("unzip");
-        mergingDir = rootDir.resolve("merging");
-        shardDir = rootDir.resolve("shards");
-        snapshotDir = rootDir.resolve("snapshots");
+        writerDir = rootDir.resolve(PlanBConstants.WRITER_DIR_NAME);
+        receiveDir = rootDir.resolve(PlanBConstants.RECEIVE_DIR_NAME);
+        stagingDir = rootDir.resolve(PlanBConstants.STAGING_DIR_NAME);
+        unzipDir = rootDir.resolve(PlanBConstants.UNZIP_DIR_NAME);
+        mergingDir = rootDir.resolve(PlanBConstants.MERGING_DIR_NAME);
+        shardDir = rootDir.resolve(PlanBConstants.SHARDS_DIR_NAME);
+        snapshotDir = rootDir.resolve(PlanBConstants.SNAPSHOTS_DIR_NAME);
     }
 
     public Path getRootDir() {

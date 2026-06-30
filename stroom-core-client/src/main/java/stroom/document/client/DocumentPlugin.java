@@ -332,6 +332,11 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 D document = presenter.getEntity();
                 document = presenter.write(document);
                 if (document != null) {
+                    final String validationError = getPreSaveError(document);
+                    if (validationError != null) {
+                        AlertEvent.fireWarn(this, validationError, onComplete::run);
+                        return;
+                    }
                     final D finalDocument = document;
                     save(getDocRef(document), document,
                             presenter.getPostSaveCallback(),
@@ -355,14 +360,15 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     }
 
     /**
-     * Called when saving a document, just prior to it being saved.
-     * Subclasses should override this to implement custom save validation/confirmation.
+     * Called after {@link DocPresenter#write} but before the document is sent to the server.
+     * Subclasses may override to block the save when the document is in an invalid state.
      *
-     * @param doc The doc after onWrite() has been called.
-     * @return True to continue with the save, else the save will be aborted.
+     * @param doc The document as produced by the presenter's write step.
+     * @return A user-facing validation error message to display, or {@code null} if the
+     *         document is valid and the save should proceed.
      */
-    public boolean validateBeforeSave(final D doc) {
-        return true;
+    protected String getPreSaveError(final D doc) {
+        return null;
     }
 
     @SuppressWarnings("unchecked")

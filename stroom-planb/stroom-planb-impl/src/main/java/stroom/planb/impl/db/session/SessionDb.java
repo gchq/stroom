@@ -66,7 +66,7 @@ import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.planb.impl.serde.valtime.InstantSerde;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.query.api.DateTimeSettings;
@@ -107,7 +107,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
     private SessionDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
-                      final PlanBDoc doc,
+                      final PlanBDocument doc,
                       final SessionSettings settings,
                       final TimeSerde timeSerde,
                       final SessionSerde keySerde,
@@ -131,7 +131,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
     public static SessionDb create(final Path path,
                                    final ByteBuffers byteBuffers,
-                                   final PlanBDoc doc,
+                                   final PlanBDocument doc,
                                    final boolean readOnly) {
         // Ensure all settings are non null.
         final SessionSettings settings;
@@ -202,8 +202,8 @@ public class SessionDb extends AbstractDb<Session, Session> {
             case LONG -> new LongSessionSerde(byteBuffers, timeSerde);
             case FLOAT -> new FloatSessionSerde(byteBuffers, timeSerde);
             case DOUBLE -> new DoubleSessionSerde(byteBuffers, timeSerde);
-            case STRING ->
-                    new LimitedStringSessionSerde(byteBuffers, Db.MAX_KEY_LENGTH - timeSerde.getSize(), timeSerde);
+            case STRING -> new LimitedStringSessionSerde(byteBuffers,
+                    Db.MAX_KEY_LENGTH - timeSerde.getSize(), timeSerde);
             case UID_LOOKUP -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(
                         env,

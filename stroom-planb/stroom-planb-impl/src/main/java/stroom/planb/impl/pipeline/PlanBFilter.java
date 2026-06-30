@@ -27,6 +27,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.RangeState;
 import stroom.planb.impl.data.Session;
 import stroom.planb.impl.data.SpanKV;
@@ -34,14 +35,15 @@ import stroom.planb.impl.data.State;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.data.TemporalValue;
-import stroom.planb.impl.db.ShardWriters;
-import stroom.planb.impl.db.ShardWriters.ShardWriter;
+import stroom.planb.impl.db.PlanBDocumentResolver;
+import stroom.planb.impl.db.PlanBStreamWriter;
+import stroom.planb.impl.db.PlanBStreamWriterFactory;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.StateType;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
@@ -228,12 +230,15 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private Instant effectiveTime;
     private final LocationFactoryProxy locationFactory;
-    private final ShardWriters shardWriters;
+    private final PlanBStreamWriterFactory streamWriterFactory;
     private Locator locator;
 
     private Instant time;
     private StroomDuration timeout;
-    private ShardWriter writer;
+    private PlanBDocumentResolver docResolver;
+    private PlanBStreamWriter writer;
+
+    private final PlanBDocCache planBDocCache;
 
 
     private String currentName;
@@ -250,12 +255,14 @@ public class PlanBFilter extends AbstractXMLFilter {
                        final LocationFactoryProxy locationFactory,
                        final MetaHolder metaHolder,
                        final ByteBufferFactory byteBufferFactory,
-                       final ShardWriters shardWriters) {
+                       final PlanBStreamWriterFactory streamWriterFactory,
+                       final PlanBDocCache planBDocCache) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
         this.byteBufferFactory = byteBufferFactory;
-        this.shardWriters = shardWriters;
+        this.streamWriterFactory = streamWriterFactory;
+        this.planBDocCache = planBDocCache;
     }
 
     @Override
@@ -265,7 +272,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                     .ofNullable(metaHolder.getMeta().getEffectiveMs())
                     .orElse(metaHolder.getMeta().getCreateMs());
             effectiveTime = Instant.ofEpochMilli(ms);
-            writer = shardWriters.createWriter(metaHolder.getMeta());
+            writer = streamWriterFactory.createWriter(metaHolder.getMeta());
+            docResolver = new PlanBDocumentResolver(planBDocCache);
             stagingValueOutputStream = new ByteBufferPoolOutput(byteBufferFactory,
                     BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
             saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
@@ -601,7 +609,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private void addReference() {
         LOGGER.debug(() -> "Adding reference to map: " + mapName);
-        final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
+        final Optional<PlanBDocument> optional = docResolver.resolve(mapName, this::error);
         optional.ifPresent(doc -> {
             switch (doc.getStateType()) {
                 case STATE -> addState(doc);
@@ -618,7 +626,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private void add(final StateType stateType) {
         LOGGER.debug(() -> "Adding " + stateType.getDisplayValue() + " to map: " + mapName);
-        final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
+        final Optional<PlanBDocument> optional = docResolver.resolve(mapName, this::error);
         optional.ifPresent(doc -> {
             if (stateType.equals(doc.getStateType())) {
                 switch (doc.getStateType()) {
@@ -671,7 +679,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         currentTags = null;
     }
 
-    private void addState(final PlanBDoc doc) {
+    private void addState(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             LOGGER.trace("Putting state key {} into table {}", prefix, mapName);
@@ -680,7 +688,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addTemporalState(final PlanBDoc doc) {
+    private void addTemporalState(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             final Instant time = this.time != null
@@ -702,7 +710,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addRangeState(final PlanBDoc doc) {
+    private void addRangeState(final PlanBDocument doc) {
         // If key is provided then from/to are the same.
         if (key != null) {
             if (rangeFrom != null) {
@@ -761,7 +769,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addTemporalRangeState(final PlanBDoc doc) {
+    private void addTemporalRangeState(final PlanBDocument doc) {
         final Instant time = this.time != null
                 ? this.time
                 : this.effectiveTime;
@@ -835,7 +843,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addSession(final PlanBDoc doc) {
+    private void addSession(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             if (time == null) {
@@ -856,7 +864,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addHistogramValue(final PlanBDoc doc) {
+    private void addHistogramValue(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             if (time == null) {
@@ -870,7 +878,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addMetricValue(final PlanBDoc doc) {
+    private void addMetricValue(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             if (time == null) {
@@ -884,7 +892,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addSpanValue(final PlanBDoc doc) {
+    private void addSpanValue(final PlanBDocument doc) {
         if (span == null) {
             error(LogUtil.message("No span data for {}", mapName));
         } else {

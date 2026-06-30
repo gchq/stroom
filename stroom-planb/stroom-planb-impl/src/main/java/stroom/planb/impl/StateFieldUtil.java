@@ -27,7 +27,7 @@ import stroom.planb.impl.db.trace.TraceFields;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.MetricValueSchema;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 public class StateFieldUtil {
 
-    public static List<QueryField> getQueryableFields(final PlanBDoc doc) {
+    public static List<QueryField> getQueryableFields(final PlanBDocument doc) {
         return switch (doc.getStateType()) {
             case STATE -> StateFields.FIELDS;
             case TEMPORAL_STATE -> TemporalStateFields.FIELDS;
@@ -52,7 +52,7 @@ public class StateFieldUtil {
         };
     }
 
-    private static List<QueryField> getMetricFields(final PlanBDoc doc) {
+    private static List<QueryField> getMetricFields(final PlanBDocument doc) {
         if (doc != null) {
             final AbstractPlanBSettings settings = doc.getSettings();
             if (settings instanceof final MetricSettings metricSettings) {
@@ -90,7 +90,7 @@ public class StateFieldUtil {
         return b != null && b;
     }
 
-    public static Map<String, QueryField> getFieldMap(final PlanBDoc doc) {
+    public static Map<String, QueryField> getFieldMap(final PlanBDocument doc) {
         return switch (doc.getStateType()) {
             case STATE -> StateFields.FIELD_MAP;
             case TEMPORAL_STATE -> TemporalStateFields.FIELD_MAP;
@@ -105,7 +105,7 @@ public class StateFieldUtil {
         };
     }
 
-    public static QueryField getTimeField(final PlanBDoc doc) {
+    public static QueryField getTimeField(final PlanBDocument doc) {
         return switch (doc.getStateType()) {
             case STATE, RANGED_STATE -> null;
             case TEMPORAL_STATE -> TemporalStateFields.EFFECTIVE_TIME_FIELD;

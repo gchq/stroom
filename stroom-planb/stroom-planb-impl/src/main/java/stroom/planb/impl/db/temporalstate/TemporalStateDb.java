@@ -49,7 +49,7 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.DateTimeSettings;
@@ -86,7 +86,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     private TemporalStateDb(final PlanBEnv env,
                             final ByteBuffers byteBuffers,
-                            final PlanBDoc doc,
+                            final PlanBDocument doc,
                             final TemporalStateSettings settings,
                             final TimeSerde timeSerde,
                             final TemporalKeySerde keySerde,
@@ -110,7 +110,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     public static TemporalStateDb create(final Path path,
                                          final ByteBuffers byteBuffers,
-                                         final PlanBDoc doc,
+                                         final PlanBDocument doc,
                                          final boolean readOnly) {
         // Ensure all settings are non null.
         final TemporalStateSettings settings;

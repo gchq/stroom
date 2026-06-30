@@ -3,9 +3,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max">
-        <form:FormGroup identity="dataSource" label="Data Source" addStyleNames="form-padding">
-            <g:SimplePanel ui:field="dataSource"/>
-        </form:FormGroup>
         <g:Label ui:field="label"/>
         <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
             <g:north size="400">

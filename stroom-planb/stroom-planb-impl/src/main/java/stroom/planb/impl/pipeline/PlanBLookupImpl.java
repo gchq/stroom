@@ -25,7 +25,7 @@ import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.GetRequest;
 import stroom.planb.impl.data.PlanBQueryService;
 import stroom.planb.impl.data.TemporalState;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.security.api.SecurityContext;
 import stroom.util.pipeline.scope.PipelineScoped;
 
@@ -43,7 +43,7 @@ public class PlanBLookupImpl implements PlanBLookup {
 
     private final PlanBDocCache stateDocCache;
     private final Cache<GetRequest, Optional<TemporalState>> cache;
-    private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
+    private final Map<String, Optional<PlanBDocument>> stateDocMap = new HashMap<>();
     private final SecurityContext securityContext;
     private final PlanBQueryService planBQueryService;
 
@@ -72,7 +72,7 @@ public class PlanBLookupImpl implements PlanBLookup {
                           final long eventTimeMs,
                           final ReferenceDataResult result) {
         final String docName = mapName.toLowerCase(Locale.ROOT);
-        final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(docName, k ->
+        final Optional<PlanBDocument> stateOptional = stateDocMap.computeIfAbsent(docName, k ->
                 securityContext.useAsReadResult(() ->
                         Optional.ofNullable(stateDocCache.get(docName))));
         stateOptional.ifPresent(stateDoc -> {

@@ -40,6 +40,9 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     @UiField
     CustomCheckBox overwrite;
 
+    private boolean readOnly;
+    private boolean shardingEnabled;
+
     @Inject
     public GeneralSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -105,11 +108,28 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
         this.overwrite.setValue(overwrite == null || overwrite);
     }
 
+    public void setShardingEnabled(final boolean shardingEnabled) {
+        this.shardingEnabled = shardingEnabled;
+        if (shardingEnabled) {
+            synchroniseMerge.setValue(false);
+        }
+        updateStates();
+    }
+
+    public void setSharedPathLocked(final boolean locked) {
+        // No longer supported — shared path is managed by SharedFileStoreSettingsWidget.
+    }
+
+    private void updateStates() {
+        maxStoreSize.setEnabled(!readOnly);
+        synchroniseMerge.setEnabled(!readOnly && !shardingEnabled);
+        overwrite.setEnabled(!readOnly);
+    }
+
     @Override
     public void onReadOnly(final boolean readOnly) {
-        maxStoreSize.setEnabled(!readOnly);
-        synchroniseMerge.setEnabled(!readOnly);
-        overwrite.setEnabled(!readOnly);
+        this.readOnly = readOnly;
+        updateStates();
     }
 
     @UiHandler("maxStoreSize")

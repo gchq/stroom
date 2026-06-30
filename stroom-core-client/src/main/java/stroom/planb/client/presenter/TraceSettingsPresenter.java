@@ -18,9 +18,12 @@ package stroom.planb.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.planb.client.presenter.SharedFileStorePresenterUtil;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
+import stroom.planb.client.view.ArchivalSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
+import stroom.planb.client.view.SharedFileStoreView;
 import stroom.planb.client.view.SnapshotSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.TraceSettings;
@@ -41,6 +44,9 @@ public class TraceSettingsPresenter
         view.setUiHandlers(this);
     }
 
+    /** Archival settings from the most recent {@link #read} call — round-tripped by {@link #write}. */
+    // NOTE: archival is now managed via the view (ArchivalSettingsView), not cached here.
+
     public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
         if (settings instanceof final TraceSettings traceSettings) {
             read(traceSettings, readOnly);
@@ -56,6 +62,8 @@ public class TraceSettingsPresenter
         getView().setOverwrite(settings.getOverwrite());
         getView().setRetention(settings.getRetention());
         getView().setSnapshotSettings(settings.getSnapshotSettings());
+        SharedFileStorePresenterUtil.readSharedFileStore(settings, getView(), getView());
+        updateShardingEnabled();
     }
 
     public AbstractPlanBSettings write() {
@@ -64,17 +72,42 @@ public class TraceSettingsPresenter
                 .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
                 .retention(getView().getRetention())
+                .sharedFileStore(SharedFileStorePresenterUtil.writeSharedFileStore(getView(), getView()))
                 .snapshotSettings(getView().getSnapshotSettings())
                 .build();
+    }
+
+    @Override
+    public boolean supportsSharding() {
+        return true;
+    }
+
+    @Override
+    public void onChange() {
+        updateShardingEnabled();
+        super.onChange();
+    }
+
+    private void updateShardingEnabled() {
+        getView().setShardingEnabled(getView().getShardCount() > 0);
+    }
+
+    public void setShardCountLocked(final boolean locked) {
+        getView().setShardCountLocked(locked);
     }
 
     public interface TraceSettingsView extends
             View,
             GeneralSettingsView,
+            SharedFileStoreView,
             RetentionSettingsView,
             SnapshotSettingsView,
+            ArchivalSettingsView,
             ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {
 
+        void setShardingEnabled(boolean shardingEnabled);
+
+        void setShardCountLocked(boolean locked);
     }
 }

@@ -16,6 +16,8 @@
 
 package stroom.planb.impl.data;
 
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileHashUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;

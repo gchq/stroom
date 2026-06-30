@@ -21,7 +21,8 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.StatePaths;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.impl.rest.FileTransferClient;
+import stroom.planb.shared.PlanBDocument;
 import stroom.util.concurrent.Guard;
 import stroom.util.concurrent.Guard.TryAgainException;
 import stroom.util.concurrent.StripedGuard;
@@ -75,7 +76,7 @@ class SnapshotShard implements Shard {
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
-    private final PlanBDoc doc;
+    private final PlanBDocument doc;
     private final DbFactory dbFactory;
     private final Executor executor;
 
@@ -88,7 +89,7 @@ class SnapshotShard implements Shard {
                          final Provider<PlanBConfig> configProvider,
                          final StatePaths statePaths,
                          final FileTransferClient fileTransferClient,
-                         final PlanBDoc doc,
+                         final PlanBDocument doc,
                          final DbFactory dbFactory,
                          final Executor executor) {
         this.byteBuffers = byteBuffers;
@@ -207,13 +208,13 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public long deleteOldData(final PlanBDoc doc) {
+    public long deleteOldData(final PlanBDocument doc) {
         // Deletion of old data is not supported on snapshots
         return 0L;
     }
 
     @Override
-    public long condense(final PlanBDoc doc) {
+    public long condense(final PlanBDocument doc) {
         // Condense is not supported on snapshots
         return 0L;
     }
@@ -221,14 +222,6 @@ class SnapshotShard implements Shard {
     @Override
     public void compact() {
         // Compact is not supported on snapshots
-    }
-
-    @Override
-    public void checkSnapshotStatus(final SnapshotRequest request) {
-    }
-
-    @Override
-    public void createSnapshot() {
     }
 
     @Override
@@ -291,7 +284,7 @@ class SnapshotShard implements Shard {
      */
     private static class SnapshotInstance {
 
-        private final PlanBDoc doc;
+        private final PlanBDocument doc;
         private final Path dbDir;
         private final RuntimeException fetchException;
         private final Instant currentSnapshotTime;
@@ -305,7 +298,7 @@ class SnapshotShard implements Shard {
                                 final Provider<PlanBConfig> configProvider,
                                 final StatePaths statePaths,
                                 final FileTransferClient fileTransferClient,
-                                final PlanBDoc doc,
+                                final PlanBDocument doc,
                                 final Instant createTime,
                                 final Instant previousSnapshotTime,
                                 final DbFactory dbFactory) {
@@ -445,13 +438,13 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public PlanBDoc getDoc() {
+    public PlanBDocument getDoc() {
         return doc;
     }
 
     public interface DbFactory {
 
-        Db<?, ?> open(PlanBDoc doc,
+        Db<?, ?> open(PlanBDocument doc,
                       Path dbDir,
                       ByteBuffers byteBuffers,
                       ByteBufferFactory byteBufferFactory,

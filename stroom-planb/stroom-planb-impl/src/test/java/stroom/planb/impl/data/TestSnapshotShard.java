@@ -25,6 +25,7 @@ import stroom.planb.impl.data.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -501,8 +502,6 @@ class TestSnapshotShard {
 
         // These should not throw
         shard.compact();
-        shard.checkSnapshotStatus(null);
-        shard.createSnapshot();
     }
 
     @Test

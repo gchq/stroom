@@ -60,6 +60,62 @@ public class ClusterLockRecord extends UpdatableRecordImpl<ClusterLockRecord> {
         return (String) get(2);
     }
 
+    /**
+     * Setter for <code>stroom.cluster_lock.lock_time_ms</code>.
+     */
+    public void setLockTimeMs(Long value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for <code>stroom.cluster_lock.lock_time_ms</code>.
+     */
+    public Long getLockTimeMs() {
+        return (Long) get(3);
+    }
+
+    /**
+     * Setter for <code>stroom.cluster_lock.node_name</code>.
+     */
+    public void setNodeName(String value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>stroom.cluster_lock.node_name</code>.
+     */
+    public String getNodeName() {
+        return (String) get(4);
+    }
+
+    /**
+     * Setter for <code>stroom.cluster_lock.thread_name</code>.
+     */
+    public void setThreadName(String value) {
+        set(5, value);
+    }
+
+    /**
+     * Getter for <code>stroom.cluster_lock.thread_name</code>.
+     */
+    public String getThreadName() {
+        return (String) get(5);
+    }
+
+    /**
+     * Setter for <code>stroom.cluster_lock.lease_ms</code>.
+     */
+    public void setLeaseMs(Long value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>stroom.cluster_lock.lease_ms</code>.
+     */
+    public Long getLeaseMs() {
+        return (Long) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -83,12 +139,16 @@ public class ClusterLockRecord extends UpdatableRecordImpl<ClusterLockRecord> {
     /**
      * Create a detached, initialised ClusterLockRecord
      */
-    public ClusterLockRecord(Integer id, Integer version, String name) {
+    public ClusterLockRecord(Integer id, Integer version, String name, Long lockTimeMs, String nodeName, String threadName, Long leaseMs) {
         super(ClusterLock.CLUSTER_LOCK);
 
         setId(id);
         setVersion(version);
         setName(name);
+        setLockTimeMs(lockTimeMs);
+        setNodeName(nodeName);
+        setThreadName(threadName);
+        setLeaseMs(leaseMs);
         resetChangedOnNotNull();
     }
 }

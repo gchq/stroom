@@ -34,4 +34,5 @@ public interface GeneralSettingsView extends ReadOnlyChangeHandler, HasUiHandler
     Boolean getOverwrite();
 
     void setOverwrite(Boolean overwrite);
+
 }

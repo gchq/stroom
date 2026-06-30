@@ -91,6 +91,18 @@ public class SpanValueSerde implements Serde<SpanValue> {
         return NanoTimeUtil.fromInstant(instant);
     }
 
+    /**
+     * Reads only the {@code insertTime} field (the very first field in the
+     * serialised layout) from raw value bytes.  Unlike {@link #read} this
+     * method does <em>not</em> touch the UID lookup table, so it is safe to
+     * call even when the lookup is incomplete or inconsistent.
+     *
+     * @param val raw serialised value buffer; its position is not modified.
+     */
+    public NanoTime readInsertTime(final ByteBuffer val) {
+        return readNanoTime(val.duplicate());
+    }
+
     private ByteBuffer writeKvList(final Txn<ByteBuffer> txn, final List<KeyValue> list, final ByteBuffer byteBuffer) {
         final List<KeyValue> values = NullSafe.list(list);
         ByteBuffer result = ensure(byteBuffer, Integer.BYTES);
@@ -776,7 +788,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
                 ByteBufferUtils.skip(input, Integer.BYTES);
 
             } else if (type == ValueType.LONG.getPrimitiveValue()) {
-                ByteBufferUtils.skip(input, Integer.BYTES);
+                ByteBufferUtils.skip(input, Long.BYTES);
 
             } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, Double.BYTES);

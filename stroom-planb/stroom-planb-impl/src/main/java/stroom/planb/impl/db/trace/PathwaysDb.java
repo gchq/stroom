@@ -100,6 +100,15 @@ public class PathwaysDb {
     }
 
 
+    public void close() {
+        try {
+            env.close();
+        } catch (final Exception e) {
+            LOGGER.error("Error closing PathwaysDb env", e);
+        }
+    }
+
+
     public static class SimpleDb {
 
         private final PlanBEnv env;

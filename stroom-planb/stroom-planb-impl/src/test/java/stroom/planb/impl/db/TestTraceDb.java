@@ -24,12 +24,12 @@ import stroom.docstore.api.DocFinder;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
-import stroom.planb.impl.data.FileDescriptor;
-import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileHashUtil;
 import stroom.planb.impl.serde.SpanDataLoaderTestUtil;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
@@ -61,6 +61,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -166,6 +167,7 @@ public class TestTraceDb {
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+
         final ShardManager shardManager = new ShardManager(
                 new ByteBuffers(byteBufferFactory),
                 byteBufferFactory,
@@ -176,7 +178,8 @@ public class TestTraceDb {
                 statePaths,
                 null,
                 new SimpleTaskContextFactory(),
-                executorProvider);
+                executorProvider,
+                null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
                 statePaths,
                 new MockSecurityContext(),

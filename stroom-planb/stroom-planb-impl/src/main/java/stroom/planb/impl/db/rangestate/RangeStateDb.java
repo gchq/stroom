@@ -44,7 +44,7 @@ import stroom.planb.impl.serde.rangestate.ShortRangeKeySerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RangeType;
 import stroom.query.api.DateTimeSettings;
@@ -79,7 +79,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     private RangeStateDb(final PlanBEnv env,
                          final ByteBuffers byteBuffers,
-                         final PlanBDoc doc,
+                         final PlanBDocument doc,
                          final RangeStateSettings settings,
                          final RangeKeySerde keySerde,
                          final ValTimeSerde valueSerde,
@@ -101,7 +101,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     public static RangeStateDb create(final Path path,
                                       final ByteBuffers byteBuffers,
-                                      final PlanBDoc doc,
+                                      final PlanBDocument doc,
                                       final boolean readOnly) {
         // Ensure all settings are non null.
         final RangeStateSettings settings;

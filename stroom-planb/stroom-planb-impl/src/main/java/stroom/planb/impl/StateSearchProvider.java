@@ -22,6 +22,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Query;
 import stroom.query.api.SearchRequest;
@@ -108,11 +109,11 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.docFinder = docFinder;
     }
 
-    private PlanBDoc getPlanBDoc(final DocRef docRef) {
+    private PlanBDocument getPlanBDoc(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             Objects.requireNonNull(docRef, "Null doc reference");
             Objects.requireNonNull(docRef.getName(), "Null doc key");
-            final PlanBDoc doc = stateDocCache.get(docRef.getName());
+            final PlanBDocument doc = stateDocCache.get(docRef.getName());
             Objects.requireNonNull(doc, "Null state doc");
             return doc;
         });
@@ -135,20 +136,20 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public Optional<QueryField> getTimeField(final DocRef docRef) {
-        final PlanBDoc doc = getPlanBDoc(docRef);
+        final PlanBDocument doc = getPlanBDoc(docRef);
         return Optional.ofNullable(StateFieldUtil.getTimeField(doc));
     }
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        final PlanBDoc doc = getPlanBDoc(criteria.getDataSourceRef());
+        final PlanBDocument doc = getPlanBDoc(criteria.getDataSourceRef());
         final List<QueryField> fields = StateFieldUtil.getQueryableFields(doc);
         return fieldInfoResultPageFactory.create(criteria, fields);
     }
 
     @Override
     public int getFieldCount(final DocRef docRef) {
-        final PlanBDoc doc = getPlanBDoc(docRef);
+        final PlanBDocument doc = getPlanBDoc(docRef);
         return NullSafe.getOrElse(
                 doc,
                 d -> StateFieldUtil.getQueryableFields(doc),
@@ -158,7 +159,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
-        final PlanBDoc doc = getPlanBDoc(docRef);
+        final PlanBDocument doc = getPlanBDoc(docRef);
         final Map<String, QueryField> fieldMap = StateFieldUtil.getFieldMap(doc);
         final QueryField queryField = fieldMap.get(fieldName);
         if (queryField == null) {
@@ -169,7 +170,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(getPlanBDoc(docRef)).map(PlanBDoc::getDescription);
+        return Optional.ofNullable(getPlanBDoc(docRef)).map(PlanBDocument::getDescription);
     }
 
     @Override
@@ -184,7 +185,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         final DocRef docRef = query.getDataSource();
 
         // Check we have permission to read the doc.
-        final PlanBDoc doc = getPlanBDoc(docRef);
+        final PlanBDocument doc = getPlanBDoc(docRef);
         Objects.requireNonNull(doc, "Unable to find state doc with key: " + docRef.getName());
 
         // Extract highlights.

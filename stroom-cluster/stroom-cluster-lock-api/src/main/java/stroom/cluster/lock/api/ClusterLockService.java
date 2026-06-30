@@ -43,4 +43,9 @@ public interface ClusterLockService {
      * supplier under that lock, returning supplier's return value
      */
     <T> T lockResult(final String lockName, final Supplier<T> supplier);
+
+    /**
+     * Delete all cluster lock records where the lock name starts with the specified prefix.
+     */
+    void deleteLocks(final String prefix);
 }

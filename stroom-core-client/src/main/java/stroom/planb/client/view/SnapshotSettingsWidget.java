@@ -58,16 +58,40 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
         if (snapshotSettings != null) {
-            this.useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
-            this.useSnapshotsForGet.setValue(snapshotSettings.isUseSnapshotsForGet());
-            this.useSnapshotsForQuery.setValue(snapshotSettings.isUseSnapshotsForQuery());
+            final boolean lookupVal = !shardingEnabled && snapshotSettings.isUseSnapshotsForLookup();
+            final boolean getVal = !shardingEnabled && snapshotSettings.isUseSnapshotsForGet();
+            final boolean queryVal = !shardingEnabled && snapshotSettings.isUseSnapshotsForQuery();
+            this.useSnapshotsForLookup.setValue(lookupVal);
+            this.useSnapshotsForGet.setValue(getVal);
+            this.useSnapshotsForQuery.setValue(queryVal);
         }
     }
 
+    private boolean readOnly;
+    private boolean shardingEnabled;
+
+    public void setShardingEnabled(final boolean shardingEnabled) {
+        this.shardingEnabled = shardingEnabled;
+        updateStates();
+    }
+
+    private void updateStates() {
+        final boolean enabled = !readOnly && !shardingEnabled;
+        useSnapshotsForLookup.setEnabled(enabled);
+        useSnapshotsForGet.setEnabled(enabled);
+        useSnapshotsForQuery.setEnabled(enabled);
+
+        if (shardingEnabled) {
+            useSnapshotsForLookup.setValue(false);
+            useSnapshotsForGet.setValue(false);
+            useSnapshotsForQuery.setValue(false);
+        }
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
-        useSnapshotsForLookup.setEnabled(!readOnly);
-        useSnapshotsForGet.setEnabled(!readOnly);
-        useSnapshotsForQuery.setEnabled(!readOnly);
+        this.readOnly = readOnly;
+        updateStates();
     }
 
 

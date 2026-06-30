@@ -58,7 +58,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class NodeMutatorImpl implements TraceWalker {
+public class NodeMutatorImpl {
 
     private static final int MAX_SET_SIZE = 10;
 
@@ -102,29 +102,6 @@ public class NodeMutatorImpl implements TraceWalker {
 //        final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
 //
 //        PathNode node = roots.get(pathKey);
-    }
-
-    @Override
-    public void process(final Trace trace,
-                        final Map<PathKey, PathNode> roots,
-                        final MessageReceiver messageReceiver,
-                        final PathwaysDoc pathwaysDoc) {
-        final Map<PathKey, Map<String, Map<PathKey, PathNodeSequence>>> maps = new HashMap<>();
-        final Span root = trace.root();
-        final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
-
-        PathNode node = roots.get(pathKey);
-        if (node == null && !pathwaysDoc.isAllowPathwayCreation()) {
-            messageReceiver.log(Severity.ERROR, () -> "Invalid path: " + pathKey);
-        } else {
-            node = roots.computeIfAbsent(pathKey, k -> {
-                messageReceiver.log(Severity.INFO, () -> "Adding new root path: " + root.getName());
-                return new PathNode(root.getName());
-            });
-            final Map<String, Map<PathKey, PathNodeSequence>> map = maps.computeIfAbsent(pathKey, k -> new HashMap<>());
-            final PathNode pathNode = walk(trace, root, node, map, messageReceiver, pathwaysDoc);
-            roots.put(pathKey, pathNode);
-        }
     }
 
     private PathNode walk(final Trace trace,

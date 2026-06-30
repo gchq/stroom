@@ -43,8 +43,19 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
 
     public abstract AbstractPlanBSettings write();
 
+    public boolean supportsSharding() {
+        return false;
+    }
+
+    /** No-op by default; overridden by {@link TraceSettingsPresenter}. */
+    public void setShardCountLocked(final boolean locked) {
+    }
+
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
+        if (getView() instanceof final stroom.entity.client.presenter.ReadOnlyChangeHandler changeHandler) {
+            changeHandler.onReadOnly(readOnly);
+        }
     }
 
     @Override

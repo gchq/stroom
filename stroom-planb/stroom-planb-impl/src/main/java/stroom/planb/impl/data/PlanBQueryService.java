@@ -34,13 +34,12 @@ import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateType;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValNull;
-import stroom.query.language.functions.ValString;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -90,14 +89,14 @@ public class PlanBQueryService {
     }
 
     public TemporalState lookup(final GetRequest request) {
-        final PlanBDoc doc = planBDocCache.get(request.getMapName());
+        final PlanBDocument doc = planBDocCache.get(request.getMapName());
         if (doc == null) {
             LOGGER.warn(() -> "No Plan B doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + request.getMapName() + "'");
         }
         final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
                 doc,
-                PlanBDoc::getSettings,
+                PlanBDocument::getSettings,
                 AbstractPlanBSettings::getSnapshotSettings,
                 SnapshotSettings::new);
         final boolean local = snapshotSettings.isUseSnapshotsForLookup() || !shardManager.isSnapshotNode();
@@ -106,14 +105,14 @@ public class PlanBQueryService {
     }
 
     public Val getVal(final GetRequest request) {
-        final PlanBDoc doc = planBDocCache.get(request.getMapName());
+        final PlanBDocument doc = planBDocCache.get(request.getMapName());
         if (doc == null) {
             LOGGER.warn(() -> "No Plan B doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + request.getMapName() + "'");
         }
         final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
                 doc,
-                PlanBDoc::getSettings,
+                PlanBDocument::getSettings,
                 AbstractPlanBSettings::getSnapshotSettings,
                 SnapshotSettings::new);
         final boolean local = snapshotSettings.isUseSnapshotsForGet() || !shardManager.isSnapshotNode();
@@ -124,7 +123,7 @@ public class PlanBQueryService {
     }
 
     public PlanBValue getPlanBValue(final GetRequest request) {
-        final PlanBDoc doc = planBDocCache.get(request.getMapName());
+        final PlanBDocument doc = planBDocCache.get(request.getMapName());
         if (doc == null) {
             LOGGER.warn(() -> "No PlanB doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No PlanB doc found for '" + request.getMapName() + "'");
@@ -175,13 +174,13 @@ public class PlanBQueryService {
     public PlanBValue getLocalValue(final String mapName,
                                     final String keyName,
                                     final Instant eventTime) {
-        return shardManager.get(mapName, reader -> switch (reader) {
+        return shardManager.get(mapName, keyName, reader -> switch (reader) {
             case final StateDb db -> db.getState(new StateRequest(KeyPrefix.create(keyName)));
-            case final TemporalStateDb db ->
-                    db.getState(new TemporalStateRequest(new TemporalKey(KeyPrefix.create(keyName), eventTime)));
+            case final TemporalStateDb db -> db.getState(new TemporalStateRequest(
+                    new TemporalKey(KeyPrefix.create(keyName), eventTime)));
             case final RangeStateDb db -> db.getState(new RangeStateRequest(Long.parseLong(keyName)));
-            case final TemporalRangeStateDb db ->
-                    db.getState(new TemporalRangeStateRequest(Long.parseLong(keyName), eventTime));
+            case final TemporalRangeStateDb db -> db.getState(
+                    new TemporalRangeStateRequest(Long.parseLong(keyName), eventTime));
             case final SessionDb db -> db.getState(new SessionRequest(KeyPrefix.create(keyName), eventTime));
             default -> throw new IllegalStateException("Unexpected value: " + reader);
         });

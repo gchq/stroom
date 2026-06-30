@@ -20,9 +20,10 @@ import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.util.ProcessorUtil;
+import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.SpanKV;
-import stroom.planb.impl.db.ShardWriters;
-import stroom.planb.impl.db.ShardWriters.ShardWriter;
+import stroom.planb.impl.db.PlanBStreamWriter;
+import stroom.planb.impl.db.PlanBStreamWriterFactory;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.PlanBDoc;
@@ -54,7 +55,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import javax.xml.transform.stream.StreamSource;
@@ -70,9 +70,11 @@ public class TestPlanBFilter {
     private static final JsonMapper MAPPER = createMapper(true);
 
     @Mock
-    ShardWriters shardWriters;
+    PlanBStreamWriterFactory shardWriters;
     @Mock
-    ShardWriter shardWriter;
+    PlanBStreamWriter shardWriter;
+    @Mock
+    PlanBDocCache planBDocCache;
 
     @Test
     void test() throws Exception {
@@ -80,11 +82,11 @@ public class TestPlanBFilter {
 
         Mockito.when(shardWriters.createWriter(Mockito.any()))
                 .thenReturn(shardWriter);
-        Mockito.when(shardWriter.getDoc(Mockito.any(), Mockito.any()))
-                .thenReturn(Optional.of(PlanBDoc.builder()
+        Mockito.when(planBDocCache.get(Mockito.any()))
+                .thenReturn(PlanBDoc.builder()
                         .uuid(UUID.randomUUID().toString())
                         .stateType(StateType.TRACE)
-                        .build()));
+                        .build());
         final Answer<?> answer = invocation -> {
             final SpanKV spanKV = invocation.getArgument(1);
             LOGGER.info(spanKV.toString());
@@ -304,7 +306,8 @@ public class TestPlanBFilter {
                 new LocationFactoryProxy(),
                 metaHolder,
                 new ByteBufferFactoryImpl(),
-                shardWriters);
+                shardWriters,
+                planBDocCache);
 
         final TestFilter testFilter = new TestFilter(null, null);
 
