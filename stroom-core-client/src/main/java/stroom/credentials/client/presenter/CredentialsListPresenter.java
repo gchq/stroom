@@ -136,6 +136,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.securityContext = securityContext;
 
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Credentials");
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);
         dataGrid.setWidth("100%");

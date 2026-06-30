@@ -161,6 +161,7 @@ public class TaskManagerListPresenter
         this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 
         autoRefreshButton = new InlineSvgToggleButton();

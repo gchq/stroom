@@ -88,6 +88,7 @@ public class IndexFieldListPresenter
         view.setUiHandlers(this);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -333,6 +334,7 @@ public class IndexFieldListPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
         this.readOnly = readOnly;
         enableButtons();

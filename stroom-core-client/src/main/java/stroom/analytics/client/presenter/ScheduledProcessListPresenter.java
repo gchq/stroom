@@ -90,6 +90,7 @@ public class ScheduledProcessListPresenter
                 ExecutionScheduleFields.NAME, true, true);
         request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Scheduled Processes");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager =
                 new DataGridSelectionEventManager<>(

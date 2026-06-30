@@ -66,6 +66,7 @@ public class ColumnSelectionPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Column Selection");
         view.setDataWidget(dataGrid);
 
         addColumns();

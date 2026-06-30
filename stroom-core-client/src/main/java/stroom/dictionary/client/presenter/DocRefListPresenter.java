@@ -46,6 +46,7 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document References");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
     }
@@ -102,6 +103,10 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
 
     public MultiSelectionModel<DocRef> getSelectionModel() {
         return selectionModel;
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 //
 //    public void setSelectionModel(final SelectionModel<Volume> selectionModel) {

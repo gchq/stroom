@@ -91,6 +91,7 @@ public class AccountsListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
         this.dataGrid = new MyDataGrid<>(this, 1000);
+        this.dataGrid.setTableName("Accounts");
         this.selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<Account> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid, selectionModel, false);

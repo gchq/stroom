@@ -59,6 +59,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
         this.nodeGroupClient = nodeGroupClient;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Node Groups");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");

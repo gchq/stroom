@@ -84,6 +84,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Solr Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -323,6 +324,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
     @Override
     protected void onRead(final DocRef docRef, final SolrIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Solr Index '" + docRef.getName() + "' Fields");
         this.index = document;
         if (document != null) {
             fields = document.getFields().stream()

@@ -70,6 +70,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         this.editPresenterProvider = editPresenterProvider;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Notifications");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<NotificationConfig> selectionEventManager =
                 new DataGridSelectionEventManager<>(

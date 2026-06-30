@@ -60,6 +60,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Statistics Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -217,6 +218,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
     protected void onRead(final DocRef docRef,
                           final StatisticStoreDoc document,
                           final boolean readOnly) {
+        dataGrid.setTableName("Statistics '" + docRef.getName() + "' Fields");
         enableButtons();
         refresh();
     }

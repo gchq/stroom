@@ -64,6 +64,7 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
         this.annotationResourceClient = annotationResourceClient;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Annotation Tags");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");

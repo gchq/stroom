@@ -79,6 +79,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
 
         this.restFactory = restFactory;
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Words");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -262,6 +263,9 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
 
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
+        if (docRef != null && docRef.getName() != null) {
+            dataGrid.setTableName("Dictionary '" + docRef.getName() + "' Words");
+        }
         fetchData();
     }
 

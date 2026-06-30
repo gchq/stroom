@@ -53,6 +53,7 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document References");
         addSelectedColumn();
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Document Name", Function.identity(), false);
         dataGrid.addEndColumn(new EndColumn<>());

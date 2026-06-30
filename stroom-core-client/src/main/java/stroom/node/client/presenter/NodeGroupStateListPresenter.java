@@ -55,6 +55,7 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
                                        final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Node Group State");
         view.setDataWidget(dataGrid);
 
         this.nodeGroupClient = nodeGroupClient;
