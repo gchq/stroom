@@ -20,7 +20,7 @@ import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
-import stroom.planb.impl.data.ShardMergeEventData;
+import stroom.planb.impl.fs.SharedFileStoreMergeEventData;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -72,12 +72,12 @@ public class PathwaysEntityEventHandler implements EntityEvent.Handler {
         LOGGER.debug("onChange - event: {}", event);
 
         // Only react if this UPDATE carries ShardMergeEventData payload
-        if (event == null || !event.hasDataClass(ShardMergeEventData.class)) {
+        if (event == null || !event.hasDataClass(SharedFileStoreMergeEventData.class)) {
             return;
         }
 
         final DocRef mergedTracesDocRef = event.getDocRef();
-        final ShardMergeEventData eventData = event.getDataObject(ShardMergeEventData.class);
+        final SharedFileStoreMergeEventData eventData = event.getDataObject(SharedFileStoreMergeEventData.class);
         if (eventData == null) {
             return;
         }

@@ -30,8 +30,8 @@ import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.ShardMergeEventData;
-import stroom.planb.impl.data.SharedFileStoreMergeProcessor;
+import stroom.planb.impl.fs.SharedFileStoreMergeEventData;
+import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
@@ -353,9 +353,9 @@ class TestPathwaysIntegration {
         final EntityEvent event = firedEvents.get(0);
         assertThat(event.getAction()).isEqualTo(stroom.util.entityevent.EntityAction.UPDATE);
         assertThat(event.getDocRef()).isEqualTo(tracesDoc.asDocRef());
-        assertThat(event.hasDataClass(ShardMergeEventData.class)).isTrue();
+        assertThat(event.hasDataClass(SharedFileStoreMergeEventData.class)).isTrue();
 
-        final ShardMergeEventData data = event.getDataObject(ShardMergeEventData.class);
+        final SharedFileStoreMergeEventData data = event.getDataObject(SharedFileStoreMergeEventData.class);
         assertThat(data.getShardIndex()).isEqualTo(0);
         assertThat(data.getBatchDirName()).isEqualTo(batchDirName);
 

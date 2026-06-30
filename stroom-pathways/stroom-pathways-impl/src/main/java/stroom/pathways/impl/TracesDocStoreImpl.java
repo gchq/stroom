@@ -26,7 +26,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.SharedFileStoreDocStore;
+import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
