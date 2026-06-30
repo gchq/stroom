@@ -15,6 +15,7 @@
     border-bottom: 1px solid var(--splitter__background-color);
     padding: 0 5px;
     gap: 5px;
+    min-height: 34px;
 }
 
 .askStroomAiViewImpl-title {
@@ -209,7 +210,10 @@
 .ai-message-header,
 .ai-message-footer {
     display: flex;
-    gap: 8px;
+    gap: 5px;
+}
+
+.ai-message-footer {
     align-items: center;
 }
 
@@ -219,7 +223,7 @@
     font-style: italic;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 .ai-attachment-status .svgIcon {
@@ -277,13 +281,6 @@
 /* ---- Delete button (visible on hover) ---- */
 
 .ai-message-delete {
-    display: flex;
-    color: var(--control__text-color--disabled);
-    background: none;
-    border: 1px solid transparent;
-    padding: 2px 4px;
-    align-items: center;
-    cursor: pointer;
     opacity: 0;
 }
 
@@ -291,6 +288,18 @@
     opacity: 1;
 }
 
-.ai-message-delete:hover {
-    color: #d32f2f;
+.ai-message-delete .face {
+    color: var(--control__text-color--disabled);
+}
+
+.ai-message-delete:hover .face {
+    color: var(--icon-colour__red);
+}
+
+.ai-attachment-status-icon {
+    cursor: default !important;
+}
+
+.ai-attachment-status-icon .face {
+    color: var(--icon-colour__green);
 }

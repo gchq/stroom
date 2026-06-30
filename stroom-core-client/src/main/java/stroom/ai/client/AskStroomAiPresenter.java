@@ -167,14 +167,14 @@ public class AskStroomAiPresenter
                 if (button != null) {
                     // Capture delete click events.
                     final String messageIdStr = button.getAttribute("data-delete-message-id");
-                    if (messageIdStr != null) {
+                    if (NullSafe.isNonBlankString(messageIdStr)) {
                         onDeleteMessage(Integer.parseInt(messageIdStr));
                         return;
                     }
 
                     // Capture copy click events.
                     final String data = button.getAttribute("data");
-                    if (data != null) {
+                    if (NullSafe.isNonBlankString(data)) {
                         if (ClipboardUtil.copy(data)) {
                             // Code to change label
                             final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
@@ -549,12 +549,12 @@ public class AskStroomAiPresenter
 
                 // Add delete button.
                 if (deletable && messageId > 0) {
-                    footer.elem(button ->
-                                    icon(button, SvgImage.DELETE),
-                            BUTTON,
-                            Attribute.className("ai-message-delete"),
-                            new Attribute("data-delete-message-id",
-                                    String.valueOf(messageId)));
+                    button(footer,
+                            SvgImage.DELETE,
+                            "Delete message",
+                            "ai-message-delete",
+                            "data-delete-message-id",
+                            String.valueOf(messageId));
                 }
 
                 // Add copy button.
@@ -586,7 +586,7 @@ public class AskStroomAiPresenter
                                       final long nowMs) {
         hb.elem(details -> {
             details.elem(summary -> {
-                icon(summary, icon);
+                icon(summary, icon, "ai-message-summary-icon");
                 summary.append(summaryText);
             }, SUMMARY, Attribute.className("ai-message-header"));
 
@@ -615,7 +615,11 @@ public class AskStroomAiPresenter
         hb.div(container -> {
             // Header with icon and description.
             container.div(header -> {
-                icon(header, SvgImage.TABLE);
+                button(header, SvgImage.TABLE,
+                        "ai-attachment-icon",
+                        "View data",
+                        "data-attachment-id",
+                        String.valueOf(attachmentId));
                 header.append(NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment"));
             }, Attribute.className("ai-message-header"));
 
@@ -632,12 +636,12 @@ public class AskStroomAiPresenter
             container.div(footer -> {
                 // Add delete button.
                 if (deletable && messageId > 0) {
-                    footer.elem(button ->
-                                    icon(button, SvgImage.DELETE),
-                            BUTTON,
-                            Attribute.className("ai-message-delete"),
-                            new Attribute("data-delete-message-id",
-                                    String.valueOf(messageId)));
+                    button(footer,
+                            SvgImage.DELETE,
+                            "ai-message-delete",
+                            "Delete attachment",
+                            "data-delete-message-id",
+                            String.valueOf(messageId));
                 }
                 timestamp(footer, timeMs, nowMs);
             }, Attribute.className("ai-message-footer"));
@@ -645,7 +649,7 @@ public class AskStroomAiPresenter
     }
 
     private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
-        icon(hb, icon);
+        icon(hb, icon, "ai-attachment-status-icon");
         hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
     }
 
@@ -696,6 +700,33 @@ public class AskStroomAiPresenter
     private static void icon(final HtmlBuilder hb, final SvgImage icon) {
         hb.div(div -> div.appendTrustedString(icon.getSvg()),
                 Attribute.className("svgIcon " + icon.getClassName()));
+    }
+
+    private static void icon(final HtmlBuilder hb,
+                             final SvgImage icon,
+                             final String className) {
+        hb.elem(button -> {
+                    button.div(div -> div.appendTrustedString(icon.getSvg()),
+                            Attribute.className("svg-image " + icon.getClassName() + " face"));
+                },
+                BUTTON,
+                Attribute.className(className + " icon-button"));
+    }
+
+    private static void button(final HtmlBuilder hb,
+                               final SvgImage icon,
+                               final String className,
+                               final String title,
+                               final String messageAttribute,
+                               final String messageData) {
+        hb.elem(button -> {
+                    button.div(div -> div.appendTrustedString(icon.getSvg()),
+                            Attribute.className("svg-image " + icon.getClassName() + " face"));
+                },
+                BUTTON,
+                Attribute.className(className + " icon-button"),
+                new Attribute(messageAttribute, messageData),
+                new Attribute("title", title));
     }
 
     private void timestamp(final HtmlBuilder html, final long timeMs, final long nowMs) {
