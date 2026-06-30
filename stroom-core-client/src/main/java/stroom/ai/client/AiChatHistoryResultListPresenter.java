@@ -24,6 +24,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.SelectionEventManager;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -64,7 +65,8 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
     @Inject
     public AiChatHistoryResultListPresenter(final EventBus eventBus,
                                             final PagerView view,
-                                            final AskStroomAiClient askStroomAiClient) {
+                                            final AskStroomAiClient askStroomAiClient,
+                                            final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
         cellTable = new MyCellTable<AiChat>(100) {
@@ -120,7 +122,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
             }
         };
 
-        final Column<AiChat, AiChat> column = new Column<AiChat, AiChat>(new AiChatCell()) {
+        final Column<AiChat, AiChat> column = new Column<AiChat, AiChat>(new AiChatCell(dateTimeFormatter)) {
             @Override
             public AiChat getValue(final AiChat object) {
                 return object;

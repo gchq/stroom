@@ -28,8 +28,6 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-import java.util.Date;
-
 public class FindAnnotationCell extends AbstractCell<Annotation> {
 
     private final DurationLabel durationLabel;
@@ -87,7 +85,7 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
                     durationLabel.div(sub,
                             "annotationDurationLabel",
                             value.getCreateTimeMs(),
-                            new Date());
+                            System.currentTimeMillis());
 
                     if (value.getAssignedTo() != null) {
                         // Dash

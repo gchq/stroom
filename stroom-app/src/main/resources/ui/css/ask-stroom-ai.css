@@ -237,6 +237,7 @@
     font-size: 0.7em;
     color: var(--control__text-color--disabled);
     margin-left: auto;
+    cursor: default;
 }
 
 .ai-message-copy {

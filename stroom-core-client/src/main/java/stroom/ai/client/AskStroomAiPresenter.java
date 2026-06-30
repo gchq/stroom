@@ -40,6 +40,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -96,6 +97,7 @@ public class AskStroomAiPresenter
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
     private final LocationManager locationManager;
     private final UserPreferencesManager userPreferencesManager;
+    private final DateTimeFormatter dateTimeFormatter;
     private AskStroomAiContext data;
     private AiChat currentChat;
     private boolean titleGenerated;
@@ -116,7 +118,8 @@ public class AskStroomAiPresenter
                                 final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
                                 final LocationManager locationManager,
-                                final UserPreferencesManager userPreferencesManager) {
+                                final UserPreferencesManager userPreferencesManager,
+                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
@@ -126,6 +129,7 @@ public class AskStroomAiPresenter
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userPreferencesManager = userPreferencesManager;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         // Load dock state from user preferences.
         this.currentDockBehaviour = loadDockBehaviourFromPrefs();
@@ -377,9 +381,10 @@ public class AskStroomAiPresenter
         getView().setEmptyState(false);
         getView().clearContextIndicator();
 
+        final long nowMs = System.currentTimeMillis();
         final HtmlBuilder hb = new HtmlBuilder();
         appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
-                System.currentTimeMillis(), false, 0, false);
+                nowMs, nowMs, false, 0, false);
         appendToContainer(hb);
 
         // Scroll markdown container to bottom, so the user's message is displayed
@@ -434,11 +439,12 @@ public class AskStroomAiPresenter
         }
         askStroomAiClient.pollMessages(currentChat.getId(), lastSeenMessageId, response -> {
             if (response.getNewMessages() != null && !response.getNewMessages().isEmpty()) {
+                final long nowMs = System.currentTimeMillis();
                 final HtmlBuilder hb = new HtmlBuilder();
                 for (final AiChatMessage msg : response.getNewMessages()) {
                     // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
                     if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
-                        renderMessage(hb, msg);
+                        renderMessage(hb, msg, nowMs);
                     }
                     // Track the highest seen message ID.
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
@@ -477,7 +483,7 @@ public class AskStroomAiPresenter
     /**
      * Render a single message with type-aware HTML structure.
      */
-    private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg) {
+    private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg, final long nowMs) {
         final long timeMs = msg.getCreateTimeMs();
         final int messageId = msg.getId();
         final boolean deletable = msg.getMessageType() == AiMessageType.USER_MESSAGE
@@ -485,39 +491,39 @@ public class AskStroomAiPresenter
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
                 appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
-                        timeMs, false, messageId, deletable);
+                        timeMs, nowMs, false, messageId, deletable);
                 break;
             case AI_RESPONSE:
                 appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
-                        timeMs, true, messageId, false);
+                        timeMs, nowMs, true, messageId, false);
                 break;
             case ERROR:
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
-                        timeMs, false, messageId, false);
+                        timeMs, nowMs, false, messageId, false);
                 break;
             case WORKING:
                 appendDetailsElement(hb, "ai-message ai-message--working",
-                        SvgImage.INFO, "Working...", msg.getMessage(), timeMs);
+                        SvgImage.INFO, "Working...", msg.getMessage(), timeMs, nowMs);
                 break;
             case THINKING:
                 appendDetailsElement(hb, "ai-message ai-message--thinking",
-                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs);
+                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs, nowMs);
                 break;
             case DASHBOARD_DATA:
             case QUERY_DATA:
             case TABLE_DATA:
                 appendDetailsElement(hb, "ai-message ai-message--data",
-                        SvgImage.TABLE, "Data context", msg.getMessage(), timeMs);
+                        SvgImage.TABLE, "Data context", msg.getMessage(), timeMs, nowMs);
                 break;
             case DEBUG_DETAIL:
                 appendDetailsElement(hb, "ai-message ai-message--debug-detail",
-                        SvgImage.INFO, "Request detail", msg.getMessage(), timeMs);
+                        SvgImage.INFO, "Request detail", msg.getMessage(), timeMs, nowMs);
                 break;
             case ATTACHMENT:
-                appendAttachmentMessage(hb, msg, timeMs, messageId, deletable);
+                appendAttachmentMessage(hb, msg, timeMs, nowMs, messageId, deletable);
                 break;
             default:
-                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, false, 0, false);
+                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, nowMs, false, 0, false);
                 break;
         }
     }
@@ -530,6 +536,7 @@ public class AskStroomAiPresenter
                                    final String cssClass,
                                    final String markdownText,
                                    final long timeMs,
+                                   final long nowMs,
                                    final boolean showCopy,
                                    final int messageId,
                                    final boolean deletable) {
@@ -560,7 +567,7 @@ public class AskStroomAiPresenter
                 }
 
                 // Add timestamp.
-                timestamp(footer, timeMs);
+                timestamp(footer, timeMs, nowMs);
 
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className(cssClass));
@@ -575,7 +582,8 @@ public class AskStroomAiPresenter
                                       final SvgImage icon,
                                       final String summaryText,
                                       final String markdownText,
-                                      final long timeMs) {
+                                      final long timeMs,
+                                      final long nowMs) {
         hb.elem(details -> {
             details.elem(summary -> {
                 icon(summary, icon);
@@ -583,14 +591,13 @@ public class AskStroomAiPresenter
             }, SUMMARY, Attribute.className("ai-message-header"));
 
             // Add markdown message.
-            details.div(contentDiv -> {
-                contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText));
-            }, Attribute.className("ai-details-content"));
+            details.div(contentDiv ->
+                            contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText)),
+                    Attribute.className("ai-details-content"));
 
             // Add timestamp footer.
-            details.div(footer -> {
-                timestamp(footer, timeMs);
-            }, Attribute.className("ai-message-footer"));
+            details.div(footer ->
+                    timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
         }, DETAILS, Attribute.className(cssClass));
     }
 
@@ -601,6 +608,7 @@ public class AskStroomAiPresenter
     private void appendAttachmentMessage(final HtmlBuilder hb,
                                          final AiChatMessage msg,
                                          final long timeMs,
+                                         final long nowMs,
                                          final int messageId,
                                          final boolean deletable) {
         final Integer attachmentId = msg.getAttachmentId();
@@ -613,11 +621,11 @@ public class AskStroomAiPresenter
 
             // Status line — will be updated in-place by polling.
             if (attachmentId != null) {
-                container.div(statusDiv -> {
-                    appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading...");
-                }, Attribute.className("ai-attachment-status"), new Attribute("id",
-                        "ai-attachment-status-" +
-                        attachmentId));
+                container.div(statusDiv ->
+                                appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading..."),
+                        Attribute.className("ai-attachment-status"), new Attribute("id",
+                                "ai-attachment-status-" +
+                                attachmentId));
             }
 
             // Footer with timestamp and optional delete button.
@@ -631,16 +639,14 @@ public class AskStroomAiPresenter
                             new Attribute("data-delete-message-id",
                                     String.valueOf(messageId)));
                 }
-                timestamp(footer, timeMs);
+                timestamp(footer, timeMs, nowMs);
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className("ai-message ai-message--data"));
     }
 
     private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
         icon(hb, icon);
-        hb.div(status -> {
-            status.append(text);
-        }, Attribute.className("ai-attachment-status-text"));
+        hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
     }
 
     /**
@@ -688,15 +694,14 @@ public class AskStroomAiPresenter
     }
 
     private static void icon(final HtmlBuilder hb, final SvgImage icon) {
-        hb.div(div -> {
-            div.appendTrustedString(icon.getSvg());
-        }, Attribute.className("svgIcon " + icon.getClassName()));
+        hb.div(div -> div.appendTrustedString(icon.getSvg()),
+                Attribute.className("svgIcon " + icon.getClassName()));
     }
 
-    private void timestamp(final HtmlBuilder html, final long timeMs) {
-        html.div(timestamp -> {
-            timestamp.append(RelativeTimeUtil.formatRelativeTime(timeMs));
-        }, Attribute.className("ai-message-timestamp"));
+    private void timestamp(final HtmlBuilder html, final long timeMs, final long nowMs) {
+        html.div(timestamp -> timestamp.append(dateTimeFormatter.formatRelative(timeMs, nowMs)),
+                Attribute.className("ai-message-timestamp"),
+                Attribute.title(dateTimeFormatter.format(timeMs)));
     }
 
     /**
@@ -809,11 +814,12 @@ public class AskStroomAiPresenter
 
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
+            final long nowMs = System.currentTimeMillis();
             final HtmlBuilder hb = new HtmlBuilder();
             if (messages != null && !messages.isEmpty()) {
                 getView().setEmptyState(false);
                 for (final AiChatMessage msg : messages) {
-                    renderMessage(hb, msg);
+                    renderMessage(hb, msg, nowMs);
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
             } else {
@@ -825,9 +831,8 @@ public class AskStroomAiPresenter
 
             // Fetch attachment statuses to update status elements rendered above.
             // For historical chats, attachments are already in their final state (READY/ERROR).
-            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response -> {
-                updateAttachmentStatuses(response.getAttachments());
-            }, error -> { /* ignore */ }, this);
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response ->
+                    updateAttachmentStatuses(response.getAttachments()), error -> { /* ignore */ }, this);
         }, this);
     }
 
