@@ -18,7 +18,7 @@ package stroom.docstore.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.docstore.impl.DocStoreConfig.DocStoreDbConfig;
+import stroom.docstore.impl.DocStoreDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

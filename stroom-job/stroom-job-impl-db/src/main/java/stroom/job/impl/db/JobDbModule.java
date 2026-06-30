@@ -18,7 +18,7 @@ package stroom.job.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.job.impl.JobSystemConfig.JobSystemDbConfig;
+import stroom.job.impl.JobSystemDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

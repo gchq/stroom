@@ -30,7 +30,6 @@ import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
-import stroom.docstore.mock.MockDocFinderModule;
 import stroom.documentation.impl.DocumentationModule;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.mock.MockStroomEventLoggingModule;

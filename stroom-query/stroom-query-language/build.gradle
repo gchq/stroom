@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+plugins {
+    id 'java-test-fixtures'
+}
+
 ext.moduleName = 'stroom.expression'
 
 dependencies {
@@ -26,6 +30,7 @@ dependencies {
     implementation libs.fast.infoset
     implementation libs.guava
     implementation libs.jackson.annotations
+    implementation libs.jackson.jq
     implementation libs.kryo
     implementation libs.slf4j.api
     implementation libs.vavr
@@ -37,4 +42,9 @@ dependencies {
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
+
+    testFixturesImplementation platform(libs.junit.bom)
+    testFixturesImplementation platform(libs.dropwizard.dependencies)
+    testFixturesImplementation libs.assertj.core
+    testFixturesImplementation libs.junit.jupiter.api
 }

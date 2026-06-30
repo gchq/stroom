@@ -22,5 +22,4 @@ dependencies {
     implementation project(':stroom-docref')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
 }

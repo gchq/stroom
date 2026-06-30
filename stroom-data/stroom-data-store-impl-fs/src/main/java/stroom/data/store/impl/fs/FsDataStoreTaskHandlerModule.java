@@ -30,7 +30,8 @@ public class FsDataStoreTaskHandlerModule extends AbstractModule {
                 .bind(FsVolumeResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(FsVolumeService.class);
+                .addBinding(FsVolumeService.class)
+                .addBinding(FsVolumeCache.class);
     }
 
     @Override

@@ -17,7 +17,6 @@
 package stroom.proxy.app.guice;
 
 import stroom.collection.mock.MockCollectionModule;
-import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -66,7 +65,6 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.ResultPage;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -156,11 +154,6 @@ public class ProxyCoreModule extends AbstractModule {
                     return Optional.empty();
                 }
                 return Optional.ofNullable(docRef.getName());
-            }
-
-            @Override
-            public ResultPage<DocAuditEntry> getAuditInfo(final DocRef docRef) {
-                return ResultPage.empty();
             }
         };
     }

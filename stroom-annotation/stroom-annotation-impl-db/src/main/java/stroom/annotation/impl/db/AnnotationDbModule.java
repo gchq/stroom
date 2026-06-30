@@ -16,7 +16,7 @@
 
 package stroom.annotation.impl.db;
 
-import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
+import stroom.annotation.impl.AnnotationDBConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

@@ -16,10 +16,11 @@
 
 package stroom.explorer.impl;
 
-import stroom.docref.DocAuditEntry;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocAuditEntryService;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.shared.ExplorerConstants;
@@ -53,6 +54,7 @@ class DocRefInfoService {
     private final Provider<ExplorerService> explorerServiceProvider;
     private final Set<IsSpecialExplorerDataSource> specialExplorerDataSources;
     private final DocFinder docFinder;
+    private final DocAuditEntryService docAuditEntryService;
 
     // Cache the set of special (non-DB) data source type names.
     private volatile Set<String> specialTypes = null;
@@ -61,15 +63,17 @@ class DocRefInfoService {
     DocRefInfoService(final Provider<SecurityContext> securityContextProvider,
                       final Provider<ExplorerService> explorerServiceProvider,
                       final Set<IsSpecialExplorerDataSource> specialExplorerDataSources,
-                      final DocFinder docFinder) {
+                      final DocFinder docFinder,
+                      final DocAuditEntryService docAuditEntryService) {
         this.securityContextProvider = securityContextProvider;
         this.explorerServiceProvider = explorerServiceProvider;
         this.specialExplorerDataSources = specialExplorerDataSources;
         this.docFinder = docFinder;
+        this.docAuditEntryService = docAuditEntryService;
     }
 
     public ResultPage<DocAuditEntry> getAuditInfo(final DocRef docRef) {
-        return docFinder.getAuditInfo(docRef);
+        return docAuditEntryService.getAuditInfo(docRef);
     }
 
     public Optional<DocRef> decorate(final DocRef docRef) {

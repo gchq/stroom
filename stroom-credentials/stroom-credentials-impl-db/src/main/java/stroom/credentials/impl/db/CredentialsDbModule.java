@@ -16,7 +16,7 @@
 
 package stroom.credentials.impl.db;
 
-import stroom.credentials.impl.CredentialsConfig.CredentialsDbConfig;
+import stroom.credentials.impl.CredentialsDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

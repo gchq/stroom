@@ -16,7 +16,6 @@
 
 package stroom.activity.impl.db;
 
-import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

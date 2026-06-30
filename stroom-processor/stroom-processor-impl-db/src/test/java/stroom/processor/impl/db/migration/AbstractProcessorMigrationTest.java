@@ -17,7 +17,7 @@
 package stroom.processor.impl.db.migration;
 
 import stroom.db.util.AbstractFlyWayDbModule;
-import stroom.processor.impl.ProcessorConfig.ProcessorDbConfig;
+import stroom.processor.impl.ProcessorDbConfig;
 import stroom.processor.impl.db.ProcessorDbConnProvider;
 import stroom.processor.impl.db.ProcessorDbModule;
 import stroom.test.common.util.db.AbstractSingleFlywayMigrationTest;

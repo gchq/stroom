@@ -16,7 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.DocAuditEntry;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.SerialisationTestConstructor;
 

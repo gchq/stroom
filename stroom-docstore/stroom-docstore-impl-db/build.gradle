@@ -16,23 +16,23 @@
 
 ext.moduleName = 'stroom.docstore.impl.db'
 
+// JOOQ codegen config — see gradle/jooq-codegen.gradle and jooq-codegen.xml
+ext.jooqMigrationLocation = 'stroom/docstore/impl/db/migration'
+ext.jooqFlywayTable = 'docstore_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+
 dependencies {
+    implementation libs.jooq
+    implementation libs.flyway.mysql
+    implementation libs.guice
+    implementation libs.jaxb.api
+    implementation libs.slf4j.api
+
     implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.flyway.core
-    implementation libs.flyway.mysql
-    implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
-    implementation libs.jaxb.api
-    implementation libs.slf4j.api
+    runtimeOnly libs.mysql.connector.java
 }

@@ -21,22 +21,16 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-resource:stroom-resource-api')
-    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-importexport:stroom-importexport-api')
 
-    implementation libs.dropwizard.metrics.annotation
     implementation libs.guice
-    implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.slf4j.api
-    implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

@@ -22,21 +22,17 @@ dependencies {
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-resource:stroom-resource-api')
-    implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
@@ -47,17 +43,14 @@ dependencies {
 
     implementation libs.commons.compress
     implementation libs.commons.fileupload
-    implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.guice
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.slf4j.api
-    implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
-    testImplementation project(':stroom-lmdb') // TODO : Refactor out ByteArrayUtils.
     testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation

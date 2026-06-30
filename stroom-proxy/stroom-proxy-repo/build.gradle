@@ -17,38 +17,17 @@
 ext.moduleName = 'stroom.proxy.repo'
 
 dependencies {
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-receive:stroom-receive-common')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.commons.compress
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.lifecycle
-    implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
-    implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
-    implementation libs.slf4j.api
 
-    testImplementation project(':stroom-proxy:stroom-proxy-remote-api')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.guice.extension
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

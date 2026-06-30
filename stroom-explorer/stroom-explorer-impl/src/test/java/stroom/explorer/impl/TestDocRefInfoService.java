@@ -17,6 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocAuditEntryService;
 import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.security.mock.MockSecurityContext;
@@ -72,6 +73,8 @@ class TestDocRefInfoService {
     private Set<IsSpecialExplorerDataSource> mockSpecialDataSources;
     @Mock
     private DocFinder docFinder;
+    @Mock
+    private DocAuditEntryService docAuditEntryService;
 
     private final MockSecurityContext mockSecurityContext = new MockSecurityContext();
 
@@ -83,7 +86,8 @@ class TestDocRefInfoService {
                 () -> mockSecurityContext,
                 null,
                 mockSpecialDataSources,
-                docFinder);
+                docFinder,
+                docAuditEntryService);
     }
 
     private void initMockCache() {

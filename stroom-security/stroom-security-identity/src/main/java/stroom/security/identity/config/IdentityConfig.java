@@ -16,13 +16,9 @@
 
 package stroom.security.identity.config;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
@@ -204,25 +200,5 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                ", passwordPolicyConfig=" + passwordPolicyConfig +
                ", dbConfig=" + dbConfig +
                '}';
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class IdentityDbConfig extends AbstractDbConfig {
-
-        public IdentityDbConfig() {
-            super();
-        }
-
-        @SuppressWarnings("unused")
-        @JsonCreator
-        public IdentityDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

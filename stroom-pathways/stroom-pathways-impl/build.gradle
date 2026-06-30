@@ -23,7 +23,6 @@ dependencies {
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -31,7 +30,6 @@ dependencies {
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-pipeline')
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -40,12 +38,9 @@ dependencies {
 
     implementation libs.guice
     implementation libs.jackson.databind
-    implementation libs.jakarta.inject
-    implementation libs.jakarta.validation.api
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.restygwt
-    implementation libs.saxon.he
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
 

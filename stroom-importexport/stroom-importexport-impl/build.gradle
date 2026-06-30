@@ -26,7 +26,6 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-processor:stroom-processor-api')
-    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -37,15 +36,12 @@ dependencies {
     implementation libs.commons.compress
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.vavr
     implementation libs.ws.rs.api
 
-    testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-security:stroom-security-mock')
 
     testImplementation libs.bundles.common.test.implementation

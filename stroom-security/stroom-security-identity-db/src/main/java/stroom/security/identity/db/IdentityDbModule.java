@@ -18,7 +18,7 @@ package stroom.security.identity.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.security.identity.config.IdentityConfig.IdentityDbConfig;
+import stroom.security.identity.config.IdentityDbConfig;
 
 import java.util.List;
 import javax.sql.DataSource;

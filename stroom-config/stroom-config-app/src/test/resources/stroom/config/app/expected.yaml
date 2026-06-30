@@ -313,8 +313,8 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       volumeCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -448,6 +448,7 @@ appConfig:
       maximumSize: 1000000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    physicalDeleteAge: "P30D"
   elastic:
     client:
       maxConnections: 30
