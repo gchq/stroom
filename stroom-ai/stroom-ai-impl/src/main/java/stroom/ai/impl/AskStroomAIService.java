@@ -1483,6 +1483,46 @@ public class AskStroomAIService {
         attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup attachment files
     }
 
+    public void deleteMessage(final int chatId, final int messageId) {
+        aiService.verifyOwnership(chatId);
+
+        // Look up the message to check for an associated attachment.
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+        final AiChatMessage targetMessage = messages.stream()
+                .filter(m -> m.getId() == messageId)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Message " + messageId + " not found in chat " + chatId));
+
+        // If this is an ATTACHMENT message, delete the attachment record + file.
+        if (targetMessage.getAttachmentId() != null) {
+            final int attachmentId = targetMessage.getAttachmentId();
+            // Delete DB records (message + attachment) in a transaction.
+            aiService.deleteAttachment(attachmentId);
+            // Clean up the attachment file on disk.
+            attachmentFileStore.deleteAttachmentFile(attachmentId);
+        } else {
+            // Simple message deletion.
+            aiService.deleteMessage(messageId);
+        }
+    }
+
+    public void deleteAllMessages(final int chatId) {
+        aiService.verifyOwnership(chatId);
+
+        // Get attachment IDs for filesystem cleanup.
+        final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+        final List<Integer> attachmentIds = attachments.stream()
+                .map(AiChatAttachment::getId)
+                .toList();
+
+        // Delete all messages and attachments in a single transaction.
+        aiService.deleteAllChatMessagesAndAttachments(chatId);
+
+        // Clean up attachment files on disk.
+        attachmentFileStore.deleteAttachmentFiles(attachmentIds);
+    }
+
     public void updateChatTitle(final int chatId, final String title) {
         aiService.updateChatTitle(chatId, title);
     }

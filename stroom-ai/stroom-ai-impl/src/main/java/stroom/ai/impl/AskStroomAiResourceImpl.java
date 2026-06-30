@@ -360,6 +360,52 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
+    public Boolean deleteMessage(final int chatId, final int messageId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteMessage"))
+                .withDescription("Delete message " + messageId + " from AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChatMessage")
+                                .withId(String.valueOf(messageId))
+                                .addData(Data.builder()
+                                        .withName("ChatId")
+                                        .withValue(String.valueOf(chatId))
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    askStroomAIServiceProvider.get().deleteMessage(chatId, messageId);
+                    return true;
+                })
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean deleteAllMessages(final int chatId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteAllMessages"))
+                .withDescription("Delete all messages from AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChat")
+                                .withId(String.valueOf(chatId))
+                                .addData(Data.builder()
+                                        .withName("Action")
+                                        .withValue("DeleteAllMessages")
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    askStroomAIServiceProvider.get().deleteAllMessages(chatId);
+                    return true;
+                })
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
     public List<AiChatMessage> getMessages(final int chatId) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "getMessages"))

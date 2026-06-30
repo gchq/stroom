@@ -35,4 +35,6 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
     void onShowHistory();
 
     void onDownloadChat();
+
+    void onDeleteAllMessages();
 }

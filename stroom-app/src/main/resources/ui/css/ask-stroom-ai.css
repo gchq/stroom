@@ -22,6 +22,13 @@
     flex-grow: 1;
     align-items: center;
     flex-direction: row;
+    overflow: hidden;
+}
+
+.askStroomAiViewImpl-title div {
+    text-overflow: ellipsis;
+    width: 100%;
+    overflow: hidden;
 }
 
 .askStroomAiViewImpl-buttons {
@@ -264,4 +271,25 @@
 
 .aiChatHistoryCell-age {
     opacity: 0.6;
+}
+
+/* ---- Delete button (visible on hover) ---- */
+
+.ai-message-delete {
+    display: flex;
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: 1px solid transparent;
+    padding: 2px 4px;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.ai-message:hover > .ai-message-footer .ai-message-delete {
+    opacity: 1;
+}
+
+.ai-message-delete:hover {
+    color: #d32f2f;
 }

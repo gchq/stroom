@@ -28,6 +28,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
@@ -157,11 +158,17 @@ public class AskStroomAiPresenter
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final Element target = e.getNativeEvent().getEventTarget().cast();
-                // Capture copy click events.
-                final Element button = ElementUtil
-                        .findParent(target, element -> element.getTagName().equalsIgnoreCase("button"),
-                                2);
+                final Element button = ElementUtil.findParent(target, element ->
+                        element.getTagName().equalsIgnoreCase("button"), 2);
                 if (button != null) {
+                    // Capture delete click events.
+                    final String messageIdStr = button.getAttribute("data-delete-message-id");
+                    if (messageIdStr != null) {
+                        onDeleteMessage(Integer.parseInt(messageIdStr));
+                        return;
+                    }
+
+                    // Capture copy click events.
                     final String data = button.getAttribute("data");
                     if (data != null) {
                         if (ClipboardUtil.copy(data)) {
@@ -372,7 +379,7 @@ public class AskStroomAiPresenter
 
         final HtmlBuilder hb = new HtmlBuilder();
         appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
-                System.currentTimeMillis(), false);
+                System.currentTimeMillis(), false, 0, false);
         appendToContainer(hb);
 
         // Scroll markdown container to bottom, so the user's message is displayed
@@ -472,18 +479,21 @@ public class AskStroomAiPresenter
      */
     private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg) {
         final long timeMs = msg.getCreateTimeMs();
+        final int messageId = msg.getId();
+        final boolean deletable = msg.getMessageType() == AiMessageType.USER_MESSAGE
+                                  || msg.getMessageType() == AiMessageType.ATTACHMENT;
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
                 appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
-                        timeMs, false);
+                        timeMs, false, messageId, deletable);
                 break;
             case AI_RESPONSE:
                 appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
-                        timeMs, true);
+                        timeMs, true, messageId, false);
                 break;
             case ERROR:
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
-                        timeMs, false);
+                        timeMs, false, messageId, false);
                 break;
             case WORKING:
                 appendDetailsElement(hb, "ai-message ai-message--working",
@@ -504,10 +514,10 @@ public class AskStroomAiPresenter
                         SvgImage.INFO, "Request detail", msg.getMessage(), timeMs);
                 break;
             case ATTACHMENT:
-                appendAttachmentMessage(hb, msg, timeMs);
+                appendAttachmentMessage(hb, msg, timeMs, messageId, deletable);
                 break;
             default:
-                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, false);
+                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, false, 0, false);
                 break;
         }
     }
@@ -520,13 +530,25 @@ public class AskStroomAiPresenter
                                    final String cssClass,
                                    final String markdownText,
                                    final long timeMs,
-                                   final boolean showCopy) {
+                                   final boolean showCopy,
+                                   final int messageId,
+                                   final boolean deletable) {
         final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
 
         hb.div(wrapper -> {
             wrapper.append(markdownHtml);
-            // Add message footer (timestamp + optional copy button).
+            // Add message footer (timestamp + optional copy/delete buttons).
             wrapper.div(footer -> {
+
+                // Add delete button.
+                if (deletable && messageId > 0) {
+                    footer.elem(button ->
+                                    icon(button, SvgImage.DELETE),
+                            BUTTON,
+                            Attribute.className("ai-message-delete"),
+                            new Attribute("data-delete-message-id",
+                                    String.valueOf(messageId)));
+                }
 
                 // Add copy button.
                 if (showCopy) {
@@ -578,7 +600,9 @@ public class AskStroomAiPresenter
      */
     private void appendAttachmentMessage(final HtmlBuilder hb,
                                          final AiChatMessage msg,
-                                         final long timeMs) {
+                                         final long timeMs,
+                                         final int messageId,
+                                         final boolean deletable) {
         final Integer attachmentId = msg.getAttachmentId();
         hb.div(container -> {
             // Header with icon and description.
@@ -596,8 +620,17 @@ public class AskStroomAiPresenter
                         attachmentId));
             }
 
-            // Footer with timestamp.
+            // Footer with timestamp and optional delete button.
             container.div(footer -> {
+                // Add delete button.
+                if (deletable && messageId > 0) {
+                    footer.elem(button ->
+                                    icon(button, SvgImage.DELETE),
+                            BUTTON,
+                            Attribute.className("ai-message-delete"),
+                            new Attribute("data-delete-message-id",
+                                    String.valueOf(messageId)));
+                }
                 timestamp(footer, timeMs);
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className("ai-message ai-message--data"));
@@ -688,6 +721,7 @@ public class AskStroomAiPresenter
             getView().clearContextIndicator();
             getView().setTitle(chat.getTitle());
             getView().setDownloadEnabled(true);
+            getView().setDeleteAllEnabled(true);
             getView().focus();
         }, this);
     }
@@ -722,6 +756,45 @@ public class AskStroomAiPresenter
                 .fire();
     }
 
+    private void onDeleteMessage(final int messageId) {
+        if (currentChat == null) {
+            return;
+        }
+        ConfirmEvent.fire(this,
+                "Are you sure you want to delete this message?",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.deleteMessage(
+                                currentChat.getId(), messageId,
+                                success -> reloadCurrentChat(),
+                                getView());
+                    }
+                });
+    }
+
+    @Override
+    public void onDeleteAllMessages() {
+        if (currentChat == null) {
+            return;
+        }
+        ConfirmEvent.fire(this,
+                "Are you sure you want to delete all messages and attachments in this conversation?",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.deleteAllMessages(
+                                currentChat.getId(),
+                                success -> reloadCurrentChat(),
+                                getView());
+                    }
+                });
+    }
+
+    private void reloadCurrentChat() {
+        if (currentChat != null) {
+            loadChat(currentChat);
+        }
+    }
+
     private void loadChat(final AiChat chat) {
         currentChat = chat;
         // A loaded chat already has a title.
@@ -732,6 +805,7 @@ public class AskStroomAiPresenter
         getView().clearContextIndicator();
         getView().setTitle(chat.getTitle());
         getView().setDownloadEnabled(true);
+        getView().setDeleteAllEnabled(true);
 
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
@@ -825,6 +899,8 @@ public class AskStroomAiPresenter
         void clearContextIndicator();
 
         void setDownloadEnabled(boolean enabled);
+
+        void setDeleteAllEnabled(boolean enabled);
     }
 
     // ---- Dock preference helpers ----
