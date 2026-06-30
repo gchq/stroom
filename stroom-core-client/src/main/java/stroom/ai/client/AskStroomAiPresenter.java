@@ -95,6 +95,7 @@ public class AskStroomAiPresenter
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
     private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
+    private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final LocationManager locationManager;
     private final UserPreferencesManager userPreferencesManager;
     private final DateTimeFormatter dateTimeFormatter;
@@ -117,6 +118,7 @@ public class AskStroomAiPresenter
                                 final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
                                 final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
+                                final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final LocationManager locationManager,
                                 final UserPreferencesManager userPreferencesManager,
                                 final DateTimeFormatter dateTimeFormatter) {
@@ -126,6 +128,7 @@ public class AskStroomAiPresenter
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
         this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
         this.downloadChatPresenterProvider = downloadChatPresenterProvider;
+        this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userPreferencesManager = userPreferencesManager;
@@ -163,8 +166,16 @@ public class AskStroomAiPresenter
             if (MouseUtil.isPrimary(e)) {
                 final Element target = e.getNativeEvent().getEventTarget().cast();
                 final Element button = ElementUtil.findParent(target, element ->
-                        element.getTagName().equalsIgnoreCase("button"), 2);
+                        element.getTagName().equalsIgnoreCase("button"), 5);
                 if (button != null) {
+                    // Capture "View data" click events.
+                    final String attachmentIdStr = button.getAttribute("data-attachment-id");
+                    if (NullSafe.isNonBlankString(attachmentIdStr)) {
+                        final String desc = button.getAttribute("data-attachment-desc");
+                        onViewAttachmentData(Integer.parseInt(attachmentIdStr), desc);
+                        return;
+                    }
+
                     // Capture delete click events.
                     final String messageIdStr = button.getAttribute("data-delete-message-id");
                     if (NullSafe.isNonBlankString(messageIdStr)) {
@@ -551,10 +562,9 @@ public class AskStroomAiPresenter
                 if (deletable && messageId > 0) {
                     button(footer,
                             SvgImage.DELETE,
-                            "Delete message",
-                            "ai-message-delete",
-                            "data-delete-message-id",
-                            String.valueOf(messageId));
+                            iconButtonClassName("ai-message-delete"),
+                            Attribute.title("Delete message"),
+                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
                 }
 
                 // Add copy button.
@@ -586,7 +596,7 @@ public class AskStroomAiPresenter
                                       final long nowMs) {
         hb.elem(details -> {
             details.elem(summary -> {
-                icon(summary, icon, "ai-message-summary-icon");
+                button(summary, icon, iconButtonClassName("ai-message-summary-icon"));
                 summary.append(summaryText);
             }, SUMMARY, Attribute.className("ai-message-header"));
 
@@ -615,12 +625,14 @@ public class AskStroomAiPresenter
         hb.div(container -> {
             // Header with icon and description.
             container.div(header -> {
+                final String description = NullSafe.getOrElse(
+                        msg, AiChatMessage::getMessage, "Table attachment");
                 button(header, SvgImage.TABLE,
-                        "ai-attachment-icon",
-                        "View data",
-                        "data-attachment-id",
-                        String.valueOf(attachmentId));
-                header.append(NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Table attachment"));
+                        iconButtonClassName("ai-attachment-icon"),
+                        Attribute.title("View data"),
+                        new Attribute("data-attachment-id", String.valueOf(attachmentId)),
+                        new Attribute("data-attachment-desc", description));
+                header.append(description);
             }, Attribute.className("ai-message-header"));
 
             // Status line — will be updated in-place by polling.
@@ -638,10 +650,9 @@ public class AskStroomAiPresenter
                 if (deletable && messageId > 0) {
                     button(footer,
                             SvgImage.DELETE,
-                            "ai-message-delete",
-                            "Delete attachment",
-                            "data-delete-message-id",
-                            String.valueOf(messageId));
+                            iconButtonClassName("ai-message-delete"),
+                            Attribute.title("Delete attachment"),
+                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
                 }
                 timestamp(footer, timeMs, nowMs);
             }, Attribute.className("ai-message-footer"));
@@ -649,7 +660,7 @@ public class AskStroomAiPresenter
     }
 
     private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
-        icon(hb, icon, "ai-attachment-status-icon");
+        button(hb, icon, iconButtonClassName("ai-attachment-status-icon"));
         hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
     }
 
@@ -702,31 +713,17 @@ public class AskStroomAiPresenter
                 Attribute.className("svgIcon " + icon.getClassName()));
     }
 
-    private static void icon(final HtmlBuilder hb,
-                             final SvgImage icon,
-                             final String className) {
-        hb.elem(button -> {
-                    button.div(div -> div.appendTrustedString(icon.getSvg()),
-                            Attribute.className("svg-image " + icon.getClassName() + " face"));
-                },
-                BUTTON,
-                Attribute.className(className + " icon-button"));
+    private static Attribute iconButtonClassName(final String className) {
+        return Attribute.className(className + " icon-button");
     }
 
     private static void button(final HtmlBuilder hb,
                                final SvgImage icon,
-                               final String className,
-                               final String title,
-                               final String messageAttribute,
-                               final String messageData) {
-        hb.elem(button -> {
-                    button.div(div -> div.appendTrustedString(icon.getSvg()),
-                            Attribute.className("svg-image " + icon.getClassName() + " face"));
-                },
+                               final Attribute... attributes) {
+        hb.elem(button -> button.div(div -> div.appendTrustedString(icon.getSvg()),
+                        Attribute.className("svg-image " + icon.getClassName() + " face")),
                 BUTTON,
-                Attribute.className(className + " icon-button"),
-                new Attribute(messageAttribute, messageData),
-                new Attribute("title", title));
+                attributes);
     }
 
     private void timestamp(final HtmlBuilder html, final long timeMs, final long nowMs) {
@@ -790,6 +787,14 @@ public class AskStroomAiPresenter
                     e.hide();
                 })
                 .fire();
+    }
+
+    private void onViewAttachmentData(final int attachmentId, final String description) {
+        if (currentChat == null) {
+            return;
+        }
+        final AiAttachmentDataPresenter presenter = aiAttachmentDataPresenterProvider.get();
+        presenter.show(currentChat.getId(), attachmentId, description);
     }
 
     private void onDeleteMessage(final int messageId) {

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
@@ -29,6 +30,7 @@ import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
@@ -487,6 +489,29 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                         .build())
                 .withSimpleLoggedResult(() ->
                         askStroomAIServiceProvider.get().downloadChatHistory(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiAttachmentDataPage getAttachmentData(final GetAttachmentDataRequest request) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "getAttachmentData"))
+                .withDescription("View attachment data for attachment "
+                                 + request.getAttachmentId()
+                                 + " in AI chat " + request.getChatId())
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChatAttachment")
+                                .withId(String.valueOf(request.getAttachmentId()))
+                                .addData(Data.builder()
+                                        .withName("ChatId")
+                                        .withValue(String.valueOf(request.getChatId()))
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() ->
+                        askStroomAIServiceProvider.get().getAttachmentData(request))
                 .getResultAndLog();
     }
 }

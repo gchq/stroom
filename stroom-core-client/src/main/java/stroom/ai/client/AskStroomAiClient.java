@@ -1,5 +1,6 @@
 package stroom.ai.client;
 
+import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
@@ -10,6 +11,7 @@ import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
+import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
@@ -204,6 +206,19 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.downloadChatHistory(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void getAttachmentData(final GetAttachmentDataRequest request,
+                           final Consumer<AiAttachmentDataPage> consumer,
+                           final RestErrorHandler errorHandler,
+                           final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.getAttachmentData(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

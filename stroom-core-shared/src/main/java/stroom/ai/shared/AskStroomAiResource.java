@@ -149,4 +149,12 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "downloadChatHistory")
     ResourceGeneration downloadChatHistory(
             @Parameter(description = "request", required = true) DownloadChatHistoryRequest request);
+
+    @POST
+    @Path("/getAttachmentData")
+    @Operation(
+            summary = "Get a page of attachment table data",
+            operationId = "getAttachmentData")
+    AiAttachmentDataPage getAttachmentData(
+            @Parameter(description = "request", required = true) GetAttachmentDataRequest request);
 }

@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
@@ -34,6 +35,7 @@ import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.config.global.api.GlobalConfig;
@@ -57,6 +59,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -82,6 +85,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -1611,6 +1615,90 @@ public class AskStroomAIService {
                 TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
                 config.getMultiSummaryMergePrompt());
         return true;
+    }
+
+    // ---------------------------------------------------------------------
+    // Attachment data viewing
+    // ---------------------------------------------------------------------
+
+    /**
+     * Reads the markdown attachment file for the given attachment ID,
+     * parses the header row and a page of data rows, and returns them.
+     */
+    public AiAttachmentDataPage getAttachmentData(final GetAttachmentDataRequest request) {
+        final int chatId = request.getChatId();
+        final int attachmentId = request.getAttachmentId();
+        aiService.verifyOwnership(chatId);
+
+        // Verify the attachment belongs to this chat.
+        final AiChatAttachment attachment = aiService.getAttachment(attachmentId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Attachment " + attachmentId + " not found"));
+        if (attachment.getChatId() != chatId) {
+            throw new RuntimeException(
+                    "Attachment " + attachmentId + " does not belong to chat " + chatId);
+        }
+
+        final Path mdFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        if (!Files.exists(mdFile)) {
+            return new AiAttachmentDataPage(
+                    Collections.emptyList(), Collections.emptyList(), 0, 0);
+        }
+
+        final int offset = NullSafe.getOrElse(
+                request.getPageRequest(), PageRequest::getOffset, 0);
+        final int length = NullSafe.getOrElse(
+                request.getPageRequest(), PageRequest::getLength, PageRequest.DEFAULT_PAGE_LENGTH);
+
+        try (final BufferedReader reader = Files.newBufferedReader(mdFile, StandardCharsets.UTF_8)) {
+            // Line 1: header row  "| Col1 | Col2 | Col3 |"
+            final String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return new AiAttachmentDataPage(
+                        Collections.emptyList(), Collections.emptyList(), 0, 0);
+            }
+            final List<String> headers = parseMarkdownRow(headerLine);
+
+            // Line 2: separator row "| --- | --- | --- |"
+            reader.readLine();
+
+            // Read through data rows, counting total and collecting the requested page.
+            final List<List<String>> pageRows = new ArrayList<>();
+            int totalRowCount = 0;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.isBlank()) {
+                    if (totalRowCount >= offset && totalRowCount < offset + length) {
+                        pageRows.add(parseMarkdownRow(line));
+                    }
+                    totalRowCount++;
+                }
+            }
+
+            return new AiAttachmentDataPage(headers, pageRows, totalRowCount, offset);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(
+                    "Failed to read attachment file for ID " + attachmentId, e);
+        }
+    }
+
+    /**
+     * Parse a single markdown table row into a list of cell values.
+     * Input: "| val1 | val2 | val3 |"
+     * Output: ["val1", "val2", "val3"]
+     */
+    private List<String> parseMarkdownRow(final String line) {
+        final List<String> cells = new ArrayList<>();
+        // Split on unescaped pipe characters.
+        final String[] parts = line.split("(?<!\\\\)\\|", -1);
+        for (final String part : parts) {
+            final String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                // Unescape any escaped pipes.
+                cells.add(trimmed.replace("\\|", "|"));
+            }
+        }
+        return cells;
     }
 
     // ---------------------------------------------------------------------
