@@ -106,4 +106,9 @@ public class ByteBufferPoolOutput extends UnsafeByteBufferOutput {
         this.byteBuffer.put(byteBuffer);
         position += length;
     }
+
+    public void clear() {
+        super.reset();
+        this.byteBuffer.clear();
+    }
 }
