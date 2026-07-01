@@ -20,6 +20,10 @@ dependencies {
 
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-shared')
+    // Needed for S3MetaFieldsMapper
+    implementation project(':stroom-docref')
+    // Needed for S3MetaFieldsMapper
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

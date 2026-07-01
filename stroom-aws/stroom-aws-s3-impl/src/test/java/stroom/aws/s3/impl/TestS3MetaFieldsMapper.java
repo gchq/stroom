@@ -34,7 +34,7 @@ class TestS3MetaFieldsMapper {
 
     @TestFactory
     Stream<DynamicTest> testGetS3Key() {
-        final S3MetaFieldsMapper s3MetaFieldsMapper = new S3MetaFieldsMapper();
+        final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper = new stroom.aws.s3.client.S3MetaFieldsMapper();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)

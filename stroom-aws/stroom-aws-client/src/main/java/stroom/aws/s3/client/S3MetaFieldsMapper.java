@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.impl;
+package stroom.aws.s3.client;
 
 
-import stroom.aws.s3.client.S3Util;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.logging.LambdaLogger;

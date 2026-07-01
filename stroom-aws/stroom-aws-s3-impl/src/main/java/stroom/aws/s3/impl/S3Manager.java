@@ -76,29 +76,21 @@ public class S3Manager {
     private static final CIKey SEQUENCE_NO_VAR = CIKey.internStaticKey("sequenceNo");
     private static final String SEPARATE_META_FILE_METADATA_KEY = "has-stroom-meta-file";
 
-    static final String AWS_USER_DEFINED_META_PREFIX = "x-amz-meta-";
     static final String META_METADATA_KEY_PREFIX = "meta-";
 
     public static final String FEED_TAG_KEY = "feed";
     public static final String STREAM_TYPE_TAG_KEY = "stream-type";
     public static final String META_ID_TAG_KEY = "meta-id";
 
-    static {
-        if (!Objects.equals(AWS_USER_DEFINED_META_PREFIX, AWS_USER_DEFINED_META_PREFIX.toLowerCase())) {
-            // This is because of use of CIKey.startsWithLowerCase
-            throw new IllegalStateException("Expecting AWS_USER_DEFINED_META_PREFIX to be lower case");
-        }
-    }
-
     private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3ClientHelper s3ClientHelper;
     private final ContextVariableResolver contextVariableResolver;
 
     public S3Manager(final TemplateCache templateCache,
                      final S3ClientConfig s3ClientConfig,
-                     final S3MetaFieldsMapper s3MetaFieldsMapper,
+                     final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper,
                      final S3ClientHelper s3ClientHelper,
                      final ContextVariableResolver contextVariableResolver) {
         this.templateCache = templateCache;
@@ -537,7 +529,7 @@ public class S3Manager {
         // metaDataKey is like
         String key = metaEntry.getKey();
         // Remove AWS user-defined meta key prefix if present
-        key = removeAwsPrefix(key);
+        key = S3Util.removeAwsPrefix(key);
 
         final SegmentedMetaEntry segmentedMetaEntry;
         if (key.startsWith(META_METADATA_KEY_PREFIX)) {
@@ -563,18 +555,6 @@ public class S3Manager {
             segmentedMetaEntry = null;
         }
         return segmentedMetaEntry;
-    }
-
-    // TODO not sure this is needed as the SDK should silently do this
-    private static String removeAwsPrefix(final String key) {
-        return NullSafe.get(
-                key,
-                k -> {
-                    if (k.startsWith(AWS_USER_DEFINED_META_PREFIX)) {
-                        k = k.substring(AWS_USER_DEFINED_META_PREFIX.length());
-                    }
-                    return k;
-                });
     }
 
     private String rangeToHttpString(final Range<Long> range) {
@@ -713,18 +693,6 @@ public class S3Manager {
             sb.append(part);
         }
         return sb.toString();
-    }
-
-    // TODO Not sure this is needed, but do just in case the SDK doesn't remove it.
-    public static CIKey removeAwsPrefix(final CIKey key) {
-        return NullSafe.get(
-                key,
-                ciKey -> {
-                    if (ciKey.startsWithLowerCase(AWS_USER_DEFINED_META_PREFIX)) {
-                        ciKey = ciKey.substring(AWS_USER_DEFINED_META_PREFIX.length());
-                    }
-                    return ciKey;
-                });
     }
 
 //    private PutObjectRequest createPutObjectRequest(final String bucketName,

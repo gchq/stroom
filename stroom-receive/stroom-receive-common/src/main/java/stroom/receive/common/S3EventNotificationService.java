@@ -17,9 +17,16 @@
 package stroom.receive.common;
 
 
+import stroom.aws.s3.client.S3ClientHelper;
+import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
+import stroom.aws.s3.client.S3ClientPool;
+import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.sqs.SqsClientFactory;
 import stroom.aws.sqs.SqsConfig;
 import stroom.data.store.api.S3Location;
+import stroom.data.store.api.S3VolumeService;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.concurrent.UniqueId;
@@ -29,6 +36,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -42,6 +50,7 @@ import tools.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -72,9 +81,12 @@ public class S3EventNotificationService {
     private final ReceiptIdGenerator receiptIdGenerator;
     private final S3EventConsumer s3EventConsumer;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
+    private final S3ClientPool s3ClientPool;
+    private final S3VolumeService s3VolumeService;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
 
     private volatile S3EventNotificationConfig lastS3EventNotificationConfig = null;
-    private volatile List<ClientState> clients;
+    private volatile List<ClientState> sqsClients;
 
     @Inject
     public S3EventNotificationService(
@@ -82,20 +94,30 @@ public class S3EventNotificationService {
             final SqsClientFactory sqsClientFactory,
             final ReceiptIdGenerator receiptIdGenerator,
             final S3EventConsumer s3EventConsumer,
-            final AttributeMapFilterFactory attributeMapFilterFactory) {
+            final AttributeMapFilterFactory attributeMapFilterFactory,
+            final S3ClientPool s3ClientPool,
+            final S3VolumeService s3VolumeService,
+            final S3MetaFieldsMapper s3MetaFieldsMapper) {
         this.s3EventNotificationConfigProvider = s3EventNotificationConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.s3EventConsumer = s3EventConsumer;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
+        this.s3ClientPool = s3ClientPool;
+        this.s3VolumeService = s3VolumeService;
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
     }
 
     public void poll() {
-        LOGGER.debug("poll()");
-        final List<ClientState> clients = getClients();
+        final List<ClientState> clients = getSqsClients();
+        LOGGER.debug("poll() - clients: {}", clients);
         if (NullSafe.hasItems(clients)) {
             for (final ClientState clientState : clients) {
                 poll(clientState);
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.info("Thread interrupted, breaking out of SQS clients loop");
+                    break;
+                }
             }
         }
     }
@@ -126,7 +148,8 @@ public class S3EventNotificationService {
                         .messageAttributeNames("All") // Message attribute wildcard.
                         .build();
 
-                messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
+                messages = sqsClient.receiveMessage(receiveMessageRequest)
+                        .messages();
 
                 final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
@@ -138,21 +161,16 @@ public class S3EventNotificationService {
                         addSqsMessageId(attributeMap, message);
 
                         // TODO:
-                        //  * Create class to hold s3 object location info.
                         //  * Add a table/col to hold the S3 location info as a child of meta.
                         //  * It is agreed that stroom will not duplicate the data on S3, so will
                         //    just create the meta rec in the db along with s3 location to read from there.
-                        //  * Build an attr map receipt info + meta obtained from either the ZIP manifest
-                        //    or the s3 metadata (depending on how the s3 forwarder behaves).
                         //  * Don't need to worry about any auth filtering beyond authenticating to the SQS itself.
-                        //  * Add in attr map filtering.
                         //  * Add in logging to receive log.
                         //  * S3 is read only from stroom's POV, so we need a isReadOnly method on the Store api.
                         final S3CreateEvent s3CreateEvent = convertMessage(message.body(), attributeMap);
 
-                        NullSafe.consume(s3CreateEvent,
-                                s3CreateEvent1 ->
-                                        handleEvent(s3CreateEvent1, attributeMapFilter));
+                        NullSafe.consume(s3CreateEvent, event ->
+                                handleEvent(event, attributeMapFilter));
 
                         // Now delete the msg we have consumed
                         final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
@@ -162,6 +180,10 @@ public class S3EventNotificationService {
                         sqsClient.deleteMessage(deleteMessageRequest);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
+                    }
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.info("Thread interrupted, stopping polling");
+                        break;
                     }
                 }
             } while (!messages.isEmpty());
@@ -274,9 +296,9 @@ public class S3EventNotificationService {
                                 awsRegion, eventTime, eventName, bucketName,
                                 bucketArn, objectKey, objectSize, attributeMap);
 
-                        s3CreateEvent = new S3CreateEvent(
-                                new S3Location(awsRegion, bucketName, objectKey),
-                                attributeMap);
+                        final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
+                        addS3MetaAttributes(s3Location, attributeMap);
+                        s3CreateEvent = new S3CreateEvent(s3Location, attributeMap);
                     } else {
                         LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
                     }
@@ -289,6 +311,39 @@ public class S3EventNotificationService {
                     "Error parsing message body - {}, messageBody:\n{}", LogUtil.exceptionMessage(e), messageBody), e);
         }
         return s3CreateEvent;
+    }
+
+    /**
+     * Call out to S3 to get the objects metadata.
+     */
+    private void addS3MetaAttributes(final S3Location s3Location,
+                                     final AttributeMap attributeMap) {
+        LOGGER.debug("addS3MetaAttributes() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
+        final Optional<FsVolume> optS3Volume = s3VolumeService.getS3Volume(
+                s3Location.regionName(),
+                s3Location.bucketName());
+
+        optS3Volume.ifPresentOrElse(
+                s3Volume -> {
+                    final S3ClientConfig s3ClientConfig = s3Volume.getS3ClientConfig();
+                    final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
+                    final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
+                            s3Location.bucketName(),
+                            s3Location.key());
+
+                    // Map any known keys back to their original form as some of our keys may not fit the
+                    // key restrictions.
+                    objectInfo.s3Metadata().forEach((k, v) -> {
+                        final CIKey originalKey = s3MetaFieldsMapper.getOriginalKey(k)
+                                .orElse(k);
+                        attributeMap.put(originalKey.get(), v);
+                    });
+                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, modified attributeMap: {}",
+                            s3Location, attributeMap);
+                },
+                () -> LOGGER.warn("No S3 volume found matching region '{}' and bucket '{}'. " +
+                                  "Unable to fetch S3 metadata for key '{}'",
+                        s3Location.regionName(), s3Location.bucketName(), s3Location.key()));
     }
 
     private static String getNodeAsString(final JsonNode baseNode, final String fieldName) {
@@ -327,27 +382,27 @@ public class S3EventNotificationService {
         }
     }
 
-    private List<ClientState> getClients() {
+    private List<ClientState> getSqsClients() {
         // Intentionally use instance equality as the provider will return a different instance
         // if the config has changed.
         if (s3EventNotificationConfigProvider.get() != lastS3EventNotificationConfig) {
             synchronized (this) {
                 final S3EventNotificationConfig newS3EventNotificationConfig = s3EventNotificationConfigProvider.get();
                 if (newS3EventNotificationConfig != lastS3EventNotificationConfig) {
-                    final List<ClientState> oldClients = clients;
+                    final List<ClientState> oldClients = sqsClients;
                     closeClients(oldClients);
-                    clients = NullSafe.stream(newS3EventNotificationConfig.getSqsConnectors())
+                    sqsClients = NullSafe.stream(newS3EventNotificationConfig.getSqsConnectors())
                             .map(sqsConfig -> {
                                 final SqsClient sqsClient = sqsClientFactory.createSqsClient(sqsConfig);
                                 return new ClientState(sqsClient, sqsConfig);
                             })
                             .toList();
                     lastS3EventNotificationConfig = newS3EventNotificationConfig;
-                    LOGGER.debug(() -> LogUtil.message("getClients() - sqsClients.size: {}", clients.size()));
+                    LOGGER.debug(() -> LogUtil.message("getClients() - sqsClients.size: {}", sqsClients.size()));
                 }
             }
         }
-        return clients;
+        return sqsClients;
     }
 
     private void closeClients(final List<ClientState> clients) {

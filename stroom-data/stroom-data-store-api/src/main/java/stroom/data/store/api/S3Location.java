@@ -24,11 +24,11 @@ import java.util.Objects;
 @NullMarked
 public record S3Location(String regionName,
                          String bucketName,
-                         String objectKey) {
+                         String key) {
 
     public S3Location {
         Objects.requireNonNull(regionName);
         Objects.requireNonNull(bucketName);
-        Objects.requireNonNull(objectKey);
+        Objects.requireNonNull(key);
     }
 }

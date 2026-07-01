@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
+import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.impl.S3Manager;
-import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -176,9 +176,8 @@ final class S3ZstdSource implements Source {
             return new AttributeMap(metadata.entrySet()
                     .stream()
                     .map(entry -> {
-                        CIKey key = S3Manager.removeAwsPrefix(entry.getKey());
+                        CIKey key = entry.getKey();
                         final String value = entry.getValue();
-                        key = S3Manager.removeAwsPrefix(key);
                         if (key.startsWithLowerCase(MANIFEST_METADATA_KEY_PREFIX)) {
                             key = key.substring(MANIFEST_METADATA_KEY_PREFIX_LENGTH);
                             final CIKey originalCiKey = s3MetaFieldsMapper.getOriginalKey(key)

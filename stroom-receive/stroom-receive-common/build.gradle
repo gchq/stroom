@@ -39,6 +39,7 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.aws.sqs
+    implementation libs.aws.s3.transfer.manager
     implementation libs.bcrypt
     implementation libs.bouncy.castle
     implementation libs.commons.compress

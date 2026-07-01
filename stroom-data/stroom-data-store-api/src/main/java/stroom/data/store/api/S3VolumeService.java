@@ -23,6 +23,8 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;
 
+// TODO we may need a S3ClientConfigService that has getS3ClientConfig(regionName, bucketName)
+//  so proxy can have an impl if we ever want proxy to consume SQS events
 public interface S3VolumeService {
 
     /**

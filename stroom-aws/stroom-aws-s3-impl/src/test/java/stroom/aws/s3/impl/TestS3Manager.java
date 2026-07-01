@@ -19,6 +19,7 @@ package stroom.aws.s3.impl;
 import stroom.aws.common.shared.AwsBasicCredentials;
 import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientPoolImpl;
+import stroom.aws.s3.client.S3Util;
 import stroom.aws.s3.impl.S3Manager.SegmentedMetaEntry;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.CacheManager;
@@ -78,7 +79,7 @@ public class TestS3Manager {
         s3Manager = new S3Manager(
                 new TemplateCacheImpl(cacheManager),
                 s3ClientConfig,
-                new S3MetaFieldsMapper(),
+                new stroom.aws.s3.client.S3MetaFieldsMapper(),
                 new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(cacheManager)),
                 null);
     }
@@ -184,13 +185,13 @@ public class TestS3Manager {
                 .withSimpleEqualityAssertion()
                 .addCase(Map.entry("foo", "bar"), null)
                 .addCase(
-                        Map.entry(S3Manager.AWS_USER_DEFINED_META_PREFIX + "foo", "bar"),
+                        Map.entry(S3Util.AWS_USER_DEFINED_META_PREFIX + "foo", "bar"),
                         null)
                 .addCase(
-                        Map.entry(S3Manager.AWS_USER_DEFINED_META_PREFIX + "0-foo", "bar"),
+                        Map.entry(S3Util.AWS_USER_DEFINED_META_PREFIX + "0-foo", "bar"),
                         null)
                 .addCase(
-                        Map.entry(S3Manager.AWS_USER_DEFINED_META_PREFIX
+                        Map.entry(S3Util.AWS_USER_DEFINED_META_PREFIX
                                   + S3Manager.META_METADATA_KEY_PREFIX
                                   + "0-foo",
                                 "bar"),

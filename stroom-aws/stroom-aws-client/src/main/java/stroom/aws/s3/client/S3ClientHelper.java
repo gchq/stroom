@@ -17,6 +17,7 @@
 package stroom.aws.s3.client;
 
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -305,7 +306,11 @@ public class S3ClientHelper {
                     () -> LogUtil.message("getObjectInfo() - bucket: '{}', key: '{}'",
                             bucketName, key));
 
-            final Map<String, String> s3Metadata = headObjectResponse.metadata();
+            final Map<CIKey, String> s3Metadata = CollectionUtil.mappingKeys(
+                    NullSafe.map(headObjectResponse.metadata()),
+                    k ->
+                            CIKey.of(S3Util.removeAwsPrefix(k)));
+
             final long contentLength = NullSafe.getLong(headObjectResponse.contentLength());
 
             return new S3ObjectInfo(
@@ -313,7 +318,7 @@ public class S3ClientHelper {
                     key,
                     contentLength,
                     NullSafe.getInt(headObjectResponse.tagCount()),
-                    CIKey.mapOf(s3Metadata));
+                    s3Metadata);
         } catch (final NoSuchKeyException e) {
             error("Error getting object info: ", bucketName, key, e);
             throw new RuntimeException(LogUtil.message("No data found for using key: {}, bucket: {}",
@@ -595,9 +600,13 @@ public class S3ClientHelper {
 
     private String getDebugIdentity(final String bucketName,
                                     final String key) {
-        return "bucketName=" +
+        return "region=" +
+               s3ClientConfig.getRegion() +
+               ", bucketName=" +
                bucketName +
-               Optional.ofNullable(key).map(k -> ", key=" + k).orElse("");
+               Optional.ofNullable(key)
+                       .map(k -> ", key=" + k)
+                       .orElse("");
     }
 
 

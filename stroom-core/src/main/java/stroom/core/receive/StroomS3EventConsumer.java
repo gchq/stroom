@@ -56,7 +56,7 @@ public class StroomS3EventConsumer implements S3EventConsumer {
         LOGGER.debug("accept() - s3CreateEvent: {}", s3CreateEvent);
         final String regionName = s3CreateEvent.s3Location().regionName();
         final String bucketName = s3CreateEvent.s3Location().bucketName();
-        final String objectKey = s3CreateEvent.s3Location().objectKey();
+        final String objectKey = s3CreateEvent.s3Location().key();
 
 
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();

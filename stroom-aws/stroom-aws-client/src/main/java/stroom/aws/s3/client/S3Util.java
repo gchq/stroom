@@ -20,6 +20,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -28,6 +29,8 @@ import java.util.regex.Pattern;
 public class S3Util {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Util.class);
+
+    public static final String AWS_USER_DEFINED_META_PREFIX = "x-amz-meta-";
 
     private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9_-]");
     private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.-]");
@@ -38,6 +41,13 @@ public class S3Util {
     private static final Pattern TRAILING_SLASH = Pattern.compile("/+$");
     private static final Pattern MULTI_SLASH = Pattern.compile("/+");
 
+    static {
+        if (!Objects.equals(AWS_USER_DEFINED_META_PREFIX, AWS_USER_DEFINED_META_PREFIX.toLowerCase())) {
+            // This is because of use of CIKey.startsWithLowerCase
+            throw new IllegalStateException("Expecting AWS_USER_DEFINED_META_PREFIX to be lower case");
+        }
+    }
+
     private S3Util() {
     }
 
@@ -47,7 +57,7 @@ public class S3Util {
         result = S3_META_KEY_INVALID_CHARS_PATTERN.matcher(result).replaceAll("-");
         result = LEADING_HYPHENS.matcher(result).replaceAll("");
         result = TRAILING_HYPHENS.matcher(result).replaceAll("");
-        LOGGER.debug("cleanS3MetaDataKey() - metaKey: '{}', s3Name: '{}'",  metaKey, result);
+        LOGGER.debug("cleanS3MetaDataKey() - metaKey: '{}', s3Name: '{}'", metaKey, result);
         return result;
     }
 
@@ -57,7 +67,7 @@ public class S3Util {
         result = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(result).replaceAll("-");
         result = LEADING_HYPHENS.matcher(result).replaceAll("");
         result = TRAILING_HYPHENS.matcher(result).replaceAll("");
-        LOGGER.debug("cleanBucketName() - bucketName: '{}', result: '{}'",  bucketName, result);
+        LOGGER.debug("cleanBucketName() - bucketName: '{}', result: '{}'", bucketName, result);
         return result;
     }
 
@@ -67,7 +77,7 @@ public class S3Util {
         result = MULTI_SLASH.matcher(result).replaceAll("/");
         result = LEADING_SLASH.matcher(result).replaceAll("");
         result = TRAILING_SLASH.matcher(result).replaceAll("");
-        LOGGER.debug("cleanKeyName() - keyName: '{}', result: '{}'",  keyName, result);
+        LOGGER.debug("cleanKeyName() - keyName: '{}', result: '{}'", keyName, result);
         return result;
     }
 
@@ -78,5 +88,29 @@ public class S3Util {
                         metadataKey, S3_META_KEY_INVALID_CHARS_PATTERN));
             }
         }
+    }
+
+    // TODO Not sure this is needed, but do just in case the SDK doesn't remove it.
+    public static CIKey removeAwsPrefix(final CIKey key) {
+        return NullSafe.get(
+                key,
+                ciKey -> {
+                    if (ciKey.startsWithLowerCase(AWS_USER_DEFINED_META_PREFIX)) {
+                        ciKey = ciKey.substring(AWS_USER_DEFINED_META_PREFIX.length());
+                    }
+                    return ciKey;
+                });
+    }
+
+    // TODO Not sure this is needed, but do just in case the SDK doesn't remove it.
+    public static String removeAwsPrefix(final String key) {
+        return NullSafe.get(
+                key,
+                k -> {
+                    if (k.startsWith(AWS_USER_DEFINED_META_PREFIX)) {
+                        k = k.substring(AWS_USER_DEFINED_META_PREFIX.length());
+                    }
+                    return k;
+                });
     }
 }

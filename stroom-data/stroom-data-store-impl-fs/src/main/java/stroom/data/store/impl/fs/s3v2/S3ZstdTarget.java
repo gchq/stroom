@@ -16,10 +16,10 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
+import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
-import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;

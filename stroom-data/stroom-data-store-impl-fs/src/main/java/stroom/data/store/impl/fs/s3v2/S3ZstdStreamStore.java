@@ -16,9 +16,9 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
+import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
-import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;

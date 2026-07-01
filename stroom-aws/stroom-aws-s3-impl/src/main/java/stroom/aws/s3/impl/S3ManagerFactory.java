@@ -32,14 +32,14 @@ public class S3ManagerFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ManagerFactory.class);
 
     private final TemplateCache templateCache;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3ClientPool s3ClientPool;
     private final S3ClientConfigCache s3ClientConfigCache;
     private final ContextVariableResolver contextVariableResolver;
 
     @Inject
     public S3ManagerFactory(final TemplateCache templateCache,
-                            final S3MetaFieldsMapper s3MetaFieldsMapper,
+                            final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper,
                             final S3ClientPool s3ClientPool,
                             final S3ClientConfigCache s3ClientConfigCache,
                             final ContextVariableResolver contextVariableResolver) {
