@@ -74,6 +74,6 @@ public class FsOrphanedMetaTrackerRecord extends UpdatableRecordImpl<FsOrphanedM
 
         setId(id);
         setMinMetaId(minMetaId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -134,6 +134,6 @@ public class FsVolumeStateRecord extends UpdatableRecordImpl<FsVolumeStateRecord
         setBytesFree(bytesFree);
         setBytesTotal(bytesTotal);
         setUpdateTimeMs(updateTimeMs);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

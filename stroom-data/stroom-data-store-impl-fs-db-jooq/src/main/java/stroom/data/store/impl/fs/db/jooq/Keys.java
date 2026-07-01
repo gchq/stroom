@@ -9,8 +9,10 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
@@ -20,6 +22,7 @@ import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
 import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionary;
 import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionaryTask;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsFeedPathRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaS3LocationRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaVolumeRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsOrphanedMetaTrackerRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsTypePathRecord;
@@ -43,6 +46,8 @@ public class Keys {
 
     public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_NAME = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, DSL.name("KEY_fs_feed_path_name"), new TableField[] { FsFeedPath.FS_FEED_PATH.NAME }, true);
     public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_PRIMARY = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, DSL.name("KEY_fs_feed_path_PRIMARY"), new TableField[] { FsFeedPath.FS_FEED_PATH.ID }, true);
+    public static final UniqueKey<FsMetaS3LocationRecord> KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_META_REGION_BUCKET_KEY_IDX = Internal.createUniqueKey(FsMetaS3Location.FS_META_S3_LOCATION, DSL.name("KEY_fs_meta_s3_location_fs_meta_s3_location_meta_region_bucket_key_idx"), new TableField[] { FsMetaS3Location.FS_META_S3_LOCATION.META_ID, FsMetaS3Location.FS_META_S3_LOCATION.S3_REGION, FsMetaS3Location.FS_META_S3_LOCATION.S3_BUCKET, FsMetaS3Location.FS_META_S3_LOCATION.S3_KEY }, true);
+    public static final UniqueKey<FsMetaS3LocationRecord> KEY_FS_META_S3_LOCATION_PRIMARY = Internal.createUniqueKey(FsMetaS3Location.FS_META_S3_LOCATION, DSL.name("KEY_fs_meta_s3_location_PRIMARY"), new TableField[] { FsMetaS3Location.FS_META_S3_LOCATION.ID }, true);
     public static final UniqueKey<FsMetaVolumeRecord> KEY_FS_META_VOLUME_PRIMARY = Internal.createUniqueKey(FsMetaVolume.FS_META_VOLUME, DSL.name("KEY_fs_meta_volume_PRIMARY"), new TableField[] { FsMetaVolume.FS_META_VOLUME.META_ID, FsMetaVolume.FS_META_VOLUME.FS_VOLUME_ID }, true);
     public static final UniqueKey<FsOrphanedMetaTrackerRecord> KEY_FS_ORPHANED_META_TRACKER_PRIMARY = Internal.createUniqueKey(FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER, DSL.name("KEY_fs_orphaned_meta_tracker_PRIMARY"), new TableField[] { FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER.ID }, true);
     public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_NAME = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, DSL.name("KEY_fs_type_path_name"), new TableField[] { FsTypePath.FS_TYPE_PATH.NAME }, true);
@@ -60,6 +65,6 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<FsVolumeRecord, FsVolumeStateRecord> FS_VOLUME_FK_FS_VOLUME_STATE_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_fk_fs_volume_state_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_STATE_ID }, Keys.KEY_FS_VOLUME_STATE_PRIMARY, new TableField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true);
-    public static final ForeignKey<FsVolumeRecord, FsVolumeGroupRecord> FS_VOLUME_GROUP_FK_FS_VOLUME_GROUP_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_group_fk_fs_volume_group_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_GROUP_ID }, Keys.KEY_FS_VOLUME_GROUP_PRIMARY, new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.ID }, true);
+    public static final ForeignKey<FsVolumeRecord, FsVolumeStateRecord> FS_VOLUME_FK_FS_VOLUME_STATE_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_fk_fs_volume_state_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_STATE_ID }, Keys.KEY_FS_VOLUME_STATE_PRIMARY, new TableField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<FsVolumeRecord, FsVolumeGroupRecord> FS_VOLUME_GROUP_FK_FS_VOLUME_GROUP_ID = Internal.createForeignKey(FsVolume.FS_VOLUME, DSL.name("fs_volume_group_fk_fs_volume_group_id"), new TableField[] { FsVolume.FS_VOLUME.FK_FS_VOLUME_GROUP_ID }, Keys.KEY_FS_VOLUME_GROUP_PRIMARY, new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

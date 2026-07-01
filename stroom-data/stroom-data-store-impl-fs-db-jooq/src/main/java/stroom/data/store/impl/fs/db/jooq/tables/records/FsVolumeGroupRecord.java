@@ -149,6 +149,6 @@ public class FsVolumeGroupRecord extends UpdatableRecordImpl<FsVolumeGroupRecord
         setUpdateTimeMs(updateTimeMs);
         setUpdateUser(updateUser);
         setName(name);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

@@ -239,6 +239,6 @@ public class FsVolumeRecord extends UpdatableRecordImpl<FsVolumeRecord> {
         setVolumeType(volumeType);
         setData(data);
         setFkFsVolumeGroupId(fkFsVolumeGroupId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

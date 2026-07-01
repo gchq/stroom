@@ -136,6 +136,6 @@ public class ZstdDictionaryTaskRecord extends UpdatableRecordImpl<ZstdDictionary
         setStreamTypeName(streamTypeName);
         setChildStreamTypeName(childStreamTypeName);
         setMetaId(metaId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

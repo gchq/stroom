@@ -74,6 +74,6 @@ public class FsMetaVolumeRecord extends UpdatableRecordImpl<FsMetaVolumeRecord> 
 
         setMetaId(metaId);
         setFsVolumeId(fsVolumeId);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }

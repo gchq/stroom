@@ -5,6 +5,7 @@ package stroom.data.store.impl.fs.db.jooq;
 
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
@@ -25,6 +26,11 @@ public class Tables {
      * The table <code>stroom.fs_feed_path</code>.
      */
     public static final FsFeedPath FS_FEED_PATH = FsFeedPath.FS_FEED_PATH;
+
+    /**
+     * The table <code>stroom.fs_meta_s3_location</code>.
+     */
+    public static final FsMetaS3Location FS_META_S3_LOCATION = FsMetaS3Location.FS_META_S3_LOCATION;
 
     /**
      * The table <code>stroom.fs_meta_volume</code>.

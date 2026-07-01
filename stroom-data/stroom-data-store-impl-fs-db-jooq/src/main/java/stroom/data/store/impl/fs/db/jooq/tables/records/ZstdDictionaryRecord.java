@@ -209,6 +209,6 @@ public class ZstdDictionaryRecord extends UpdatableRecordImpl<ZstdDictionaryReco
         setChildStreamTypeName(childStreamTypeName);
         setUuid(uuid);
         setStatus(status);
-        resetChangedOnNotNull();
+        resetTouchedOnNotNull();
     }
 }
