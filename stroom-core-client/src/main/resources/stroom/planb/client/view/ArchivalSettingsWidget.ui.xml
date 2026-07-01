@@ -14,8 +14,8 @@
         </form:FormGroup>
         <form:FormGroup ui:field="archivalLeadTimePanel"
                         identity="archivalLeadTimePanel"
-                        label="Archive After"
-                        helpText="How long data stays in the main shard before being moved to an archive shard. Must be less than the retention duration.">
+                        label="Minimum Archive Age"
+                        helpText="Data older than this period becomes eligible for archiving. Must be less than the retention duration.">
             <g:FlowPanel styleName="durationSetting">
                 <valuespinner:ValueSpinner ui:field="archivalAge"/>
                 <i:SelectionBox ui:field="archivalTimeUnit" addStyleNames="allow-focus"/>

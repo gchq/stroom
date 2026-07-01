@@ -41,7 +41,6 @@ public final class PlanBConstants {
     public static final String COMPLETE_FILE_NAME = ".complete";
     public static final String MERGED_FILE_NAME = ".merged";
     public static final String VERSION_FILE_NAME = ".version";
-    public static final String PATHWAYS_PROCESSED_FILE_NAME = ".pathways_processed";
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";
     public static final String ARCHIVE_DIR_NAME          = "archive";
     public static final String ARCHIVAL_LAST_FILE_NAME   = ".archival.last";

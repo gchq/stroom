@@ -228,14 +228,12 @@ class TestSharedFileStoreMerge {
 
         final SharedFileStoreMergeProcessor mergeProcessor = new SharedFileStoreMergeProcessor(
                 clusterLockService,
-                () -> documentActionHandlers,
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
                 () -> planBConfig,
                 statePaths,
                 nodeInfo,
                 securityContext,
-                () -> null,
                 taskContextFactory,
                 planBDocCache
         );

@@ -22,10 +22,9 @@ import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesStore;
 import stroom.planb.impl.PlanBDocumentTypes;
-import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.impl.data.TracesStoreImpl;
+import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.util.RunnableWrapper;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -43,9 +42,6 @@ public class PathwaysModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
                 .addBinding().toInstance(TracesDoc.TYPE);
 
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(PathwaysEntityEventHandler.class);
-
         DocumentStoreBinder.create(binder())
                 .bind(PathwaysDoc.TYPE, PathwaysStore.class, PathwaysStoreImpl.class)
                 .bind(TracesDoc.TYPE, TracesDocStore.class, TracesDocStoreImpl.class);
@@ -59,7 +55,7 @@ public class PathwaysModule extends AbstractModule {
                 .bindJobTo(ProcessPathways.class, builder -> builder
                         .name("Process Pathways")
                         .description("Job to process trace data to form pathways and/or validate traces")
-                        .frequencySchedule("10m"));
+                        .frequencySchedule("1m"));
 
         GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class)
                 .addBinding(TracesDocStoreImpl.class);

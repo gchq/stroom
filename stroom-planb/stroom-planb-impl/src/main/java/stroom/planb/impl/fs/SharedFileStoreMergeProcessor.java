@@ -19,12 +19,7 @@ package stroom.planb.impl.fs;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentActionHandler;
-import stroom.docstore.api.DocumentTypeName;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.node.api.NodeInfo;
-import stroom.pathways.shared.PathwaysDoc;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
@@ -33,9 +28,6 @@ import stroom.planb.shared.PlanBDocument;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -54,8 +46,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @Singleton
@@ -64,14 +54,11 @@ public class SharedFileStoreMergeProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileStoreMergeProcessor.class);
 
     private final ClusterLockService clusterLockService;
-    private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
-    private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
-    private final Provider<EntityEventBus> entityEventBusProvider;
     private final TaskContextFactory taskContextFactory;
     private final SharedFileStorePublisher publisher;
     private final List<SharedFileStoreOperation> operations;
@@ -79,26 +66,20 @@ public class SharedFileStoreMergeProcessor {
 
     @Inject
     public SharedFileStoreMergeProcessor(final ClusterLockService clusterLockService,
-                                         final Provider<Map<DocumentTypeName, DocumentActionHandler>>
-                                                 documentActionHandlersProvider,
                                          final ByteBuffers byteBuffers,
                                          final ByteBufferFactory byteBufferFactory,
                                          final Provider<PlanBConfig> configProvider,
                                          final StatePaths statePaths,
                                          final NodeInfo nodeInfo,
                                          final SecurityContext securityContext,
-                                         final Provider<EntityEventBus> entityEventBusProvider,
                                          final TaskContextFactory taskContextFactory,
                                          final PlanBDocCache planBDocCache) {
         this.clusterLockService = clusterLockService;
-        this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
         this.statePaths = statePaths;
-        this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
-        this.entityEventBusProvider = entityEventBusProvider;
         this.taskContextFactory = taskContextFactory;
         this.publisher = new SharedFileStorePublisher(nodeInfo);
         this.operations = List.of(new RetentionOperation(), new ArchiveOperation(publisher));
@@ -135,10 +116,6 @@ public class SharedFileStoreMergeProcessor {
                 .resolve(PlanBConstants.SHARDS_DIR_NAME)
                 .resolve(doc.getUuid());
 
-        // hasReferencingPathways() scans the full docstore; computing it once
-        // per doc avoids O(shardCount) full scans per merge cycle.
-        final boolean pathwaysExist = hasReferencingPathways(doc.asDocRef());
-
         // Shuffle shard indices so concurrent nodes naturally scatter across
         // different shards on each merge cycle. Without this, all nodes would
         // race for shard 0 first, causing O(N²) failed lock attempts per cycle
@@ -168,8 +145,7 @@ public class SharedFileStoreMergeProcessor {
                 final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
                         "Merge doc " + doc.getName() + " shard " + shardIndexStr,
                         taskContext -> securityContext.asProcessingUser(() ->
-                                mergeShard(doc, shardIndex, completeBatchDirs,
-                                        sharedShardsDocDir, pathwaysExist)));
+                                mergeShard(doc, shardIndex, completeBatchDirs, sharedShardsDocDir)));
                 try {
                     runnable.run();
                 } catch (final Exception e) {
@@ -178,14 +154,12 @@ public class SharedFileStoreMergeProcessor {
                 }
             }
         }
-        cleanUpProcessedBatches(doc, pathwaysExist);
     }
 
     private void mergeShard(final PlanBDocument doc,
                             final int shardIndex,
                             final List<Path> completeBatchDirs,
-                            final Path sharedShardsDocDir,
-                            final boolean pathwaysExist) {
+                            final Path sharedShardsDocDir) {
         final String lockName = PlanBConstants.getMergeLockName(doc.getUuid(), shardIndex);
         LOGGER.debug(() -> "Attempting to acquire lock " + lockName);
         clusterLockService.tryLock(lockName, () -> {
@@ -213,7 +187,7 @@ public class SharedFileStoreMergeProcessor {
                         publisher.push(doc, shardIndex, shard);
                     }
 
-                    fireBatchEvents(doc, shardIndex, completeBatchDirs, pathwaysExist);
+                    cleanUpMergedBatches(completeBatchDirs);
                     LOGGER.info("Successfully completed merge/maintenance for {}", lockName);
                 } finally {
                     final Path mergeShardDir = shard.getShardDir();
@@ -265,13 +239,12 @@ public class SharedFileStoreMergeProcessor {
     }
 
     /**
-     * Writes {@code .merged} markers, fires entity update events for Pathways
-     * consumers, and deletes batch directories that are fully processed.
+     * Writes {@code .merged} markers and immediately deletes batch directories.
+     * Pathways processing is now triggered by the live shard's
+     * {@code trace-pathways-pending} DBI rather than via file-system events,
+     * so batch directories are no longer retained for downstream consumers.
      */
-    private void fireBatchEvents(final PlanBDocument doc,
-                                 final int shardIndex,
-                                 final List<Path> batchDirs,
-                                 final boolean pathwaysExist) {
+    private void cleanUpMergedBatches(final List<Path> batchDirs) {
         for (final Path batchDir : batchDirs) {
             try {
                 Files.writeString(batchDir.resolve(PlanBConstants.MERGED_FILE_NAME),
@@ -279,21 +252,7 @@ public class SharedFileStoreMergeProcessor {
             } catch (final IOException e) {
                 LOGGER.error("Error writing .merged marker to {}", batchDir, e);
             }
-
-            final String batchDirName = batchDir.getFileName().toString();
-            if (!pathwaysExist) {
-                FileUtil.deleteDir(batchDir);
-            } else {
-                final EntityEventBus eventBus = entityEventBusProvider.get();
-                if (eventBus != null) {
-                    final String newVersion = System.currentTimeMillis() + "_"
-                            + nodeInfo.getThisNodeName();
-                    LOGGER.info("Firing MERGE UPDATE event for doc: {}, shard: {}, batch: {}",
-                            doc.getName(), shardIndex, batchDirName);
-                    EntityEvent.fire(eventBus, doc.asDocRef(), EntityAction.UPDATE,
-                            new SharedFileStoreMergeEventData(shardIndex, batchDirName, newVersion));
-                }
-            }
+            FileUtil.deleteDir(batchDir);
         }
     }
 
@@ -317,70 +276,6 @@ public class SharedFileStoreMergeProcessor {
             }
         }
         return completeBatchDirs;
-    }
-
-    private void cleanUpProcessedBatches(final PlanBDocument doc, final boolean pathwaysExist) {
-        final Path sharedPath = Path.of(doc.getSharedPath());
-        final Path processingDir = sharedPath
-                .resolve(PlanBConstants.PROCESSING_DIR_NAME)
-                .resolve(doc.getUuid());
-
-        if (!Files.exists(processingDir)) {
-            return;
-        }
-
-        try (final Stream<Path> shardDirStream = Files.list(processingDir)) {
-            for (final Path shardDir : shardDirStream.toList()) {
-                try (final Stream<Path> batchDirStream = Files.list(shardDir)) {
-                    for (final Path batchDir : batchDirStream.toList()) {
-                        final boolean isMerged = Files.exists(
-                                batchDir.resolve(PlanBConstants.MERGED_FILE_NAME));
-                        final boolean isPathwaysProcessed = Files.exists(
-                                batchDir.resolve(PlanBConstants.PATHWAYS_PROCESSED_FILE_NAME));
-                        if (isMerged && (!pathwaysExist || isPathwaysProcessed)) {
-                            LOGGER.info("Cleaning up fully processed batch directory: {}", batchDir);
-                            FileUtil.deleteDir(batchDir);
-                        }
-                    }
-                } catch (final IOException e) {
-                    LOGGER.error("Error listing batch directories for cleanup in {}", shardDir, e);
-                }
-            }
-        } catch (final IOException e) {
-            LOGGER.error("Error listing shard directories for cleanup in {}", processingDir, e);
-        }
-    }
-
-    /**
-     * Loads all documents assignable to {@code clazz} from the docstore by querying every
-     * registered {@link ImportExportActionHandler}.
-     */
-    private <T> List<T> loadDocsByType(final Class<T> clazz) {
-        final List<T> results = new ArrayList<>();
-        documentActionHandlersProvider.get().values().stream()
-                .filter(handler -> handler instanceof ImportExportActionHandler)
-                .forEach(handler -> {
-                    final ImportExportActionHandler ieHandler = (ImportExportActionHandler) handler;
-                    try {
-                        for (final DocRef docRef : ieHandler.listDocuments()) {
-                            final Object doc = handler.readDocument(docRef);
-                            if (clazz.isInstance(doc)) {
-                                results.add(clazz.cast(doc));
-                            }
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error("Error reading documents from handler {}",
-                                ieHandler.getType(), e);
-                    }
-                });
-        return results;
-    }
-
-    private boolean hasReferencingPathways(final DocRef tracesDocRef) {
-        return loadDocsByType(PathwaysDoc.class).stream()
-                .anyMatch(p -> p.getTracesDocRef() != null
-                        && Objects.equals(p.getTracesDocRef().getUuid(),
-                                tracesDocRef.getUuid()));
     }
 
     private static void copyIfExists(final Path src, final Path dst) throws IOException {
