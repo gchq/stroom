@@ -95,6 +95,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -829,7 +830,7 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 });
             } else {
-                throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+                Console.error(() -> "Document type '" + docRef.getType() + "' not registered");
             }
         }
     }
