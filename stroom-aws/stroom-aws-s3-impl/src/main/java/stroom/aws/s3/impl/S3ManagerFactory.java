@@ -23,6 +23,7 @@ import stroom.cache.api.TemplateCache;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.TemplateUtil.ContextVariableResolver;
 
 import jakarta.inject.Inject;
 
@@ -34,22 +35,30 @@ public class S3ManagerFactory {
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3ClientPool s3ClientPool;
     private final S3ClientConfigCache s3ClientConfigCache;
+    private final ContextVariableResolver contextVariableResolver;
 
     @Inject
     public S3ManagerFactory(final TemplateCache templateCache,
                             final S3MetaFieldsMapper s3MetaFieldsMapper,
                             final S3ClientPool s3ClientPool,
-                            final S3ClientConfigCache s3ClientConfigCache) {
+                            final S3ClientConfigCache s3ClientConfigCache,
+                            final ContextVariableResolver contextVariableResolver) {
         this.templateCache = templateCache;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3ClientPool = s3ClientPool;
         this.s3ClientConfigCache = s3ClientConfigCache;
+        this.contextVariableResolver = contextVariableResolver;
     }
 
     public S3Manager createS3Manager(final S3ClientConfig s3ClientConfig) {
         LOGGER.debug("createS3Manager() - s3ClientConfig: {}", s3ClientConfig);
         final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
-        return new S3Manager(templateCache, s3ClientConfig, s3MetaFieldsMapper, s3ClientHelper);
+        return new S3Manager(
+                templateCache,
+                s3ClientConfig,
+                s3MetaFieldsMapper,
+                s3ClientHelper,
+                contextVariableResolver);
     }
 
     public S3Manager createS3Manager(final DocRef s3ConfigRef) {

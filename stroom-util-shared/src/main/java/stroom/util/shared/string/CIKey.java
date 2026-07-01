@@ -529,6 +529,11 @@ public class CIKey implements Comparable<CIKey> {
         return key == null || key.isEmpty();
     }
 
+    @JsonIgnore
+    public boolean isBlank() {
+        return key == null || key.isBlank();
+    }
+
     /**
      * Create a case-insensitive keyed {@link Entry} from a {@link String} key and value of type T.
      */

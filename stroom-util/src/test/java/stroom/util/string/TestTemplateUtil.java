@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -39,6 +38,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestTemplateUtil {
 
     @TestFactory
-    Stream<DynamicTest> testTemplator() {
+    Stream<DynamicTest> testTemplate() {
         final Map<CIKey, String> populatedMap = CIKey.mapOf(
                 "number", "123",
                 "animal", "cow",
@@ -62,30 +62,30 @@ class TestTemplateUtil {
                 .withTestFunction(testCase -> {
                     final Map<CIKey, String> map = Objects.requireNonNullElse(testCase.getInput()._1, emptyMap);
                     final String templateStr = testCase.getInput()._2;
-                    final Template templator = TemplateUtil.parseTemplate(
+                    final Template template = TemplateUtil.parseTemplate(
                             templateStr,
                             String::toUpperCase,
                             String::toLowerCase);
-                    final String output1 = templator.buildExecutor()
+                    final String output1 = template.buildExecutor()
                             .addCommonReplacementFunction(map::get)
                             .execute();
 
                     // Check re-use
-                    final ExecutorBuilder executorBuilder2 = templator.buildExecutor();
+                    final ExecutorBuilder executorBuilder2 = template.buildExecutor();
                     map.forEach(executorBuilder2::addReplacement);
 
                     final String output2 = executorBuilder2.execute();
                     assertThat(output2)
                             .isEqualTo(output1);
 
-                    final ExecutorBuilder executorBuilder3 = templator.buildExecutor();
+                    final ExecutorBuilder executorBuilder3 = template.buildExecutor();
                     map.forEach((var, value) ->
                             executorBuilder3.addLazyReplacement(var, () -> value));
                     final String output3 = executorBuilder3.execute();
                     assertThat(output3)
                             .isEqualTo(output1);
 
-                    final String output4 = templator.executeWith(testCase.getInput()._1);
+                    final String output4 = template.executeWith(testCase.getInput()._1);
                     assertThat(output4)
                             .isEqualTo(output1);
 
@@ -110,6 +110,11 @@ class TestTemplateUtil {
                 .addCase(Tuple.of(populatedMap, " "), " ")
                 .addCase(Tuple.of(populatedMap, "    "), "    ")
                 .addCase(Tuple.of(populatedMap, null), "")
+                .addCase(Tuple.of(populatedMap, "xxxfoo}xxx"), "xxxfoo}xxx")
+                .addCase(Tuple.of(populatedMap, "xxx$foo}xxx"), "xxx$foo}xxx")
+                .addThrowsCase(Tuple.of(populatedMap, "xxx${fooxxx"), RuntimeException.class)
+                .addThrowsCase(Tuple.of(populatedMap, "xxx${fooxxx${bar"), RuntimeException.class)
+                .addThrowsCase(Tuple.of(populatedMap, "xxx${fooxxx${bar}"), RuntimeException.class)
                 .build();
     }
 
@@ -232,8 +237,8 @@ class TestTemplateUtil {
                 ZoneOffset.UTC);
         final String templateStr =
                 "${foo}__${year}/${year}-${month}/${year}-${month}-${day}/${hour}:${minute}:${second}.${millis}";
-        final Template templator = TemplateUtil.parseTemplate(templateStr);
-        final String output = templator.buildExecutor()
+        final Template template = TemplateUtil.parseTemplate(templateStr);
+        final String output = template.buildExecutor()
                 .addStandardTimeReplacements(() -> zonedDateTime)
                 .execute();
         assertThat(output)
@@ -243,8 +248,8 @@ class TestTemplateUtil {
     @Test
     void testUuidReplacement_reuse() {
         final String templateStr = "${uuid},${uuid}";
-        final Template templator = TemplateUtil.parseTemplate(templateStr);
-        final String output = templator.buildExecutor()
+        final Template template = TemplateUtil.parseTemplate(templateStr);
+        final String output = template.buildExecutor()
                 .addUuidReplacement(true)
                 .execute();
 
@@ -260,8 +265,8 @@ class TestTemplateUtil {
     @Test
     void testUuidReplacement_unique() {
         final String templateStr = "${uuid},${uuid}";
-        final Template templator = TemplateUtil.parseTemplate(templateStr);
-        final String output = templator.buildExecutor()
+        final Template template = TemplateUtil.parseTemplate(templateStr);
+        final String output = template.buildExecutor()
                 .addUuidReplacement(false)
                 .execute();
 
@@ -272,6 +277,32 @@ class TestTemplateUtil {
         final UUID uuid2 = UUID.fromString(parts[1]);
         assertThat(uuid1)
                 .isNotEqualTo(uuid2);
+    }
+
+    @Test
+    void testSequencerNumberReplacement_reuse() {
+        final String templateStr = "${seqNo},${seqNo},${seqNo},${foo}";
+        final Template template = TemplateUtil.parseTemplate(templateStr);
+        final AtomicLong sequence = new AtomicLong(5);
+        final String output = template.buildExecutor()
+                .addSequenceNumberReplacement(CIKey.of("seqNo"), sequence, true)
+                .execute();
+
+        assertThat(output)
+                .isEqualTo("5,5,5,");
+    }
+
+    @Test
+    void testSequencerNumberReplacement_unique() {
+        final String templateStr = "${seqNo},${seqNo},${seqNo},${foo}";
+        final Template template = TemplateUtil.parseTemplate(templateStr);
+        final AtomicLong sequence = new AtomicLong(5);
+        final String output = template.buildExecutor()
+                .addSequenceNumberReplacement(CIKey.of("seqNo"), sequence, false)
+                .execute();
+
+        assertThat(output)
+                .isEqualTo("5,6,7,");
     }
 
     @Test
@@ -337,7 +368,7 @@ class TestTemplateUtil {
     }
 
     @Test
-    void testSystemPropReplacement(@TempDir final Path tempDir) throws IOException {
+    void testSystemPropReplacement(@TempDir final Path tempDir) {
         final String propKey = "stroom.test.29348023984";
         final String propVal = "prop-val";
         System.setProperty(propKey, propVal);

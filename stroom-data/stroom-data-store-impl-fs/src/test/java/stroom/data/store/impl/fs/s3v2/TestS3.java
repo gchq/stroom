@@ -72,7 +72,8 @@ public class TestS3 {
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
                 new S3MetaFieldsMapper(),
-                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(new CacheManagerImpl())));
+                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(new CacheManagerImpl())),
+                null);
 
         final Path file = tempDir.resolve("test.txt");
         Files.writeString(file, """
@@ -130,7 +131,8 @@ public class TestS3 {
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
                 new S3MetaFieldsMapper(),
-                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(new CacheManagerImpl())));
+                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(new CacheManagerImpl())),
+                null);
 
         final int iterations = 10;
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

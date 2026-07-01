@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.writer;
+package stroom.pipeline.state;
 
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.SearchIdHolder;
+import stroom.util.shared.string.CIKey;
+import stroom.util.string.TemplateUtil.ContextVariableResolver;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-class TestPipelineContextVariableResolver {
+class TestContextVariableResolver {
 
     @Mock
     private FeedHolder mockFeedHolder;
@@ -55,7 +53,7 @@ class TestPipelineContextVariableResolver {
 
     @Test
     void testAllNullProvides() {
-        final PipelineContextVariableResolver resolver = new PipelineContextVariableResolver(
+        final ContextVariableResolver resolver = new ContextVariableResolverImpl(
                 null,
                 null,
                 null,
@@ -66,7 +64,7 @@ class TestPipelineContextVariableResolver {
 
     @Test
     void testAllNullHolders() {
-        final PipelineContextVariableResolver resolver = new PipelineContextVariableResolver(
+        final ContextVariableResolver resolver = new ContextVariableResolverImpl(
                 () -> null,
                 () -> null,
                 () -> null,
@@ -81,7 +79,7 @@ class TestPipelineContextVariableResolver {
                 .randomUuid()
                 .name("pipe1")
                 .build();
-        final PipelineContextVariableResolver resolver = new PipelineContextVariableResolver(
+        final ContextVariableResolver resolver = new ContextVariableResolverImpl(
                 () -> mockFeedHolder,
                 () -> mockPipelineHolder,
                 () -> mockMetaHolder,
@@ -103,23 +101,23 @@ class TestPipelineContextVariableResolver {
         Mockito.when(mockNodeInfo.getThisNodeName())
                 .thenReturn("node1");
 
-        assertThat(resolver.getVariableValue("foo"))
+        assertThat(resolver.getVariableValue(CIKey.of("foo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("feed"))
+        assertThat(resolver.getVariableValue(CIKey.of("feed")))
                 .hasValue("FEED1");
-        assertThat(resolver.getVariableValue("pipeline"))
+        assertThat(resolver.getVariableValue(CIKey.of("pipeline")))
                 .hasValue("pipe1");
-        assertThat(resolver.getVariableValue("sourceId"))
+        assertThat(resolver.getVariableValue(CIKey.of("sourceId")))
                 .hasValue("123");
-        assertThat(resolver.getVariableValue("streamId"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamId")))
                 .hasValue("123");
-        assertThat(resolver.getVariableValue("partNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("partNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("streamNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("searchId"))
+        assertThat(resolver.getVariableValue(CIKey.of("searchId")))
                 .hasValue("search1");
-        assertThat(resolver.getVariableValue("node"))
+        assertThat(resolver.getVariableValue(CIKey.of("node")))
                 .hasValue("node1");
     }
 
@@ -131,7 +129,7 @@ class TestPipelineContextVariableResolver {
                 .build();
         final AtomicReference<FeedHolder> feedHolderProvider = new AtomicReference<>(mockFeedHolder);
 
-        final PipelineContextVariableResolver resolver = new PipelineContextVariableResolver(
+        final ContextVariableResolver resolver = new ContextVariableResolverImpl(
                 feedHolderProvider::get,
                 () -> mockPipelineHolder,
                 () -> mockMetaHolder,
@@ -153,23 +151,23 @@ class TestPipelineContextVariableResolver {
         Mockito.when(mockNodeInfo.getThisNodeName())
                 .thenReturn("node1");
 
-        assertThat(resolver.getVariableValue("foo"))
+        assertThat(resolver.getVariableValue(CIKey.of("foo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("feed"))
+        assertThat(resolver.getVariableValue(CIKey.of("feed")))
                 .hasValue("FEED1");
-        assertThat(resolver.getVariableValue("pipeline"))
+        assertThat(resolver.getVariableValue(CIKey.of("pipeline")))
                 .hasValue("pipe1");
-        assertThat(resolver.getVariableValue("sourceId"))
+        assertThat(resolver.getVariableValue(CIKey.of("sourceId")))
                 .hasValue("123");
-        assertThat(resolver.getVariableValue("streamId"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamId")))
                 .hasValue("123");
-        assertThat(resolver.getVariableValue("partNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("partNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("streamNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("searchId"))
+        assertThat(resolver.getVariableValue(CIKey.of("searchId")))
                 .hasValue("search1");
-        assertThat(resolver.getVariableValue("node"))
+        assertThat(resolver.getVariableValue(CIKey.of("node")))
                 .hasValue("node1");
 
         feedHolderProvider.set(mockFeedHolder2);
@@ -177,29 +175,29 @@ class TestPipelineContextVariableResolver {
         Mockito.when(mockFeedHolder2.getFeedName())
                 .thenReturn("FEED2");
 
-        assertThat(resolver.getVariableValue("foo"))
+        assertThat(resolver.getVariableValue(CIKey.of("foo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("feed"))
+        assertThat(resolver.getVariableValue(CIKey.of("feed")))
                 .hasValue("FEED2");
-        assertThat(resolver.getVariableValue("pipeline"))
+        assertThat(resolver.getVariableValue(CIKey.of("pipeline")))
                 .hasValue("pipe1");
-        assertThat(resolver.getVariableValue("sourceId"))
+        assertThat(resolver.getVariableValue(CIKey.of("sourceId")))
                 .hasValue("123");
-        assertThat(resolver.getVariableValue("streamId"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamId")))
                 .hasValue("123");
-        assertThat(resolver.getVariableValue("partNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("partNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("streamNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("searchId"))
+        assertThat(resolver.getVariableValue(CIKey.of("searchId")))
                 .hasValue("search1");
-        assertThat(resolver.getVariableValue("node"))
+        assertThat(resolver.getVariableValue(CIKey.of("node")))
                 .hasValue("node1");
     }
 
     @Test
     void testAll_intermediateNulls() {
-        final PipelineContextVariableResolver resolver = new PipelineContextVariableResolver(
+        final ContextVariableResolver resolver = new ContextVariableResolverImpl(
                 () -> mockFeedHolder,
                 () -> mockPipelineHolder,
                 () -> mockMetaHolder,
@@ -219,44 +217,44 @@ class TestPipelineContextVariableResolver {
         Mockito.when(mockNodeInfo.getThisNodeName())
                 .thenReturn(null);
 
-        assertThat(resolver.getVariableValue("foo"))
+        assertThat(resolver.getVariableValue(CIKey.of("foo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("feed"))
+        assertThat(resolver.getVariableValue(CIKey.of("feed")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("pipeline"))
+        assertThat(resolver.getVariableValue(CIKey.of("pipeline")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("sourceId"))
+        assertThat(resolver.getVariableValue(CIKey.of("sourceId")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("streamId"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamId")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("partNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("partNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("streamNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamNo")))
                 .hasValue("3");
-        assertThat(resolver.getVariableValue("searchId"))
+        assertThat(resolver.getVariableValue(CIKey.of("searchId")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("node"))
+        assertThat(resolver.getVariableValue(CIKey.of("node")))
                 .isEmpty();
     }
 
-    private static void asserAllEmpty(final PipelineContextVariableResolver resolver) {
-        assertThat(resolver.getVariableValue("foo"))
+    private static void asserAllEmpty(final ContextVariableResolver resolver) {
+        assertThat(resolver.getVariableValue(CIKey.of("foo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("feed"))
+        assertThat(resolver.getVariableValue(CIKey.of("feed")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("pipeline"))
+        assertThat(resolver.getVariableValue(CIKey.of("pipeline")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("sourceId"))
+        assertThat(resolver.getVariableValue(CIKey.of("sourceId")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("streamId"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamId")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("partNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("partNo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("streamNo"))
+        assertThat(resolver.getVariableValue(CIKey.of("streamNo")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("searchId"))
+        assertThat(resolver.getVariableValue(CIKey.of("searchId")))
                 .isEmpty();
-        assertThat(resolver.getVariableValue("node"))
+        assertThat(resolver.getVariableValue(CIKey.of("node")))
                 .isEmpty();
     }
 }

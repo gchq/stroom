@@ -306,6 +306,12 @@ appConfig:
         Reference: "ref"
         Test Events: "tevt"
         Test Reference: "tref"
+      s3VolumeCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
+        maximumSize: 1000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null

@@ -32,7 +32,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.shared.string.CIKey;
 import stroom.util.string.StringIdUtil;
-import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.ContextVariableResolver;
+import stroom.util.string.TemplateUtil.ExecutorBuilder;
 import stroom.util.string.TemplateUtil.Template;
 
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -42,15 +43,12 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -75,6 +73,7 @@ public class S3Manager {
     private static final CIKey ID_VAR = CIKey.internStaticKey("id");
     private static final CIKey ID_PATH_VAR = CIKey.internStaticKey("idPath");
     private static final CIKey ID_PADDED_VAR = CIKey.internStaticKey("idPadded");
+    private static final CIKey SEQUENCE_NO_VAR = CIKey.internStaticKey("sequenceNo");
     private static final String SEPARATE_META_FILE_METADATA_KEY = "has-stroom-meta-file";
 
     static final String AWS_USER_DEFINED_META_PREFIX = "x-amz-meta-";
@@ -95,27 +94,18 @@ public class S3Manager {
     private final S3ClientConfig s3ClientConfig;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3ClientHelper s3ClientHelper;
+    private final ContextVariableResolver contextVariableResolver;
 
     public S3Manager(final TemplateCache templateCache,
                      final S3ClientConfig s3ClientConfig,
                      final S3MetaFieldsMapper s3MetaFieldsMapper,
-                     final S3ClientHelper s3ClientHelper) {
+                     final S3ClientHelper s3ClientHelper,
+                     final ContextVariableResolver contextVariableResolver) {
         this.templateCache = templateCache;
         this.s3ClientConfig = s3ClientConfig;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3ClientHelper = s3ClientHelper;
-    }
-
-    private Template getTemplate(final String templateStr) {
-        final Template template;
-        if (TemplateUtil.isStaticTemplate(templateStr)) {
-            // No point hitting the cache if our keyPattern is a static one containing something
-            // with high cardinality like a meta id.
-            template = TemplateUtil.parseTemplate(templateStr);
-        } else {
-            template = templateCache.getTemplate(templateStr);
-        }
-        return template;
+        this.contextVariableResolver = contextVariableResolver;
     }
 
     /**
@@ -154,12 +144,22 @@ public class S3Manager {
      * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
      */
     public String createKey(final String keyPattern, final Meta meta) {
+        return createKey(keyPattern, meta, null);
+    }
+
+    /**
+     * Create an S3 key using either the supplied keyPattern or the keyPattern from
+     * the s3ClientConfig. {@link Meta} is used to provide values for the templated key.
+     *
+     * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
+     */
+    public String createKey(final String keyPattern, final Meta meta, final AtomicLong sequenceNumber) {
         Objects.requireNonNull(meta);
         final String effectiveKeyPattern = NullSafe.nonBlankStringElseGet(
                 keyPattern,
                 this::getKeyNamePattern);
 
-        String key = applyTemplate(effectiveKeyPattern, meta);
+        String key = applyTemplate(effectiveKeyPattern, meta, sequenceNumber);
         key = S3Util.cleanKeyName(key);
 
         final int keyBytesLen = key.getBytes(StandardCharsets.UTF_8).length;
@@ -184,6 +184,43 @@ public class S3Manager {
                 .orElse(S3ClientConfig.DEFAULT_KEY_PATTERN);
     }
 
+    /**
+     * @return The first non-blank pattern out of:
+     * <ol>
+     *     <li>keyNamePattern</li>
+     *     <li>s3ClientConfig.getKeyPattern</li>
+     *     <li>s3ClientConfig.DEFAULT_KEY_PATTERN</li>
+     * </ol>
+     */
+    public String getKeyNamePattern(final String keyNamePattern) {
+        if (NullSafe.isNonBlankString(keyNamePattern)) {
+            return keyNamePattern;
+        } else {
+            return NullSafe
+                    .nonBlankStringElse(
+                            s3ClientConfig.getKeyPattern(),
+                            S3ClientConfig.DEFAULT_KEY_PATTERN);
+        }
+    }
+
+    /**
+     * @return The first non-blank pattern out of:
+     * <ol>
+     *     <li>bucketNamePattern</li>
+     *     <li>s3ClientConfig.getBucketName</li>
+     *     <li>s3ClientConfig.DEFAULT_BUCKET_NAME</li>
+     * </ol>
+     */
+    public String getBucketNamePattern(final String bucketNamePattern) {
+        if (NullSafe.isNonBlankString(bucketNamePattern)) {
+            return bucketNamePattern;
+        } else {
+            return NullSafe.nonBlankStringElse(
+                    s3ClientConfig.getBucketName(),
+                    S3ClientConfig.DEFAULT_BUCKET_NAME);
+        }
+    }
+
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source) {
@@ -196,16 +233,21 @@ public class S3Manager {
         return upload(getBucketNamePattern(), getKeyNamePattern(), meta, s3MetaData, null, source);
     }
 
-    public PutObjectResponse upload(final String bucketNamePattern,
-                                    final String keyNamePattern,
+    /**
+     * @param bucketName The S3 bucket to upload to (Use {@link S3Manager#createBucketName(String, Meta)}
+     *                   to create a bucket from a pattern).
+     * @param key        The S3 key to upload to (Use {@link S3Manager#createKey(String, Meta, AtomicLong)}
+     *                   to create a key from a pattern).
+     */
+    public PutObjectResponse upload(final String bucketName,
+                                    final String key,
                                     final Meta meta,
                                     final AttributeMap attributeMap,
                                     final S3UploadProperties uploadProperties,
                                     final Path source) {
-        final String bucketName = createBucketName(bucketNamePattern, meta);
-        final String key = createKey(keyNamePattern, meta);
+        NullSafe.requireNonBlankString(bucketName);
+        NullSafe.requireNonBlankString(key);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
-
         return s3ClientHelper.upload(
                 bucketName,
                 key,
@@ -597,26 +639,31 @@ public class S3Manager {
     }
 
     private String applyTemplate(final String templateStr, final Meta meta) {
-        final Template template;
-        if (TemplateUtil.isStaticTemplate(templateStr)) {
-            // No point hitting the cache if our keyPattern is a static one containing something
-            // with high cardinality like a meta id.
-            template = TemplateUtil.parseTemplate(templateStr);
-        } else {
-            template = templateCache.getTemplate(templateStr);
+        return applyTemplate(templateStr, meta, null);
+    }
+
+    private String applyTemplate(final String templateStr, final Meta meta, final AtomicLong sequenceNumber) {
+        final Template template = templateCache.getTemplate(templateStr);
+        ExecutorBuilder executorBuilder = template.buildExecutor();
+        if (contextVariableResolver != null) {
+            contextVariableResolver.addContextReplacements(executorBuilder);
         }
-
-        final Supplier<ZonedDateTime> zonedDateTimeSupplier = () ->
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
-
-        final String output = template.buildExecutor()
-                .addStandardTimeReplacements(zonedDateTimeSupplier)
+        // Use now() for time replacements. When one of: rolling, agg splitting and record splitting is used,
+        // the time vars can distinguish multiple files coming from the same stream
+        executorBuilder = executorBuilder
+                .addStandardTimeReplacements()
+                .addUuidReplacement(false)
                 .addLazyReplacement(FEED_VAR, meta::getFeedName)
                 .addLazyReplacement(TYPE_VAR, meta::getTypeName)
                 .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
                 .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
-                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
-                .execute();
+                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()));
+
+        if (sequenceNumber != null) {
+            executorBuilder = executorBuilder.addSequenceNumberReplacement(
+                    SEQUENCE_NO_VAR, sequenceNumber, true);
+        }
+        final String output = executorBuilder.execute();
 
         LOGGER.debug("applyTemplate() - template: '{}', output: '{}", template, output);
         return output;

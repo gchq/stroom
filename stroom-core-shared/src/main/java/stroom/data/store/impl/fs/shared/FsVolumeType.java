@@ -20,6 +20,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -64,7 +65,8 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     /**
      * Volume types that use the S3 storage platform.
      */
-    private static final Set<FsVolumeType> S3_VOLUME_TYPES = EnumSet.of(S3_V1, S3_V1_READ_ONLY, S3_V2);
+    private static final Set<FsVolumeType> S3_VOLUME_TYPES = Collections.unmodifiableSet(
+            EnumSet.of(S3_V1, S3_V1_READ_ONLY, S3_V2));
 
     public static final PrimitiveValueConverter<FsVolumeType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(FsVolumeType.class, FsVolumeType.values());
@@ -109,7 +111,10 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
         return readOnly;
     }
 
-    public static Set<FsVolumeType> getS3_VOLUME_TYPES() {
+    /**
+     * @return Volume types that use S3 for storage.
+     */
+    public static Set<FsVolumeType> getS3VolumeTypes() {
         return S3_VOLUME_TYPES;
     }
 }

@@ -79,7 +79,8 @@ public class TestS3Manager {
                 new TemplateCacheImpl(cacheManager),
                 s3ClientConfig,
                 new S3MetaFieldsMapper(),
-                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(cacheManager)));
+                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(cacheManager)),
+                null);
     }
 
     @AfterEach

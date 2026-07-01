@@ -52,9 +52,10 @@ public class TemplateCacheImpl implements TemplateCache {
 
     @Override
     public Template getTemplate(final String template) {
-        // Not much point caching the empty instance
-        if (NullSafe.isEmptyString(template)) {
-            return Template.EMPTY_TEMPLATE;
+        if (TemplateUtil.isStaticTemplate(template)) {
+            // All static templates may have high cardinality and are cheap to create so no
+            // point caching them.
+            return TemplateUtil.parseTemplate(template);
         } else {
             return cache.get(template);
         }

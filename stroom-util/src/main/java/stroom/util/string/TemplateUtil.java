@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
@@ -161,13 +162,18 @@ public class TemplateUtil {
                 // representing either a chunk of static text or a named variable for replacement.
                 for (final char chr : template.toCharArray()) {
                     if (chr == '{' && lastChar == '$') {
-                        inVariable = true;
-                        if (!sb.isEmpty()) {
-                            // Stuff before must be static text
-                            final String staticText = format(sb.toString(), staticTextFormatter);
-                            funcList.add(StaticTextPart.of(staticText));
-                            LOGGER.debug("Adding static text func for '{}'", staticText);
-                            sb.setLength(0);
+                        if (inVariable) {
+                            throw new IllegalArgumentException(LogUtil.message(
+                                    "Nested variable found in template '{}'", template));
+                        } else {
+                            inVariable = true;
+                            if (!sb.isEmpty()) {
+                                // Stuff before must be static text
+                                final String staticText = format(sb.toString(), staticTextFormatter);
+                                funcList.add(StaticTextPart.of(staticText));
+                                LOGGER.debug("Adding static text func for '{}'", staticText);
+                                sb.setLength(0);
+                            }
                         }
                     } else if (inVariable && chr == '}') {
                         inVariable = false;
@@ -205,11 +211,11 @@ public class TemplateUtil {
     }
 
     /**
-     * @return True if the supplied template is all static text with no variable placeholders.
+     * @return True if the supplied template is null, blank or all static text with no variable placeholders.
      */
     public static boolean isStaticTemplate(final String template) {
         return NullSafe.isBlankString(template)
-               || !template.contains("{");
+               || !template.contains("${");
     }
 
     private static String format(final String str,
@@ -356,11 +362,6 @@ public class TemplateUtil {
                    && varsInTemplate.contains(var);
         }
 
-        @Override
-        public String toString() {
-            return template;
-        }
-
         /**
          * @return True if the template is empty.
          */
@@ -400,6 +401,17 @@ public class TemplateUtil {
         public int hashCode() {
             return Objects.hash(template, varsInTemplate, templateParts);
         }
+
+        @Override
+        public String toString() {
+            return "Template{" +
+                   "template='" + template + '\'' +
+                   ", varsInTemplate=" + varsInTemplate +
+                   ", templateParts=" + templateParts +
+                   ", partExtractorCount=" + partExtractorCount +
+                   ", isAllStaticText=" + isAllStaticText +
+                   '}';
+        }
     }
 
 
@@ -431,6 +443,20 @@ public class TemplateUtil {
          */
         ExecutorBuilder addLazyReplacement(CIKey var,
                                            Supplier<String> replacementSupplier);
+
+        /**
+         * Add a lazy static {@link ReplacementProvider} for var.
+         * If var exists in the template, {@link AtomicLong#getAndIncrement()} will be called
+         * to provide the replacement value. If reuseSequenceNumber is true, that value
+         * will be used for each instance of var in the template. If reuseSequenceNumber is false
+         * {@link AtomicLong#getAndIncrement()}
+         * replacementSupplier will only be called once to get a replacement
+         * even if var appears more than once in the template.
+         * If var is not in the template it is a no-op.
+         */
+        ExecutorBuilder addSequenceNumberReplacement(CIKey var,
+                                                     AtomicLong sequenceNumber,
+                                                     boolean reuseSequenceNumber);
 
         /**
          * Add a single {@link ReplacementProvider} function that will be used for <strong>ALL</strong>
@@ -573,6 +599,14 @@ public class TemplateUtil {
         }
 
         @Override
+        public ExecutorBuilder addSequenceNumberReplacement(final CIKey var,
+                                                            final AtomicLong sequenceNumber,
+                                                            final boolean reuseSequenceNumber) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
         public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
             // Template is all static text so this is a no-op
             return this;
@@ -703,6 +737,21 @@ public class TemplateUtil {
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addSequenceNumberReplacement(final CIKey var,
+                                                            final AtomicLong sequenceNumber,
+                                                            final boolean reuseSequenceNumber) {
+            Objects.requireNonNull(sequenceNumber);
+            if (reuseSequenceNumber) {
+                varToReplacementProviderMap.put(var, new SingleStatefulReplacementProvider(var, () ->
+                        String.valueOf(sequenceNumber.getAndIncrement())));
+            } else {
+                varToReplacementProviderMap.put(var, ignored ->
+                        String.valueOf(sequenceNumber.getAndIncrement()));
             }
             return this;
         }
@@ -950,6 +999,11 @@ public class TemplateUtil {
         private final Supplier<String> replacementSupplier;
         private String replacement = null;
 
+        /**
+         * @param var                 The var to replace in the template
+         * @param replacementSupplier Will be called only once if var is in the template. The replacement
+         *                            value will be used for all instances of var.
+         */
         private SingleStatefulReplacementProvider(final CIKey var,
                                                   final Supplier<String> replacementSupplier) {
             this.var = var;
@@ -1075,6 +1129,21 @@ public class TemplateUtil {
         public String apply(final Map<CIKey, ReplacementProvider> stringReplacementProviderMap,
                             final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             return staticText;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface ContextVariableResolver {
+
+        default Optional<String> getVariableValue(final CIKey var) {
+            return Optional.empty();
+        }
+
+        default ExecutorBuilder addContextReplacements(final ExecutorBuilder executorBuilder) {
+            return executorBuilder;
         }
     }
 }

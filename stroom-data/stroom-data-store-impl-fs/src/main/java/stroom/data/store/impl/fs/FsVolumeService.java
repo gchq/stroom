@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.CacheManager;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.TemplateCache;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.api.FsVolumeGroupService;
@@ -99,7 +100,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
-    private static final String CACHE_NAME = "S3 Volume Cache";
+    private static final String S3_VOLUME_CACHE_NAME = "S3 Volume Cache";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
@@ -120,6 +121,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
     private final NodeInfo nodeInfo;
     private final TaskContextFactory taskContextFactory;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
+    private final LoadingStroomCache<S3CacheKey, Optional<FsVolume>> s3VolumeCache;
 
     private volatile boolean createdDefaultVolumes = false;
 
@@ -152,8 +154,10 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         this.taskContextFactory = taskContextFactory;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
 
-//        cacheManager.createLoadingCache(
-//                CACHE_NAME)
+        s3VolumeCache = cacheManager.createLoadingCache(
+                S3_VOLUME_CACHE_NAME,
+                () -> volumeConfigProvider.get().getS3VolumeCache(),
+                this::doGetS3Volume);
     }
 
     public FsVolume create(final FsVolume fsVolume) {
@@ -330,6 +334,14 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
                                           final String bucketName) {
         Objects.requireNonNull(regionName);
         Objects.requireNonNull(bucketName);
+        final Optional<FsVolume> optVolume = s3VolumeCache.get(new S3CacheKey(regionName, bucketName));
+        LOGGER.debug("getS3Volume() - regionName: {}, bucketName: {}, optVolume: {}",
+                regionName, bucketName, optVolume);
+        return optVolume;
+    }
+
+    public Optional<FsVolume> doGetS3Volume(final S3CacheKey s3CacheKey) {
+        Objects.requireNonNull(s3CacheKey);
         final Optional<FsVolume> s3Volume = getCurrentVolumes()
                 .groupNameToVolumesMap()
                 .values()
@@ -339,19 +351,19 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
                         fsVolume.getStatus() == VolumeUseStatus.ACTIVE)
                 .filter(fsVolume ->
                         fsVolume.getVolumeType() != null
-                        && FsVolumeType.getS3_VOLUME_TYPES().contains(fsVolume.getVolumeType()))
+                        && FsVolumeType.getS3VolumeTypes().contains(fsVolume.getVolumeType()))
                 .filter(fsVolume -> {
                     final S3ClientConfig s3ClientConfig = fsVolume.getS3ClientConfig();
                     if (s3ClientConfig != null) {
-                        return Objects.equals(s3ClientConfig.getBucketName(), bucketName)
-                               && Objects.equals(s3ClientConfig.getRegion(), regionName);
+                        return Objects.equals(s3ClientConfig.getBucketName(), s3CacheKey.bucketName)
+                               && Objects.equals(s3ClientConfig.getRegion(), s3CacheKey.regionName);
                     } else {
                         return false;
                     }
                 })
                 .findAny();
 
-        LOGGER.debug("getS3Volume() - regionName: {}, bucketName: {}, s3Volume: {}", regionName, bucketName, s3Volume);
+        LOGGER.debug("doGetS3Volume() - s3CacheKey: {}, s3Volume: {}", s3CacheKey, s3Volume);
         return s3Volume;
     }
 

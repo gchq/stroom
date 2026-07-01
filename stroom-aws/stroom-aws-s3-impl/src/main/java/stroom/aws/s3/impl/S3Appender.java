@@ -83,7 +83,7 @@ public class S3Appender extends AbstractAppender {
     private DocRef s3ConfigRef;
     private String bucketNamePattern;
     private String keyNamePattern;
-    private S3ClientConfig s3ClientConfig;
+    private S3Manager s3Manager;
     private String cacheControl;
     private String contentDisposition;
     private String contentEncoding;
@@ -125,7 +125,9 @@ public class S3Appender extends AbstractAppender {
         if (optional.isEmpty()) {
             fatal("Unable to load S3 client config from " + s3ConfigRef);
         } else {
-            s3ClientConfig = optional.get();
+            final S3ClientConfig s3ClientConfig = optional.get();
+            LOGGER.debug("startProcessing() - s3ClientConfig: {}", s3ClientConfig);
+            s3Manager = s3ManagerFactory.createS3Manager(s3ClientConfig);
         }
 
         super.startProcessing();
@@ -147,14 +149,6 @@ public class S3Appender extends AbstractAppender {
                     super.close();
 
                     try {
-                        final S3Manager s3Manager = s3ManagerFactory.createS3Manager(s3ClientConfig);
-//                        final String bucketNamePattern = NullSafe
-//                                .nonBlank(S3Appender.this.bucketNamePattern)
-//                                .orElse(s3Manager.getBucketNamePattern());
-//                        final String keyNamePattern = NullSafe
-//                                .nonBlank(S3Appender.this.keyNamePattern)
-//                                .orElse(s3Manager.getKeyNamePattern());
-
                         // Upload to S3
                         // Upload the zip to S3.
                         final Meta meta = metaHolder.getMeta();
@@ -166,9 +160,15 @@ public class S3Appender extends AbstractAppender {
                                 contentEncoding,
                                 contentType);
 
+                        final String bucketName = s3Manager.createBucketName(bucketNamePattern, meta);
+                        final String key = s3Manager.createKey(keyNamePattern, meta, sequenceNumber);
+                        LOGGER.debug(
+                                "close() - Uploading file for meta: {}, bucketName: {}, key: {}, " +
+                                "tempFile: {}, attributeMap: {}",
+                                meta, bucketName, key, tempFile, attributeMap);
                         s3Manager.upload(
-                                bucketNamePattern,
-                                keyNamePattern,
+                                bucketName,
+                                key,
                                 meta,
                                 attributeMap,
                                 uploadProperties,
