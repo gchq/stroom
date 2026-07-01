@@ -212,7 +212,30 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             } else {
                 setSelectedTab(null);
             }
-            onResize();
+
+            if (visibleTabs.contains(tabData)) {
+                // Tab is already visible — just update styling, don't recalculate layout.
+                // Recalculating would change the visible set because the recentTabs order
+                // has changed, causing tabs to shift around despite no resize.
+                updateTabStyles();
+            } else {
+                onResize();
+            }
+        }
+    }
+
+    /**
+     * Updates selected and keyboard-selected styling on all tab widgets
+     * without recalculating the layout.
+     */
+    private void updateTabStyles() {
+        for (final TabData tabData : tabs) {
+            final AbstractTab tab = getTab(tabData);
+            if (tab != null) {
+                final boolean visible = visibleTabs.contains(tabData);
+                tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
+                tab.setSelected(visible && tabData.equals(selectedTab));
+            }
         }
     }
 
