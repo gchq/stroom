@@ -35,7 +35,14 @@
             <g:TextBox ui:field="reasoningEffort" width="400px"
                        title="Reasoning effort level: low, medium, or high. Leave blank if the model does not support reasoning."/>
         </form:FormGroup>
-        <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px" addStyleNames="allow-focus"/>
+        <form:FormGroup identity="embeddingModelDimensions"
+                        label="Embedding model dimensions"
+                        helpText="Specify the number of dimensions to use for embedding models. Lucene has a max of 1024 but Elastic can handle 4096.">
+            <v:ValueSpinner ui:field="embeddingModelDimensions" width="80px"
+                            title="Number of dimensions to use for embedding models."/>
+        </form:FormGroup>
+        <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
+                  addStyleNames="allow-focus"/>
         <b:Button ui:field="testModel" text="Test Model" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder>
