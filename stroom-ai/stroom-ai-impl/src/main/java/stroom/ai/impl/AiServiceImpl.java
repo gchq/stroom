@@ -484,6 +484,17 @@ public class AiServiceImpl implements AiService {
         aiDao.deleteMessage(messageId);
     }
 
+    @Override
+    public void deleteAttachment(final int attachmentId) {
+        aiDao.deleteAttachment(attachmentId);
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+        verifyOwnership(chatId);
+        aiDao.deleteAllChatMessagesAndAttachments(chatId);
+    }
+
     // ---------------------------------------------------------------------
     // Attachment operations (delegate to AiDao)
     // ---------------------------------------------------------------------

@@ -113,6 +113,7 @@ public class ImportConfigConfirmPresenter extends
         this.view = view;
 
         dataGrid = new MyDataGrid<>(this, MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid.setTableName("Import Items");
 
         view.setDataGrid(dataGrid);
         view.setRootFolderView(rootFolderPresenter.getView());

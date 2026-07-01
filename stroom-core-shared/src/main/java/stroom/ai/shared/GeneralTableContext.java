@@ -31,8 +31,7 @@ public final class GeneralTableContext extends AskStroomAiContext {
         if (description != null) {
             return description;
         }
-        return "Table (" + (rows != null ? rows.size() : 0) + " rows, "
-               + (columns != null ? columns.size() : 0) + " cols)";
+        return "Table";
     }
 
     public List<String> getColumns() {

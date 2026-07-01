@@ -95,6 +95,7 @@ public class DependenciesPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this, 100);
+        dataGrid.setTableName("Dependencies");
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;

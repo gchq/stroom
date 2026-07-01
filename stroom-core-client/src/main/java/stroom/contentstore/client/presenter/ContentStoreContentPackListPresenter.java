@@ -80,6 +80,7 @@ public class ContentStoreContentPackListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Content Packs");
 
         // Create the grid
         view.setDataWidget(dataGrid);

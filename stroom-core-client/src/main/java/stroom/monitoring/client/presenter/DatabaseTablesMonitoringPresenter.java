@@ -61,6 +61,7 @@ public class DatabaseTablesMonitoringPresenter
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid.setTableName("Database Tables");
         view.setDataWidget(dataGrid);
 
         dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(

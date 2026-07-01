@@ -72,6 +72,7 @@ public class TracesListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Traces");
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         addColumns();

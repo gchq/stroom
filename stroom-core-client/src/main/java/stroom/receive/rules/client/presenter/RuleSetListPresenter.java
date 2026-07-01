@@ -47,6 +47,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Receive Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

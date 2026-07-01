@@ -98,6 +98,7 @@ public class UserRefPopupPresenter
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 

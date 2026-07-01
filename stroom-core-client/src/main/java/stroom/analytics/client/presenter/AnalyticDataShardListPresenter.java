@@ -88,6 +88,7 @@ public class AnalyticDataShardListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Analytic Data Shards");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

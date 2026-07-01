@@ -254,4 +254,14 @@ public class MockAiService implements AiService {
     public void deleteMessage(final int messageId) {
 
     }
+
+    @Override
+    public void deleteAttachment(final int attachmentId) {
+
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+
+    }
 }

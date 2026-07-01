@@ -66,6 +66,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         final MyDataGrid<JobWrapper> dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Jobs");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

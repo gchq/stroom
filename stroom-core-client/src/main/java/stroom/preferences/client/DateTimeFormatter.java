@@ -52,6 +52,81 @@ public class DateTimeFormatter {
             return null;
         }
 
+        final TimeZoneSettings tz = getTimeZoneSettings();
+
+        String pattern = tz.pattern;
+
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(tz.use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
+
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(tz.use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
+
+        return MomentJs.nativeToDateString(ms, tz.use.getDisplayValue(), pattern, tz.zoneId, tz.offsetMinutes);
+    }
+
+    /**
+     * Format an epoch-millis timestamp as a human-readable relative time string
+     * (e.g. "just now", "5 minutes ago", "yesterday") relative to the given
+     * {@code nowMs} value.  Calendar day boundaries (for "yesterday" / "N days ago")
+     * are computed in the user's preferred timezone.
+     */
+    public String formatRelative(final long timeMs, final long nowMs) {
+        final long diff = nowMs - timeMs;
+
+        if (diff < ONE_SECOND) {
+            return "just now";
+        }
+
+        final long seconds = diff / ONE_SECOND;
+        if (seconds < 60) {
+            return seconds == 1
+                    ? "a second ago"
+                    : seconds + " seconds ago";
+        }
+
+        final long minutes = diff / ONE_MINUTE;
+        if (minutes < 60) {
+            return minutes == 1
+                    ? "a minute ago"
+                    : minutes + " minutes ago";
+        }
+
+        final long hours = diff / ONE_HOUR;
+        if (hours < 24) {
+            return hours == 1
+                    ? "an hour ago"
+                    : hours + " hours ago";
+        }
+
+        // Use timezone-aware calendar day computation.
+        final TimeZoneSettings tz = getTimeZoneSettings();
+        final int days = MomentJs.daysBetween(
+                timeMs, nowMs, tz.use.getDisplayValue(), tz.zoneId, tz.offsetMinutes);
+
+        if (days == 1) {
+            return "yesterday";
+        } else if (days >= 365) {
+            final int years = days / 365;
+            return years == 1
+                    ? "a year ago"
+                    : years + " years ago";
+        } else {
+            return days + " days ago";
+        }
+    }
+
+    private TimeZoneSettings getTimeZoneSettings() {
         Use use = Use.UTC;
         String pattern = "YYYY-MM-DD[T]HH:mm:ss.SSSZ";
         int offsetMinutes = 0;
@@ -82,23 +157,7 @@ public class DateTimeFormatter {
             }
         }
 
-        // If UTC then just display the `Z` suffix.
-        if (Use.UTC.equals(use)) {
-            pattern = pattern.replaceAll("Z", "[Z]");
-        }
-        // Ensure we haven't doubled up square brackets.
-        pattern = pattern.replaceAll("\\[+", "[");
-        pattern = pattern.replaceAll("]+", "]");
-
-        // If UTC then just display the `Z` suffix.
-        if (Use.UTC.equals(use)) {
-            pattern = pattern.replaceAll("Z", "[Z]");
-        }
-        // Ensure we haven't doubled up square brackets.
-        pattern = pattern.replaceAll("\\[+", "[");
-        pattern = pattern.replaceAll("]+", "]");
-
-        return MomentJs.nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
+        return new TimeZoneSettings(use, pattern, offsetMinutes, zoneId);
     }
 
     String convertJavaDateTimePattern(final String pattern) {
@@ -124,5 +183,29 @@ public class DateTimeFormatter {
 
 
         return converted;
+    }
+
+    // ---------------------------------------------------------------
+
+    private static final long ONE_SECOND = 1000;
+    private static final long ONE_MINUTE = ONE_SECOND * 60;
+    private static final long ONE_HOUR = ONE_MINUTE * 60;
+
+    private static class TimeZoneSettings {
+
+        private final Use use;
+        private final String pattern;
+        private final int offsetMinutes;
+        private final String zoneId;
+
+        private TimeZoneSettings(final Use use,
+                                 final String pattern,
+                                 final int offsetMinutes,
+                                 final String zoneId) {
+            this.use = use;
+            this.pattern = pattern;
+            this.offsetMinutes = offsetMinutes;
+            this.zoneId = zoneId;
+        }
     }
 }

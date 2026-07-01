@@ -97,6 +97,21 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean deleteChat(@PathParam("chatId") int chatId);
 
     @POST
+    @Path("/deleteMessage/{chatId}/{messageId}")
+    @Operation(
+            summary = "Delete a message from an AI chat conversation",
+            operationId = "deleteMessage")
+    Boolean deleteMessage(@PathParam("chatId") int chatId,
+                          @PathParam("messageId") int messageId);
+
+    @POST
+    @Path("/deleteAllMessages/{chatId}")
+    @Operation(
+            summary = "Delete all messages and attachments from an AI chat conversation",
+            operationId = "deleteAllMessages")
+    Boolean deleteAllMessages(@PathParam("chatId") int chatId);
+
+    @POST
     @Path("/getMessages/{chatId}")
     @Operation(
             summary = "Get messages for an AI chat conversation",
@@ -134,4 +149,12 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "downloadChatHistory")
     ResourceGeneration downloadChatHistory(
             @Parameter(description = "request", required = true) DownloadChatHistoryRequest request);
+
+    @POST
+    @Path("/getAttachmentData")
+    @Operation(
+            summary = "Get a page of attachment table data",
+            operationId = "getAttachmentData")
+    AiAttachmentDataPage getAttachmentData(
+            @Parameter(description = "request", required = true) GetAttachmentDataRequest request);
 }

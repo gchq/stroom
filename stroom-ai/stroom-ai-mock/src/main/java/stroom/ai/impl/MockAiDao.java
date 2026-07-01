@@ -90,6 +90,16 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public void deleteAttachment(final int attachmentId) {
+
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+
+    }
+
+    @Override
     public AiChatAttachment createAttachment(final int chatId, final AiAttachmentType type, final String contextJson) {
         return null;
     }

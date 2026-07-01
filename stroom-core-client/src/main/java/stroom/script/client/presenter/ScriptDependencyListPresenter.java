@@ -115,6 +115,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     public void read(final DocRef docRef, final ScriptDoc document, final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
+        if (docRef != null && docRef.getName() != null) {
+            scriptListPresenter.setTableName("Script '" + docRef.getName() + "' Dependencies");
+        }
 
         scripts = new ArrayList<>();
         if (document != null) {

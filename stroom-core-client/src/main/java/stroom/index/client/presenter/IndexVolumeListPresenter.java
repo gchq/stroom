@@ -42,6 +42,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Volumes");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
