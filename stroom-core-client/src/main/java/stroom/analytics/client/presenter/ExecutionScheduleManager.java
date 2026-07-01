@@ -130,6 +130,7 @@ public class ExecutionScheduleManager
 
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Execution Schedules");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager
             = new DataGridSelectionEventManager<>(

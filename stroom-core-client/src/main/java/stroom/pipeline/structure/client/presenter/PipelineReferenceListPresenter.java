@@ -107,6 +107,7 @@ public class PipelineReferenceListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Pipeline References");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -280,6 +281,10 @@ public class PipelineReferenceListPresenter
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 
     public void setPipeline(final PipelineDoc pipeline) {

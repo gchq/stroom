@@ -124,6 +124,9 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         enableButtons();
 
         currentDoc = docRef;
+        if (docRef != null && docRef.getName() != null) {
+            docRefListPresenter.setTableName("Dictionary '" + docRef.getName() + "' Imports");
+        }
         imports = new ArrayList<>();
         if (document != null) {
             if (document.getImports() != null) {

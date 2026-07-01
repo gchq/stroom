@@ -79,6 +79,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         this.delayedUpdate = new DelayedUpdate(this::update);
 
         final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Caches");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

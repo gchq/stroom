@@ -46,6 +46,8 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
     private final String name;
     @JsonProperty
     private final boolean enabled;
+    @JsonProperty
+    private final boolean invertSelection;
 
     @JsonCreator
     public NodeGroup(@JsonProperty("id") final Integer id,
@@ -55,7 +57,8 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
                      @JsonProperty("updateTimeMs") final Long updateTimeMs,
                      @JsonProperty("updateUser") final String updateUser,
                      @JsonProperty("name") final String name,
-                     @JsonProperty("enabled") final Boolean enabled) {
+                     @JsonProperty("enabled") final Boolean enabled,
+                     @JsonProperty("invertSelection") final Boolean invertSelection) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -63,7 +66,8 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.name = name;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, true);
+        this.invertSelection = Objects.requireNonNullElse(invertSelection, false);
     }
 
     @Override
@@ -103,6 +107,10 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
         return enabled;
     }
 
+    public boolean isInvertSelection() {
+        return invertSelection;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -110,6 +118,7 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
         }
         final NodeGroup nodeGroup = (NodeGroup) o;
         return enabled == nodeGroup.enabled &&
+               invertSelection == nodeGroup.invertSelection &&
                Objects.equals(id, nodeGroup.id) &&
                Objects.equals(version, nodeGroup.version) &&
                Objects.equals(createTimeMs, nodeGroup.createTimeMs) &&
@@ -121,7 +130,15 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, enabled);
+        return Objects.hash(id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                name,
+                enabled,
+                invertSelection);
     }
 
     @Override
@@ -135,6 +152,7 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
                ", updateUser='" + updateUser + '\'' +
                ", name='" + name + '\'' +
                ", enabled=" + enabled +
+               ", invertSelection=" + invertSelection +
                '}';
     }
 
@@ -152,6 +170,7 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
         private Integer version;
         private String name;
         private boolean enabled;
+        private boolean invertSelection;
 
         private Builder() {
         }
@@ -165,6 +184,7 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
             this.updateUser = nodeGroup.updateUser;
             this.name = nodeGroup.name;
             this.enabled = nodeGroup.enabled;
+            this.invertSelection = nodeGroup.invertSelection;
         }
 
         public Builder id(final Integer id) {
@@ -187,6 +207,11 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
             return self();
         }
 
+        public Builder invertSelection(final boolean invertSelection) {
+            this.invertSelection = invertSelection;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -201,7 +226,8 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
                     updateTimeMs,
                     updateUser,
                     name,
-                    enabled);
+                    enabled,
+                    invertSelection);
         }
     }
 }

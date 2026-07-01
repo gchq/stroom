@@ -50,6 +50,7 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Processor Profiles");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");

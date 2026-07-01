@@ -113,7 +113,7 @@ public final class UserPreferencesPresenter
     @Override
     public void onChange() {
         final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
-        UserPreferences after = write();
+        UserPreferences after = write(before);
 
         if (!Objects.equals(before.getTheme(), after.getTheme())) {
             // Theme changed
@@ -122,7 +122,7 @@ public final class UserPreferencesPresenter
             final boolean change = editorPreferencesPresenter.updateTheme(themeTypeBefore, themeTypeAfter);
             if (change) {
                 // Update the prefs with the change
-                after = write();
+                after = write(before);
             }
         }
         userPreferencesManager.setCurrentPreferences(after);
@@ -141,10 +141,11 @@ public final class UserPreferencesPresenter
     public void onSetAsDefault() {
         ConfirmEvent.fire(this,
                 "Are you sure you want to set the current preferences as the defaults for ALL users?" +
-                        "\nThis will not change individual users' saved preferences.",
+                "\nThis will not change individual users' saved preferences.",
                 (ok) -> {
                     if (ok) {
-                        final UserPreferences userPreferences = write();
+                        final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
+                        final UserPreferences userPreferences = write(before);
                         userPreferencesManager.setDefaultUserPreferences(userPreferences, this::reset, this);
                     }
                 });
@@ -177,7 +178,8 @@ public final class UserPreferencesPresenter
                     .onShow(e -> themePreferencesPresenter.getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            final UserPreferences newUserPreferences = write();
+                            final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
+                            final UserPreferences newUserPreferences = write(before);
                             userPreferencesManager.setCurrentPreferences(newUserPreferences);
                             if (!Objects.equals(newUserPreferences, fetchedUserPreferences)) {
                                 userPreferencesManager.update(newUserPreferences, (result) -> e.hide(), this);
@@ -201,8 +203,8 @@ public final class UserPreferencesPresenter
         timePreferencesPresenter.read(userPreferences);
     }
 
-    private UserPreferences write() {
-        final UserPreferences.Builder builder = UserPreferences.builder();
+    private UserPreferences write(final UserPreferences userPreferences) {
+        final UserPreferences.Builder builder = userPreferences.copy();
         themePreferencesPresenter.write(builder);
         editorPreferencesPresenter.write(builder);
         timePreferencesPresenter.write(builder);

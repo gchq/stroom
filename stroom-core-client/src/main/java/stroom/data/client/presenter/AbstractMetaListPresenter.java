@@ -136,6 +136,7 @@ public abstract class AbstractMetaListPresenter
         this.expressionValidator = expressionValidator;
 
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Streams");
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
@@ -179,6 +180,10 @@ public abstract class AbstractMetaListPresenter
                 super.changeData(onProcessData(data));
             }
         };
+    }
+
+    void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 
     @Override

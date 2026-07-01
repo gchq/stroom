@@ -37,6 +37,10 @@ public interface AiDao {
 
     void deleteMessage(int messageId);
 
+    void deleteAttachment(int attachmentId);
+
+    void deleteAllChatMessagesAndAttachments(int chatId);
+
     // ---------------------------------------------------------------------
     // Attachment operations
     // ---------------------------------------------------------------------

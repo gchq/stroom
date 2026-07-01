@@ -64,6 +64,7 @@ public class FeedDependencyListPresenter
 
         view.asWidget().addStyleName("form-control-background form-control-border");
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Feed Dependencies");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

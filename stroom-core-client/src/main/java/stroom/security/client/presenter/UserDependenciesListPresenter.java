@@ -77,6 +77,7 @@ public class UserDependenciesListPresenter
         this.pagerView = pagerView;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("User Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 

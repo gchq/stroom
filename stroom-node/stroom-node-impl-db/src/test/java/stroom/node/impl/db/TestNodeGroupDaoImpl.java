@@ -22,7 +22,6 @@ import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
-import stroom.node.shared.NodeGroupState;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.logging.LambdaLogger;
@@ -39,9 +38,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -213,41 +210,25 @@ class TestNodeGroupDaoImpl {
         final NodeGroup group = createGroup("stateGroup", true);
 
         // Link only nodeA to the group
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(nodeA.getId(), group.getId(), true));
+        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(group, Set.of(nodeA.getId())));
 
         // All three nodes should be returned, but only nodeA is included
-        final ResultPage<NodeGroupState> result = nodeGroupDao.getNodeGroupState(group.getId());
-        assertThat(result.getValues()).hasSize(3);
+        final Set<String> result = nodeGroupDao.getSelectedNodesForGroup(group.getId());
+        assertThat(result).hasSize(1);
 
-        final Map<String, Boolean> stateMap = result.getValues().stream()
-                .collect(Collectors.toMap(s -> s.getNode().getName(), NodeGroupState::isIncluded));
-        assertThat(stateMap.get("nodeA")).isTrue();
-        assertThat(stateMap.get("nodeB")).isFalse();
-        assertThat(stateMap.get("nodeC")).isFalse();
+        assertThat(result.contains("nodeA")).isTrue();
+        assertThat(result.contains("nodeB")).isFalse();
+        assertThat(result.contains("nodeC")).isFalse();
     }
 
     @Test
     void testGetNodeGroupState_noLinks() {
-        createNode("lonelyNode");
+        final Node n1 = createNode("lonelyNode");
         final NodeGroup group = createGroup("emptyGroup", true);
 
-        final ResultPage<NodeGroupState> result = nodeGroupDao.getNodeGroupState(group.getId());
-        assertThat(result.getValues()).hasSize(1);
-        assertThat(result.getValues().getFirst().isIncluded()).isFalse();
-    }
-
-    @Test
-    void testGetNodeGroupState_orderedByName() {
-        createNode("zeta");
-        createNode("alpha");
-        createNode("mu");
-        final NodeGroup group = createGroup("orderGroup", true);
-
-        final ResultPage<NodeGroupState> result = nodeGroupDao.getNodeGroupState(group.getId());
-        final List<String> names = result.getValues().stream()
-                .map(s -> s.getNode().getName())
-                .collect(Collectors.toList());
-        assertThat(names).isSorted();
+        final Set<String> names = nodeGroupDao.getSelectedNodesForGroup(group.getId());
+        assertThat(names).hasSize(0);
+        assertThat(names.contains(n1.getName())).isFalse();
     }
 
     // ---- Update Node Group State (link/unlink) ----
@@ -258,25 +239,12 @@ class TestNodeGroupDaoImpl {
         final NodeGroup group = createGroup("linkGroup", true);
 
         final boolean result = nodeGroupDao.updateNodeGroupState(
-                new NodeGroupChange(node.getId(), group.getId(), true));
+                new NodeGroupChange(group, Set.of(node.getId())));
         assertThat(result).isTrue();
 
         // Verify via getNodeGroupIncludedNodes
-        final Set<String> included = nodeGroupDao.getNodeGroupIncludedNodes(group.getId());
+        final Set<String> included = nodeGroupDao.getSelectedNodesForGroup(group.getId());
         assertThat(included).containsExactly("includeMe");
-    }
-
-    @Test
-    void testUpdateNodeGroupState_exclude() {
-        final Node node = createNode("excludeMe");
-        final NodeGroup group = createGroup("unlinkGroup", true);
-
-        // Include then exclude
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(node.getId(), group.getId(), true));
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(node.getId(), group.getId(), false));
-
-        final Set<String> included = nodeGroupDao.getNodeGroupIncludedNodes(group.getId());
-        assertThat(included).isEmpty();
     }
 
     @Test
@@ -285,10 +253,10 @@ class TestNodeGroupDaoImpl {
         final NodeGroup group = createGroup("idempotentGroup", true);
 
         // Including twice should not fail (uses ON DUPLICATE KEY UPDATE)
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(node.getId(), group.getId(), true));
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(node.getId(), group.getId(), true));
+        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(group, Set.of(node.getId())));
+        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(group, Set.of(node.getId())));
 
-        final Set<String> included = nodeGroupDao.getNodeGroupIncludedNodes(group.getId());
+        final Set<String> included = nodeGroupDao.getSelectedNodesForGroup(group.getId());
         assertThat(included).containsExactly("idempotent");
     }
 
@@ -298,9 +266,8 @@ class TestNodeGroupDaoImpl {
         final NodeGroup group = createGroup("noLinkGroup", true);
 
         // Excluding when not included should return false (no rows affected)
-        final boolean result = nodeGroupDao.updateNodeGroupState(
-                new NodeGroupChange(node.getId(), group.getId(), false));
-        assertThat(result).isFalse();
+        final boolean result = nodeGroupDao.updateNodeGroupState(new NodeGroupChange(group, Set.of()));
+        assertThat(result).isTrue();
     }
 
     // ---- getNodeGroupIncludedNodes ----
@@ -308,7 +275,7 @@ class TestNodeGroupDaoImpl {
     @Test
     void testGetNodeGroupIncludedNodes_empty() {
         final NodeGroup group = createGroup("emptyIncludes", true);
-        final Set<String> included = nodeGroupDao.getNodeGroupIncludedNodes(group.getId());
+        final Set<String> included = nodeGroupDao.getSelectedNodesForGroup(group.getId());
         assertThat(included).isEmpty();
     }
 
@@ -319,10 +286,9 @@ class TestNodeGroupDaoImpl {
         final Node nodeZ = createNode("nodeZ");
         final NodeGroup group = createGroup("multiGroup", true);
 
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(nodeX.getId(), group.getId(), true));
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(nodeZ.getId(), group.getId(), true));
+        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(group, Set.of(nodeX.getId(), nodeZ.getId())));
 
-        final Set<String> included = nodeGroupDao.getNodeGroupIncludedNodes(group.getId());
+        final Set<String> included = nodeGroupDao.getSelectedNodesForGroup(group.getId());
         assertThat(included).containsExactlyInAnyOrder("nodeX", "nodeZ");
     }
 
@@ -333,18 +299,18 @@ class TestNodeGroupDaoImpl {
         final NodeGroup groupB = createGroup("groupB", true);
 
         // Link node to groupA only
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(node.getId(), groupA.getId(), true));
+        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(groupA, Set.of(node.getId())));
 
-        assertThat(nodeGroupDao.getNodeGroupIncludedNodes(groupA.getId())).containsExactly("sharedNode");
-        assertThat(nodeGroupDao.getNodeGroupIncludedNodes(groupB.getId())).isEmpty();
+        assertThat(nodeGroupDao.getSelectedNodesForGroup(groupA.getId())).containsExactly("sharedNode");
+        assertThat(nodeGroupDao.getSelectedNodesForGroup(groupB.getId())).isEmpty();
     }
 
     @Test
     void testGetNodeGroupIncludedNodes_returnsImmutableSet() {
         final NodeGroup group = createGroup("immutableGroup", true);
-        final Set<String> included = nodeGroupDao.getNodeGroupIncludedNodes(group.getId());
+        final Set<String> selected = nodeGroupDao.getSelectedNodesForGroup(group.getId());
 
-        assertThatThrownBy(() -> included.add("shouldFail"))
+        assertThatThrownBy(() -> selected.add("shouldFail"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -355,8 +321,8 @@ class TestNodeGroupDaoImpl {
         final Node node = createNode("cascadeNode");
         final NodeGroup group = createGroup("cascadeGroup", true);
 
-        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(node.getId(), group.getId(), true));
-        assertThat(nodeGroupDao.getNodeGroupIncludedNodes(group.getId())).hasSize(1);
+        nodeGroupDao.updateNodeGroupState(new NodeGroupChange(group, Set.of(node.getId())));
+        assertThat(nodeGroupDao.getSelectedNodesForGroup(group.getId())).hasSize(1);
 
         // Deleting the group should also remove the links
         nodeGroupDao.delete(group.getId());

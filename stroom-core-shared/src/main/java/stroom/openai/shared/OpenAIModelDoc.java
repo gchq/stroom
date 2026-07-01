@@ -48,12 +48,15 @@ import java.util.Objects;
         "modelId",
         "maxContextWindowTokens",
         "reasoningEffort",
+        "embeddingModelDimensions",
         "httpClientConfiguration"
 })
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
 
     private static final int DEFAULT_MAX_CONTEXT_WINDOW_TOKENS = 0;
+    // Lucene can only support 1024 dimensions but Elastic can deal with 4096.
+    private static final int DEFAULT_EMBEDDING_MODEL_DIMENSIONS = 1024;
 
     public static final String TYPE = "OpenAIModel";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.OPENAI_MODEL_DOCUMENT_TYPE;
@@ -70,6 +73,8 @@ public class OpenAIModelDoc extends AbstractDoc {
     private final int maxContextWindowTokens;
     @JsonProperty
     private final String reasoningEffort;
+    @JsonProperty
+    private final int embeddingModelDimensions;
     @JsonProperty
     private final HttpClientConfig httpClientConfiguration;
 
@@ -88,6 +93,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("modelId") final String modelId,
             @JsonProperty("maxContextWindowTokens") final Integer maxContextWindowTokens,
             @JsonProperty("reasoningEffort") final String reasoningEffort,
+            @JsonProperty("embeddingModelDimensions") final Integer embeddingModelDimensions,
             @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -97,6 +103,8 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.maxContextWindowTokens =
                 Objects.requireNonNullElse(maxContextWindowTokens, DEFAULT_MAX_CONTEXT_WINDOW_TOKENS);
         this.reasoningEffort = reasoningEffort;
+        this.embeddingModelDimensions =
+                Objects.requireNonNullElse(embeddingModelDimensions, DEFAULT_EMBEDDING_MODEL_DIMENSIONS);
         this.httpClientConfiguration = httpClientConfiguration;
     }
 
@@ -131,6 +139,10 @@ public class OpenAIModelDoc extends AbstractDoc {
         return reasoningEffort;
     }
 
+    public int getEmbeddingModelDimensions() {
+        return embeddingModelDimensions;
+    }
+
     public HttpClientConfig getHttpClientConfiguration() {
         return httpClientConfiguration;
     }
@@ -150,6 +162,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                Objects.equals(apiKeyName, that.apiKeyName) &&
                Objects.equals(modelId, that.modelId) &&
                Objects.equals(reasoningEffort, that.reasoningEffort) &&
+               Objects.equals(embeddingModelDimensions, that.embeddingModelDimensions) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
 
@@ -162,6 +175,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                 modelId,
                 maxContextWindowTokens,
                 reasoningEffort,
+                embeddingModelDimensions,
                 httpClientConfiguration);
     }
 
@@ -173,6 +187,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                ", modelId='" + apiKeyName + '\'' +
                ", maxContextWindowTokens=" + maxContextWindowTokens +
                ", reasoningEffort='" + reasoningEffort + '\'' +
+               ", embeddingModelDimensions=" + embeddingModelDimensions +
                ", httpClientConfiguration=" + httpClientConfiguration +
                '}';
     }
@@ -193,6 +208,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String modelId;
         private int maxContextWindowTokens;
         private String reasoningEffort;
+        private int embeddingModelDimensions = DEFAULT_EMBEDDING_MODEL_DIMENSIONS;
         private HttpClientConfig httpClientConfiguration;
 
         private Builder() {
@@ -206,6 +222,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.modelId = openAIModelDoc.modelId;
             this.maxContextWindowTokens = openAIModelDoc.maxContextWindowTokens;
             this.reasoningEffort = openAIModelDoc.reasoningEffort;
+            this.embeddingModelDimensions = openAIModelDoc.embeddingModelDimensions;
             this.httpClientConfiguration = openAIModelDoc.httpClientConfiguration;
         }
 
@@ -239,6 +256,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder embeddingModelDimensions(final int embeddingModelDimensions) {
+            this.embeddingModelDimensions = embeddingModelDimensions;
+            return self();
+        }
+
         public Builder httpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
             this.httpClientConfiguration = httpClientConfiguration;
             return self();
@@ -264,6 +286,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                     modelId,
                     maxContextWindowTokens,
                     reasoningEffort,
+                    embeddingModelDimensions,
                     httpClientConfiguration);
         }
     }

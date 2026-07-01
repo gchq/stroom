@@ -74,6 +74,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

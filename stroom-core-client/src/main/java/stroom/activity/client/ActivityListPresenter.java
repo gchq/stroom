@@ -63,6 +63,7 @@ public class ActivityListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Activities");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

@@ -97,6 +97,7 @@ public class AppUserPermissionsListPresenter
         this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("User Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =
                 new DataGridSelectionEventManager<>(

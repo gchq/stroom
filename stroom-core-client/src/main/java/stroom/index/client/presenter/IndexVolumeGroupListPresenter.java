@@ -56,6 +56,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Volume Groups");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");

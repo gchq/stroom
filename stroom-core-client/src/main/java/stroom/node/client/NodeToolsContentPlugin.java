@@ -16,12 +16,14 @@
 
 package stroom.node.client;
 
+import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
-import stroom.core.client.event.CloseContentEvent;
-import stroom.data.table.client.Refreshable;
+import stroom.core.client.MenuKeys;
+import stroom.document.client.DocumentPluginRegistry;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -32,20 +34,18 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
-        extends NodeToolsPlugin {
+        extends ContentPlugin<P> {
 
-    private final ContentManager contentManager;
-    private final Provider<P> presenterProvider;
-    private P presenter;
+    private final ClientSecurityContext securityContext;
 
     @Inject
     public NodeToolsContentPlugin(final EventBus eventBus,
                                   final ContentManager contentManager,
                                   final Provider<P> presenterProvider,
+                                  final DocumentPluginRegistry documentPluginRegistry,
                                   final ClientSecurityContext securityContext) {
-        super(eventBus, securityContext);
-        this.contentManager = contentManager;
-        this.presenterProvider = presenterProvider;
+        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
+        this.securityContext = securityContext;
 
         final Action openAction = getOpenAction();
         if (openAction != null) {
@@ -53,7 +53,7 @@ public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
             final Command command;
             if (requiredAppPermission != null) {
                 command = () -> {
-                    if (getSecurityContext().hasAppPermission(requiredAppPermission)) {
+                    if (securityContext.hasAppPermission(requiredAppPermission)) {
                         open();
                     }
                 };
@@ -64,34 +64,29 @@ public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
         }
     }
 
-    public void open() {
-        if (presenter == null) {
-            // If the presenter is null then we haven't got this tab open.
-            // Create a new presenter.
-            presenter = presenterProvider.get();
-        }
+    @Override
+    public void onReveal(final BeforeRevealMenubarEvent event) {
+        super.onReveal(event);
 
-        final CloseContentEvent.Handler closeHandler = event -> {
-            // Give the content manager the ok to close the tab.
-            event.getCallback().closeTab(true);
+        event.getMenuItems().addMenuItem(
+                MenuKeys.MAIN_MENU,
+                new KeyedParentMenuItem.Builder()
+                        .priority(2)
+                        .text("Tools")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.TOOLS_MENU)
+                        .build());
 
-            // After we close the tab set the presenter back to null so
-            // that we can open it again.
-            presenter = null;
-        };
-
-        // Tell the content manager to open the tab.
-        final TabData tabData = (TabData) presenter;
-        contentManager.open(closeHandler, tabData, presenter);
-
-        // If the presenter is refreshable then refresh it.
-        if (presenter instanceof Refreshable) {
-            final Refreshable refreshable = (Refreshable) presenter;
-            refreshable.refresh();
-        }
+        addChildItems(event);
     }
 
     protected abstract AppPermission getRequiredAppPermission();
 
     protected abstract Action getOpenAction();
+
+    protected ClientSecurityContext getSecurityContext() {
+        return securityContext;
+    }
+
+    protected abstract void addChildItems(BeforeRevealMenubarEvent event);
 }

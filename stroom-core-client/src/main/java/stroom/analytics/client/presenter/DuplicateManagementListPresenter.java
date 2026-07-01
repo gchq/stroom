@@ -71,6 +71,7 @@ public class DuplicateManagementListPresenter
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Duplicate Management");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         deleteButton = view.addButton(SvgPresets.DELETE);

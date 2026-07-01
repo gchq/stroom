@@ -20,5 +20,5 @@ import java.util.Optional;
 
 public interface NodeGroupCache {
 
-    Optional<NodeGroupInfo> getIncludedGroupNodes(String name);
+    Optional<NodeGroupState> getSelectedGroupNodes(String name);
 }

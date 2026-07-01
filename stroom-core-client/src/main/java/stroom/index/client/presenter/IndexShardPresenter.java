@@ -101,6 +101,7 @@ public class IndexShardPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Shards");
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;
@@ -438,6 +439,7 @@ public class IndexShardPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Index '" + docRef.getName() + "' Shards");
         this.readOnly = readOnly;
         enableButtons();
 

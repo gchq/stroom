@@ -62,6 +62,7 @@ public class StatisticsCustomMaskListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Statistics Custom Masks");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -194,6 +195,7 @@ public class StatisticsCustomMaskListPresenter
     protected void onRead(final DocRef docRef,
                           final StatisticStoreDoc document,
                           final boolean readOnly) {
+        dataGrid.setTableName("Statistics '" + docRef.getName() + "' Custom Masks");
         update();
     }
 

@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.node.api;
+package stroom.node.shared;
 
-import stroom.node.shared.NodeGroup;
+import stroom.docref.HasDisplayValue;
 
-import java.util.Set;
+public enum NodeInclusionBehaviour implements HasDisplayValue {
+    INCLUDE_SELECTED("Include Selected"),
+    EXCLUDE_SELECTED("Exclude Selected");
 
-public record NodeGroupInfo(NodeGroup nodeGroup, Set<String> includedNodes) {
+    private final String displayValue;
 
+    NodeInclusionBehaviour(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
 }

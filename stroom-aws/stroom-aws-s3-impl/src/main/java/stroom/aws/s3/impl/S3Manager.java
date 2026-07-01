@@ -594,7 +594,7 @@ public class S3Manager {
                                  final String keyNamePattern) {
 
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(keyNamePattern, meta);
         return s3ClientHelper.listKeys(bucketName, key);
     }
 
@@ -649,6 +649,7 @@ public class S3Manager {
         return output;
     }
 
+
     /**
      * Creates a string representation of an S3 object of the form
      * <pre>
@@ -667,6 +668,144 @@ public class S3Manager {
                 bucketName,
                 keyName);
     }
+
+//    public DeleteObjectResponse delete(final Meta meta) {
+//        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+//        final String key = createKey(getKeyNamePattern(), meta);
+//        final DeleteObjectRequest request = DeleteObjectRequest.builder()
+//                .bucket(bucketName)
+//                .key(key)
+//                .build();
+//        logRequest("Deleting: ", bucketName, key, request);
+//
+//        final DeleteObjectResponse response;
+//        if (s3ClientConfig.isAsync()) {
+//            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
+//                response = s3AsyncClient.deleteObject(request).join();
+//            } catch (final S3Exception e) {
+//                error("Error deleting: ", bucketName, key, e);
+//                throw e;
+//            }
+//        } else {
+//            try (final S3Client s3Client = createClient(s3ClientConfig)) {
+//                response = s3Client.deleteObject(request);
+//            } catch (final S3Exception e) {
+//                error("Error deleting: ", bucketName, key, e);
+//                throw e;
+//            }
+//        }
+//
+//        logResponse("Deleted: ", bucketName, key, response);
+//        return response;
+//    }
+//
+//    private Tagging createTags(final Meta meta) {
+//        return Tagging.builder()
+//                .tagSet(
+//                        Tag.builder().key("feed").value(meta.getFeedName()).build(),
+//                        Tag.builder().key("stream-type").value(meta.getTypeName()).build(),
+//                        Tag.builder().key("meta-id").value(String.valueOf(meta.getId())).build()
+//                )
+//                .build();
+//    }
+//
+//    public String createKey(final String keyPattern, final Meta meta) {
+//        String keyName = keyPattern;
+//        final ZonedDateTime zonedDateTime =
+//                ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
+//        final String idPadded = padId(meta.getId());
+//        keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
+//        // Parse for stuff like partNo, pipeline, node, etc.
+//        keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
+//        keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
+//        keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
+//        keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
+//        keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
+//        keyName = pathCreator.replaceContextVars(keyName);
+//        keyName = pathCreator.replaceUUIDVars(keyName);
+//
+//        keyName = S3_KEY_NAME_PATTERN.matcher(keyName).replaceAll("-");
+//        keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
+//        keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
+//        keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
+//
+//        if (keyName.getBytes(StandardCharsets.UTF_8).length > 1024) {
+//            throw new RuntimeException("Key name too long: " + keyName);
+//        }
+//
+//        return keyName;
+//    }
+//
+
+//    /**
+//     * Creates a string representation of an S3 object of the form
+//     * <pre>
+//     * s3://region/bucket/key
+//     * </pre>
+//     */
+//    public String toS3PathString(final Meta meta, final String keyNamePattern) {
+//        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+//        final String key = createKey(getKeyNamePattern(), meta);
+//        final DeleteObjectRequest request = DeleteObjectRequest.builder()
+//                .bucket(bucketName)
+//                .key(key)
+//                .build();
+//        logRequest("Deleting: ", bucketName, key, request);
+//
+//        final DeleteObjectResponse response;
+//        if (s3ClientConfig.isAsync()) {
+//            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
+//                response = s3AsyncClient.deleteObject(request).join();
+//            } catch (final S3Exception e) {
+//                error("Error deleting: ", bucketName, key, e);
+//                throw e;
+//            }
+//        } else {
+//            try (final S3Client s3Client = createClient(s3ClientConfig)) {
+//                response = s3Client.deleteObject(request);
+//            } catch (final S3Exception e) {
+//                error("Error deleting: ", bucketName, key, e);
+//                throw e;
+//            }
+//        }
+//
+//        logResponse("Deleted: ", bucketName, key, response);
+//        return response;
+//    }
+//
+//    private Tagging createTags(final Meta meta) {
+//        return Tagging.builder()
+//                .tagSet(
+//                        Tag.builder().key("feed").value(meta.getFeedName()).build(),
+//                        Tag.builder().key("stream-type").value(meta.getTypeName()).build(),
+//                        Tag.builder().key("meta-id").value(String.valueOf(meta.getId())).build()
+//                )
+//                .build();
+//    }
+
+//    public String createKey(final String keyPattern, final Meta meta) {
+//        String keyName = keyPattern;
+//        final ZonedDateTime zonedDateTime =
+//                ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
+//        final String idPadded = padId(meta.getId());
+//        keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
+//        keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
+//        keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
+//        keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
+//        keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
+//        keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
+//
+//        keyName = S3_KEY_NAME_PATTERN.matcher(keyName).replaceAll("-");
+//        keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
+//        keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
+//        keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
+//
+//        if (keyName.getBytes(StandardCharsets.UTF_8).length > 1024) {
+//            throw new RuntimeException("Key name too long: " + keyName);
+//        }
+//
+//        return keyName;
+//    }
 
     /**
      * Pad a prefix.

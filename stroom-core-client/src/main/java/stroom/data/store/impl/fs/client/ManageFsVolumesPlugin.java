@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupPresenter;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -41,8 +42,9 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupP
     ManageFsVolumesPlugin(final EventBus eventBus,
                           final ContentManager contentManager,
                           final Provider<FsVolumeGroupPresenter> presenterProvider,
+                          final DocumentPluginRegistry documentPluginRegistry,
                           final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
     }
 
     @Override
@@ -69,6 +71,11 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupP
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    public String getType() {
+        return FsVolumeGroupPresenter.TAB_TYPE;
     }
 }
 

@@ -72,6 +72,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document Permissions");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         getView().setDataWidget(dataGrid);
         addColumns();

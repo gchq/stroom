@@ -76,6 +76,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 expressionValidator,
                 false
         );
+        setTableName("Related Streams");
     }
 
     public void setSelectedStream(final MetaRow metaRow,

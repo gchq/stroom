@@ -110,6 +110,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Nodes");
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
 

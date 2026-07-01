@@ -78,6 +78,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         this.tooltipPresenter = tooltipPresenter;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Processor Task Summary");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

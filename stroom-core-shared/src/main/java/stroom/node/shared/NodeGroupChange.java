@@ -22,36 +22,29 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class NodeGroupChange {
 
     @JsonProperty
-    private final int nodeId;
+    private final NodeGroup nodeGroup;
     @JsonProperty
-    private final int nodeGroupId;
-    @JsonProperty
-    private final boolean included;
+    private final Set<Integer> selectedNodes;
 
     @JsonCreator
-    public NodeGroupChange(@JsonProperty("nodeId") final int nodeId,
-                           @JsonProperty("nodeGroupId") final int nodeGroupId,
-                           @JsonProperty("included") final boolean included) {
-        this.nodeId = nodeId;
-        this.nodeGroupId = nodeGroupId;
-        this.included = included;
+    public NodeGroupChange(@JsonProperty("nodeGroup") final NodeGroup nodeGroup,
+                           @JsonProperty("selectedNodes") final Set<Integer> selectedNodes) {
+        this.nodeGroup = nodeGroup;
+        this.selectedNodes = selectedNodes;
     }
 
-    public int getNodeId() {
-        return nodeId;
+    public NodeGroup getNodeGroup() {
+        return nodeGroup;
     }
 
-    public int getNodeGroupId() {
-        return nodeGroupId;
-    }
-
-    public boolean isIncluded() {
-        return included;
+    public Set<Integer> getSelectedNodes() {
+        return selectedNodes;
     }
 
     @Override
@@ -59,23 +52,21 @@ public class NodeGroupChange {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final NodeGroupChange that = (NodeGroupChange) o;
-        return nodeId == that.nodeId &&
-               nodeGroupId == that.nodeGroupId &&
-               included == that.included;
+        final NodeGroupChange change = (NodeGroupChange) o;
+        return Objects.equals(nodeGroup, change.nodeGroup) &&
+               Objects.equals(selectedNodes, change.selectedNodes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nodeId, nodeGroupId, included);
+        return Objects.hash(nodeGroup, selectedNodes);
     }
 
     @Override
     public String toString() {
         return "NodeGroupChange{" +
-               "nodeId=" + nodeId +
-               ", nodeGroupId=" + nodeGroupId +
-               ", included=" + included +
+               "nodeGroup=" + nodeGroup +
+               ", selectedNodes=" + selectedNodes +
                '}';
     }
 }

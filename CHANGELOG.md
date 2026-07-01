@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Bug **#5596** : Change S3Appender to support the standard context variables (e.g. `partNo`, `pipeline`, etc.) and `uuid` in the key name pattern string.
+
 
 ## [v7.13-beta.4] - 2026-06-26
 
