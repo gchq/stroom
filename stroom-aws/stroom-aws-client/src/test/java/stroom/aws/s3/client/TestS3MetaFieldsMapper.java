@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.impl;
+package stroom.aws.s3.client;
 
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
@@ -34,7 +34,7 @@ class TestS3MetaFieldsMapper {
 
     @TestFactory
     Stream<DynamicTest> testGetS3Key() {
-        final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper = new stroom.aws.s3.client.S3MetaFieldsMapper();
+        final S3MetaFieldsMapper s3MetaFieldsMapper = new S3MetaFieldsMapper();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)

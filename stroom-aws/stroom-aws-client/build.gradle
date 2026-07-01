@@ -37,7 +37,10 @@ dependencies {
     implementation libs.jakarta.validation.api
     implementation libs.slf4j.api
 
+    testImplementation project(':stroom-test-common')
+
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.vavr
 
     testRuntimeOnly libs.bundles.common.test.runtime
 }
