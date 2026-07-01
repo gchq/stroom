@@ -26,6 +26,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -41,12 +42,13 @@ public class S3EventNotificationConfig
     @JsonProperty
     private final List<SqsConfig> sqsConnectors;
 
-    public S3EventNotificationConfig(@JsonProperty("sqsConnectors") final List<SqsConfig> sqsConnectors) {
-        this.sqsConnectors = NullSafe.list(sqsConnectors);
-    }
-
     public S3EventNotificationConfig() {
         this.sqsConnectors = Collections.emptyList();
+    }
+
+    @JsonCreator
+    public S3EventNotificationConfig(@JsonProperty("sqsConnectors") final List<SqsConfig> sqsConnectors) {
+        this.sqsConnectors = NullSafe.list(sqsConnectors);
     }
 
     @RequiresProxyRestart
