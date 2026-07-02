@@ -18,7 +18,6 @@ package stroom.widget.tab.client.view;
 
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.ShowMenuEvent.Handler;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -47,8 +46,10 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +63,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
     private final ArrayList<TabData> tabs = new ArrayList<>();
     private final List<TabData> visibleTabs = new ArrayList<>();
+    private final LinkedList<TabData> recentTabs = new LinkedList<>();
     private TabData selectedTab;
     private TabData keyboardSelectedTab;
     private Element currentTabIndexElement;
@@ -122,15 +124,13 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     public void removeTab(final TabData tabData, final boolean resize) {
         final Widget tab = tabWidgetMap.get(tabData);
         if (tab != null) {
-            final int minVisibleTab = visibleTabs.isEmpty() ? -1 : indexOf(visibleTabs.get(0));
-            final int maxVisibleTab = visibleTabs.isEmpty() ? -1 : indexOf(visibleTabs.get(visibleTabs.size() - 1));
-            final int tabsSize = tabs.size() - 1;
             final int tabIndex = tabs.indexOf(tabData);
 
             makeInvisible(tab.getElement());
             remove(tab);
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
+            recentTabs.remove(tabData);
 
             final int nextSelected = Math.max(0, tabIndex - 1);
 
@@ -143,26 +143,13 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                     }
 
                     visibleTabs.clear();
-
-                    if (maxVisibleTab < tabsSize) {
-                        // keep current lhs tab if there are non-visible tabs to the right
-                        onResize(minVisibleTab);
-                    } else if (minVisibleTab > 0) {
-                        // or move left one tab if there are non-visible tabs to the left
-                        onResize(minVisibleTab - 1);
-                    } else if (maxVisibleTab == tabsSize) {
-                        // or keep lhs tab if there are no non-visible tabs to show
-                        onResize(minVisibleTab);
-                    } else {
-                        // otherwise calculate out the new visible tabs
-                        onResize();
-                    }
+                    onResize();
                 } else {
                     selectTab(null);
                 }
                 updateTabCount();
             } else {
-                selectedTab = tabs.get(nextSelected);
+                setSelectedTab(tabs.get(nextSelected));
             }
         }
     }
@@ -171,19 +158,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     public void moveTab(final TabData tabData, final int tabPos) {
         final Widget tabWidget = tabWidgetMap.get(tabData);
         if (tabWidget != null) {
-            final int minVisibleTab = indexOf(visibleTabs.get(0));
-            final int maxVisibleTab = indexOf(visibleTabs.get(visibleTabs.size() - 1));
-
-            final boolean tabPosVisible = tabPos >= minVisibleTab && tabPos <= maxVisibleTab;
-            // clear out visible tabs so we display the moved tab in the correct place
-            if (!tabPosVisible) {
-                visibleTabs.clear();
-            }
-
-            final int startIndex = tabPosVisible
-                    ? minVisibleTab
-                    : -1;
-
             remove(tabWidget);
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
@@ -193,7 +167,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             tabWidgetMap.put(tabData, tab);
             tabs.add(tabPos, tabData);
 
-            onResize(startIndex);
+            onResize();
 
             keyboardSelectTab(tabData);
             fireTabSelection(tabData);
@@ -205,6 +179,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         getElement().removeAllChildren();
         tabWidgetMap.clear();
         tabs.clear();
+        recentTabs.clear();
 
         onResize();
         updateTabCount();
@@ -226,15 +201,52 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     @Override
     public void selectTab(final TabData tabData) {
         if (!Objects.equals(tabData, selectedTab)) {
-            selectedTab = tabData;
             keyboardSelectedTab = tabData;
-            if (selectedTab != null) {
-                final AbstractTab tab = getTab(selectedTab);
+            if (tabData != null) {
+                final AbstractTab tab = getTab(tabData);
                 if (tab == null) {
-                    selectedTab = null;
+                    setSelectedTab(null);
+                } else {
+                    setSelectedTab(tabData);
                 }
+            } else {
+                setSelectedTab(null);
             }
-            onResize();
+
+            if (visibleTabs.contains(tabData)) {
+                // Tab is already visible — just update styling, don't recalculate layout.
+                // Recalculating would change the visible set because the recentTabs order
+                // has changed, causing tabs to shift around despite no resize.
+                updateTabStyles();
+            } else {
+                onResize();
+            }
+        }
+    }
+
+    /**
+     * Updates selected and keyboard-selected styling on all tab widgets
+     * without recalculating the layout.
+     */
+    private void updateTabStyles() {
+        for (final TabData tabData : tabs) {
+            final AbstractTab tab = getTab(tabData);
+            if (tab != null) {
+                final boolean visible = visibleTabs.contains(tabData);
+                tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
+                tab.setSelected(visible && tabData.equals(selectedTab));
+            }
+        }
+    }
+
+    /**
+     * Single place where selectedTab and recentTabs are updated together.
+     */
+    private void setSelectedTab(final TabData tabData) {
+        selectedTab = tabData;
+        if (tabData != null) {
+            recentTabs.remove(tabData);
+            recentTabs.addFirst(tabData);
         }
     }
 
@@ -264,34 +276,11 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     @Override
     public void onResize() {
-        onResize(-1);
-    }
-
-    private void onResize(final int startIndex) {
-//        GWT.log("onResize");
         overflowTabCount = 0;
 
         // Figure out how many tabs are not visible because they overflow the bar width.
         if (getElement().getOffsetWidth() > 0) {
-
-            Set<TabData> displayableTabs = new HashSet<>();
-
-            if (startIndex != -1 || visibleTabs.contains(selectedTab)) {
-                // use the given start index or the current one if we are already showing the selected tab
-                final int newStartIndex = startIndex == -1
-                        ? indexOf(visibleTabs.get(0))
-                        : startIndex;
-                displayableTabs = getDisplayableTabs(newStartIndex);
-
-            } else {
-                // loop through from the beginning of the tabs until we show the selected tab
-                for (int i = 0; i < tabs.size(); i++) {
-                    displayableTabs = getDisplayableTabs(i);
-                    if (selectedTab == null || displayableTabs.contains(selectedTab)) {
-                        break;
-                    }
-                }
-            }
+            final Set<TabData> displayableTabs = getDisplayableTabs();
 
             final int tabCount = tabs.stream().map(this::getTab).filter(Predicate.not(AbstractTab::isHidden))
                     .collect(Collectors.toSet()).size();
@@ -368,47 +357,157 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         return tabIndexElement;
     }
 
-    private Set<TabData> getDisplayableTabs(final int startIndex) {
+    /**
+     * Determines which tabs to display by walking outward from the selected tab,
+     * preferring the direction containing the more recently selected adjacent tab.
+     * Hidden tabs are pre-filtered so the walk logic operates on a clean list.
+     */
+    private Set<TabData> getDisplayableTabs() {
         final int selectorWidth = getTabSelector().getOffsetWidth();
-        int remaining = getElement().getOffsetWidth();
+        final int totalWidth = getElement().getOffsetWidth();
         final int tabGap = getTabGap();
 
-        final Set<TabData> displayableTabs = new HashSet<>();
-        boolean overflow = false;
-        for (int i = startIndex; i < tabs.size(); i++) {
-            final TabData tabData = tabs.get(i);
-            final AbstractTab tab = getTab(tabData);
+        // Pre-filter: only consider non-hidden tabs
+        final List<TabData> candidateTabs = tabs.stream()
+                .filter(td -> {
+                    final AbstractTab t = getTab(td);
+                    return t != null && !t.isHidden();
+                })
+                .collect(Collectors.toList());
 
-            // Ignore tabs that have been deliberately hidden.
-            if (tab != null && !tab.isHidden()) {
-                if (!overflow) {
-                    remaining -= tab.getOffsetWidth();
-                    if (i > 0) {
-                        final Element separator = addSeparator();
-                        if (separator != null) {
-                            remaining -= separator.getOffsetWidth();
-                        }
-                        remaining -= tabGap;
-                    }
+        // If there are no visible tabs then none are displayable.
+        if (candidateTabs.isEmpty()) {
+            return Collections.emptySet();
+        }
 
-                    // We will require more space to the right of the tab if
-                    // we need to show the tab selector.
-                    int requiredSpace = 0;
-                    if (i < tabs.size() - 1) {
-                        requiredSpace = selectorWidth;
-                    }
+        // Determine the centre tab to walk outward from.
+        // Prefer the selected tab, fall back to the most recent tab in recentTabs,
+        // and finally fall back to fitting from the start.
+        final TabData centreTab = findCentreTab(candidateTabs);
+        if (centreTab == null) {
+            return getDisplayableTabsFromStart(candidateTabs, totalWidth, selectorWidth, tabGap);
+        }
 
-                    if (remaining < requiredSpace) {
-                        overflow = true;
-                    } else {
-                        displayableTabs.add(tabData);
-                    }
+        // Start with the centre tab
+        final int centreIndex = candidateTabs.indexOf(centreTab);
+        int usedWidth = getTab(centreTab).getOffsetWidth();
+        final Set<TabData> fitted = new HashSet<>();
+        fitted.add(centreTab);
+
+        // Walk outward from the centre tab's position in candidateTabs
+        int left = centreIndex - 1;
+        int right = centreIndex + 1;
+
+        while (left >= 0 || right < candidateTabs.size()) {
+            // Choose direction: pick whichever adjacent tab was more recently selected.
+            // If neither is in recentTabs (both MAX_VALUE), default to LEFT.
+            final Direction direction;
+            if (left < 0) {
+                direction = Direction.RIGHT;
+            } else if (right >= candidateTabs.size()) {
+                direction = Direction.LEFT;
+            } else {
+                direction = getRecentTabsRank(candidateTabs.get(left))
+                            <= getRecentTabsRank(candidateTabs.get(right))
+                        ? Direction.LEFT
+                        : Direction.RIGHT;
+            }
+
+            final TabData candidate = direction == Direction.LEFT
+                    ? candidateTabs.get(left)
+                    : candidateTabs.get(right);
+            final AbstractTab candidateWidget = getTab(candidate);
+
+            // Calculate width needed (tab + gap/separator)
+            final int candidateWidth = candidateWidget.getOffsetWidth() + tabGap;
+
+            // Reserve space for the selector if not all tabs will fit
+            final int candidateFittedCount = fitted.size() + 1;
+            final int requiredExtra = candidateFittedCount < candidateTabs.size()
+                    ? selectorWidth
+                    : 0;
+
+            if (usedWidth + candidateWidth + requiredExtra <= totalWidth) {
+                fitted.add(candidate);
+                usedWidth += candidateWidth;
+                if (direction == Direction.LEFT) {
+                    left--;
+                } else {
+                    right++;
+                }
+            } else {
+                // Tab doesn't fit in this direction — exhaust it so we still try the other side.
+                // A narrower tab on the opposite side may still fit.
+                if (direction == Direction.LEFT) {
+                    left = -1;
+                } else {
+                    right = candidateTabs.size();
                 }
             }
         }
 
-//        GWT.log(startIndex + " " + displayableTabs.stream().map(TabData::getLabel).collect(Collectors.toList()));
-        return displayableTabs;
+        return fitted;
+    }
+
+    /**
+     * Returns the rank of a tab in recentTabs (lower = more recent).
+     * Tabs not in recentTabs get Integer.MAX_VALUE.
+     */
+    private int getRecentTabsRank(final TabData tabData) {
+        final int index = recentTabs.indexOf(tabData);
+        return index == -1
+                ? Integer.MAX_VALUE
+                : index;
+    }
+
+    /**
+     * Finds the best tab to centre the walk on.
+     * Prefers the selected tab if it's in the candidate list,
+     * otherwise falls back to the most recent tab from recentTabs.
+     * Returns null if no suitable centre tab can be found.
+     */
+    private TabData findCentreTab(final List<TabData> candidateTabs) {
+        if (selectedTab != null && candidateTabs.contains(selectedTab)) {
+            return selectedTab;
+        }
+        for (final TabData td : recentTabs) {
+            if (candidateTabs.contains(td)) {
+                return td;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Fallback when there's no selected tab — fit as many as possible from the start.
+     */
+    private Set<TabData> getDisplayableTabsFromStart(
+            final List<TabData> candidateTabs,
+            final int totalWidth,
+            final int selectorWidth,
+            final int tabGap) {
+        final Set<TabData> fitted = new HashSet<>();
+        int usedWidth = 0;
+        for (final TabData td : candidateTabs) {
+            final AbstractTab tab = getTab(td);
+
+            int tabWidth = tab.getOffsetWidth();
+            if (!fitted.isEmpty()) {
+                tabWidth += tabGap;
+            }
+
+            final int requiredExtra = (fitted.size() + 1) < candidateTabs.size()
+                    ? selectorWidth
+                    : 0;
+
+            if (usedWidth + tabWidth + requiredExtra <= totalWidth) {
+                fitted.add(td);
+                usedWidth += tabWidth;
+            } else {
+                break;
+            }
+        }
+        return fitted;
     }
 
     @Override
@@ -683,20 +782,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
 
-        final int indexOfSelectedTab = indexOf(selectedTab);
-
-        final List<TabData> tabsNotShownToLeft = getTabsNotShown(t -> indexOf(t) < indexOfSelectedTab);
-        final List<TabData> tabsNotShownToRight = getTabsNotShown(t -> indexOf(t) > indexOfSelectedTab);
-
-        final List<Item> menuItems = new ArrayList<>();
-
-        tabsNotShownToLeft.stream().map(this::toIconMenuItem).forEach(menuItems::add);
-
-        if (!tabsNotShownToLeft.isEmpty() && !tabsNotShownToRight.isEmpty()) {
-            menuItems.add(new Separator(0));
-        }
-
-        tabsNotShownToRight.stream().map(this::toIconMenuItem).forEach(menuItems::add);
+        final List<Item> menuItems = tabs.stream()
+                .filter(t -> !getTab(t).isHidden())
+                .map(t -> toIconMenuItem(t, visibleTabs.contains(t)))
+                .collect(Collectors.toList());
 
         ShowMenuEvent
                 .builder()
@@ -706,25 +795,21 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 .fire(this);
     }
 
-    private List<TabData> getTabsNotShown(final Predicate<TabData> predicate) {
-        return tabs.stream()
-                .filter(Predicate.not(visibleTabs::contains))
-                .filter(t -> !getTab(t).isHidden())
-                .filter(predicate == null
-                        ? t -> true
-                        : predicate)
-                .collect(Collectors.toList());
-    }
+    private Item toIconMenuItem(final TabData tabData, final boolean visible) {
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        if (!visible) {
+            sb.appendHtmlConstant("<b>");
+        }
+        sb.appendEscaped(tabData.getLabel());
+        if (!visible) {
+            sb.appendHtmlConstant("</b>");
+        }
 
-    private Item toIconMenuItem(final TabData tabData) {
         return new IconMenuItem.Builder()
                 .priority(0)
                 .icon(tabData.getIcon())
-                .text(new SafeHtmlBuilder()
-                        .appendHtmlConstant("<b>")
-                        .appendEscaped(tabData.getLabel())
-                        .appendHtmlConstant("</b>")
-                        .toSafeHtml())
+                .text(sb.toSafeHtml())
+                .tooltip(tabData.getLabel())
                 .command(() -> fireTabSelection(tabData))
                 .build();
     }
@@ -808,5 +893,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     protected int getTabGap() {
         return 0;
+    }
+
+    private enum Direction {
+        LEFT,
+        RIGHT
     }
 }
