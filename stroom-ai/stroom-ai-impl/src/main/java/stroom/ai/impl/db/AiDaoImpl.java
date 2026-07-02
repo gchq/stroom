@@ -162,10 +162,25 @@ public class AiDaoImpl implements AiDao {
 
     @Override
     public void deleteChat(final int chatId) {
-        JooqUtil.context(aiDbConnProvider, context -> context
-                .deleteFrom(AI_CHAT)
-                .where(AI_CHAT.ID.eq(chatId))
-                .execute());
+        JooqUtil.transaction(aiDbConnProvider, context -> {
+            // Null out attachment references in messages (FK constraint).
+            context.update(AI_CHAT_MESSAGE)
+                    .setNull(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete messages.
+            context.deleteFrom(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete attachments.
+            context.deleteFrom(AI_CHAT_ATTACHMENT)
+                    .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete the chat.
+            context.deleteFrom(AI_CHAT)
+                    .where(AI_CHAT.ID.eq(chatId))
+                    .execute();
+        });
     }
 
     @Override
@@ -265,10 +280,49 @@ public class AiDaoImpl implements AiDao {
 
     @Override
     public void deleteMessage(final int messageId) {
-        JooqUtil.context(aiDbConnProvider, context -> context
-                .deleteFrom(AI_CHAT_MESSAGE)
-                .where(AI_CHAT_MESSAGE.ID.eq(messageId))
-                .execute());
+        JooqUtil.transaction(aiDbConnProvider, context -> {
+            // Null out any attachment reference first (FK RESTRICT).
+            context.update(AI_CHAT_MESSAGE)
+                    .setNull(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID)
+                    .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                    .execute();
+            context.deleteFrom(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                    .execute();
+        });
+    }
+
+    @Override
+    public void deleteAttachment(final int attachmentId) {
+        JooqUtil.transaction(aiDbConnProvider, context -> {
+            // Delete the message that references this attachment.
+            context.deleteFrom(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID.eq(attachmentId))
+                    .execute();
+            // Delete the attachment itself.
+            context.deleteFrom(AI_CHAT_ATTACHMENT)
+                    .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
+                    .execute();
+        });
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+        JooqUtil.transaction(aiDbConnProvider, context -> {
+            // Null out attachment references in messages (FK RESTRICT).
+            context.update(AI_CHAT_MESSAGE)
+                    .setNull(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete all messages.
+            context.deleteFrom(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete all attachments.
+            context.deleteFrom(AI_CHAT_ATTACHMENT)
+                    .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+        });
     }
 
     // ---------------------------------------------------------------------

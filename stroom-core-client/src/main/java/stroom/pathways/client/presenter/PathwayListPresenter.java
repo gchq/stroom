@@ -95,6 +95,7 @@ public class PathwayListPresenter
         view.setUiHandlers(this);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Pathways");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 

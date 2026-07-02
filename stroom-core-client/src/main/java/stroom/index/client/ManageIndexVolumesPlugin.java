@@ -18,6 +18,7 @@ package stroom.index.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsContentPlugin;
@@ -41,8 +42,9 @@ public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolume
     ManageIndexVolumesPlugin(final EventBus eventBus,
                              final ContentManager contentManager,
                              final Provider<IndexVolumeGroupPresenter> presenterProvider,
+                             final DocumentPluginRegistry documentPluginRegistry,
                              final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
     }
 
     @Override
@@ -69,5 +71,10 @@ public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolume
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    public String getType() {
+        return IndexVolumeGroupPresenter.TAB_TYPE;
     }
 }

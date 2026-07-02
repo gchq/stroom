@@ -80,6 +80,7 @@ public class ConstraintListPresenter
 //        view.setUiHandlers(this);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Constraints");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 

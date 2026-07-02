@@ -243,7 +243,7 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId())
                 .apiKey(apiKey)
                 .httpClientBuilder(httpClientBuilder)
-                .dimensions(1024); // Lucene can only support 1024 dimensions.
+                .dimensions(modelDoc.getEmbeddingModelDimensions());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
             // Override the base URL
@@ -482,6 +482,17 @@ public class AiServiceImpl implements AiService {
     @Override
     public void deleteMessage(final int messageId) {
         aiDao.deleteMessage(messageId);
+    }
+
+    @Override
+    public void deleteAttachment(final int attachmentId) {
+        aiDao.deleteAttachment(attachmentId);
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+        verifyOwnership(chatId);
+        aiDao.deleteAllChatMessagesAndAttachments(chatId);
     }
 
     // ---------------------------------------------------------------------

@@ -69,7 +69,7 @@ class NodeGroupResourceImpl implements NodeGroupResource {
     }
 
     @Override
-    public ResultPage<NodeGroupState> getNodeGroupState(final Integer id) {
+    public NodeGroupState getNodeGroupState(final Integer id) {
         return nodeGroupServiceProvider.get().getNodeGroupState(id);
     }
 

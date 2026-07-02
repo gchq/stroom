@@ -22,27 +22,21 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class NodeGroupState {
+
     @JsonProperty
-    private final Node node;
-    @JsonProperty
-    private final boolean included;
+    private final Set<Integer> selected;
 
     @JsonCreator
-    public NodeGroupState(@JsonProperty("node") final Node node,
-                          @JsonProperty("included") final boolean included) {
-        this.node = node;
-        this.included = included;
+    public NodeGroupState(@JsonProperty("selected") final Set<Integer> selected) {
+        this.selected = selected;
     }
 
-    public Node getNode() {
-        return node;
-    }
-
-    public boolean isIncluded() {
-        return included;
+    public Set<Integer> getSelected() {
+        return selected;
     }
 
     @Override
@@ -51,19 +45,18 @@ public class NodeGroupState {
             return false;
         }
         final NodeGroupState that = (NodeGroupState) o;
-        return included == that.included && Objects.equals(node, that.node);
+        return Objects.equals(selected, that.selected);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(node, included);
+        return Objects.hashCode(selected);
     }
 
     @Override
     public String toString() {
         return "NodeGroupState{" +
-               "node=" + node +
-               ", included=" + included +
+               "selected=" + selected +
                '}';
     }
 }

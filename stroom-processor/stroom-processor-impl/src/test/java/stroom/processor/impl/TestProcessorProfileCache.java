@@ -19,7 +19,7 @@ package stroom.processor.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
-import stroom.node.api.NodeGroupInfo;
+import stroom.node.api.NodeGroupState;
 import stroom.node.shared.NodeGroup;
 import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.shared.ProcessorProfile;
@@ -629,7 +629,7 @@ class TestProcessorProfileCache {
     @Test
     void testGetProfile_nodeGroupNotFound_throws() {
         setupProfile(PROFILE_NAME, "missingGroup", createAllDayPeriod(10, 5));
-        when(nodeGroupCache.getIncludedGroupNodes("missingGroup")).thenReturn(Optional.empty());
+        when(nodeGroupCache.getSelectedGroupNodes("missingGroup")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> processorProfileCache.getProfile("node1", PROFILE_NAME, WEDNESDAY_14_30))
                 .isInstanceOf(RuntimeException.class)
@@ -715,7 +715,7 @@ class TestProcessorProfileCache {
                 .enabled(enabled)
                 .stampAudit("test")
                 .build();
-        when(nodeGroupCache.getIncludedGroupNodes(groupName))
-                .thenReturn(Optional.of(new NodeGroupInfo(nodeGroup, includedNodes)));
+        when(nodeGroupCache.getSelectedGroupNodes(groupName))
+                .thenReturn(Optional.of(new NodeGroupState(nodeGroup, includedNodes)));
     }
 }

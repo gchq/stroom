@@ -54,6 +54,7 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Elastic Index Fields");
         dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -120,6 +121,7 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Elastic Index '" + docRef.getName() + "' Fields");
         if (document != null) {
             fields = document.getFields().stream()
                     .sorted(Comparator.comparing(ElasticIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))

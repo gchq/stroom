@@ -64,6 +64,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                final WrapperView view) {
         super(eventBus, view);
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Markers");
         dataGrid.setMultiLine(true);
         view.setWidget(dataGrid);
 

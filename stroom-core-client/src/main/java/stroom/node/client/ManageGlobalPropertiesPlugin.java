@@ -19,6 +19,7 @@ package stroom.node.client;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -39,8 +40,9 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
     ManageGlobalPropertiesPlugin(final EventBus eventBus,
                                  final ContentManager contentManager,
                                  final Provider<GlobalPropertyTabPresenter> presenterProvider,
+                                 final DocumentPluginRegistry documentPluginRegistry,
                                  final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+        super(eventBus, contentManager, presenterProvider, documentPluginRegistry, securityContext);
     }
 
     @Override
@@ -67,5 +69,10 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
                             .command(super::open)
                             .build());
         }
+    }
+
+    @Override
+    public String getType() {
+        return GlobalPropertyTabPresenter.TAB_TYPE;
     }
 }

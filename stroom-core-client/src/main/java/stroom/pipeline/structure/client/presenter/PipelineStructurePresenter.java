@@ -187,6 +187,10 @@ public class PipelineStructurePresenter
         pipelinePresenter.setEnabled(!readOnly);
         propertyListPresenter.setReadOnly(readOnly);
         pipelineReferenceListPresenter.setReadOnly(readOnly);
+        propertyListPresenter.setTableName(
+                "Pipeline '" + docRef.getName() + "' Properties");
+        pipelineReferenceListPresenter.setTableName(
+                "Pipeline '" + docRef.getName() + "' References");
         enableButtons();
 
         if (document != null) {

@@ -78,6 +78,10 @@ public interface AiService {
 
     void deleteMessage(int messageId);
 
+    void deleteAttachment(int attachmentId);
+
+    void deleteAllChatMessagesAndAttachments(int chatId);
+
     void verifyOwnership(int chatId);
 
     void verifyOwnership(AiChat chat);

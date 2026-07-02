@@ -19,7 +19,7 @@ package stroom.processor.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
-import stroom.node.api.NodeGroupInfo;
+import stroom.node.api.NodeGroupState;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.query.language.functions.UserTimeZoneUtil;
@@ -88,9 +88,9 @@ public class ProcessorProfileCache implements Clearable {
                 new RuntimeException("Processor profile called '" +
                                      profileName +
                                      "' not found"));
-        final Optional<NodeGroupInfo> optionalNodeGroupData = nodeGroupCache
-                .getIncludedGroupNodes(processorProfile.getNodeGroupName());
-        final NodeGroupInfo nodeGroupInfo = optionalNodeGroupData.orElseThrow(() ->
+        final Optional<NodeGroupState> optionalNodeGroupData = nodeGroupCache
+                .getSelectedGroupNodes(processorProfile.getNodeGroupName());
+        final NodeGroupState nodeGroupState = optionalNodeGroupData.orElseThrow(() ->
                 new RuntimeException("No node group called '" +
                                      processorProfile.getNodeGroupName() +
                                      "' can be found for processor profile '" +
@@ -98,13 +98,15 @@ public class ProcessorProfileCache implements Clearable {
                                      "'"));
 
         // If the node group is disabled then return zero tasks.
-        if (!nodeGroupInfo.nodeGroup().isEnabled()) {
-            LOGGER.debug("Node group '{}' is disabled", nodeGroupInfo.nodeGroup().getName());
+        if (!nodeGroupState.isEnabled()) {
+            LOGGER.debug("Node group '{}' is disabled", nodeGroupState.getNodeGroup());
             return ZERO;
         }
 
         // If the node group does not include the requesting node then return zero tasks.
-        if (!nodeGroupInfo.includedNodes().contains(node)) {
+        final boolean included = nodeGroupState.isIncludedNode(node);
+        if (!included) {
+            LOGGER.debug("Node '{}' is not included in group '{}'", node, nodeGroupState.getNodeGroup());
             return ZERO;
         }
 

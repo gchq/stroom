@@ -50,6 +50,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("XPath Matches");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 

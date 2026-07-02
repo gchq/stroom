@@ -55,6 +55,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Conditional Formatting Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

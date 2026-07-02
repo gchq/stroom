@@ -54,6 +54,8 @@ public class OpenAIModelSettingsViewImpl
     @UiField
     Button testModel;
     @UiField
+    ValueSpinner embeddingModelDimensions;
+    @UiField
     Button setHttpClientConfig;
 
     @Inject
@@ -63,6 +65,8 @@ public class OpenAIModelSettingsViewImpl
 
         maxContextWindowTokens.setMin(0L);
         maxContextWindowTokens.setMax(Integer.MAX_VALUE);
+        embeddingModelDimensions.setMin(0L);
+        embeddingModelDimensions.setMax(Integer.MAX_VALUE);
     }
 
     @Override
@@ -116,12 +120,23 @@ public class OpenAIModelSettingsViewImpl
     }
 
     @Override
+    public int getEmbeddingModelDimensions() {
+        return embeddingModelDimensions.getIntValue();
+    }
+
+    @Override
+    public void setEmbeddingModelDimensions(final int embeddingModelDimensions) {
+        this.embeddingModelDimensions.setValue(embeddingModelDimensions);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         baseUrl.setEnabled(!readOnly);
         apiKey.setEnabled(!readOnly);
         modelId.setEnabled(!readOnly);
         maxContextWindowTokens.setEnabled(!readOnly);
         reasoningEffort.setEnabled(!readOnly);
+        embeddingModelDimensions.setEnabled(!readOnly);
     }
 
     private void fireChange() {
@@ -152,6 +167,11 @@ public class OpenAIModelSettingsViewImpl
 
     @UiHandler("reasoningEffort")
     public void onReasoningEffort(final ValueChangeEvent<String> event) {
+        fireChange();
+    }
+
+    @UiHandler("embeddingModelDimensions")
+    public void onEmbeddingModelDimensionsValueChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }
 

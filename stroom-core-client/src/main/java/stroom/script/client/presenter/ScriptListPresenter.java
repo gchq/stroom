@@ -42,6 +42,7 @@ public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Script Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -70,5 +71,9 @@ public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
 
     public MultiSelectionModel<DocRef> getSelectionModel() {
         return selectionModel;
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 }

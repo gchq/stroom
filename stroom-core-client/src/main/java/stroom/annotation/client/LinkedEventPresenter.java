@@ -73,6 +73,7 @@ public class LinkedEventPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Linked Events");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -152,6 +153,7 @@ public class LinkedEventPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
+        dataGrid.setTableName("Annotation '" + docRef.getName() + "' Events");
         this.annotationRef = docRef;
         dirty = false;
         refreshData();

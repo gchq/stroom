@@ -94,13 +94,17 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     }
 
     @Override
-    public ResultPage<NodeGroupState> getNodeGroupState(final Integer id) {
-        return nodeGroupDao.getNodeGroupState(id);
+    public NodeGroupState getNodeGroupState(final Integer id) {
+        return securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
+                nodeGroupDao.getNodeGroupState(id));
     }
 
     @Override
-    public boolean updateNodeGroupState(final NodeGroupChange change) {
-        return nodeGroupDao.updateNodeGroupState(change);
+    public Boolean updateNodeGroupState(final NodeGroupChange change) {
+        final Boolean result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
+                nodeGroupDao.updateNodeGroupState(change));
+        fireChange(EntityAction.UPDATE);
+        return result;
     }
 
     private void fireChange(final EntityAction action) {

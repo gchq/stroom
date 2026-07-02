@@ -61,6 +61,7 @@ public class ProfilePeriodListPresenter
 
         view.asWidget().addStyleName("form-control-background form-control-border");
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Profile Periods");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

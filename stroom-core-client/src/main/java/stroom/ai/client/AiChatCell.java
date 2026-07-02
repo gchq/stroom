@@ -17,6 +17,7 @@
 package stroom.ai.client;
 
 import stroom.ai.shared.AiChat;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.Templates;
 
@@ -24,6 +25,12 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class AiChatCell extends AbstractCell<AiChat> {
+
+    private final DateTimeFormatter dateTimeFormatter;
+
+    public AiChatCell(final DateTimeFormatter dateTimeFormatter) {
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
 
     @Override
     public void render(final Context context, final AiChat value, final SafeHtmlBuilder sb) {
@@ -37,7 +44,8 @@ public class AiChatCell extends AbstractCell<AiChat> {
 
             // Add age
             row.append(Templates.div(getCellClassName() + "-age",
-                    SafeHtmlUtil.from(RelativeTimeUtil.formatRelativeTime(value.getUpdateTimeMs()))));
+                    SafeHtmlUtil.from(dateTimeFormatter.formatRelative(
+                            value.getUpdateTimeMs(), System.currentTimeMillis()))));
 
             sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
         }

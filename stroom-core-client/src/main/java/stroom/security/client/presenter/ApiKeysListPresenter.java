@@ -114,6 +114,7 @@ public class ApiKeysListPresenter
         this.uiConfigCache = uiConfigCache;
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("API Keys");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
 //        this.selectionEventManager = new DataGridSelectionEventManager<>(
 //                dataGrid, selectionModel, false);

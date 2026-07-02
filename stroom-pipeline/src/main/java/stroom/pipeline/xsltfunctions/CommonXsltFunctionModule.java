@@ -39,6 +39,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
         bindFunction(ColToFunction.class);
+        bindFunction(CosineSimilarityFunction.class);
         bindFunction(CurrentTimeFunction.class);
         bindFunction(CurrentUnixTimeFunction.class);
         bindFunction(CurrentUserFunction.class);
@@ -140,6 +141,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class CosineSimilarityFunction extends StroomExtensionFunctionDefinition<CosineSimilarity> {
+
+        @Inject
+        CosineSimilarityFunction(final Provider<CosineSimilarity> functionCallProvider) {
+            super(
+                    CosineSimilarity.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.ATOMIC_SEQUENCE,
+                            SequenceType.ATOMIC_SEQUENCE
+                    },
+                    SequenceType.SINGLE_NUMERIC,
                     functionCallProvider);
         }
     }

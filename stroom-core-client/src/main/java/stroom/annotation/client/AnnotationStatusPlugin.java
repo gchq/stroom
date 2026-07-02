@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.inject.Inject;
@@ -33,12 +34,19 @@ public class AnnotationStatusPlugin extends AnnotationPlugin {
     AnnotationStatusPlugin(final EventBus eventBus,
                            final ContentManager contentManager,
                            final Provider<AnnotationTagPresenter> presenterProvider,
+                           final DocumentPluginRegistry documentPluginRegistry,
                            final ClientSecurityContext securityContext) {
         super(eventBus,
                 contentManager,
                 presenterProvider,
+                documentPluginRegistry,
                 securityContext,
                 "Annotation Statuses",
                 AnnotationTagType.STATUS);
+    }
+
+    @Override
+    public String getType() {
+        return AnnotationTagPresenter.TAB_TYPE + AnnotationTagType.STATUS.getDisplayValue();
     }
 }

@@ -68,6 +68,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Data Retention Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

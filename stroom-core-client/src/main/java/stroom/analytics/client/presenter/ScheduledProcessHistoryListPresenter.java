@@ -77,6 +77,7 @@ public class ScheduledProcessHistoryListPresenter
                 ExecutionHistoryFields.ID, true, true);
         request = ExecutionHistoryRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Scheduled Process History");
         dataGrid.setMultiLine(true);
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<ExecutionHistory> selectionEventManager =

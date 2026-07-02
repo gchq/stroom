@@ -54,6 +54,7 @@ public class ConfigPropertyClusterValuesListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid.setTableName("Cluster Property Values");
         dataGrid.setMultiLine(true);
         view.setDataWidget(dataGrid);
 

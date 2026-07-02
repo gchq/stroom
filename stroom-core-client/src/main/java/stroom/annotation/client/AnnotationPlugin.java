@@ -19,6 +19,7 @@ package stroom.annotation.client;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -38,6 +39,7 @@ abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPres
     AnnotationPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
                      final Provider<AnnotationTagPresenter> presenterProvider,
+                     final DocumentPluginRegistry documentPluginRegistry,
                      final ClientSecurityContext securityContext,
                      final String tabLabel,
                      final AnnotationTagType annotationTagType) {
@@ -47,7 +49,7 @@ abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPres
             annotationTagPresenter.setAnnotationTagType(annotationTagType);
             annotationTagPresenter.refresh();
             return annotationTagPresenter;
-        }, securityContext);
+        }, documentPluginRegistry, securityContext);
         this.tabLabel = tabLabel;
     }
 
