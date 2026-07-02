@@ -363,6 +363,26 @@ paths:
       summary: Create a new AI chat conversation
       tags:
       - AI
+  /ai/v1/deleteAllMessages/{chatId}:
+    post:
+      operationId: deleteAllMessages
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete all messages and attachments from an AI chat conversation
+      tags:
+      - AI
   /ai/v1/deleteChat/{chatId}:
     post:
       operationId: deleteChat
@@ -383,6 +403,32 @@ paths:
       summary: Delete an AI chat conversation
       tags:
       - AI
+  /ai/v1/deleteMessage/{chatId}/{messageId}:
+    post:
+      operationId: deleteMessage
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete a message from an AI chat conversation
+      tags:
+      - AI
   /ai/v1/downloadChatHistory:
     post:
       operationId: downloadChatHistory
@@ -401,6 +447,26 @@ paths:
                 $ref: "#/components/schemas/ResourceGeneration"
           description: default response
       summary: Download the chat history for a conversation as a Markdown file
+      tags:
+      - AI
+  /ai/v1/getAttachmentData:
+    post:
+      operationId: getAttachmentData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetAttachmentDataRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAttachmentDataPage"
+          description: default response
+      summary: Get a page of attachment table data
       tags:
       - AI
   /ai/v1/getChat/{chatId}:
@@ -9596,6 +9662,25 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         userRef:
           $ref: "#/components/schemas/UserRef"
+    AiAttachmentDataPage:
+      type: object
+      properties:
+        headers:
+          type: array
+          items:
+            type: string
+        offset:
+          type: integer
+          format: int32
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        totalRowCount:
+          type: integer
+          format: int32
     AiChat:
       type: object
       properties:
@@ -14181,6 +14266,17 @@ components:
           $ref: "#/components/schemas/OffsetRange"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+    GetAttachmentDataRequest:
+      type: object
+      properties:
+        attachmentId:
+          type: integer
+          format: int32
+        chatId:
+          type: integer
+          format: int32
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
     GetFeedStatusRequest:
       type: object
       properties:
@@ -15859,6 +15955,9 @@ components:
           type: string
         description:
           type: string
+        embeddingModelDimensions:
+          type: integer
+          format: int32
         httpClientConfiguration:
           $ref: "#/components/schemas/HttpClientConfig"
         maxContextWindowTokens:
