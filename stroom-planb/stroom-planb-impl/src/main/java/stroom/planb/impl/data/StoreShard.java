@@ -16,13 +16,12 @@
 
 package stroom.planb.impl.data;
 
-
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.PlanBDb;
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.PlanBDb;
+import stroom.planb.impl.dao.StatePaths;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.HasCondenseSettings;

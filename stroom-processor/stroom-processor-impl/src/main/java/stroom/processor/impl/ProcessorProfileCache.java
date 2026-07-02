@@ -20,6 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
 import stroom.node.api.NodeGroupInfo;
+import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.query.language.functions.UserTimeZoneUtil;

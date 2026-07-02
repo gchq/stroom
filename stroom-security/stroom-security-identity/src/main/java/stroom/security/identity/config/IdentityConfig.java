@@ -17,6 +17,7 @@
 package stroom.security.identity.config;
 
 import stroom.config.common.HasDbConfig;
+import stroom.security.identity.db.IdentityDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;

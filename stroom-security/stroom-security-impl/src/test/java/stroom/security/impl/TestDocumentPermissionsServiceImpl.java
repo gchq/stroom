@@ -16,11 +16,10 @@
 
 package stroom.security.impl;
 
-
 import stroom.docref.DocRef;
 import stroom.security.api.UserService;
+import stroom.security.impl.dao.SecurityTestUtil;
 import stroom.security.impl.db.SecurityDbConnProvider;
-import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;

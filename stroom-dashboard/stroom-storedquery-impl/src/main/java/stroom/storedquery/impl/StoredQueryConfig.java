@@ -17,6 +17,7 @@
 package stroom.storedquery.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.storedquery.impl.db.StoredQueryDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 

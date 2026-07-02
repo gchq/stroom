@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutable;
@@ -53,7 +53,6 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)

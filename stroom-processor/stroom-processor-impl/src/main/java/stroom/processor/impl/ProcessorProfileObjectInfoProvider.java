@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.ProcessorProfile;
 
 import event.logging.BaseObject;

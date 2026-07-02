@@ -16,12 +16,11 @@
 
 package stroom.processor.impl;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
-import stroom.meta.impl.db.MetaDaoImpl;
+import stroom.meta.impl.dao.MetaDaoImpl;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;

@@ -24,6 +24,7 @@ import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
+import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.docstore.shared.AuditAction;

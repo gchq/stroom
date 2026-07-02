@@ -21,6 +21,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.job.impl.db.jooq.tables.Job;
 import stroom.job.shared.BatchScheduleRequest;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;

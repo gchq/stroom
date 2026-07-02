@@ -17,10 +17,10 @@
 package stroom.planb.impl.serde.temporalkey;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.HashClashCommitRunnable;
-import stroom.planb.impl.db.HashLookupDb;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.dao.HashClashCommitRunnable;
+import stroom.planb.impl.dao.HashLookupDb;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UidLookupDb;
 import stroom.planb.impl.serde.hash.HashFactory;
 import stroom.planb.impl.serde.hash.HashFactoryFactory;
 import stroom.planb.impl.serde.time.TimeSerde;

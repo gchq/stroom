@@ -20,7 +20,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.config.global.impl.ConfigProvidersModule;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
-import stroom.config.global.impl.db.GlobalConfigDaoModule;
+import stroom.config.global.impl.dao.GlobalConfigDaoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;

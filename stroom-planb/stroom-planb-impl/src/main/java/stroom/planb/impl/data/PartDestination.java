@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.dao.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;

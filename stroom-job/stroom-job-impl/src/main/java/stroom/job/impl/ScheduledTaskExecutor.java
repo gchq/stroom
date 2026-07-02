@@ -18,6 +18,7 @@ package stroom.job.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.job.api.ScheduledJob;
+import stroom.job.impl.db.jooq.tables.Job;
 import stroom.job.shared.JobNode;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;

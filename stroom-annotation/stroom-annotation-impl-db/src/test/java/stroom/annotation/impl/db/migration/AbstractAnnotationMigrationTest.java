@@ -16,7 +16,7 @@
 
 package stroom.annotation.impl.db.migration;
 
-import stroom.annotation.impl.AnnotationDBConfig;
+import stroom.annotation.impl.db.AnnotationDBConfig;
 import stroom.annotation.impl.db.AnnotationDbConnProvider;
 import stroom.annotation.impl.db.AnnotationDbModule;
 import stroom.db.util.AbstractFlyWayDbModule;

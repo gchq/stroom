@@ -17,6 +17,7 @@
 package stroom.security.impl.apikey;
 
 import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.security.impl.db.jooq.tables.ApiKey;
 import stroom.security.shared.HashedApiKey;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

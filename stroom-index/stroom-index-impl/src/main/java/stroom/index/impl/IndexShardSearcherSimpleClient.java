@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.util.AbstractCommandLineTool;
 
 public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {

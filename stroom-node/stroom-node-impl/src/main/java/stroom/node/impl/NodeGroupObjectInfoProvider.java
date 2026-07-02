@@ -17,6 +17,7 @@
 package stroom.node.impl;
 
 import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.node.impl.db.jooq.tables.Node;
 import stroom.node.shared.NodeGroup;
 
 import event.logging.BaseObject;

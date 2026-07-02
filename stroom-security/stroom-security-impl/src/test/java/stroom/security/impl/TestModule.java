@@ -24,7 +24,7 @@ import stroom.docstore.mock.MockDocFinderModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.UserService;
-import stroom.security.impl.db.SecurityDaoModule;
+import stroom.security.impl.dao.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.mock.MockHasUserDependenciesModule;
