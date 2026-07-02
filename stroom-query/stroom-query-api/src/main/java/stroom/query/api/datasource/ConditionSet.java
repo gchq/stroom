@@ -399,7 +399,9 @@ public enum ConditionSet {
             FieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
             FieldType.ID.equals(elasticIndexFieldType) ||
             FieldType.LONG.equals(elasticIndexFieldType) ||
-            FieldType.INTEGER.equals(elasticIndexFieldType)) {
+            FieldType.INTEGER.equals(elasticIndexFieldType) ||
+            FieldType.FLOAT.equals(elasticIndexFieldType) ||
+            FieldType.DOUBLE.equals(elasticIndexFieldType)) {
             return ConditionSet.ELASTIC_NUMERIC;
         } else if (FieldType.DENSE_VECTOR.equals(elasticIndexFieldType)) {
             return ConditionSet.DEFAULT_DENSE_VECTOR;
