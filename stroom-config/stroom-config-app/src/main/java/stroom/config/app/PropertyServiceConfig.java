@@ -17,6 +17,7 @@
 package stroom.config.app;
 
 import stroom.config.common.HasDbConfig;
+import stroom.config.global.impl.db.PropertyServiceDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 

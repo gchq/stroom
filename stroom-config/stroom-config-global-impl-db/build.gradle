@@ -25,9 +25,9 @@ dependencies {
     implementation libs.guice
     implementation libs.jooq
 
-    implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-db-util')
+    implementation project(':stroom-util-shared')
 
     runtimeOnly libs.mysql.connector.java
 

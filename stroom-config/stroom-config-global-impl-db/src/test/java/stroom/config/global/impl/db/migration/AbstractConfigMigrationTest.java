@@ -16,9 +16,9 @@
 
 package stroom.config.global.impl.db.migration;
 
-import stroom.config.app.PropertyServiceDbConfig;
 import stroom.config.global.impl.db.GlobalConfigDbConnProvider;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
+import stroom.config.global.impl.db.PropertyServiceDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.test.common.util.db.AbstractSingleFlywayMigrationTest;
 

@@ -27,7 +27,7 @@
             <forcedTypes>
                 <forcedType>
                     <name>BOOLEAN</name>
-                    <includeExpression>.*\.node\.enabled|.*\.node_group\.enabled</includeExpression>
+                    <includeExpression>.*\.node\.enabled|.*\.node_group\.enabled|.*\.node_group\.invert_selection</includeExpression>
                     <!-- see https://github.com/jOOQ/jOOQ/issues/9405 -->
                     <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
                 </forcedType>

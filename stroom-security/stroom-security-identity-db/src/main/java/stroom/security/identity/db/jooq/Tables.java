@@ -7,6 +7,7 @@ package stroom.security.identity.db.jooq;
 import stroom.security.identity.db.jooq.tables.Account;
 import stroom.security.identity.db.jooq.tables.JsonWebKey;
 import stroom.security.identity.db.jooq.tables.OauthClient;
+import stroom.security.identity.db.jooq.tables.Token;
 import stroom.security.identity.db.jooq.tables.TokenType;
 
 
@@ -30,6 +31,11 @@ public class Tables {
      * The table <code>stroom.oauth_client</code>.
      */
     public static final OauthClient OAUTH_CLIENT = OauthClient.OAUTH_CLIENT;
+
+    /**
+     * The table <code>stroom.token</code>.
+     */
+    public static final Token TOKEN = Token.TOKEN;
 
     /**
      * The table <code>stroom.token_type</code>.

@@ -62,38 +62,40 @@ def buildJooqConfig = { String jdbcUrlVal, String inputSchemaVal ->
 }
 
 // ---------------------------------------------------------------------------
-// generateJooq — runs codegen against an existing local DB (e.g. SetupDevEnv)
-// ---------------------------------------------------------------------------
-
-tasks.register('generateJooq') {
-    group = 'jooq'
-    description = 'Generates JOOQ code from an existing local MySQL database (parsed from local.yml).'
-
-    doLast {
-        def resolved = buildJooqConfig(jdbcUrl, dbSchema)
-        logger.lifecycle("Running JOOQ codegen against local DB: ${dbSchema}")
-
-        jooqExec.run(configurations.jooqCodegen, resolved)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// regenerateJooq — creates a fresh temp DB, runs Flyway, then codegen
+// generateJooq — creates a fresh temp DB, runs Flyway, then codegen
 // ---------------------------------------------------------------------------
 // Requires a running MySQL instance on localhost:3307 with root/my-secret-pw
 // (same as the test infrastructure).
 
-tasks.register('regenerateJooq') {
+tasks.register('generateJooq') {
     dependsOn classes
     group = 'jooq'
     description = 'Creates a fresh MySQL DB, runs Flyway migrations, ' +
-                  'regenerates JOOQ code, then drops the DB.'
+                  'generates JOOQ code, then drops the DB.'
 
     doLast {
+        // Load the MySQL driver from the jooqCodegen configuration.
+        // DriverManager won't find drivers loaded by a child classloader,
+        // so we obtain the Driver instance directly and call connect().
+        def driverLoader = new URLClassLoader(
+            configurations.jooqCodegen.collect { it.toURI().toURL() } as URL[]
+        )
+        def mysqlDriver = driverLoader
+            .loadClass('com.mysql.cj.jdbc.Driver')
+            .getDeclaredConstructor()
+            .newInstance() as java.sql.Driver
+
+        def connectAs = { String url, String user, String password ->
+            def props = new Properties()
+            props.setProperty('user', user)
+            props.setProperty('password', password)
+            return mysqlDriver.connect(url, props)
+        }
+
         def rootJdbcUrl = 'jdbc:mysql://localhost:3307?useUnicode=yes&characterEncoding=UTF-8'
         def rootUser = 'root'
         def rootPassword = 'my-secret-pw'
-        def dbName = "jooq_regen_${project.name}_${System.currentTimeMillis()}"
+        def dbName = "jooq_regen_${project.name.replace('-', '_')}_${System.currentTimeMillis()}"
 
         if (project.hasProperty('jooqDbHost')) {
             rootJdbcUrl = "jdbc:mysql://${project.jooqDbHost}?useUnicode=yes&characterEncoding=UTF-8"
@@ -106,7 +108,7 @@ tasks.register('regenerateJooq') {
         }
 
         logger.lifecycle("Creating temporary database: ${dbName}")
-        def conn = java.sql.DriverManager.getConnection(rootJdbcUrl, rootUser, rootPassword)
+        def conn = connectAs(rootJdbcUrl, rootUser, rootPassword)
         try {
             def stmt = conn.createStatement()
             stmt.executeUpdate(
@@ -143,9 +145,13 @@ tasks.register('regenerateJooq') {
                 Thread.currentThread().getContextClassLoader()
             )
 
-            org.flywaydb.core.Flyway.configure(classLoader)
+            // Flyway is on the module's runtimeClasspath, not the build script
+            // classpath, so load the class reflectively.
+            classLoader.loadClass('org.flywaydb.core.Flyway')
+                .getMethod('configure', ClassLoader)
+                .invoke(null, classLoader)
                 .dataSource(tempJdbcUrl, 'stroomuser', 'stroompassword1')
-                .locations("classpath:${jooqMigrationLocation}")
+                .locations("classpath:${jooqMigrationLocation}" as String)
                 .table(jooqFlywayTable)
                 .load()
                 .migrate()
@@ -158,7 +164,7 @@ tasks.register('regenerateJooq') {
             jooqExec.run(configurations.jooqCodegen, resolved)
         } finally {
             logger.lifecycle("Dropping temporary database: ${dbName}")
-            def dropConn = java.sql.DriverManager.getConnection(rootJdbcUrl, rootUser, rootPassword)
+            def dropConn = connectAs(rootJdbcUrl, rootUser, rootPassword)
             try {
                 dropConn.createStatement().executeUpdate("DROP DATABASE IF EXISTS `${dbName}`")
             } finally {
@@ -166,4 +172,11 @@ tasks.register('regenerateJooq') {
             }
         }
     }
+}
+
+// Backwards-compatible alias
+tasks.register('regenerateJooq') {
+    dependsOn 'generateJooq'
+    group = 'jooq'
+    description = 'Alias for generateJooq.'
 }

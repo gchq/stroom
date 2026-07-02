@@ -23,6 +23,7 @@ import stroom.annotation.impl.AnnotationDBConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.global.impl.db.PropertyServiceDbConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceDbConfig;
 import stroom.docstore.impl.DocStoreConfig;
