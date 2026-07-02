@@ -5,8 +5,8 @@ import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
+import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpRequest;
 import dev.langchain4j.http.client.SuccessfulHttpResponse;
@@ -82,6 +82,7 @@ public class ApacheHttpClient implements HttpClient {
                 });
             }
         } catch (final IOException e) {
+            LOGGER.debug("execute() SSE - IOException: {}", e.getMessage(), e);
             listener.onError(e);
         }
     }
@@ -89,6 +90,23 @@ public class ApacheHttpClient implements HttpClient {
     private void handleServerSentEvents(final ClassicHttpResponse response,
                                         final ServerSentEventParser parser,
                                         final ServerSentEventListener listener) throws IOException {
+        final int statusCode = response.getCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            String body = null;
+            if (response.getEntity() != null) {
+                try {
+                    body = EntityUtils.toString(response.getEntity());
+                } catch (final ParseException e) {
+                    LOGGER.debug("handleServerSentEvents() - ParseException reading error body: {}",
+                            e.getMessage(), e);
+                    body = "Failed to parse error response body: " + e.getMessage();
+                }
+            }
+            LOGGER.debug("handleServerSentEvents() - non-2xx response, statusCode: {}, body:\n{}",
+                    statusCode, body);
+            listener.onError(new HttpException(statusCode, body));
+            return;
+        }
         parser.parse(response.getEntity().getContent(), listener);
     }
 
@@ -153,21 +171,26 @@ public class ApacheHttpClient implements HttpClient {
             LOGGER.debug("convertResponse() - statusCode: {}, headers: {}, body:\n{}",
                     statusCode, headers, body);
 
-            try {
-                // This will throw if statusCode is not a 2xx
-                return SuccessfulHttpResponse.builder()
-                        .statusCode(statusCode)
-                        .headers(headers)
-                        .body(body)
-                        .build();
-            } catch (final RuntimeException e) {
-                throw new RuntimeException(LogUtil.message(
-                        "Unable to convert HTTP response body, statusCode: {}, headers: {}, body:\n{}",
-                        statusCode, headers, body), e);
+            if (statusCode < 200 || statusCode >= 300) {
+                LOGGER.debug("convertResponse() - non-2xx response, throwing HttpException for statusCode: {}",
+                        statusCode);
+                throw new HttpException(statusCode, body);
             }
+
+            return SuccessfulHttpResponse.builder()
+                    .statusCode(statusCode)
+                    .headers(headers)
+                    .body(body)
+                    .build();
+        } catch (final HttpException e) {
+            LOGGER.debug("convertResponse() - HttpException: statusCode: {}, message: {}",
+                    e.statusCode(), e.getMessage(), e);
+            throw e;
         } catch (final IOException e) {
+            LOGGER.debug("convertResponse() - IOException: {}", e.getMessage(), e);
             throw new UncheckedIOException(e);
         } catch (final ParseException e) {
+            LOGGER.debug("convertResponse() - ParseException: {}", e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }
