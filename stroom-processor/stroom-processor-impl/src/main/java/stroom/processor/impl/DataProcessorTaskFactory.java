@@ -24,6 +24,7 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.JobNames;
+import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;

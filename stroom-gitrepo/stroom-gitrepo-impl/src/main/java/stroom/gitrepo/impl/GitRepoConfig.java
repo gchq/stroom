@@ -18,6 +18,7 @@ package stroom.gitrepo.impl;
 
 import stroom.config.common.HasDbConfig;
 import stroom.gitrepo.impl.db.GitRepoDbConfig;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;

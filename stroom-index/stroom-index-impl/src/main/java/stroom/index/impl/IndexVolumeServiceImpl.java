@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.IndexVolumeGroupService;
+import stroom.index.impl.db.jooq.Stroom;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;

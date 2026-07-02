@@ -18,6 +18,7 @@ package stroom.security.identity.db;
 
 import stroom.config.common.CommonDbConfig;
 import stroom.security.identity.account.AccountDao;
+import stroom.security.identity.dao.AccountDaoImpl;
 import stroom.security.identity.shared.Account;
 import stroom.test.common.util.db.DbTestUtil;
 

@@ -1,6 +1,7 @@
 package stroom.credentials.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.credentials.impl.db.CredentialsDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 

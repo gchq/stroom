@@ -17,7 +17,7 @@
 package stroom.planb.impl.data;
 
 import stroom.docstore.api.DocumentNotFoundException;
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.dao.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;

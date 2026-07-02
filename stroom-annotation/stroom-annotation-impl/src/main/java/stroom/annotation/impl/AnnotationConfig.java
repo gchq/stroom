@@ -16,6 +16,7 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.impl.db.AnnotationDBConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;

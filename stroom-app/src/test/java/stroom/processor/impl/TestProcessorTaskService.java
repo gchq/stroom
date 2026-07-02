@@ -22,6 +22,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.impl.db.migration.legacyqd.ExpressionTerm;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;

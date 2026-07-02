@@ -17,10 +17,10 @@
 package stroom.planb.impl.serde.keyprefix;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.HashLookupDb;
-import stroom.planb.impl.db.HashLookupRecorder;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.dao.HashLookupDb;
+import stroom.planb.impl.dao.HashLookupRecorder;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UsedLookupsRecorder;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 

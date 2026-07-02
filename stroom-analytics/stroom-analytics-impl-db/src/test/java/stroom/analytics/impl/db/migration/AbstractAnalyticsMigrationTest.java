@@ -16,7 +16,7 @@
 
 package stroom.analytics.impl.db.migration;
 
-import stroom.analytics.impl.AnalyticsDbConfig;
+import stroom.analytics.impl.db.AnalyticsDbConfig;
 import stroom.analytics.impl.db.AnalyticsDbConnProvider;
 import stroom.analytics.impl.db.AnalyticsDbModule;
 import stroom.db.util.AbstractFlyWayDbModule;

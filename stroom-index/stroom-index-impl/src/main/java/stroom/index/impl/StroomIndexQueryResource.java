@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import stroom.index.impl.db.jooq.Stroom;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;

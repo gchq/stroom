@@ -18,6 +18,7 @@ package stroom.processor.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;

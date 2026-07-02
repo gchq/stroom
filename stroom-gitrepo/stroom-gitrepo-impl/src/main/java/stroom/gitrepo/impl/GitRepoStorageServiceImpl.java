@@ -28,6 +28,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoStorageService;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;

@@ -18,6 +18,7 @@ package stroom.meta.impl;
 
 import stroom.config.common.HasDbConfig;
 import stroom.data.shared.StreamTypeNames;
+import stroom.meta.impl.db.MetaServiceDbConfig;
 import stroom.meta.shared.DataFormatNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.collections.CollectionUtil;
@@ -45,7 +46,6 @@ import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 import java.util.Set;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

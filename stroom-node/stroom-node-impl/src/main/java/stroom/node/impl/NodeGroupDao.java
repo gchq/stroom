@@ -16,6 +16,7 @@
 
 package stroom.node.impl;
 
+import stroom.node.impl.db.jooq.tables.Node;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;

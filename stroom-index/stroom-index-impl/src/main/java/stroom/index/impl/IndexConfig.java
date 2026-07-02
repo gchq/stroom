@@ -17,6 +17,7 @@
 package stroom.index.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.index.impl.db.IndexDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -28,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

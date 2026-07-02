@@ -16,6 +16,8 @@
 
 package stroom.processor.impl;
 
+import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
+
 class TestProcessorFilterTracker {
 
 //    @Test

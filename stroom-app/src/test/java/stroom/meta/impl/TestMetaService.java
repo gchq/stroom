@@ -16,7 +16,7 @@
 
 package stroom.meta.impl;
 
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
