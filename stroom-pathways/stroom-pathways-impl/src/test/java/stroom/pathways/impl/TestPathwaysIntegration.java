@@ -171,41 +171,52 @@ class TestPathwaysIntegration {
     }
 
     /**
-     * Only traces whose root-span end time is older than the grace-period
-     * cutoff should be returned as eligible for pathways processing, mirroring
-     * the filter applied by {@link PathwaysProcessor#exec()}.
+     * The grace-period cutoff is based on the wall-clock time at which the
+     * root span was merged into the store (not the span's declared end time).
+     * Traces merged after the cutoff are still within the grace period and
+     * should NOT be returned by {@link TraceDb#iterateRootsMergedBefore}.
+     *
+     * <p>This test verifies:
+     * <ul>
+     *   <li>A cutoff strictly in the past (before insertion) → 0 eligible traces.</li>
+     *   <li>A cutoff of {@link Long#MAX_VALUE} → all inserted root traces eligible.</li>
+     * </ul>
      */
     @Test
     void testGracePeriodCutoffFiltersEligibleTraces() throws Exception {
         final TracesDoc doc = buildTracesDoc("traces_cutoff_test");
         final Path dbPath = Files.createDirectories(tempDir.resolve("db_cutoff"));
 
-        // Trace A: root span ended 30 s ago → eligible after 10 s grace
-        final Span oldRoot = buildRootSpan(
+        // Record a cutoff time BEFORE insertion so that the merge times of both
+        // traces will be >= cutoff (i.e. both still within the grace period).
+        final long cutoffBeforeInsert = Instant.now().toEpochMilli() - 1_000L;
+
+        final Span rootA = buildRootSpan(
                 "aaaabbbbccccdddd0000000011112222",
                 "1111222233334444",
                 Instant.now().minusSeconds(30));
 
-        // Trace B: root span ends 30 s in the future → not yet eligible
-        final Span futureRoot = buildRootSpan(
-                "ccccddddeeeefffff000000011112222",
+        final Span rootB = buildRootSpan(
+                "ccccddddeeeeeeee0000000011112222",
                 "5555666677778888",
-                Instant.now().plusSeconds(30));
+                Instant.now().minusSeconds(30));
 
         try (final TraceDb db = TraceDb.create(dbPath, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
             try (final LmdbWriter writer = db.createWriter()) {
-                db.insert(writer, oldRoot);
-                db.insert(writer, futureRoot);
+                db.insert(writer, rootA);
+                db.insert(writer, rootB);
                 writer.commit();
             }
 
-            final long cutoffMs = Instant.now().toEpochMilli() - 10_000L;
+            // Cutoff strictly before insertion → grace period not yet elapsed for either trace.
+            final List<byte[]> stillInGracePeriod = new ArrayList<>();
+            db.iterateRootsMergedBefore(cutoffBeforeInsert, stillInGracePeriod::add);
+            assertThat(stillInGracePeriod).isEmpty();
 
-            final List<byte[]> eligible = new ArrayList<>();
-            db.iterateRootsMergedBefore(cutoffMs, eligible::add);
-
-            // Only trace A (ended 30 s ago) should pass the grace-period check
-            assertThat(eligible).hasSize(1);
+            // Long.MAX_VALUE cutoff → all inserted root traces are eligible.
+            final List<byte[]> allEligible = new ArrayList<>();
+            db.iterateRootsMergedBefore(Long.MAX_VALUE, allEligible::add);
+            assertThat(allEligible).hasSize(2);
         }
     }
 }

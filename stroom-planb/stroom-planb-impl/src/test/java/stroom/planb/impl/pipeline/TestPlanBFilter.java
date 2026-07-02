@@ -302,7 +302,7 @@ public class TestPlanBFilter {
         final MetaHolder metaHolder = new MetaHolder();
         metaHolder.setMeta(new Meta());
         final PlanBFilter splitter = new PlanBFilter(
-                new ErrorReceiverProxy(),
+                new ErrorReceiverProxy(new FatalErrorReceiver()),
                 new LocationFactoryProxy(),
                 metaHolder,
                 new ByteBufferFactoryImpl(),

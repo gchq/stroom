@@ -48,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -205,8 +206,8 @@ class TestArchiveOperation {
 
         archiveOperation.run(ctx(doc, shard));
 
-        // Verify push was called for each date-labelled shard dir
-        verify(publisher).pushArchive(any(), any(Integer.class), any());
+        // Verify push was called once for each date-labelled shard dir (2 labels → 2 calls).
+        verify(publisher, times(2)).pushArchive(any(), any(Integer.class), any());
     }
 
     @Test

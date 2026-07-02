@@ -261,8 +261,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         traceRootValueSerde.write(value, valueBuffer ->
                                 traceRootsDbi.put(writeTxn, keyBuffer, valueBuffer)));
 
-                // Use pool-managed direct buffer rather than ByteBuffer.allocateDirect()
-                // to avoid off-heap pressure under sustained high-throughput insertion.
+                // Use the wall-clock time at which this root span was merged into
+                // the store. The grace period ticks from this moment, giving time
+                // for late-arriving child spans to be received before the trace is
+                // handed to PathwaysProcessor.
                 final long mergeTimeMs = System.currentTimeMillis();
                 final byte[] mergeKeyBytes = new byte[Long.BYTES + traceIdBytes.length];
                 ByteBuffer.wrap(mergeKeyBytes).putLong(mergeTimeMs).put(traceIdBytes);

@@ -382,8 +382,9 @@ public class PlanBFilter extends AbstractXMLFilter {
                 spanHandler.startElement(uri, localName, qName, atts);
             } else if ("span".equals(elementName)) {
                 spanHandler = new SpanHandler();
+            } else {
+                contentBuffer.clear();
             }
-
         } else {
             depthLevel++;
             insideElement = true;
