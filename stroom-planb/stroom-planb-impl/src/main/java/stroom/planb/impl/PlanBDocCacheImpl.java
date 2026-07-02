@@ -79,23 +79,22 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
 
     private PlanBDocument create(final String name) {
         return securityContext.asProcessingUserResult(() -> {
-            // Pass null type so DocFinder searches all registered handlers.
-            // This means PlanBDoc, TracesDoc, and any future PlanBDoc subtypes
-            // are resolved automatically without explicit type enumeration.
             final Map<DocumentTypeName, DocumentActionHandler> handlers = documentActionHandlersProvider.get();
-            final List<DocRef> allMatches = docFinder.findByName(null, name);
 
             PlanBDocument result = null;
-            for (final DocRef docRef : allMatches) {
-                final DocumentActionHandler<?> handler = handlers.get(new DocumentTypeName(docRef.getType()));
-                if (handler != null) {
-                    final Object loaded = handler.readDocument(docRef);
-                    if (loaded instanceof final PlanBDocument planBDoc) {
-                        if (result != null) {
-                            throw new RuntimeException(
-                                    "Unexpectedly found more than one state doc with key: " + name);
+            for (final String type : planBDocumentTypes) {
+                final List<DocRef> matches = docFinder.findByName(type, name);
+                for (final DocRef docRef : matches) {
+                    final DocumentActionHandler<?> handler = handlers.get(new DocumentTypeName(docRef.getType()));
+                    if (handler != null) {
+                        final Object loaded = handler.readDocument(docRef);
+                        if (loaded instanceof final PlanBDocument planBDoc) {
+                            if (result != null) {
+                                throw new RuntimeException(
+                                        "Unexpectedly found more than one state doc with key: " + name);
+                            }
+                            result = planBDoc;
                         }
-                        result = planBDoc;
                     }
                 }
             }

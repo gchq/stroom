@@ -63,7 +63,12 @@ public class RestPartDestination implements PartDestination {
                 "Plan B zipping writer dir {} for meta {}",
                 part.localWriterDir(), meta.getId()));
         try {
-            ZipUtil.zip(zipFile, part.localWriterDir());
+            final String docUuidEntry = part.localWriterDir().getFileName().toString();
+            ZipUtil.zip(
+                    zipFile,
+                    part.localWriterDir().getParent(),
+                    path -> !path.equals(zipFile),
+                    name -> name.startsWith(docUuidEntry + "/") || name.equals(docUuidEntry));
             try {
                 final String fileHash = FileHashUtil.hash(zipFile);
                 final FileDescriptor fileDescriptor = new FileDescriptor(

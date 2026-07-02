@@ -19,6 +19,8 @@ package stroom.planb.impl;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
+import stroom.planb.impl.db.BatchDestination;
+import stroom.planb.impl.db.DefaultBatchDestination;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateFetcherImpl;
@@ -33,6 +35,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class MockPlanBModule extends AbstractModule {
 
@@ -56,6 +59,13 @@ public class MockPlanBModule extends AbstractModule {
         // State
         bind(FileTransferClient.class).to(FileTransferClientImpl.class);
         bind(TargetNodeSetFactory.class).toProvider(() -> null);
+
+        // BatchDestination needed by PlanBStreamWriterFactory / PlanBFilter
+        bind(BatchDestination.class).to(DefaultBatchDestination.class);
+
+        // @PlanBDocumentTypes Set<String> needed by PlanBDocCacheImpl
+        Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
+                .addBinding().toInstance(PlanBDoc.TYPE);
 
         DocumentStoreBinder.create(binder())
                 .bind(PlanBDoc.TYPE, PlanBDocStore.class, PlanBDocStoreImpl.class);
