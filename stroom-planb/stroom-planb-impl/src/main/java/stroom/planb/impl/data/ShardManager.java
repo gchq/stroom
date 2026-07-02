@@ -323,6 +323,19 @@ public class ShardManager {
         return getShardForMapNameAndShard(mapName, -1);
     }
 
+    /**
+     * Returns the {@link PlanBDocument} for the given map name from the doc
+     * cache, or {@code null} if no document with that name is registered.
+     */
+    public PlanBDocument getDoc(final String mapName) {
+        try {
+            return planBDocCache.get(mapName);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "No PlanB doc found for map name '" + mapName + "': " + e.getMessage());
+            return null;
+        }
+    }
+
     public Shard getShardForMapNameAndShard(final String mapName, final int shardIndex) {
         final PlanBDocument doc = planBDocCache.get(mapName);
         if (doc == null) {

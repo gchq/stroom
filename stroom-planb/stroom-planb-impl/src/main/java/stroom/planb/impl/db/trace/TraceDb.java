@@ -90,6 +90,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -766,6 +767,26 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     /**
      * Returns the full assembled {@link Trace} for the given raw trace-ID bytes,
+     * or {@link Optional#empty()} if no spans exist for that trace ID in this shard.
+     * Opening its own read transaction. Suitable for use as a method reference
+     * ({@code traceDb::findTrace}) in {@link java.util.function.Function} contexts.
+     */
+    public Optional<Trace> findTrace(final byte[] traceId) {
+        return env.read(readTxn -> {
+            final TraceBuilder traceBuilder = new TraceBuilder(HexStringUtil.encode(traceId));
+            byteBuffers.useBytes(traceId, prefixBuffer -> {
+                findSpans(readTxn, traceId, traceBuilder::addSpan);
+                return null;
+            });
+            if (!traceBuilder.hasSpans() || !traceBuilder.hasRoot()) {
+                return Optional.empty();
+            }
+            return Optional.of(traceBuilder.build());
+        });
+    }
+
+    /**
+     * Returns the full assembled {@link Trace} for the given raw trace-ID bytes,
      * opening its own read transaction. Suitable for use as a method reference
      * ({@code traceDb::getTrace}) in {@link java.util.function.Function} contexts.
      */
@@ -820,6 +841,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             traceMap.computeIfAbsent(NullSafe.getOrElse(span, Span::getParentSpanId, ""),
                             k -> new ConcurrentHashMap<>())
                     .put(span.getSpanId(), span);
+        }
+
+        public boolean hasSpans() {
+            return !traceMap.isEmpty();
+        }
+
+        /**
+         * Returns {@code true} if at least one span with no parent (i.e. parentSpanId
+         * is {@code null}, stored under the empty-string key) is present. A trace
+         * may have child spans but no root if the root was lost (e.g. queue purge).
+         */
+        public boolean hasRoot() {
+            return traceMap.containsKey("");
         }
 
         public Trace build() {

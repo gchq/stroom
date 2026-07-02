@@ -118,11 +118,11 @@ public class TestPathwayProcessor {
         try (final LmdbWriter writer = pathwaysDb.createWriter()) {
             final TraceProcessor traceProcessor =
                     new TraceProcessor(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY));
-            traceDb.iterateTraces((traceId, function) ->
+            traceDb.iterateTraces((traceId, ignored) ->
                     traceProcessor.processTrace(writer,
                             pathwaysDb,
                             traceId,
-                            function,
+                            traceDb::findTrace,
                             PathwaysDoc.builder().uuid(UUID.randomUUID().toString()).build(),
                             messageReceiver));
             writer.commit();

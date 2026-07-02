@@ -39,6 +39,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class TraceProcessor {
@@ -58,7 +59,7 @@ public class TraceProcessor {
     public void processTrace(final LmdbWriter writer,
                              final PathwaysDb pathwaysDb,
                              final byte[] traceId,
-                             final Function<byte[], Trace> traceFunction,
+                             final Function<byte[], Optional<Trace>> traceFunction,
                              final PathwaysDoc doc,
                              final MessageReceiver messageReceiver) {
         try {
@@ -67,20 +68,25 @@ public class TraceProcessor {
                 final boolean processed = processingStatus
                         .get(writer.getWriteTxn(), keyByteBuffer.duplicate(), Objects::nonNull);
                 if (!processed) {
-                    // Get the full trace.
-                    final Trace trace = traceFunction.apply(traceId);
-
-                    // If we have no status then process this trace root.
-                    LOGGER.debug(() -> "\n" + trace.toString());
-
-                    // Construct known paths for all traces.
-                    buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
-
-                    // After processing record that we have processed.
-                    processingStatus.insert(writer, keyByteBuffer, PROCESSED);
-
-                    writer.tryCommit();
+                    final Optional<Trace> optTrace = traceFunction.apply(traceId);
+                    if (optTrace.isEmpty()) {
+                        // No usable trace in shard (either no spans, or spans but no root span).
+                        // Likely caused by a processing-queue purge or partial data loss.
+                        // Mark as processed so it is skipped on future ticks.
+                        LOGGER.warn("Skipping incomplete trace root {} in shard (no spans or no root " +
+                                        "span found); marking as processed to suppress future re-scans",
+                                HexStringUtil.encode(traceId));
+                        processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                        writer.tryCommit();
+                    } else {
+                        final Trace trace = optTrace.get();
+                        LOGGER.debug(() -> "\n" + trace.toString());
+                        buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
+                        processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                        writer.tryCommit();
+                    }
                 }
+                return null;
             });
         } catch (final RuntimeException e) {
             LOGGER.error("Error processing trace {}", HexStringUtil.encode(traceId), e);
