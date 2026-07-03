@@ -61,6 +61,24 @@ public class AuthenticationState {
     }
 
     /**
+     * Constructor for use when the OIDC redirect_uri (callback) is different
+     * from the initiating URI (the page the user was trying to reach).
+     * Used by the SPA auth flow where the callback is a dedicated API endpoint.
+     */
+    public AuthenticationState(final String id,
+                               final String initiatingUrl,
+                               final String callbackUri,
+                               final String nonce,
+                               final boolean prompt) {
+        this.id = id;
+        this.url = initiatingUrl;
+        this.nonce = nonce;
+        this.prompt = prompt;
+        this.initiatingUri = createInitiatingUri(initiatingUrl);
+        this.redirectUri = callbackUri;  // Use the explicit callback URI
+    }
+
+    /**
      * The id of this state.
      *
      * @return The id of this state.
@@ -114,13 +132,13 @@ public class AuthenticationState {
     @Override
     public String toString() {
         return "AuthenticationState{" +
-                "id='" + id + '\'' +
-                ", url='" + url + '\'' +
-                ", initiatingUri='" + initiatingUri + '\'' +
-                ", redirectUri='" + redirectUri + '\'' +
-                ", nonce='" + nonce + '\'' +
-                ", prompt=" + prompt +
-                '}';
+               "id='" + id + '\'' +
+               ", url='" + url + '\'' +
+               ", initiatingUri='" + initiatingUri + '\'' +
+               ", redirectUri='" + redirectUri + '\'' +
+               ", nonce='" + nonce + '\'' +
+               ", prompt=" + prompt +
+               '}';
     }
 
     private static String createInitiatingUri(final String url) {
