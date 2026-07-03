@@ -78,6 +78,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -196,7 +197,15 @@ public class AskStroomAIService {
                 }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
-                responseText = e.getMessage();
+                if (isTimeoutError(e)) {
+                    responseText = "The AI model took too long to respond and the request "
+                                   + "timed out. This can happen with complex questions, large "
+                                   + "context, or reasoning models. You can increase the timeout "
+                                   + "in the OpenAI Model document's HTTP Client Configuration "
+                                   + "settings (timeout field).";
+                } else {
+                    responseText = e.getMessage();
+                }
                 aiService.storeMessage(chatId, AiMessageType.ERROR, responseText);
             }
 
@@ -1321,6 +1330,21 @@ public class AskStroomAIService {
                || lowerMessage.contains("context window")
                || lowerMessage.contains("input is too long")
                || lowerMessage.contains("request too large");
+    }
+
+    /**
+     * Checks if the exception (or its cause chain) is a socket timeout error,
+     * indicating the AI model took too long to respond.
+     */
+    private boolean isTimeoutError(final Exception e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     /**
