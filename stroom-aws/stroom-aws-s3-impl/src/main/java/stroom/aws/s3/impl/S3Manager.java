@@ -573,17 +573,18 @@ public class S3Manager {
 
     public GetObjectResponse download(final Meta meta,
                                       final Path dest) {
-        return download(meta, null, getKeyNamePattern(), dest, true);
+        return download(meta, null, null, getKeyNamePattern(), dest, true);
     }
 
     public GetObjectResponse download(final Meta meta,
                                       final String childStreamType,
+                                      final String bucketNamePattern,
                                       final String keyNamePattern,
                                       final Path dest,
                                       final boolean allowAsync) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(dest);
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String bucketName = createBucketName(bucketNamePattern, meta);
         final String key = createKey(keyNamePattern, meta);
 
         return s3ClientHelper.download(bucketName, key, dest, allowAsync);

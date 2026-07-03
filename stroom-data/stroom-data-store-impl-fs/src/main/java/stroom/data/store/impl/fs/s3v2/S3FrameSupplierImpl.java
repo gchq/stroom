@@ -215,7 +215,7 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
 
     private void initDownloadAllFileFrameSupplier() {
         // Can't use async as this thread needs it
-        s3Manager.download(meta, childStreamType, keyNameTemplate, tempFile, false);
+        s3Manager.download(meta, childStreamType, null, keyNameTemplate, tempFile, false);
         try {
             fileFrameSupplier = new FileFrameSupplierImpl(tempFile);
             fileFrameSupplier.initialise(zstdSeekTable, includedFrameIndexes, includeAll);

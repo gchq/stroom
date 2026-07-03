@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -80,7 +81,7 @@ public class StoreImpl implements Store, AttributeMapFactory {
     @Override
     public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) throws DataException {
         Objects.requireNonNull(metaProperties);
-        Objects.requireNonNull(metaProperties);
+        Objects.requireNonNull(volumeGroup);
         LOGGER.debug("openTarget() - metaProperties: {}, volumeGroup: {}", metaProperties, volumeGroup);
 
         try {
@@ -111,11 +112,21 @@ public class StoreImpl implements Store, AttributeMapFactory {
     @Override
     public void addExistingS3Source(final MetaProperties metaProperties,
                                     final S3Location s3Location) throws DataException {
-//        final FsVolume volume = volumeService.getS3Volume(
-//                s3Location.regionName(), s3Location.bucketName())
-//                .orElseThrow(() -> );
+        LOGGER.debug("addExistingS3Source() - metaProperties: {}, s3Location: {}", metaProperties, s3Location);
+        // We need to associate the meta rec with an existing data volume that matches
+        // TODO If there is no matching vol we could consider auto-creating one with config containing
+        //  the region/bucket, but it wouldn't have any of the creds needed to connect.
+        final FsVolume volume = volumeService.getS3Volume(s3Location)
+                .orElseThrow(() -> new DataException(LogUtil.message(
+                        "No S3 volume found with region '{}' and bucket: '{}'",
+                        s3Location.regionName(), s3Location.bucketName())));
 
+        final Meta meta = metaService.create(metaProperties);
+        final long metaId = meta.getId();
+        dataVolumeService.createS3LocationDataVolume(metaId, volume, Set.of(s3Location));
 
+        LOGGER.debug("addExistingS3Source() - metaProperties: {}, s3Location: {}, volume: {}, metaId: {}",
+                metaProperties, s3Location, volume, metaId);
     }
 
     @Override

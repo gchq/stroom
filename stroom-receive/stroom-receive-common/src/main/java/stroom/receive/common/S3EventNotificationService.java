@@ -80,7 +80,6 @@ public class S3EventNotificationService {
     private final SqsClientFactory sqsClientFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final S3EventConsumer s3EventConsumer;
-    private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final S3ClientPool s3ClientPool;
     private final S3VolumeService s3VolumeService;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
@@ -94,7 +93,6 @@ public class S3EventNotificationService {
             final SqsClientFactory sqsClientFactory,
             final ReceiptIdGenerator receiptIdGenerator,
             final S3EventConsumer s3EventConsumer,
-            final AttributeMapFilterFactory attributeMapFilterFactory,
             final S3ClientPool s3ClientPool,
             final S3VolumeService s3VolumeService,
             final S3MetaFieldsMapper s3MetaFieldsMapper) {
@@ -102,7 +100,6 @@ public class S3EventNotificationService {
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.s3EventConsumer = s3EventConsumer;
-        this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.s3ClientPool = s3ClientPool;
         this.s3VolumeService = s3VolumeService;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
@@ -151,8 +148,6 @@ public class S3EventNotificationService {
                 messages = sqsClient.receiveMessage(receiveMessageRequest)
                         .messages();
 
-                final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-
                 // delete messages from the queue
                 for (final Message message : messages) {
                     try {
@@ -169,8 +164,9 @@ public class S3EventNotificationService {
                         //  * S3 is read only from stroom's POV, so we need a isReadOnly method on the Store api.
                         final S3CreateEvent s3CreateEvent = convertMessage(message.body(), attributeMap);
 
-                        NullSafe.consume(s3CreateEvent, event ->
-                                handleEvent(event, attributeMapFilter));
+                        // Consumer is responsible for doing attributeMap filtering as they need
+                        // to deal with accept/drop/reject
+                        s3EventConsumer.accept(s3CreateEvent);
 
                         // Now delete the msg we have consumed
                         final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()

@@ -22,6 +22,7 @@ import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.cache.api.TemplateCache;
 import stroom.data.store.api.DataException;
+import stroom.data.store.api.S3Location;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
@@ -114,6 +115,13 @@ public class S3StreamStore implements StreamStore {
 
     @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
+        return openSource(meta, dataVolume, null);
+    }
+
+    public Source openSource(final Meta meta,
+                             final DataVolume dataVolume,
+                             final S3Location s3Location) throws DataException {
+
         final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
                 final Path tempPath = createTempPath(meta.getId());
@@ -124,7 +132,16 @@ public class S3StreamStore implements StreamStore {
                         zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
                         // Download the zip from S3.
                         final S3Manager s3Manager = createS3Manager(dataVolume);
-                        s3Manager.download(meta, zipFile);
+                        if (s3Location != null) {
+                            s3Manager.download(meta,
+                                    null,
+                                    s3Location.bucketName(),
+                                    s3Location.key(),
+                                    zipFile,
+                                    true);
+                        } else {
+                            s3Manager.download(meta, zipFile);
+                        }
 
                         ZipUtil.unzip(zipFile, tempPath);
                     } catch (final IOException e) {

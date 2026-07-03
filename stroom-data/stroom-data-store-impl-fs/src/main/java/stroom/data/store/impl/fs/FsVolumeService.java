@@ -340,7 +340,7 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
         return optVolume;
     }
 
-    public Optional<FsVolume> doGetS3Volume(final S3CacheKey s3CacheKey) {
+    Optional<FsVolume> doGetS3Volume(final S3CacheKey s3CacheKey) {
         Objects.requireNonNull(s3CacheKey);
         final Optional<FsVolume> s3Volume = getCurrentVolumes()
                 .groupNameToVolumesMap()

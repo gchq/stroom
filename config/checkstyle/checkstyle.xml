@@ -178,6 +178,7 @@
       stroom.credentials.impl.db.jooq.tables.Credential.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.*,
+      stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsVolume.*,

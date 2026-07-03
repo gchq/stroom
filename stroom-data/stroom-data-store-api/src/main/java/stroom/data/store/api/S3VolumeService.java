@@ -33,4 +33,9 @@ public interface S3VolumeService {
     @NullMarked
     Optional<FsVolume> getS3Volume(final String regionName,
                                    final String bucketName);
+
+    @NullMarked
+    default Optional<FsVolume> getS3Volume(final S3Location s3Location) {
+        return getS3Volume(s3Location.regionName(), s3Location.bucketName());
+    }
 }

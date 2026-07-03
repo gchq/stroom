@@ -29,6 +29,7 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Record2;
 
 import java.util.Collection;
@@ -105,13 +106,19 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         return new DataVolumeImpl(metaId, volume);
     }
 
+    DataVolume createDataVolume(final DSLContext context,
+                                final long metaId,
+                                final FsVolume volume) {
+        context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
+                .values(metaId, volume.getId())
+                .execute();
+        return new DataVolumeImpl(metaId, volume);
+    }
+
     @Override
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-            context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
-                    .values(metaId, volume.getId())
-                    .execute();
-            return new DataVolumeImpl(metaId, volume);
+            return createDataVolume(context, metaId, volume);
         });
     }
 

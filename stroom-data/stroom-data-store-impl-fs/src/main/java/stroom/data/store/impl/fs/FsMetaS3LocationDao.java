@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.receive.common;
+package stroom.data.store.impl.fs;
 
 
-/**
- * Consumes S3 put events, i.e. as captured by {@link S3EventNotificationService}.
- * <p>
- * It is the responsibility of the implementation to capture any of the object's
- * metadata
- * </p>
- */
-@FunctionalInterface
-public interface S3EventConsumer {
+import stroom.data.store.api.S3Location;
+import stroom.data.store.impl.fs.shared.FsVolume;
 
-    void accept(S3CreateEvent s3CreateEvent);
+import org.jspecify.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Set;
+
+public interface FsMetaS3LocationDao {
+
+    S3LocationDataVolume create(final long metaId,
+                                final FsVolume fsVolume, final Set<S3Location> s3Locations);
+
+
+    @Nullable
+    S3LocationDataVolume getS3LocationDataVolume(final long metaId);
+
+    int delete(final Collection<Long> metaIds);
 }

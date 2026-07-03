@@ -375,7 +375,8 @@ public class S3ClientHelper {
 
                         final FileDownload downloadFile = transferManager.downloadFile(downloadFileRequest);
 
-                        final CompletedFileDownload downloadResult = downloadFile.completionFuture().join();
+                        final CompletedFileDownload downloadResult = downloadFile.completionFuture()
+                                .join();
                         LOGGER.debug(() -> "Download result: " +
                                            getDebugIdentity(bucketName, key) +
                                            ", result=" +
@@ -383,7 +384,8 @@ public class S3ClientHelper {
                         response = downloadResult.response();
                     }
                 } else {
-                    response = s3AsyncClient.getObject(request, downloadDestination).join();
+                    response = s3AsyncClient.getObject(request, downloadDestination)
+                            .join();
                 }
             } catch (final RuntimeException e) {
                 error("Error downloading: ", bucketName, key, e);

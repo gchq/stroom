@@ -19,15 +19,19 @@ package stroom.core.receive;
 
 import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.cache.api.CacheManager;
+import stroom.data.store.api.S3Location;
 import stroom.data.store.api.Store;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.S3CreateEvent;
 import stroom.receive.common.S3EventConsumer;
+import stroom.receive.common.StreamFactory;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -54,29 +58,35 @@ public class StroomS3EventConsumer implements S3EventConsumer {
     @Override
     public void accept(final S3CreateEvent s3CreateEvent) {
         LOGGER.debug("accept() - s3CreateEvent: {}", s3CreateEvent);
-        final String regionName = s3CreateEvent.s3Location().regionName();
-        final String bucketName = s3CreateEvent.s3Location().bucketName();
-        final String objectKey = s3CreateEvent.s3Location().key();
-
+        final AttributeMap attributeMap = s3CreateEvent.attributeMap();
 
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
         final boolean canReceive;
         try {
-            canReceive = attributeMapFilter.filter(s3CreateEvent.attributeMap());
+            canReceive = attributeMapFilter.filter(attributeMap);
             LOGGER.debug("handleEvent() - s3CreateEvent: {}, isAllowed: {}", s3CreateEvent, canReceive);
             if (canReceive) {
-                // TODO
-//                store.addExistingS3Source();
+                receiveEvent(s3CreateEvent.s3Location(), attributeMap);
             } else {
-                LOGGER.debug("handleEvent() - s3CreateEvent: {}, isAllowed: {}", s3CreateEvent, canReceive);
-                // TODO log the drop
+                LOGGER.debug("handleEvent() - Dropping s3CreateEvent: {}", s3CreateEvent);
             }
         } catch (final StroomStreamException e) {
-            // TODO log the rejection
-            LOGGER.debug("handleEvent() - s3CreateEvent: {}, stroomStreamException: {}",
-                    s3CreateEvent, LogUtil.exceptionMessage(e));
+            // TODO rejection has no concept when consuming s3 events as there is nobody to send the rejection to
+            LOGGER.debug("handleEvent() - Rejecting s3CreateEvent: {}", s3CreateEvent);
         }
+    }
+
+    private void receiveEvent(final S3Location s3Location, final AttributeMap attributeMap) {
+        // Get the effective time if one has been provided.
+        final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(attributeMap, true);
+        final MetaProperties metaProperties = MetaProperties.builder()
+                .typeName(attributeMap.get(StandardHeaderArguments.TYPE))
+                .feedName(attributeMap.get(StandardHeaderArguments.FEED))
+                .effectiveMs(effectiveMs)
+                .build();
+        // Don't need a target as the data is on S3 and staying put for stroom to read from it.
+        store.addExistingS3Source(metaProperties, s3Location);
     }
 
 
