@@ -47,6 +47,8 @@ import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpProxyConfig;
 import stroom.util.shared.http.HttpTlsConfig;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 
 import dev.langchain4j.http.client.HttpClientBuilder;
@@ -69,14 +71,23 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 
 @Singleton
 public class AiServiceImpl implements AiService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiServiceImpl.class);
+
+    private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
+            .builder()
+            .time(10)
+            .timeUnit(TimeUnit.MINUTES)
+            .build();
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -84,6 +95,8 @@ public class AiServiceImpl implements AiService {
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
     private final SecurityContext securityContext;
     private final AiDao aiDao;
+
+    private HttpClientConfig defaultHttpClientConfig;
 
     @Inject
     AiServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
@@ -110,7 +123,7 @@ public class AiServiceImpl implements AiService {
             final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
                     modelDoc,
                     OpenAIModelDoc::getHttpClientConfiguration,
-                    HttpClientConfig.builder().build()));
+                    getDefaultHttpClientConfig()));
             final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
             try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
                 final String url = getUrl(modelDoc, "models");
@@ -260,7 +273,7 @@ public class AiServiceImpl implements AiService {
         final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
-                HttpClientConfig.builder().build()));
+                getDefaultHttpClientConfig()));
         return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
     }
 
@@ -302,9 +315,7 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientConfiguration convert(final HttpClientConfig config) {
-        if (config == null) {
-            return new HttpClientConfiguration();
-        }
+        Objects.requireNonNull(config, "Null HTTP client configuration");
 
         return HttpClientConfiguration
                 .builder()
@@ -540,5 +551,37 @@ public class AiServiceImpl implements AiService {
     public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
         verifyOwnership(chatId);
         return aiDao.getAttachmentsByChatId(chatId);
+    }
+
+    @Override
+    public HttpClientConfig getDefaultHttpClientConfig() {
+        if (defaultHttpClientConfig == null) {
+            defaultHttpClientConfig = createDefaultHttpClientConfig();
+        }
+        return defaultHttpClientConfig;
+    }
+
+    private HttpClientConfig createDefaultHttpClientConfig() {
+        HttpTlsConfig httpTlsConfig = null;
+        try (final SSLServerSocket sslServerSocket = ((SSLServerSocket) SSLServerSocketFactory.getDefault()
+                .createServerSocket())) {
+            final List<String> supportedCiphers = Arrays.stream(sslServerSocket.getEnabledCipherSuites()).toList();
+            final List<String> supportedProtocols = Arrays.stream(sslServerSocket.getEnabledProtocols()).toList();
+            httpTlsConfig = HttpTlsConfig
+                    .builder()
+                    .supportedCiphers(supportedCiphers)
+                    .supportedProtocols(supportedProtocols)
+                    .build();
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        return HttpClientConfig
+                .builder()
+                .timeout(DEFAULT_TIMEOUT)
+                .connectionTimeout(DEFAULT_TIMEOUT)
+                .connectionRequestTimeout(DEFAULT_TIMEOUT)
+                .tlsConfiguration(httpTlsConfig)
+                .build();
     }
 }
