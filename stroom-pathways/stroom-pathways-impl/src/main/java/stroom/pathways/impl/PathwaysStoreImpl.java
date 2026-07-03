@@ -16,11 +16,14 @@
 
 package stroom.pathways.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.PathwaysDoc;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -28,13 +31,33 @@ public class PathwaysStoreImpl
         extends AbstractDocumentStore<PathwaysDoc>
         implements PathwaysStore {
 
+    private final Provider<ClusterLockService> clusterLockServiceProvider;
+
     @Inject
     public PathwaysStoreImpl(final StoreFactory storeFactory,
-                             final PathwaysSerialiser serialiser) {
+                             final PathwaysSerialiser serialiser,
+                             final Provider<ClusterLockService> clusterLockServiceProvider) {
         super(storeFactory,
                 serialiser,
                 PathwaysDoc.TYPE,
                 PathwaysDoc::builder,
                 PathwaysDoc::copy);
+        this.clusterLockServiceProvider = clusterLockServiceProvider;
+    }
+
+    @Override
+    public void deleteDocument(final DocRef docRef) {
+        super.deleteDocument(docRef);
+
+        // Clean up cluster write locks created by PathwaysProcessor for this document.
+        // Lock rows accumulate in cluster_lock as shards are written to and are never
+        // removed automatically — they must be explicitly deleted on document removal.
+        if (docRef != null && docRef.getUuid() != null) {
+            try {
+                clusterLockServiceProvider.get().deleteLocks("pathways-write-" + docRef.getUuid());
+            } catch (final Exception e) {
+                // Ignore lock deletion failures to avoid failing the document delete itself.
+            }
+        }
     }
 }

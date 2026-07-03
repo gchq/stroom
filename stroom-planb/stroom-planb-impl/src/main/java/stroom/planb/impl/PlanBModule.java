@@ -137,7 +137,7 @@ public class PlanBModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(SharedFileStoreMergeRunnable.class, builder -> builder
                         .name("Plan B Shared FS Merge")
-                        .description("Distributed merge of sharded Plan B batch stores on the shared file store")
+                        .description("Distributed merge of Plan B batches on the shared file store")
                         .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(true));
 
@@ -148,8 +148,7 @@ public class PlanBModule extends AbstractModule {
                 .bindJobTo(ShardHousekeepingRunnable.class, builder -> builder
                         .name("Plan B Shard Housekeeping")
                         .description("Detects orphaned shard directories on the shared filesystem and "
-                                + "moves them to trash, then drains trash entries from previous runs. "
-                                + "Covers all PlanB doc types (PlanBDoc, TracesDoc, etc.).")
+                                + "moves them to trash, then drains trash entries from previous runs.")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
                         .advanced(true));
 

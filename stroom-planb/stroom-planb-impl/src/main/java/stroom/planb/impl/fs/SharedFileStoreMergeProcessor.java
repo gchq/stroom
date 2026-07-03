@@ -88,22 +88,23 @@ public class SharedFileStoreMergeProcessor {
 
     public void merge() {
         securityContext.asProcessingUser(() -> {
-            taskContextFactory.context("Plan B Shared FS Merge", taskContext -> {
-                LOGGER.info("Starting Plan B Shared FS Merge");
+            LOGGER.info("Starting Plan B Shared FS Merge");
 
-                final List<PlanBDocument> planBDocs = planBDocCache.getAll();
-                for (final PlanBDocument doc : planBDocs) {
-                    if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
-                        try {
-                            mergeDoc(doc, taskContext);
-                        } catch (final Exception e) {
-                            LOGGER.error("Error merging shards for doc {}", doc.getName(), e);
-                        }
+            final TaskContext taskContext = taskContextFactory.current();
+            final List<PlanBDocument> planBDocs = planBDocCache.getAll();
+            Collections.shuffle(planBDocs);
+
+            for (final PlanBDocument doc : planBDocs) {
+                if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+                    try {
+                        mergeDoc(doc, taskContext);
+                    } catch (final Exception e) {
+                        LOGGER.error("Error merging shards for doc {}", doc.getName(), e);
                     }
                 }
+            }
 
-                LOGGER.info("Finished Plan B Shared FS Merge");
-            }).run();
+            LOGGER.info("Finished Plan B Shared FS Merge");
         });
     }
 
