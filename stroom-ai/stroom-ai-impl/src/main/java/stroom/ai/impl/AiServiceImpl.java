@@ -114,13 +114,13 @@ public class AiServiceImpl implements AiService {
             final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
             try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
                 final String url = getUrl(modelDoc, "models");
-                final String apiKey = getApiKey(modelDoc);
 
                 final HttpGet httpGet = new HttpGet(url);
                 httpGet.addHeader("Content-Type", "application/audit");
-                if (NullSafe.isNonBlankString(apiKey)) {
-                    httpGet.addHeader("Authorization", "Bearer " + apiKey);
-                }
+
+                // Provide an API key
+                getApiKey(modelDoc).ifPresent(apiKey ->
+                        httpGet.addHeader("Authorization", "Bearer " + apiKey));
 
                 return httpClientProvider.get().execute(httpGet, response -> {
 //                        final StringBuilder sb = new StringBuilder()
@@ -163,22 +163,19 @@ public class AiServiceImpl implements AiService {
         }
     }
 
-    private String getApiKey(final OpenAIModelDoc doc) {
-        return getApiKey(doc.getApiKeyName());
-    }
-
-    private String getApiKey(final String apiKeyName) {
+    private Optional<String> getApiKey(final OpenAIModelDoc doc) {
+        final String apiKeyName = doc.getApiKeyName();
         if (NullSafe.isNonBlankString(apiKeyName)) {
             final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
             if (storedSecret != null) {
                 if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
                     if (accessTokenSecret.getAccessToken() != null) {
-                        return accessTokenSecret.getAccessToken();
+                        return Optional.of(accessTokenSecret.getAccessToken());
                     }
                 }
             }
         }
-        return "";
+        return Optional.empty();
     }
 
     private String getUrl(final OpenAIModelDoc modelDoc, final String path) {
@@ -199,24 +196,23 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
-        final String apiKey = getApiKey(modelDoc.getApiKeyName());
-
         LOGGER.debug(() -> "getChatModel: modelId='" + modelDoc.getModelId()
                            + "' baseUrl='" + NullSafe.toString(modelDoc.getBaseUrl()) + "'");
 
+        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
+                .modelName(modelDoc.getModelId());
+
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-
-        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
-        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
-                .modelName(modelDoc.getModelId())
-                .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder);
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
             // Override the base URL
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
+
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
             modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
@@ -229,29 +225,25 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
-        final String apiKey = getApiKey(modelDoc.getApiKeyName());
+        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
+                .modelName(modelDoc.getModelId());
 
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-//        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-//                .version(HttpClient.Version.HTTP_1_1);
-//        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
-//                .httpClientBuilder(httpClientBuilder);
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
-        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
-        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
-                .modelName(modelDoc.getModelId())
-                .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder)
-                .dimensions(modelDoc.getEmbeddingModelDimensions());
+        // Set embedding dimensions
+        if (modelDoc.getEmbeddingModelDimensions() > 0) {
+            modelBuilder.dimensions(modelDoc.getEmbeddingModelDimensions());
+        }
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
             // Override the base URL
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        // Provide a bearer token
-        modelBuilder.apiKey(getApiKey(modelDoc));
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
@@ -274,10 +266,8 @@ public class AiServiceImpl implements AiService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        modelBuilder.apiKey(getApiKey(modelDoc));
-//        } else {
-//            modelBuilder.apiKey("dummy_api_key");
-//        }
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
@@ -292,11 +282,8 @@ public class AiServiceImpl implements AiService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        // Provide a bearer token
-        modelBuilder.apiKey(getApiKey(modelDoc));
-//        } else {
-//            modelBuilder.apiKey("dummy_api_key");
-//        }
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
