@@ -143,24 +143,14 @@ public class AskStroomAiPresenter
         view.setUiHandlers(this);
 
         // Initiate the selection box presenter with the default model if one is set.
-        askStroomAiClient.getConfig(config -> {
-            if (config.getModelRef() != null) {
-                docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
-            }
-        }, this);
+        readModel();
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
-                askStroomAiClient.getConfig(config -> {
-                    final AskStroomAIConfig newConfig = config
-                            .copy()
-                            .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
-                            .build();
-                    askStroomAiClient.setConfig(newConfig);
-                }, this)));
+                writeModel()));
 
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
@@ -308,12 +298,30 @@ public class AskStroomAiPresenter
     @Override
     public void onChangeConfig() {
         askStroomAiClient.getConfig(config -> {
+            final AskStroomAiConfigPresenter askStroomAiConfigPresenter = askStroomAiConfigPresenterProvider.get();
+            askStroomAiConfigPresenter.show(
+                    config, this::updateConfig, currentDockBehaviour, this::onDockBehaviourChange);
+        }, this);
+    }
+
+    private void updateConfig(final AskStroomAIConfig config) {
+        askStroomAiClient.setConfig(config);
+        readModel();
+    }
+
+    private void readModel() {
+        askStroomAiClient.getConfig(config -> {
+            docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
+        }, this);
+    }
+
+    private void writeModel() {
+        askStroomAiClient.getConfig(config -> {
             final AskStroomAIConfig newConfig = config
                     .copy()
                     .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                     .build();
-            askStroomAiConfigPresenterProvider.get().show(
-                    newConfig, askStroomAiClient::setConfig, currentDockBehaviour, this::onDockBehaviourChange);
+            askStroomAiClient.setConfig(newConfig);
         }, this);
     }
 
