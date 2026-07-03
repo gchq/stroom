@@ -28,6 +28,7 @@ import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.http.HttpClientConfig;
 
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -263,5 +264,10 @@ public class MockAiService implements AiService {
     @Override
     public void deleteAllChatMessagesAndAttachments(final int chatId) {
 
+    }
+
+    @Override
+    public HttpClientConfig getDefaultHttpClientConfig() {
+        return HttpClientConfig.builder().build();
     }
 }
