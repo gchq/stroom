@@ -210,8 +210,7 @@ public class TabManager {
             menuItems.add(createRestoreMenu());
         }
 
-        if (component instanceof EmbeddedQueryPresenter) {
-            final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
+        if (component instanceof final EmbeddedQueryPresenter embeddedQueryPresenter) {
             final boolean showingVis = embeddedQueryPresenter.isShowingVis();
             final boolean canShowVis = embeddedQueryPresenter.canShowVis();
             if (showingVis || canShowVis) {
