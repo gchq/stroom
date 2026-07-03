@@ -20,7 +20,6 @@ import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.TabConfig;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.HasChangeHandlers;
@@ -34,6 +33,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public abstract class AbstractComponentPresenter<V extends View>
         extends MyPresenterWidget<V>
@@ -94,11 +95,19 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     @Override
-    public void setComponentName(final String name) {
-        componentConfig = componentConfig
-                .copy()
-                .name(name)
-                .build();
+    public final void setComponentName(final String name) {
+        final String originalName = componentConfig.getName();
+        if (!Objects.equals(originalName, name)) {
+            componentConfig = componentConfig
+                    .copy()
+                    .name(name)
+                    .build();
+            // Make sure settings presenter has the latest name.
+            if (settingsPresenter != null) {
+                settingsPresenter.read(componentConfig);
+            }
+            changeSettings();
+        }
     }
 
     @Override
