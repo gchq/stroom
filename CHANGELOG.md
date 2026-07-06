@@ -13,6 +13,64 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.5] - 2026-07-06
+
+* Feature **#5599** : Add XPath to query functions so that users can pull XML apart in Dashboard Tables.
+
+* Feature **#5600** : Add JQ to query functions so that users can pull JSON apart in Dashboard Tables.
+
+* Feature **#5559** : Improve node selection for node groups to allow select all and selection inversion.
+
+* Bug **#5560** : Fix processing schedule list label.
+
+* Feature **#5561** : Add feature to delete individual attachments and messages from AI chat history.
+
+* Feature **#5561** : Add time tooltips to AI chat messages.
+
+* Feature **#5561** : Fix user preferences resetting stroom AI preferences.
+
+* Feature **#5561** : Open and view attachments in the AI chat window.
+
+* Feature **#5561** : Add names to tables so they can be identified by stroom AI.
+
+* Bug **#5548** : Fix PlanB filter XML value bug.
+
+* Bug **#5562** : Add missing tab types to session restore.
+
+* Feature **#5565** : Make vector embedding dimension count configurable.
+
+* Feature **#5616** : Add  XSLT function for computing the similarity of two float vectors.
+
+* Bug **#5617** : Fix tab visibility on resize.
+
+* Bug **#5621** : Support numeric comparators for Elasticsearch float and double fields.
+
+* Dependency **#5624** : Upgrade langchain4j and openai-java libs.
+
+* Feature **#5622** : Change Stroom UI auth flow so redirects are no longer required. Allows Stroom UI to be served from another location with BFF proxy.
+
+* Bug **#5573** : Fix Ask Stroom AI error handling behaviour when requests are too large.
+
+* Bug **#5574** : Fix Ask Stroom AI dock behaviour.
+
+* Feature **#5630** : Make embedding dimensions optional.
+
+* Bug **#5575** : Change ask Stroom AI table page menu item.
+
+* Bug **#5576** : Increase default AI model HTTP timeouts to 10 minutes.
+
+* Bug **#5585** : Fix dashboard tab rename bug.
+
+* Bug **#5577** : Fix bug affecting AI chat model selection.
+
+* Bug **#5601** : Fix bug stopping embedded queries being edited.
+
+* Bug **#5568** : Add analytic rule info to error stream messages.
+
+* Bug **#5636** : Fix expression term quote removal bug.
+
+* Bug **#5640** : Fix CSRF checks.
+
 * Bug **#5596** : Change S3Appender to replace path variables using the current time rather than the stream create time. This is to bring it into line with the FileAppender.
 
 * Bug **#5637** : Fix doc perm issue.
@@ -2287,7 +2345,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.5...HEAD
+[v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5
 [v7.13-beta.4]: https://github.com/gchq/stroom/compare/v7.13-beta.3...v7.13-beta.4
 [v7.13-beta.3]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v7.13-beta.3
 [v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
