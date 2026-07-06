@@ -111,6 +111,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                           final ReportStore reportStore,
                           final ResultStoreManager searchResponseCreatorManager,
                           final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                          final Provider<AnalyticRuleHolder> analyticRuleHolderProvider,
                           final SearchRequestFactory searchRequestFactory,
                           final ExpressionContextFactory expressionContextFactory,
                           final ExpressionPredicateFactory expressionPredicateFactory,
@@ -119,7 +120,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                           final Store streamStore,
                           final NotificationStateService notificationStateService,
                           final Provider<EmailSender> emailSenderProvider) {
-        super(analyticErrorWriterProvider, errorReceiverProxyProvider);
+        super(analyticErrorWriterProvider, errorReceiverProxyProvider, analyticRuleHolderProvider);
         this.reportStore = reportStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.searchRequestFactory = searchRequestFactory;

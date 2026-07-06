@@ -50,6 +50,7 @@ public class AnalyticErrorWriter {
     private final RecordCount recordCount;
     private final Store store;
     private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final AnalyticRuleHolder analyticRuleHolder;
 
     @Inject
     public AnalyticErrorWriter(final RecordErrorReceiver recordErrorReceiver,
@@ -57,13 +58,15 @@ public class AnalyticErrorWriter {
                                final ErrorWriterProxy errorWriterProxy,
                                final RecordCount recordCount,
                                final Store store,
-                               final VolumeGroupNameProvider volumeGroupNameProvider) {
+                               final VolumeGroupNameProvider volumeGroupNameProvider,
+                               final AnalyticRuleHolder analyticRuleHolder) {
         this.recordErrorReceiver = recordErrorReceiver;
         this.errorReceiverProxy = errorReceiverProxy;
         this.errorWriterProxy = errorWriterProxy;
         this.recordCount = recordCount;
         this.store = store;
         this.volumeGroupNameProvider = volumeGroupNameProvider;
+        this.analyticRuleHolder = analyticRuleHolder;
     }
 
     <R> R exec(final String errorFeedName,
@@ -114,11 +117,10 @@ public class AnalyticErrorWriter {
     private void outputError(final Exception e, final Severity severity) {
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
-                if (e.getMessage() != null) {
-                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.getMessage(), e);
-                } else {
-                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.toString(), e);
-                }
+                final String message = e.getMessage() != null
+                        ? e.getMessage()
+                        : e.toString();
+                errorReceiverProxy.log(severity, null, ELEMENT_ID, prefixWithRuleIdentity(message), e);
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.
             }
@@ -129,5 +131,13 @@ public class AnalyticErrorWriter {
         } else {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
         }
+    }
+
+    private String prefixWithRuleIdentity(final String message) {
+        final String ruleIdentity = analyticRuleHolder.getRuleIdentity();
+        if (ruleIdentity != null) {
+            return ruleIdentity + ": " + message;
+        }
+        return message;
     }
 }

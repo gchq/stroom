@@ -16,6 +16,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.query.common.v2.StringFieldValue;
 import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.FieldValue;
@@ -24,37 +25,67 @@ import java.util.List;
 
 public class MultiAnalyticFieldListConsumer implements AnalyticFieldListConsumer {
 
-    private final List<AnalyticFieldListConsumer> consumers;
+    private final List<Entry> entries;
+    private final AnalyticRuleHolder analyticRuleHolder;
 
-    public MultiAnalyticFieldListConsumer(final List<AnalyticFieldListConsumer> consumers) {
-        this.consumers = consumers;
+    public MultiAnalyticFieldListConsumer(final List<Entry> entries,
+                                          final AnalyticRuleHolder analyticRuleHolder) {
+        this.entries = entries;
+        this.analyticRuleHolder = analyticRuleHolder;
     }
 
     @Override
     public void acceptFieldValues(final List<FieldValue> fieldValues) {
-        for (final AnalyticFieldListConsumer consumer : consumers) {
-            consumer.acceptFieldValues(fieldValues);
+        for (final Entry entry : entries) {
+            analyticRuleHolder.setAnalyticRuleDoc(entry.analyticRuleDoc);
+            try {
+                entry.consumer.acceptFieldValues(fieldValues);
+            } finally {
+                analyticRuleHolder.clear();
+            }
         }
     }
 
     @Override
     public void acceptStringValues(final List<StringFieldValue> stringValues) {
-        for (final AnalyticFieldListConsumer consumer : consumers) {
-            consumer.acceptStringValues(stringValues);
+        for (final Entry entry : entries) {
+            analyticRuleHolder.setAnalyticRuleDoc(entry.analyticRuleDoc);
+            try {
+                entry.consumer.acceptStringValues(stringValues);
+            } finally {
+                analyticRuleHolder.clear();
+            }
         }
     }
 
     @Override
     public void start() {
-        for (final AnalyticFieldListConsumer consumer : consumers) {
-            consumer.start();
+        for (final Entry entry : entries) {
+            analyticRuleHolder.setAnalyticRuleDoc(entry.analyticRuleDoc);
+            try {
+                entry.consumer.start();
+            } finally {
+                analyticRuleHolder.clear();
+            }
         }
     }
 
     @Override
     public void end() {
-        for (final AnalyticFieldListConsumer consumer : consumers) {
-            consumer.end();
+        for (final Entry entry : entries) {
+            analyticRuleHolder.setAnalyticRuleDoc(entry.analyticRuleDoc);
+            try {
+                entry.consumer.end();
+            } finally {
+                analyticRuleHolder.clear();
+            }
         }
+    }
+
+    /**
+     * Pairs an analytic rule doc with its field list consumer.
+     */
+    public record Entry(AbstractAnalyticRuleDoc analyticRuleDoc, AnalyticFieldListConsumer consumer) {
+
     }
 }
