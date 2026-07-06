@@ -12,7 +12,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
-* Bug **#5596** : Change S3Appender to support the standard context variables (e.g. `partNo`, `pipeline`, etc.) and `uuid` in the key name pattern string.
+
+* Bug **#5596** : Change S3Appender to replace path variables using the current time rather than the stream create time. This is to bring it into line with the FileAppender.
+
+* Bug **#5637** : Fix doc perm issue.
+
+* Bug **#5606** : Fix processor filter RunAs permissions.
+
+* Bug **#5605** : Fix pipeline stepping bug.
 
 
 ## [v7.13-beta.4] - 2026-06-26
