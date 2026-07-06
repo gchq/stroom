@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.8] - 2026-07-06
+
+* Bug **#5596** : Change S3Appender to replace path variables using the current time rather than the stream create time. This is to bring it into line with the FileAppender.
+
+* Bug **#5637** : Fix doc perm issue.
+
+* Bug **#5606** : Fix processor filter RunAs permissions.
+
+* Bug **#5605** : Fix pipeline stepping bug.
+
+
 ## [v7.12.7] - 2026-06-29
 
 * Bug **#5584** : Change the way the special singleton documents `DataRetentionRules`, `ReceiveDataRuleSet` and `ContentTemplates` are created for the first time. Now uses a cluster lock to ensure only one of each is ever created.
@@ -2181,7 +2192,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.8...HEAD
+[v7.12.8]: https://github.com/gchq/stroom/compare/v7.12.7...v7.12.8
 [v7.12.7]: https://github.com/gchq/stroom/compare/v7.12.6...v7.12.7
 [v7.12.6]: https://github.com/gchq/stroom/compare/v7.12.5...v7.12.6
 [v7.12.5]: https://github.com/gchq/stroom/compare/v7.12.4...v7.12.5
