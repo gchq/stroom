@@ -100,6 +100,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                      final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
                                      final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
                                      final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                                     final Provider<AnalyticRuleHolder> analyticRuleHolderProvider,
                                      final DetectionConsumerFactory detectionConsumerFactory,
                                      final SearchRequestFactory searchRequestFactory,
                                      final ExpressionContextFactory expressionContextFactory,
@@ -108,7 +109,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                      final ExpressionPredicateFactory expressionPredicateFactory,
                                      final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
                                      final WordListProvider wordListProvider) {
-        super(analyticErrorWriterProvider, errorReceiverProxyProvider);
+        super(analyticErrorWriterProvider, errorReceiverProxyProvider, analyticRuleHolderProvider);
         this.analyticRuleStore = analyticRuleStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
