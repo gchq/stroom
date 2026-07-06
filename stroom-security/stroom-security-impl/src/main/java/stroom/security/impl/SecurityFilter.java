@@ -162,6 +162,12 @@ class SecurityFilter implements Filter {
                 return userIdentity;
             });
 
+            // Track whether the identity was obtained from a session cookie (vs a request token).
+            // CSRF protection is only needed for cookie-based auth because the browser automatically
+            // attaches cookies to cross-origin requests. API keys and Bearer tokens are not
+            // automatically attached, so they are not vulnerable to CSRF.
+            final boolean identityFromSession = optUserIdentity.isPresent();
+
             // API requests that are not from the front-end should have a token.
             // Also requests from an AWS ALB will have an ALB signed token containing the claims
             if (optUserIdentity.isEmpty()) {
@@ -175,8 +181,10 @@ class SecurityFilter implements Filter {
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
                 UserAgentSessionUtil.setUserAgentInSession(request);
 
-                // CSRF check — reject state-changing requests without the custom header
-                if (!isCsrfValid(request)) {
+                // CSRF check — only for session/cookie-based identity.
+                // API key / Bearer token requests are not vulnerable to CSRF because the
+                // browser does not automatically attach Authorization headers cross-origin.
+                if (identityFromSession && !isCsrfValid(request)) {
                     LOGGER.warn("Rejecting request due to missing CSRF header: {} {}",
                             request.getMethod(), fullPath);
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
