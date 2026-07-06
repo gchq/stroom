@@ -525,6 +525,34 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/deleteAllMessages/{chatId}" : {
+      "post" : {
+        "operationId" : "deleteAllMessages",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete all messages and attachments from an AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/deleteChat/{chatId}" : {
       "post" : {
         "operationId" : "deleteChat",
@@ -550,6 +578,42 @@
           }
         },
         "summary" : "Delete an AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/deleteMessage/{chatId}/{messageId}" : {
+      "post" : {
+        "operationId" : "deleteMessage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete a message from an AI chat conversation",
         "tags" : [ "AI" ]
       }
     },
@@ -580,6 +644,36 @@
           }
         },
         "summary" : "Download the chat history for a conversation as a Markdown file",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/getAttachmentData" : {
+      "post" : {
+        "operationId" : "getAttachmentData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetAttachmentDataRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiAttachmentDataPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a page of attachment table data",
         "tags" : [ "AI" ]
       }
     },
@@ -1747,6 +1841,60 @@
         },
         "summary" : "Update a dictionary doc",
         "tags" : [ "API Key" ]
+      }
+    },
+    "/auth/flow/v1/noauth/callback" : {
+      "get" : {
+        "operationId" : "authFlowCallback",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "code",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "state",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "text/html" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "OIDC callback endpoint for the SPA authentication flow",
+        "tags" : [ "Auth Flow" ]
+      }
+    },
+    "/auth/flow/v1/noauth/status" : {
+      "get" : {
+        "operationId" : "authFlowStatus",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "redirect_uri",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthFlowResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Check authentication status for the SPA",
+        "tags" : [ "Auth Flow" ]
       }
     },
     "/authentication/v1/noauth/changePassword" : {
@@ -7342,7 +7490,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageNodeGroupState"
+                  "$ref" : "#/components/schemas/NodeGroupState"
                 }
               }
             },
@@ -10960,7 +11108,7 @@
       }
     },
     "/session/v1/logout" : {
-      "get" : {
+      "post" : {
         "operationId" : "stroomLogout",
         "parameters" : [ {
           "in" : "query",
@@ -13962,6 +14110,34 @@
           }
         }
       },
+      "AiAttachmentDataPage" : {
+        "type" : "object",
+        "properties" : {
+          "headers" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          },
+          "totalRowCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "AiChat" : {
         "type" : "object",
         "properties" : {
@@ -14664,6 +14840,27 @@
           },
           "sourceTaskId" : {
             "$ref" : "#/components/schemas/TaskId"
+          }
+        }
+      },
+      "AuthFlowResponse" : {
+        "type" : "object",
+        "properties" : {
+          "authenticated" : {
+            "type" : "boolean"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "expiresInSec" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "redirectUrl" : {
+            "type" : "string"
+          },
+          "subjectId" : {
+            "type" : "string"
           }
         }
       },
@@ -19576,6 +19773,22 @@
           }
         }
       },
+      "GetAttachmentDataRequest" : {
+        "type" : "object",
+        "properties" : {
+          "attachmentId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "chatId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          }
+        }
+      },
       "GetFeedStatusRequest" : {
         "type" : "object",
         "properties" : {
@@ -21440,6 +21653,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "invertSelection" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
@@ -21459,27 +21675,29 @@
       "NodeGroupChange" : {
         "type" : "object",
         "properties" : {
-          "included" : {
-            "type" : "boolean"
+          "nodeGroup" : {
+            "$ref" : "#/components/schemas/NodeGroup"
           },
-          "nodeGroupId" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "nodeId" : {
-            "type" : "integer",
-            "format" : "int32"
+          "selectedNodes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
           }
         }
       },
       "NodeGroupState" : {
         "type" : "object",
         "properties" : {
-          "included" : {
-            "type" : "boolean"
-          },
-          "node" : {
-            "$ref" : "#/components/schemas/Node"
+          "selected" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
           }
         }
       },
@@ -21732,6 +21950,10 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "embeddingModelDimensions" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "httpClientConfiguration" : {
             "$ref" : "#/components/schemas/HttpClientConfig"
@@ -24420,21 +24642,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/NodeGroup"
-            }
-          }
-        }
-      },
-      "ResultPageNodeGroupState" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NodeGroupState"
             }
           }
         }
