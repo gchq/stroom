@@ -389,9 +389,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                         for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                             if (processor.equals(processorFilter.getProcessor())) {
 
-                                // If the user is not an admin then only show them filters that are set to run as them.
-                                if (securityContext.isAdmin() ||
-                                    Objects.equals(currentUser, processorFilter.getRunAsUser())) {
+                                if (canSeeFilter(processorFilter, currentUser)) {
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
                                     if (queryData != null && queryData.getExpression() != null) {
@@ -419,6 +417,36 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
             return ResultPage.createUnboundedList(values);
         });
+    }
+
+    private boolean canSeeFilter(final ProcessorFilter processorFilter, final UserRef currentUser) {
+        if (securityContext.isAdmin()) {
+            LOGGER.debug("canSeeFilter() - Is admin, current user: {}, processorFilter: {}",
+                    currentUser, processorFilter);
+            return true;
+        } else {
+            final UserRef runAsUser = processorFilter.getRunAsUser();
+            if (Objects.equals(currentUser, runAsUser)) {
+                LOGGER.debug("canSeeFilter() - Is runAsUser, current user: {}, runAsUser: {}, processorFilter: {}",
+                        currentUser, runAsUser, processorFilter);
+                return true;
+            } else if (runAsUser != null && runAsUser.isGroup()) {
+                final String groupName = runAsUser.getSubjectId();
+                if (securityContext.inGroup(groupName)) {
+                    LOGGER.debug("canSeeFilter() - Member of runAsUser group, current user: {}, runAsUser: {}, " +
+                                 "processorFilter: {}",
+                            currentUser, runAsUser, processorFilter);
+                    return true;
+                } else {
+                    LOGGER.debug("canSeeFilter() - Can't see filter, current user: {}, runAsUser: {}, " +
+                                 "processorFilter: {}",
+                            currentUser, runAsUser, processorFilter);
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     }
 
     @Override
