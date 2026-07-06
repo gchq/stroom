@@ -46,6 +46,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Singleton
@@ -60,6 +67,7 @@ public class SharedFileStoreMergeProcessor {
     private final StatePaths statePaths;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
+    private final ExecutorService mergeExecutor;
     private final SharedFileStorePublisher publisher;
     private final List<SharedFileStoreOperation> operations;
     private final PlanBDocCache planBDocCache;
@@ -81,9 +89,28 @@ public class SharedFileStoreMergeProcessor {
         this.statePaths = statePaths;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
+        this.mergeExecutor = createMergeExecutor(configProvider.get().getShardMergeThreadCount());
         this.publisher = new SharedFileStorePublisher(nodeInfo);
         this.operations = List.of(new RetentionOperation(), new ArchiveOperation(publisher));
         this.planBDocCache = planBDocCache;
+    }
+
+    private static ExecutorService createMergeExecutor(final int threadCount) {
+        final AtomicInteger threadNo = new AtomicInteger();
+        return new ThreadPoolExecutor(
+                threadCount,
+                threadCount,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                runnable -> {
+                    final Thread thread = new Thread(
+                            runnable,
+                            "Plan B Shard Merge #" + threadNo.incrementAndGet());
+                    thread.setDaemon(true);
+                    thread.setPriority(3);
+                    return thread;
+                });
     }
 
     public void merge() {
@@ -128,6 +155,9 @@ public class SharedFileStoreMergeProcessor {
         }
         Collections.shuffle(shardIndices);
 
+        final Executor executor = mergeExecutor;
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+
         for (final int shardIndex : shardIndices) {
             final String shardIndexStr = PlanBConstants.formatShardIndex(shardIndex);
 
@@ -147,13 +177,20 @@ public class SharedFileStoreMergeProcessor {
                         "Merge doc " + doc.getName() + " shard " + shardIndexStr,
                         taskContext -> securityContext.asProcessingUser(() ->
                                 mergeShard(doc, shardIndex, completeBatchDirs, sharedShardsDocDir)));
-                try {
-                    runnable.run();
-                } catch (final Exception e) {
-                    LOGGER.error("Error processing shard {} for doc {}",
-                            shardIndexStr, doc.getName(), e);
-                }
+
+                futures.add(CompletableFuture
+                        .runAsync(runnable, executor)
+                        .exceptionally(t -> {
+                            LOGGER.error("Error processing shard {} for doc {}",
+                                    shardIndexStr, doc.getName(), t);
+                            return null;
+                        }));
             }
+        }
+
+        // Wait for all shard merges to complete before returning.
+        if (!futures.isEmpty()) {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         }
     }
 
