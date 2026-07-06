@@ -69,7 +69,6 @@ import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -865,17 +864,12 @@ public class EmbeddedQueryPresenter
     }
 
     private void fireColumnAndDataUpdate() {
-        TableUpdateEvent.fire(this);
+        TableUpdateEvent.fire(tableEventBus::fireEvent);
     }
 
     @Override
     public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
         return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        tableEventBus.fireEvent(event);
     }
 
     @Override

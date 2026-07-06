@@ -68,6 +68,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.inject.Inject;
@@ -77,6 +78,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -195,7 +197,15 @@ public class AskStroomAIService {
                 }
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
-                responseText = e.getMessage();
+                if (isTimeoutError(e)) {
+                    responseText = "The AI model took too long to respond and the request "
+                                   + "timed out. This can happen with complex questions, large "
+                                   + "context, or reasoning models. You can increase the timeout "
+                                   + "in the OpenAI Model document's HTTP Client Configuration "
+                                   + "settings (timeout field).";
+                } else {
+                    responseText = e.getMessage();
+                }
                 aiService.storeMessage(chatId, AiMessageType.ERROR, responseText);
             }
 
@@ -238,7 +248,8 @@ public class AskStroomAIService {
 
         if (context instanceof final GeneralTableContext generalTableContext) {
             // Synchronous — data is already in memory, just convert to markdown.
-            processGeneralAttachment(attachment.getId(), generalTableContext);
+            processGeneralAttachment(attachment.getId(), generalTableContext,
+                    getTableAnalysisConfig(config));
         } else {
             // Async download for Dashboard/Query contexts.
             submitAsyncDownload(attachment.getId(), chatId, context, config);
@@ -250,7 +261,8 @@ public class AskStroomAIService {
      * in the attachment file store and marks the attachment as READY.
      */
     private void processGeneralAttachment(final int attachmentId,
-                                          final GeneralTableContext generalTableContext) {
+                                          final GeneralTableContext generalTableContext,
+                                          final TableAnalysisConfig tableAnalysisConfig) {
         LOGGER.debug(() -> "processGeneralAttachment: attachmentId=" + attachmentId
                            + " cols=" + generalTableContext.getColumns().size()
                            + " rows=" + generalTableContext.getRows().size());
@@ -274,7 +286,11 @@ public class AskStroomAIService {
                             .collect(Collectors.joining()));
                     writer.write("|\n");
                     // Write rows
+                    final int maxRows = tableAnalysisConfig.getMaxTotalRows();
                     for (final List<String> rowValues : generalTableContext.getRows()) {
+                        if (rowCountHolder[0] >= maxRows) {
+                            break;
+                        }
                         writer.write(rowValues.stream()
                                 .map(val -> "| " + escapeMarkdownCell(val) + " ")
                                 .collect(Collectors.joining()));
@@ -287,12 +303,16 @@ public class AskStroomAIService {
             }, () -> "processGeneralAttachment attachmentId=" + attachmentId
                      + " rows=" + rowCountHolder[0]);
             final int rowCount = rowCountHolder[0];
+            final boolean truncated = rowCount < generalTableContext.getRows().size();
 
             final String description = generalTableContext.getDescription()
                                        + " (" + rowCount + " rows, "
-                                       + generalTableContext.getColumns().size() + " cols)";
+                                       + generalTableContext.getColumns().size() + " cols"
+                                       + (truncated
+                    ? ", truncated to limit"
+                    : "") + ")";
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
-                    rowCount, description, null, false);
+                    rowCount, description, null, truncated);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
@@ -493,7 +513,9 @@ public class AskStroomAIService {
         LOGGER.debug(() -> "processQuestion: chatId=" + chatId);
 
         final AskStroomAIConfig config = request.getConfig();
-        final ChatModel chatModel = getChatModel(config);
+        final OpenAIModelDoc modelDoc = getModelDoc(config);
+        final ChatModel chatModel = getChatModel(modelDoc);
+        final int maxContextTokens = modelDoc.getMaxContextWindowTokens();
         final boolean debugEnabled = NullSafe.getOrElse(
                 defaultConfigProvider.get(),
                 AskStroomAIConfig::isEnableDebugDetail,
@@ -558,6 +580,35 @@ public class AskStroomAIService {
                                    + " messages=" + messages.size()
                                    + " hasSummary=" + (currentSummary != null)
                                    + " chatId=" + chatId);
+
+                // Proactive check: if the context window size is configured and we
+                // have attachments, estimate the total token count. If it exceeds
+                // the context window, go straight to batch processing to avoid a
+                // wasteful round-trip that will fail.
+                if (maxContextTokens > 0 && !readyAttachments.isEmpty() && currentAttempt == 1) {
+                    final int estimatedTokens = estimateTokenCount(messages);
+                    if (estimatedTokens > maxContextTokens) {
+                        LOGGER.info(() -> "Estimated " + estimatedTokens
+                                          + " tokens exceeds context window of " + maxContextTokens
+                                          + " for chatId=" + chatId
+                                          + ", going directly to batch processing");
+                        if (debugLog != null) {
+                            debugLog.append("### Proactive Overflow Detection\n\n")
+                                    .append("Estimated tokens: ").append(estimatedTokens)
+                                    .append(", context window: ").append(maxContextTokens)
+                                    .append("\n\n---\n\n");
+                        }
+                        final String result = analyseWithAttachments(request, chatModel,
+                                readyAttachments, chatId, workingMessageId, debugLog);
+                        if (debugLog != null) {
+                            storeDebugDetail(chatId, debugLog.toString());
+                        }
+                        return result + "\n\n---\n*Note: The attached data was too large "
+                               + "for full analysis in a single call. Results were produced "
+                               + "using batch processing and may not capture cross-row "
+                               + "patterns or cross-table comparisons as effectively.*";
+                    }
+                }
 
                 try {
                     final ChatResponse chatResponse = processUnified(
@@ -1031,7 +1082,7 @@ public class AskStroomAIService {
                                           final TableAnalysisConfig config) {
         return LOGGER.logDurationIfDebugEnabled(() -> {
             final List<String> batches = new ArrayList<>();
-            final int maxBatchSize = config.getMaxRowsPerBatch();
+            final int maxRowsPerBatch = config.getMaxRowsPerBatch();
 
             try (final BufferedReader reader = Files.newBufferedReader(mdFile)) {
                 final String headerLine = reader.readLine();
@@ -1045,23 +1096,24 @@ public class AskStroomAIService {
 
                 final String mdHeader = headerLine + "\n" + separatorLine + "\n";
                 final StringBuilder batch = new StringBuilder(mdHeader);
+                int rowsInBatch = 0;
 
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.isEmpty()) {
                         continue;
                     }
-                    final String row = line + "\n";
-                    if (batch.length() + row.length() > maxBatchSize
-                        && batch.length() > mdHeader.length()) {
+                    if (rowsInBatch >= maxRowsPerBatch && rowsInBatch > 0) {
                         batches.add(batch.toString());
                         batch.setLength(0);
                         batch.append(mdHeader);
+                        rowsInBatch = 0;
                     }
-                    batch.append(row);
+                    batch.append(line).append('\n');
+                    rowsInBatch++;
                 }
 
-                if (batch.length() > mdHeader.length()) {
+                if (rowsInBatch > 0) {
                     batches.add(batch.toString());
                 }
             } catch (final IOException e) {
@@ -1172,7 +1224,7 @@ public class AskStroomAIService {
      */
     private String truncateTableData(final String text,
                                      final int maxLines) {
-        // Only truncate if text contains a markdown table (pipe-delimited lines).
+        // Only truncate if text contains a Markdown table (pipe-delimited lines).
         if (!text.contains("| ---")) {
             return text;
         }
@@ -1258,6 +1310,13 @@ public class AskStroomAIService {
      * about token limits being exceeded.
      */
     private boolean isContextOverflowError(final Exception e) {
+        // Check for HTTP 413 Payload Too Large.
+        if (e instanceof final HttpException httpException) {
+            if (httpException.statusCode() == 413) {
+                return true;
+            }
+        }
+
         final String message = e.getMessage();
         if (message == null) {
             return false;
@@ -1271,6 +1330,33 @@ public class AskStroomAIService {
                || lowerMessage.contains("context window")
                || lowerMessage.contains("input is too long")
                || lowerMessage.contains("request too large");
+    }
+
+    /**
+     * Checks if the exception (or its cause chain) is a socket timeout error,
+     * indicating the AI model took too long to respond.
+     */
+    private boolean isTimeoutError(final Exception e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * Estimates the total token count for a list of chat messages using a simple
+     * character-based approximation (~4 characters per token).
+     */
+    private int estimateTokenCount(final List<ChatMessage> messages) {
+        int totalChars = 0;
+        for (final ChatMessage message : messages) {
+            totalChars += message.toString().length();
+        }
+        return totalChars / 4;
     }
 
     /**
@@ -1368,7 +1454,7 @@ public class AskStroomAIService {
         return sb.toString();
     }
 
-    private ChatModel getChatModel(final AskStroomAIConfig config) {
+    private OpenAIModelDoc getModelDoc(final AskStroomAIConfig config) {
         if (config == null || config.getModelRef() == null) {
             throw new RuntimeException("No model specified");
         }
@@ -1381,7 +1467,10 @@ public class AskStroomAIService {
         if (openAIModelDoc == null) {
             throw new RuntimeException("Default OpenAI API doc cannot be found");
         }
+        return openAIModelDoc;
+    }
 
+    private ChatModel getChatModel(final OpenAIModelDoc openAIModelDoc) {
         // Stub mode: return a test ChatModel that requires no API key or network.
         if (STUB_MODEL_ID.equals(openAIModelDoc.getModelId())) {
             LOGGER.info(() -> "Using stub ChatModel for testing (modelId='" + STUB_MODEL_ID + "')");
@@ -1389,7 +1478,7 @@ public class AskStroomAIService {
         }
 
         LOGGER.debug(() -> "getChatModel: modelId='" + openAIModelDoc.getModelId()
-                           + "' docRef=" + docRef.getUuid());
+                           + "' docRef=" + openAIModelDoc.getUuid());
         return aiService.getChatModel(openAIModelDoc);
     }
 
@@ -1533,12 +1622,6 @@ public class AskStroomAIService {
 
     public List<AiChatMessage> getMessages(final int chatId) {
         return aiService.getMessages(chatId);
-    }
-
-    public AiChatMessage storeMessage(final int chatId,
-                                      final AiMessageType messageType,
-                                      final String message) {
-        return aiService.storeMessage(chatId, messageType, message);
     }
 
     public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {

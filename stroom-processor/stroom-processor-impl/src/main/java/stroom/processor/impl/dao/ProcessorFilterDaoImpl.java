@@ -485,22 +485,30 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Override
     public List<ProcessorFilter> fetchByRunAsUser(final String userUuid) {
         Objects.requireNonNull(userUuid);
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select()
-                        .from(PROCESSOR_FILTER)
-                        .join(PROCESSOR_FILTER_TRACKER)
-                        .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
-                        .join(PROCESSOR)
-                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                        .where(PROCESSOR_FILTER.RUN_AS_USER_UUID.eq(userUuid))
-                        .and(PROCESSOR_FILTER.DELETED.isFalse())
-                        .fetch())
-                .map(this::mapRecord);
+        // Resolve run-as users as the processing user so that the UserRefLookup is not
+        // restricted by the current user's security context. The runAsUser is descriptive
+        // metadata about the filter's execution identity. Visibility filtering is handled
+        // by the service layer.
+        return securityContext.asProcessingUserResult(() ->
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                                .select()
+                                .from(PROCESSOR_FILTER)
+                                .join(PROCESSOR_FILTER_TRACKER)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID
+                                        .eq(PROCESSOR_FILTER_TRACKER.ID))
+                                .join(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(PROCESSOR_FILTER.RUN_AS_USER_UUID.eq(userUuid))
+                                .and(PROCESSOR_FILTER.DELETED.isFalse())
+                                .fetch())
+                        .map(this::mapRecord));
     }
 
     @Override
     public Optional<ProcessorFilter> fetch(final int id) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> fetch(context, id)).map(this::mapRecord);
+        return securityContext.asProcessingUserResult(() ->
+                JooqUtil.contextResult(processorDbConnProvider, context -> fetch(context, id))
+                        .map(this::mapRecord));
     }
 
     private Optional<Record> fetch(final DSLContext context, final int id) {
@@ -518,17 +526,19 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Override
     public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
         Objects.requireNonNull(uuid);
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
-                        context
-                                .select()
-                                .from(PROCESSOR_FILTER)
-                                .join(PROCESSOR_FILTER_TRACKER)
-                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
-                                .join(PROCESSOR)
-                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                                .where(PROCESSOR_FILTER.UUID.eq(uuid))
-                                .fetchOptional())
-                .map(this::mapRecord);
+        return securityContext.asProcessingUserResult(() ->
+                JooqUtil.contextResult(processorDbConnProvider, context ->
+                                context
+                                        .select()
+                                        .from(PROCESSOR_FILTER)
+                                        .join(PROCESSOR_FILTER_TRACKER)
+                                        .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID
+                                                .eq(PROCESSOR_FILTER_TRACKER.ID))
+                                        .join(PROCESSOR)
+                                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                        .where(PROCESSOR_FILTER.UUID.eq(uuid))
+                                        .fetchOptional())
+                        .map(this::mapRecord));
     }
 
     @Override
@@ -538,18 +548,20 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
-        final List<ProcessorFilter> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select()
-                        .from(PROCESSOR_FILTER)
-                        .join(PROCESSOR_FILTER_TRACKER)
-                        .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
-                        .join(PROCESSOR)
-                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                        .where(condition)
-                        .orderBy(orderFields)
-                        .limit(offset, limit)
-                        .fetch())
-                .map(this::mapRecord);
+        final List<ProcessorFilter> list = securityContext.asProcessingUserResult(() ->
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                                .select()
+                                .from(PROCESSOR_FILTER)
+                                .join(PROCESSOR_FILTER_TRACKER)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID
+                                        .eq(PROCESSOR_FILTER_TRACKER.ID))
+                                .join(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(condition)
+                                .orderBy(orderFields)
+                                .limit(offset, limit)
+                                .fetch())
+                        .map(this::mapRecord));
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 

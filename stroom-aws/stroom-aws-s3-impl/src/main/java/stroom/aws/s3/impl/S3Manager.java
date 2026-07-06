@@ -85,9 +85,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -640,10 +637,10 @@ public class S3Manager {
 
     public String createKey(final String keyPattern, final Meta meta) {
         String keyName = keyPattern;
-        final ZonedDateTime zonedDateTime =
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
         final String idPadded = padId(meta.getId());
-        keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
+        // Use now() so when one of rolling, agg splitting and record splitting is used,
+        // the time vars can distinguish multiple files coming from the same stream
+        keyName = pathCreator.replaceTimeVars(keyName);
         // Parse for stuff like partNo, pipeline, node, etc.
         keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
         keyName = pathCreator.replace(keyName, "type", meta::getTypeName);

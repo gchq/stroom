@@ -37,7 +37,7 @@
         </form:FormGroup>
         <form:FormGroup identity="embeddingModelDimensions"
                         label="Embedding model dimensions"
-                        helpText="Specify the number of dimensions to use for embedding models. Lucene has a max of 1024 but Elastic can handle 4096.">
+                        helpText="Specify the number of dimensions to use for embedding models. Lucene has a max of 1024 but Elastic can handle 4096. Set to zero to disable and allow models to use their default.">
             <v:ValueSpinner ui:field="embeddingModelDimensions" width="80px"
                             title="Number of dimensions to use for embedding models."/>
         </form:FormGroup>
