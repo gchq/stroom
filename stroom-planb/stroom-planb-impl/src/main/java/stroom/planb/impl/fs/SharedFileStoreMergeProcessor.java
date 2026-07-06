@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -155,7 +154,6 @@ public class SharedFileStoreMergeProcessor {
         }
         Collections.shuffle(shardIndices);
 
-        final Executor executor = mergeExecutor;
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (final int shardIndex : shardIndices) {
@@ -179,7 +177,7 @@ public class SharedFileStoreMergeProcessor {
                                 mergeShard(doc, shardIndex, completeBatchDirs, sharedShardsDocDir)));
 
                 futures.add(CompletableFuture
-                        .runAsync(runnable, executor)
+                        .runAsync(runnable, mergeExecutor)
                         .exceptionally(t -> {
                             LOGGER.error("Error processing shard {} for doc {}",
                                     shardIndexStr, doc.getName(), t);
