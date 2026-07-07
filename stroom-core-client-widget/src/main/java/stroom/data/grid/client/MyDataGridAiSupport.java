@@ -75,7 +75,7 @@ public class MyDataGridAiSupport<T> {
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.AI)
-                .text("Table")
+                .text("Current Page")
                 .command(this::aiTable)
                 .build());
 

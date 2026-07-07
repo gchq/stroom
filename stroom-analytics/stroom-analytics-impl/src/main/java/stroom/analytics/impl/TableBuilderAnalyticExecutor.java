@@ -139,6 +139,7 @@ public class TableBuilderAnalyticExecutor {
     private final ViewStore viewStore;
     private final MetaService metaService;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
+    private final Provider<AnalyticRuleHolder> analyticRuleHolderProvider;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
     private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
@@ -165,7 +166,8 @@ public class TableBuilderAnalyticExecutor {
                                         final ViewStore viewStore,
                                         final MetaService metaService,
                                         final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
-                                        final AnalyticErrorWritingExecutor analyticErrorWritingExecutor) {
+                                        final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
+                                        final Provider<AnalyticRuleHolder> analyticRuleHolderProvider) {
         this.executorProvider = executorProvider;
         this.securityContext = securityContext;
         this.detectionConsumerFactory = detectionConsumerFactory;
@@ -188,6 +190,7 @@ public class TableBuilderAnalyticExecutor {
         this.metaService = metaService;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
+        this.analyticRuleHolderProvider = analyticRuleHolderProvider;
     }
 
     public void exec() {
@@ -450,78 +453,90 @@ public class TableBuilderAnalyticExecutor {
         final Map<String, Object> metaAttributeMap = MetaAttributeMapUtil
                 .createAttributeMap(meta);
 
-        final List<AnalyticFieldListConsumer> fieldListConsumers = new ArrayList<>();
-
         // Filter the rules that should be applied to this meta.
         final List<TableBuilderAnalytic> filteredAnalytics = analytics
                 .stream()
                 .filter(analytic -> !ignoreStream(analytic, meta, metaAttributeMap))
                 .toList();
 
+        if (filteredAnalytics.isEmpty()) {
+            return;
+        }
+
+        // Build entries pairing each consumer with its rule doc.
+        final List<MultiAnalyticFieldListConsumer.Entry> entries = new ArrayList<>();
         for (final TableBuilderAnalytic analytic : filteredAnalytics) {
-            fieldListConsumers.add(createLmdbConsumer(analytic, meta));
+            entries.add(new MultiAnalyticFieldListConsumer.Entry(
+                    analytic.analyticRuleDoc(),
+                    createLmdbConsumer(analytic, meta)));
         }
 
-        final AnalyticFieldListConsumer fieldListConsumer;
-        if (fieldListConsumers.size() > 1) {
-            fieldListConsumer = new MultiAnalyticFieldListConsumer(fieldListConsumers);
-        } else if (fieldListConsumers.size() == 1) {
-            fieldListConsumer = fieldListConsumers.getFirst();
-        } else {
-            fieldListConsumer = null;
-        }
+        analyticErrorWritingExecutor.wrap(
+                "Analytics Table Builder Processor",
+                meta.getFeedName(),
+                pipelineDocRef.getUuid(),
+                null,
+                parentTaskContext,
+                taskContext -> {
+                    final AnalyticRuleHolder analyticRuleHolder = analyticRuleHolderProvider.get();
 
-        if (fieldListConsumer != null) {
-            analyticErrorWritingExecutor.wrap(
-                    "Analytics Table Builder Processor",
-                    meta.getFeedName(),
-                    pipelineDocRef.getUuid(),
-                    parentTaskContext,
-                    taskContext -> {
-                        final FieldListConsumerHolder fieldListConsumerHolder =
-                                fieldListConsumerHolderProvider.get();
-                        fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
+                    // Build the consumer, passing the holder so per-rule errors are
+                    // attributed correctly by switching the active rule in/out.
+                    final AnalyticFieldListConsumer fieldListConsumer;
+                    if (entries.size() == 1) {
+                        // Single rule - set it once on the holder.
+                        analyticRuleHolder.setAnalyticRuleDoc(entries.getFirst().analyticRuleDoc());
+                        fieldListConsumer = entries.getFirst().consumer();
+                    } else {
+                        // Multiple rules - the multi-consumer switches the active rule
+                        // on the holder as each consumer is processed.
+                        fieldListConsumer = new MultiAnalyticFieldListConsumer(
+                                entries, analyticRuleHolder);
+                    }
 
-                        try {
-                            fieldListConsumer.start();
+                    final FieldListConsumerHolder fieldListConsumerHolder =
+                            fieldListConsumerHolderProvider.get();
+                    fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
 
-                            analyticsStreamProcessorProvider.get().extract(
-                                    taskContext,
-                                    meta.getId(),
-                                    pipelineDocRef,
-                                    pipelineData);
+                    try {
+                        fieldListConsumer.start();
 
-                        } finally {
-                            fieldListConsumer.end();
-                        }
+                        analyticsStreamProcessorProvider.get().extract(
+                                taskContext,
+                                meta.getId(),
+                                pipelineDocRef,
+                                pipelineData);
 
-                        if (!taskContext.isTerminated()) {
-                            // Update LMDB state.
-                            analytics.forEach(analytic -> {
-                                final LmdbDataStore lmdbDataStore = analytic.dataStore().getLmdbDataStore();
+                    } finally {
+                        fieldListConsumer.end();
+                    }
 
-                                // Get current state and last event time.
-                                final CurrentDbState currentDbState = lmdbDataStore.sync();
-                                Long lastEventTime = null;
-                                if (currentDbState != null) {
-                                    lastEventTime = currentDbState.getLastEventTime();
-                                }
+                    if (!taskContext.isTerminated()) {
+                        // Update LMDB state.
+                        analytics.forEach(analytic -> {
+                            final LmdbDataStore lmdbDataStore = analytic.dataStore().getLmdbDataStore();
 
-                                // Update the state.
-                                lmdbDataStore.putCurrentDbState(meta.getId(), null, lastEventTime);
-                                lmdbDataStore.sync();
-                            });
+                            // Get current state and last event time.
+                            final CurrentDbState currentDbState = lmdbDataStore.sync();
+                            Long lastEventTime = null;
+                            if (currentDbState != null) {
+                                lastEventTime = currentDbState.getLastEventTime();
+                            }
 
-                            // Update extraction state.
-                            final ExtractionState extractionState = extractionStateProvider.get();
-                            filteredAnalytics.forEach(analytic -> {
-                                analytic.trackerData.incrementStreamCount();
-                                analytic.trackerData.addEventCount(extractionState.getCount());
-                            });
-                        }
-                        return !taskContext.isTerminated();
-                    }).get();
-        }
+                            // Update the state.
+                            lmdbDataStore.putCurrentDbState(meta.getId(), null, lastEventTime);
+                            lmdbDataStore.sync();
+                        });
+
+                        // Update extraction state.
+                        final ExtractionState extractionState = extractionStateProvider.get();
+                        filteredAnalytics.forEach(analytic -> {
+                            analytic.trackerData.incrementStreamCount();
+                            analytic.trackerData.addEventCount(extractionState.getCount());
+                        });
+                    }
+                    return !taskContext.isTerminated();
+                }).get();
     }
 
     private AnalyticFieldListConsumer createLmdbConsumer(final TableBuilderAnalytic analytic,
@@ -660,6 +675,7 @@ public class TableBuilderAnalyticExecutor {
                 "Analytics Aggregate Rule Executor",
                 errorFeedName,
                 null,
+                analytic.analyticRuleDoc(),
                 parentTaskContext,
                 taskContext -> {
                     final DetectionConsumer detectionConsumer = detectionConsumerProvider.get();

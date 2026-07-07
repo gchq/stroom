@@ -281,7 +281,7 @@ public final class ParamUtil {
                     sb.append(token.getText());
                 }
             } else {
-                sb.append(token.getUnescapedText());
+                sb.append(token.getText());
             }
         }
 

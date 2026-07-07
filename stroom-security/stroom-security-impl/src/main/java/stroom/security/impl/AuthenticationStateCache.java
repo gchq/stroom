@@ -65,7 +65,22 @@ public class AuthenticationStateCache {
         return state;
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Create an authentication state where the OIDC redirect_uri is a specific
+     * callback endpoint rather than the initiating URI.
+     */
+    public AuthenticationState create(final String initiatingUrl,
+                                      final String callbackUri,
+                                      final boolean prompt) {
+        final String stateId = createRandomString(20);
+        final String nonce = createRandomString(20);
+        final AuthenticationState state = new AuthenticationState(
+                stateId, initiatingUrl, callbackUri, nonce, prompt);
+        LOGGER.debug(() -> LogUtil.message("Creating {}", state));
+        cache.put(stateId, state);
+        return state;
+    }
+
     public Optional<AuthenticationState> getAndRemove(final String stateId) {
         final Optional<AuthenticationState> optional = cache.getIfPresent(stateId);
         if (optional.isPresent()) {

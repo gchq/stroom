@@ -41,8 +41,8 @@ public abstract class AppServlet extends HttpServlet {
 
     private static final String TITLE = "@TITLE@";
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
-    private static final String SCRIPT = "@SCRIPT@";
     private static final String ROOT_CLASS = "@ROOT_CLASS@";
+    private static final String BOOTSTRAP = "@BOOTSTRAP@";
 
     private final Provider<UiConfig> uiConfigProvider;
     private final Provider<UserPreferencesService> userPreferencesServiceProvider;
@@ -77,13 +77,64 @@ public abstract class AppServlet extends HttpServlet {
         html = html.replace(ROOT_CLASS, classNames);
         html = html.replace(TITLE, uiConfig.getHtmlTitle());
         html = html.replace(ON_CONTEXT_MENU, uiConfig.getOncontextmenu());
-        html = html.replace(SCRIPT, getScript());
+        if (useBootstrap()) {
+            html = html.replace(BOOTSTRAP, getBootstrapScript(getScript()));
+        } else {
+            // Load the GWT script directly without auth check (e.g., for the sign-in page)
+            html = html.replace(BOOTSTRAP,
+                    "<script type=\"text/javascript\" src='" + getScript() + "'></script>");
+        }
 
         pw.write(html);
         pw.close();
     }
 
     abstract String getScript();
+
+    /**
+     * Whether to use the bootstrap auth-check script that verifies authentication
+     * via the BFF status endpoint before loading the GWT application.
+     * Subclasses can override to return false if the page should load the GWT
+     * script directly without an auth check (e.g., the sign-in page, which IS
+     * the login UI and must not redirect to the IdP).
+     */
+    boolean useBootstrap() {
+        return true;
+    }
+
+    /**
+     * Returns an inline JavaScript snippet that checks authentication status
+     * via the BFF auth flow endpoint before loading the GWT application script.
+     * If the user is not authenticated, the browser is redirected to the IdP.
+     */
+    private String getBootstrapScript(final String gwtScriptPath) {
+        return """
+                <script type="text/javascript">
+                (function() {
+                  fetch('/api/auth/flow/v1/noauth/status?redirect_uri='
+                    + encodeURIComponent(window.location.href))
+                    .then(function(resp) {
+                      if (!resp.ok) throw new Error('Auth check failed: ' + resp.status);
+                      return resp.json();
+                    })
+                    .then(function(auth) {
+                      if (auth.authenticated) {
+                        var s = document.createElement('script');
+                        s.type = 'text/javascript';
+                        s.src = '%s';
+                        document.head.appendChild(s);
+                      } else {
+                        window.location.href = auth.redirectUrl;
+                      }
+                    })
+                    .catch(function(err) {
+                      var el = document.getElementById('loadingText');
+                      if (el) el.textContent = 'Authentication error: ' + err.message;
+                      console.error('Bootstrap auth check failed', err);
+                    });
+                })();
+                </script>""".formatted(gwtScriptPath);
+    }
 
 
     // --------------------------------------------------------------------------------

@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -334,17 +335,15 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 convertToPaths(inheritedCreatePermissions));
     }
 
-    private <T> Map<String, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
+    private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
         return map.entrySet()
                 .stream()
-                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> {
-                    return entry.getValue()
-                            .stream()
-                            .map(list -> list.stream()
-                                    .map(UserRef::toDisplayString)
-                                    .collect(Collectors.joining(" --> ")))
-                            .toList();
-                }));
+                .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue()
+                        .stream()
+                        .map(list -> list.stream()
+                                .map(UserRef::toDisplayString)
+                                .collect(Collectors.joining(" --> ")))
+                        .toList()));
     }
 
     private void addDeepPermissionsAndPaths(final UserRef userRef,

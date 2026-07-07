@@ -74,6 +74,10 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
         });
         view.setSelectionList(cellTable);
 
+        // Double-click a row to confirm selection and close the dialog.
+        selectionModel.addDoubleSelectHandler(event ->
+                HidePopupRequestEvent.builder(TabSessionChooserPresenter.this).fire());
+
         // Text.
         final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {
             @Override

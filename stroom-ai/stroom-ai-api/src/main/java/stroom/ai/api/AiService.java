@@ -26,6 +26,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.http.HttpClientConfig;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -35,6 +36,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AiService {
+
+    HttpClientConfig getDefaultHttpClientConfig();
 
     // ---------------------------------------------------------------------
     // Model operations

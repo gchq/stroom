@@ -16,18 +16,14 @@
 
 package stroom.security.impl;
 
-import stroom.config.common.UriFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
-import stroom.security.impl.OpenIdManager.RedirectUrl;
-import stroom.security.openid.api.OpenId;
 import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.net.UrlUtils;
 import stroom.util.servlet.SessionUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
@@ -48,11 +44,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
-import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -63,18 +56,18 @@ class SecurityFilter implements Filter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
-    private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
     private final AuthenticationBypassChecker authenticationBypassChecker;
 
+    private static final String CSRF_HEADER = "X-CSRF";
+    private static final String CSRF_EXPECTED_VALUE = "1";
+
     @Inject
     SecurityFilter(
-            final UriFactory uriFactory,
             final SecurityContext securityContext,
             final OpenIdManager openIdManager,
             final AuthenticationBypassChecker authenticationBypassChecker) {
-        this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
         this.authenticationBypassChecker = authenticationBypassChecker;
@@ -169,6 +162,12 @@ class SecurityFilter implements Filter {
                 return userIdentity;
             });
 
+            // Track whether the identity was obtained from a session cookie (vs a request token).
+            // CSRF protection is only needed for cookie-based auth because the browser automatically
+            // attaches cookies to cross-origin requests. API keys and Bearer tokens are not
+            // automatically attached, so they are not vulnerable to CSRF.
+            final boolean identityFromSession = optUserIdentity.isPresent();
+
             // API requests that are not from the front-end should have a token.
             // Also requests from an AWS ALB will have an ALB signed token containing the claims
             if (optUserIdentity.isEmpty()) {
@@ -182,21 +181,19 @@ class SecurityFilter implements Filter {
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
                 UserAgentSessionUtil.setUserAgentInSession(request);
 
-                // If OIDC code flow has been handled by the AWS ALB then the session won't have been
-                // created by our code flow code. Thus, ensure we have a session with the user in it
-                if (isStroomUIServlet(servletName)) {
-                    SessionUtil.getOrCreateSession(request, aSession -> {
-                        LOGGER.info("Creating session {} for user {}, fullPath: {}, servlet: {}",
-                                aSession.getId(), userIdentity, fullPath, servletName);
-                        UserIdentitySessionUtil.setUserInSession(aSession, userIdentity);
-                    });
+                // CSRF check — only for session/cookie-based identity.
+                // API key / Bearer token requests are not vulnerable to CSRF because the
+                // browser does not automatically attach Authorization headers cross-origin.
+                if (identityFromSession && !isCsrfValid(request)) {
+                    LOGGER.warn("Rejecting request due to missing CSRF header: {} {}",
+                            request.getMethod(), fullPath);
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
                 }
 
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->
                         process(request, response, chain));
-            } else if (isStroomUIServlet(servletName)) {
-                doOpenIdFlow(request, response, fullPath);
             } else {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
                 // or no login flow is possible/expected.
@@ -207,65 +204,6 @@ class SecurityFilter implements Filter {
         }
     }
 
-    private boolean isStroomUIServlet(final String servletName) {
-        return Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName)
-               || Objects.equals(ResourcePaths.SESSION_LIST_SERVLET_NAME, servletName);
-    }
-
-    private void doOpenIdFlow(final HttpServletRequest request,
-                              final HttpServletResponse response,
-                              final String fullPath) throws IOException {
-        // No identity found and not an unauthenticated servlet/api so assume it is
-        // a UI request. Thus instigate an OpenID authentication flow
-        try {
-            final String postAuthRedirectUri = getPostAuthRedirectUri(request);
-            final String code = UrlUtils.getLastParam(request, OpenId.CODE);
-            final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
-            final RedirectUrl redirectUri = openIdManager.redirect(
-                    request, code, stateId, postAuthRedirectUri);
-            LOGGER.debug("Doing code flow postAuthRedirectUri: {}, code: {}, stateId: {}, redirectUri: {}",
-                    postAuthRedirectUri, code, stateId, redirectUri);
-            // HTTP 1.1.
-            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            // HTTP 1.0.
-            response.setHeader("Pragma", "no-cache");
-            // Proxies.
-            response.setHeader("Expires", "0");
-
-            switch (redirectUri.redirectMode()) {
-                case REFRESH -> {
-                    // If the session has only just been created, and we do a normal redirect,
-                    // then the browser will never get the session cookie as the response is terminated
-                    // for the redirect. Thus, the session ID will not be known at the redirect URI.
-                    // A refresh will ensure the cookie is set.
-                    LOGGER.debug("Responding with a http-equiv refresh to {}", redirectUri);
-                    response.setContentType(ContentType.TEXT_HTML.getMimeType());
-                    try (final PrintWriter responseWriter = response.getWriter()) {
-                        responseWriter.print("<html>");
-                        responseWriter.print("<head>");
-                        responseWriter.print("<meta http-equiv=\"refresh\" content=\"0; URL='");
-                        responseWriter.print(redirectUri.redirectUrl());
-                        responseWriter.print("'\" />");
-                        responseWriter.print("</html>");
-                        responseWriter.print("</head>");
-                    }
-                }
-                case REDIRECT -> {
-                    // Do a standard http redirect, e.g. to the IDP
-                    final String url = redirectUri.redirectUrl();
-                    LOGGER.debug("Code flow UI request so redirecting to:, " +
-                                 "redirectUri: {}, url: {}, postAuthRedirectUri: {}, path: {}",
-                            redirectUri, url, postAuthRedirectUri, fullPath);
-
-                    response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-                    response.setHeader("Location", url);
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw e;
-        }
-    }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void logUserIdentityToDebug(final Optional<UserIdentity> optUserIdentity,
@@ -293,25 +231,14 @@ class SecurityFilter implements Filter {
         }
     }
 
-    private String getPostAuthRedirectUri(final HttpServletRequest request) {
-        // We have a new request, so we're going to redirect with an AuthenticationRequest.
-        // Get the redirect URL for the auth service from the current request.
-        final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
-                .map(queryStr -> "?" + queryStr)
-                .orElse("");
-
-        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it,
-        // so we need to append just the path/query part to the public URI defined in config
-        // rather than using the full url of the request
-        return uriFactory.publicUri(originalPath).toString();
-    }
 
     private boolean isStaticResource(final String fullPath,
                                      final String servletPath,
                                      final String servletName) {
         // Test for internal IdP sign in request.
         if (ResourcePaths.UI_SERVLET_NAME.equals(servletName)
-            || ResourcePaths.SIGN_IN_SERVLET_NAME.equals(servletName)) {
+            || ResourcePaths.SIGN_IN_SERVLET_NAME.equals(servletName)
+            || ResourcePaths.STROOM_SERVLET_NAME.equals(servletName)) {
             LOGGER.debug("Unauthenticated static content, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             return true;
@@ -331,6 +258,24 @@ class SecurityFilter implements Filter {
             shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
         }
         return shouldBypass;
+    }
+
+    /**
+     * Check for the presence of a custom CSRF header on state-changing requests.
+     * Browsers prevent cross-site scripts from adding custom headers to requests,
+     * so the presence of this header proves the request originated from same-origin
+     * JavaScript code (our UI), not from a cross-site form submission or link.
+     */
+    private boolean isCsrfValid(final HttpServletRequest request) {
+        final String method = request.getMethod();
+        // GET, OPTIONS, and HEAD are safe methods — no CSRF check needed
+        if (HttpMethod.GET.equalsIgnoreCase(method)
+                || HttpMethod.OPTIONS.equalsIgnoreCase(method)
+                || HttpMethod.HEAD.equalsIgnoreCase(method)) {
+            return true;
+        }
+        // For state-changing methods (POST, PUT, DELETE, PATCH), require the header
+        return CSRF_EXPECTED_VALUE.equals(request.getHeader(CSRF_HEADER));
     }
 
     private void process(final HttpServletRequest request,

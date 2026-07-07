@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.ResizeFlowPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
@@ -57,19 +58,17 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     ResizeLayoutPanel contentPanel;
     @UiField
     MainToolbar mainToolbar;
-    private Widget maximisedWidget;
-    private int splitPos = 300;
-    private ThinSplitLayoutPanel splitPanel;
+
+    // Persistent content widgets — set via setInSlot, never destroyed.
     private Widget westWidget;
     private Widget centerWidget;
-    private String currentBanner;
 
-    // Dock state
+    // Layout state — the single source of truth for how the layout should look.
+    private final LayoutState state = new LayoutState();
+
     private ThinSplitLayoutPanel outerSplitPanel;
-    private FlowPanel contentWrapper;
-    private Widget dockedWidget;
-    private DockLocation dockLocation;
-    private double dockSize;
+
+    private String currentBanner;
 
     @Inject
     public MainViewImpl(final Binder binder,
@@ -89,10 +88,10 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     public void setInSlot(final Object slot, final Widget content) {
         if (slot == MainPresenter.EXPLORER) {
             westWidget = content;
-            showSplit();
+            rebuildLayout();
         } else if (slot == MainPresenter.CONTENT) {
             centerWidget = content;
-            showSplit();
+            rebuildLayout();
         } else {
             super.setInSlot(slot, content);
         }
@@ -101,232 +100,204 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @Override
     public void maximise(final View view) {
         if (view == null) {
-
-            if (maximisedWidget == null) {
-                // Remember split panel.
-                if (westWidget != null) {
-                    splitPos = westWidget.getOffsetWidth();
-                }
-
-                // Maximise the passed view.
-                centerWidget.getElement().addClassName("maximised");
-
-                // Clear the split panel.
-                hideSplit();
-                maximisedWidget = centerWidget;
-
-                // Set the maximised widget as the inner content.
-                setInnerContent(maximisedWidget);
-
-                if (maximisedWidget instanceof Focus) {
-                    ((Focus) maximisedWidget).focus();
-                }
+            // Toggle explorer visibility.
+            if (!state.explorerMaximised) {
+                captureSplitPos();
+                state.explorerMaximised = true;
             } else {
-                centerWidget.getElement().removeClassName("maximised");
-
-                // Restore the view.
-                showSplit();
-                maximisedWidget = null;
-
-                if (westWidget instanceof Focus) {
-                    ((Focus) westWidget).focus();
-                }
+                state.explorerMaximised = false;
             }
-
+            state.maximisedView = null;
         } else {
-            final Widget widget = view.asWidget();
-            if (maximisedWidget == null || maximisedWidget != widget) {
-                // Remember split panel.
-                if (westWidget != null) {
-                    splitPos = westWidget.getOffsetWidth();
-                }
-
-                // Maximise the passed view.
-                // Clear the split panel.
-                hideSplit();
-                maximisedWidget = widget;
-
-                // Set the maximised widget as the inner content.
-                setInnerContent(maximisedWidget);
-
-                if (maximisedWidget instanceof Focus) {
-                    ((Focus) maximisedWidget).focus();
-                }
+            // Toggle specific view maximise.
+            if (state.maximisedView == null || state.maximisedView != view) {
+                captureSplitPos();
+                state.maximisedView = view;
             } else {
-                // Restore the view.
-                showSplit();
-                maximisedWidget = null;
-
-                if (westWidget instanceof Focus) {
-                    ((Focus) westWidget).focus();
-                }
+                state.maximisedView = null;
             }
         }
-    }
 
-    private void showSplit() {
-        // Ensure the split position isn't too small.
-        if (splitPos < 10) {
-            splitPos = 10;
-        }
+        rebuildLayout();
 
-        splitPanel = new ThinSplitLayoutPanel();
-        splitPanel.addStyleName("mainViewImpl-splitPanel");
-        if (westWidget != null) {
-            splitPanel.addWest(westWidget, splitPos);
-        }
-        if (centerWidget != null) {
-            splitPanel.add(centerWidget);
-        }
-
-        setInnerContent(splitPanel);
-    }
-
-    private void hideSplit() {
-        if (splitPanel != null) {
-            splitPanel.clear();
-            splitPanel = null;
-        }
-    }
-
-    /**
-     * Sets the inner content widget, respecting the outer dock panel if one is active.
-     * If docked, the inner content becomes the center of the outer split panel.
-     * If not docked, the inner content goes directly into contentPanel.
-     */
-    private void setInnerContent(final Widget innerContent) {
-        if (dockedWidget != null && outerSplitPanel != null) {
-            // Rebuild the outer split panel with the new inner content.
-            rebuildOuterSplit(innerContent);
+        // Focus the appropriate widget after rebuild.
+        if (state.explorerMaximised || state.maximisedView != null) {
+            final Widget focusTarget = state.maximisedView != null
+                    ? state.maximisedView.asWidget()
+                    : centerWidget;
+            if (focusTarget instanceof Focus) {
+                ((Focus) focusTarget).focus();
+            }
         } else {
-            contentPanel.clear();
-            contentPanel.setWidget(innerContent);
+            if (westWidget instanceof Focus) {
+                ((Focus) westWidget).focus();
+            }
         }
-    }
-
-    /**
-     * Gets the current inner content widget (the split panel or maximised widget).
-     */
-    private Widget getInnerContent() {
-        if (maximisedWidget != null) {
-            return maximisedWidget;
-        } else if (splitPanel != null) {
-            return splitPanel;
-        }
-        return centerWidget;
     }
 
     @Override
     public void dock(final Widget widget,
                      final DockLocation dockLocation,
                      final Size size) {
-        this.dockedWidget = widget;
-        this.dockLocation = dockLocation;
-        this.dockSize = getDockDimension(dockLocation, size);
-
-        // Get the current inner content (split panel or maximised widget).
-        final Widget innerContent = getInnerContent();
-
-        // Build the outer split panel with the dock widget and inner content.
-        rebuildOuterSplit(innerContent);
+        captureDockSize();
+        state.docked = true;
+        state.dockedWidget = widget;
+        state.dockLocation = dockLocation;
+        state.dockSize = getDockDimension(dockLocation, size);
+        rebuildLayout();
     }
 
     @Override
     public void undock() {
-        if (dockedWidget == null) {
+        if (!state.docked) {
             return;
         }
-
-        // Capture the current dock size before tearing down the outer split
-        // so that re-docking restores the user's last splitter position.
         captureDockSize();
-
-        // Get the inner content before tearing down the outer split.
-        final Widget innerContent = getInnerContent();
-
-        // Tear down the outer split panel and content wrapper.
-        if (outerSplitPanel != null) {
-            outerSplitPanel.clear();
-            outerSplitPanel = null;
-        }
-        contentWrapper = null;
-
-        dockedWidget = null;
-        dockLocation = null;
-
-        // Move spinner and menu back to the main FlowPanel.
-        main.add(mainToolbar);
-
-        // Restore the inner content directly into contentPanel.
-        contentPanel.clear();
-        contentPanel.setWidget(innerContent);
+        state.docked = false;
+        // Note: we null the widget in state but the widget itself is just
+        // detached — AskStroomAiPresenter still holds a reference to it.
+        state.dockedWidget = null;
+        state.dockLocation = null;
+        rebuildLayout();
     }
 
-    private void rebuildOuterSplit(final Widget innerContent) {
-        outerSplitPanel = new ThinSplitLayoutPanel() {
-            @Override
-            public void onResize() {
-                super.onResize();
-                // After every resize (including splitter drag), check if the
-                // docked widget size has changed and fire a DockResizeEvent.
-                scheduleDockResizeCheck();
-            }
-        };
-        outerSplitPanel.addStyleName("mainViewImpl-outerSplitPanel");
+    // ── Layout rebuild ──────────────────────────────────────────────────────
 
-        // Add the docked widget on the appropriate edge.
-        switch (dockLocation) {
-            case RIGHT:
-                outerSplitPanel.addEast(dockedWidget, dockSize);
-                break;
-            case LEFT:
-                outerSplitPanel.addWest(dockedWidget, dockSize);
-                break;
-            case TOP:
-                outerSplitPanel.addNorth(dockedWidget, dockSize);
-                break;
-            case BOTTOM:
-                outerSplitPanel.addSouth(dockedWidget, dockSize);
-                break;
+    /**
+     * Builds the correct widget tree from the current {@link LayoutState}.
+     * <p>
+     * Persistent content widgets (westWidget, centerWidget, state.dockedWidget,
+     * mainToolbar) are detached from their current parents and re-attached
+     * into fresh disposable containers. This preserves all DOM state, event
+     * handlers, scroll positions, and presenter bindings.
+     * </p>
+     */
+    private void rebuildLayout() {
+        // ── Step 1: Detach all persistent widgets from current parents ──
+        if (westWidget != null) {
+            westWidget.removeFromParent();
+        }
+        if (centerWidget != null) {
+            centerWidget.removeFromParent();
+        }
+        if (state.dockedWidget != null) {
+            state.dockedWidget.removeFromParent();
+        }
+        mainToolbar.removeFromParent();
+
+        // ── Step 2: Discard old disposable containers ──
+        contentPanel.clear();
+        // Disposable container widgets — recreated by rebuildLayout().
+        outerSplitPanel = null;
+
+        // ── Step 3: Determine the "inner content" ──
+        final Widget innerContent;
+
+        if (state.maximisedView != null) {
+            // A specific view is maximised (full-screen takeover).
+            innerContent = state.maximisedView.asWidget();
+
+        } else if (state.explorerMaximised) {
+            // Explorer hidden — content fills the space.
+            centerWidget.getElement().addClassName("maximised");
+            innerContent = centerWidget;
+
+        } else {
+            // Normal — explorer + content in a split panel.
+            centerWidget.getElement().removeClassName("maximised");
+
+            // Ensure the split position isn't too small.
+            final int splitWidth = Math.max(state.explorerWidth, 10);
+
+            final ThinSplitLayoutPanel splitPanel = new ThinSplitLayoutPanel();
+            splitPanel.addStyleName("mainViewImpl-splitPanel");
+            if (westWidget != null) {
+                splitPanel.addWest(westWidget, splitWidth);
+            }
+            if (centerWidget != null) {
+                splitPanel.add(centerWidget);
+            }
+            innerContent = splitPanel;
         }
 
-        // Wrap the inner content with the spinner and menu in a position:relative
-        // container so they stay anchored to the content area, not the full layout.
-        contentWrapper = new FlowPanel();
-        contentWrapper.addStyleName("mainViewImpl-contentWrapper");
-        contentWrapper.add(innerContent);
-        contentWrapper.add(mainToolbar);
+        // ── Step 4: Wrap with dock panel if AI is docked ──
+        if (state.docked && state.dockedWidget != null) {
+            outerSplitPanel = new ThinSplitLayoutPanel() {
+                @Override
+                public void onResize() {
+                    super.onResize();
+                    scheduleDockResizeCheck();
+                }
+            };
+            outerSplitPanel.addStyleName("mainViewImpl-outerSplitPanel");
 
-        // The content wrapper is the center of the outer split panel.
-        outerSplitPanel.add(contentWrapper);
-
-        contentPanel.clear();
-        contentPanel.setWidget(outerSplitPanel);
-
-        // Force a deferred layout to fix initial positioning —
-        // DockLayoutPanel computes absolute positions from parent dimensions,
-        // which may not be final until after the browser completes its layout pass.
-        Scheduler.get().scheduleDeferred(() -> {
-            if (outerSplitPanel != null) {
-                outerSplitPanel.forceLayout();
+            // Add the docked widget on the appropriate edge.
+            switch (state.dockLocation) {
+                case RIGHT:
+                    outerSplitPanel.addEast(state.dockedWidget, state.dockSize);
+                    break;
+                case LEFT:
+                    outerSplitPanel.addWest(state.dockedWidget, state.dockSize);
+                    break;
+                case TOP:
+                    outerSplitPanel.addNorth(state.dockedWidget, state.dockSize);
+                    break;
+                case BOTTOM:
+                    outerSplitPanel.addSouth(state.dockedWidget, state.dockSize);
+                    break;
             }
-        });
+
+            // Use ResizeFlowPanel to maintain the GWT resize chain so that
+            // innerContent receives onResize() notifications from the
+            // outerSplitPanel (DockLayoutPanel).
+            final ResizeFlowPanel contentWrapper = new ResizeFlowPanel();
+            contentWrapper.addStyleName("mainViewImpl-contentWrapper");
+            innerContent.setSize("100%", "100%");
+            contentWrapper.add(innerContent);
+            contentWrapper.add(mainToolbar);
+
+            outerSplitPanel.add(contentWrapper);
+            contentPanel.setWidget(outerSplitPanel);
+
+            // Force a deferred layout to fix initial positioning —
+            // DockLayoutPanel computes absolute positions from parent dimensions,
+            // which may not be final until after the browser completes its layout pass.
+            Scheduler.get().scheduleDeferred(() -> {
+                if (outerSplitPanel != null) {
+                    outerSplitPanel.forceLayout();
+                }
+            });
+        } else {
+            // No dock — toolbar goes back to the main FlowPanel.
+            main.add(mainToolbar);
+            contentPanel.setWidget(innerContent);
+        }
+    }
+
+    // ── Size capture helpers ────────────────────────────────────────────────
+
+    /**
+     * Capture current explorer width from the live DOM before hiding it.
+     */
+    private void captureSplitPos() {
+        if (westWidget != null && westWidget.getOffsetWidth() > 0) {
+            state.explorerWidth = westWidget.getOffsetWidth();
+        }
     }
 
     /**
-     * Captures the current docked widget size into the dockSize field.
-     * Called before undocking so the position is preserved for re-docking.
+     * Capture current dock size from the live DOM before undocking/re-docking.
      */
     private void captureDockSize() {
-        if (dockedWidget != null && dockLocation != null) {
+        if (state.docked && state.dockedWidget != null && state.dockLocation != null) {
             final double currentSize;
-            if (dockLocation == DockLocation.LEFT || dockLocation == DockLocation.RIGHT) {
-                currentSize = dockedWidget.getOffsetWidth();
+            if (state.dockLocation == DockLocation.LEFT || state.dockLocation == DockLocation.RIGHT) {
+                currentSize = state.dockedWidget.getOffsetWidth();
             } else {
-                currentSize = dockedWidget.getOffsetHeight();
+                currentSize = state.dockedWidget.getOffsetHeight();
             }
             if (currentSize > 0) {
-                dockSize = currentSize;
+                state.dockSize = currentSize;
             }
         }
     }
@@ -340,29 +311,30 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     }
 
     /**
-     * Periodically checks if the dock panel size has changed (via splitter drag)
+     * Checks if the dock panel size has changed (via splitter drag)
      * and fires a DockResizeEvent when it does.
      */
     private void scheduleDockResizeCheck() {
-        if (dockedWidget == null || outerSplitPanel == null) {
+        if (!state.docked || state.dockedWidget == null || outerSplitPanel == null) {
             return;
         }
         // Use a deferred command to observe the actual rendered size after layout.
         Scheduler.get().scheduleDeferred(() -> {
-            if (dockedWidget != null && outerSplitPanel != null) {
+            if (state.docked && state.dockedWidget != null && outerSplitPanel != null) {
                 final double currentSize;
-                if (dockLocation == DockLocation.LEFT || dockLocation == DockLocation.RIGHT) {
-                    currentSize = dockedWidget.getOffsetWidth();
+                if (state.dockLocation == DockLocation.LEFT
+                    || state.dockLocation == DockLocation.RIGHT) {
+                    currentSize = state.dockedWidget.getOffsetWidth();
                 } else {
-                    currentSize = dockedWidget.getOffsetHeight();
+                    currentSize = state.dockedWidget.getOffsetHeight();
                 }
-                if (currentSize > 0 && Double.compare(currentSize, dockSize) != 0) {
-                    dockSize = currentSize;
+                if (currentSize > 0 && Double.compare(currentSize, state.dockSize) != 0) {
+                    state.dockSize = currentSize;
                     final Size newSize = new Size.Builder()
-                            .width(dockedWidget.getOffsetWidth())
-                            .height(dockedWidget.getOffsetHeight())
+                            .width(state.dockedWidget.getOffsetWidth())
+                            .height(state.dockedWidget.getOffsetHeight())
                             .build();
-                    DockResizeEvent.fire(event -> eventBus.fireEvent(event), newSize);
+                    DockResizeEvent.fire(eventBus::fireEvent, newSize);
                 }
             }
         });
@@ -407,4 +379,23 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     public interface Binder extends UiBinder<Widget, MainViewImpl> {
 
     }
+
+    /**
+     * Captures all layout state as a single source of truth.
+     * All state-changing methods update this object, then call
+     * {@link #rebuildLayout()} to construct the correct widget tree.
+     */
+    private static class LayoutState {
+
+        boolean explorerMaximised;
+        int explorerWidth = 300;
+
+        boolean docked;
+        DockLocation dockLocation;
+        double dockSize;
+        Widget dockedWidget;
+
+        View maximisedView;
+    }
+
 }

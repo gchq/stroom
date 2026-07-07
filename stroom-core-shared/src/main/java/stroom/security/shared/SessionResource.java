@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -45,7 +46,7 @@ public interface SessionResource extends RestResource, DirectRestService {
     String LIST_PATH_PART = "/list";
     String NODE_NAME_PARAM = "nodeName";
 
-    @GET
+    @POST
     @Path("logout")
     @Operation(
             summary = "Logout of Stroom session",

@@ -84,11 +84,6 @@ public class SecurityModule extends AbstractModule {
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
 
-        // TODO: 26/07/2023 Remove these
-//        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
-//        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
-//                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
-
         bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
                 .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
@@ -122,6 +117,7 @@ public class SecurityModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ApiKeyResourceImpl.class)
                 .bind(AppPermissionResourceImpl.class)
+                .bind(AuthFlowResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)

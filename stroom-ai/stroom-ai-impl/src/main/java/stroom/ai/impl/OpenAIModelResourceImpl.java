@@ -25,30 +25,19 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.openai.shared.OpenAIModelTestResponse;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
-import stroom.util.shared.http.HttpTlsConfig;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.NoSuchElementException;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 
 @AutoLogged
 public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUuid<OpenAIModelDoc> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIModelResourceImpl.class);
-
-    private static HttpClientConfig defaultHttpClientConfig;
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<AiService> aiServiceProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -100,29 +89,6 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
 
     @Override
     public HttpClientConfig getDefaultHttpClientConfig() {
-        if (defaultHttpClientConfig == null) {
-            defaultHttpClientConfig = createDefaultHttpClientConfig();
-        }
-        return defaultHttpClientConfig;
-    }
-
-    private HttpClientConfig createDefaultHttpClientConfig() {
-        try (final SSLServerSocket sslServerSocket = ((SSLServerSocket) SSLServerSocketFactory.getDefault()
-                .createServerSocket())) {
-            final List<String> supportedCiphers = Arrays.stream(sslServerSocket.getEnabledCipherSuites()).toList();
-            final List<String> supportedProtocols = Arrays.stream(sslServerSocket.getEnabledProtocols()).toList();
-            final HttpTlsConfig httpTlsConfig = HttpTlsConfig
-                    .builder()
-                    .supportedCiphers(supportedCiphers)
-                    .supportedProtocols(supportedProtocols)
-                    .build();
-            return HttpClientConfig
-                    .builder()
-                    .tlsConfiguration(httpTlsConfig)
-                    .build();
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            return HttpClientConfig.builder().build();
-        }
+        return aiServiceProvider.get().getDefaultHttpClientConfig();
     }
 }
