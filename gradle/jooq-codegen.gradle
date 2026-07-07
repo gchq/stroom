@@ -137,7 +137,9 @@ tasks.register('generateJooq') {
                 classpathUrls.add(resourcesDir.toURI().toURL())
             }
             configurations.runtimeClasspath.resolve().each { file ->
-                classpathUrls.add(file.toURI().toURL())
+                if (file.exists()) {
+                    classpathUrls.add(file.toURI().toURL())
+                }
             }
 
             def classLoader = new URLClassLoader(
