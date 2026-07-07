@@ -32,6 +32,8 @@ import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.DurationUtil;
+import stroom.util.client.NumberUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
@@ -121,8 +123,10 @@ public class TracesListPresenter
         final Function<TraceRoot, String> valueExtractor = trace -> {
             final NanoTime start = trace.getStartTime();
             final NanoTime end = trace.getEndTime();
-            final NanoDuration duration = end.diff(start);
-            return duration.toString();
+            if (start == null || end == null) {
+                return "";
+            }
+            return DurationUtil.formatDuration(end.diff(start));
         };
         final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
@@ -135,19 +139,19 @@ public class TracesListPresenter
 
     private void addServicesColumn() {
         final Function<TraceRoot, String> valueExtractor = trace ->
-                Integer.toString(NullSafe.get(trace, TraceRoot::getServices));
+                NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getServices));
         addTextColumn("Services", 100, valueExtractor);
     }
 
     private void addDepthColumn() {
         final Function<TraceRoot, String> valueExtractor = trace ->
-                Integer.toString(NullSafe.get(trace, TraceRoot::getDepth));
+                NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getDepth));
         addTextColumn("Depth", 100, valueExtractor);
     }
 
     private void addTotalSpansColumn() {
-        final Function<TraceRoot, String> valueExtractor = trace -> Integer.toString(NullSafe.get(trace,
-                TraceRoot::getTotalSpans));
+        final Function<TraceRoot, String> valueExtractor = trace ->
+                NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getTotalSpans));
         addTextColumn("Total Spans", 100, valueExtractor);
     }
 
@@ -182,6 +186,7 @@ public class TracesListPresenter
                 width);
 //        dataGrid.sort(column);
     }
+
 
     public void refresh() {
         if (dataProvider == null) {

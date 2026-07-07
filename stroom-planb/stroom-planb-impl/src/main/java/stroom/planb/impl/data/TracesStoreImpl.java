@@ -118,7 +118,10 @@ public class TracesStoreImpl implements TracesStore {
             return getLocalTraces(criteria);
 
         } else {
-            // Otherwise perform a remote query.
+            // Snapshot node: proxy the query to a configured storage node.
+            // In a shared-filesystem deployment all storage nodes hold identical data, so
+            // querying the first is sufficient; that node's getLocalTraces() will in turn
+            // fan out across its local shards.
             final List<String> nodes = NullSafe.list(configProvider.get().getNodeList());
             if (nodes.isEmpty()) {
                 throw new RuntimeException("No Plan B storage nodes are configured");
@@ -126,11 +129,11 @@ public class TracesStoreImpl implements TracesStore {
 
             final String nodeName = nodes.getFirst();
             final String url = NodeCallUtil
-                                       .getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
-                               + ResourcePaths.buildAuthenticatedApiPath(
-                    TracesRemoteQueryResource.BASE_PATH, TracesRemoteQueryResource.GET_TRACES_PATH);
+                    .getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                            TracesRemoteQueryResource.BASE_PATH,
+                            TracesRemoteQueryResource.GET_TRACES_PATH);
             try {
-                // A different node to make a rest call to the required node
                 final WebTarget webTarget = webTargetFactoryProvider.get().create(url);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
@@ -140,7 +143,6 @@ public class TracesStoreImpl implements TracesStore {
                 } else if (response.getStatus() != Status.OK.getStatusCode()) {
                     throw new WebApplicationException(response);
                 }
-
                 return response.readEntity(TracesResultPage.class);
             } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
@@ -161,8 +163,20 @@ public class TracesStoreImpl implements TracesStore {
             final UserIdentity userIdentity = securityContext.getUserIdentity();
             final List<CompletableFuture<TracesResultPage>> futures = new ArrayList<>();
 
+            // Bound per-shard results to (offset + length): each shard sorts by the same
+            // secondary index and returns at most this many rows, so the global merge of
+            // N shards has at most N×(offset+length) rows to sort — far fewer than all rows.
+            final int callerOffset = criteria.getPageRequest() != null
+                    ? criteria.getPageRequest().getOffset() : 0;
+            final int callerLength = criteria.getPageRequest() != null
+                    ? criteria.getPageRequest().getLength() : Integer.MAX_VALUE;
+            // Guard against integer overflow when offset + length > MAX_VALUE.
+            final int shardPageSize = callerLength == Integer.MAX_VALUE
+                    ? Integer.MAX_VALUE
+                    : callerOffset + callerLength;
+
             final FindTraceCriteria shardCriteria = new FindTraceCriteria(
-                    PageRequest.unlimited(),
+                    new PageRequest(0, shardPageSize),
                     criteria.getSortList(),
                     criteria.getDataSourceRef(),
                     criteria.getFilter(),
@@ -187,56 +201,9 @@ public class TracesStoreImpl implements TracesStore {
                 }, executor));
             }
 
-            final List<TraceRoot> allTraceRoots = new ArrayList<>();
-            int total = 0;
-            boolean exact = true;
 
-            // Wait for all shard queries to complete concurrently
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-            for (final CompletableFuture<TracesResultPage> future : futures) {
-                try {
-                    final TracesResultPage page = future.get();
-                    if (page != null) {
-                        if (page.getValues() != null) {
-                            allTraceRoots.addAll(page.getValues());
-                        }
-                        if (page.getPageResponse() != null) {
-                            total += page.getPageResponse().getTotal();
-                            if (!page.getPageResponse().isExact()) {
-                                exact = false;
-                            }
-                        }
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error("Failed to retrieve query result page from future", e);
-                }
-            }
-
-            // Sort lexicographically by traceId
-            allTraceRoots.sort(Comparator.comparing(TraceRoot::getTraceId));
-
-            // Apply pagination manually
-            final int offset = criteria.getPageRequest() != null ? criteria.getPageRequest().getOffset() : 0;
-            final int length = criteria.getPageRequest() != null
-                    ? criteria.getPageRequest().getLength()
-                    : Integer.MAX_VALUE;
-
-            final List<TraceRoot> paginatedList;
-            if (offset >= allTraceRoots.size()) {
-                paginatedList = Collections.emptyList();
-            } else {
-                final int toIndex = Math.min(offset + length, allTraceRoots.size());
-                paginatedList = allTraceRoots.subList(offset, toIndex);
-            }
-
-            final stroom.util.shared.PageResponse pageResponse = new stroom.util.shared.PageResponse(
-                    (long) offset,
-                    paginatedList.size(),
-                    (long) total,
-                    exact
-            );
-            return new TracesResultPage(paginatedList, pageResponse);
+            return mergeAndPaginate(futures, criteria);
         } else {
             return shardManager.get(criteria.getDataSourceRef().getName(), reader -> {
                 if (reader instanceof final TraceDb traceDb) {
@@ -245,6 +212,107 @@ public class TracesStoreImpl implements TracesStore {
                 throw new IllegalStateException("Unexpected value: " + reader);
             });
         }
+    }
+
+    /**
+     * Collects results from completed futures (per-shard or per-node), merges all
+     * {@link TraceRoot} values, sorts by {@code startTime} descending (most recent first)
+     * with {@code traceId} as a stable tiebreaker, then applies the caller's page request.
+     */
+    private TracesResultPage mergeAndPaginate(
+            final List<CompletableFuture<TracesResultPage>> futures,
+            final FindTraceCriteria criteria) {
+
+        final List<TraceRoot> allTraceRoots = new ArrayList<>();
+        int total = 0;
+        boolean exact = true;
+
+        for (final CompletableFuture<TracesResultPage> future : futures) {
+            try {
+                final TracesResultPage page = future.get();
+                if (page != null) {
+                    if (page.getValues() != null) {
+                        allTraceRoots.addAll(page.getValues());
+                    }
+                    if (page.getPageResponse() != null) {
+                        total += page.getPageResponse().getTotal();
+                        if (!page.getPageResponse().isExact()) {
+                            exact = false;
+                        }
+                    }
+                }
+            } catch (final Exception e) {
+                LOGGER.error("Failed to retrieve query result page from future", e);
+            }
+        }
+
+        // Sort the merged set using the same comparator as the per-shard secondary index.
+        allTraceRoots.sort(buildMergeComparator(criteria));
+
+        // Apply the caller's offset/length over the full merged set.
+        final int offset = criteria.getPageRequest() != null
+                ? criteria.getPageRequest().getOffset()
+                : 0;
+        final int length = criteria.getPageRequest() != null
+                ? criteria.getPageRequest().getLength()
+                : Integer.MAX_VALUE;
+
+        final List<TraceRoot> paginatedList;
+        if (offset >= allTraceRoots.size()) {
+            paginatedList = Collections.emptyList();
+        } else {
+            paginatedList = allTraceRoots.subList(offset, Math.min(offset + length, allTraceRoots.size()));
+        }
+
+        final stroom.util.shared.PageResponse pageResponse = new stroom.util.shared.PageResponse(
+                (long) offset,
+                paginatedList.size(),
+                (long) total,
+                exact
+        );
+        return new TracesResultPage(paginatedList, pageResponse);
+    }
+
+    /**
+     * Builds a {@link Comparator} for the inter-shard merge that matches the sort order
+     * used by the per-shard secondary LMDB indexes.
+     *
+     * <p>The default (no sort criteria) is {@code Trace Start} descending — newest first.
+     */
+    private static Comparator<TraceRoot> buildMergeComparator(final FindTraceCriteria criteria) {
+        final stroom.util.shared.CriteriaFieldSort firstSort =
+                stroom.util.shared.NullSafe.get(criteria.getSortList(),
+                        sorts -> sorts.isEmpty() ? null : sorts.getFirst());
+        final String field = firstSort != null
+                ? firstSort.getId()
+                : stroom.planb.impl.db.trace.TraceRootField.TRACE_START;
+        final boolean desc = firstSort == null || firstSort.isDesc();
+
+        final Comparator<TraceRoot> base = switch (field) {
+            case stroom.planb.impl.db.trace.TraceRootField.OPERATION -> Comparator.comparing(TraceRoot::getName,
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+            case stroom.planb.impl.db.trace.TraceRootField.TRACE_ID -> Comparator.comparing(TraceRoot::getTraceId,
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+            case stroom.planb.impl.db.trace.TraceRootField.DURATION -> Comparator.comparingLong(root -> {
+                final stroom.pathways.shared.otel.trace.NanoTime s = root.getStartTime();
+                final stroom.pathways.shared.otel.trace.NanoTime e = root.getEndTime();
+                if (s == null || e == null) {
+                    return 0L;
+                }
+                return (e.getSeconds() - s.getSeconds()) * 1_000_000_000L + (e.getNanos() - s.getNanos());
+            });
+            case stroom.planb.impl.db.trace.TraceRootField.SERVICES -> Comparator.comparingInt(TraceRoot::getServices);
+            case stroom.planb.impl.db.trace.TraceRootField.DEPTH -> Comparator.comparingInt(TraceRoot::getDepth);
+            case stroom.planb.impl.db.trace.TraceRootField.TOTAL_SPANS ->
+                Comparator.comparingInt(TraceRoot::getTotalSpans);
+            // TRACE_START and default
+            default -> Comparator.comparing(TraceRoot::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()));
+        };
+
+        final Comparator<TraceRoot> ordered = desc ? base.reversed() : base;
+        // Stable tiebreaker: ascending traceId.
+        return ordered.thenComparing(TraceRoot::getTraceId,
+                Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
     @Override
