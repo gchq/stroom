@@ -32,10 +32,12 @@ public class RemoteFeedModule extends AbstractModule {
         bind(DataFeedKeyService.class).to(DataFeedKeyServiceImpl.class);
         bind(DataFeedIdentityService.class).to(DataFeedIdentityServiceImpl.class);
         bind(CertificateIdentityService.class).to(CertificateIdentityServiceImpl.class);
+        bind(S3EventResource.class).to(S3EventResourceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(FeedStatusResourceImpl.class)
-                .bind(FeedStatusResourceV2Impl.class);
+                .bind(FeedStatusResourceV2Impl.class)
+                .bind(S3EventResourceImpl.class);
 
 //        ServletBinder.create(binder())
 //                .bind(RemoteFeedServiceRPC.class);

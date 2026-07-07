@@ -123,6 +123,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
             // Adds sender details to the attributeMap
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
+            LOGGER.debug("handle() - receiptId: {}, userIdentity: {}", receiptId, userIdentity);
+
             // Get the type name from the header arguments if supplied.
             final String typeName = NullSafe.string(attributeMap.get(StandardHeaderArguments.TYPE));
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();

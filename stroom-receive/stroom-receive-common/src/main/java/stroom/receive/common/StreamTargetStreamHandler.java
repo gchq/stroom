@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -326,7 +327,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
 
     private static class Layer {
 
-        private final Set<StroomZipFileType> types = new HashSet<>();
+        private final Set<StroomZipFileType> types = EnumSet.noneOf(StroomZipFileType.class);
 
         boolean hasType(final StroomZipFileType type) {
             return types.contains(type);

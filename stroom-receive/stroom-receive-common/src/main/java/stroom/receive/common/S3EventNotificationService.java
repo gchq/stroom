@@ -17,18 +17,14 @@
 package stroom.receive.common;
 
 
-import stroom.aws.s3.client.S3ClientHelper;
-import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
-import stroom.aws.s3.client.S3ClientPool;
-import stroom.aws.s3.client.S3MetaFieldsMapper;
-import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.sqs.SqsClientFactory;
 import stroom.aws.sqs.SqsConfig;
 import stroom.data.store.api.S3Location;
-import stroom.data.store.api.S3VolumeService;
-import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.security.api.CommonSecurityContext;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.json.JsonUtil;
@@ -36,7 +32,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -49,15 +44,22 @@ import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
+ * <p>
+ * Service for consuming S3 create events.
+ * Files that have been created on S3 will be associated with a new meta record so they
+ * can be consumed in-place. The files are not copied from their S3 location.
+ * </p>
+ * <p>
  * See
  * <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html">
  * AWS notification content structure
  * </a> for details.
+ * </p>
  */
 @Singleton
 public class S3EventNotificationService {
@@ -66,23 +68,19 @@ public class S3EventNotificationService {
     private static final Pattern DOT_DELIMITER_PATTERN = Pattern.compile("\\.");
     private static final String EXPECTED_EVENT_MAJOR_VERSION = "2";
     private static final String SUPPORTED_EVENT_NAME_PREFIX = "ObjectCreated:";
-    //    private static final Set<String> SUPPORTED_EVENT_NAMES = Set.of(
-//            "ObjectCreated:Put",
-//            "ObjectCreated:Post");
-    public static final String EVENT_FIELD = "Event";
-    public static final String TEST_EVENT_VALUE = "s3:TestEvent";
-    public static final String SERVICE_FIELD = "Service";
-    public static final String TIME_FIELD = "Time";
-    public static final String BUCKET_FIELD = "Bucket";
-    public static final String RECORDS_FIELD = "Records";
+    private static final String EVENT_FIELD = "Event";
+    private static final String TEST_EVENT_VALUE = "s3:TestEvent";
+    private static final String SERVICE_FIELD = "Service";
+    private static final String TIME_FIELD = "Time";
+    private static final String BUCKET_FIELD = "Bucket";
+    private static final String RECORDS_FIELD = "Records";
 
     private final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider;
     private final SqsClientFactory sqsClientFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final S3EventConsumer s3EventConsumer;
-    private final S3ClientPool s3ClientPool;
-    private final S3VolumeService s3VolumeService;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3ObjectInspector s3ObjectInspector;
+    private final CommonSecurityContext commonSecurityContext;
 
     private volatile S3EventNotificationConfig lastS3EventNotificationConfig = null;
     private volatile List<ClientState> sqsClients;
@@ -93,16 +91,14 @@ public class S3EventNotificationService {
             final SqsClientFactory sqsClientFactory,
             final ReceiptIdGenerator receiptIdGenerator,
             final S3EventConsumer s3EventConsumer,
-            final S3ClientPool s3ClientPool,
-            final S3VolumeService s3VolumeService,
-            final S3MetaFieldsMapper s3MetaFieldsMapper) {
+            final S3ObjectInspector s3ObjectInspector,
+            final SecurityContext commonSecurityContext) {
         this.s3EventNotificationConfigProvider = s3EventNotificationConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.s3EventConsumer = s3EventConsumer;
-        this.s3ClientPool = s3ClientPool;
-        this.s3VolumeService = s3VolumeService;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3ObjectInspector = s3ObjectInspector;
+        this.commonSecurityContext = commonSecurityContext;
     }
 
     public void poll() {
@@ -117,6 +113,30 @@ public class S3EventNotificationService {
                 }
             }
         }
+    }
+
+    /**
+     * @param s3Location The location of the object on s3
+     * @param metaData   Any additional metadata to override the meta obtained from the S3 object.
+     */
+    public void notify(final S3Location s3Location, final Map<String, String> metaData) {
+        Objects.requireNonNull(s3Location);
+        LOGGER.debug("notify() - s3Location: {}, metaData: {}", s3Location, metaData);
+        commonSecurityContext.secure(AppPermission.STROOM_PROXY, () -> {
+            commonSecurityContext.asProcessingUser(() -> {
+                final AttributeMap attributeMap = new AttributeMap();
+                addReceiptId(attributeMap);
+
+                s3ObjectInspector.addS3MetaAttributes(s3Location, attributeMap);
+                // Override the s3 metadata with any supplied meta.
+                if (NullSafe.hasEntries(metaData)) {
+                    attributeMap.putAll(metaData);
+                }
+
+                LOGGER.debug("notify() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
+                s3EventConsumer.accept(new S3CreateEvent(s3Location, attributeMap));
+            });
+        });
     }
 
     private void poll(final ClientState clientState) {
@@ -156,7 +176,6 @@ public class S3EventNotificationService {
                         addSqsMessageId(attributeMap, message);
 
                         // TODO:
-                        //  * Add a table/col to hold the S3 location info as a child of meta.
                         //  * It is agreed that stroom will not duplicate the data on S3, so will
                         //    just create the meta rec in the db along with s3 location to read from there.
                         //  * Don't need to worry about any auth filtering beyond authenticating to the SQS itself.
@@ -293,7 +312,8 @@ public class S3EventNotificationService {
                                 bucketArn, objectKey, objectSize, attributeMap);
 
                         final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
-                        addS3MetaAttributes(s3Location, attributeMap);
+                        s3ObjectInspector.addS3MetaAttributes(s3Location, attributeMap);
+//                        addS3MetaAttributes(s3Location, attributeMap);
                         s3CreateEvent = new S3CreateEvent(s3Location, attributeMap);
                     } else {
                         LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
@@ -309,38 +329,38 @@ public class S3EventNotificationService {
         return s3CreateEvent;
     }
 
-    /**
-     * Call out to S3 to get the objects metadata.
-     */
-    private void addS3MetaAttributes(final S3Location s3Location,
-                                     final AttributeMap attributeMap) {
-        LOGGER.debug("addS3MetaAttributes() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
-        final Optional<FsVolume> optS3Volume = s3VolumeService.getS3Volume(
-                s3Location.regionName(),
-                s3Location.bucketName());
-
-        optS3Volume.ifPresentOrElse(
-                s3Volume -> {
-                    final S3ClientConfig s3ClientConfig = s3Volume.getS3ClientConfig();
-                    final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
-                    final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
-                            s3Location.bucketName(),
-                            s3Location.key());
-
-                    // Map any known keys back to their original form as some of our keys may not fit the
-                    // key restrictions.
-                    objectInfo.s3Metadata().forEach((k, v) -> {
-                        final CIKey originalKey = s3MetaFieldsMapper.getOriginalKey(k)
-                                .orElse(k);
-                        attributeMap.put(originalKey.get(), v);
-                    });
-                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, modified attributeMap: {}",
-                            s3Location, attributeMap);
-                },
-                () -> LOGGER.warn("No S3 volume found matching region '{}' and bucket '{}'. " +
-                                  "Unable to fetch S3 metadata for key '{}'",
-                        s3Location.regionName(), s3Location.bucketName(), s3Location.key()));
-    }
+//    /**
+//     * Call out to S3 to get the objects metadata.
+//     */
+//    private void addS3MetaAttributes(final S3Location s3Location,
+//                                     final AttributeMap attributeMap) {
+//        LOGGER.debug("addS3MetaAttributes() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
+//        final Optional<FsVolume> optS3Volume = s3VolumeService.getS3Volume(
+//                s3Location.regionName(),
+//                s3Location.bucketName());
+//
+//        optS3Volume.ifPresentOrElse(
+//                s3Volume -> {
+//                    final S3ClientConfig s3ClientConfig = s3Volume.getS3ClientConfig();
+//                    final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
+//                    final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
+//                            s3Location.bucketName(),
+//                            s3Location.key());
+//
+//                    // Map any known keys back to their original form as some of our keys may not fit the
+//                    // key restrictions.
+//                    objectInfo.s3Metadata().forEach((k, v) -> {
+//                        final CIKey originalKey = s3MetaFieldsMapper.getOriginalKey(k)
+//                                .orElse(k);
+//                        attributeMap.put(originalKey.get(), v);
+//                    });
+//                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, modified attributeMap: {}",
+//                            s3Location, attributeMap);
+//                },
+//                () -> LOGGER.warn("No S3 volume found matching region '{}' and bucket '{}'. " +
+//                                  "Unable to fetch S3 metadata for key '{}'",
+//                        s3Location.regionName(), s3Location.bucketName(), s3Location.key()));
+//    }
 
     private static String getNodeAsString(final JsonNode baseNode, final String fieldName) {
         final String val = JsonUtil.getNodeAsString(baseNode, fieldName);

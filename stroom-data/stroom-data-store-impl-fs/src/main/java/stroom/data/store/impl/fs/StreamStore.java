@@ -76,6 +76,13 @@ public interface StreamStore {
 
     FsVolumeType getVolumeType();
 
+    /**
+     * @return True if this {@link StreamStore} is read-only and doesn't support writes.
+     */
+    default boolean isReadOnly() {
+        return false;
+    }
+
 
     // --------------------------------------------------------------------------------
 

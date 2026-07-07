@@ -19,18 +19,28 @@ package stroom.receive.common;
 
 import stroom.data.store.api.S3Location;
 import stroom.meta.api.AttributeMap;
+import stroom.receive.common.S3EventResource.S3EventRequest;
+import stroom.util.shared.NullSafe;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
 @NullMarked
-public record S3CreateEvent(
-        S3Location s3Location, AttributeMap attributeMap
-) {
+public record S3CreateEvent(S3Location s3Location, AttributeMap attributeMap) {
 
-    public S3CreateEvent {
-        Objects.requireNonNull(attributeMap);
+    public S3CreateEvent(final S3Location s3Location,
+                         @Nullable final AttributeMap attributeMap) {
         Objects.requireNonNull(s3Location);
+        this.s3Location = s3Location;
+        this.attributeMap = Objects.requireNonNullElseGet(attributeMap, AttributeMap::new);
+    }
+
+    public static S3CreateEvent create(final S3EventRequest request) {
+        Objects.requireNonNull(request);
+        return new S3CreateEvent(
+                request.getS3Location(),
+                NullSafe.get(request.getMetaData(), AttributeMap::new));
     }
 }

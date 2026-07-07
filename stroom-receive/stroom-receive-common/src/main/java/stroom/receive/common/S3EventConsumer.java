@@ -20,8 +20,7 @@ package stroom.receive.common;
 /**
  * Consumes S3 put events, i.e. as captured by {@link S3EventNotificationService}.
  * <p>
- * It is the responsibility of the implementation to capture any of the object's
- * metadata
+ * It is the responsibility of the implementation to perform attribute map filtering.
  * </p>
  */
 @FunctionalInterface

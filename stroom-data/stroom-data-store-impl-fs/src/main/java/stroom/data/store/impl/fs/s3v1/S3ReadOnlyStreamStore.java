@@ -20,25 +20,21 @@ package stroom.data.store.impl.fs.s3v1;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.S3Location;
 import stroom.data.store.api.Source;
-import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.DataVolumeService;
-import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.ReadOnlyStreamStore;
 import stroom.data.store.impl.fs.S3LocationDataVolume;
-import stroom.data.store.impl.fs.StreamStore;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.SimpleMeta;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
-public class S3ReadOnlyStreamStore implements StreamStore {
+public class S3ReadOnlyStreamStore extends ReadOnlyStreamStore {
 
     // Delegates everything that is a read only to this
     final S3StreamStore streamStore;
@@ -52,37 +48,13 @@ public class S3ReadOnlyStreamStore implements StreamStore {
     }
 
     @Override
-    public Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException {
-        throw new UnsupportedOperationException(LogUtil.message(
-                "openTarget not supported on a read-only stream store, meta: {}, dataVolume: {}",
-                meta, dataVolume));
-    }
-
-    @Override
-    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
-        throw new UnsupportedOperationException(LogUtil.message(
-                "physicallyDelete not supported on a read-only stream store, dataVolumes: {}",
-                LogUtil.getSample(dataVolumes, 10)));
-    }
-
-    @Override
-    public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
-                                                  final DataVolume dataVolume,
-                                                  final Progress progress) {
-        throw new UnsupportedOperationException(LogUtil.message(
-                "physicallyDelete not supported on a read-only stream store, simpleMeta: {}, dataVolume: {}",
-                simpleMeta, dataVolume));
-    }
-
-    @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(dataVolume);
 
         final S3LocationDataVolume s3LocationDataVolume = dataVolumeService.findS3Locations(meta.getId());
         final Set<S3Location> s3Locations = s3LocationDataVolume.s3Locations();
-        final int count = NullSafe.size(s3Locations);
-        if (count == 1) {
+        if (NullSafe.hasOneItem(s3Locations)) {
             final S3Location s3Location = s3Locations.stream()
                     .findAny()
                     .orElseThrow();
@@ -90,7 +62,7 @@ public class S3ReadOnlyStreamStore implements StreamStore {
         } else {
             throw new IllegalStateException(LogUtil.message(
                     "Only one s3Location is supported, found {}, dataVolume: {}, s3Locations: {}",
-                    count, dataVolume, s3Locations));
+                    NullSafe.size(s3Locations), dataVolume, s3Locations));
         }
     }
 

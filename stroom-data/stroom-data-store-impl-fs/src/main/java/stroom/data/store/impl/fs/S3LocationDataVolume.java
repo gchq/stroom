@@ -26,12 +26,19 @@ import stroom.util.shared.NullSafe;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * @param dataVolume
+ * @param s3Locations
+ */
 public record S3LocationDataVolume(DataVolume dataVolume,
                                    Set<S3Location> s3Locations) implements DataVolume {
 
     public S3LocationDataVolume(final DataVolume dataVolume,
                                 final Set<S3Location> s3Locations) {
         this.dataVolume = Objects.requireNonNull(dataVolume);
+        if (NullSafe.isEmptyCollection(s3Locations)) {
+            throw new IllegalArgumentException("There must be at least one S3Location");
+        }
         this.s3Locations = NullSafe.unmodifialbeSet(s3Locations);
     }
 

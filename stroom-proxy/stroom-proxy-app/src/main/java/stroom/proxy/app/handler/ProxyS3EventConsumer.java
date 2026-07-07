@@ -24,8 +24,6 @@ public class ProxyS3EventConsumer implements S3EventConsumer {
 
     @Override
     public void accept(final S3CreateEvent s3CreateEvent) {
-
-        throw new UnsupportedOperationException("TODO");
-
+        throw new UnsupportedOperationException("TODO - Proxy doesn't currently support consuming SQS events");
     }
 }

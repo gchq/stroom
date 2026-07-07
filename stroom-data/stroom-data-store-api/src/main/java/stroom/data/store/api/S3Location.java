@@ -16,19 +16,67 @@
 
 package stroom.data.store.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
 // TODO In theory we don't need region name as bucketName is globally unique in AWS.
 @NullMarked
-public record S3Location(String regionName,
-                         String bucketName,
-                         String key) {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public final class S3Location {
 
-    public S3Location {
-        Objects.requireNonNull(regionName);
-        Objects.requireNonNull(bucketName);
-        Objects.requireNonNull(key);
+    @JsonProperty
+    private final String regionName;
+    @JsonProperty
+    private final String bucketName;
+    @JsonProperty
+    private final String key;
+
+    @JsonCreator
+    public S3Location(@JsonProperty("regionName") final String regionName,
+                      @JsonProperty("bucketName") final String bucketName,
+                      @JsonProperty("key") final String key) {
+        this.regionName = Objects.requireNonNull(regionName);
+        this.bucketName = Objects.requireNonNull(bucketName);
+        this.key = Objects.requireNonNull(key);
+    }
+
+    public String regionName() {
+        return regionName;
+    }
+
+    public String bucketName() {
+        return bucketName;
+    }
+
+    public String key() {
+        return key;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final S3Location that = (S3Location) o;
+        return Objects.equals(regionName, that.regionName)
+               && Objects.equals(bucketName, that.bucketName)
+               && Objects.equals(key, that.key);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(regionName, bucketName, key);
+    }
+
+    @Override
+    public String toString() {
+        return "S3Location[" +
+               "regionName=" + regionName + ", " +
+               "bucketName=" + bucketName + ", " +
+               "key=" + key + ']';
     }
 }

@@ -185,11 +185,9 @@ public class S3StreamStore implements StreamStore {
     public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
                                                   final DataVolume dataVolume,
                                                   final Progress progress) {
-        final String s3Path = getS3Path(dataVolume, simpleMeta);
-
-        final S3Manager s3Manager = createS3Manager(dataVolume);
+//        final String s3Path = getS3Path(dataVolume, simpleMeta);
+//        final S3Manager s3Manager = createS3Manager(dataVolume);
 //        s3Manager.delete(m)
-
 
         throw new UnsupportedOperationException("TODO");
     }
@@ -264,7 +262,6 @@ public class S3StreamStore implements StreamStore {
             // Upload the zip to S3.
             final S3Manager s3Manager = createS3Manager(dataVolume);
             s3Manager.upload(meta, attributeMap, zipFile);
-
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
