@@ -75,12 +75,13 @@ public class TestS3Manager {
                 .build();
 
         cacheManager = new CacheManagerImpl();
-
-        s3Manager = new S3Manager(
-                new TemplateCacheImpl(cacheManager),
+        final S3ClientHelper s3ClientHelper = new S3ClientHelper(
                 s3ClientConfig,
-                new stroom.aws.s3.client.S3MetaFieldsMapper(),
-                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(cacheManager)),
+                new S3ClientPoolImpl(cacheManager));
+        s3Manager = new S3Manager(
+                s3ClientConfig,
+                s3ClientHelper,
+                new TemplateCacheImpl(cacheManager),
                 null);
     }
 

@@ -78,25 +78,20 @@ public class S3Manager {
 
     static final String META_METADATA_KEY_PREFIX = "meta-";
 
-    public static final String FEED_TAG_KEY = "feed";
-    public static final String STREAM_TYPE_TAG_KEY = "stream-type";
     public static final String META_ID_TAG_KEY = "meta-id";
 
-    private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
-    private final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3ClientHelper s3ClientHelper;
+    private final TemplateCache templateCache;
     private final ContextVariableResolver contextVariableResolver;
 
-    public S3Manager(final TemplateCache templateCache,
-                     final S3ClientConfig s3ClientConfig,
-                     final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper,
+    public S3Manager(final S3ClientConfig s3ClientConfig,
                      final S3ClientHelper s3ClientHelper,
+                     final TemplateCache templateCache,
                      final ContextVariableResolver contextVariableResolver) {
-        this.templateCache = templateCache;
         this.s3ClientConfig = s3ClientConfig;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3ClientHelper = s3ClientHelper;
+        this.templateCache = templateCache;
         this.contextVariableResolver = contextVariableResolver;
     }
 
@@ -614,8 +609,8 @@ public class S3Manager {
     private Map<String, String> createS3TagsFromMeta(final Meta meta) {
         Objects.requireNonNull(meta);
         return Map.of(
-                FEED_TAG_KEY, meta.getFeedName(),
-                STREAM_TYPE_TAG_KEY, meta.getTypeName(),
+                S3ClientHelper.FEED_TAG_KEY, meta.getFeedName(),
+                S3ClientHelper.STREAM_TYPE_TAG_KEY, meta.getTypeName(),
                 META_ID_TAG_KEY, Long.toString(meta.getId()));
     }
 
@@ -650,25 +645,24 @@ public class S3Manager {
         return output;
     }
 
-
-    /**
-     * Creates a string representation of an S3 object of the form
-     * <pre>
-     * s3://region/bucket/key
-     * </pre>
-     */
-    public String toS3PathString(final Meta meta, final String keyNamePattern) {
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String keyName = createKey(
-                Objects.requireNonNullElseGet(keyNamePattern, this::getKeyNamePattern),
-                meta);
-        return String.join(
-                "/",
-                "s3:/",
-                s3ClientConfig.getRegion(),
-                bucketName,
-                keyName);
-    }
+//    /**
+//     * Creates a string representation of an S3 object of the form
+//     * <pre>
+//     * s3://region/bucket/key
+//     * </pre>
+//     */
+//    public String toS3PathString(final Meta meta, final String keyNamePattern) {
+//        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+//        final String keyName = createKey(
+//                Objects.requireNonNullElseGet(keyNamePattern, this::getKeyNamePattern),
+//                meta);
+//        return String.join(
+//                "/",
+//                "s3:/",
+//                s3ClientConfig.getRegion(),
+//                bucketName,
+//                keyName);
+//    }
 
 //    public DeleteObjectResponse delete(final Meta meta) {
 //        final String bucketName = createBucketName(getBucketNamePattern(), meta);

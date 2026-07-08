@@ -18,8 +18,8 @@ package stroom.core.receive;
 
 
 import stroom.aws.s3.impl.S3ManagerFactory;
+import stroom.aws.s3.shared.S3Location;
 import stroom.cache.api.CacheManager;
-import stroom.data.store.api.S3Location;
 import stroom.data.store.api.Store;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;

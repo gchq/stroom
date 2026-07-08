@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.db;
 
 
-import stroom.data.store.api.S3Location;
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.S3LocationDataVolume;

@@ -20,7 +20,6 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.aws.common.shared.AwsBasicCredentials;
 import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientPoolImpl;
-import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
@@ -69,10 +68,11 @@ public class TestS3 {
         final S3ClientConfig s3ClientConfig = getS3ClientConfig();
 
         final S3Manager s3Manager = new S3Manager(
-                new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
-                new S3MetaFieldsMapper(),
-                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(new CacheManagerImpl())),
+                new S3ClientHelper(
+                        s3ClientConfig,
+                        new S3ClientPoolImpl(new CacheManagerImpl())),
+                new TemplateCacheImpl(new CacheManagerImpl()),
                 null);
 
         final Path file = tempDir.resolve("test.txt");
@@ -128,10 +128,11 @@ public class TestS3 {
                 .build();
 
         final S3Manager s3Manager = new S3Manager(
-                new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
-                new S3MetaFieldsMapper(),
-                new S3ClientHelper(s3ClientConfig, new S3ClientPoolImpl(new CacheManagerImpl())),
+                new S3ClientHelper(
+                        s3ClientConfig,
+                        new S3ClientPoolImpl(new CacheManagerImpl())),
+                new TemplateCacheImpl(new CacheManagerImpl()),
                 null);
 
         final int iterations = 10;

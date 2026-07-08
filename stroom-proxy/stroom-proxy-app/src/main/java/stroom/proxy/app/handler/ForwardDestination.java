@@ -81,6 +81,10 @@ public interface ForwardDestination {
          */
         HTTP,
         /**
+         * Forwards to an S3 object store.
+         */
+        S3,
+        /**
          * Forwards to multiple destinations.
          */
         MULTI,

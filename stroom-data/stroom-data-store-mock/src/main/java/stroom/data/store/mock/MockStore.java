@@ -16,11 +16,11 @@
 
 package stroom.data.store.mock;
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.S3Location;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;

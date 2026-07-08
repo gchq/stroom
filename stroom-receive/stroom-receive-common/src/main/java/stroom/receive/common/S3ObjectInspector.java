@@ -22,7 +22,7 @@ import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
 import stroom.aws.s3.client.S3ClientPool;
 import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.shared.S3ClientConfig;
-import stroom.data.store.api.S3Location;
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.api.S3VolumeService;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.AttributeMap;

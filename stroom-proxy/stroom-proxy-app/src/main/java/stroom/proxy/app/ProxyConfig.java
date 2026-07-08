@@ -20,6 +20,7 @@ import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardS3Config;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
@@ -71,6 +72,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_DIR_SCANNER = "dirScanner";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
+    public static final String PROP_NAME_FORWARD_S3_DESTINATIONS = "forwardS3Destinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
     public static final String PROP_NAME_FEED_STATUS = "feedStatus";
     public static final String PROP_NAME_THREADS = "threads";
@@ -93,6 +95,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final DirScannerConfig dirScannerConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
+    private final List<ForwardS3Config> forwardS3Destinations;
     private final LogStreamConfig logStreamConfig;
     private final FeedStatusConfig feedStatusConfig;
     private final ThreadConfig threadConfig;
@@ -110,6 +113,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new EventStoreConfig(),
                 new AggregatorConfig(),
                 new DirScannerConfig(),
+                new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new LogStreamConfig(),
@@ -134,6 +138,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_DIR_SCANNER) final DirScannerConfig dirScannerConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
+            @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS) final List<ForwardS3Config> forwardS3Destinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
@@ -153,6 +158,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.dirScannerConfig = dirScannerConfig;
         this.forwardFileDestinations = NullSafe.list(forwardFileDestinations);
         this.forwardHttpDestinations = NullSafe.list(forwardHttpDestinations);
+        this.forwardS3Destinations = NullSafe.list(forwardS3Destinations);
         this.logStreamConfig = Objects.requireNonNullElseGet(logStreamConfig, LogStreamConfig::new);
         this.feedStatusConfig = Objects.requireNonNullElseGet(feedStatusConfig, FeedStatusConfig::new);
         this.threadConfig = Objects.requireNonNullElseGet(threadConfig, ThreadConfig::new);
@@ -409,6 +415,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private DirScannerConfig dirScannerConfig = new DirScannerConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
+        private final List<ForwardS3Config> forwardS3Destinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
@@ -495,6 +502,19 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder addForwardS3Destination(final ForwardS3Config forwarderS3Config) {
+            this.forwardS3Destinations.add(forwarderS3Config);
+            return this;
+        }
+
+        public Builder forwardS3Destinations(final Collection<ForwardS3Config> forwarderS3Configs) {
+            this.forwardS3Destinations.clear();
+            if (forwarderS3Configs != null) {
+                this.forwardS3Destinations.addAll(forwarderS3Configs);
+            }
+            return this;
+        }
+
         public Builder logStreamConfig(final LogStreamConfig logStreamConfig) {
             this.logStreamConfig = logStreamConfig;
             return this;
@@ -534,6 +554,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     dirScannerConfig,
                     forwardFileDestinations,
                     forwardHttpDestinations,
+                    forwardS3Destinations,
                     logStreamConfig,
                     feedStatusConfig,
                     threadConfig,

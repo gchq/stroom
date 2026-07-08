@@ -17,9 +17,9 @@
 package stroom.receive.common;
 
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.aws.sqs.SqsClientFactory;
 import stroom.aws.sqs.SqsConfig;
-import stroom.data.store.api.S3Location;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.security.api.CommonSecurityContext;

@@ -17,9 +17,9 @@
 package stroom.receive.common;
 
 
-import stroom.data.store.api.S3Location;
+import stroom.aws.s3.shared.S3EventResource.S3EventRequest;
+import stroom.aws.s3.shared.S3Location;
 import stroom.meta.api.AttributeMap;
-import stroom.receive.common.S3EventResource.S3EventRequest;
 import stroom.util.shared.NullSafe;
 
 import org.jspecify.annotations.NullMarked;

@@ -16,11 +16,15 @@
 
 package stroom.aws.common.shared;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
-public final class AwsSystemPropertyCredentials implements AwsCredentials {
+public final class AwsSystemPropertyCredentials
+        extends AbstractConfig
+        implements AwsCredentials {
 
     public AwsSystemPropertyCredentials() {
     }

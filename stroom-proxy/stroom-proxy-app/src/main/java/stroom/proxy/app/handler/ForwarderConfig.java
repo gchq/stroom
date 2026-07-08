@@ -20,7 +20,7 @@ import stroom.proxy.app.DownstreamHostConfig;
 import stroom.util.io.PathCreator;
 
 public sealed interface ForwarderConfig
-        permits ForwardHttpPostConfig, ForwardFileConfig {
+        permits ForwardFileConfig, ForwardHttpPostConfig, ForwardS3Config {
 
     String getName();
 

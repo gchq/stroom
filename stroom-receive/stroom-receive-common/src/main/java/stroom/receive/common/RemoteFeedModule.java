@@ -16,6 +16,7 @@
 
 package stroom.receive.common;
 
+import stroom.aws.s3.shared.S3EventResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;

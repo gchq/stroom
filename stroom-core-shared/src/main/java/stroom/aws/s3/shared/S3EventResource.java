@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.receive.common;
+package stroom.aws.s3.shared;
 
 
-import stroom.data.store.api.S3Location;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

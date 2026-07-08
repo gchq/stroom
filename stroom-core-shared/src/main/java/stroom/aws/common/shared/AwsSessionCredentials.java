@@ -16,6 +16,8 @@
 
 package stroom.aws.common.shared;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -24,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public final class AwsSessionCredentials implements AwsCredentials {
+public final class AwsSessionCredentials extends AbstractConfig implements AwsCredentials {
 
     @JsonProperty
     private final String accessKeyId;

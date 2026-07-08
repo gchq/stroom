@@ -16,6 +16,7 @@
 
 package stroom.aws.common.shared;
 
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -37,7 +38,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = AwsSystemPropertyCredentials.class, name = "system"),
         @Type(value = AwsWebCredentials.class, name = "web")
 })
-public sealed interface AwsCredentials permits
+public sealed interface AwsCredentials extends IsProxyConfig
+        permits
         AwsAnonymousCredentials,
         AwsBasicCredentials,
         AwsDefaultCredentials,

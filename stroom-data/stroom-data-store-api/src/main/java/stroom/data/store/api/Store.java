@@ -60,7 +60,7 @@ public interface Store {
      */
     @NullMarked
     void addExistingS3Source(MetaProperties metaProperties,
-                             S3Location s3Location) throws DataException;
+                             stroom.aws.s3.shared.S3Location s3Location) throws DataException;
 
     /**
      * <p>

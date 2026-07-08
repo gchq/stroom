@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs.s3v1;
 
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.api.DataException;
-import stroom.data.store.api.S3Location;
 import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.DataVolumeService;

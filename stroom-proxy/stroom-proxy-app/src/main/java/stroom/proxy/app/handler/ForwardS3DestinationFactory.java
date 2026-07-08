@@ -16,14 +16,7 @@
 
 package stroom.proxy.app.handler;
 
-import com.google.inject.AbstractModule;
+public interface ForwardS3DestinationFactory {
 
-public class ForwarderModule extends AbstractModule {
-
-    @Override
-    protected void configure() {
-        bind(ForwardFileDestinationFactory.class).to(ForwardFileDestinationFactoryImpl.class);
-        bind(ForwardHttpPostDestinationFactory.class).to(ForwardHttpPostDestinationFactoryImpl.class);
-        bind(ForwardS3DestinationFactory.class).to(ForwardS3DestinationFactoryImpl.class);
-    }
+    ForwardDestination create(ForwardS3Config forwardS3Config);
 }

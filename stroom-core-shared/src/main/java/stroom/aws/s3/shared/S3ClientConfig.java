@@ -18,6 +18,9 @@ package stroom.aws.s3.shared;
 
 import stroom.aws.common.shared.AwsAssumeRole;
 import stroom.aws.common.shared.AwsCredentials;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,8 +30,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+@NotInjectableConfig // Used in lists so not a unique thing
 @JsonInclude(Include.NON_NULL)
-public class S3ClientConfig {
+public class S3ClientConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String DEFAULT_BUCKET_NAME = "stroom.${feed}.${type}";
     public static final String DEFAULT_KEY_PATTERN =

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.data.store.api;
+package stroom.aws.s3.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
 // TODO In theory we don't need region name as bucketName is globally unique in AWS.
-@NullMarked
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class S3Location {
 

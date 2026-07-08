@@ -186,6 +186,9 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     .get(forwardHttpPostConfig);
             case final ForwardFileConfig forwardFileConfig -> instantForwardFileProvider.get()
                     .get(forwardFileConfig);
+            case final ForwardS3Config ignored -> {
+                throw new IllegalStateException("S3 forwarder does not support instant forwarding.");
+            }
         };
     }
 

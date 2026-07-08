@@ -16,6 +16,7 @@
 
 package stroom.aws.common.shared;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,7 +28,7 @@ import java.util.Objects;
 
 @NotInjectableConfig
 @JsonInclude(Include.NON_NULL)
-public final class AwsBasicCredentials implements AwsCredentials {
+public final class AwsBasicCredentials extends AbstractConfig implements AwsCredentials {
 
     @JsonProperty
     private final String accessKeyId;

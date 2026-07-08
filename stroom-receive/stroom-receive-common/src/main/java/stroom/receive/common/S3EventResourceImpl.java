@@ -17,6 +17,7 @@
 package stroom.receive.common;
 
 
+import stroom.aws.s3.shared.S3EventResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

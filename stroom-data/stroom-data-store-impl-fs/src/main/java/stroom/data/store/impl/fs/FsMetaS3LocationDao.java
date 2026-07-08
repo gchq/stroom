@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 
-import stroom.data.store.api.S3Location;
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.impl.fs.shared.FsVolume;
 
 import org.jspecify.annotations.Nullable;

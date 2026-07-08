@@ -16,6 +16,8 @@
 
 package stroom.aws.common.shared;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -24,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public final class AwsWebCredentials implements AwsCredentials {
+public final class AwsWebCredentials extends AbstractConfig implements AwsCredentials {
 
     /**
      * Define the role arn that should be used by this credentials provider.

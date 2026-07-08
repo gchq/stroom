@@ -68,6 +68,16 @@ import java.util.stream.Collectors;
 public class S3ClientHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ClientHelper.class);
+//    private static final CIKey FEED_VAR = CIKey.internStaticKey("feed");
+//    private static final CIKey TYPE_VAR = CIKey.internStaticKey("type");
+//    private static final CIKey ID_VAR = CIKey.internStaticKey("id");
+//    private static final CIKey ID_PATH_VAR = CIKey.internStaticKey("idPath");
+//    private static final CIKey ID_PADDED_VAR = CIKey.internStaticKey("idPadded");
+//    private static final CIKey SEQUENCE_NO_VAR = CIKey.internStaticKey("sequenceNo");
+//    private static final int PAD_SIZE = 3;
+
+    public static final String FEED_TAG_KEY = "feed";
+    public static final String STREAM_TYPE_TAG_KEY = "stream-type";
 
     private final S3ClientConfig s3ClientConfig;
     private final S3ClientPool s3ClientPool;
@@ -85,6 +95,33 @@ public class S3ClientHelper {
     private PooledClient<S3Client> getSyncClient() {
         return s3ClientPool.getPooledS3Client(s3ClientConfig);
     }
+
+//    /**
+//     * Pad a prefix.
+//     */
+//    private static String padId(final long current) {
+//        return StringIdUtil.idToString(current);
+//    }
+
+//    /**
+//     * Pkg private for testing
+//     *
+//     * @return The metaId as a directory path with one dir for 1000 metaIds,
+//     * e.g. metaId 123,456,789 => "123/456"
+//     */
+//    static String getIdPath(final long metaId) {
+//        final String idStr = padId(metaId);
+//        final StringBuilder sb = new StringBuilder();
+//        final int endIdxExc = idStr.length() - PAD_SIZE;
+//        for (int i = 0; i < endIdxExc; i += PAD_SIZE) {
+//            final String part = idStr.substring(i, i + PAD_SIZE);
+//            if (!sb.isEmpty()) {
+//                sb.append("/");
+//            }
+//            sb.append(part);
+//        }
+//        return sb.toString();
+//    }
 
     public PutObjectResponse upload(final String bucketName,
                                     final String key,

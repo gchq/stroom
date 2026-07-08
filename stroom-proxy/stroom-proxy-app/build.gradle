@@ -14,6 +14,7 @@ application {
 }
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
@@ -46,6 +47,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.aws.s3.transfer.manager
     implementation libs.aws.sqs
     implementation libs.commons.compress
     implementation libs.dropwizard.assets
