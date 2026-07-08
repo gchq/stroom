@@ -252,7 +252,8 @@ public class TemplateUtil {
         private final Set<CIKey> varsInTemplate;
         private final List<TemplatePart> templateParts;
         private final int partExtractorCount;
-        private boolean isAllStaticText;
+        private final boolean isAllStaticText;
+        private final Supplier<ExecutorBuilder> builderSupplier;
 
         private Template(final String template,
                          final Set<CIKey> varsInTemplate,
@@ -260,9 +261,14 @@ public class TemplateUtil {
             this.template = Objects.requireNonNull(template);
             this.varsInTemplate = NullSafe.unmodifialbeSet(varsInTemplate);
             this.templateParts = NullSafe.unmodifiableList(templateParts);
-            // Cache this
+            // Cache these
             this.partExtractorCount = this.templateParts.size();
             this.isAllStaticText = isAllStatic(templateParts);
+            if (isAllStaticText) {
+                this.builderSupplier = () -> new AllStaticExecutorBuilderImpl(this);
+            } else {
+                this.builderSupplier = () -> new ExecutorBuilderImpl(this);
+            }
         }
 
         private static Template staticTemplate(final String template, final String formattedText) {
@@ -343,11 +349,7 @@ public class TemplateUtil {
          * {@link ExecutorBuilderImpl} is not thread safe.
          */
         public ExecutorBuilder buildExecutor() {
-            if (isAllStaticText) {
-                return new AllStaticExecutorBuilderImpl(this);
-            } else {
-                return new ExecutorBuilderImpl(this);
-            }
+            return builderSupplier.get();
         }
 
         /**

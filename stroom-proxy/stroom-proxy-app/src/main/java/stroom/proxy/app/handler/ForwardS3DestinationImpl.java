@@ -39,6 +39,7 @@ import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -60,8 +61,9 @@ import java.util.stream.Collectors;
 public class ForwardS3DestinationImpl implements ForwardS3Destination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardS3DestinationImpl.class);
-    private static final CIKey FEED_VAR = CIKey.internStaticKey("feed");
-    private static final CIKey TYPE_VAR = CIKey.internStaticKey("type");
+    private static final CIKey FEED_VAR = CIKeys.FEED;
+    private static final CIKey TYPE_VAR = CIKeys.TYPE;
+    private static final CIKey RECEIPT_ID_VAR = CIKey.internStaticKey(StandardHeaderArguments.RECEIPT_ID);
     private static final S3UploadProperties DEFAULT_UPLOAD_PROPERTIES = S3UploadProperties.builder()
             .contentType("application/zip")
             .build();
@@ -105,8 +107,8 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
             attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
             final FeedKey feedKey = FeedKey.of(attributeMap.get(FEED_VAR.get()), attributeMap.get(TYPE_VAR.get()));
-            final String bucketName = createBucketName(feedKey);
-            final String key = createKey(feedKey);
+            final String bucketName = createBucketName(feedKey, attributeMap);
+            final String key = createKey(feedKey, attributeMap);
 
             LOGGER.debug("add() - sourceDir: {}, feedKey: {}, bucketName: {}, keyPattern: {}",
                     sourceDir, feedKey, bucketName, key);
@@ -127,7 +129,7 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
 
                 LOGGER.debug("add() - Uploaded {} to S3, bucket: {}, key: {}", zipFile, bucketName, key);
 
-                // If not, we rely on S3 Event Notifications
+                // If not, we rely on Event Notifications from S3+SQS
                 if (NotificationType.REST == forwardS3Config.getNotificationType()) {
                     sendRestNotification(bucketName, key, attributeMap);
                 }
@@ -159,9 +161,7 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
         LOGGER.debug("sendRestNotification() - uri: {}, request: {}", uri, request);
 
         final WebTarget target = jerseyClient.target(uri);
-        try (final Response response = target.request(MediaType.APPLICATION_JSON)
-                .post(Entity.json(request))) {
-
+        try (final Response response = sendRequest(target, request)) {
             if (response.getStatus() != HttpServletResponse.SC_OK) {
                 final String error;
                 try {
@@ -175,8 +175,14 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
         }
     }
 
-    private Map<CIKey, String> buildS3MetaData(final AttributeMap attributeMap) {
+    private static Response sendRequest(final WebTarget target, final S3EventRequest request) {
+        final Response response = target.request(MediaType.APPLICATION_JSON)
+                .post(Entity.json(request));
+        LOGGER.debug("sendRequest() - response: {}", response);
+        return response;
+    }
 
+    private Map<CIKey, String> buildS3MetaData(final AttributeMap attributeMap) {
         final Map<CIKey, String> map = attributeMap.entrySet()
                 .stream()
                 .map(entry -> {
@@ -196,31 +202,34 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
         return map;
     }
 
-    private String createBucketName(final FeedKey feedKey) {
+    private String createBucketName(final FeedKey feedKey, final AttributeMap attributeMap) {
         final String bucketName = forwardS3Config.getClientConfig().getBucketName();
         NullSafe.requireNonBlankString(bucketName);
-        return applyTemplate(bucketName, feedKey);
+        return applyTemplate(bucketName, feedKey, attributeMap);
     }
 
-    private String createKey(final FeedKey feedKey) {
+    private String createKey(final FeedKey feedKey, final AttributeMap attributeMap) {
         final String keyPattern = forwardS3Config.getClientConfig().getKeyPattern();
         NullSafe.requireNonBlankString(keyPattern);
-        return applyTemplate(keyPattern, feedKey);
+        return applyTemplate(keyPattern, feedKey, attributeMap);
     }
 
     private String applyTemplate(final String templateStr,
-                                 final FeedKey feedKey) {
+                                 final FeedKey feedKey,
+                                 final AttributeMap attributeMap) {
         final Template template = templateCache.getTemplate(templateStr);
         // Use now() for time replacements. When one of: rolling, agg splitting and record splitting is used,
         // the time vars can distinguish multiple files coming from the same stream
+        // It doesn't make sense to have a sequence numbers in the template as there will potentially
+        // be multiple nodes uploading to the same s3 bucket, so a seq number would need to be globally
+        // unique. Better to use a UUID or receiptId instead.
         final String output = template.buildExecutor()
                 .addStandardTimeReplacements()
                 .addUuidReplacement(false)
                 .addLazyReplacement(FEED_VAR, feedKey::feed)
                 .addLazyReplacement(TYPE_VAR, feedKey::type)
-//                .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
-//                .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
-//                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
+                .addLazyReplacement(RECEIPT_ID_VAR, () ->
+                        attributeMap.get(RECEIPT_ID_VAR))
                 .execute();
 
         LOGGER.debug("applyTemplate() - template: '{}', output: '{}", template, output);

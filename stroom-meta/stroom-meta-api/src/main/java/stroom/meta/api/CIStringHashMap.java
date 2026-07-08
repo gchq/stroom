@@ -16,6 +16,8 @@
 
 package stroom.meta.api;
 
+import stroom.util.shared.string.CIKey;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -76,6 +78,18 @@ class CIStringHashMap implements Map<String, String> {
     @Override
     public String get(final Object key) {
         return map.get(new CIString((String) key));
+    }
+
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value or null.
+     */
+    public String get(final CIKey key) {
+        return map.get(new CIString(key));
     }
 
     /**
@@ -219,6 +233,32 @@ class CIStringHashMap implements Map<String, String> {
         CIString(final String key) {
             this.key = key.trim();
             this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
+        }
+
+        /**
+         * A stop-gap until {@link AttributeMap} is replaced with a CiKey based map.
+         * Saves the duplicate lower-casing if we already know the lower case.
+         */
+        CIString(final CIKey ciKey) {
+            if (ciKey.isBlank()) {
+                this.key = "";
+                this.lowerKey = "";
+            } else {
+                final String ciKeyStr = ciKey.get();
+                if (needsTrimming(ciKeyStr)) {
+                    this.key = ciKeyStr.trim();
+                    this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
+                } else {
+                    this.key = ciKeyStr;
+                    this.lowerKey = ciKey.getAsLowerCase();
+                }
+            }
+        }
+
+        private static boolean needsTrimming(final String str) {
+            final boolean startsWithSpace = Character.isWhitespace(str.charAt(0));
+            final boolean endsWithSpace = Character.isWhitespace(str.charAt(str.length() - 1));
+            return startsWithSpace || endsWithSpace;
         }
 
         public String getKey() {
