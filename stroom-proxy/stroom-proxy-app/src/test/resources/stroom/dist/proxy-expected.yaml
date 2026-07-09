@@ -105,6 +105,7 @@ proxyConfig:
       queueAndRetryEnabled: true
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
+  forwardS3Destinations: []
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
@@ -162,8 +163,7 @@ proxyConfig:
     - "Test Events"
     - "Test Reference"
     receiptCheckMode: "FEED_STATUS"
-    s3EventNotification:
-      sqsConnectors: []
+    sqs: null
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"

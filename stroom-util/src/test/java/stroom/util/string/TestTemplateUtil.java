@@ -18,8 +18,10 @@ package stroom.util.string;
 
 import stroom.test.common.TestUtil;
 import stroom.util.shared.string.CIKey;
+import stroom.util.string.TemplateUtil.AllStaticTemplateImpl;
 import stroom.util.string.TemplateUtil.ExecutorBuilder;
 import stroom.util.string.TemplateUtil.Template;
+import stroom.util.string.TemplateUtil.TemplateImpl;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
@@ -385,9 +387,16 @@ class TestTemplateUtil {
 
     @Test
     void testAllStatic() {
-        assertThat(TemplateUtil.parseTemplate("foo").isStatic())
+        final Template template1 = TemplateUtil.parseTemplate("foo");
+        assertThat(template1.isStatic())
                 .isTrue();
-        assertThat(TemplateUtil.parseTemplate("foo${bar}").isStatic())
+        assertThat(template1)
+                .isInstanceOf(AllStaticTemplateImpl.class);
+
+        final Template template2 = TemplateUtil.parseTemplate("foo${bar}");
+        assertThat(template2.isStatic())
                 .isFalse();
+        assertThat(template2)
+                .isInstanceOf(TemplateImpl.class);
     }
 }

@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.guice;
 
+import stroom.aws.s3.client.S3ClientModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -88,6 +89,7 @@ public class ProxyCoreModule extends AbstractModule {
         install(new ProxyCacheServiceModule());
         install(new QueueModule());
         install(new StoreModule());
+        install(new S3ClientModule());
 
         bind(ProxyId.class).asEagerSingleton();
         bind(ReceiptIdGenerator.class).to(ProxyReceiptIdGenerator.class).asEagerSingleton();

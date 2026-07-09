@@ -81,7 +81,6 @@ public class StoreImpl implements Store, AttributeMapFactory {
     @Override
     public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) throws DataException {
         Objects.requireNonNull(metaProperties);
-        Objects.requireNonNull(volumeGroup);
         LOGGER.debug("openTarget() - metaProperties: {}, volumeGroup: {}", metaProperties, volumeGroup);
 
         try {

@@ -18,10 +18,13 @@ package stroom.receive.common;
 
 
 import stroom.aws.s3.shared.S3EventResource;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Objects;
 
@@ -36,19 +39,21 @@ public class S3EventResourceImpl implements S3EventResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3EventResourceImpl.class);
 
-    private final S3EventNotificationService s3EventNotificationService;
+    private final Provider<S3EventNotificationService> s3EventNotificationServiceProvider;
 
     @Inject
-    S3EventResourceImpl(final S3EventNotificationService s3EventNotificationService) {
-        this.s3EventNotificationService = s3EventNotificationService;
+    S3EventResourceImpl(final Provider<S3EventNotificationService> s3EventNotificationServiceProvider) {
+        this.s3EventNotificationServiceProvider = s3EventNotificationServiceProvider;
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Not a user operation
     @Override
     public void notify(final S3EventRequest request) {
         LOGGER.debug("notify() - request: {}", request);
         Objects.requireNonNull(request);
         // TODO Allow calls only from proxy at the moment. May want to open it up for
         //  other people to use.
-        s3EventNotificationService.notify(request.getS3Location(), request.getMetaData());
+        s3EventNotificationServiceProvider.get()
+                .notify(request.getS3Location(), request.getMetaData());
     }
 }

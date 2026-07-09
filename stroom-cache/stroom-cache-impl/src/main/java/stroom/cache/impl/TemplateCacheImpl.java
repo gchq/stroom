@@ -40,7 +40,6 @@ public class TemplateCacheImpl implements TemplateCache {
 
     @Inject
     public TemplateCacheImpl(final CacheManager cacheManager) {
-        // TODO config ought to come from config somewhere
         // Templates are immutable so no expiry needed
         this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,

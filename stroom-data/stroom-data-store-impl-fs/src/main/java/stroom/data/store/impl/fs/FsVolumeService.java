@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.aws.s3.shared.S3ClientConfigService;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.TemplateCache;
@@ -95,7 +96,8 @@ import java.util.stream.Collectors;
         EntityAction.CREATE,
         EntityAction.UPDATE,
         EntityAction.DELETE})
-public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
+public class FsVolumeService
+        implements S3VolumeService, S3ClientConfigService, EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
@@ -974,6 +976,12 @@ public class FsVolumeService implements S3VolumeService, EntityEvent.Handler, Cl
 
     private Path getAbsVolumePath(final FsVolume volume) {
         return pathCreator.toAppPath(volume.getPath());
+    }
+
+    @Override
+    public Optional<S3ClientConfig> getS3ClientConfig(final String regionName, final String bucketName) {
+        return getS3Volume(regionName, bucketName)
+                .map(FsVolume::getS3ClientConfig);
     }
 
 

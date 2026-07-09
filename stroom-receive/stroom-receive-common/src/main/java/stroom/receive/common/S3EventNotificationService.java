@@ -17,6 +17,12 @@
 package stroom.receive.common;
 
 
+import stroom.aws.s3.client.S3ClientHelper;
+import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
+import stroom.aws.s3.client.S3ClientPool;
+import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.aws.s3.shared.S3ClientConfigService;
 import stroom.aws.s3.shared.S3Location;
 import stroom.aws.sqs.SqsClientFactory;
 import stroom.aws.sqs.SqsConfig;
@@ -32,6 +38,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -46,6 +53,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -75,44 +83,43 @@ public class S3EventNotificationService {
     private static final String BUCKET_FIELD = "Bucket";
     private static final String RECORDS_FIELD = "Records";
 
-    private final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final SqsClientFactory sqsClientFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final S3EventConsumer s3EventConsumer;
-    private final S3ObjectInspector s3ObjectInspector;
+    private final S3ClientPool s3ClientPool;
+    private final S3ClientConfigService s3ClientConfigService;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final CommonSecurityContext commonSecurityContext;
 
-    private volatile S3EventNotificationConfig lastS3EventNotificationConfig = null;
-    private volatile List<ClientState> sqsClients;
+    //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
+    private volatile SqsConfig lastSqsConfig = null;
+    private volatile ClientState sqsClientState;
 
     @Inject
     public S3EventNotificationService(
-            final Provider<S3EventNotificationConfig> s3EventNotificationConfigProvider,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final SqsClientFactory sqsClientFactory,
             final ReceiptIdGenerator receiptIdGenerator,
             final S3EventConsumer s3EventConsumer,
-            final S3ObjectInspector s3ObjectInspector,
+            final S3ClientPool s3ClientPool,
+            final S3ClientConfigService s3ClientConfigService,
+            final S3MetaFieldsMapper s3MetaFieldsMapper,
             final SecurityContext commonSecurityContext) {
-        this.s3EventNotificationConfigProvider = s3EventNotificationConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.s3EventConsumer = s3EventConsumer;
-        this.s3ObjectInspector = s3ObjectInspector;
+        this.s3ClientPool = s3ClientPool;
+        this.s3ClientConfigService = s3ClientConfigService;
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.commonSecurityContext = commonSecurityContext;
     }
 
     public void poll() {
-        final List<ClientState> clients = getSqsClients();
-        LOGGER.debug("poll() - clients: {}", clients);
-        if (NullSafe.hasItems(clients)) {
-            for (final ClientState clientState : clients) {
-                poll(clientState);
-                if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.info("Thread interrupted, breaking out of SQS clients loop");
-                    break;
-                }
-            }
-        }
+        final ClientState clientState = getSqsClient();
+        LOGGER.debug("poll() - clientState: {}", clientState);
+        poll(clientState);
     }
 
     /**
@@ -127,7 +134,7 @@ public class S3EventNotificationService {
                 final AttributeMap attributeMap = new AttributeMap();
                 addReceiptId(attributeMap);
 
-                s3ObjectInspector.addS3MetaAttributes(s3Location, attributeMap);
+                addS3MetaAttributes(s3Location, attributeMap);
                 // Override the s3 metadata with any supplied meta.
                 if (NullSafe.hasEntries(metaData)) {
                     attributeMap.putAll(metaData);
@@ -137,6 +144,39 @@ public class S3EventNotificationService {
                 s3EventConsumer.accept(new S3CreateEvent(s3Location, attributeMap));
             });
         });
+    }
+
+    public void addS3MetaAttributes(final S3Location s3Location,
+                                    final AttributeMap attributeMap) {
+        LOGGER.debug("addS3MetaAttributes() - s3Location: {}, attributeMap: {}",
+                s3Location, attributeMap);
+        Objects.requireNonNull(s3Location);
+        Objects.requireNonNull(attributeMap);
+
+        final Optional<S3ClientConfig> optS3ClientConfig = s3ClientConfigService.getS3ClientConfig(
+                s3Location.regionName(),
+                s3Location.bucketName());
+
+        optS3ClientConfig.ifPresentOrElse(
+                s3ClientConfig -> {
+                    final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
+                    final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
+                            s3Location.bucketName(),
+                            s3Location.key());
+
+                    // Map any known keys back to their original form as some of our keys may not fit the
+                    // key restrictions.
+                    objectInfo.s3Metadata().forEach((k, v) -> {
+                        final CIKey originalKey = s3MetaFieldsMapper.getOriginalKey(k)
+                                .orElse(k);
+                        attributeMap.put(originalKey.get(), v);
+                    });
+                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, modified attributeMap: {}",
+                            s3Location, attributeMap);
+                },
+                () -> LOGGER.warn("No S3 client config found matching region '{}' and bucket '{}'. " +
+                                  "Unable to fetch S3 metadata for key '{}'",
+                        s3Location.regionName(), s3Location.bucketName(), s3Location.key()));
     }
 
     private void poll(final ClientState clientState) {
@@ -312,7 +352,7 @@ public class S3EventNotificationService {
                                 bucketArn, objectKey, objectSize, attributeMap);
 
                         final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
-                        s3ObjectInspector.addS3MetaAttributes(s3Location, attributeMap);
+                        addS3MetaAttributes(s3Location, attributeMap);
 //                        addS3MetaAttributes(s3Location, attributeMap);
                         s3CreateEvent = new S3CreateEvent(s3Location, attributeMap);
                     } else {
@@ -398,38 +438,37 @@ public class S3EventNotificationService {
         }
     }
 
-    private List<ClientState> getSqsClients() {
+    private ClientState getSqsClient() {
         // Intentionally use instance equality as the provider will return a different instance
         // if the config has changed.
-        if (s3EventNotificationConfigProvider.get() != lastS3EventNotificationConfig) {
+        if (receiveDataConfigProvider.get().getSqs() != lastSqsConfig) {
             synchronized (this) {
-                final S3EventNotificationConfig newS3EventNotificationConfig = s3EventNotificationConfigProvider.get();
-                if (newS3EventNotificationConfig != lastS3EventNotificationConfig) {
-                    final List<ClientState> oldClients = sqsClients;
-                    closeClients(oldClients);
-                    sqsClients = NullSafe.stream(newS3EventNotificationConfig.getSqsConnectors())
-                            .map(sqsConfig -> {
-                                final SqsClient sqsClient = sqsClientFactory.createSqsClient(sqsConfig);
-                                return new ClientState(sqsClient, sqsConfig);
-                            })
-                            .toList();
-                    lastS3EventNotificationConfig = newS3EventNotificationConfig;
-                    LOGGER.debug(() -> LogUtil.message("getClients() - sqsClients.size: {}", sqsClients.size()));
+                final SqsConfig newSqsConfig = receiveDataConfigProvider.get().getSqs();
+                if (newSqsConfig != null) {
+                    if (newSqsConfig != lastSqsConfig) {
+                        final ClientState oldClientState = sqsClientState;
+                        closeClient(oldClientState);
+                        final SqsClient sqsClient = sqsClientFactory.createSqsClient(newSqsConfig);
+                        sqsClientState = new ClientState(sqsClient, newSqsConfig);
+                        lastSqsConfig = newSqsConfig;
+                        LOGGER.debug(() -> LogUtil.message("getClients() - sqsClientState: {}", sqsClientState));
+                    }
+                } else {
+                    sqsClientState = null;
+                    lastSqsConfig = null;
                 }
             }
         }
-        return sqsClients;
+        return sqsClientState;
     }
 
-    private void closeClients(final List<ClientState> clients) {
-        for (final ClientState clientState : NullSafe.list(clients)) {
-            try {
-                clientState.sqsClient.close();
-            } catch (final Exception e) {
-                LOGGER.error(LogUtil.message("Error closing sqsClient {}, config: {},  - {}",
-                        clientState.sqsClient, clientState.config, LogUtil.exceptionMessage(e)), e);
-                throw new RuntimeException(e);
-            }
+    private void closeClient(final ClientState clientState) {
+        try {
+            clientState.sqsClient.close();
+        } catch (final Exception e) {
+            LOGGER.error(LogUtil.message("Error closing sqsClient {}, config: {},  - {}",
+                    clientState.sqsClient, clientState.config, LogUtil.exceptionMessage(e)), e);
+            throw new RuntimeException(e);
         }
     }
 

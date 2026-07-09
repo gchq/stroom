@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.db;
 
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FsFeedPathDao;
+import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.FsOrphanedMetaDao;
 import stroom.data.store.impl.fs.FsTypePathDao;
 import stroom.data.store.impl.fs.FsVolumeCache;
@@ -38,6 +39,7 @@ public class FsDataStoreDaoModule extends AbstractModule {
         super.configure();
 
         bind(DataVolumeDao.class).to(DataVolumeDaoImpl.class);
+        bind(FsMetaS3LocationDao.class).to(FsMetaS3LocationDaoImpl.class);
         bind(FsFeedPathDao.class).to(FsFeedPathDaoImpl.class);
         bind(FsTypePathDao.class).to(FsTypePathDaoImpl.class);
         bind(FsVolumeDao.class).to(FsVolumeDaoImpl.class);

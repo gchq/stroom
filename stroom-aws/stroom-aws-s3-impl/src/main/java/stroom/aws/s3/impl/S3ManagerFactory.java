@@ -38,7 +38,6 @@ public class S3ManagerFactory {
 
     @Inject
     public S3ManagerFactory(final TemplateCache templateCache,
-                            final stroom.aws.s3.client.S3MetaFieldsMapper s3MetaFieldsMapper,
                             final S3ClientPool s3ClientPool,
                             final S3ClientConfigCache s3ClientConfigCache,
                             final ContextVariableResolver contextVariableResolver) {

@@ -16,6 +16,8 @@
 
 package stroom.receive;
 
+import stroom.aws.s3.client.S3ClientModule;
+import stroom.aws.s3.impl.S3ConfigModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
@@ -97,6 +99,8 @@ public class TestBaseModule extends AbstractModule {
         install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
         install(new TaskContextModule());
+        install(new S3ClientModule());
+        install(new S3ConfigModule());
         GuiceTestUtil.buildMockBinder(binder())
                 .addMockBindingFor(PipelineService.class)
                 .addMockBindingFor(ProcessorFilterService.class);

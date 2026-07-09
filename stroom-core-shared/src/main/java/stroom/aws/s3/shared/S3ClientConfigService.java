@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.aws.common.shared;
+package stroom.aws.s3.shared;
 
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.NotInjectableConfig;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.util.Optional;
 
-@NotInjectableConfig
-@JsonInclude(Include.NON_NULL)
-public final class AwsAnonymousCredentials extends AbstractConfig implements AwsCredentials {
+public interface S3ClientConfigService {
 
-    public AwsAnonymousCredentials() {
+    Optional<S3ClientConfig> getS3ClientConfig(final String regionName,
+                                               final String bucketName);
+
+    default Optional<S3ClientConfig> getS3ClientConfig(final S3Location s3Location) {
+        return getS3ClientConfig(s3Location.regionName(), s3Location.bucketName());
     }
-
 }

@@ -1,19 +1,3 @@
-/*
- * Copyright 2016-2025 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.proxy.app.guice;
 
 import com.google.inject.AbstractModule;
@@ -34,19 +18,19 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.DownstreamHostConfig getDownstreamHostConfig(
+    stroom.proxy.app.DirScannerConfig getDirScannerConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.DownstreamHostConfig.class);
+                stroom.proxy.app.DirScannerConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.DirScannerConfig getDirScannerConfig(
+    stroom.proxy.app.DownstreamHostConfig getDownstreamHostConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.DirScannerConfig.class);
+                stroom.proxy.app.DownstreamHostConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -182,6 +166,96 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ai.shared.KeyStore getKeyStoreButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.ai.shared.KeyStore cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.ai.shared.SSLConfig getSSLConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.ai.shared.SSLConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.common.shared.AwsAnonymousCredentials getAwsAnonymousCredentialsButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.common.shared.AwsAnonymousCredentials cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.common.shared.AwsBasicCredentials getAwsBasicCredentialsButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.common.shared.AwsBasicCredentials cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.common.shared.AwsDefaultCredentials getAwsDefaultCredentialsButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.common.shared.AwsDefaultCredentials cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.common.shared.AwsEnvironmentVariableCredentials getAwsEnvironmentVariableCredentialsButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.common.shared.AwsEnvironmentVariableCredentials cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.common.shared.AwsProfileCredentials getAwsProfileCredentialsButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.common.shared.AwsProfileCredentials cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.s3.shared.S3ClientConfig getS3ClientConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.s3.shared.S3ClientConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.aws.sqs.SqsConfig getSqsConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.aws.sqs.SqsConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.handler.ForwardFileConfig getForwardFileConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
@@ -212,6 +286,16 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.handler.ForwardS3Config getForwardS3ConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.handler.ForwardS3Config cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.handler.PathTemplateConfig getPathTemplateConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
@@ -232,7 +316,7 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.util.cert.SSLConfig getSSLConfigButThrow(
+    stroom.util.cert.SSLConfig getSSLConfig2ButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
                 "stroom.util.cert.SSLConfig cannot be injected directly. "

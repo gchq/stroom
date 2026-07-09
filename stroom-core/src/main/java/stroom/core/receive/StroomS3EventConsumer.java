@@ -17,9 +17,7 @@
 package stroom.core.receive;
 
 
-import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.aws.s3.shared.S3Location;
-import stroom.cache.api.CacheManager;
 import stroom.data.store.api.Store;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
@@ -42,16 +40,12 @@ public class StroomS3EventConsumer implements S3EventConsumer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomS3EventConsumer.class);
 
     private final AttributeMapFilterFactory attributeMapFilterFactory;
-    private final S3ManagerFactory s3ManagerFactory;
     private final Store store;
 
     @Inject
     public StroomS3EventConsumer(final AttributeMapFilterFactory attributeMapFilterFactory,
-                                 final S3ManagerFactory s3ManagerFactory,
-                                 final Store store,
-                                 final CacheManager cacheManager) {
+                                 final Store store) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
-        this.s3ManagerFactory = s3ManagerFactory;
         this.store = store;
     }
 
@@ -59,7 +53,6 @@ public class StroomS3EventConsumer implements S3EventConsumer {
     public void accept(final S3CreateEvent s3CreateEvent) {
         LOGGER.debug("accept() - s3CreateEvent: {}", s3CreateEvent);
         final AttributeMap attributeMap = s3CreateEvent.attributeMap();
-
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
         final boolean canReceive;

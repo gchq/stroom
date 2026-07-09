@@ -29,6 +29,12 @@ package stroom.util.shared;
  * Typically implementing classes may be held in collections, e.g. lists, in which
  * case the whole collection is treated as an atomic unit.
  * </p>
+ * <p>
+ * Implementing classes <strong>MUST</strong> implement {@link Object#equals(Object)} as
+ * equality is used to compare the property value with its default.
+ * with
+ * </p>
+ *
  */
 public interface IsAtomicConfig extends IsStroomConfig {
 

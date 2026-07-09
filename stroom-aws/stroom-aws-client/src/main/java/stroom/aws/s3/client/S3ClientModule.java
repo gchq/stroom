@@ -26,6 +26,5 @@ public class S3ClientModule extends AbstractModule {
         super.configure();
 
         bind(S3ClientPool.class).to(S3ClientPoolImpl.class);
-
     }
 }

@@ -123,6 +123,22 @@ public class SqsConfig
         return new Builder(this);
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SqsConfig sqsConfig = (SqsConfig) o;
+        return Objects.equals(credentials, sqsConfig.credentials) && Objects.equals(assumeRole,
+                sqsConfig.assumeRole) && Objects.equals(awsRegionName,
+                sqsConfig.awsRegionName) && Objects.equals(queueUrl,
+                sqsConfig.queueUrl) && Objects.equals(pollFrequency, sqsConfig.pollFrequency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(credentials, assumeRole, awsRegionName, queueUrl, pollFrequency);
+    }
 
     // --------------------------------------------------------------------------------
 

@@ -242,6 +242,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return forwardHttpDestinations;
     }
 
+    @RequiresProxyRestart
+    @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS)
+    public List<ForwardS3Config> getForwardS3Destinations() {
+        return forwardS3Destinations;
+    }
+
     @JsonProperty(PROP_NAME_LOG_STREAM)
     public LogStreamConfig getLogStreamConfig() {
         return logStreamConfig;
@@ -262,7 +268,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxySecurityConfig;
     }
 
-    @JsonPropertyDescription("Configurations for AWS SQS connectors")
+    @JsonPropertyDescription("Configurations for AWS SQS connectors used for the" +
+                             "EventStore (not S3 event notifications)")
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;

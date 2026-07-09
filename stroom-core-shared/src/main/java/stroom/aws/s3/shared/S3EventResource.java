@@ -20,7 +20,11 @@ package stroom.aws.s3.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,6 +56,8 @@ public interface S3EventResource extends RestResource {
     // --------------------------------------------------------------------------------
 
 
+    @JsonPropertyOrder(alphabetic = true)
+    @JsonInclude(Include.NON_NULL)
     class S3EventRequest {
 
         @JsonProperty
@@ -59,8 +65,9 @@ public interface S3EventResource extends RestResource {
         @JsonProperty
         private final Map<String, String> metaData;
 
+        @JsonCreator
         public S3EventRequest(@JsonProperty("s3Location") final S3Location s3Location,
-                              @JsonProperty("String") final Map<String, String> metaData) {
+                              @JsonProperty("metaData") final Map<String, String> metaData) {
             this.s3Location = s3Location;
             this.metaData = metaData;
         }

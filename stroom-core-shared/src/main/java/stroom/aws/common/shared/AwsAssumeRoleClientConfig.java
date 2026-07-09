@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class AwsAssumeRoleClientConfig {
 
@@ -50,5 +52,20 @@ public class AwsAssumeRoleClientConfig {
 
     public String getEndpointOverride() {
         return endpointOverride;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AwsAssumeRoleClientConfig that = (AwsAssumeRoleClientConfig) o;
+        return Objects.equals(credentials, that.credentials) && Objects.equals(region,
+                that.region) && Objects.equals(endpointOverride, that.endpointOverride);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(credentials, region, endpointOverride);
     }
 }

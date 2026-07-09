@@ -34,6 +34,7 @@ import stroom.util.io.StroomPathConfig;
 import stroom.util.metrics.Metrics;
 import stroom.util.metrics.MetricsImpl;
 import stroom.util.servlet.MockServletModule;
+import stroom.util.string.TemplateUtil.ContextVariableResolver;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
@@ -73,6 +74,7 @@ public class ToolModule extends AbstractModule {
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
         bind(DataRetentionRulesProvider.class).toInstance(() -> null);
+        bind(ContextVariableResolver.class).toInstance(ContextVariableResolver.NO_OP);
         install(new DirProvidersModule());
     }
 

@@ -28,12 +28,14 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.state.ContextVariableResolverImpl;
 import stroom.pipeline.textconverter.TextConverterModule;
 import stroom.pipeline.xmlschema.XmlSchemaModule;
 import stroom.pipeline.xslt.XsltModule;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.string.TemplateUtil;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -49,6 +51,7 @@ public class PipelineModule extends AbstractModule {
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
         bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
+        bind(TemplateUtil.ContextVariableResolver.class).to(ContextVariableResolverImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(PipelineStoreImpl.class);

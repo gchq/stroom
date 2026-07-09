@@ -46,8 +46,9 @@ class TestTemplateCacheImpl {
                     .isEqualTo("foo bar");
 
             final Template template3 = templatorCache.getTemplate("foo");
+            // Static template so not cached
             assertThat(template3)
-                    .isSameAs(template1);
+                    .isNotSameAs(template1);
 
             final Template template4 = templatorCache.getTemplate("foo ${xxx}");
             assertThat(template4)
@@ -68,11 +69,12 @@ class TestTemplateCacheImpl {
 
             final Template template3 = templatorCache.getTemplate("foo");
             assertThat(template3)
-                    .isSameAs(template1);
+                    .isNotSameAs(template1);
 
             templatorCache.evict("foo");
 
             final Template template4 = templatorCache.getTemplate("foo");
+            // Static template so not cached
             assertThat(template4)
                     .isNotSameAs(template1);
         }
