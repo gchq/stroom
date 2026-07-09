@@ -137,8 +137,12 @@ public class TraceLoader {
         final List<TraceRoot> traceRoots = tracesStore.findTraces(findTraceCriteria).getValues();
         final List<Trace> traces = new ArrayList<>(traceRoots.size());
         for (final TraceRoot traceRoot : traceRoots) {
+            final Long startTimeMs = traceRoot.getStartTime() != null
+                    ? traceRoot.getStartTime().toEpochMillis()
+                    : null;
             final Trace trace = tracesStore
-                    .getTrace(new GetTraceRequest(TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO));
+                    .getTrace(new GetTraceRequest(
+                            TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO, startTimeMs));
             if (trace != null) {
                 traces.add(trace);
             }

@@ -27,9 +27,13 @@ import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.shared.PlanBDoc;
+import stroom.query.api.TimeRange;
+import stroom.query.api.TimeRanges;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -62,12 +66,22 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     @Override
     protected void onBind() {
         super.onBind();
+        registerHandler(getView().addTimeRangeValueChangeHandler(e -> {
+            listPresenter.setTimeRange(e.getValue());
+            listPresenter.refresh();
+        }));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(e -> {
             final TraceRoot traceRoot = listPresenter.getSelectionModel().getSelected();
+            // Pass the root start time so the server can locate the archive bucket
+            // (labelled by start time) if this trace has been purged from the live shard.
+            final Long startTimeMs = traceRoot.getStartTime() != null
+                    ? traceRoot.getStartTime().toEpochMillis()
+                    : null;
             final GetTraceRequest request = new GetTraceRequest(
                     dataSourceRef,
                     traceRoot.getTraceId(),
-                    SimpleDuration.ZERO);
+                    SimpleDuration.ZERO,
+                    startTimeMs);
             restFactory
                     .create(TRACES_RESOURCE)
                     .method(res -> res.findTrace(request))
@@ -81,6 +95,9 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     protected void onRead(final DocRef docRef, final TracesDoc document, final boolean readOnly) {
         if (docRef != null) {
             setDataSourceRef(docRef);
+            // Default the time range selector to Today on first open.
+            getView().setTimeRange(TimeRanges.TODAY);
+            listPresenter.setTimeRange(TimeRanges.TODAY);
             refresh();
         }
     }
@@ -114,5 +131,11 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         void setTopWidget(View view);
 
         void setBottomWidget(Widget view);
+
+        void setTimeRange(TimeRange timeRange);
+
+        TimeRange getTimeRange();
+
+        HandlerRegistration addTimeRangeValueChangeHandler(ValueChangeHandler<TimeRange> handler);
     }
 }

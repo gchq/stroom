@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Server-side time-bucketing logic for {@link ArchivalGranularity}.
@@ -99,6 +100,36 @@ public final class ArchivalGranularityUtil {
         } catch (final Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Returns the inclusive start of the time bucket identified by {@code label},
+     * i.e. the first instant covered by this archive shard.
+     * Returns {@code null} if {@code label} cannot be parsed.
+     */
+    public static Instant bucketStart(final ArchivalGranularity granularity,
+                                       final String label) {
+        final Instant end = bucketEnd(granularity, label);
+        if (end == null) {
+            return null;
+        }
+        return switch (granularity) {
+            case HOUR -> end.minus(1, ChronoUnit.HOURS);
+            case DAY  -> end.minus(1, ChronoUnit.DAYS);
+            case WEEK -> end.minus(7, ChronoUnit.DAYS);
+        };
+    }
+
+    /**
+     * Returns {@code true} if the half-open bucket {@code [bucketStart, bucketEnd)}
+     * overlaps the closed filter interval {@code [filterFromMs, filterToMs]}.
+     */
+    public static boolean overlaps(final Instant bucketStart,
+                                    final Instant bucketEnd,
+                                    final long filterFromMs,
+                                    final long filterToMs) {
+        return bucketStart.toEpochMilli() <= filterToMs
+                && bucketEnd.toEpochMilli() > filterFromMs;
     }
 
     /**

@@ -18,6 +18,7 @@ package stroom.pathways.shared;
 
 import stroom.docref.DocRef;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FieldFields;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
@@ -51,13 +52,23 @@ public class FindTraceCriteria extends BaseCriteria {
     private final Pathway pathway;
     @JsonProperty
     private SimpleDuration temporalOrderingTolerance;
+    @JsonProperty
+    private final TimeRange timeRange;
 
-    @SuppressWarnings("checkstyle:linelength")
-    public FindTraceCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
-                             @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance) {
-        this(pageRequest, sortList, dataSourceRef, null, null, temporalOrderingTolerance);
+    public FindTraceCriteria(final PageRequest pageRequest,
+                             final List<CriteriaFieldSort> sortList,
+                             final DocRef dataSourceRef,
+                             final SimpleDuration temporalOrderingTolerance) {
+        this(pageRequest, sortList, dataSourceRef, null, null, temporalOrderingTolerance, null);
+    }
+
+    public FindTraceCriteria(final PageRequest pageRequest,
+                             final List<CriteriaFieldSort> sortList,
+                             final DocRef dataSourceRef,
+                             final String filter,
+                             final Pathway pathway,
+                             final SimpleDuration temporalOrderingTolerance) {
+        this(pageRequest, sortList, dataSourceRef, filter, pathway, temporalOrderingTolerance, null);
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -67,12 +78,14 @@ public class FindTraceCriteria extends BaseCriteria {
                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                              @JsonProperty("filter") final String filter,
                              @JsonProperty("pathway") final Pathway pathway,
-                             @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance) {
+                             @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
+                             @JsonProperty("timeRange") final TimeRange timeRange) {
         super(pageRequest, sortList);
         this.dataSourceRef = dataSourceRef;
         this.filter = filter;
         this.pathway = pathway;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
+        this.timeRange = timeRange;
     }
 
     public DocRef getDataSourceRef() {
@@ -91,6 +104,10 @@ public class FindTraceCriteria extends BaseCriteria {
         return temporalOrderingTolerance;
     }
 
+    public TimeRange getTimeRange() {
+        return timeRange;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -106,12 +123,13 @@ public class FindTraceCriteria extends BaseCriteria {
         return Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(filter, that.filter) &&
                Objects.equals(pathway, that.pathway) &&
-               Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance);
+               Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
+               Objects.equals(timeRange, that.timeRange);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, filter, pathway, temporalOrderingTolerance);
+        return Objects.hash(super.hashCode(), dataSourceRef, filter, pathway, temporalOrderingTolerance, timeRange);
     }
 
     @Override
@@ -121,6 +139,7 @@ public class FindTraceCriteria extends BaseCriteria {
                ", filter='" + filter + '\'' +
                ", pathway=" + pathway +
                ", temporalOrderingTolerance=" + temporalOrderingTolerance +
+               ", timeRange=" + timeRange +
                '}';
     }
 }

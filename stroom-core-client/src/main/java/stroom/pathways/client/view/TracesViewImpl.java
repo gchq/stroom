@@ -17,7 +17,11 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
+import stroom.query.api.TimeRange;
+import stroom.query.client.view.TimeRangeSelector;
 
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -37,6 +41,8 @@ public class TracesViewImpl
     SimplePanel topWidget;
     @UiField
     SimplePanel bottomWidget;
+    @UiField
+    TimeRangeSelector timeRangeSelector;
 
     private final Widget widget;
 
@@ -58,6 +64,21 @@ public class TracesViewImpl
     @Override
     public void setBottomWidget(final Widget widget) {
         this.bottomWidget.setWidget(widget);
+    }
+
+    @Override
+    public void setTimeRange(final TimeRange timeRange) {
+        timeRangeSelector.setValue(timeRange);
+    }
+
+    @Override
+    public TimeRange getTimeRange() {
+        return timeRangeSelector.getValue();
+    }
+
+    @Override
+    public HandlerRegistration addTimeRangeValueChangeHandler(final ValueChangeHandler<TimeRange> handler) {
+        return timeRangeSelector.addValueChangeHandler(handler);
     }
 
     @Override

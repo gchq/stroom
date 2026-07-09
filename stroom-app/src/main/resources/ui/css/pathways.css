@@ -376,3 +376,16 @@
 .indent-3 {
     padding-left: 90px;
 }
+
+/* ---- TracesViewImpl ---- */
+
+.TracesViewImpl-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 2px 5px;
+    border-bottom: 1px solid var(--header__border-color);
+}
+
+.TracesViewImpl-label {
+    flex: 1;
+}

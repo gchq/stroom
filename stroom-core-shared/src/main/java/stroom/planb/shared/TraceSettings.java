@@ -16,6 +16,8 @@
 
 package stroom.planb.shared;
 
+import stroom.util.shared.time.SimpleDuration;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -43,7 +45,8 @@ import java.util.Objects;
         "overwrite",
         "retention",
         "sharedFileStore",
-        "snapshotSettings"
+        "snapshotSettings",
+        "maxQueryTimeRange"
 })
 @JsonInclude(Include.NON_NULL)
 public final class TraceSettings extends AbstractPlanBSettings implements HasSharedFileStore {
@@ -51,15 +54,20 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
     @JsonProperty
     private final SharedFileStoreSettings sharedFileStore;
 
+    @JsonProperty
+    private final SimpleDuration maxQueryTimeRange;
+
     @JsonCreator
     public TraceSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                          @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
                          @JsonProperty("overwrite") final Boolean overwrite,
                          @JsonProperty("retention") final RetentionSettings retention,
                          @JsonProperty("sharedFileStore") final SharedFileStoreSettings sharedFileStore,
-                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings) {
+                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                         @JsonProperty("maxQueryTimeRange") final SimpleDuration maxQueryTimeRange) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
         this.sharedFileStore = sharedFileStore;
+        this.maxQueryTimeRange = maxQueryTimeRange;
     }
 
     /**
@@ -70,6 +78,14 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
     @Override
     public SharedFileStoreSettings getSharedFileStore() {
         return sharedFileStore;
+    }
+
+    /**
+     * Returns the maximum query time range allowed for this data source,
+     * or {@code null} if no limit is configured.
+     */
+    public SimpleDuration getMaxQueryTimeRange() {
+        return maxQueryTimeRange;
     }
 
     @Override
@@ -84,12 +100,13 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
             return false;
         }
         final TraceSettings that = (TraceSettings) o;
-        return Objects.equals(sharedFileStore, that.sharedFileStore);
+        return Objects.equals(sharedFileStore, that.sharedFileStore)
+                && Objects.equals(maxQueryTimeRange, that.maxQueryTimeRange);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), sharedFileStore);
+        return Objects.hash(super.hashCode(), sharedFileStore, maxQueryTimeRange);
     }
 
     @Override
@@ -97,12 +114,14 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
         return "TraceSettings{" +
                super.toString() +
                ", sharedFileStore=" + sharedFileStore +
+               ", maxQueryTimeRange=" + maxQueryTimeRange +
                '}';
     }
 
     public static class Builder extends AbstractBuilder<TraceSettings, Builder> {
 
         private SharedFileStoreSettings sharedFileStore;
+        private SimpleDuration maxQueryTimeRange;
 
         public Builder() {
         }
@@ -111,11 +130,17 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
             super(settings);
             if (settings != null) {
                 this.sharedFileStore = settings.sharedFileStore;
+                this.maxQueryTimeRange = settings.maxQueryTimeRange;
             }
         }
 
         public Builder sharedFileStore(final SharedFileStoreSettings sharedFileStore) {
             this.sharedFileStore = sharedFileStore;
+            return self();
+        }
+
+        public Builder maxQueryTimeRange(final SimpleDuration maxQueryTimeRange) {
+            this.maxQueryTimeRange = maxQueryTimeRange;
             return self();
         }
 
@@ -132,7 +157,8 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
                     overwrite,
                     retention,
                     sharedFileStore,
-                    snapshotSettings);
+                    snapshotSettings,
+                    maxQueryTimeRange);
         }
     }
 }

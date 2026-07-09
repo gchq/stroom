@@ -60,6 +60,9 @@ import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -81,19 +84,23 @@ import org.lmdbjava.Txn;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -105,21 +112,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
     /**
-     * Names of all DBIs that must be copied verbatim into every archive partition
-     * so that archives are independently queryable. Update this list whenever a
-     * new DBI is added to {@link TraceDb}.
+     * Names of the lookup named-DBs that must be copied verbatim into every
+     * archive partition so that the UID / hash integers embedded in archived
+     * span values can still be decoded.
+     *
+     * <p>The {@code trace-roots*} DBIs are deliberately <em>not</em> in this list.
+     * Each archive receives only the roots (and the six secondary sort indexes
+     * for those roots) whose start time falls in that archive's bucket, written
+     * explicitly by {@link #archiveOldData}. Copying the trace-root DBIs wholesale
+     * would place a full snapshot of every root into every bucket, causing the
+     * same root to appear in multiple archives (duplicate results, inflated
+     * counts) and mis-aligning the archive contents with the start-time bucket
+     * label that {@link stroom.planb.impl.data.ArchiveShardLocator} selects on.
      */
-    private static final List<String> ARCHIVE_DBI_NAMES = List.of(
+    private static final List<String> LOOKUP_DBI_NAMES = List.of(
             "lookup-keyToUid", "lookup-uidToKey", "lookup-info",
-            "lookup-hash",
-            "trace-roots",
-            "trace-roots-merge-time",
-            "trace-roots-start-time",
-            "trace-roots-duration",
-            "trace-roots-operation",
-            "trace-roots-services",
-            "trace-roots-depth",
-            "trace-roots-total-spans");
+            "lookup-hash");
 
     /** Number of bytes used for the traceId suffix appended to every secondary-index key. */
     private static final int TRACE_ID_BYTES = 16;
@@ -168,20 +176,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // Secondary sort indexes  (key = sortField ∥ traceId[16], value = empty)
     // Each enables an O(offset+length) sorted range scan via LmdbStream,
     // avoiding a full traceRootsDbi scan for every findTraces() call.
+    // The set of indexes is defined once by TraceSecondaryIndex; this map opens
+    // one DBI per index so the write/delete/update/query paths can iterate them
+    // generically rather than naming each index individually.
     // -----------------------------------------------------------------------
-
-    /** Sorted by trace start time. Key: (secs[8] ∥ nanos[4] ∥ traceId[16]). */
-    private final Dbi<ByteBuffer> traceRootStartTimeDbi;
-    /** Sorted by trace duration. Key: (durationNanos[8] ∥ traceId[16]). */
-    private final Dbi<ByteBuffer> traceRootDurationDbi;
-    /** Sorted by root-span operation name. Key: (nameUtf8 ∥ 0x00 ∥ traceId[16]). */
-    private final Dbi<ByteBuffer> traceRootOperationDbi;
-    /** Sorted by services count. Key: (services[4] ∥ traceId[16]). */
-    private final Dbi<ByteBuffer> traceRootServicesDbi;
-    /** Sorted by span depth. Key: (depth[4] ∥ traceId[16]). */
-    private final Dbi<ByteBuffer> traceRootDepthDbi;
-    /** Sorted by total spans. Key: (totalSpans[4] ∥ traceId[16]). */
-    private final Dbi<ByteBuffer> traceRootTotalSpansDbi;
+    private final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> secondaryIndexDbis;
 
     //    private final Dbi<ByteBuffer> traceUpdateTimeDbi;
 //    private final Dbi<ByteBuffer> updateTimeDbi;
@@ -217,12 +216,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         traceRootValueSerde = new TraceRootValueSerde(byteBufferFactory);
         traceRootsDbi = env.openDbi("trace-roots", DbiFlags.MDB_CREATE);
         traceRootsMergeTimeDbi = env.openDbi("trace-roots-merge-time", DbiFlags.MDB_CREATE);
-        traceRootStartTimeDbi  = env.openDbi("trace-roots-start-time",  DbiFlags.MDB_CREATE);
-        traceRootDurationDbi   = env.openDbi("trace-roots-duration",     DbiFlags.MDB_CREATE);
-        traceRootOperationDbi  = env.openDbi("trace-roots-operation",    DbiFlags.MDB_CREATE);
-        traceRootServicesDbi   = env.openDbi("trace-roots-services",     DbiFlags.MDB_CREATE);
-        traceRootDepthDbi      = env.openDbi("trace-roots-depth",        DbiFlags.MDB_CREATE);
-        traceRootTotalSpansDbi = env.openDbi("trace-roots-total-spans",  DbiFlags.MDB_CREATE);
+
+        // Open one DBI per secondary sort index, keyed by the index definition.
+        final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> indexDbis =
+                new EnumMap<>(TraceSecondaryIndex.class);
+        for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
+            indexDbis.put(index, env.openDbi(index.dbiName(), DbiFlags.MDB_CREATE));
+        }
+        secondaryIndexDbis = indexDbis;
 
 //        traceUpdateTimeDbi = env.openDbi("trace-update-time", DbiFlags.MDB_CREATE);
 //        updateTimeDbi = env.openDbi("update-time", DbiFlags.MDB_CREATE);
@@ -273,67 +274,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     // -----------------------------------------------------------------------
-    // Secondary sort index — key builders
-    // Key format: (sortField_bytes ∥ traceId[16]); value: empty.
-    // All integers written big-endian so LMDB's byte-lexicographic order
-    // equals the natural numeric/chronological order for ascending scans.
-    // -----------------------------------------------------------------------
-
-    /** Key: (startSecs[8] ∥ startNanos[4] ∥ traceId[16]) = 28 bytes. */
-    private static byte[] makeStartTimeKey(final NanoTime t, final byte[] traceId) {
-        final byte[] key = new byte[Long.BYTES + Integer.BYTES + TRACE_ID_BYTES];
-        ByteBuffer.wrap(key)
-                .putLong(t != null ? t.getSeconds() : 0L)
-                .putInt(t != null ? t.getNanos() : 0)
-                .put(traceId);
-        return key;
-    }
-
-    /** Key: (durationNanos[8] ∥ traceId[16]) = 24 bytes. */
-    private static byte[] makeDurationKey(final NanoTime start, final NanoTime end, final byte[] traceId) {
-        final long durNanos;
-        if (start == null || end == null) {
-            durNanos = 0L;
-        } else {
-            durNanos = (end.getSeconds() - start.getSeconds()) * 1_000_000_000L
-                    + (end.getNanos() - start.getNanos());
-        }
-        final byte[] key = new byte[Long.BYTES + TRACE_ID_BYTES];
-        ByteBuffer.wrap(key).putLong(durNanos).put(traceId);
-        return key;
-    }
-
-    /**
-     * Key: (nameUtf8 ∥ 0x00 ∥ traceId[16]).
-     * The null-byte separator ensures the variable-length name does not bleed
-     * into the fixed-length traceId suffix during comparison.
-     */
-    private static byte[] makeOperationKey(final String name, final byte[] traceId) {
-        final byte[] nameBytes = name != null
-                ? name.getBytes(StandardCharsets.UTF_8)
-                : new byte[0];
-        // name ∥ separator ∥ traceId
-        final byte[] key = new byte[nameBytes.length + 1 + TRACE_ID_BYTES];
-        final ByteBuffer buf = ByteBuffer.wrap(key);
-        buf.put(nameBytes);
-        buf.put((byte) 0x00); // separator
-        buf.put(traceId);
-        return key;
-    }
-
-    /** Key: (value[4] ∥ traceId[16]) = 20 bytes. Shared by services, depth, totalSpans. */
-    private static byte[] makeIntKey(final int value, final byte[] traceId) {
-        final byte[] key = new byte[Integer.BYTES + TRACE_ID_BYTES];
-        ByteBuffer.wrap(key).putInt(value).put(traceId);
-        return key;
-    }
-
-    // -----------------------------------------------------------------------
-    // Secondary sort index — write / delete helpers
+    // Secondary sort index — write / delete / update helpers
+    // All indexes are defined by TraceSecondaryIndex; these helpers iterate that
+    // set so no per-index code is needed here. Key layouts and comparators live
+    // in TraceSecondaryIndex.
     // -----------------------------------------------------------------------
 
     /**
-     * Writes all six secondary sort index entries for {@code root} in a single
+     * Writes every secondary sort index entry for {@code root} in a single
      * transaction. All indexes use {@link PutFlags#MDB_NOOVERWRITE} — if the
      * exact same key already exists (same sort-field value AND same traceId)
      * the put is silently ignored, preventing duplicate entries.
@@ -341,52 +289,28 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private void writeSecondaryIndexes(final Txn<ByteBuffer> writeTxn,
                                        final byte[] traceIdBytes,
                                        final TraceRoot root) {
-        byteBuffers.useBytes(makeStartTimeKey(root.getStartTime(), traceIdBytes), buf -> {
-            traceRootStartTimeDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
-        byteBuffers.useBytes(makeDurationKey(root.getStartTime(), root.getEndTime(), traceIdBytes), buf -> {
-            traceRootDurationDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
-        byteBuffers.useBytes(makeOperationKey(root.getName(), traceIdBytes), buf -> {
-            traceRootOperationDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
-        byteBuffers.useBytes(makeIntKey(root.getServices(), traceIdBytes), buf -> {
-            traceRootServicesDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
-        byteBuffers.useBytes(makeIntKey(root.getDepth(), traceIdBytes), buf -> {
-            traceRootDepthDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
-        byteBuffers.useBytes(makeIntKey(root.getTotalSpans(), traceIdBytes), buf -> {
-            traceRootTotalSpansDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
+        for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
+            final Dbi<ByteBuffer> indexDbi = secondaryIndexDbis.get(index);
+            byteBuffers.useBytes(index.key(root, traceIdBytes), buf -> {
+                indexDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
+            });
+        }
     }
 
     /**
-     * Deletes all secondary sort index entries for the given {@code oldRoot}.
+     * Deletes every secondary sort index entry for the given {@code oldRoot}.
      * Called before overwriting a trace root so that stale entries (with the
      * previous sort-field values) are removed.
      */
     private void deleteSecondaryIndexes(final Txn<ByteBuffer> writeTxn,
                                         final byte[] traceIdBytes,
                                         final TraceRoot oldRoot) {
-        byteBuffers.useBytes(makeStartTimeKey(oldRoot.getStartTime(), traceIdBytes), buf -> {
-            traceRootStartTimeDbi.delete(writeTxn, buf);
-        });
-        byteBuffers.useBytes(makeDurationKey(oldRoot.getStartTime(), oldRoot.getEndTime(), traceIdBytes), buf -> {
-            traceRootDurationDbi.delete(writeTxn, buf);
-        });
-        byteBuffers.useBytes(makeOperationKey(oldRoot.getName(), traceIdBytes), buf -> {
-            traceRootOperationDbi.delete(writeTxn, buf);
-        });
-        byteBuffers.useBytes(makeIntKey(oldRoot.getServices(), traceIdBytes), buf -> {
-            traceRootServicesDbi.delete(writeTxn, buf);
-        });
-        byteBuffers.useBytes(makeIntKey(oldRoot.getDepth(), traceIdBytes), buf -> {
-            traceRootDepthDbi.delete(writeTxn, buf);
-        });
-        byteBuffers.useBytes(makeIntKey(oldRoot.getTotalSpans(), traceIdBytes), buf -> {
-            traceRootTotalSpansDbi.delete(writeTxn, buf);
-        });
+        for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
+            final Dbi<ByteBuffer> indexDbi = secondaryIndexDbis.get(index);
+            byteBuffers.useBytes(index.key(oldRoot, traceIdBytes), buf -> {
+                indexDbi.delete(writeTxn, buf);
+            });
+        }
     }
 
     public void insert(final LmdbWriter writer, final Span span) {
@@ -498,54 +422,34 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * Performs a targeted secondary-index update after a child span is merged.
+     * Migrates the secondary sort index entries from {@code oldRoot} to
+     * {@code newRoot} after a child span is merged.
      *
-     * <p>Only the indexes whose sort-field value actually changed are touched:
-     * <ul>
-     *   <li>{@code trace-roots-total-spans} — always (incremented by 1).</li>
-     *   <li>{@code trace-roots-start-time} — only if the new span starts before the
-     *       existing earliest start.</li>
-     *   <li>{@code trace-roots-duration} — only if either bound (start or end) changed,
-     *       since duration is derived from both.</li>
-     * </ul>
-     *
-     * <p>{@code operation}, {@code services} and {@code depth} are set exclusively by
-     * root-span processing and are never modified here, saving 6 LMDB ops in the
-     * common case where neither time bound changes (span falls within existing range).
+     * <p>For each index only the entries whose key actually changed are touched:
+     * if {@code index.key(oldRoot)} equals {@code index.key(newRoot)} the index is
+     * skipped entirely. This naturally limits work to the indexes affected by a
+     * child span (total-spans always; start-time when the earliest start moves;
+     * duration when either bound moves) while leaving operation/services/depth —
+     * whose values don't change on a child span — untouched, all without naming
+     * any index individually.
      */
     private void updateChildSpanIndexes(final Txn<ByteBuffer> writeTxn,
                                         final byte[] traceIdBytes,
                                         final TraceRoot oldRoot,
                                         final TraceRoot newRoot) {
-        // totalSpans always changes.
-        byteBuffers.useBytes(makeIntKey(oldRoot.getTotalSpans(), traceIdBytes), buf -> {
-            traceRootTotalSpansDbi.delete(writeTxn, buf);
-        });
-        byteBuffers.useBytes(makeIntKey(newRoot.getTotalSpans(), traceIdBytes), buf -> {
-            traceRootTotalSpansDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
-
-        final boolean startChanged = !Objects.equals(oldRoot.getStartTime(), newRoot.getStartTime());
-        final boolean endChanged = !Objects.equals(oldRoot.getEndTime(), newRoot.getEndTime());
-
-        if (startChanged) {
-            byteBuffers.useBytes(makeStartTimeKey(oldRoot.getStartTime(), traceIdBytes), buf -> {
-                traceRootStartTimeDbi.delete(writeTxn, buf);
+        for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
+            final byte[] oldKey = index.key(oldRoot, traceIdBytes);
+            final byte[] newKey = index.key(newRoot, traceIdBytes);
+            if (Arrays.equals(oldKey, newKey)) {
+                continue;
+            }
+            final Dbi<ByteBuffer> indexDbi = secondaryIndexDbis.get(index);
+            byteBuffers.useBytes(oldKey, buf -> {
+                indexDbi.delete(writeTxn, buf);
             });
-            byteBuffers.useBytes(makeStartTimeKey(newRoot.getStartTime(), traceIdBytes), buf -> {
-                traceRootStartTimeDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
+            byteBuffers.useBytes(newKey, buf -> {
+                indexDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
             });
-        }
-
-        if (startChanged || endChanged) {
-            byteBuffers.useBytes(
-                    makeDurationKey(oldRoot.getStartTime(), oldRoot.getEndTime(), traceIdBytes), buf -> {
-                        traceRootDurationDbi.delete(writeTxn, buf);
-                    });
-            byteBuffers.useBytes(
-                    makeDurationKey(newRoot.getStartTime(), newRoot.getEndTime(), traceIdBytes), buf -> {
-                        traceRootDurationDbi.put(writeTxn, buf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-                    });
         }
     }
 
@@ -764,14 +668,45 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * Archives trace entries whose insert time is older than archiveBefore
-     * into dated LMDB environments under archiveBaseDir, then deletes them from
-     * the main environment.
+     * Archives whole traces whose <em>root-span start time</em> is older than
+     * {@code archiveBefore} into dated LMDB environments under
+     * {@code archiveBaseDir}, then deletes them from the live environment.
      *
-     * Three passes:
-     * 1. Read all span+root entries to archive, grouped by date label.
-     * 2. Write each group to a new archive LMDB environment.
-     * 3. Delete the archived entries from the main environment.
+     * <p><b>Why start time, not merge/insert time.</b> Queries filter traces on
+     * the root's start time, and {@link stroom.planb.impl.data.ArchiveShardLocator}
+     * selects which archives to open by comparing the query time range against the
+     * archive's date-label bucket. For that selection to be accurate the bucket
+     * label must be derived from the same axis the query uses — the trace start
+     * time. Bucketing by merge/insert time would put a trace that started at
+     * 23:55 but merged at 00:05 the next day into the wrong bucket, making it
+     * invisible to a query for its real start day once purged from the live shard.
+     *
+     * <p><b>Self-contained by trace.</b> Every span of a rooted trace is placed in
+     * that trace's bucket regardless of the individual span's timestamp, so a
+     * trace whose spans straddle a bucket boundary (e.g. midnight) stays whole in
+     * a single archive. Each archive is given only <em>its own</em> roots plus the
+     * six secondary sort indexes for those roots (rebuilt via
+     * {@link #writeSecondaryIndexes}), so fan-out time-range queries against the
+     * archive behave exactly as against the live shard — with no cross-bucket
+     * duplication of roots.
+     *
+     * <p><b>Orphan spans.</b> Spans whose traceId has no root anywhere in this
+     * shard (e.g. the root was lost) can never form a queryable trace and are
+     * swept separately: those older than {@code archiveBefore} by insert time are
+     * archived into a bucket labelled by their insert time and then deleted. This
+     * keeps the live shard bounded even when no retention policy is configured.
+     * Orphan spans produce no trace-root index entry and are reachable only by a
+     * direct {@code getTrace(traceId)} lookup.
+     *
+     * <p>Three passes:
+     * <ol>
+     *   <li>Scan roots then spans, grouping each archived root and its spans (and
+     *       any old orphan spans) by bucket label; capture raw bytes.</li>
+     *   <li>Write each bucket to its own archive env — spans, roots, the roots'
+     *       secondary sort indexes and the lookup tables.</li>
+     *   <li>Delete the archived spans, roots, secondary indexes and merge-time
+     *       entries from the live env, then drop now-unused lookup keys.</li>
+     * </ol>
      */
     @Override
     public long archiveOldData(final Instant archiveBefore,
@@ -779,45 +714,107 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                final Path archiveBaseDir) {
         final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(archiveBefore);
 
-        // Pass 1: collect raw key/value bytes to archive, grouped by date label.
+        // traceIdHex -> bucket label, for roots being archived.
+        final Map<String, String> archivedRootLabels = new HashMap<>();
+        // traceIdHex -> decoded root, used to rebuild the archive's sort indexes.
+        final Map<String, TraceRoot> archivedRoots = new HashMap<>();
+        // traceIdHex -> {rawTraceIdKey, rawRootVal}, for verbatim copy into the archive.
+        final Map<String, byte[][]> archivedRootRawKV = new HashMap<>();
+        // Every traceId that has a root, so orphan spans can be distinguished.
+        final Set<String> allRootTraceIds = new HashSet<>();
+        // bucket label -> list of {rawSpanKey, rawSpanVal}.
+        final Map<String, List<byte[][]>> bucketSpans = new LinkedHashMap<>();
+
+        // Pass 1: scan roots (to decide which traces to archive and how to label
+        // them) then spans (grouped into buckets by their trace's label).
         //
-        // We read insertTime from the first 8 bytes of the value (NanoTimeSerde
-        // writes a single long) via readInsertTime(), which does NOT touch the
-        // UID lookup table.  This avoids "Unable to find value for UID" errors
-        // that would be thrown by the full valueSerde.read() path.
-        final Map<String, List<byte[][]>> toArchive = new LinkedHashMap<>();
+        // Span insert time is read via readInsertTime() — the first 8 bytes of the
+        // value — which does NOT touch the UID lookup table, avoiding
+        // "Unable to find value for UID" errors on an incomplete lookup table.
+        // TraceRoot values are self-contained (no UID lookup) so decoding them here
+        // is safe too.
         env.read(readTxn -> {
-            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
-                if (insertTime.isBefore(nanoTimeBefore)) {
-                    final Instant insertInstant = NanoTimeUtil.toInstant(insertTime);
-                    final String label = ArchivalGranularityUtil.label(granularity, insertInstant);
-                    // Copy raw bytes — LMDB buffers are only valid for the lifetime
-                    // of the enclosing read transaction.
-                    final byte[] rawKey = new byte[key.remaining()];
-                    key.duplicate().get(rawKey);
+            // 1a: trace roots.
+            LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                final byte[] traceIdBytes = new byte[key.remaining()];
+                key.duplicate().get(traceIdBytes);
+                final String hex = HexStringUtil.encode(traceIdBytes);
+                allRootTraceIds.add(hex);
+
+                final TraceRoot root = traceRootValueSerde.read(val.duplicate());
+                final NanoTime startTime = root.getStartTime();
+                if (startTime != null && startTime.isBefore(nanoTimeBefore)) {
+                    final String label = ArchivalGranularityUtil.label(
+                            granularity, NanoTimeUtil.toInstant(startTime));
+                    archivedRootLabels.put(hex, label);
+                    archivedRoots.put(hex, root);
                     final byte[] rawVal = new byte[val.remaining()];
                     val.duplicate().get(rawVal);
-                    toArchive.computeIfAbsent(label, l -> new ArrayList<>())
-                            .add(new byte[][]{rawKey, rawVal});
+                    archivedRootRawKV.put(hex, new byte[][]{traceIdBytes, rawVal});
                 }
+            });
+
+            // 1b: spans. Bucket a span with its archived root; if it is an orphan
+            // (no root anywhere) archive it by insert time; otherwise (a live,
+            // not-yet-archived rooted trace) leave it in place.
+            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                if (key.remaining() < TRACE_ID_BYTES) {
+                    return;
+                }
+                final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+                key.duplicate().get(traceIdBytes);
+                final String hex = HexStringUtil.encode(traceIdBytes);
+
+                final String label;
+                final String rootLabel = archivedRootLabels.get(hex);
+                if (rootLabel != null) {
+                    // Span of a trace being archived — goes in the root's bucket,
+                    // whatever this span's own timestamp is.
+                    label = rootLabel;
+                } else if (!allRootTraceIds.contains(hex)) {
+                    // Orphan span. Bucket by insert time (no queryable start axis).
+                    final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
+                    if (!insertTime.isBefore(nanoTimeBefore)) {
+                        return;
+                    }
+                    label = ArchivalGranularityUtil.label(
+                            granularity, NanoTimeUtil.toInstant(insertTime));
+                } else {
+                    // Span of a live rooted trace that is not being archived.
+                    return;
+                }
+
+                final byte[] rawKey = new byte[key.remaining()];
+                key.duplicate().get(rawKey);
+                final byte[] rawVal = new byte[val.remaining()];
+                val.duplicate().get(rawVal);
+                bucketSpans.computeIfAbsent(label, l -> new ArrayList<>())
+                        .add(new byte[][]{rawKey, rawVal});
             });
             return null;
         });
 
-        if (toArchive.isEmpty()) {
+        if (bucketSpans.isEmpty() && archivedRoots.isEmpty()) {
             return 0L;
         }
 
-        // Pass 2: write raw bytes to archive LMDB environments.
+        // Invert archivedRootLabels into bucket label -> root traceId hexes.
+        final Map<String, List<String>> bucketRootHexes = new LinkedHashMap<>();
+        for (final Map.Entry<String, String> e : archivedRootLabels.entrySet()) {
+            bucketRootHexes.computeIfAbsent(e.getValue(), l -> new ArrayList<>()).add(e.getKey());
+        }
+
+        // Pass 2: write each bucket to its own archive environment.
         //
-        // We bypass insert() / valueSerde.write() because we are doing a
-        // verbatim byte copy — the UID integers embedded in the value bytes
-        // already reference the source shard's lookup table.  After writing
-        // the span data we call copyLookupsTo() to replicate those lookup
-        // tables into the archive so it remains independently queryable.
-        for (final Map.Entry<String, List<byte[][]>> entry : toArchive.entrySet()) {
-            final Path archiveDir = archiveBaseDir.resolve(entry.getKey());
+        // Spans and roots are copied verbatim (the UID integers embedded in the
+        // bytes reference the lookup tables cloned by copyLookupsTo). The archive's
+        // six secondary sort indexes are rebuilt for this bucket's roots only, so
+        // the archive is fully queryable without holding any other bucket's roots.
+        final Set<String> allLabels = new LinkedHashSet<>();
+        allLabels.addAll(bucketSpans.keySet());
+        allLabels.addAll(bucketRootHexes.keySet());
+        for (final String label : allLabels) {
+            final Path archiveDir = archiveBaseDir.resolve(label);
             try {
                 Files.createDirectories(archiveDir);
             } catch (final IOException e) {
@@ -826,46 +823,137 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             try (final TraceDb archiveDb =
                          TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
                 archiveDb.env.write(archiveWriter -> {
-                    for (final byte[][] rawKV : entry.getValue()) {
-                        // lmdbjava requires direct (off-heap) ByteBuffers.
-                        final ByteBuffer directKey =
-                                ByteBuffer.allocateDirect(rawKV[0].length);
-                        directKey.put(rawKV[0]).flip();
-                        final ByteBuffer directVal =
-                                ByteBuffer.allocateDirect(rawKV[1].length);
-                        directVal.put(rawKV[1]).flip();
-                        archiveDb.dbi.put(archiveWriter.getWriteTxn(), directKey, directVal);
+                    final Txn<ByteBuffer> writeTxn = archiveWriter.getWriteTxn();
+
+                    final List<byte[][]> spans = bucketSpans.get(label);
+                    if (spans != null) {
+                        for (final byte[][] rawKV : spans) {
+                            putDirect(archiveDb.dbi, writeTxn, rawKV[0], rawKV[1]);
+                        }
+                    }
+
+                    final List<String> rootHexes = bucketRootHexes.get(label);
+                    if (rootHexes != null) {
+                        for (final String hex : rootHexes) {
+                            final byte[][] rawKV = archivedRootRawKV.get(hex);
+                            putDirect(archiveDb.traceRootsDbi, writeTxn, rawKV[0], rawKV[1]);
+                            archiveDb.writeSecondaryIndexes(writeTxn, rawKV[0], archivedRoots.get(hex));
+                        }
                     }
                     return null;
                 });
-                // Copy UID / hash lookup tables and trace-root index so the
-                // archive is independently queryable without the source shard.
+                // Clone the UID / hash lookup tables so the archive decodes span
+                // values without access to the source shard.
                 copyLookupsTo(archiveDb);
             }
         }
 
-        // Pass 3: delete archived entries from the main environment.
+        // Pass 3: delete the archived spans, roots, secondary indexes and
+        // merge-time entries from the live environment.
+        //
+        // The span scan re-applies the SAME predicate as pass 1b (archived iff the
+        // trace's root is being archived, or it is an orphan older than the cutoff)
+        // so that exactly the archived spans are deleted — keeping archive and
+        // delete symmetric. Every RETAINED span's lookups are recorded via
+        // recordUsed so that the subsequent deleteUnused only drops UID/hash lookup
+        // entries no longer referenced by any surviving span.
         return env.write(writer -> {
-            final long count = deleteOldData(writer, nanoTimeBefore);
-            if (count > 0 && !Thread.currentThread().isInterrupted()) {
+            final Count count = new Count();
+            env.read(readTxn -> {
+                // Spans.
+                LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                    boolean archived = false;
+                    if (key.remaining() >= TRACE_ID_BYTES) {
+                        final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+                        key.duplicate().get(traceIdBytes);
+                        final String hex = HexStringUtil.encode(traceIdBytes);
+                        if (archivedRootLabels.containsKey(hex)) {
+                            archived = true;
+                        } else if (!allRootTraceIds.contains(hex)) {
+                            final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
+                            archived = insertTime.isBefore(nanoTimeBefore);
+                        }
+                    }
+
+                    if (archived) {
+                        dbi.delete(writer.getWriteTxn(), key);
+                        count.increment();
+                    } else {
+                        // Retained — record its lookups so deleteUnused keeps them.
+                        keyRecorder.recordUsed(writer, key);
+                        valueRecorder.recordUsed(writer, val);
+                    }
+                    writer.tryCommit();
+                });
+
+                // Archived roots + their secondary sort indexes.
+                for (final Map.Entry<String, TraceRoot> e : archivedRoots.entrySet()) {
+                    final byte[] traceIdBytes = HexStringUtil.decode(e.getKey());
+                    byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+                        traceRootsDbi.delete(writer.getWriteTxn(), keyBuf);
+                    });
+                    deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, e.getValue());
+                    count.increment();
+                    writer.tryCommit();
+                }
+
+                // Merge-time entries for archived roots. Key: mergeTimeMs[8] ∥ traceId[16].
+                if (!archivedRoots.isEmpty()) {
+                    LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
+                        final ByteBuffer keyBuf = key.duplicate();
+                        if (keyBuf.remaining() != Long.BYTES + TRACE_ID_BYTES) {
+                            return;
+                        }
+                        keyBuf.getLong(); // skip mergeTimeMs prefix
+                        final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+                        keyBuf.get(traceIdBytes);
+                        if (archivedRoots.containsKey(HexStringUtil.encode(traceIdBytes))) {
+                            traceRootsMergeTimeDbi.delete(writer.getWriteTxn(), key);
+                            writer.tryCommit();
+                        }
+                    });
+                }
+
+                writer.commit();
+                return null;
+            });
+
+            // Drop lookup keys that are no longer referenced by any remaining span.
+            if (count.get() > 0 && !Thread.currentThread().isInterrupted()) {
                 env.read(readTxn -> {
                     keyRecorder.deleteUnused(readTxn, writer);
                     valueRecorder.deleteUnused(readTxn, writer);
                     return null;
                 });
             }
-            return count;
+            return count.get();
         });
     }
 
     /**
-     * Copies all lookup named-DBs (UID forward/reverse maps, hash map) and
-     * the trace-root index from this shard's LMDB environment to the archive
-     * shard's environment.  The archive thereby becomes self-contained and
-     * queryable without access to the source shard.
+     * lmdbjava requires direct (off-heap) buffers; copy the raw key/value bytes
+     * into fresh direct buffers and put them into {@code targetDbi}.
+     */
+    private static void putDirect(final Dbi<ByteBuffer> targetDbi,
+                                  final Txn<ByteBuffer> writeTxn,
+                                  final byte[] rawKey,
+                                  final byte[] rawVal) {
+        final ByteBuffer directKey = ByteBuffer.allocateDirect(rawKey.length);
+        directKey.put(rawKey).flip();
+        final ByteBuffer directVal = ByteBuffer.allocateDirect(rawVal.length);
+        directVal.put(rawVal).flip();
+        targetDbi.put(writeTxn, directKey, directVal);
+    }
+
+    /**
+     * Copies the lookup named-DBs (UID forward/reverse maps, hash map) from this
+     * shard's LMDB environment to the archive shard's environment so that the UID
+     * integers embedded in archived span values remain decodable. Trace-root DBIs
+     * are NOT copied here — see {@link #LOOKUP_DBI_NAMES} and {@link #archiveOldData},
+     * which write each archive's own roots and secondary indexes explicitly.
      */
     private void copyLookupsTo(final TraceDb archive) {
-        for (final String name : ARCHIVE_DBI_NAMES) {
+        for (final String name : LOOKUP_DBI_NAMES) {
             copyNamedDbi(name, this.env, archive.env);
         }
     }
@@ -1011,7 +1099,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         final long pos = count.getAndIncrement();
                         if (criteria.getPageRequest().getOffset() <= pos &&
                             criteria.getPageRequest().getLength() > list.size() &&
-                            tracePredicate.test(trace)) {
+                            tracePredicate.test(trace) &&
+                            matchesTimeRange(root, criteria)) {
                             list.add(root);
                         }
                     } catch (final RuntimeException e) {
@@ -1034,17 +1123,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             // Default: newest first (descending start-time).
             final boolean desc = firstSort == null || firstSort.isDesc();
 
-            final Dbi<ByteBuffer> indexDbi = switch (sortField) {
-                case TraceRootField.DURATION    -> traceRootDurationDbi;
-                case TraceRootField.OPERATION   -> traceRootOperationDbi;
-                case TraceRootField.SERVICES    -> traceRootServicesDbi;
-                case TraceRootField.DEPTH       -> traceRootDepthDbi;
-                case TraceRootField.TOTAL_SPANS -> traceRootTotalSpansDbi;
-                // TRACE_ID: primary DBI key IS the traceId — last 16 bytes == all bytes.
-                case TraceRootField.TRACE_ID    -> traceRootsDbi;
-                // TRACE_START and all unknowns use the start-time index.
-                default                         -> traceRootStartTimeDbi;
-            };
+            final Dbi<ByteBuffer> indexDbi;
+            if (TraceRootField.TRACE_ID.equals(sortField)) {
+                // Primary DBI key IS the traceId — last 16 bytes == all bytes.
+                indexDbi = traceRootsDbi;
+            } else {
+                // Any secondary-indexed field; TRACE_START and unknowns fall back to start-time.
+                final TraceSecondaryIndex index = TraceSecondaryIndex.forField(sortField);
+                indexDbi = secondaryIndexDbis.get(
+                        index != null ? index : TraceSecondaryIndex.START_TIME);
+            }
 
             return findTracesByIndex(criteria, indexDbi, desc);
         }
@@ -1053,13 +1141,42 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * Performs an O(offset+length) sorted query over {@code indexDbi} using
-     * {@link LmdbStream}. Each key in {@code indexDbi} has the traceId as its
-     * last {@value #TRACE_ID_BYTES} bytes; this suffix is extracted and used to
-     * look up the full {@link TraceRoot} from {@link #traceRootsDbi}.
+     * Returns {@code true} if the given trace root falls within the criteria's time range
+     * (filtering on trace start time). A {@code null} time range, or a trace root with no
+     * start time, is always considered to match.
+     */
+    private static boolean matchesTimeRange(final TraceRoot root, final FindTraceCriteria criteria) {
+        final TimeRange timeRange = criteria.getTimeRange();
+        if (timeRange == null) {
+            return true;
+        }
+        final NanoTime startTime = root.getStartTime();
+        if (startTime == null) {
+            LOGGER.debug("matchesTimeRange: startTime is null, passing trace {}", root.getTraceId());
+            return true;
+        }
+        final long startMs = startTime.toEpochMillis();
+        final TimeFilter timeFilter =
+                DateExpressionParser.getTimeFilter(
+                        timeRange, DateTimeSettings.builder().build());
+        final boolean result = startMs >= timeFilter.getFrom() && startMs <= timeFilter.getTo();
+        LOGGER.debug("matchesTimeRange: traceId={} startMs={} from={} to={} result={}",
+                root.getTraceId(), startMs, timeFilter.getFrom(), timeFilter.getTo(), result);
+        return result;
+    }
+
+    /**
+     * Performs a sorted query over {@code indexDbi} using {@link LmdbStream}.
      *
-     * <p>The total count is obtained from {@code traceRootsDbi.stat().entries}
-     * — an O(1) LMDB operation — avoiding any additional full-table scan.
+     * <p>When no time range is active, this is O(offset+length): the stream is
+     * consumed only as far as needed via {@code skip().limit()} on the raw index.
+     *
+     * <p>When a time range filter is active, {@link #matchesTimeRange} is applied
+     * <em>before</em> {@code skip().limit()} so that pagination operates over
+     * filtered results. This prevents descending queries from consuming the wrong
+     * end of the index (e.g. the newest 100 entries when the time window is 1-2 h
+     * in the past). The stream is still terminated lazily once {@code length}
+     * matching roots have been collected.
      *
      * @param criteria  pagination and sort criteria; {@code getPageRequest()} must not be null
      * @param indexDbi  the secondary (or primary) DBI to scan
@@ -1083,40 +1200,101 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
             final LmdbKeyRange keyRange = desc ? LmdbKeyRange.allReverse() : LmdbKeyRange.all();
             try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, indexDbi, keyRange)) {
-                stream
-                        .skip(offset)
-                        .limit(length)
-                        .forEach(entry -> {
-                            try {
-                                // The traceId is always the last TRACE_ID_BYTES bytes of the key,
-                                // regardless of which sort field precedes it.
-                                final ByteBuffer keyBuf = entry.getKey().duplicate();
-                                final byte[] keyBytes = new byte[keyBuf.remaining()];
-                                keyBuf.get(keyBytes);
-                                final byte[] traceIdBytes = Arrays.copyOfRange(
-                                        keyBytes, keyBytes.length - TRACE_ID_BYTES, keyBytes.length);
-
-                                traceRootKeySerde.write(new TraceRootKey(traceIdBytes), traceRootKeyBuf -> {
-                                    final ByteBuffer traceRootVal = traceRootsDbi.get(readTxn, traceRootKeyBuf);
-                                    if (traceRootVal != null) {
-                                        list.add(traceRootValueSerde.read(traceRootVal.duplicate()));
+                if (criteria.getTimeRange() == null) {
+                    // No time range: classic O(offset+length) raw index scan.
+                    stream
+                            .skip(offset)
+                            .limit(length)
+                            .forEach(entry -> {
+                                try {
+                                    final TraceRoot root = lookupTraceRoot(readTxn, entry);
+                                    if (root != null) {
+                                        list.add(root);
                                     }
-                                });
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug("Error reading trace from sort index: {}", e.getMessage(), e);
-                            }
-                        });
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug("Error reading trace from sort index: {}",
+                                            e.getMessage(), e);
+                                }
+                            });
+                } else {
+                    // Time range active: filter BEFORE skip/limit so that descending
+                    // queries correctly skip entries outside the window (e.g. desc sort
+                    // by start-time + time range 1-2 h ago must not consume the newest
+                    // N raw entries and then return zero results).
+                    stream
+                            .map(entry -> {
+                                try {
+                                    return lookupTraceRoot(readTxn, entry);
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug("Error reading trace from sort index: {}",
+                                            e.getMessage(), e);
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .filter(root -> matchesTimeRange(root, criteria))
+                            .skip(offset)
+                            .limit(length)
+                            .forEach(list::add);
+                }
             }
             return null;
         });
 
+        // Determine the reported total and exactness.
+        //
+        // No time range: use the O(1) LMDB stat count — always exact.
+        //
+        // Time range active: the LMDB stat count is the *unfiltered* total and would mislead
+        // the data grid into thinking old rows are still valid.  Instead:
+        //   • If the page is not full (list.size() < length) the stream exhausted all matching
+        //     entries, so we know the exact total = offset + list.size().
+        //   • If the page is full there may be more entries beyond this page, so we report
+        //     exact=false which causes the pagination control to show "?" for the total.
+        final long reportedTotal;
+        final boolean exact;
+        if (criteria.getTimeRange() == null) {
+            reportedTotal = totalRef[0];
+            exact = true;
+        } else if (list.size() < length) {
+            // Last (or only) page — we have seen all matching entries.
+            reportedTotal = (long) offset + list.size();
+            exact = true;
+        } else {
+            // Full page — there may be more.
+            reportedTotal = (long) offset + list.size();
+            exact = false;
+        }
         return new TracesResultPage(list,
                 PageResponse.builder()
                         .offset(offset)
                         .length(list.size())
-                        .total(totalRef[0])
-                        .exact(true)
+                        .total(reportedTotal)
+                        .exact(exact)
                         .build());
+    }
+
+    /**
+     * Extracts the trace-ID from the last {@value #TRACE_ID_BYTES} bytes of a sort-index
+     * entry's key and looks up the corresponding {@link TraceRoot} in {@link #traceRootsDbi}.
+     *
+     * @return the {@link TraceRoot}, or {@code null} if no matching root is found
+     */
+    private TraceRoot lookupTraceRoot(final Txn<ByteBuffer> readTxn, final LmdbEntry entry) {
+        final ByteBuffer keyBuf = entry.getKey().duplicate();
+        final byte[] keyBytes = new byte[keyBuf.remaining()];
+        keyBuf.get(keyBytes);
+        final byte[] traceIdBytes = Arrays.copyOfRange(
+                keyBytes, keyBytes.length - TRACE_ID_BYTES, keyBytes.length);
+
+        final TraceRoot[] rootRef = {null};
+        traceRootKeySerde.write(new TraceRootKey(traceIdBytes), traceRootKeyBuf -> {
+            final ByteBuffer traceRootVal = traceRootsDbi.get(readTxn, traceRootKeyBuf);
+            if (traceRootVal != null) {
+                rootRef[0] = traceRootValueSerde.read(traceRootVal.duplicate());
+            }
+        });
+        return rootRef[0];
     }
 
     public Trace getTrace(final GetTraceRequest request) {

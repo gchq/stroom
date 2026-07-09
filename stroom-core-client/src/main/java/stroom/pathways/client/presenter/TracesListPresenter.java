@@ -31,6 +31,7 @@ import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.query.api.TimeRange;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DurationUtil;
 import stroom.util.client.NumberUtil;
@@ -63,6 +64,7 @@ public class TracesListPresenter
     private DocRef dataSourceRef;
     private String filter;
     private Pathway pathway;
+    private TimeRange timeRange;
 
     @Inject
     public TracesListPresenter(final EventBus eventBus,
@@ -204,7 +206,8 @@ public class TracesListPresenter
                                 dataSourceRef,
                                 filter,
                                 pathway,
-                                SimpleDuration.ZERO);
+                                SimpleDuration.ZERO,
+                                timeRange);
 
                         restFactory
                                 .create(TRACES_RESOURCE)
@@ -233,5 +236,9 @@ public class TracesListPresenter
 
     public void setPathway(final Pathway pathway) {
         this.pathway = pathway;
+    }
+
+    public void setTimeRange(final TimeRange timeRange) {
+        this.timeRange = timeRange;
     }
 }

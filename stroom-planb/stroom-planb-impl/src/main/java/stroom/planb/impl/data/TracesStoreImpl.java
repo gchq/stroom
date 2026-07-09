@@ -30,19 +30,31 @@ import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.impl.db.trace.TraceSecondaryIndex;
+import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
+import stroom.planb.shared.TraceSettings;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
+import stroom.util.io.FileUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.time.SimpleDuration;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -54,11 +66,15 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -76,6 +92,9 @@ public class TracesStoreImpl implements TracesStore {
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
     private final SecurityContext securityContext;
     private final Executor executor;
+    private final stroom.bytebuffer.impl6.ByteBuffers byteBuffers;
+    private final stroom.bytebuffer.impl6.ByteBufferFactory byteBufferFactory;
+    private final ArchiveShardLocator archiveShardLocator;
 
     @Inject
     public TracesStoreImpl(final PlanBDocCache planBDocCache,
@@ -86,7 +105,10 @@ public class TracesStoreImpl implements TracesStore {
                            final Provider<WebTargetFactory> webTargetFactoryProvider,
                            final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
                            final SecurityContext securityContext,
-                           final ExecutorProvider executorProvider) {
+                           final ExecutorProvider executorProvider,
+                           final stroom.bytebuffer.impl6.ByteBuffers byteBuffers,
+                           final stroom.bytebuffer.impl6.ByteBufferFactory byteBufferFactory,
+                           final ArchiveShardLocator archiveShardLocator) {
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.shardManager = shardManager;
@@ -96,6 +118,9 @@ public class TracesStoreImpl implements TracesStore {
         this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.securityContext = securityContext;
         this.executor = executorProvider.get();
+        this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
+        this.archiveShardLocator = archiveShardLocator;
     }
 
     @Override
@@ -181,7 +206,12 @@ public class TracesStoreImpl implements TracesStore {
                     criteria.getDataSourceRef(),
                     criteria.getFilter(),
                     criteria.getPathway(),
-                    criteria.getTemporalOrderingTolerance());
+                    criteria.getTemporalOrderingTolerance(),
+                    criteria.getTimeRange());
+
+            // Resolve the time filter once for archive fan-out.
+            final TimeFilter timeFilter = resolveTimeFilter(criteria.getTimeRange());
+            validateTimeRangeLimit(doc, timeFilter);
 
             for (int i = 0; i < doc.getShardCount(); i++) {
                 final int shardIndex = i;
@@ -201,6 +231,27 @@ public class TracesStoreImpl implements TracesStore {
                 }, executor));
             }
 
+            // --- Archive shard fan-out ---
+            if (timeFilter != null) {
+                for (int i = 0; i < doc.getShardCount(); i++) {
+                    final int shardIndex = i;
+                    final List<ArchiveShardRef> archiveRefs = archiveShardLocator.findRelevantShards(
+                            doc, shardIndex,
+                            timeFilter.getFrom(), timeFilter.getTo());
+                    for (final ArchiveShardRef ref : archiveRefs) {
+                        futures.add(CompletableFuture.supplyAsync(() -> {
+                            try {
+                                return securityContext.asUserResult(userIdentity,
+                                        () -> queryArchive(ref, shardCriteria, doc));
+                            } catch (final Exception e) {
+                                LOGGER.error("Error querying archive shard " + ref.dateLabel() +
+                                        " for doc " + doc.getName(), e);
+                                return null;
+                            }
+                        }, executor));
+                    }
+                }
+            }
 
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             return mergeAndPaginate(futures, criteria);
@@ -288,26 +339,17 @@ public class TracesStoreImpl implements TracesStore {
                 : stroom.planb.impl.db.trace.TraceRootField.TRACE_START;
         final boolean desc = firstSort == null || firstSort.isDesc();
 
-        final Comparator<TraceRoot> base = switch (field) {
-            case stroom.planb.impl.db.trace.TraceRootField.OPERATION -> Comparator.comparing(TraceRoot::getName,
-                            Comparator.nullsLast(Comparator.naturalOrder()));
-            case stroom.planb.impl.db.trace.TraceRootField.TRACE_ID -> Comparator.comparing(TraceRoot::getTraceId,
-                            Comparator.nullsLast(Comparator.naturalOrder()));
-            case stroom.planb.impl.db.trace.TraceRootField.DURATION -> Comparator.comparingLong(root -> {
-                final stroom.pathways.shared.otel.trace.NanoTime s = root.getStartTime();
-                final stroom.pathways.shared.otel.trace.NanoTime e = root.getEndTime();
-                if (s == null || e == null) {
-                    return 0L;
-                }
-                return (e.getSeconds() - s.getSeconds()) * 1_000_000_000L + (e.getNanos() - s.getNanos());
-            });
-            case stroom.planb.impl.db.trace.TraceRootField.SERVICES -> Comparator.comparingInt(TraceRoot::getServices);
-            case stroom.planb.impl.db.trace.TraceRootField.DEPTH -> Comparator.comparingInt(TraceRoot::getDepth);
-            case stroom.planb.impl.db.trace.TraceRootField.TOTAL_SPANS ->
-                Comparator.comparingInt(TraceRoot::getTotalSpans);
-            // TRACE_START and default
-            default -> Comparator.comparing(TraceRoot::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()));
-        };
+        // Match the per-shard secondary-index order. TRACE_ID is served by the primary
+        // trace-roots DBI (not a secondary index) so it is handled explicitly; every
+        // other field (and the default) comes from the single TraceSecondaryIndex source.
+        final Comparator<TraceRoot> base;
+        if (stroom.planb.impl.db.trace.TraceRootField.TRACE_ID.equals(field)) {
+            base = Comparator.comparing(TraceRoot::getTraceId,
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+        } else {
+            final TraceSecondaryIndex index = TraceSecondaryIndex.forField(field);
+            base = (index != null ? index : TraceSecondaryIndex.START_TIME).comparator();
+        }
 
         final Comparator<TraceRoot> ordered = desc ? base.reversed() : base;
         // Stable tiebreaker: ascending traceId.
@@ -366,12 +408,81 @@ public class TracesStoreImpl implements TracesStore {
     }
 
     public Trace getLocalTrace(final GetTraceRequest request) {
-        return shardManager.get(request.getDataSourceRef().getName(), request.getTraceId(), reader -> {
-            if (reader instanceof final TraceDb traceDb) {
-                return traceDb.getTrace(request);
+        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
+
+        // 1. Live shard first. Use findTrace (returns empty rather than throwing)
+        //    so we can fall back to archives when the trace has been purged.
+        final Optional<Trace> live = shardManager.get(
+                request.getDataSourceRef().getName(), request.getTraceId(), reader -> {
+                    if (reader instanceof final TraceDb traceDb) {
+                        return traceDb.findTrace(traceIdBytes);
+                    }
+                    throw new IllegalStateException("Unexpected value: " + reader);
+                });
+        if (live.isPresent()) {
+            return live.get();
+        }
+
+        // 2. Archive fallback. Archives are labelled by trace start time, so if the
+        //    caller supplied the start time we open only the matching bucket; otherwise
+        //    we scan every archive bucket for this trace's shard.
+        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+        if (doc != null && doc.getSharedPath() != null && doc.getShardCount() > 0) {
+            final int shardIndex = ShardKeyRouter.computeShardIndex(
+                    request.getTraceId(), doc.getShardCount());
+            final long fromMs = request.getStartTimeMs() != null
+                    ? request.getStartTimeMs() : Long.MIN_VALUE;
+            final long toMs = request.getStartTimeMs() != null
+                    ? request.getStartTimeMs() : Long.MAX_VALUE;
+            final List<ArchiveShardRef> refs =
+                    archiveShardLocator.findRelevantShards(doc, shardIndex, fromMs, toMs);
+            for (final ArchiveShardRef ref : refs) {
+                final Trace trace = getTraceFromArchive(ref, traceIdBytes, doc);
+                if (trace != null) {
+                    return trace;
+                }
             }
-            throw new IllegalStateException("Unexpected value: " + reader);
-        });
+        }
+
+        throw new NotFoundException("No spans found for trace " + request.getTraceId());
+    }
+
+    /**
+     * Copies an archive shard's {@code data.mdb} to a local temp dir, opens it
+     * read-only and returns the assembled {@link Trace} for {@code traceIdBytes},
+     * or {@code null} if the archive does not contain that trace. Cleans up the
+     * temp dir on exit.
+     */
+    private Trace getTraceFromArchive(final ArchiveShardRef ref,
+                                      final byte[] traceIdBytes,
+                                      final PlanBDocument doc) {
+        final Path tempDir;
+        try {
+            tempDir = Files.createTempDirectory("planb_arch_");
+        } catch (final IOException e) {
+            LOGGER.error(() -> "Failed to create temp dir for archive shard " +
+                    ref.dateLabel() + ": " + e.getMessage());
+            return null;
+        }
+        try {
+            final Path srcData = ref.dir().resolve(PlanBConstants.DATA_FILE_NAME);
+            if (!Files.exists(srcData)) {
+                LOGGER.warn(() -> "Archive shard " + ref.dir() + " has no data.mdb — skipping");
+                return null;
+            }
+            Files.copy(srcData, tempDir.resolve(PlanBConstants.DATA_FILE_NAME));
+
+            try (final TraceDb archiveDb =
+                         TraceDb.create(tempDir, byteBuffers, byteBufferFactory, doc, true)) {
+                return archiveDb.findTrace(traceIdBytes).orElse(null);
+            }
+        } catch (final Exception e) {
+            LOGGER.error(() -> "Error reading trace from archive shard " + ref.dateLabel() +
+                    " for doc " + doc.getName() + ": " + e.getMessage(), e);
+            return null;
+        } finally {
+            FileUtil.deleteDir(tempDir);
+        }
     }
 
     private PlanBDocument getPlanBDoc(final DocRef docRef) {
@@ -392,6 +503,102 @@ public class TracesStoreImpl implements TracesStore {
             }
         } else {
             return planBDocCache.get(docRef.getName());
+        }
+    }
+
+    /**
+     * Resolves the criteria time range to a {@link TimeFilter} (epoch-ms bounds),
+     * or returns {@code null} if no time range is set.
+     */
+    @Nullable
+    private static TimeFilter resolveTimeFilter(@Nullable final TimeRange timeRange) {
+        if (timeRange == null) {
+            return null;
+        }
+        return DateExpressionParser.getTimeFilter(timeRange, DateTimeSettings.builder().build());
+    }
+
+    /**
+     * Validates that the resolved time filter does not exceed the configured
+     * {@code maxQueryTimeRange} on the document's settings. Throws
+     * {@link IllegalArgumentException} if the limit is exceeded.
+     */
+    private static void validateTimeRangeLimit(final PlanBDocument doc,
+                                               final TimeFilter timeFilter) {
+        if (timeFilter == null) {
+            return;
+        }
+        final SimpleDuration maxQueryTimeRange;
+        if (doc.getSettings() instanceof final TraceSettings ts) {
+            maxQueryTimeRange = ts.getMaxQueryTimeRange();
+        } else {
+            maxQueryTimeRange = null;
+        }
+        if (maxQueryTimeRange == null) {
+            return;
+        }
+        final long windowMs = timeFilter.getTo() - timeFilter.getFrom();
+        final long limitMs = toMillis(maxQueryTimeRange);
+        if (windowMs > limitMs) {
+            throw new IllegalArgumentException(
+                    "Query time range (" + windowMs / 1000 + "s) exceeds the configured " +
+                    "maximum of " + maxQueryTimeRange + " for this data source. " +
+                    "Please narrow the time range.");
+        }
+    }
+
+    /**
+     * Converts a {@link SimpleDuration} to epoch milliseconds.
+     */
+    private static long toMillis(final SimpleDuration duration) {
+        final long time = duration.getTime();
+        return switch (duration.getTimeUnit()) {
+            case NANOSECONDS  -> time / 1_000_000;
+            case MILLISECONDS -> time;
+            case SECONDS      -> time * 1_000;
+            case MINUTES      -> time * 60 * 1_000;
+            case HOURS        -> time * 60 * 60 * 1_000;
+            case DAYS         -> time * 24 * 60 * 60 * 1_000;
+            case WEEKS        -> time * 7 * 24 * 60 * 60 * 1_000;
+            case MONTHS       -> time * 30L * 24 * 60 * 60 * 1_000;
+            case YEARS        -> time * 365L * 24 * 60 * 60 * 1_000;
+        };
+    }
+
+    /**
+     * Copies the archive shard's {@code data.mdb} to a local temp directory,
+     * opens it as a read-only {@link TraceDb}, runs {@code findTraces()} and
+     * returns the result. Cleans up the temp directory on exit.
+     */
+    private TracesResultPage queryArchive(final ArchiveShardRef ref,
+                                          final FindTraceCriteria criteria,
+                                          final PlanBDocument doc) {
+        final Path tempDir;
+        try {
+            tempDir = Files.createTempDirectory("planb_arch_");
+        } catch (final IOException e) {
+            LOGGER.error(() -> "Failed to create temp dir for archive shard " +
+                    ref.dateLabel() + ": " + e.getMessage());
+            return null;
+        }
+        try {
+            final Path srcData = ref.dir().resolve(PlanBConstants.DATA_FILE_NAME);
+            if (!Files.exists(srcData)) {
+                LOGGER.warn(() -> "Archive shard " + ref.dir() + " has no data.mdb — skipping");
+                return null;
+            }
+            Files.copy(srcData, tempDir.resolve(PlanBConstants.DATA_FILE_NAME));
+
+            try (final TraceDb archiveDb =
+                         TraceDb.create(tempDir, byteBuffers, byteBufferFactory, doc, true)) {
+                return archiveDb.findTraces(criteria);
+            }
+        } catch (final Exception e) {
+            LOGGER.error(() -> "Error querying archive shard " + ref.dateLabel() +
+                    " for doc " + doc.getName() + ": " + e.getMessage(), e);
+            return null;
+        } finally {
+            FileUtil.deleteDir(tempDir);
         }
     }
 }
