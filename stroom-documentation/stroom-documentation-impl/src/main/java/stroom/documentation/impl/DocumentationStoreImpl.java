@@ -24,9 +24,7 @@ import stroom.documentation.shared.DocumentationDoc;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 @Singleton
 public class DocumentationStoreImpl
@@ -41,17 +39,6 @@ public class DocumentationStoreImpl
                 DocumentationDoc.TYPE,
                 DocumentationDoc::builder,
                 DocumentationDoc::copy);
-    }
-
-    // Documentation docs have no dependencies.
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return Collections.emptySet();
     }
 
     @Override

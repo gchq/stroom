@@ -28,5 +28,6 @@ public interface StoreFactory {
             DocumentSerialiser2<D> serialiser,
             String type,
             Supplier<B> builderSupplier,
-            Function<D, B> builderFunction);
+            Function<D, B> builderFunction,
+            Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier);
 }

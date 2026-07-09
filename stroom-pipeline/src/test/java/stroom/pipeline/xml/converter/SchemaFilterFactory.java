@@ -55,6 +55,7 @@ public class SchemaFilterFactory {
                     persistence,
                     null,
                     securityContext,
+                    null,
                     null),
             serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore, securityContext);

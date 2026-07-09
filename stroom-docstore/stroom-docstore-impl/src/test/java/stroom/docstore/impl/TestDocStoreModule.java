@@ -17,7 +17,6 @@
 package stroom.docstore.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.impl.CacheManagerImpl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -76,7 +75,8 @@ class TestDocStoreModule {
                 serialiser,
                 "MyDocType",
                 MyDoc::builder,
-                MyDoc::copy);
+                MyDoc::copy,
+                () -> null);
     }
 
     private static class MyDoc extends AbstractDoc {

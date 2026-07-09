@@ -40,7 +40,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -172,16 +171,6 @@ public class ReceiveDataRuleSetStoreImpl
     @Override
     public void deleteDocument(final DocRef docRef) {
         throw new UnsupportedOperationException("Delete not supported by Data Receipt Rules");
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        throw new UnsupportedOperationException("Get Dependencies not supported by Data Receipt Rules");
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        throw new UnsupportedOperationException("Get Dependencies not supported by Data Receipt Rules");
     }
 
     @Override

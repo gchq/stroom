@@ -30,9 +30,10 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import org.jooq.Record6;
+import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
 import static stroom.docstore.impl.db.jooq.tables.DocDependency.DOC_DEPENDENCY;
@@ -72,6 +74,14 @@ public class DocDependencyDao {
             DependencyCriteria.FIELD_TO_UUID, DOC_DEPENDENCY.TO_UUID,
             DependencyCriteria.FIELD_STATUS, OK_FIELD
     );
+
+    // Explorer-document types that "own" a non-explorer entity (e.g. a ProcessorFilter is owned by its
+    // Pipeline). A broken dependency whose source is a non-explorer entity (its from_uuid is absent
+    // from the doc table) is rolled up to the owning document — found via one of the source's own
+    // dependency edges of these types — so it can surface on a real explorer tree node rather than
+    // being invisible. Extend this set if other non-explorer entities with a different owner type are
+    // added to the dependency store.
+    private static final Set<String> OWNER_DOC_TYPES = Set.of("Pipeline");
 
     private final DocStoreDbConnProvider connProvider;
 
@@ -270,6 +280,11 @@ public class DocDependencyDao {
     /**
      * Find broken dependencies: edges where the target UUID does not exist in the doc table
      * (as a non-deleted document). Returns a map of source DocRef to the set of missing target DocRefs.
+     * <p>
+     * A broken edge whose source is a non-explorer entity (its {@code from_uuid} is absent from the
+     * doc table, e.g. a ProcessorFilter) is rolled up to the source's owning explorer document (found
+     * via one of the source's own {@link #OWNER_DOC_TYPES owner-typed} dependency edges) so that it can
+     * be surfaced on a real explorer tree node.
      *
      * @param pseudoRefUuids UUIDs of known pseudo-refs that should NOT be considered broken
      */
@@ -284,13 +299,17 @@ public class DocDependencyDao {
                         .and(DOC_DEPENDENCY.TO_UUID.notIn(pseudoRefUuids));
             }
 
-            final Result<Record6<String, String, String, String, String, String>> records = ctx
-                    .select(DOC_DEPENDENCY.FROM_TYPE,
+            // FROM_DOC.UUID tells us whether the source is itself an explorer document (non-null) or a
+            // non-explorer entity that needs rolling up (null).
+            final Result<Record> records = ctx
+                    .select(List.of(
+                            DOC_DEPENDENCY.FROM_TYPE,
                             DOC_DEPENDENCY.FROM_UUID,
                             FROM_NAME_RESOLVED,
+                            FROM_DOC.UUID,
                             DOC_DEPENDENCY.TO_TYPE,
                             DOC_DEPENDENCY.TO_UUID,
-                            DOC_DEPENDENCY.TO_NAME)
+                            DOC_DEPENDENCY.TO_NAME))
                     .from(DOC_DEPENDENCY)
                     .leftJoin(FROM_DOC).on(FROM_DOC.UUID.eq(DOC_DEPENDENCY.FROM_UUID)
                             .and(FROM_DOC.DELETED.isNull()))
@@ -300,7 +319,8 @@ public class DocDependencyDao {
                     .fetch();
 
             final Map<DocRef, Set<DocRef>> result = new HashMap<>();
-            for (final Record6<String, String, String, String, String, String> r : records) {
+            final Set<String> nonExplorerSourceUuids = new HashSet<>();
+            for (final Record r : records) {
                 final DocRef fromRef = new DocRef(
                         r.get(DOC_DEPENDENCY.FROM_TYPE),
                         r.get(DOC_DEPENDENCY.FROM_UUID),
@@ -310,8 +330,53 @@ public class DocDependencyDao {
                         r.get(DOC_DEPENDENCY.TO_UUID),
                         r.get(DOC_DEPENDENCY.TO_NAME));
                 result.computeIfAbsent(fromRef, k -> new HashSet<>()).add(toRef);
+                if (r.get(FROM_DOC.UUID) == null) {
+                    nonExplorerSourceUuids.add(fromRef.getUuid());
+                }
+            }
+
+            // Roll up any non-explorer source to its owning explorer document.
+            if (!nonExplorerSourceUuids.isEmpty()) {
+                final Map<String, DocRef> ownerBySourceUuid = getOwnerDocRefs(ctx, nonExplorerSourceUuids);
+                if (!ownerBySourceUuid.isEmpty()) {
+                    final Map<DocRef, Set<DocRef>> rolledUp = new HashMap<>();
+                    result.forEach((source, missing) -> {
+                        final DocRef owner = ownerBySourceUuid.get(source.getUuid());
+                        rolledUp.computeIfAbsent(owner != null ? owner : source, k -> new HashSet<>())
+                                .addAll(missing);
+                    });
+                    return rolledUp;
+                }
             }
             return result;
         });
+    }
+
+    /**
+     * For each supplied non-explorer source UUID, find its owning explorer document: the target of one
+     * of the source's dependency edges whose type is an {@link #OWNER_DOC_TYPES owner type} and which
+     * still exists in the doc table. Returns a map of source UUID to owner DocRef (with the owner's
+     * live name). Sources with no such edge are simply absent from the map.
+     */
+    private Map<String, DocRef> getOwnerDocRefs(final DSLContext ctx, final Set<String> sourceUuids) {
+        return ctx
+                .select(DOC_DEPENDENCY.FROM_UUID,
+                        DOC_DEPENDENCY.TO_TYPE,
+                        DOC_DEPENDENCY.TO_UUID,
+                        TO_DOC.NAME)
+                .from(DOC_DEPENDENCY)
+                .join(TO_DOC).on(TO_DOC.UUID.eq(DOC_DEPENDENCY.TO_UUID)
+                        .and(TO_DOC.DELETED.isNull()))
+                .where(DOC_DEPENDENCY.FROM_UUID.in(sourceUuids)
+                        .and(DOC_DEPENDENCY.TO_TYPE.in(OWNER_DOC_TYPES)))
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> r.get(DOC_DEPENDENCY.FROM_UUID),
+                        r -> new DocRef(
+                                r.get(DOC_DEPENDENCY.TO_TYPE),
+                                r.get(DOC_DEPENDENCY.TO_UUID),
+                                r.get(TO_DOC.NAME)),
+                        (a, b) -> a));
     }
 }

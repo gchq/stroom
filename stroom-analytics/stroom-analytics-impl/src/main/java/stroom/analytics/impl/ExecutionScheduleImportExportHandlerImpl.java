@@ -171,18 +171,6 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
     // ---------------------------------------------------------------------
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        //TODO 8192 check what this does, does it need implementing.
-        return null;
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        //TODO 8192 check what this does, does it need implementing.
-        return null;
-    }
-
-    @Override
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
     }
 

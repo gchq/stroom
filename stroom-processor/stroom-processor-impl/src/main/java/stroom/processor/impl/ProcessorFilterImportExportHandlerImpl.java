@@ -17,7 +17,6 @@
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentNotFoundException;
@@ -42,7 +41,6 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDoc;
-import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
@@ -58,7 +56,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -435,50 +432,6 @@ public class ProcessorFilterImportExportHandlerImpl
     // ---------------------------------------------------------------------
     // START OF HasDependencies
     // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final Map<DocRef, Set<DocRef>> dependencies = new HashMap<>();
-        final ResultPage<ProcessorFilter> page = processorFilterService.find(new ExpressionCriteria());
-
-        if (page != null && page.getValues() != null) {
-            page.getValues().forEach(processorFilter -> {
-                final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
-                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
-                }
-                final DocRef docRef = new DocRef(
-                        ProcessorFilter.ENTITY_TYPE,
-                        processorFilter.getPipelineUuid(),
-                        getPipelineName(processorFilter.getPipeline()));
-
-                dependencies.put(docRef, dependencyRemapper.getDependencies());
-            });
-        }
-
-        return dependencies;
-    }
-
-    private String getPipelineName(final DocRef pipeline) {
-        return docFinderProvider.get().getName(pipeline).orElse("Unknown");
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTextTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
-        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
-        final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
-        if (page != null && page.getValues() != null) {
-            page.getValues().forEach(processorFilter -> {
-                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
-                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
-                }
-            });
-        }
-        return dependencyRemapper.getDependencies();
-    }
 
     @Override
     public void remapDependencies(final DocRef docRef,
