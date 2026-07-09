@@ -18,6 +18,7 @@ package stroom.pathways.client.presenter;
 
 import stroom.data.grid.client.DefaultResources;
 import stroom.data.grid.client.Glass;
+import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
@@ -31,12 +32,16 @@ import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,6 +49,10 @@ public class TraceOverviewWidget extends Composite {
 
     private final HTML panel = new HTML();
     private Trace trace;
+    /** Lookup of spanId -&gt; Span for resolving clicks on span rows. */
+    private final Map<String, Span> spanById = new HashMap<>();
+    /** The span whose attributes are shown in the Span Info panel, or {@code null}. */
+    private Span selectedSpan;
 
 
     private Extents extents;
@@ -54,6 +63,8 @@ public class TraceOverviewWidget extends Composite {
     private int startX;
     private NanoDuration windowStart = NanoDuration.ZERO;
     private NanoDuration windowEnd = NanoDuration.ZERO;
+    private boolean resizingPanel;
+    private int spanInfoWidth = 340;
 
     public TraceOverviewWidget(final DefaultResources resources) {
         initWidget(panel);
@@ -88,6 +99,27 @@ public class TraceOverviewWidget extends Composite {
                 windowStart = NanoDuration.ZERO;
                 windowEnd = extents.totalDuration;
                 refresh();
+
+            } else if ("closeSpanInfo".equals(element.getId())) {
+                selectedSpan = null;
+                refresh();
+
+            } else if ("spanInfoResize".equals(element.getId())) {
+                startX = e.getClientX();
+                capture();
+                resizingPanel = true;
+
+            } else {
+                // Clicked a span row/bar — open the Span Info panel for that span.
+                final Element row = ElementUtil.findParent(
+                        element, el -> el.hasAttribute("data-span-id"), 15);
+                if (row != null) {
+                    final Span span = spanById.get(row.getAttribute("data-span-id"));
+                    if (span != null) {
+                        selectedSpan = span;
+                        refresh();
+                    }
+                }
             }
 
         });
@@ -95,8 +127,17 @@ public class TraceOverviewWidget extends Composite {
             releaseCapture();
             resizingStart = false;
             resizingEnd = false;
+            resizingPanel = false;
         });
         panel.addMouseMoveHandler(e -> {
+            if (resizingPanel) {
+                // Drag the panel's left edge: moving left widens it, right narrows it.
+                final int delta = startX - e.getClientX();
+                startX = e.getClientX();
+                spanInfoWidth = Math.max(240, Math.min(900, spanInfoWidth + delta));
+                refresh();
+                return;
+            }
             if (resizingStart && resizingEnd) {
                 final NanoDuration windowSize = windowEnd.subtract(windowStart);
                 final NanoDuration start = calcWindow(e);
@@ -218,6 +259,12 @@ public class TraceOverviewWidget extends Composite {
 
     public void setTrace(final Trace trace) {
         this.trace = trace;
+        this.selectedSpan = null;
+        spanById.clear();
+        if (trace != null) {
+            trace.getParentSpanIdMap().values()
+                    .forEach(spans -> spans.forEach(span -> spanById.put(span.getSpanId(), span)));
+        }
         this.extents = computeExtents();
         windowStart = NanoDuration.ZERO;
         windowEnd = extents.totalDuration;
@@ -225,6 +272,9 @@ public class TraceOverviewWidget extends Composite {
     }
 
     private void refresh() {
+        // Capture the operation list scroll position; setHTML() below rebuilds the
+        // whole DOM and would otherwise reset it to the top on every span click/resize.
+        final int operationScrollTop = getOperationListScrollTop();
         final HtmlBuilder hb = new HtmlBuilder();
         if (trace != null) {
             hb.div(div -> {
@@ -234,9 +284,27 @@ public class TraceOverviewWidget extends Composite {
 
             }, Attribute.className("timeline-container"));
 
-            appendServiceOperations(hb);
+            hb.div(body -> {
+                appendServiceOperations(body);
+                if (selectedSpan != null) {
+                    appendSpanInfo(body, selectedSpan);
+                }
+            }, Attribute.className("trace-body"));
         }
         panel.setHTML(hb.toSafeHtml());
+        setOperationListScrollTop(operationScrollTop);
+    }
+
+    private int getOperationListScrollTop() {
+        final Element list = ElementUtil.findChild(panel.getElement(), "operation-list");
+        return list == null ? 0 : list.getScrollTop();
+    }
+
+    private void setOperationListScrollTop(final int scrollTop) {
+        final Element list = ElementUtil.findChild(panel.getElement(), "operation-list");
+        if (list != null) {
+            list.setScrollTop(scrollTop);
+        }
     }
 
     private void appendTimelineHeader(final HtmlBuilder hb) {
@@ -529,7 +597,8 @@ public class TraceOverviewWidget extends Composite {
                 }
             }, Attribute.className("waterfall-container"));
 
-        }, Attribute.className("operation-item"), Attribute.id("operationList"));
+        }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
+                new Attribute("data-span-id", span.getSpanId()));
 
         final List<Span> children = trace.children(span);
         if (!children.isEmpty()) {
@@ -617,6 +686,73 @@ public class TraceOverviewWidget extends Composite {
 //    </div>
     }
 
+
+    private boolean isSelected(final Span span) {
+        return selectedSpan != null && selectedSpan.getSpanId().equals(span.getSpanId());
+    }
+
+    /**
+     * Renders the Span Info side panel for the given span: identity, timing and all
+     * OTel attributes. Shown when a span row is clicked; closed via the header button
+     * (id {@code closeSpanInfo}).
+     */
+    private void appendSpanInfo(final HtmlBuilder hb, final Span span) {
+        hb.div(sp -> {
+            // Left-edge drag handle for resizing the panel.
+            sp.div("", Attribute.className("span-info-resize"), Attribute.id("spanInfoResize"));
+            sp.div(header -> {
+                header.span("Span Info", Attribute.className("span-info-title"));
+                header.div("×",
+                        Attribute.className("span-info-close"),
+                        Attribute.id("closeSpanInfo"),
+                        Attribute.title("Close"));
+            }, Attribute.className("span-info-header"));
+
+            sp.div(body -> {
+                body.div(span.getName(), Attribute.className("span-info-name"));
+
+                appendInfoRow(body, "Kind", span.getKind() == null ? "" : span.getKind().toString());
+                if (span.start() != null && span.end() != null) {
+                    appendInfoRow(body, "Duration", span.duration().toString());
+                }
+                appendInfoRow(body, "Start", formatTime(span.start()));
+                appendInfoRow(body, "End", formatTime(span.end()));
+                appendInfoRow(body, "Span ID", span.getSpanId());
+                appendInfoRow(body, "Parent Span ID", span.getParentSpanId());
+
+                final List<KeyValue> attributes = span.getAttributes();
+                if (attributes != null && !attributes.isEmpty()) {
+                    body.div("Attributes", Attribute.className("span-info-section"));
+                    attributes.forEach(attr -> {
+                        final String value = attr.getValue() == null
+                                ? ""
+                                : attr.getValue().toString();
+                        body.div(row -> {
+                            row.span(attr.getKey() + ": ", Attribute.className("span-info-key"));
+                            row.span(value);
+                        }, Attribute.className("span-info-attr"));
+                    });
+                }
+            }, Attribute.className("span-info-body"));
+        }, Attribute.className("span-info-panel"),
+                Attribute.id("spanInfo"),
+                Attribute.style("width: " + spanInfoWidth + "px;"));
+    }
+
+    private void appendInfoRow(final HtmlBuilder hb, final String key, final String value) {
+        hb.div(row -> {
+            row.span(key + ": ", Attribute.className("span-info-key"));
+            row.span(value == null ? "" : value);
+        }, Attribute.className("span-info-row"));
+    }
+
+    private static String formatTime(final NanoTime time) {
+        if (time == null) {
+            return "";
+        }
+        return DateTimeFormat.getFormat("yyyy-MM-dd HH:mm:ss.SSS")
+                .format(new Date(time.toEpochMillis()));
+    }
 
     private static class Extents {
 

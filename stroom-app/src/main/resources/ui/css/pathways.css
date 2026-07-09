@@ -293,10 +293,10 @@
 }
 
 /*
- * Trace overview layout: a fixed timeline + section header above a
- * vertically-scrollable operation list. The root (.trace-overview) fills the
- * height it is given by its container and is a flex column; the operation list
- * takes the remaining space and scrolls, showing a scroll bar on its right.
+ * Trace overview layout. The root (.trace-overview) is a vertical flex column:
+ * a full-width timeline on top, then a .trace-body row holding the operation list
+ * (left) and, when a span is selected, the Span Info panel (.span-info-panel) on
+ * the right — so the span-info header lines up with the section header.
  */
 .trace-overview {
     display: flex;
@@ -309,21 +309,116 @@
     flex: 0 0 auto;
 }
 
-.trace-overview .service-operations {
+/*
+ * Below the full-width timeline: the operations list on the left and (when a span
+ * is selected) the Span Info panel on the right. Both start at the same y, so the
+ * span-info header lines up with the "Service & Operation" section header.
+ */
+.trace-body {
+    display: flex;
+    flex-direction: row;
     flex: 1 1 auto;
+    min-height: 0;
+}
+
+.trace-body .service-operations {
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
-.trace-overview .section-header {
+.trace-body .section-header {
     flex: 0 0 auto;
 }
 
-.trace-overview .operation-list {
+.trace-body .operation-list {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+}
+
+.operation-item.selected {
+    background-color: rgba(255, 140, 66, 0.15);
+}
+
+/* Span Info side panel — shown when a span row is clicked. */
+.span-info-panel {
+    position: relative;
+    flex: 0 0 auto;
+    width: 340px;             /* base; overridden by an inline width when resized */
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+}
+
+/* Left-edge drag handle to resize the panel. */
+.span-info-resize {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 1;
+}
+
+.span-info-resize:hover {
+    background-color: rgba(255, 140, 66, 0.4);
+}
+
+.span-info-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 500;
+    background-color: #2d2d2d;
+}
+
+.span-info-close {
+    cursor: pointer;
+    padding: 0 6px;
+}
+
+.span-info-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.span-info-name {
+    font-weight: 500;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: rgb(255, 140, 66);
+    word-break: break-all;
+}
+
+.span-info-row,
+.span-info-attr {
+    margin: 3px 0;
+    word-break: break-all;
+}
+
+.span-info-key {
+    color: #9aa0a6;
+}
+
+.span-info-section {
+    font-weight: 500;
+    margin: 12px 0 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
 }
 
 .operation-item {
