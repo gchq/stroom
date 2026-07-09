@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.explorer.impl;
+package stroom.docstore.impl.dao;
 
 import stroom.docref.DocRef;
-import stroom.importexport.api.ContentService;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -30,11 +29,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-//@EntityEventHandler(
-//        action = {
-//                EntityAction.CREATE,
-//                EntityAction.DELETE,
-//                EntityAction.UPDATE})
 @Singleton
 public class BrokenDependenciesCache {
 
@@ -42,27 +36,27 @@ public class BrokenDependenciesCache {
 
     private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
 
-    private final Provider<ContentService> contentServiceProvider;
+    private final Provider<DocDependencyDao> docDependencyServiceProvider;
     private final SecurityContext securityContext;
 
     @Inject
-    public BrokenDependenciesCache(final Provider<ContentService> contentServiceProvider,
+    public BrokenDependenciesCache(final Provider<DocDependencyDao> docDependencyServiceProvider,
                                    final SecurityContext securityContext) {
-        this.contentServiceProvider = contentServiceProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
         this.securityContext = securityContext;
     }
 
     private volatile Map<DocRef, Set<DocRef>> brokenDependenciesMap = Collections.emptyMap();
     private volatile long brokenDepsNextUpdateEpochMs = 0L;
 
-    public Map<DocRef, Set<DocRef>> getMap() {
+    public Map<DocRef, Set<DocRef>> getMap(final Set<String> pseudoRefUuids) {
         if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
             synchronized (this) {
                 if (System.currentTimeMillis() > brokenDepsNextUpdateEpochMs) {
                     securityContext.asProcessingUser(() -> {
                         LOGGER.debug("Updating broken dependencies map");
                         brokenDependenciesMap = LOGGER.logDurationIfDebugEnabled(() -> {
-                            return contentServiceProvider.get().fetchBrokenDependencies();
+                            return docDependencyServiceProvider.get().getBrokenDependencies(pseudoRefUuids);
                         }, "Updating broken dependencies map");
                         brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
                     });
@@ -75,20 +69,4 @@ public class BrokenDependenciesCache {
     public void invalidate() {
         brokenDepsNextUpdateEpochMs = 0L;
     }
-
-//    @Override
-//    public void onChange(final EntityEvent event) {
-//        switch (event.getAction()) {
-//            case UPDATE -> {
-//                // User has potentially fixed a dependency so
-//
-//                brokenDependenciesMap.
-//
-//            }
-//            case DELETE -> {
-//                // User has potentially broken a dependency
-//
-//            }
-//        }
-//    }
 }
