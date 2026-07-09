@@ -79,22 +79,17 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
 
     private PlanBDocument create(final String name) {
         return securityContext.asProcessingUserResult(() -> {
-            final Map<DocumentTypeName, DocumentActionHandler> handlers = documentActionHandlersProvider.get();
-
             PlanBDocument result = null;
             for (final String type : planBDocumentTypes) {
                 final List<DocRef> matches = docFinder.findByName(type, name);
                 for (final DocRef docRef : matches) {
-                    final DocumentActionHandler<?> handler = handlers.get(new DocumentTypeName(docRef.getType()));
-                    if (handler != null) {
-                        final Object loaded = handler.readDocument(docRef);
-                        if (loaded instanceof final PlanBDocument planBDoc) {
-                            if (result != null) {
-                                throw new RuntimeException(
-                                        "Unexpectedly found more than one state doc with key: " + name);
-                            }
-                            result = planBDoc;
+                    final PlanBDocument planBDoc = loadFromDocRef(docRef);
+                    if (planBDoc != null) {
+                        if (result != null) {
+                            throw new RuntimeException(
+                                    "Unexpectedly found more than one state doc with key: " + name);
                         }
+                        result = planBDoc;
                     }
                 }
             }
@@ -104,6 +99,25 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
             }
             return result;
         });
+    }
+
+    /**
+     * Loads a {@link PlanBDocument} directly from a known {@link DocRef} via its
+     * document handler, bypassing the {@link DocFinder#findByName} lookup. Returns
+     * {@code null} if there is no handler for the doc's type or the loaded document
+     * is not a {@link PlanBDocument}.
+     */
+    private PlanBDocument loadFromDocRef(final DocRef docRef) {
+        final Map<DocumentTypeName, DocumentActionHandler> handlers = documentActionHandlersProvider.get();
+        final DocumentActionHandler<?> handler = handlers.get(new DocumentTypeName(docRef.getType()));
+        if (handler == null) {
+            return null;
+        }
+        final Object loaded = handler.readDocument(docRef);
+        if (loaded instanceof final PlanBDocument planBDoc) {
+            return planBDoc;
+        }
+        return null;
     }
 
     @Override
@@ -116,7 +130,11 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
                 if (handler instanceof final ImportExportActionHandler ieHandler) {
                     for (final DocRef docRef : ieHandler.listDocuments()) {
                         try {
-                            final PlanBDocument doc = cache.get(docRef.getName());
+                            // listDocuments() already gives us the full DocRef, so on a cache
+                            // miss load straight from it rather than re-resolving by name via
+                            // create()/findByName. Warm cache entries are still reused.
+                            final PlanBDocument doc = cache.get(docRef.getName(),
+                                    name -> loadFromDocRef(docRef));
                             if (doc != null) {
                                 results.add(doc);
                             }

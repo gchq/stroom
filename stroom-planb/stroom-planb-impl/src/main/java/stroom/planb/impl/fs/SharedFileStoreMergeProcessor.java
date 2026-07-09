@@ -32,6 +32,10 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -196,51 +200,109 @@ public class SharedFileStoreMergeProcessor {
                             final int shardIndex,
                             final List<Path> completeBatchDirs,
                             final Path sharedShardsDocDir) {
-        final String lockName = PlanBConstants.getMergeLockName(doc.getUuid(), shardIndex);
-        LOGGER.debug(() -> "Attempting to acquire lock " + lockName);
-        clusterLockService.tryLock(lockName, () -> {
-            try {
-                LOGGER.info("Acquired lock {}, starting merge/maintenance", lockName);
-
-                // Recover any orphaned .tmp_ / .old_ dirs left by an interrupted push.
-                // Must run before opening the shard so syncFromSharedStoreIfRequired()
-                // sees a consistent shard directory.
-                publisher.recoverOrphaned(sharedShardsDocDir, shardIndex);
-
-                final SharedFileStoreShard shard = new SharedFileStoreShard(
-                        byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
-                        statePaths.getMergingDir());
+        // Span over the whole method — includes time spent waiting to acquire the
+        // cluster lock as well as the merge/maintenance work itself.
+        final Tracer tracer = GlobalOpenTelemetry.getTracer(SharedFileStoreMergeProcessor.class.getName());
+        final Span span = tracer.spanBuilder("SharedFileStoreMergeProcessor.mergeShard")
+                .setAttribute("planb.doc", doc.getName())
+                .setAttribute("planb.shardIndex", (long) shardIndex)
+                .setAttribute("planb.batchCount", (long) completeBatchDirs.size())
+                .startSpan();
+        try (final Scope scope = span.makeCurrent()) {
+            final String lockName = PlanBConstants.getMergeLockName(doc.getUuid(), shardIndex);
+            LOGGER.debug(() -> "Attempting to acquire lock " + lockName);
+            clusterLockService.tryLock(lockName, () -> {
                 try {
-                    boolean modified = mergeAllBatches(shard, completeBatchDirs);
+                    LOGGER.info("Acquired lock {}, starting merge/maintenance", lockName);
 
-                    final SharedFileStoreOperationContext ctx = new SharedFileStoreOperationContext(
-                            doc, shardIndex, shard, sharedShardsDocDir, lockName);
-                    for (final SharedFileStoreOperation op : operations) {
-                        modified |= op.run(ctx);
+                    // Recover any orphaned .tmp_ / .old_ dirs left by an interrupted push.
+                    // Must run before opening the shard so syncFromSharedStoreIfRequired()
+                    // sees a consistent shard directory.
+                    final Span recoverSpan = tracer
+                            .spanBuilder("SharedFileStoreMergeProcessor.recoverOrphaned").startSpan();
+                    try (final Scope recoverScope = recoverSpan.makeCurrent()) {
+                        publisher.recoverOrphaned(sharedShardsDocDir, shardIndex);
+                    } finally {
+                        recoverSpan.end();
                     }
 
-                    if (modified) {
-                        publisher.push(doc, shardIndex, shard);
+                    // Open the shard. This may sync a fresh copy of the shard down from the
+                    // shared store to local disk (see SharedFileStoreShard.syncFromSharedStore).
+                    final Span openSpan = tracer
+                            .spanBuilder("SharedFileStoreMergeProcessor.openShard")
+                            .setAttribute("planb.shardIndex", (long) shardIndex)
+                            .startSpan();
+                    final SharedFileStoreShard shard;
+                    try (final Scope openScope = openSpan.makeCurrent()) {
+                        shard = new SharedFileStoreShard(
+                                byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
+                                statePaths.getMergingDir());
+                    } finally {
+                        openSpan.end();
                     }
 
-                    cleanUpMergedBatches(completeBatchDirs);
-                    LOGGER.info("Successfully completed merge/maintenance for {}", lockName);
-                } finally {
-                    final Path mergeShardDir = shard.getShardDir();
-                    shard.dispose();
-                    // The merge shard runs in an isolated subdirectory of mergingDir rather than
-                    // shardDir. Clean it up now that the merge is done and published.
                     try {
-                        FileUtil.deleteDir(mergeShardDir);
-                    } catch (final Exception e) {
-                        LOGGER.warn("Failed to clean up merge directory {}: {}", mergeShardDir, e.getMessage());
+                        // Child span over just the batch-merge work, so it can be
+                        // distinguished from lock wait and downstream maintenance.
+                        final Span mergeSpan = tracer
+                                .spanBuilder("SharedFileStoreMergeProcessor.mergeAllBatches")
+                                .setAttribute("planb.batchCount", (long) completeBatchDirs.size())
+                                .startSpan();
+                        boolean modified;
+                        try (final Scope mergeScope = mergeSpan.makeCurrent()) {
+                            modified = mergeAllBatches(shard, completeBatchDirs);
+                        } finally {
+                            mergeSpan.end();
+                        }
+
+                        // Maintenance operations (retention, archival, etc.).
+                        final SharedFileStoreOperationContext ctx = new SharedFileStoreOperationContext(
+                                doc, shardIndex, shard, sharedShardsDocDir, lockName);
+                        final Span opsSpan = tracer
+                                .spanBuilder("SharedFileStoreMergeProcessor.maintenanceOperations").startSpan();
+                        try (final Scope opsScope = opsSpan.makeCurrent()) {
+                            for (final SharedFileStoreOperation op : operations) {
+                                modified |= op.run(ctx);
+                            }
+                        } finally {
+                            opsSpan.end();
+                        }
+
+                        if (modified) {
+                            // Push the merged shard back up to the shared store
+                            // (local disk -> shared store copy).
+                            final Span pushSpan = tracer
+                                    .spanBuilder("SharedFileStoreMergeProcessor.push")
+                                    .setAttribute("planb.shardIndex", (long) shardIndex)
+                                    .startSpan();
+                            try (final Scope pushScope = pushSpan.makeCurrent()) {
+                                publisher.push(doc, shardIndex, shard);
+                            } finally {
+                                pushSpan.end();
+                            }
+                        }
+
+                        cleanUpMergedBatches(completeBatchDirs);
+                        LOGGER.info("Successfully completed merge/maintenance for {}", lockName);
+                    } finally {
+                        final Path mergeShardDir = shard.getShardDir();
+                        shard.dispose();
+                        // The merge shard runs in an isolated subdirectory of mergingDir rather than
+                        // shardDir. Clean it up now that the merge is done and published.
+                        try {
+                            FileUtil.deleteDir(mergeShardDir);
+                        } catch (final Exception e) {
+                            LOGGER.warn("Failed to clean up merge directory {}: {}", mergeShardDir, e.getMessage());
+                        }
                     }
+                } catch (final IOException e) {
+                    LOGGER.error("Error during merge/maintenance for {}", lockName, e);
+                    throw new UncheckedIOException(e);
                 }
-            } catch (final IOException e) {
-                LOGGER.error("Error during merge/maintenance for {}", lockName, e);
-                throw new UncheckedIOException(e);
-            }
-        });
+            });
+        } finally {
+            span.end();
+        }
     }
 
     /**
@@ -263,14 +325,25 @@ public class SharedFileStoreMergeProcessor {
      */
     private boolean mergeSingleBatch(final SharedFileStoreShard shard, final Path batchDir) throws IOException {
         LOGGER.info("Merging batch {}", batchDir);
-        final Path localTempBatchDir = Files.createTempDirectory("planb_merge_");
-        try {
-            copyIfExists(batchDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                    localTempBatchDir.resolve(PlanBConstants.DATA_FILE_NAME));
-            shard.merge(localTempBatchDir);
-            return true;
+        final Tracer tracer = GlobalOpenTelemetry.getTracer(SharedFileStoreMergeProcessor.class.getName());
+        final Span batchSpan = tracer.spanBuilder("SharedFileStoreMergeProcessor.mergeBatch")
+                .setAttribute("planb.batchDir", batchDir.getFileName().toString())
+                .startSpan();
+        try (final Scope batchScope = batchSpan.makeCurrent()) {
+            final Path localTempBatchDir = Files.createTempDirectory("planb_merge_");
+            try {
+                // Copy the batch's data.mdb from the (shared) batch dir down to local disk.
+                // Measured as negligible (sub-ms), so it is not spanned separately; the
+                // mergeBatch span time is dominated by the LMDB shard.merge below.
+                copyIfExists(batchDir.resolve(PlanBConstants.DATA_FILE_NAME),
+                        localTempBatchDir.resolve(PlanBConstants.DATA_FILE_NAME));
+                shard.merge(localTempBatchDir);
+                return true;
+            } finally {
+                FileUtil.deleteDir(localTempBatchDir);
+            }
         } finally {
-            FileUtil.deleteDir(localTempBatchDir);
+            batchSpan.end();
         }
     }
 

@@ -292,6 +292,40 @@
     padding: 8px 0;
 }
 
+/*
+ * Trace overview layout: a fixed timeline + section header above a
+ * vertically-scrollable operation list. The root (.trace-overview) fills the
+ * height it is given by its container and is a flex column; the operation list
+ * takes the remaining space and scrolls, showing a scroll bar on its right.
+ */
+.trace-overview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.trace-overview .timeline-container {
+    flex: 0 0 auto;
+}
+
+.trace-overview .service-operations {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.trace-overview .section-header {
+    flex: 0 0 auto;
+}
+
+.trace-overview .operation-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .operation-item {
     display: flex;
     align-items: center;

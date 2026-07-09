@@ -33,6 +33,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.SimpleDurationUtil;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
@@ -164,80 +168,107 @@ public class SharedFileStoreShard extends AbstractStoreShard {
                     .resolve(doc.getUuid())
                     .resolve(String.format("%04d", shardIndex));
             final Path sharedVersionFile = sharedShardDir.resolve(PlanBConstants.VERSION_FILE_NAME);
-
-            if (!Files.exists(sharedVersionFile)) {
-                // No shared version yet, meaning no merged shard exists in shared store yet.
-                lastSyncCheckTimeMs = now;
-                return;
-            }
-
             final Path localVersionFile = shardDir.resolve(PlanBConstants.VERSION_FILE_NAME);
-            final String localVersion = Files.exists(localVersionFile) ? Files.readString(localVersionFile).trim() : "";
-            final String sharedVersion = Files.readString(sharedVersionFile).trim();
+
+            final Tracer tracer = GlobalOpenTelemetry.getTracer(SharedFileStoreShard.class.getName());
+
+            // Span the shared-store version metadata reads (stat + read of the version
+            // files) so shared-FS latency is visible separately from the data copy and
+            // the LMDB env open that together make up the openShard time.
+            final String localVersion;
+            final String sharedVersion;
+            final Span checkSpan = tracer.spanBuilder("SharedFileStoreShard.checkSharedVersion")
+                    .setAttribute("planb.doc", doc.getName())
+                    .setAttribute("planb.shardIndex", (long) shardIndex)
+                    .startSpan();
+            try (final Scope checkScope = checkSpan.makeCurrent()) {
+                if (!Files.exists(sharedVersionFile)) {
+                    // No shared version yet, meaning no merged shard exists in shared store yet.
+                    lastSyncCheckTimeMs = now;
+                    return;
+                }
+                localVersion = Files.exists(localVersionFile)
+                        ? Files.readString(localVersionFile).trim()
+                        : "";
+                sharedVersion = Files.readString(sharedVersionFile).trim();
+            } finally {
+                checkSpan.end();
+            }
 
             if (localVersion.equals(sharedVersion)) {
                 lastSyncCheckTimeMs = now;
                 return;
             }
 
-            // Stale or missing local copy, perform copy-then-validate
+            // Stale or missing local copy, perform copy-then-validate.
             LOGGER.info(() -> "Local shard version (" + localVersion + ") for " + doc.getName()
                     + " (shard " + shardIndex + ") is stale. Syncing from shared store version ("
                     + sharedVersion + ")");
 
-            int attempts = 0;
-            boolean success = false;
-            while (attempts < 3 && !success) {
-                attempts++;
-                final String v1 = Files.readString(sharedVersionFile).trim();
-                final Path syncTmpDir = shardDir.resolve("sync_tmp");
-                FileUtil.deleteDir(syncTmpDir);
-                Files.createDirectories(syncTmpDir);
+            // Span the actual copy-down so the shared-store -> local-disk shard copy
+            // shows up in telemetry.
+            final Span span = tracer.spanBuilder("SharedFileStoreShard.syncFromSharedStore")
+                    .setAttribute("planb.doc", doc.getName())
+                    .setAttribute("planb.shardIndex", (long) shardIndex)
+                    .startSpan();
+            try (final Scope scope = span.makeCurrent()) {
+                int attempts = 0;
+                boolean success = false;
+                while (attempts < 3 && !success) {
+                    attempts++;
+                    final String v1 = Files.readString(sharedVersionFile).trim();
+                    final Path syncTmpDir = shardDir.resolve("sync_tmp");
+                    FileUtil.deleteDir(syncTmpDir);
+                    Files.createDirectories(syncTmpDir);
 
-                // Copy data.mdb
-                final Path sharedDataFile = sharedShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
-                if (Files.exists(sharedDataFile)) {
-                    Files.copy(sharedDataFile, syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                            StandardCopyOption.REPLACE_EXISTING);
-                }
-
-                final String v2 = Files.readString(sharedVersionFile).trim();
-                if (v1.equals(v2)) {
-                    // Success! Swap the files under exclusive lock
-                    writeLock.lockInterruptibly();
-                    try {
-                        exclusiveReadLock.lockInterruptibly();
-                        try {
-                            close();
-                            // Move files
-                            final Path localDataFile = shardDir.resolve(PlanBConstants.DATA_FILE_NAME);
-                            final Path tmpDataFile = syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME);
-                            if (Files.exists(tmpDataFile)) {
-                                Files.move(tmpDataFile, localDataFile, StandardCopyOption.REPLACE_EXISTING);
-                            }
-
-                            // Delete any existing lock.mdb so LMDB creates a fresh one
-                            // with clean mutex state on the next mdb_env_open.
-                            final Path localLockFile = shardDir.resolve(PlanBConstants.LOCK_FILE_NAME);
-                            Files.deleteIfExists(localLockFile);
-
-                            Files.writeString(localVersionFile, v2);
-                            open();
-                            success = true;
-                            lastSyncCheckTimeMs = System.currentTimeMillis();
-                        } finally {
-                            exclusiveReadLock.unlock();
-                        }
-                    } finally {
-                        writeLock.unlock();
+                    // Copy data.mdb
+                    final Path sharedDataFile = sharedShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
+                    if (Files.exists(sharedDataFile)) {
+                        Files.copy(sharedDataFile, syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME),
+                                StandardCopyOption.REPLACE_EXISTING);
                     }
-                } else {
-                    LOGGER.warn("Version changed during sync copy. Retrying. Attempt " + attempts);
+
+                    final String v2 = Files.readString(sharedVersionFile).trim();
+                    if (v1.equals(v2)) {
+                        // Success! Swap the files under exclusive lock
+                        writeLock.lockInterruptibly();
+                        try {
+                            exclusiveReadLock.lockInterruptibly();
+                            try {
+                                close();
+                                // Move files
+                                final Path localDataFile = shardDir.resolve(PlanBConstants.DATA_FILE_NAME);
+                                final Path tmpDataFile = syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME);
+                                if (Files.exists(tmpDataFile)) {
+                                    Files.move(tmpDataFile, localDataFile, StandardCopyOption.REPLACE_EXISTING);
+                                }
+
+                                // Delete any existing lock.mdb so LMDB creates a fresh one
+                                // with clean mutex state on the next mdb_env_open.
+                                final Path localLockFile = shardDir.resolve(PlanBConstants.LOCK_FILE_NAME);
+                                Files.deleteIfExists(localLockFile);
+
+                                Files.writeString(localVersionFile, v2);
+                                open();
+                                success = true;
+                                lastSyncCheckTimeMs = System.currentTimeMillis();
+                            } finally {
+                                exclusiveReadLock.unlock();
+                            }
+                        } finally {
+                            writeLock.unlock();
+                        }
+                    } else {
+                        LOGGER.warn("Version changed during sync copy. Retrying. Attempt " + attempts);
+                    }
+                    FileUtil.deleteDir(syncTmpDir);
                 }
-                FileUtil.deleteDir(syncTmpDir);
-            }
-            if (!success) {
-                throw new RuntimeException("Failed to sync shard from shared store due to concurrent modifications");
+                if (!success) {
+                    throw new RuntimeException(
+                            "Failed to sync shard from shared store due to concurrent modifications");
+                }
+            } finally {
+                span.end();
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

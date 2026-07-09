@@ -57,6 +57,9 @@ public class TraceOverviewWidget extends Composite {
 
     public TraceOverviewWidget(final DefaultResources resources) {
         initWidget(panel);
+        // Lets the CSS lay the widget out as a fixed timeline/header above a
+        // vertically-scrollable operation list (see .trace-overview in pathways.css).
+        panel.addStyleName("trace-overview");
         glass = new Glass(resources.dataGridStyle().resizeGlass());
 
         panel.addMouseDownHandler(e -> {

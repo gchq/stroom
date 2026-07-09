@@ -48,6 +48,7 @@ dependencies {
     implementation libs.guice
     implementation libs.kryo
     implementation libs.lmdbjava
+    implementation libs.opentelemetry.instrumentation.annotations
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.swagger.annotations
