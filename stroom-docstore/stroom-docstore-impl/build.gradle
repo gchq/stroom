@@ -38,6 +38,8 @@ dependencies {
     implementation libs.zero.allocation.hashing
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
