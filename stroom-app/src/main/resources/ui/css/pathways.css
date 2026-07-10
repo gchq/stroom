@@ -285,6 +285,7 @@
     padding: 8px 20px;
     border-bottom: 1px solid #404040;
     font-size: 13px;
+    line-height: 15px;      /* explicit line box so .span-info-header can match exactly */
     font-weight: 500;
 }
 
@@ -373,18 +374,27 @@
 
 .span-info-header {
     flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border-color);
+    position: relative;       /* anchors the absolutely-positioned close button */
+    padding: 8px 20px;
+    border-bottom: 1px solid #404040;
+    font-size: 13px;
+    line-height: 15px;        /* same explicit line box as .section-header -> identical height */
     font-weight: 500;
     background-color: #2d2d2d;
 }
 
+/* Force the title text to match .section-header; without this it picks up a
+ * different inherited/element font (renders larger and lighter). */
+.span-info-title {
+    font-size: 13px;
+    font-weight: 500;
+}
+
 .span-info-close {
+    position: absolute;
+    top: 8px;
+    right: 20px;
     cursor: pointer;
-    padding: 0 6px;
 }
 
 .span-info-body {
