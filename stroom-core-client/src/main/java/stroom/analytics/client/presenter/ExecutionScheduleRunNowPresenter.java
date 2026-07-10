@@ -18,9 +18,9 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter.ExecutionScheduleRunNowView;
 import stroom.analytics.shared.ExecutionScheduleResource;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -40,7 +40,7 @@ import javax.inject.Inject;
 
 public class ExecutionScheduleRunNowPresenter
         extends MyPresenterWidget<ExecutionScheduleRunNowView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ProcessingStatusUiHandlers, HasChangeHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -87,13 +87,13 @@ public class ExecutionScheduleRunNowPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     public interface ExecutionScheduleRunNowView

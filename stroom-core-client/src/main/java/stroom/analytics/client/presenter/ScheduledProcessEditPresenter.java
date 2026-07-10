@@ -21,9 +21,9 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
@@ -52,7 +52,7 @@ import java.util.function.Consumer;
 
 public class ScheduledProcessEditPresenter
         extends MyPresenterWidget<ScheduledProcessEditView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ProcessingStatusUiHandlers, HasChangeHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -124,9 +124,9 @@ public class ScheduledProcessEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
-        registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onDirty()));
-        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onDirty()));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onChange()));
+        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onChange()));
     }
 
     public void show(final ExecutionSchedule executionSchedule,
@@ -211,13 +211,13 @@ public class ScheduledProcessEditPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     private void setScheduleBounds(final ScheduleBounds scheduleBounds) {
