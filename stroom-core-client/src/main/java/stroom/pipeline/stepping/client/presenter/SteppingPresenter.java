@@ -25,10 +25,9 @@ import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -110,7 +109,7 @@ import java.util.stream.Collectors;
 
 public class SteppingPresenter
         extends MyPresenterWidget<SteppingPresenter.SteppingView>
-        implements HasDirtyHandlers, ClassificationUiHandlers {
+        implements HasChangeHandlers, ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -507,12 +506,12 @@ public class SteppingPresenter
             ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
             if (elementPresenter == null) {
                 // Editing element code (e.g. XSLT) fires a ChangeEvent ("something changed") which we
-                // relay to the tab framework as a DirtyEvent so the enclosing pipeline presenter
-                // re-evaluates Save via onChange(). The authoritative dirty verdict is recomputed there
-                // by comparison, so a reverted edit correctly returns to clean. It must NOT rebuild the
-                // pipeline model/tree - the code content is not part of the pipeline structure, and doing
-                // so on every keypress caused the tree to flash and the UI to lag on large documents.
-                final ChangeHandler changeEditorHandler = () -> DirtyEvent.fire(SteppingPresenter.this, true);
+                // relay up as our own ChangeEvent so the enclosing pipeline presenter re-evaluates Save
+                // via onChange(). The authoritative dirty verdict is recomputed there by comparison, so a
+                // reverted edit correctly returns to clean. It must NOT rebuild the pipeline model/tree -
+                // the code content is not part of the pipeline structure, and doing so on every keypress
+                // caused the tree to flash and the UI to lag on large documents.
+                final ChangeHandler changeEditorHandler = () -> ChangeEvent.fire(SteppingPresenter.this);
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
@@ -1153,8 +1152,8 @@ public class SteppingPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     // --------------------------------------------------------------------------------
