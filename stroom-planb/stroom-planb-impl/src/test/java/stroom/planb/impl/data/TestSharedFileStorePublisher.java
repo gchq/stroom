@@ -16,6 +16,9 @@
 
 package stroom.planb.impl.data;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
@@ -44,6 +47,9 @@ class TestSharedFileStorePublisher {
 
     private static final int SHARD_INDEX = 0;
 
+    private static final ByteBufferFactory BYTE_BUFFER_FACTORY = new ByteBufferFactoryImpl();
+    private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(BYTE_BUFFER_FACTORY);
+
     @TempDir
     Path tempDir;
 
@@ -60,7 +66,7 @@ class TestSharedFileStorePublisher {
     void setUp() throws IOException {
         mocks = MockitoAnnotations.openMocks(this);
         when(nodeInfo.getThisNodeName()).thenReturn("test-node");
-        publisher = new SharedFileStorePublisher(nodeInfo);
+        publisher = new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY);
 
         sharedRoot = tempDir.resolve("shared");
         Files.createDirectories(sharedRoot);

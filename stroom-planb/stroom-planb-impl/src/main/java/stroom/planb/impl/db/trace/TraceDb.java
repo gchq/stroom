@@ -1190,13 +1190,28 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         final int offset = criteria.getPageRequest().getOffset();
         final int length = criteria.getPageRequest().getLength();
 
-        // Use a single-element array to capture the total count from inside the lambda,
+        // Derive the time filter once (if any) so it can drive both the page scan and the
+        // exact count below.
+        final TimeFilter timeFilter = criteria.getTimeRange() == null
+                ? null
+                : DateExpressionParser.getTimeFilter(
+                        criteria.getTimeRange(), DateTimeSettings.builder().build());
+
+        // Use single-element arrays to capture totals from inside the lambda,
         // since the lambda requires effectively-final variables.
         final long[] totalRef = {0L};
 
         env.read(readTxn -> {
-            // O(1): LMDB stat gives exact entry count without scanning all entries.
-            totalRef[0] = traceRootsDbi.stat(readTxn).entries;
+            if (timeFilter == null) {
+                // O(1): LMDB stat gives exact entry count without scanning all entries.
+                totalRef[0] = traceRootsDbi.stat(readTxn).entries;
+            } else {
+                // Time range active: the unfiltered stat count would mislead the grid. Count
+                // the matching entries exactly via a key-only walk of the chronologically
+                // ordered START_TIME index (no TraceRoot deserialisation) — see
+                // countTracesInTimeRange.
+                totalRef[0] = countTracesInTimeRange(readTxn, timeFilter);
+            }
 
             final LmdbKeyRange keyRange = desc ? LmdbKeyRange.allReverse() : LmdbKeyRange.all();
             try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, indexDbi, keyRange)) {
@@ -1241,37 +1256,67 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             return null;
         });
 
-        // Determine the reported total and exactness.
-        //
-        // No time range: use the O(1) LMDB stat count — always exact.
-        //
-        // Time range active: the LMDB stat count is the *unfiltered* total and would mislead
-        // the data grid into thinking old rows are still valid.  Instead:
-        //   • If the page is not full (list.size() < length) the stream exhausted all matching
-        //     entries, so we know the exact total = offset + list.size().
-        //   • If the page is full there may be more entries beyond this page, so we report
-        //     exact=false which causes the pagination control to show "?" for the total.
-        final long reportedTotal;
-        final boolean exact;
-        if (criteria.getTimeRange() == null) {
-            reportedTotal = totalRef[0];
-            exact = true;
-        } else if (list.size() < length) {
-            // Last (or only) page — we have seen all matching entries.
-            reportedTotal = (long) offset + list.size();
-            exact = true;
-        } else {
-            // Full page — there may be more.
-            reportedTotal = (long) offset + list.size();
-            exact = false;
-        }
+        // totalRef now holds an exact total in both cases: the O(1) LMDB stat count when no
+        // time range is active, or the exact count of entries matching the time window
+        // (via countTracesInTimeRange). Either way the total is exact, so the pager shows the
+        // true count rather than "?".
         return new TracesResultPage(list,
                 PageResponse.builder()
                         .offset(offset)
                         .length(list.size())
-                        .total(reportedTotal)
-                        .exact(exact)
+                        .total(totalRef[0])
+                        .exact(true)
                         .build());
+    }
+
+    /**
+     * Counts trace roots whose start time falls within {@code timeFilter}, by walking only the
+     * <em>keys</em> of the chronologically-ordered {@link TraceSecondaryIndex#START_TIME} index
+     * over the matching contiguous range. The start time is encoded in the key, so this never
+     * reads a value or deserialises a {@link TraceRoot} — far cheaper than a filtered full scan,
+     * and lets the pager report an exact total under a time filter (cost is O(matching entries)).
+     *
+     * <p>The index key is {@code (startSecs[8] ∥ startNanos[4] ∥ traceId[16])}, big-endian.
+     * {@link #matchesTimeRange} compares at millisecond granularity ({@code from <= startMs <= to}),
+     * so the bounds are built to cover exactly that millisecond window: the lower bound sits at
+     * the first nanosecond of the {@code from} millisecond (traceId {@code 0x00}s) and the upper
+     * bound at the last nanosecond of the {@code to} millisecond (traceId {@code 0xFF}s), both
+     * inclusive.
+     *
+     * <p>Roots with a {@code null} start time are keyed at {@code (0,0)} and so are excluded here
+     * even though {@link #matchesTimeRange} would pass them; null start times are abnormal.
+     */
+    private long countTracesInTimeRange(final Txn<ByteBuffer> readTxn, final TimeFilter timeFilter) {
+        final long from = timeFilter.getFrom();
+        final long to = timeFilter.getTo();
+        final ByteBuffer start = startTimeBound(
+                from / 1_000L, (int) ((from % 1_000L) * 1_000_000L), (byte) 0x00);
+        final ByteBuffer stop = startTimeBound(
+                to / 1_000L, (int) ((to % 1_000L) * 1_000_000L + 999_999L), (byte) 0xFF);
+        final LmdbKeyRange keyRange = LmdbKeyRange.builder()
+                .start(start, true)
+                .stop(stop, true)
+                .build();
+        final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
+        try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, startTimeDbi, keyRange)) {
+            // Not SIZED, so count() actually traverses the range (key-only, no value reads).
+            return stream.count();
+        }
+    }
+
+    /**
+     * Builds a direct {@link ByteBuffer} bound key for the START_TIME index: {@code secs[8] ∥
+     * nanos[4] ∥ traceId[16]} with the traceId suffix filled with {@code traceIdFill}
+     * ({@code 0x00} for an inclusive lower bound, {@code 0xFF} for an inclusive upper bound).
+     */
+    private static ByteBuffer startTimeBound(final long secs, final int nanos, final byte traceIdFill) {
+        final ByteBuffer buf = ByteBuffer.allocateDirect(Long.BYTES + Integer.BYTES + TRACE_ID_BYTES);
+        buf.putLong(secs).putInt(nanos);
+        for (int i = 0; i < TRACE_ID_BYTES; i++) {
+            buf.put(traceIdFill);
+        }
+        buf.flip();
+        return buf;
     }
 
     /**

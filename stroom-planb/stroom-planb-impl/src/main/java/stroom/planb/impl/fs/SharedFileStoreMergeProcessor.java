@@ -93,7 +93,7 @@ public class SharedFileStoreMergeProcessor {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.mergeExecutor = createMergeExecutor(configProvider.get().getShardMergeThreadCount());
-        this.publisher = new SharedFileStorePublisher(nodeInfo);
+        this.publisher = new SharedFileStorePublisher(nodeInfo, byteBuffers, byteBufferFactory);
         this.operations = List.of(new RetentionOperation(), new ArchiveOperation(publisher));
         this.planBDocCache = planBDocCache;
     }

@@ -22,14 +22,18 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.impl.fs.SharedFileStorePublisher;
+import stroom.planb.impl.fs.StagedArchive;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.StateType;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.io.ByteSize;
@@ -323,8 +327,69 @@ class TestArchiveOldData {
     }
 
     // -----------------------------------------------------------------------
+    // Repeated archival of the same day must MERGE, not overwrite
+    // -----------------------------------------------------------------------
+
+    /**
+     * Regression guard for silent data loss on repeated archival: when a bucket for a
+     * date already exists on the shared store, a second archive batch for that same date
+     * must be <em>merged</em> into it, not overwrite it. Previously {@code pushArchive}
+     * raw-copied the new batch's {@code data.mdb} over the existing one, discarding every
+     * trace archived by earlier runs for that date.
+     */
+    @Test
+    void pushArchive_mergesRepeatedBatchesForSameDay_ratherThanOverwriting(
+            @TempDir final Path tempDir) throws IOException {
+        final Path shared = Files.createDirectory(tempDir.resolve("shared"));
+        final PlanBDoc doc = buildSharedDoc(shared);
+        final String dayLabel = "2024-01-10";
+        final Instant day = Instant.parse("2024-01-10T09:00:00.000Z");
+
+        // First archive batch for the day: trace A only.
+        final Path batch1 = Files.createDirectory(tempDir.resolve("batch1"));
+        try (final TraceDb db = TraceDb.create(batch1, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> db.insert(writer, new SpanKV(rootKey(TRACE_A), span(day, day))));
+        }
+        // Second archive batch for the SAME day: trace B only.
+        final Path batch2 = Files.createDirectory(tempDir.resolve("batch2"));
+        try (final TraceDb db = TraceDb.create(batch2, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> db.insert(writer, new SpanKV(rootKey(TRACE_B), span(day, day))));
+        }
+
+        // pushArchive does not use NodeInfo, so null is fine here.
+        final SharedFileStorePublisher publisher =
+                new SharedFileStorePublisher(null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY);
+        publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch1));
+        publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch2)); // must MERGE
+
+        // The shared bucket must contain BOTH traces — previously only TRACE_B survived.
+        final Path bucket = shared
+                .resolve(PlanBConstants.ARCHIVE_DIR_NAME)
+                .resolve(doc.getUuid())
+                .resolve(PlanBConstants.formatShardIndex(0))
+                .resolve(dayLabel);
+        assertThat(bucket.resolve(PlanBConstants.COMPLETE_FILE_NAME)).exists();
+        try (final TraceDb archive = TraceDb.create(bucket, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(traceIds(archive)).containsExactly(TRACE_A, TRACE_B);
+        }
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    private static PlanBDoc buildSharedDoc(final Path sharedPath) {
+        return PlanBDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test-doc")
+                .stateType(StateType.TRACE)
+                .settings(new TraceSettings.Builder()
+                        .maxStoreSize(ByteSize.ofGibibytes(1).getBytes())
+                        .sharedFileStore(new SharedFileStoreSettings(
+                                1, sharedPath.toAbsolutePath().toString()))
+                        .build())
+                .build();
+    }
 
     private static PlanBDoc buildDoc() {
         return PlanBDoc.builder()

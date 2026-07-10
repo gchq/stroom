@@ -275,7 +275,7 @@ public class TracesStoreImpl implements TracesStore {
             final FindTraceCriteria criteria) {
 
         final List<TraceRoot> allTraceRoots = new ArrayList<>();
-        int total = 0;
+        long total = 0;
         boolean exact = true;
 
         for (final CompletableFuture<TracesResultPage> future : futures) {
@@ -318,7 +318,7 @@ public class TracesStoreImpl implements TracesStore {
         final stroom.util.shared.PageResponse pageResponse = new stroom.util.shared.PageResponse(
                 (long) offset,
                 paginatedList.size(),
-                (long) total,
+                total,
                 exact
         );
         return new TracesResultPage(paginatedList, pageResponse);

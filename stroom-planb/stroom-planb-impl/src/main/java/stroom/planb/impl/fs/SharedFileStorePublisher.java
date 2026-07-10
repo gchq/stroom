@@ -16,8 +16,12 @@
 
 package stroom.planb.impl.fs;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -54,9 +58,15 @@ public class SharedFileStorePublisher {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileStorePublisher.class);
 
     private final NodeInfo nodeInfo;
+    private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
 
-    public SharedFileStorePublisher(final NodeInfo nodeInfo) {
+    public SharedFileStorePublisher(final NodeInfo nodeInfo,
+                                    final ByteBuffers byteBuffers,
+                                    final ByteBufferFactory byteBufferFactory) {
         this.nodeInfo = nodeInfo;
+        this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
     }
 
     /**
@@ -116,8 +126,11 @@ public class SharedFileStorePublisher {
      * Pushes a locally-produced archive shard to the shared file store using
      * the same crash-safe rename-swap protocol as push().
      *
-     * If an archive shard already exists for this date (late-arriving data),
-     * the existing data file is copied into the local dir first so it merges.
+     * <p>If an archive shard already exists for this date (repeated archival runs,
+     * or late-arriving data), the new batch is <em>merged</em> into the existing
+     * bucket at the LMDB level. A raw file copy cannot merge two LMDB files — it
+     * would overwrite the existing bucket and silently drop everything archived by
+     * earlier runs for the same date, which is data loss.
      */
     public void pushArchive(final PlanBDocument doc,
                      final int shardIndex,
@@ -136,27 +149,44 @@ public class SharedFileStorePublisher {
                 PlanBConstants.TMP_DIR_PREFIX + archiveShard.dateLabel() + "_" + uid);
         Files.createDirectories(sharedTempDir);
 
-        // If an archive shard already exists for this date (late-arriving data),
-        // copy its data file into the temp dir so the new entries merge with it.
-        if (Files.exists(archiveShardDir)
-                && Files.exists(archiveShardDir.resolve(PlanBConstants.COMPLETE_FILE_NAME))) {
-            LOGGER.info("Merging existing archive shard {} into local copy before push",
-                    archiveShardDir);
+        try {
             final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
-            if (Files.exists(existingData)) {
+            final boolean mergeIntoExisting =
+                    Files.exists(archiveShardDir.resolve(PlanBConstants.COMPLETE_FILE_NAME))
+                            && Files.exists(existingData);
+
+            if (mergeIntoExisting) {
+                // Seed the temp dir with the existing bucket's data, then merge the new
+                // batch INTO it at the LMDB level (union of both sets of entries).
+                LOGGER.info("Merging new archive batch into existing archive shard {}",
+                        archiveShardDir);
                 Files.copy(existingData, sharedTempDir.resolve(PlanBConstants.DATA_FILE_NAME),
                         StandardCopyOption.REPLACE_EXISTING);
+                try (final Db<?, ?> db = PlanBDb.open(
+                        doc, sharedTempDir, byteBuffers, byteBufferFactory, false)) {
+                    db.merge(archiveShard.localDir());
+                }
+                // Keep the archive layout as data.mdb + .complete only: drop the lock file
+                // LMDB created during the merge (it is recreated on the next open).
+                Files.deleteIfExists(sharedTempDir.resolve(PlanBConstants.LOCK_FILE_NAME));
+            } else {
+                // First (or only) bucket for this date — stage the new batch's data file.
+                copyIfExists(archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME),
+                        sharedTempDir.resolve(PlanBConstants.DATA_FILE_NAME));
+            }
+
+            // Write the completion sentinel before making the directory visible.
+            Files.writeString(sharedTempDir.resolve(PlanBConstants.COMPLETE_FILE_NAME), "");
+
+            // Atomic rename-swap: live -> old, temp -> live, delete old.
+            pushDir(sharedTempDir, archiveShardDir);
+        } finally {
+            // On success pushDir consumes sharedTempDir; on failure remove it so an
+            // interrupted merge cannot leave an orphaned .tmp_ dir on the shared store.
+            if (Files.exists(sharedTempDir)) {
+                FileUtil.deleteDir(sharedTempDir);
             }
         }
-
-        copyIfExists(archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME),
-                sharedTempDir.resolve(PlanBConstants.DATA_FILE_NAME));
-
-        // Write the completion sentinel before making the directory visible.
-        Files.writeString(sharedTempDir.resolve(PlanBConstants.COMPLETE_FILE_NAME), "");
-
-        // Atomic rename-swap: live -> old, temp -> live, delete old.
-        pushDir(sharedTempDir, archiveShardDir);
     }
 
     /**
