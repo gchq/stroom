@@ -17,6 +17,7 @@
 package stroom.docstore.impl;
 
 import stroom.docstore.api.DocAuditEntryService;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;

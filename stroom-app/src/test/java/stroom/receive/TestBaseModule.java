@@ -27,8 +27,10 @@ import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.impl.dao.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.documentation.impl.DocumentationModule;
 import stroom.event.logging.api.DocumentEventLog;
@@ -103,6 +105,7 @@ public class TestBaseModule extends AbstractModule {
 
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class); //?
         bind(PathConfig.class).to(StroomPathConfig.class);

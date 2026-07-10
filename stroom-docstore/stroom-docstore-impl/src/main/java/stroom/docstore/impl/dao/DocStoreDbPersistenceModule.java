@@ -16,6 +16,7 @@
 
 package stroom.docstore.impl.dao;
 
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.db.jooq.tables.Doc;
@@ -34,6 +35,8 @@ public class DocStoreDbPersistenceModule extends AbstractModule {
         super.configure();
 
         bind(Persistence.class).to(DBPersistence.class);
+        bind(DocDependencyDao.class);
+        bind(DocDependencyService.class).to(DocDependencyServiceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PhysicalDeleteOldDocs.class, builder -> builder

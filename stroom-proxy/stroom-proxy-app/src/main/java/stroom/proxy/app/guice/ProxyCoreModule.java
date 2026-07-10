@@ -18,6 +18,7 @@ package stroom.proxy.app.guice;
 
 import stroom.collection.mock.MockCollectionModule;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
@@ -26,6 +27,7 @@ import stroom.docstore.impl.DocumentResourceHelperImpl;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.DropwizardHttpClientFactory;
 import stroom.proxy.app.DataDirProvider;
@@ -108,6 +110,7 @@ public class ProxyCoreModule extends AbstractModule {
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(DataDirProvider.class).to(DataDirProviderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
     }

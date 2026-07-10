@@ -17,10 +17,12 @@
 package stroom.docstore.impl;
 
 import stroom.cache.api.CacheManager;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
@@ -62,6 +64,7 @@ class TestDocStoreModule {
                 bind(SecurityContext.class).toInstance(securityContextMock);
                 bind(DocumentEventLog.class).toProvider(Providers.of(null));
                 bind(CacheManager.class).toProvider(() -> null);
+                bind(DocDependencyService.class).to(MockDocDependencyService.class);
                 install(new DocStoreModule());
                 install(new DocFinderModule());
             }

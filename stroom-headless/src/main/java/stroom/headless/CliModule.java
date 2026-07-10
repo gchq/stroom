@@ -22,8 +22,10 @@ import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.mock.MockFsVolumeGroupService;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
@@ -122,6 +124,7 @@ public class CliModule extends AbstractModule {
         install(new MockProcessorModule());
         install(new TaskContextModule());
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         GuiceUtil.buildMultiBinder(binder(), IsSpecialExplorerDataSource.class)
                 .addBinding(HeadlessIsSpecialExplorerDataSource.class);

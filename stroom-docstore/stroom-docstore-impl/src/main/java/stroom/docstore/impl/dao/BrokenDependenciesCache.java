@@ -36,13 +36,13 @@ public class BrokenDependenciesCache {
 
     private static final long BROKEN_DEPS_MAX_AGE_MS = 10_000L;
 
-    private final Provider<DocDependencyDao> docDependencyServiceProvider;
+    private final Provider<DocDependencyDao> docDependencyDaoProvider;
     private final SecurityContext securityContext;
 
     @Inject
-    public BrokenDependenciesCache(final Provider<DocDependencyDao> docDependencyServiceProvider,
+    public BrokenDependenciesCache(final Provider<DocDependencyDao> docDependencyDaoProvider,
                                    final SecurityContext securityContext) {
-        this.docDependencyServiceProvider = docDependencyServiceProvider;
+        this.docDependencyDaoProvider = docDependencyDaoProvider;
         this.securityContext = securityContext;
     }
 
@@ -56,7 +56,7 @@ public class BrokenDependenciesCache {
                     securityContext.asProcessingUser(() -> {
                         LOGGER.debug("Updating broken dependencies map");
                         brokenDependenciesMap = LOGGER.logDurationIfDebugEnabled(() -> {
-                            return docDependencyServiceProvider.get().getBrokenDependencies(pseudoRefUuids);
+                            return docDependencyDaoProvider.get().getBrokenDependencies(pseudoRefUuids);
                         }, "Updating broken dependencies map");
                         brokenDepsNextUpdateEpochMs = System.currentTimeMillis() + BROKEN_DEPS_MAX_AGE_MS;
                     });
