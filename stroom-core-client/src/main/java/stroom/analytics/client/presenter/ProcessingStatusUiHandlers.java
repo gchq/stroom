@@ -21,5 +21,4 @@ import stroom.document.client.event.ChangeUiHandlers;
 public interface ProcessingStatusUiHandlers extends ChangeUiHandlers {
 
     void onRefreshProcessingStatus();
-
 }

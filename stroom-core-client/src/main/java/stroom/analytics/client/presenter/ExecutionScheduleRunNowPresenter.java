@@ -17,7 +17,6 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter.ExecutionScheduleRunNowView;
-import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.HasChangeHandlers;
@@ -27,7 +26,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -35,24 +33,16 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class ExecutionScheduleRunNowPresenter
         extends MyPresenterWidget<ExecutionScheduleRunNowView>
         implements ProcessingStatusUiHandlers, HasChangeHandlers {
 
-    private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
-            GWT.create(ExecutionScheduleResource.class);
-
-
-
     @Inject
     public ExecutionScheduleRunNowPresenter(final EventBus eventBus,
                                             final ExecutionScheduleRunNowView view) {
         super(eventBus, view);
-
-
         view.setUiHandlers(this);
     }
 

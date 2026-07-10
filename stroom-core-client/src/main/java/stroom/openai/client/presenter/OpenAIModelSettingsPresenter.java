@@ -138,8 +138,6 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
     public void onSetHttpClientConfiguration() {
         httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
-                // Update the field before onChange() so the dirty recompute (which serialises this
-                // field via onWrite) sees the new value and enables Save.
                 httpClientConfiguration = updated;
                 onChange();
             }

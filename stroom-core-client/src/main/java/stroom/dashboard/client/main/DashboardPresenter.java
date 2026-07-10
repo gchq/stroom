@@ -304,8 +304,6 @@ public class DashboardPresenter
         final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
             if (!Objects.equals(e.getValue(), layoutConstraints)) {
-                // Update the field before onChange() so the dirty recompute (which serialises
-                // layoutConstraints via onWrite) sees the new value and enables Save.
                 layoutConstraints = e.getValue();
                 layoutPresenter.setLayoutConstraints(layoutConstraints);
                 onChange();
