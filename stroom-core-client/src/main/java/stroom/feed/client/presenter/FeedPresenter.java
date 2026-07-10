@@ -45,8 +45,6 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private MetaPresenter metaPresenter;
-
     @Inject
     public FeedPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
@@ -64,8 +62,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
             addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>(eventBus) {
                 @Override
                 protected MetaPresenter createPresenter() {
-                    metaPresenter = metaPresenterProvider.get();
-                    return metaPresenter;
+                    return metaPresenterProvider.get();
                 }
 
                 @Override
@@ -74,6 +71,13 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
                                    final FeedDoc document,
                                    final boolean readOnly) {
                     presenter.read(docRef, document, readOnly);
+                    // Refresh any displayed data so it reflects the (now-saved) feed settings, e.g. a
+                    // changed encoding. onRead runs on initial load and after each save (with the saved
+                    // doc, so the server has the new encoding); refreshData() is a no-op unless a stream
+                    // is currently displayed. This was previously in onWrite, which ran on every dirty
+                    // check - many times per edit, for all settings fields, and before the change was
+                    // persisted (so the re-fetch used the pre-save encoding).
+                    presenter.refreshData();
                 }
             });
             selectedTab = DATA;
@@ -116,18 +120,6 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
 
         selectTab(selectedTab);
-    }
-
-    @Override
-    protected FeedDoc onWrite(final FeedDoc doc) {
-        final FeedDoc modified = super.onWrite(doc);
-
-        // Something has changed, e.g. the encoding so refresh the meta presenter to reflect it
-        if (metaPresenter != null) {
-            metaPresenter.refreshData();
-        }
-
-        return modified;
     }
 
     @Override
