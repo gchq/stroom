@@ -770,7 +770,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         ValidationResult validationResult = ValidationResult.ok();
 
         if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
-            validationResult = ValidationResult.error("You must select a node for the volume.");
+            validationResult = ValidationResult.error("You must provide a path for the volume.");
         }
 
         // Don't need to make absolute here as comparing like with like
