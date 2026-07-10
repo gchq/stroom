@@ -60,7 +60,6 @@ public class LinkedEventPresenter
 
     private List<EventId> currentData;
     private EventId nextSelection;
-    private boolean dirty;
     private AnnotationPresenter parent;
 
     @Inject
@@ -105,15 +104,15 @@ public class LinkedEventPresenter
 
     private void linkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new LinkEvents(Collections.singletonList(eventId))), this::onChange, this);
+                new LinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, this);
     }
 
     private void unlinkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new UnlinkEvents(Collections.singletonList(eventId))), this::onChange, this);
+                new UnlinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, this);
     }
 
-    private void onChange(final Boolean success) {
+    private void onChangeComplete(final Boolean success) {
         if (success != null && success) {
             AnnotationChangeEvent.fire(this, annotationRef);
             parent.updateHistory();
@@ -128,7 +127,6 @@ public class LinkedEventPresenter
 
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
-                dirty = true;
                 linkEvent(eventId);
             }
         })));
@@ -136,8 +134,6 @@ public class LinkedEventPresenter
         registerHandler(removeEventButton.addClickHandler(e -> {
             final EventId selected = selectionModel.getSelected();
             if (selected != null) {
-                dirty = true;
-
                 nextSelection = null;
                 if (currentData != null && currentData.size() > 1) {
                     int index = currentData.indexOf(selected);
@@ -155,7 +151,6 @@ public class LinkedEventPresenter
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
         dataGrid.setTableName("Annotation '" + docRef.getName() + "' Events");
         this.annotationRef = docRef;
-        dirty = false;
         refreshData();
         enableButtons();
     }

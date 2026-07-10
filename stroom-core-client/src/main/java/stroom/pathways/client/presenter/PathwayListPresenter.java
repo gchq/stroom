@@ -28,7 +28,6 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
@@ -238,7 +237,6 @@ public class PathwayListPresenter
                             selectionModel.setSelected(pathway);
                             refresh();
                             e.hide();
-                            DirtyEvent.fire(PathwayListPresenter.this, true);
                         })
                         .onFailure(new DefaultErrorHandler(this, e::reset))
                         .taskMonitorFactory(pagerView)
@@ -267,7 +265,6 @@ public class PathwayListPresenter
                                     selectionModel.setSelected(pathway);
                                     refresh();
                                     e.hide();
-                                    DirtyEvent.fire(PathwayListPresenter.this, true);
                                 })
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
@@ -299,7 +296,6 @@ public class PathwayListPresenter
                                 .onSuccess(response -> {
                                     selectionModel.clear();
                                     refresh();
-                                    DirtyEvent.fire(PathwayListPresenter.this, true);
                                 })
                                 .taskMonitorFactory(pagerView)
                                 .exec();
