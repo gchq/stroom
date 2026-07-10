@@ -26,7 +26,9 @@ import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeGroupServiceImpl;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.FsVolumeServiceImpl;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
+import stroom.data.store.impl.fs.StoreImpl;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
@@ -46,6 +48,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -85,6 +88,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
     @TempDir
     static Path tempDir;
+    @Mock
+    private StoreImpl mockStoreImpl;
 
     @BeforeEach
     void init() {
@@ -111,7 +116,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        volumeService = new FsVolumeService(
+        volumeService = new FsVolumeServiceImpl(
                 fsVolumeDao,
                 fsVolumeGroupService,
                 fsVolumeStateDao,
@@ -122,6 +127,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null,
                 pathCreator,
                 new TemplateCacheImpl(new CacheManagerImpl()),
+                mockStoreImpl,
                 nodeInfo,
                 new SimpleTaskContextFactory(),
                 new HasCapacitySelectorFactory(),

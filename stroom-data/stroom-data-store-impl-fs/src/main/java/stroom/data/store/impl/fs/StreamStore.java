@@ -22,7 +22,9 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 
@@ -82,6 +84,13 @@ public interface StreamStore {
     default boolean isReadOnly() {
         return false;
     }
+
+    /**
+     * Allow the appropriate {@link StreamStore} implementation to validate the {@link FsVolume} configuration.
+     *
+     * @return
+     */
+    ValidationResult validateVolume(final FsVolume fsVolume);
 
 
     // --------------------------------------------------------------------------------

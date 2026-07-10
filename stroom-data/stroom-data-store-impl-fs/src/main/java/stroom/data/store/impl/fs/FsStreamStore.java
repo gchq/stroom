@@ -22,7 +22,9 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.data.store.impl.fs.standard.FsFileDeleter;
 import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.data.store.impl.fs.standard.FsSource;
@@ -38,6 +40,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 
@@ -60,8 +63,9 @@ class FsStreamStore implements StreamStore {
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
-    //    private final FsVolumeService volumeService;
-//    private final DataVolumeService dataVolumeService;
+    // Provider to avoid a circular ref in Guice bindings
+    private final Provider<FsVolumeService> fsVolumeServiceProvider;
+    //    private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
     private final FsFileDeleter fsFileDeleter;
 //    private final S3Store s3Store;
@@ -70,12 +74,13 @@ class FsStreamStore implements StreamStore {
     @Inject
     FsStreamStore(final FsPathHelper fileSystemStreamPathHelper,
                   final MetaService metaService,
+                  final Provider<FsVolumeService> fsVolumeServiceProvider,
                   final PathCreator pathCreator,
                   final FsFileDeleter fsFileDeleter) {
 
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
-//        this.volumeService = volumeService;
+        this.fsVolumeServiceProvider = fsVolumeServiceProvider;
 //        this.dataVolumeService = dataVolumeService;
         this.pathCreator = pathCreator;
 //        this.s3Store = s3Store;
@@ -288,6 +293,36 @@ class FsStreamStore implements StreamStore {
     @Override
     public FsVolumeType getVolumeType() {
         return FsVolumeType.STANDARD;
+    }
+
+    @Override
+    public ValidationResult validateVolume(final FsVolume volume) {
+        Objects.requireNonNull(volume);
+        ValidationResult validationResult = ValidationResult.ok();
+
+        validationResult = validationResult.errorIf(
+                "S3 Configuration is not supported for this volume type",
+                () -> NullSafe.isNonBlankString(volume.getS3ClientConfigData()));
+
+        if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
+            validationResult = ValidationResult.error("You must provide a path for the volume.");
+        } else {
+            final FsVolumeService volumeService = fsVolumeServiceProvider.get();
+            final String existingPath = NullSafe.get(
+                    volume.getId(),
+                    volumeService::fetch,
+                    FsVolume::getPath);
+            final boolean hasPathChanged = !Objects.equals(existingPath, volume.getPath());
+            // TODO it is debatable whether these should call back to volumeService or do it in here.
+            if (hasPathChanged) {
+                validationResult = volumeService.validateForDupPath(volume);
+
+                if (validationResult.isOk()) {
+                    validationResult = volumeService.validateVolumePath(volume);
+                }
+            }
+        }
+        return validationResult;
     }
 
 

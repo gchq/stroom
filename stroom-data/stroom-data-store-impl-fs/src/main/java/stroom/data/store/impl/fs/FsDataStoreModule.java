@@ -43,8 +43,9 @@ public class FsDataStoreModule extends AbstractModule {
         bind(Store.class).to(StoreImpl.class);
         bind(AttributeMapFactory.class).to(StoreImpl.class);
         bind(FsVolumeGroupService.class).to(FsVolumeGroupServiceImpl.class);
-        bind(S3VolumeService.class).to(FsVolumeService.class);
-        bind(S3ClientConfigService.class).to(FsVolumeService.class);
+        bind(FsVolumeService.class).to(FsVolumeServiceImpl.class);
+        bind(S3VolumeService.class).to(FsVolumeServiceImpl.class);
+        bind(S3ClientConfigService.class).to(FsVolumeServiceImpl.class);
 
         GuiceUtil.buildMapBinder(binder(), FsVolumeType.class, StreamStore.class)
                 .addBinding(FsVolumeType.STANDARD, FsStreamStore.class)
@@ -53,7 +54,7 @@ public class FsDataStoreModule extends AbstractModule {
                 .addBinding(FsVolumeType.S3_V2, S3ZstdStreamStore.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(FsVolumeService.class)
+                .addBinding(FsVolumeServiceImpl.class)
                 .addBinding(FsVolumeGroupServiceImpl.class);
 
         RestResourcesBinder.create(binder())
@@ -67,7 +68,7 @@ public class FsDataStoreModule extends AbstractModule {
                 .bind(EchoServlet.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(FsVolumeService.class);
+                .bind(FsVolumeServiceImpl.class);
     }
 
     @Override

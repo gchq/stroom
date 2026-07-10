@@ -16,6 +16,7 @@
 
 package stroom.data.store.api;
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.meta.api.MetaProperties;
 
 import org.jspecify.annotations.NullMarked;
@@ -60,7 +61,7 @@ public interface Store {
      */
     @NullMarked
     void addExistingS3Source(MetaProperties metaProperties,
-                             stroom.aws.s3.shared.S3Location s3Location) throws DataException;
+                             S3Location s3Location) throws DataException;
 
     /**
      * <p>

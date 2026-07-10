@@ -222,7 +222,7 @@ public class StoreImpl implements Store, AttributeMapFactory {
         }
     }
 
-    private StreamStore getStreamStore(final FsVolumeType fsVolumeType) {
+    StreamStore getStreamStore(final FsVolumeType fsVolumeType) {
         Objects.requireNonNull(fsVolumeType, "FsVolumeType must not be null");
         final StreamStore streamStore = streamStoreMap.get(fsVolumeType);
         LOGGER.debug(() -> LogUtil.message(

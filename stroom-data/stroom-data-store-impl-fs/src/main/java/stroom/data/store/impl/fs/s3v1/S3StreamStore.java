@@ -25,10 +25,12 @@ import stroom.cache.api.TemplateCache;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.fs.AbstractS3StreamStore;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
-import stroom.data.store.impl.fs.StreamStore;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -70,7 +72,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 @Singleton
-public class S3StreamStore implements StreamStore {
+public class S3StreamStore extends AbstractS3StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3StreamStore.class);
 
@@ -93,6 +95,7 @@ public class S3StreamStore implements StreamStore {
                   final MetaService metaService,
                   final S3ManagerFactory s3ManagerFactory,
                   final TemplateCache templateCache) {
+        super(templateCache);
         this.metaService = metaService;
         this.s3ManagerFactory = s3ManagerFactory;
         this.templateCache = templateCache;
@@ -190,6 +193,11 @@ public class S3StreamStore implements StreamStore {
 //        s3Manager.delete(m)
 
         throw new UnsupportedOperationException("TODO");
+    }
+
+    @Override
+    public ValidationResult validateVolume(final FsVolume volume) {
+        return super.validateVolume(volume);
     }
 
     private String getS3Path(final DataVolume dataVolume, final SimpleMeta simpleMeta) {

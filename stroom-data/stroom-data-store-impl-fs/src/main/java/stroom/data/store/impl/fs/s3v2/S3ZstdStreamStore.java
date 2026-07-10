@@ -19,13 +19,17 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
+import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.cache.api.TemplateCache;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
+import stroom.data.store.impl.fs.AbstractS3StreamStore;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
-import stroom.data.store.impl.fs.StreamStore;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
@@ -34,6 +38,9 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -56,7 +63,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class S3ZstdStreamStore implements StreamStore {
+public class S3ZstdStreamStore extends AbstractS3StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStreamStore.class);
 
@@ -82,7 +89,7 @@ public class S3ZstdStreamStore implements StreamStore {
 
     @Inject
     S3ZstdStreamStore(
-//            final TemplateCache templateCache,
+            final TemplateCache templateCache,
             final TempDirProvider tempDirProvider,
             final MetaService metaService,
 //                final S3MetaFieldsMapper s3MetaFieldsMapper,
@@ -94,6 +101,7 @@ public class S3ZstdStreamStore implements StreamStore {
             final S3ManagerFactory s3ManagerFactory,
             final ZstdDictionaryService zstdDictionaryService,
             final ExecutorProvider executorProvider) {
+        super(templateCache);
 //        this.templateCache = templateCache;
         this.metaService = metaService;
 //        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
@@ -185,6 +193,41 @@ public class S3ZstdStreamStore implements StreamStore {
                                                   final DataVolume dataVolume,
                                                   final Progress progress) {
         return null;
+    }
+
+    @Override
+    public ValidationResult validateVolume(final FsVolume volume) {
+        ValidationResult validationResult = super.validateVolume(volume);
+
+        if (validationResult.isOk()) {
+            final S3ClientConfig s3ClientConfig = readS3ClientConfig(volume);
+
+            // TODO The requirement for static bucket name and no key pattern, may no longer
+            //  be needed now that we have a table for storing the s3 location.
+            if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {
+                Template template = Template.EMPTY_TEMPLATE;
+                try {
+                    template = getTemplateCache().getTemplate(s3ClientConfig.getBucketName());
+                } catch (final RuntimeException e) {
+                    validationResult = ValidationResult.error(LogUtil.message(
+                            "Bucket name '{}' must be a valid static template - {}",
+                            s3ClientConfig.getBucketName(), e.getMessage()));
+                }
+
+                validationResult = validationResult.errorIf(LogUtil.message(
+                                "Bucket name '{}' must be a valid static template - {}",
+                                s3ClientConfig.getBucketName()),
+                        template::isStatic);
+            } else {
+                validationResult = ValidationResult.error("Bucket name must be provided");
+            }
+
+            validationResult = validationResult.errorIf(LogUtil.message(
+                            "Key name pattern is not supported for volume type {}. Please remove the key name pattern.",
+                            volume.getVolumeType().getDisplayValue()),
+                    () -> s3ClientConfig.getKeyPattern() != null);
+        }
+        return validationResult;
     }
 
     /**

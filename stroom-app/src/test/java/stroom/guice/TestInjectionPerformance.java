@@ -26,7 +26,7 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.FsVolumeConfig;
-import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.FsVolumeServiceImpl;
 import stroom.index.VolumeCreator;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.impl.IndexShardManager;
@@ -111,7 +111,7 @@ class TestInjectionPerformance {
                 ProcessorTaskQueueManager.class,
                 VolumeConfig.class,
                 FsVolumeConfig.class,
-                FsVolumeService.class,
+                FsVolumeServiceImpl.class,
                 PathCreator.class,
                 IndexVolumeService.class,
 

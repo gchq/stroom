@@ -24,6 +24,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+import java.util.function.BooleanSupplier;
+
 @JsonInclude(Include.NON_NULL)
 public class ValidationResult {
 
@@ -55,6 +58,40 @@ public class ValidationResult {
 
     public static ValidationResult fatal(final String message) {
         return new ValidationResult(Severity.FATAL_ERROR, message);
+    }
+
+    /**
+     * If this is OK, calls test and returns a new {@link ValidationResult} based on the outcome of test.
+     */
+    public ValidationResult errorIf(final String message, final BooleanSupplier test) {
+        return validate(Severity.ERROR, message, test);
+    }
+
+    public ValidationResult validate(final Severity severity, final String message, final BooleanSupplier test) {
+        if (isOk() && test != null) {
+            final boolean didPass = test.getAsBoolean();
+            if (didPass) {
+                return this;
+            } else {
+                return new ValidationResult(
+                        Objects.requireNonNull(severity),
+                        Objects.requireNonNull(message));
+            }
+        } else {
+            return this;
+        }
+    }
+
+    public ValidationResult errorIfNull(final String message, final Object object) {
+        if (isOk()) {
+            if (object == null) {
+                return new ValidationResult(Severity.ERROR, message);
+            } else {
+                return this;
+            }
+        } else {
+            return this;
+        }
     }
 
     public Severity getSeverity() {

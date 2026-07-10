@@ -99,7 +99,8 @@ public class FsVolumeEditPresenter
                                         final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
-                .method(res -> res.validate(volume))
+                .method(res ->
+                        res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
                         work.run();
@@ -131,7 +132,8 @@ public class FsVolumeEditPresenter
                               final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
-                .method(res -> res.update(volume.getId(), volume))
+                .method(res ->
+                        res.update(volume.getId(), volume))
                 .onSuccess(r -> {
                     consumer.accept(r);
                     event.hide();

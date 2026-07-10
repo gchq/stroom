@@ -117,12 +117,7 @@ public class SimplePathCreator implements PathCreator {
 
     @Override
     public Path toAppPath(String pathString) {
-        if (pathString == null) {
-            pathString = "";
-        } else {
-            pathString = pathString.trim();
-        }
-
+        pathString = NullSafe.trim(pathString);
         pathString = replaceSystemProperties(pathString);
         return toAbsolutePath(pathString);
     }
