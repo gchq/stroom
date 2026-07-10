@@ -23,7 +23,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
@@ -223,7 +222,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                         refresh();
 
                         e.hide();
-                        DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                        onChange();
                     } else {
                         e.reset();
                     }
@@ -257,7 +256,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                                 refresh();
 
                                 e.hide();
-                                DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                                onChange();
                             } else {
                                 e.hide();
                             }
@@ -304,7 +303,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
                     selectionModel.clear();
                     refresh();
-                    DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                    onChange();
                 }
             });
         }

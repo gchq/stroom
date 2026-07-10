@@ -25,6 +25,7 @@ import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -104,7 +105,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -146,8 +146,6 @@ public class SteppingPresenter
     private PipelineDoc pipelineDoc;
     private String classification;
     private ElementPresenter currentElementPresenter = null;
-
-    private final List<Consumer<PipelineModel>> pipelineChangeHandlers = new ArrayList<>();
 
     @Inject
     public SteppingPresenter(final EventBus eventBus,
@@ -508,10 +506,13 @@ public class SteppingPresenter
             final ElementId elementId = element.getElementId();
             ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
             if (elementPresenter == null) {
-                final DirtyHandler dirtyEditorHandler = event -> {
-                    DirtyEvent.fire(SteppingPresenter.this, true);
-                    handlePipelineChange();
-                };
+                // Editing element code (e.g. XSLT) fires a ChangeEvent ("something changed") which we
+                // relay to the tab framework as a DirtyEvent so the enclosing pipeline presenter
+                // re-evaluates Save via onChange(). The authoritative dirty verdict is recomputed there
+                // by comparison, so a reverted edit correctly returns to clean. It must NOT rebuild the
+                // pipeline model/tree - the code content is not part of the pipeline structure, and doing
+                // so on every keypress caused the tree to flash and the UI to lag on large documents.
+                final ChangeHandler changeEditorHandler = () -> DirtyEvent.fire(SteppingPresenter.this, true);
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
@@ -526,7 +527,7 @@ public class SteppingPresenter
                 presenter.setPipelineName(pipelineDoc.getName());
                 presenter.setClassification(classification);
                 elementPresenterMap.put(elementId, presenter);
-                presenter.addDirtyHandler(dirtyEditorHandler);
+                presenter.addChangeHandler(changeEditorHandler);
 
                 // Allow step refresh to be called from the editor
                 presenter.setStepRequestHandler(stepType -> {
@@ -807,14 +808,6 @@ public class SteppingPresenter
     public void resize() {
         Scheduler.get().scheduleDeferred(() ->
                 getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 30));
-    }
-
-    public void addPipelineChangeHandler(final Consumer<PipelineModel> handler) {
-        pipelineChangeHandlers.add(handler);
-    }
-
-    private void handlePipelineChange() {
-        pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
     public void save(final List<DocRef> docsToSave, final Runnable onComplete) {

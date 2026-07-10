@@ -93,6 +93,17 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
     }
 
     /**
+     * Asset content is held in a server-side draft/live store rather than in the VisualisationDoc, so
+     * it is not captured by the normal onWrite() comparison. Surface the assets tab's dirty state here
+     * so the Save button reflects pending draft asset changes (mirrors PipelinePresenter's handling of
+     * its stepping editors).
+     */
+    @Override
+    protected boolean hasAssociatedDirty() {
+        return visualisationAssetsPresenter.isDirty();
+    }
+
+    /**
      * Provide a callback to be inserted into the save chain after the save is complete.
      * @return The consumer for the callback. The second parameter will be the
      * consumer to call after this method has completed.

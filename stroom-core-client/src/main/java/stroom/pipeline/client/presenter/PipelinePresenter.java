@@ -275,7 +275,6 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     protected void onBind() {
         super.onBind();
 
-        steppingPresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
         pipelineStructurePresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
     }
 

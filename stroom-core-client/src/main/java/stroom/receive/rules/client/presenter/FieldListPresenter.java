@@ -21,7 +21,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.datasource.QueryField;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -41,7 +40,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -238,7 +236,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                     fields.add(newField);
                     refresh();
                     e.hide();
-                    DirtyEvent.fire(FieldListPresenter.this, true);
+                    onChange();
                 } else {
                     e.reset();
                 }
@@ -269,7 +267,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
                         refresh();
                         e.hide();
-                        DirtyEvent.fire(FieldListPresenter.this, true);
+                        onChange();
                     } else {
                         e.reset();
                     }
@@ -293,7 +291,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                     fields.removeAll(list);
                     selectionModel.clear();
                     refresh();
-                    DirtyEvent.fire(FieldListPresenter.this, true);
+                    onChange();
                 }
             });
         }
