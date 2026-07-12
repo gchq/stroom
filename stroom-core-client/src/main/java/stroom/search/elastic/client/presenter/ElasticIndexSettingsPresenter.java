@@ -127,6 +127,7 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         getView().setSearchScrollSize(index.getSearchScrollSize());
         getView().setTimeField(index.getTimeField());
         getView().setRerankTextFieldSuffix(index.getRerankTextFieldSuffix());
+        getView().setRerankScoreFieldSuffix(index.getRerankScoreFieldSuffix());
         getView().setRerankScoreMinimum(index.getRerankScoreMinimum());
 
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
@@ -144,6 +145,7 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
                 .searchScrollSize(getView().getSearchScrollSize())
                 .timeField(getView().getTimeField())
                 .rerankTextFieldSuffix(getView().getRerankTextFieldSuffix())
+                .rerankScoreFieldSuffix(getView().getRerankScoreFieldSuffix())
                 .rerankScoreMinimum(getView().getRerankScoreMinimum())
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
                 .build();
@@ -179,6 +181,10 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         String getRerankTextFieldSuffix();
 
         void setRerankTextFieldSuffix(String rerankTextFieldSuffix);
+
+        String getRerankScoreFieldSuffix();
+
+        void setRerankScoreFieldSuffix(String rerankScoreFieldSuffix);
 
         Float getRerankScoreMinimum();
 

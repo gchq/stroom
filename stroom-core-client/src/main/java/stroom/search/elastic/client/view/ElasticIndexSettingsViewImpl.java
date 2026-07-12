@@ -59,6 +59,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox rerankTextFieldSuffix;
     @UiField
+    TextBox rerankScoreFieldSuffix;
+    @UiField
     TextBox rerankScoreMinimum;
     @UiField
     SimplePanel defaultExtractionPipeline;
@@ -144,6 +146,16 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void setRerankTextFieldSuffix(final String rerankTextFieldSuffix) {
         this.rerankTextFieldSuffix.setValue(rerankTextFieldSuffix);
+    }
+
+    @Override
+    public String getRerankScoreFieldSuffix() {
+        return rerankScoreFieldSuffix.getValue();
+    }
+
+    @Override
+    public void setRerankScoreFieldSuffix(final String rerankScoreFieldSuffix) {
+        this.rerankScoreFieldSuffix.setValue(rerankScoreFieldSuffix);
     }
 
     @Override
