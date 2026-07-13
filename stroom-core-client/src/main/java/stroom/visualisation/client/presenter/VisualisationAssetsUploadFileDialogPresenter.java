@@ -82,7 +82,8 @@ public class VisualisationAssetsUploadFileDialogPresenter
      * Call to prepare and show the dialog.
      *
      * @param addFileCallback            Something to call when the file has been uploaded
-     * @param parentFolderItem           Where the item is going to be added in the tree. Can be null if adding at the root.
+     * @param parentFolderItem           Where the item is going to be added in the tree.
+     *                                   Can be null if adding at the root.
      * @param path                       The path that we're adding the item at.
      * @param illegalAssetNameCharacters Characters that we don't accept in the filename.
      */
