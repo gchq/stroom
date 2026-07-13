@@ -25,10 +25,6 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValBoolean;
-import stroom.query.language.functions.ValDouble;
-import stroom.query.language.functions.ValInteger;
-import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -48,6 +44,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SlicedScroll;
@@ -60,6 +57,7 @@ import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.json.JsonData;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.scoring.ScoringModel;
 import dev.langchain4j.rag.content.Content;
@@ -78,9 +76,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -93,7 +94,6 @@ import java.util.stream.Collectors;
 public class ElasticSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
-    private static final String RERANK_SCORE_FIELD_NAME = "Rerank Score";
     private static final Pattern RERANK_VECTOR_FIELD_NAME_PATTERN = Pattern.compile("^(.+)\\.[^.]+$");
     private static final char FIELD_PATH_SEPARATOR = '.';
     public static final ThreadPool SCROLL_REQUEST_THREAD_POOL =
@@ -244,18 +244,6 @@ public class ElasticSearchTaskHandler {
                             .fetch(false)
                     ));
 
-            if (elasticSearchConfigProvider.get().getHighlight()) {
-                searchRequestBuilder.highlight(highlightBuilder);
-            }
-
-            // Limit the returned fields to what the values consumers require
-            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            final String[] fieldNames = coprocessors.getFieldIndex().getFields();
-            searchRequestBuilder.fields(Arrays.stream(fieldNames)
-                    .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
-                    .toList()
-            );
-
             // Number of slices needs to be > 1 else an exception is raised
             if (elasticIndex.getSearchSlices() > 1) {
                 searchRequestBuilder.slice(SlicedScroll.of(s -> s
@@ -264,10 +252,40 @@ public class ElasticSearchTaskHandler {
                 ));
             }
 
-            // Insert a field representing the rerank score, if enabled
-            if (rerankModel != null) {
-                fieldIndex.create(RERANK_SCORE_FIELD_NAME);
+            // Add highlights
+            if (elasticSearchConfigProvider.get().getHighlight()) {
+                searchRequestBuilder.highlight(highlightBuilder);
             }
+
+            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
+            final Set<String> fieldNames = new HashSet<>(Arrays.stream(fieldIndex.getFields()).toList());
+
+            // Insert fields representing the rerank score, if enabled
+            final Set<String> rerankScoreFieldNames = new HashSet<>();
+            if (rerankModel != null) {
+                // Limit the returned fields to what the values consumers require, plus any knn query text fields.
+                // These need to be added, as the original text field values are needed for computing relevance scores.
+                for (final String vectorFieldName : queryParams.getKnnFieldQueries().keySet()) {
+                    final String textFieldName = getSuffixedFieldName(vectorFieldName,
+                            elasticIndex.getRerankTextFieldSuffix());
+                    final String scoreFieldName = getSuffixedFieldName(vectorFieldName,
+                            elasticIndex.getRerankScoreFieldSuffix());
+                    if (Objects.requireNonNullElse(elasticIndex.getRerankScoreMinimum(), 0F) > 0F &&
+                        !fieldNames.contains(scoreFieldName)) {
+                        throw new UnsupportedOperationException(
+                                "Missing rerank score field '" + scoreFieldName + "' in values consumer. " +
+                                "Either add the field or remove the rerank score cutoff in index settings.");
+                    }
+                    fieldNames.add(textFieldName);
+                    fieldIndex.create(scoreFieldName);
+                    rerankScoreFieldNames.add(scoreFieldName);
+                }
+            }
+
+            searchRequestBuilder.fields(fieldNames.stream().toList().stream()
+                    .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
+                    .toList()
+            );
 
             final SearchResponse<ObjectNode> searchResponse = elasticClient.search(
                     searchRequestBuilder.build(),
@@ -281,8 +299,8 @@ public class ElasticSearchTaskHandler {
             // Continue requesting results until we have all results
             while (!taskContext.isTerminated() && !searchHits.isEmpty()) {
                 totalHitCount += searchHits.size();
-                processResultBatch(fieldIndex, elasticIndex, queryParams, rerankModel, resultStore, valuesConsumer,
-                        errorConsumer, hitCount, searchHits);
+                processResultBatch(fieldIndex, rerankScoreFieldNames, elasticIndex, queryParams, rerankModel,
+                        resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
 
                 final long totalHits = totalHitCount;
                 taskContext.info(() -> LogUtil.message("Processed {} hits", totalHits));
@@ -316,6 +334,7 @@ public class ElasticSearchTaskHandler {
      * Receive a batch of search hits and send each one to the values consumer
      */
     private void processResultBatch(final FieldIndex fieldIndex,
+                                    final Set<String> rerankScoreFieldNames,
                                     final ElasticIndexDoc elasticIndex,
                                     final ElasticQueryParams queryParams,
                                     final OpenAIModelDoc rerankModel,
@@ -325,15 +344,23 @@ public class ElasticSearchTaskHandler {
                                     final AtomicLong hitCount,
                                     final List<Hit<ObjectNode>> searchHits) {
         try {
-            final Map<String, Content> rankedContentMap = new HashMap<>();
+            // Map rerank fields to document IDs to relevance scores, to determine whether each reranked hit
+            // meets the relevance score threshold.
+            final Map<String, Map<String, Double>> fieldToDocIdScores = new HashMap<>();
             final boolean performRerank = rerankModel != null && !queryParams.getKnnFieldQueries().isEmpty();
             if (performRerank) {
-                rerankSearchHits(elasticIndex, queryParams, rerankModel, searchHits, rankedContentMap);
+                for (final String fieldName : rerankScoreFieldNames) {
+                    final Map<String, Double> docIdToScoreMap = fieldToDocIdScores
+                            .computeIfAbsent(fieldName, k -> new HashMap<>());
+                    rerankSearchHits(elasticIndex, queryParams, rerankModel, searchHits, fieldName, docIdToScoreMap);
+                }
             }
 
             for (final Hit<ObjectNode> searchHit : searchHits) {
-                if (performRerank && !rankedContentMap.containsKey(searchHit.id())) {
-                    // Search hit excluded due to rerank minimum score cutoff
+                // Determine whether to include the search hit based on dense vector relevance score cutoff.
+                // If at least one field meets the cutoff, include the search hit.
+                if (performRerank && fieldToDocIdScores.values().stream()
+                        .noneMatch(content -> content.containsKey(searchHit.id()))) {
                     continue;
                 }
 
@@ -348,15 +375,14 @@ public class ElasticSearchTaskHandler {
 
                 final Map<String, JsonData> mapSearchHit = searchHit.fields();
                 Val[] values = null;
-
                 for (final String fieldName : fieldIndex.getFields()) {
                     final Integer insertAt = fieldIndex.getPos(fieldName);
 
                     final Object fieldValue;
-                    if (performRerank && rankedContentMap.containsKey(searchHit.id()) &&
-                        RERANK_SCORE_FIELD_NAME.equals(fieldName)) {
-                        fieldValue = rankedContentMap.get(searchHit.id()).metadata().get(
-                                ContentMetadata.RERANKED_SCORE);
+                    if (rerankScoreFieldNames.contains(fieldName)) {
+                        // If this is a rerank score field, obtain the score from the rerank content map and insert
+                        // into the values returned to the consumer.
+                        fieldValue = fieldToDocIdScores.get(fieldName).get(searchHit.id());
                     } else {
                         fieldValue = getFieldValue(mapSearchHit, fieldName);
                     }
@@ -366,26 +392,14 @@ public class ElasticSearchTaskHandler {
                             values = new Val[fieldIndex.size()];
                         }
 
-                        if (fieldValue instanceof Long) {
-                            // TODO Need to handle date fields as ValDate, assuming they come in as longs,
-                            //  but we need the field type from somewhere
-                            values[insertAt] = ValLong.create((Long) fieldValue);
-                        } else if (fieldValue instanceof Integer) {
-                            values[insertAt] = ValInteger.create((Integer) fieldValue);
-                        } else if (fieldValue instanceof Double) {
-                            values[insertAt] = ValDouble.create((Double) fieldValue);
-                        } else if (fieldValue instanceof Float) {
-                            values[insertAt] = ValDouble.create((Float) fieldValue);
-                        } else if (fieldValue instanceof Boolean) {
-                            values[insertAt] = ValBoolean.create((Boolean) fieldValue);
-                        } else if (fieldValue instanceof final Collection<?> collectionValue) {
-                            // Multi-valued fields (including values gathered from across nested objects) are
+                        if (fieldValue instanceof final Collection<?> collectionValue) {
+                            // Multivalued fields (including values gathered from across nested objects) are
                             // flattened to a single, comma-delimited string.
                             values[insertAt] = ValString.create(collectionValue.stream()
                                     .map(Object::toString)
                                     .collect(Collectors.joining(", ")));
                         } else {
-                            values[insertAt] = ValString.create(fieldValue.toString());
+                            values[insertAt] = Val.create(fieldValue);
                         }
                     }
                 }
@@ -401,22 +415,29 @@ public class ElasticSearchTaskHandler {
         }
     }
 
+    /**
+     * Build a map containing dense vector fields to their corresponding original text fields, using a period (.)
+     * to determine the base name. Then ensure each of these text fields exist in the field mapping.
+     */
     private void rerankSearchHits(final ElasticIndexDoc elasticIndex,
                                   final ElasticQueryParams queryParams,
                                   final OpenAIModelDoc rerankModel,
                                   final List<Hit<ObjectNode>> searchHits,
-                                  final Map<String, Content> rankedContentMap) {
-        final Map<String, String> denseVectorToTextFieldMapping = new HashMap<>();
+                                  final String scoreFieldName,
+                                  final Map<String, Double> docIdToScoreMap) {
         for (final ElasticIndexField field : elasticIndex.getFields()) {
             if (FieldType.DENSE_VECTOR.equals(field.getFldType())) {
-                final String fieldName = field.getFldName();
-                final Matcher fieldNameMatcher = RERANK_VECTOR_FIELD_NAME_PATTERN.matcher(fieldName);
-                if (fieldNameMatcher.matches()) {
-                    final String textFieldName = fieldNameMatcher.group(1) + elasticIndex.getRerankTextFieldSuffix();
+                final String vectorFieldName = field.getFldName();
+                final String textFieldName = getSuffixedFieldName(vectorFieldName,
+                        elasticIndex.getRerankTextFieldSuffix());
+                final String scoreFieldBaseName = getFieldBaseName(scoreFieldName);
+                final String vectorFieldBaseName = getFieldBaseName(vectorFieldName);
+                if (Objects.equals(scoreFieldBaseName, vectorFieldBaseName)) {
                     final boolean textFieldExists = elasticIndex.getFields().stream()
                             .anyMatch(f -> f.getFldName().equals(textFieldName));
                     if (textFieldExists) {
-                        denseVectorToTextFieldMapping.put(fieldName, textFieldName);
+                        rerankForField(vectorFieldName, textFieldName, elasticIndex, queryParams, rerankModel,
+                                searchHits, docIdToScoreMap);
                     } else {
                         throw new IllegalArgumentException("Text field `" + textFieldName + "` for rerank scoring " +
                                                            "was not found");
@@ -424,7 +445,37 @@ public class ElasticSearchTaskHandler {
                 }
             }
         }
+    }
 
+    private String getFieldBaseName(final String fieldName) {
+        final Matcher matcher = RERANK_VECTOR_FIELD_NAME_PATTERN.matcher(fieldName);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+
+        return null;
+    }
+
+    private String getSuffixedFieldName(final String fieldName, final String targetSuffix) {
+        final String baseName = getFieldBaseName(fieldName);
+        if (baseName != null) {
+            return baseName + targetSuffix;
+        }
+
+        return null;
+    }
+
+    /**
+     * Uses the configured LLM to generate relevance scores for the specified dense_vector field, against the user's
+     * query.
+     */
+    private void rerankForField(final String vectorFieldName,
+                                final String textFieldName,
+                                final ElasticIndexDoc elasticIndex,
+                                final ElasticQueryParams queryParams,
+                                final OpenAIModelDoc rerankModel,
+                                final List<Hit<ObjectNode>> searchHits,
+                                final Map<String, Double> docIdToScoreMap) {
         final ScoringModel scoringModel = aiServiceProvider.get().getJinaScoringModel(rerankModel);
         final int maxContextWindowTokens = rerankModel.getMaxContextWindowTokens();
         final ReRankingContentAggregator rerankAggregator = ReRankingContentAggregator.builder()
@@ -433,55 +484,41 @@ public class ElasticSearchTaskHandler {
                 .build();
 
         final Map<Query, Collection<List<Content>>> queryContentMap = new HashMap<>();
-        final Map<String, List<String>> fieldValueToDocIdMap = new HashMap<>();
-        for (final String denseVectorField : denseVectorToTextFieldMapping.keySet()) {
-            final String denseVectorTextField = denseVectorToTextFieldMapping.get(denseVectorField);
-            final String knnQueryTerm = queryParams.getKnnFieldQueries().get(denseVectorField);
-            final List<Content> fieldValues = new ArrayList<>();
+        final String knnQueryTerm = queryParams.getKnnFieldQueries().get(vectorFieldName);
+        final List<Content> fieldValues = new ArrayList<>();
 
-            if (knnQueryTerm != null) {
-                if (!queryContentMap.isEmpty()) {
-                    throw new UnsupportedOperationException("Rerank using multiple dense_vector fields is not " +
-                                                            "supported");
-                }
-                for (final Hit<ObjectNode> searchHit : searchHits) {
-                    final Map<String, JsonData> mapSearchHit = searchHit.fields();
-                    // The reranker source text may itself live inside a nested object, so resolve it using the
-                    // same nested-aware extraction used for result values rather than a flat map lookup.
-                    final Object rawFieldValue = getFieldValue(mapSearchHit, denseVectorTextField);
-                    if (rawFieldValue != null && searchHit.id() != null) {
-                        try {
-                            String fieldValue = firstStringValue(rawFieldValue);
-                            if (fieldValue == null) {
-                                continue;
-                            }
-                            if (maxContextWindowTokens > 0) {
-                                // Model context window limit is specified, so truncate the field value to fit
-                                final int charLimit = Math.min(fieldValue.length(), maxContextWindowTokens);
-                                fieldValue = fieldValue.substring(0, charLimit);
-                            }
-                            fieldValueToDocIdMap.computeIfAbsent(fieldValue,
-                                    k -> new ArrayList<>()).add(searchHit.id());
-                            fieldValues.add(Content.from(TextSegment.from(fieldValue)));
-                        } catch (final Exception e) {
-                            throw new RuntimeException("Failed to parse value '" + rawFieldValue + "' for field " +
-                                                       denseVectorTextField, e);
+        if (knnQueryTerm != null) {
+            for (final Hit<ObjectNode> searchHit : searchHits) {
+                // The reranker source text may itself live inside a nested object, so resolve it using the
+                // same nested-aware extraction used for result values rather than a flat map lookup.
+                final Object rawFieldValue = getFieldValue(searchHit.fields(), textFieldName);
+                if (rawFieldValue != null && searchHit.id() != null) {
+                    try {
+                        String fieldValue = firstStringValue(rawFieldValue);
+                        if (fieldValue == null) {
+                            continue;
                         }
+                        if (maxContextWindowTokens > 0) {
+                            // Model context window limit is specified, so truncate the field value to fit
+                            final int charLimit = Math.min(fieldValue.length(), maxContextWindowTokens);
+                            fieldValue = fieldValue.substring(0, charLimit);
+                        }
+                        fieldValues.add(Content.from(
+                                TextSegment.from(fieldValue, Metadata.from("id", searchHit.id()))));
+                    } catch (final Exception e) {
+                        throw new RuntimeException("Failed to parse value '" + rawFieldValue + "' for field " +
+                                                   textFieldName, e);
                     }
                 }
-
-                queryContentMap.put(Query.from(knnQueryTerm), List.of(fieldValues));
             }
+
+            queryContentMap.put(Query.from(knnQueryTerm), List.of(fieldValues));
         }
 
         final List<Content> rankedContent = rerankAggregator.aggregate(queryContentMap);
         for (final Content content : rankedContent) {
-            final List<String> docIds = fieldValueToDocIdMap.get(content.textSegment().text());
-            if (docIds != null) {
-                for (final String docId : docIds) {
-                    rankedContentMap.put(docId, content);
-                }
-            }
+            final Double score = (Double) content.metadata().get(ContentMetadata.RERANKED_SCORE);
+            docIdToScoreMap.put(content.textSegment().metadata().getString("id"), score);
         }
     }
 
