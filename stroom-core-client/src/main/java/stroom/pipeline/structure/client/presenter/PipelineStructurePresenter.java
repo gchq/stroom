@@ -171,7 +171,7 @@ public class PipelineStructurePresenter
 
                     enableButtons();
                 }));
-        registerHandler(pipelineTreePresenter.addChangeHandler(this::onChange));
+        registerHandler(pipelineTreePresenter.addChangeHandler(this::onStructureChange));
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
@@ -217,9 +217,14 @@ public class PipelineStructurePresenter
         pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
-    @Override
-    protected void onDirty() {
-        super.onDirty();
+    /**
+     * Invoked on every structural edit. Recomputes dirty, rebuilds the pipeline model and re-renders
+     * the tree. This must run on every edit: it previously lived in onDirty(), but the "dirty based on
+     * equality" refactor left onDirty() firing only on the clean&lt;-&gt;dirty transition, so the structure
+     * tree went stale after the first edit of a clean pipeline.
+     */
+    private void onStructureChange() {
+        onChange();
         handlePipelineChange();
         setPipelineModel(pipelineModel);
     }
@@ -281,7 +286,7 @@ public class PipelineStructurePresenter
                         if (parentElement != null) {
                             pipelineTreePresenter.getSelectionModel().setSelected(parentElement, true);
                         }
-                        onChange();
+                        onStructureChange();
                     }
                 });
             }
@@ -326,11 +331,11 @@ public class PipelineStructurePresenter
                             PipelineElement renamedElement = selected;
                             if (!Objects.equals(currentName, newName)) {
                                 renamedElement = pipelineModel.renameElement(selected, newName.trim());
-                                onChange();
+                                onStructureChange();
                             }
                             if (!Objects.equals(currentDescription, newDescription)) {
                                 renamedElement = pipelineModel.changeElementDescription(renamedElement, newDescription);
-                                onChange();
+                                onStructureChange();
                             }
                             pipelineTreePresenter.getSelectionModel().setSelected(renamedElement, true);
                         } catch (final RuntimeException ex) {
@@ -638,7 +643,7 @@ public class PipelineStructurePresenter
             pipelineModel.setBaseStack(null);
             try {
                 pipelineModel.build();
-                onChange();
+                onStructureChange();
             } catch (final PipelineModelException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
@@ -652,7 +657,7 @@ public class PipelineStructurePresenter
 
                         try {
                             pipelineModel.build();
-                            onChange();
+                            onStructureChange();
                         } catch (final PipelineModelException e) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -721,7 +726,7 @@ public class PipelineStructurePresenter
                                     name,
                                     description);
                             pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
-                            onChange();
+                            onStructureChange();
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -768,7 +773,7 @@ public class PipelineStructurePresenter
                 try {
                     pipelineModel.addExistingElement(selectedElement, element);
                     pipelineTreePresenter.getSelectionModel().setSelected(element, true);
-                    onChange();
+                    onStructureChange();
                 } catch (final RuntimeException e) {
                     AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                 }

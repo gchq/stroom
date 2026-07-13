@@ -304,9 +304,9 @@ public class DashboardPresenter
         final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
             if (!Objects.equals(e.getValue(), layoutConstraints)) {
-                onChange();
                 layoutConstraints = e.getValue();
                 layoutPresenter.setLayoutConstraints(layoutConstraints);
+                onChange();
             }
         });
         presenter.read(layoutConstraints);

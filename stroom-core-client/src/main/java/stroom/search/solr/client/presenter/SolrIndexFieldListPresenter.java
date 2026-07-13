@@ -23,7 +23,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
@@ -46,7 +45,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -67,7 +68,6 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     private final ButtonView removeButton;
     private SolrIndexDoc index;
     private List<SolrIndexField> fields;
-    private List<SolrIndexField> deletedFields;
     private SolrIndexFieldDataProvider<SolrIndexField> dataProvider;
 
     @Inject
@@ -223,7 +223,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                         refresh();
 
                         e.hide();
-                        DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                        onChange();
                     } else {
                         e.reset();
                     }
@@ -257,7 +257,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                                 refresh();
 
                                 e.hide();
-                                DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                                onChange();
                             } else {
                                 e.hide();
                             }
@@ -296,15 +296,9 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
                     fields.removeAll(list);
-
-                    if (deletedFields == null) {
-                        deletedFields = new ArrayList<>();
-                    }
-                    deletedFields.addAll(list);
-
                     selectionModel.clear();
                     refresh();
-                    DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                    onChange();
                 }
             });
         }
@@ -330,7 +324,6 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
             fields = document.getFields().stream()
                     .sorted(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
-            deletedFields = new ArrayList<>(NullSafe.list(document.getDeletedFields()));
 
             final SolrSynchState state = document.getSolrSynchState();
             final StringBuilder sb = new StringBuilder();
@@ -353,7 +346,29 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
     @Override
     protected SolrIndexDoc onWrite(final SolrIndexDoc document) {
-        return document.copy().fields(fields).deletedFields(deletedFields).build();
+        // Derive the fields that need deleting from Solr rather than accumulating them as the user
+        // edits. A field needs deleting if it existed at load (or was already pending deletion) and is
+        // no longer in the current list. Deriving at write time avoids the bugs inherent in
+        // incremental tracking - e.g. removing then re-adding a field with the same name previously
+        // left it flagged in deletedFields, so a Solr sync would delete the re-added field.
+        final Set<String> currentNames = NullSafe.list(fields).stream()
+                .map(SolrIndexField::getFldName)
+                .collect(Collectors.toSet());
+        final Map<String, SolrIndexField> toDelete = new LinkedHashMap<>();
+        NullSafe.list(document.getFields()).forEach(field -> {
+            if (!currentNames.contains(field.getFldName())) {
+                toDelete.put(field.getFldName(), field);
+            }
+        });
+        NullSafe.list(document.getDeletedFields()).forEach(field -> {
+            if (!currentNames.contains(field.getFldName())) {
+                toDelete.putIfAbsent(field.getFldName(), field);
+            }
+        });
+        return document.copy()
+                .fields(fields)
+                .deletedFields(new ArrayList<>(toDelete.values()))
+                .build();
     }
 
     public interface SolrIndexFieldListView extends View {

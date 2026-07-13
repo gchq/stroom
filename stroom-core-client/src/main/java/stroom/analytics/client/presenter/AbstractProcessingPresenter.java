@@ -69,8 +69,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> onChange()));
-        registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> onChange()));
+        registerHandler(tableBuilderProcessingPresenter.addChangeHandler(this::onChange));
     }
 
     @Override
