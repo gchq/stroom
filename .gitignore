@@ -43,6 +43,7 @@ proxy-remote.yml*
 !.idea/runConfigurations
 !.idea/icon.png
 !.idea/checkstyle-idea.xml
+.junie/
 # END OF IntelliJ
 
 #Gradle stuff (from https://github.com/github/gitignore/blob/master/Gradle.gitignore)
