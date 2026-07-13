@@ -90,9 +90,9 @@ public final class UserPreferencesPresenter
     protected void onBind() {
         registerHandler(getView().getTabBar().addSelectionHandler(e ->
                 switchTab(e.getSelectedItem())));
-        registerHandler(themePreferencesPresenter.addDirtyHandler(e -> onChange()));
-        registerHandler(editorPreferencesPresenter.addDirtyHandler(e -> onChange()));
-        registerHandler(timePreferencesPresenter.addDirtyHandler(e -> onChange()));
+        registerHandler(themePreferencesPresenter.addChangeHandler(this::onChange));
+        registerHandler(editorPreferencesPresenter.addChangeHandler(this::onChange));
+        registerHandler(timePreferencesPresenter.addChangeHandler(this::onChange));
     }
 
     private void switchTab(final TabData tabData) {

@@ -70,10 +70,6 @@ public class HttpClientConfigPresenter
     }
 
     @Override
-    public void onDirty() {
-    }
-
-    @Override
     public void onSetHttpTlsConfig() {
         final HttpTlsConfigPresenter httpTlsConfigPresenter = httpTlsConfigPresenterProvider.get();
         httpTlsConfigPresenter.show(httpTlsConfig, updated -> {

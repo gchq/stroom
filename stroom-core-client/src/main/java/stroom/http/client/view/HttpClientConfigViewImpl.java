@@ -26,7 +26,6 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -195,23 +194,6 @@ public class HttpClientConfigViewImpl
     @Override
     public SimpleDuration getValidateAfterInactivityPeriod() {
         return validateAfterInactivityPeriod.getValue();
-    }
-
-    @UiHandler({
-            "timeout",
-            "connectionTimeout",
-            "connectionRequestTimeout",
-            "timeToLive",
-            "cookiesEnabled",
-            "maxConnections",
-            "maxConnectionsPerRoute",
-            "keepAlive",
-            "retries",
-            "validateAfterInactivityPeriod"})
-    public void onChange(final ValueChangeEvent<?> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
-        }
     }
 
     @UiHandler("setHttpTlsConfig")
