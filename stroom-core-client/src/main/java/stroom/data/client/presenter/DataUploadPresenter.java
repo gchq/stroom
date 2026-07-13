@@ -22,7 +22,6 @@ import stroom.data.client.view.FileData.Status;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.shared.UploadDataRequest;
-import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.feed.client.FeedClient;
@@ -30,7 +29,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResourceKey;
 import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -39,8 +37,6 @@ import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -70,55 +66,34 @@ public class DataUploadPresenter
         this.feedClient = feedClient;
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-        view.getFileUpload().setEncoding(FormPanel.ENCODING_MULTIPART);
-        view.getFileUpload().setMethod(FormPanel.METHOD_POST);
 
-        final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler("Uploading Data",
-                this) {
-            @Override
-            public void onSubmit(final SubmitEvent event) {
-                if (!valid()) {
-                    event.cancel();
-                    currentHideRequest.reset();
-                } else {
-                    super.onSubmit(event);
-                }
-            }
+        view.getFileUpload()
+                .onSuccess(resourceKey -> {
+                    final String fileName = getView().getFileUpload().getFilename();
+                    final Long effectiveMs = getView().getEffectiveDate();
+                    final UploadDataRequest request = new UploadDataRequest(
+                            resourceKey,
+                            feedRef.getName(),
+                            getView().getType().getValue(),
+                            effectiveMs,
+                            getView().getMetaData(),
+                            fileName);
 
-            @Override
-            protected void onSuccess(final ResourceKey resourceKey) {
-                final String fileName = getView().getFileUpload().getFilename();
-                final Long effectiveMs = getView().getEffectiveDate();
-                final UploadDataRequest request = new UploadDataRequest(
-                        resourceKey,
-                        feedRef.getName(),
-                        getView().getType().getValue(),
-                        effectiveMs,
-                        getView().getMetaData(),
-                        fileName);
-
-                restFactory
-                        .create(DATA_RESOURCE)
-                        .method(res -> res.upload(request))
-                        .onSuccess(result ->
-                                AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file",
-                                        () -> {
-                                            metaPresenter.refresh();
-                                            currentHideRequest.hide();
-                                        }))
-                        .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
-                        .taskMonitorFactory(DataUploadPresenter.this)
-                        .exec();
-            }
-
-            @Override
-            protected void onFailure(final String message) {
-                error(message);
-            }
-        };
-
-        registerHandler(getView().getFileUpload().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
+                    restFactory
+                            .create(DATA_RESOURCE)
+                            .method(res -> res.upload(request))
+                            .onSuccess(result ->
+                                    AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file",
+                                            () -> {
+                                                metaPresenter.refresh();
+                                                currentHideRequest.hide();
+                                            }))
+                            .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
+                            .taskMonitorFactory(DataUploadPresenter.this)
+                            .exec();
+                })
+                .onFailure(this::error)
+                .taskMonitorFactory(this, "Uploading Data");
     }
 
     public boolean valid() {

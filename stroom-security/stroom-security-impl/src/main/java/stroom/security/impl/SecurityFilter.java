@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.config.common.UriFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
@@ -31,6 +32,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -46,7 +48,11 @@ import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
@@ -59,18 +65,23 @@ class SecurityFilter implements Filter {
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
     private final AuthenticationBypassChecker authenticationBypassChecker;
+    private final Provider<UriFactory> uriFactoryProvider;
 
     private static final String CSRF_HEADER = "X-CSRF";
     private static final String CSRF_EXPECTED_VALUE = "1";
+    private static final String ORIGIN_HEADER = "Origin";
+    private static final String REFERER_HEADER = "Referer";
 
     @Inject
     SecurityFilter(
             final SecurityContext securityContext,
             final OpenIdManager openIdManager,
-            final AuthenticationBypassChecker authenticationBypassChecker) {
+            final AuthenticationBypassChecker authenticationBypassChecker,
+            final Provider<UriFactory> uriFactoryProvider) {
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
         this.authenticationBypassChecker = authenticationBypassChecker;
+        this.uriFactoryProvider = uriFactoryProvider;
     }
 
     @Override
@@ -181,12 +192,15 @@ class SecurityFilter implements Filter {
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
                 UserAgentSessionUtil.setUserAgentInSession(request);
 
-                // CSRF check — only for session/cookie-based identity.
+                // CSRF checks — only for session/cookie-based identity.
                 // API key / Bearer token requests are not vulnerable to CSRF because the
                 // browser does not automatically attach Authorization headers cross-origin.
-                if (identityFromSession && !isCsrfValid(request)) {
-                    LOGGER.warn("Rejecting request due to missing CSRF header: {} {}",
-                            request.getMethod(), fullPath);
+                // Two independent, complementary defences are applied for defence in depth:
+                //   1. Same-origin verification via the Origin/Referer header (works for both
+                //      XHR and native form posts, and covers requests the header check can't).
+                //   2. A custom X-CSRF header that browsers forbid cross-origin scripts from setting.
+                // Each check logs its own specific rejection reason.
+                if (identityFromSession && (!isOriginValid(request) || !isCsrfValid(request))) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     return;
                 }
@@ -266,16 +280,164 @@ class SecurityFilter implements Filter {
      * so the presence of this header proves the request originated from same-origin
      * JavaScript code (our UI), not from a cross-site form submission or link.
      */
-    private boolean isCsrfValid(final HttpServletRequest request) {
-        final String method = request.getMethod();
+    boolean isCsrfValid(final HttpServletRequest request) {
         // GET, OPTIONS, and HEAD are safe methods — no CSRF check needed
-        if (HttpMethod.GET.equalsIgnoreCase(method)
-                || HttpMethod.OPTIONS.equalsIgnoreCase(method)
-                || HttpMethod.HEAD.equalsIgnoreCase(method)) {
+        if (isSafeMethod(request)) {
             return true;
         }
         // For state-changing methods (POST, PUT, DELETE, PATCH), require the header
-        return CSRF_EXPECTED_VALUE.equals(request.getHeader(CSRF_HEADER));
+        if (CSRF_EXPECTED_VALUE.equals(request.getHeader(CSRF_HEADER))) {
+            return true;
+        }
+        LOGGER.warn("Rejecting request due to missing CSRF header: {} {}",
+                request.getMethod(), request.getRequestURI());
+        return false;
+    }
+
+    /**
+     * Verify that a state-changing request originated from one of our own known origins.
+     * <p>
+     * The {@code Origin} header (falling back to {@code Referer}) is set by the browser and
+     * cannot be spoofed by cross-site JavaScript, so comparing it against the configured
+     * public/UI URIs proves the request came from our own front-end. Unlike the custom-header
+     * check, this also covers native HTML form posts. If neither header is present we fall back
+     * to the {@link #isCsrfValid(HttpServletRequest)} header check (applied separately).
+     */
+    boolean isOriginValid(final HttpServletRequest request) {
+        // GET, OPTIONS, and HEAD are safe methods — no CSRF check needed
+        if (isSafeMethod(request)) {
+            return true;
+        }
+
+        // Prefer the Origin header, falling back to Referer. Both are browser-controlled.
+        String originHeader = request.getHeader(ORIGIN_HEADER);
+        if (isBlankOrNullLiteral(originHeader)) {
+            originHeader = request.getHeader(REFERER_HEADER);
+        }
+
+        // No Origin or Referer to check against, so rely on the X-CSRF header check instead.
+        if (isBlankOrNullLiteral(originHeader)) {
+            return true;
+        }
+
+        final String requestOrigin = normaliseOrigin(originHeader);
+        final Set<String> allowedOrigins = getAllowedOrigins(request);
+        if (requestOrigin != null && allowedOrigins.contains(requestOrigin)) {
+            return true;
+        }
+
+        LOGGER.warn("Rejecting request due to invalid Origin '{}' (header value: '{}', allowed: {}): {} {}",
+                requestOrigin, originHeader, allowedOrigins, request.getMethod(), request.getRequestURI());
+        return false;
+    }
+
+    private boolean isSafeMethod(final HttpServletRequest request) {
+        final String method = request.getMethod();
+        return HttpMethod.GET.equalsIgnoreCase(method)
+               || HttpMethod.OPTIONS.equalsIgnoreCase(method)
+               || HttpMethod.HEAD.equalsIgnoreCase(method);
+    }
+
+    /**
+     * The set of origins ({@code scheme://host:port}) that we consider to be our own front-end.
+     * <p>
+     * Includes:
+     * <ul>
+     *   <li>The host the browser actually connected to (from {@code X-Forwarded-Host}/{@code Host}).
+     *       A legitimate same-origin request always has an Origin equal to this, whereas a
+     *       cross-site attacker's Origin never does, so this alone is a valid CSRF check and
+     *       avoids any dependency on the public URI being configured correctly.</li>
+     *   <li>The configured public URI and UI URI, which cover split UI/API deployments where the
+     *       UI is served from a different origin than the API (the UI URI falls back to the public
+     *       URI, which falls back to the node URI, when not configured).</li>
+     * </ul>
+     */
+    private Set<String> getAllowedOrigins(final HttpServletRequest request) {
+        final Set<String> origins = new HashSet<>();
+
+        // The origin the browser connected to, honouring a reverse proxy if present.
+        final String requestHostOrigin = getRequestHostOrigin(request);
+        if (requestHostOrigin != null) {
+            origins.add(requestHostOrigin);
+        }
+
+        final UriFactory uriFactory = uriFactoryProvider.get();
+        addOrigin(origins, uriFactory.publicUri("/"));
+        addOrigin(origins, uriFactory.uiUri("/"));
+        return origins;
+    }
+
+    /**
+     * Derive the origin string for the host the browser connected to, preferring the
+     * {@code X-Forwarded-*} headers set by a reverse proxy (e.g. NGINX) over the raw
+     * {@code Host}/connector values.
+     */
+    private String getRequestHostOrigin(final HttpServletRequest request) {
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (isBlankOrNullLiteral(scheme)) {
+            scheme = request.getScheme();
+        }
+
+        String host = request.getHeader("X-Forwarded-Host");
+        if (isBlankOrNullLiteral(host)) {
+            host = request.getHeader("Host");
+        }
+        if (isBlankOrNullLiteral(host)) {
+            host = request.getServerName() + ":" + request.getServerPort();
+        }
+
+        if (isBlankOrNullLiteral(scheme) || isBlankOrNullLiteral(host)) {
+            return null;
+        }
+        // A comma-separated X-Forwarded-Host lists the closest proxy last; use the first (client) entry.
+        final int commaIndex = host.indexOf(',');
+        if (commaIndex != -1) {
+            host = host.substring(0, commaIndex).trim();
+        }
+        return normaliseOrigin(scheme + "://" + host);
+    }
+
+    private void addOrigin(final Set<String> origins, final URI uri) {
+        final String origin = normaliseOrigin(uri);
+        if (origin != null) {
+            origins.add(origin);
+        }
+    }
+
+    /**
+     * Normalise a URI to a canonical origin string {@code scheme://host:port}, resolving the
+     * default port for the scheme so that e.g. {@code https://example.com} and
+     * {@code https://example.com:443} compare equal. Returns null if the value can't be parsed
+     * or lacks a scheme/host (e.g. the literal {@code "null"} origin sent by sandboxed contexts).
+     */
+    private static String normaliseOrigin(final String value) {
+        try {
+            return normaliseOrigin(new URI(value));
+        } catch (final URISyntaxException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to parse origin '{}'", value));
+            return null;
+        }
+    }
+
+    private static String normaliseOrigin(final URI uri) {
+        if (uri == null || uri.getScheme() == null || uri.getHost() == null) {
+            return null;
+        }
+        final String scheme = uri.getScheme().toLowerCase();
+        int port = uri.getPort();
+        if (port == -1) {
+            port = "https".equals(scheme)
+                    ? 443
+                    : 80;
+        }
+        return scheme + "://" + uri.getHost().toLowerCase() + ":" + port;
+    }
+
+    private static boolean isBlankOrNullLiteral(final String value) {
+        // NullSafe.isBlankString already treats a null reference (and whitespace) as blank. The
+        // additional check is for the literal string "null", i.e. the opaque Origin that browsers
+        // send from sandboxed contexts, which we want to treat as absent.
+        return NullSafe.isBlankString(value) || "null".equals(value);
     }
 
     private void process(final HttpServletRequest request,
