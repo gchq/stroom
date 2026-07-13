@@ -68,8 +68,8 @@ import dev.langchain4j.rag.content.aggregator.ReRankingContentAggregator;
 import dev.langchain4j.rag.query.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.json.JsonArray;
 import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import tools.jackson.databind.node.ObjectNode;
@@ -95,6 +95,7 @@ public class ElasticSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
     private static final String RERANK_SCORE_FIELD_NAME = "Rerank Score";
     private static final Pattern RERANK_VECTOR_FIELD_NAME_PATTERN = Pattern.compile("^(.+)\\.[^.]+$");
+    private static final char FIELD_PATH_SEPARATOR = '.';
     public static final ThreadPool SCROLL_REQUEST_THREAD_POOL =
             new ThreadPoolImpl("Elasticsearch Scroll Request");
 
@@ -377,8 +378,10 @@ public class ElasticSearchTaskHandler {
                             values[insertAt] = ValDouble.create((Float) fieldValue);
                         } else if (fieldValue instanceof Boolean) {
                             values[insertAt] = ValBoolean.create((Boolean) fieldValue);
-                        } else if (fieldValue instanceof ArrayList) {
-                            values[insertAt] = ValString.create(((ArrayList<?>) fieldValue).stream()
+                        } else if (fieldValue instanceof final Collection<?> collectionValue) {
+                            // Multi-valued fields (including values gathered from across nested objects) are
+                            // flattened to a single, comma-delimited string.
+                            values[insertAt] = ValString.create(collectionValue.stream()
                                     .map(Object::toString)
                                     .collect(Collectors.joining(", ")));
                         } else {
@@ -443,10 +446,15 @@ public class ElasticSearchTaskHandler {
                 }
                 for (final Hit<ObjectNode> searchHit : searchHits) {
                     final Map<String, JsonData> mapSearchHit = searchHit.fields();
-                    final JsonData rawFieldValue = mapSearchHit.get(denseVectorTextField);
+                    // The reranker source text may itself live inside a nested object, so resolve it using the
+                    // same nested-aware extraction used for result values rather than a flat map lookup.
+                    final Object rawFieldValue = getFieldValue(mapSearchHit, denseVectorTextField);
                     if (rawFieldValue != null && searchHit.id() != null) {
                         try {
-                            String fieldValue = (String) rawFieldValue.to(ArrayList.class).getFirst();
+                            String fieldValue = firstStringValue(rawFieldValue);
+                            if (fieldValue == null) {
+                                continue;
+                            }
                             if (maxContextWindowTokens > 0) {
                                 // Model context window limit is specified, so truncate the field value to fit
                                 final int charLimit = Math.min(fieldValue.length(), maxContextWindowTokens);
@@ -478,21 +486,172 @@ public class ElasticSearchTaskHandler {
     }
 
     /**
-     * Locate the value of the doc field by its full path
+     * Resolves the value of a field by its full (dot-delimited) path from a single search hit's
+     * {@code fields} response.
+     * <p>
+     * Elasticsearch returns non-nested fields flat, keyed by their full path (e.g.
+     * {@code {"user.name": ["Alice"]}}). Fields that live inside a {@code nested} object are instead
+     * grouped by the nested object they belong to, with the sub-field keys expressed relative to the
+     * nesting path. For a doubly-nested field {@code a.b.c} this looks like:
+     * <pre>
+     *   {
+     *     "a": [
+     *       { "b": [ { "c": ["value"] } ] }
+     *     ]
+     *   }
+     * </pre>
+     * This method handles both shapes, descending through an arbitrary number of nesting levels and
+     * flattening the values collected across sibling nested objects.
+     *
+     * @return {@code null} if the field is absent, a single native value, or a {@link List} of native
+     * values when the field (or the nested objects it spans) yields more than one value.
      */
     private Object getFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
-        if (fieldName == null || !searchHitMap.containsKey(fieldName)) {
+        if (fieldName == null || searchHitMap == null || searchHitMap.isEmpty()) {
             return null;
         }
 
-        final JsonArray docField = searchHitMap.get(fieldName).toJson().asJsonArray();
-        if (docField.size() > 1) {
-            return docField.stream()
-                    .map(this::jsonValueToNative)
-                    .toList();
-        } else {
-            return jsonValueToNative(docField.getFirst());
+        // Fast path: the field was returned flat (not nested), matching the original behaviour and
+        // avoiding any conversion for the common, non-nested case.
+        final JsonData directField = searchHitMap.get(fieldName);
+        if (directField != null) {
+            final List<Object> values = new ArrayList<>();
+            addLeafValues(directField.toJson(), values);
+            return toFieldResult(values);
         }
+
+        // Nested field: values are grouped under the enclosing nested object(s). Build a JSON view of
+        // the top-level fields and descend, splitting the path at each nested boundary.
+        final Map<String, JsonValue> fields = new HashMap<>(searchHitMap.size());
+        searchHitMap.forEach((key, data) -> fields.put(key, data.toJson()));
+
+        final List<Object> values = new ArrayList<>();
+        collectFieldValues(fields, fieldName, values);
+        return toFieldResult(values);
+    }
+
+    /**
+     * Recursively collects the native values for {@code fieldPath} from a map of fields that is either
+     * the top-level hit fields or the contents of a single nested object.
+     */
+    private void collectFieldValues(final Map<String, JsonValue> fields,
+                                    final String fieldPath,
+                                    final List<Object> out) {
+        if (fields == null || fieldPath == null) {
+            return;
+        }
+
+        // The field may be present directly at this level, either because it is a plain (non-nested)
+        // sub-field or because we have reached the leaf of a nested path.
+        final JsonValue direct = fields.get(fieldPath);
+        if (direct != null) {
+            addLeafValues(direct, out);
+            return;
+        }
+
+        // Otherwise the field is grouped inside a nested object. Find the longest ancestor path that is
+        // present as an array of objects, then recurse into each object with the remaining relative path.
+        final int splitAt = findNestedSplit(fields, fieldPath);
+        if (splitAt < 0) {
+            return;
+        }
+
+        final String nestedPath = fieldPath.substring(0, splitAt);
+        final String remainder = fieldPath.substring(splitAt + 1);
+        final JsonValue container = fields.get(nestedPath);
+        for (final JsonValue element : container.asJsonArray()) {
+            if (element.getValueType() == JsonValue.ValueType.OBJECT) {
+                // A JsonObject is a Map<String, JsonValue>, so it can be descended into directly.
+                final JsonObject nestedObject = element.asJsonObject();
+                collectFieldValues(nestedObject, remainder, out);
+            }
+        }
+    }
+
+    /**
+     * Finds the index of the {@code '.'} at which {@code fieldPath} should be split into a nested
+     * container path and a relative remainder. Prefixes are tested longest-first so that nested
+     * containers whose relative name spans plain-object segments (e.g. {@code b.c}) are preferred over
+     * shorter matches.
+     *
+     * @return the split index, or {@code -1} if no nested container prefix is present
+     */
+    private int findNestedSplit(final Map<String, JsonValue> fields, final String fieldPath) {
+        int idx = fieldPath.lastIndexOf(FIELD_PATH_SEPARATOR);
+        while (idx > 0) {
+            final String prefix = fieldPath.substring(0, idx);
+            if (isArrayOfObjects(fields.get(prefix))) {
+                return idx;
+            }
+            idx = fieldPath.lastIndexOf(FIELD_PATH_SEPARATOR, idx - 1);
+        }
+        return -1;
+    }
+
+    /**
+     * @return true if the value is a non-empty array containing at least one object (the shape used by
+     * Elasticsearch to group the values of a {@code nested} field).
+     */
+    private boolean isArrayOfObjects(final JsonValue value) {
+        if (value == null || value.getValueType() != JsonValue.ValueType.ARRAY) {
+            return false;
+        }
+        return value.asJsonArray().stream()
+                .anyMatch(element -> element.getValueType() == JsonValue.ValueType.OBJECT);
+    }
+
+    /**
+     * Adds the native representation of a leaf field's value(s) to {@code out}. Elasticsearch always
+     * returns field values as an array, but this also tolerates a bare scalar defensively.
+     */
+    private void addLeafValues(final JsonValue value, final List<Object> out) {
+        if (value == null) {
+            return;
+        }
+
+        if (value.getValueType() == JsonValue.ValueType.ARRAY) {
+            for (final JsonValue element : value.asJsonArray()) {
+                final Object nativeValue = jsonValueToNative(element);
+                if (nativeValue != null) {
+                    out.add(nativeValue);
+                }
+            }
+        } else {
+            final Object nativeValue = jsonValueToNative(value);
+            if (nativeValue != null) {
+                out.add(nativeValue);
+            }
+        }
+    }
+
+    /**
+     * Collapses the collected values into the shape expected by the caller: {@code null} for no values,
+     * the single value, or the list itself for multiple values.
+     */
+    private Object toFieldResult(final List<Object> values) {
+        if (values.isEmpty()) {
+            return null;
+        } else if (values.size() == 1) {
+            return values.getFirst();
+        } else {
+            return values;
+        }
+    }
+
+    /**
+     * Returns the first value of a resolved field as a String, whether the field yielded a single value
+     * or a list of values.
+     */
+    private String firstStringValue(final Object fieldValue) {
+        if (fieldValue == null) {
+            return null;
+        }
+        if (fieldValue instanceof final Collection<?> collection) {
+            return collection.isEmpty()
+                    ? null
+                    : String.valueOf(collection.iterator().next());
+        }
+        return String.valueOf(fieldValue);
     }
 
     private Object jsonValueToNative(final JsonValue jsonValue) {
