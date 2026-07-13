@@ -19,6 +19,7 @@ package stroom.state.impl.pipeline;
 import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValErr;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.state.impl.CqlSessionFactory;
@@ -83,7 +84,7 @@ public class StateProviderImpl implements StateProvider {
                     .orElse(ValNull.INSTANCE);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
-            return null;
+            return ValErr.create(e.getMessage());
         }
     }
 
