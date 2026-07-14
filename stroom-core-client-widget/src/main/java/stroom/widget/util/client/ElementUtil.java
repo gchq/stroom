@@ -270,7 +270,7 @@ public class ElementUtil {
     }-*/;
 
     public static native void scrollIntoViewNearest(Element el) /*-{
-        el.scrollIntoView({behaviour: "smooth", block: "nearest", inline: "nearest"});
+        el.scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
     }-*/;
 
     public static native void scrollIntoViewVertical(Element elem) /*-{

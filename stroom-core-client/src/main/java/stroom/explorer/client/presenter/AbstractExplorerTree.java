@@ -170,6 +170,21 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         treeModel.refresh();
     }
 
+    /**
+     * @return The node immediately above the given node in the currently displayed rows, or null if the
+     * node is not present or is the first row. Used to pick a sensible item to keep in view when the
+     * current selection is removed (e.g. after a delete).
+     */
+    ExplorerNode getNodeAbove(final ExplorerNode node) {
+        if (rows != null && node != null) {
+            final int index = rows.indexOf(node);
+            if (index > 0) {
+                return rows.get(index - 1);
+            }
+        }
+        return null;
+    }
+
     private int getItemIndex(final ExplorerNode item) {
         final List<ExplorerNode> items = cellTable.getVisibleItems();
         if (items != null) {
@@ -189,6 +204,17 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         }
         setSelectedItem(selection);
         scrollSelectedIntoView();
+    }
+
+    /**
+     * Point the cell table's keyboard-selected row at the given row and take focus. This is applied
+     * with the (deferred) row render, so it overrides the table's own tendency to re-focus a reset
+     * keyboard row (which would scroll the view to the top) after the data changes.
+     */
+    void setKeyboardSelectedRow(final int row) {
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
     }
 
     private void scrollSelectedIntoView() {

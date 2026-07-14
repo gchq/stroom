@@ -29,6 +29,7 @@ import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -233,6 +234,13 @@ public class ExplorerTreeModel {
 
             // Remember the new tree structure.
             this.currentRootNodes = result.getRootNodes();
+            // update() replaces all rows, which resets the tree's scroll position to the top. If the
+            // currently selected item is about to disappear (e.g. it was just deleted) there will be
+            // nothing to scroll back to, so the view would be left jumped to the top. Remember the
+            // selected item and the row above it now, so we can keep that row in view below.
+            final ExplorerNode previousSelection = NullSafe.get(
+                    explorerTree.getSelectionModel(), MultiSelectionModelImpl::getSelected);
+            final ExplorerNode nodeAboveSelection = explorerTree.getNodeAbove(previousSelection);
             // Update the tree.
             final List<ExplorerNode> rows = update();
 
@@ -283,6 +291,17 @@ public class ExplorerTreeModel {
             if (nextSelection != null) {
 //                GWT.log("nextSelection: " + nextSelection);
                 explorerTree.setInitialSelectedItem(nextSelection);
+            } else if (previousSelection != null && !rows.contains(previousSelection)) {
+                // The previously selected item has gone (e.g. it was just deleted). Select the row that
+                // was above it and reveal that, so the view stays where it was rather than jumping to the
+                // top. This reuses the same reveal path as selection follow, which scrolls reliably.
+                final int aboveIndex = rows.indexOf(nodeAboveSelection);
+                if (aboveIndex >= 0) {
+                    explorerTree.setInitialSelectedItem(rows.get(aboveIndex));
+                    // Also move the table's keyboard row here, otherwise the table re-focuses its
+                    // (reset) keyboard row after the data change and scrolls the view back to the top.
+                    explorerTree.setKeyboardSelectedRow(aboveIndex);
+                }
             }
 
             // We do not want the root to always be forced open.
