@@ -12669,6 +12669,8 @@ components:
           type: string
         rerankModelRef:
           $ref: "#/components/schemas/DocRef"
+        rerankScoreFieldSuffix:
+          type: string
         rerankScoreMinimum:
           type: number
           format: float
@@ -12720,6 +12722,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         fldName:
           type: string
         fldType:
@@ -12738,6 +12741,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         nativeType:
@@ -14879,6 +14883,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -15522,6 +15527,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -17292,6 +17298,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         name:
           type: string
         queryable:
@@ -19234,6 +19241,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         multiValued:

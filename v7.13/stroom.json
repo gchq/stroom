@@ -17607,6 +17607,9 @@
           "rerankModelRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "rerankScoreFieldSuffix" : {
+            "type" : "string"
+          },
           "rerankScoreMinimum" : {
             "type" : "number",
             "format" : "float"
@@ -17660,14 +17663,14 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "fldName" : {
             "type" : "string"
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -20458,7 +20461,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -21325,7 +21328,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -23387,7 +23390,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "name" : {
             "type" : "string"
@@ -25949,7 +25952,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
