@@ -17,7 +17,7 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticStreamDestinationViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements AnalyticStreamDestinationView {
 
     private final Widget widget;
@@ -69,7 +69,7 @@ public class AnalyticStreamDestinationViewImpl
 
     @UiHandler("useSourceFeedIfPossible")
     public void onUseSourceFeedIfPossible(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, AnalyticStreamDestinationViewImpl> {

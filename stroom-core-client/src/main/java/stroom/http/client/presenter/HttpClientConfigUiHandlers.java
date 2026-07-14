@@ -16,9 +16,9 @@
 
 package stroom.http.client.presenter;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface HttpClientConfigUiHandlers extends DirtyUiHandlers {
+public interface HttpClientConfigUiHandlers extends UiHandlers {
 
     void onSetHttpTlsConfig();
 }

@@ -46,7 +46,9 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import jakarta.inject.Provider;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -60,6 +62,8 @@ import java.util.stream.Stream;
 public class SearchExpressionQueryBuilder {
 
     private static final String DELIMITER = ",";
+    private static final String FIELD_PATH_SEPARATOR = ".";
+    private static final Pattern FIELD_PATH_SPLIT_PATTERN = Pattern.compile("\\.");
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
     private static final Pattern IPV4_ADDRESS_PATTERN =
@@ -153,6 +157,11 @@ public class SearchExpressionQueryBuilder {
         }
         final String fieldName = elasticIndexField.getFldName();
 
+        // Resolve the ordered list of `nested` object paths (outermost first) that this field lives
+        // under. This is computed once per term and threaded through query construction so that the
+        // leaf query can be wrapped in one Elasticsearch `nested` query per level of nesting.
+        final List<String> nestedPaths = getNestedPaths(fieldName);
+
         // Validate the expression
         if (value == null || value.isEmpty()) {
             return null;
@@ -166,11 +175,9 @@ public class SearchExpressionQueryBuilder {
         // Special case: if the expression is a wildcard, use the `exists` query
         if (value.equals("*")) {
             if (Condition.EQUALS.equals(condition)) {
-                return QueryBuilders.exists(q -> q.field(fieldName));
+                return wrapInNested(nestedPaths, QueryBuilders.exists(q -> q.field(fieldName)));
             } else if (Condition.NOT_EQUALS.equals(condition)) {
-                return QueryBuilders.bool()
-                        .mustNot(QueryBuilders.exists(q -> q.field(fieldName)))
-                        .build()._toQuery();
+                return negate(wrapInNested(nestedPaths, QueryBuilders.exists(q -> q.field(fieldName))));
             }
         }
 
@@ -179,17 +186,22 @@ public class SearchExpressionQueryBuilder {
         if (elasticFieldType.equals(FieldType.ID) ||
             elasticFieldType.equals(FieldType.LONG) ||
             elasticFieldType.equals(FieldType.INTEGER)) {
-            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getNumber, docRef);
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getNumber, docRef);
         } else if (elasticFieldType.equals(FieldType.FLOAT)) {
-            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getFloat, docRef);
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getFloat, docRef);
         } else if (elasticFieldType.equals(FieldType.DOUBLE)) {
-            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getDouble, docRef);
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getDouble, docRef);
         } else if (elasticFieldType.equals(FieldType.DATE)) {
-            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getDate, docRef);
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getDate, docRef);
         } else if (elasticFieldType.equals(FieldType.IPV4_ADDRESS)) {
-            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getIpV4Address, docRef);
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getIpV4Address, docRef);
         } else {
-            return buildStringQuery(condition, value, docRef, elasticIndexField, fieldName);
+            return buildStringQuery(condition, value, docRef, elasticIndexField, fieldName, nestedPaths);
         }
     }
 
@@ -197,7 +209,8 @@ public class SearchExpressionQueryBuilder {
                                    final String expression,
                                    final DocRef docRef,
                                    final ElasticIndexField indexField,
-                                   final String fieldName) {
+                                   final String fieldName,
+                                   final List<String> nestedPaths) {
         final List<String> terms = tokenizeExpression(expression).filter(term -> !term.isEmpty()).toList();
         if (terms.isEmpty()) {
             return null;
@@ -217,30 +230,32 @@ public class SearchExpressionQueryBuilder {
 
         switch (condition) {
             case EQUALS -> {
-                return buildQueryFn.apply(fieldName, expression);
+                return wrapInNested(nestedPaths, buildQueryFn.apply(fieldName, expression));
             }
             case NOT_EQUALS -> {
-                return negate(buildQueryFn.apply(fieldName, expression));
+                return negate(wrapInNested(nestedPaths, buildQueryFn.apply(fieldName, expression)));
             }
             case MATCHES_REGEX -> {
-                return QueryBuilders.regexp(q -> q
+                return wrapInNested(nestedPaths, QueryBuilders.regexp(q -> q
                         .field(fieldName)
                         .value(expression)
-                );
+                ));
             }
             case IN -> {
+                final Query inQuery;
                 if (terms.size() > 1) {
-                    return BoolQuery.of(q -> q
+                    inQuery = BoolQuery.of(q -> q
                             .should(terms.stream()
                                     .map(term -> buildQueryFn.apply(fieldName, term))
                                     .toList())
                     )._toQuery();
                 } else {
-                    return buildQueryFn.apply(fieldName, expression);
+                    inQuery = buildQueryFn.apply(fieldName, expression);
                 }
+                return wrapInNested(nestedPaths, inQuery);
             }
             case IN_DICTIONARY -> {
-                return buildDictionaryQuery(condition, fieldName, docRef, indexField);
+                return buildDictionaryQuery(condition, fieldName, docRef, indexField, nestedPaths);
             }
             default -> throw new UnsupportedOperationException(
                     "Unsupported condition '" + condition.getDisplayValue() + "' for " + indexField.getDisplayValue() +
@@ -307,6 +322,7 @@ public class SearchExpressionQueryBuilder {
             final ExpressionTerm.Condition condition,
             final ElasticIndexField indexField,
             final String fieldName,
+            final List<String> nestedPaths,
             final String rawValue,
             final TriFunction<Condition, String, String, FieldValue> valueParser,
             final DocRef docRef
@@ -317,58 +333,58 @@ public class SearchExpressionQueryBuilder {
         switch (condition) {
             case EQUALS -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
-                return QueryBuilders
-                        .term(q -> q
-                                .field(fieldName)
-                                .value(fieldValue));
-            }
-            case NOT_EQUALS -> {
-                fieldValue = valueParser.apply(condition, fieldName, rawValue);
-                return negate(QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .term(q -> q
                                 .field(fieldName)
                                 .value(fieldValue)));
+            }
+            case NOT_EQUALS -> {
+                fieldValue = valueParser.apply(condition, fieldName, rawValue);
+                return negate(wrapInNested(nestedPaths, QueryBuilders
+                        .term(q -> q
+                                .field(fieldName)
+                                .value(fieldValue))));
             }
             case IN -> {
                 fieldValues = tokenizeExpression(rawValue)
                         .map(val -> valueParser.apply(condition, fieldName, val))
                         .toList();
-                return QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .terms(q -> q
                                 .field(fieldName)
-                                .terms(t -> t.value(fieldValues)));
+                                .terms(t -> t.value(fieldValues))));
             }
             case GREATER_THAN -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
-                return QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
                                 .gt(JsonData.of(fieldValue)))
-                        ));
+                        )));
             }
             case GREATER_THAN_OR_EQUAL_TO -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
-                return QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
                                 .gte(JsonData.of(fieldValue)))
-                        ));
+                        )));
             }
             case LESS_THAN -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
-                return QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
                                 .lt(JsonData.of(fieldValue)))
-                        ));
+                        )));
             }
             case LESS_THAN_OR_EQUAL_TO -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
-                return QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
                                 .lte(JsonData.of(fieldValue)))
-                        ));
+                        )));
             }
             case BETWEEN -> {
                 fieldValues = tokenizeExpression(rawValue)
@@ -378,15 +394,15 @@ public class SearchExpressionQueryBuilder {
                     throw new IllegalArgumentException(
                             "Two values needed for between query. Only " + fieldValues.size() + " provided");
                 }
-                return QueryBuilders
+                return wrapInNested(nestedPaths, QueryBuilders
                         .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)
                                 .gte(JsonData.of(fieldValues.get(0)))
                                 .lte(JsonData.of(fieldValues.get(1))))
-                        ));
+                        )));
             }
             case IN_DICTIONARY -> {
-                return buildDictionaryQuery(condition, fieldName, docRef, indexField);
+                return buildDictionaryQuery(condition, fieldName, docRef, indexField, nestedPaths);
             }
             default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                                                  indexField.getFldType().getDisplayValue() + " field type");
@@ -399,6 +415,98 @@ public class SearchExpressionQueryBuilder {
                 .should(MatchAllQuery.of(q -> q)._toQuery())
                 .mustNot(query)
                 .build()._toQuery();
+    }
+
+    /**
+     * Determines the ordered list of Elasticsearch `nested` object paths that a field lives under,
+     * from outermost to innermost.
+     * <p>
+     * For a field {@code a.b.c.d} where {@code a}, {@code a.b} and {@code a.b.c} are all mapped as
+     * `nested` types, this returns {@code [a, a.b, a.b.c]}. Only the ancestor path segments are
+     * inspected (the leaf segment {@code d} is the scalar/text field being queried and is never a
+     * nesting level itself). Ancestors that are not mapped as `nested` (for example plain `object`
+     * fields, which do not require a nested query) are skipped.
+     *
+     * @param fieldName the fully qualified (dot-delimited) field name
+     * @return the nesting paths in outermost-first order, or an empty list if the field is not nested
+     */
+    private List<String> getNestedPaths(final String fieldName) {
+        if (fieldName == null || !fieldName.contains(FIELD_PATH_SEPARATOR)) {
+            return Collections.emptyList();
+        }
+
+        final String[] segments = FIELD_PATH_SPLIT_PATTERN.split(fieldName);
+        final List<String> nestedPaths = new ArrayList<>();
+        final StringBuilder pathBuilder = new StringBuilder();
+
+        // Inspect each ancestor path (i.e. every prefix except the leaf field itself) and collect
+        // those that are mapped as `nested`. This naturally supports arbitrarily deep nesting.
+        for (int i = 0; i < segments.length - 1; i++) {
+            if (i > 0) {
+                pathBuilder.append(FIELD_PATH_SEPARATOR);
+            }
+            pathBuilder.append(segments[i]);
+
+            final String path = pathBuilder.toString();
+            if (isNestedField(path)) {
+                nestedPaths.add(path);
+            }
+        }
+
+        return nestedPaths;
+    }
+
+    /**
+     * @return true if the field at the given path is mapped in Elasticsearch as a `nested` type.
+     */
+    private boolean isNestedField(final String path) {
+        final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), path);
+        return indexField instanceof final ElasticIndexField elasticIndexField &&
+               Kind.Nested.jsonValue().equals(elasticIndexField.getNativeType());
+    }
+
+    /**
+     * Convenience overload that resolves the nesting paths for the given field and wraps the query.
+     *
+     * @see #wrapInNested(List, Query)
+     */
+    private Query wrapInNested(final String fieldName, final Query query) {
+        return wrapInNested(getNestedPaths(fieldName), query);
+    }
+
+    /**
+     * Wraps a leaf query in one Elasticsearch `nested` query per level of nesting the field is
+     * subject to, supporting arbitrarily deep nesting by chaining `nested` queries.
+     * <p>
+     * Given nesting paths {@code [a, a.b]} and a leaf query {@code Q}, this produces:
+     * <pre>
+     *   nested(path=a, query=
+     *       nested(path=a.b, query=Q))
+     * </pre>
+     * The paths are supplied outermost-first, so wrapping is applied from the innermost path
+     * outwards to preserve that structure. If the field is not nested, the leaf query is returned
+     * unchanged, keeping behaviour identical for non-nested fields.
+     *
+     * @param nestedPaths the nesting paths in outermost-first order (see {@link #getNestedPaths})
+     * @param query       the leaf query to wrap
+     * @return the (possibly wrapped) query
+     */
+    private Query wrapInNested(final List<String> nestedPaths, final Query query) {
+        if (nestedPaths == null || nestedPaths.isEmpty()) {
+            return query;
+        }
+
+        Query wrapped = query;
+        // Wrap from the innermost path outwards so that the outermost `nested` query is applied last.
+        for (int i = nestedPaths.size() - 1; i >= 0; i--) {
+            final String path = nestedPaths.get(i);
+            final Query inner = wrapped;
+            wrapped = QueryBuilders.nested(n -> n
+                    .path(path)
+                    .query(inner));
+        }
+
+        return wrapped;
     }
 
     /**
@@ -487,12 +595,17 @@ public class SearchExpressionQueryBuilder {
 
     /**
      * Loads the specified Dictionary from the doc store. Each line is combined with AND logic.
+     * <p>
+     * When the field is nested, the resulting combined query is wrapped in the appropriate chain of
+     * `nested` queries. All lines target the same field (and therefore the same nesting paths), so a
+     * single outer wrap is applied to the combined query.
      */
     private Query buildDictionaryQuery(
             final Condition condition,
             final String fieldName,
             final DocRef docRef,
-            final ElasticIndexField indexField
+            final ElasticIndexField indexField,
+            final List<String> nestedPaths
     ) {
         final String[] lines = wordListProvider.getWords(docRef);
         final BoolQuery.Builder builder = new BoolQuery.Builder();
@@ -532,7 +645,7 @@ public class SearchExpressionQueryBuilder {
             builder.should(mustQueries.build()._toQuery());
         }
 
-        return builder.build()._toQuery();
+        return wrapInNested(nestedPaths, builder.build()._toQuery());
     }
 
     private boolean operatorHasChildren(final ExpressionOperator operator) {

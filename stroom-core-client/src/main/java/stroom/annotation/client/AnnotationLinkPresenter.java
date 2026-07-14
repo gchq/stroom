@@ -98,16 +98,16 @@ public class AnnotationLinkPresenter
     private void link(final Annotation annotation) {
         final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
                 new LinkAnnotations(Collections.singletonList(annotation.getId())));
-        annotationResourceClient.change(request, this::onChange, this);
+        annotationResourceClient.change(request, this::onChangeComplete, this);
     }
 
     private void unlink(final Annotation annotation) {
         final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
                 new UnlinkAnnotations(Collections.singletonList(annotation.getId())));
-        annotationResourceClient.change(request, this::onChange, this);
+        annotationResourceClient.change(request, this::onChangeComplete, this);
     }
 
-    private void onChange(final Boolean success) {
+    private void onChangeComplete(final Boolean success) {
         if (success != null && success) {
             parent.updateHistory();
             listPresenter.refresh();

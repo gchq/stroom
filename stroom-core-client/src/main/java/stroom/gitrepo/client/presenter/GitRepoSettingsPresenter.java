@@ -139,13 +139,13 @@ public class GitRepoSettingsPresenter
                 .path(view.getPath())
                 .commit(view.getCommitToPull());
 
-        // Only save autoPush = true if we can push i.e. no commit hash ref
-        if (doc.getCommit().isEmpty()) {
-            builder.autoPush(view.isAutoPush());
-        } else {
-            builder.autoPush(false);
-            view.setAutoPush(false);
-        }
+        // Only enable auto-push when the repo is not pinned to a specific commit (a commit hash implies
+        // a detached, non-pushable state). Derive this from the LIVE commit field, not the last-saved
+        // doc, and do NOT mutate the view here - onWrite runs on every dirty check, and the visibility
+        // of the auto-push option is already handled by the view's setState().
+        final String commit = view.getCommitToPull();
+        final boolean pinnedToCommit = commit != null && !commit.isEmpty();
+        builder.autoPush(!pinnedToCommit && view.isAutoPush());
 
         // Credentials - store from local values
         final Credential credential = view.getCredentialSelectionBox().getValue();

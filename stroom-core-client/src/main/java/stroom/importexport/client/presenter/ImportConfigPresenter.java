@@ -17,14 +17,12 @@
 package stroom.importexport.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
-import stroom.util.shared.ResourceKey;
 import stroom.util.shared.StringUtil;
 import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -34,7 +32,6 @@ import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.FormPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -61,21 +58,14 @@ public class ImportConfigPresenter
         this.restFactory = restFactory;
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-        view.getFileUpload().setEncoding(FormPanel.ENCODING_MULTIPART);
-        view.getFileUpload().setMethod(FormPanel.METHOD_POST);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler(
-                "Import",
-                this) {
-
-            @Override
-            protected void onSuccess(final ResourceKey resourceKey) {
-                restFactory
+        getView().getFileUpload()
+                .onSuccess(resourceKey -> restFactory
                         .create(CONTENT_RESOURCE)
                         .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
                                 ImportSettings.createConfirmation(),
@@ -91,17 +81,9 @@ public class ImportConfigPresenter
                         })
                         .onFailure(caught -> error(caught.getMessage()))
                         .taskMonitorFactory(ImportConfigPresenter.this)
-                        .exec();
-            }
-
-            @Override
-            protected void onFailure(final String message) {
-                error(message);
-            }
-        };
-
-        registerHandler(getView().getFileUpload().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
+                        .exec())
+                .onFailure(this::error)
+                .taskMonitorFactory(this, "Import");
     }
 
     private void show() {

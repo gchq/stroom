@@ -52,7 +52,6 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
     protected void onBind() {
         super.onBind();
         registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
-        registerHandler(queryEditPresenter.addValueChangeHandler(event -> onChange()));
     }
 
     @Override

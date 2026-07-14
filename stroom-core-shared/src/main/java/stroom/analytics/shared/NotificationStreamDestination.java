@@ -61,8 +61,8 @@ public final class NotificationStreamDestination extends NotificationDestination
             return false;
         }
         final NotificationStreamDestination that = (NotificationStreamDestination) o;
-        return Objects.equals(destinationFeed, that.destinationFeed)
-               && useSourceFeedIfPossible == that.useSourceFeedIfPossible;
+        return Objects.equals(destinationFeed, that.destinationFeed) &&
+               useSourceFeedIfPossible == that.useSourceFeedIfPossible;
     }
 
     @Override

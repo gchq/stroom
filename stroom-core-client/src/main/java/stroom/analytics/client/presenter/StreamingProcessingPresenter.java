@@ -21,22 +21,17 @@ import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingP
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class StreamingProcessingPresenter
-        extends MyPresenterWidget<StreamingProcessingView>
-        implements HasDirtyHandlers {
+        extends MyPresenterWidget<StreamingProcessingView> {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE = GWT.create(AnalyticProcessResource.class);
 
@@ -80,11 +75,6 @@ public class StreamingProcessingPresenter
                 })
                 .taskMonitorFactory(this)
                 .exec();
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {

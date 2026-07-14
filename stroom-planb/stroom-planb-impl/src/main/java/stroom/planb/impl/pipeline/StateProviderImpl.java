@@ -22,6 +22,7 @@ import stroom.planb.impl.data.PlanBQueryService;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValErr;
 import stroom.query.language.functions.ValNull;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
@@ -70,7 +71,7 @@ public class StateProviderImpl implements StateProvider {
                     .orElse(ValNull.INSTANCE);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
-            return null;
+            return ValErr.create(e.getMessage());
         }
     }
 }

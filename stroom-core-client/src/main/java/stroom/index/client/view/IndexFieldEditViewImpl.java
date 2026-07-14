@@ -16,7 +16,7 @@
 
 package stroom.index.client.view;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
@@ -36,7 +36,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class IndexFieldEditViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements IndexFieldEditView {
 
     private final Widget widget;
@@ -158,7 +158,7 @@ public class IndexFieldEditViewImpl
     @UiHandler("type")
     public void onChange(final ValueChangeEvent<?> event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 

@@ -25,7 +25,7 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
@@ -40,7 +40,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class AnalyticNotificationEditPresenter
         extends MyPresenterWidget<AnalyticNotificationEditView>
-        implements DirtyUiHandlers {
+        implements ChangeUiHandlers {
 
     private final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter;
     private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
@@ -63,8 +63,8 @@ public class AnalyticNotificationEditPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(analyticStreamDestinationPresenter.addDirtyHandler(e -> onDirty()));
-        registerHandler(analyticEmailDestinationPresenter.addDirtyHandler(e -> onDirty()));
+        registerHandler(analyticStreamDestinationPresenter.addChangeHandler(this::onChange));
+        registerHandler(analyticEmailDestinationPresenter.addChangeHandler(this::onChange));
     }
 
     public void read(final DocRef docRef,
@@ -183,7 +183,7 @@ public class AnalyticNotificationEditPresenter
     }
 
     @Override
-    public void onDirty() {
+    public void onChange() {
         setDestinationPresenter(getView().getDestinationType());
     }
 
@@ -193,7 +193,7 @@ public class AnalyticNotificationEditPresenter
 //        analyticStreamDestinationPresenter.setTaskListener(taskListener);
     }
 
-    public interface AnalyticNotificationEditView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticNotificationEditView extends View, HasUiHandlers<ChangeUiHandlers> {
 
 
         boolean isEnabled();

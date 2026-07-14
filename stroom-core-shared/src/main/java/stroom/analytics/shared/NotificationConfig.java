@@ -104,19 +104,28 @@ public class NotificationConfig {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final NotificationConfig that = (NotificationConfig) o;
-        return Objects.equals(uuid, that.uuid);
+        return limitNotifications == that.limitNotifications &&
+               maxNotifications == that.maxNotifications &&
+               Objects.equals(uuid, that.uuid) &&
+               Objects.equals(enabled, that.enabled) &&
+               Objects.equals(resumeAfter, that.resumeAfter) &&
+               destinationType == that.destinationType &&
+               Objects.equals(destination, that.destination);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(uuid,
+                enabled,
+                limitNotifications,
+                maxNotifications,
+                resumeAfter,
+                destinationType,
+                destination);
     }
 
     @Override

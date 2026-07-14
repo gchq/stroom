@@ -18,10 +18,10 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
 import stroom.analytics.shared.NotificationStreamDestination;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
@@ -35,7 +35,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
-        implements DirtyUiHandlers, HasDirtyHandlers {
+        implements ChangeUiHandlers, HasChangeHandlers {
 
     private final DocSelectionBoxPresenter feedPresenter;
 
@@ -54,7 +54,7 @@ public class AnalyticStreamDestinationPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(feedPresenter.addDataSelectionHandler(e -> onDirty()));
+        registerHandler(feedPresenter.addDataSelectionHandler(e -> onChange()));
     }
 
     public void read(final NotificationStreamDestination streamDestination) {
@@ -71,20 +71,20 @@ public class AnalyticStreamDestinationPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface AnalyticStreamDestinationView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticStreamDestinationView extends View, HasUiHandlers<ChangeUiHandlers> {
 
         void setDestinationFeedView(View view);
 
