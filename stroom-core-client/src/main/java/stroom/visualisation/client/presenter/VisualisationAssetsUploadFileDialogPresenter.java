@@ -1,21 +1,17 @@
 package stroom.visualisation.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResourceKey;
 import stroom.visualisation.client.presenter.VisualisationAssetsUploadFileDialogPresenter.VisualisationAssetsUploadFileDialogView;
 import stroom.visualisation.client.presenter.assets.VisualisationAssetTreeItem;
+import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -25,59 +21,35 @@ public class VisualisationAssetsUploadFileDialogPresenter
         extends MyPresenterWidget<VisualisationAssetsUploadFileDialogView>
         implements HasHandlers {
 
-    /** Allows us to stop the hide request for the dialog */
+    /**
+     * Allows us to stop the hide request for the dialog
+     */
     private HidePopupRequestEvent currentHideRequest;
 
-    /** What to call when the upload has been successful */
+    /**
+     * What to call when the upload has been successful
+     */
     private VisualisationAssetsAddFileCallback addFileCallback;
 
-    /** Where this file is being added */
+    /**
+     * Where this file is being added
+     */
     private VisualisationAssetTreeItem parentFolderItem;
 
-    /** Characters that are illegal in filenames */
+    /**
+     * Characters that are illegal in filenames
+     */
     private String illegalAssetNameCharacters;
 
-    /** Width of dialog */
-    private static final int DIALOG_WIDTH = 300;
-
-    /** Height of dialog */
-    private static final int DIALOG_HEIGHT = 300;
+    /**
+     * Width of dialog
+     */
+    private static final int DIALOG_WIDTH = 430;
 
     /**
-     * Thing that responds to submit events within the page, when the file is uploaded.
+     * Height of dialog
      */
-    final AbstractSubmitCompleteHandler submitCompleteHandler =
-            new AbstractSubmitCompleteHandler("Uploading file", this) {
-
-                @Override
-                public void onSubmit(final SubmitEvent event) {
-                    if (!checkValid()) {
-                        event.cancel();
-                        currentHideRequest.reset();
-                    } else {
-                        super.onSubmit(event);
-                    }
-                }
-
-                @Override
-                protected void onSuccess(final ResourceKey resourceKey) {
-                    final String fileName =
-                            addFileCallback.getNonClashingLabel(
-                                    parentFolderItem,
-                                    parseFakeFilename(getView().getFileUpload().getFilename()),
-                                    null);
-
-                    addFileCallback.addUploadedFile(parentFolderItem, fileName, resourceKey);
-                    currentHideRequest.hide();
-                }
-
-                @Override
-                protected void onFailure(final String message) {
-                    AlertEvent.fireError(VisualisationAssetsUploadFileDialogPresenter.this,
-                            message,
-                            currentHideRequest::reset);
-                }
-            };
+    private static final int DIALOG_HEIGHT = 300;
 
     /**
      * Injected constructor.
@@ -87,20 +59,32 @@ public class VisualisationAssetsUploadFileDialogPresenter
     public VisualisationAssetsUploadFileDialogPresenter(final EventBus eventBus,
                                                         final VisualisationAssetsUploadFileDialogView view) {
         super(eventBus, view);
-        final FormPanel form = view.getForm();
 
-        // Setup the form for file upload
-        form.setAction(ImportUtil.getImportFileURL());
-        form.setEncoding(FormPanel.ENCODING_MULTIPART);
-        form.setMethod(FormPanel.METHOD_POST);
+        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
+        view.getFileUpload()
+                .onSuccess(resourceKey -> {
+                    final String fileName =
+                            addFileCallback.getNonClashingLabel(
+                                    parentFolderItem,
+                                    parseFakeFilename(getView().getFileUpload().getFilename()),
+                                    null);
+
+                    addFileCallback.addUploadedFile(parentFolderItem, fileName, resourceKey);
+                    currentHideRequest.hide();
+                })
+                .onFailure(message -> AlertEvent.fireError(VisualisationAssetsUploadFileDialogPresenter.this,
+                        message,
+                        currentHideRequest::reset))
+                .taskMonitorFactory(this, "Uploading file");
     }
 
     /**
      * Call to prepare and show the dialog.
      *
-     * @param addFileCallback Something to call when the file has been uploaded
-     * @param parentFolderItem Where the item is going to be added in the tree. Can be null if adding at the root.
-     * @param path The path that we're adding the item at.
+     * @param addFileCallback            Something to call when the file has been uploaded
+     * @param parentFolderItem           Where the item is going to be added in the tree.
+     *                                   Can be null if adding at the root.
+     * @param path                       The path that we're adding the item at.
      * @param illegalAssetNameCharacters Characters that we don't accept in the filename.
      */
     public void fireShowPopup(final VisualisationAssetsAddFileCallback addFileCallback,
@@ -114,12 +98,6 @@ public class VisualisationAssetsUploadFileDialogPresenter
         this.illegalAssetNameCharacters = illegalAssetNameCharacters;
         this.currentHideRequest = null;
 
-        // Register the handler that gets events about the upload of the file
-        // Handlers need to be re-registered for each upload - they only work once
-        final FormPanel form = this.getView().getForm();
-        registerHandler(form.addSubmitHandler(submitCompleteHandler));
-        registerHandler(form.addSubmitCompleteHandler(submitCompleteHandler));
-
         final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(this);
         builder.popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(DIALOG_WIDTH, DIALOG_HEIGHT))
@@ -129,8 +107,8 @@ public class VisualisationAssetsUploadFileDialogPresenter
                     currentHideRequest = e;
                     if (e.isOk()) {
                         if (checkValid()) {
-                            // Submit the form
-                            getView().getForm().submit();
+                            // Upload the selected file via XHR (attaches the X-CSRF header).
+                            getView().getFileUpload().submit();
                         } else {
                             e.reset();
                         }
@@ -142,6 +120,7 @@ public class VisualisationAssetsUploadFileDialogPresenter
 
     /**
      * Checks if the data in the dialog is valid. If not shows a warning dialog and returns false.
+     *
      * @return true if everything is ok. False if not ok.
      */
     public boolean checkValid() {
@@ -159,8 +138,9 @@ public class VisualisationAssetsUploadFileDialogPresenter
      * Chrome returns a path like C:\fakepath\actual-filename.ext on Linux.
      * Not sure about other browsers.
      * <p>
-     *     Also removes any illegal characters, deleting them from the filename.
+     * Also removes any illegal characters, deleting them from the filename.
      * </p>
+     *
      * @param fakeFilename The filename given by the browser.
      * @return The filename part of the path.
      */
@@ -193,13 +173,6 @@ public class VisualisationAssetsUploadFileDialogPresenter
         /**
          * Gets the file upload widget.
          */
-        FileUpload getFileUpload();
-
-        /**
-         * Gets the panel that the file upload widget is in.
-         */
-        FormPanel getForm();
-
+        CustomFileUpload getFileUpload();
     }
-
 }

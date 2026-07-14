@@ -48,7 +48,7 @@ public class DictionarySettingsPresenter extends DocPresenter<DictionarySettings
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(dictionaryListPresenter.addDirtyHandler(event -> onChange()));
+        registerHandler(dictionaryListPresenter.addChangeHandler(this::onChange));
         dictionaryListPresenter.registerDictionarySelectionHandler(wordListPresenter::setDocRef);
     }
 

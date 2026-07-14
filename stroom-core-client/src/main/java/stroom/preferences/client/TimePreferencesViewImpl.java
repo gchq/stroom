@@ -16,7 +16,7 @@
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
 import stroom.query.api.UserTimeZone.Use;
@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class TimePreferencesViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements TimePreferencesView {
 
     public static final List<String> STANDARD_FORMATS = Arrays
@@ -210,19 +210,19 @@ public final class TimePreferencesViewImpl
     @UiHandler("custom")
     public void onTickBoxClick(final ValueChangeEvent<Boolean> event) {
         text.setEnabled(custom.getValue());
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("format")
     public void onFormatChange(final ValueChangeEvent<String> event) {
         setPattern(this.format.getValue());
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("timeZoneUse")
     public void onTimeZoneUseValueChange(final ValueChangeEvent<Use> event) {
         changeVisible();
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, TimePreferencesViewImpl> {

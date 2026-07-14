@@ -382,7 +382,9 @@ class SnapshotShard implements Shard {
         public <R> R get(final Function<Db<?, ?>, R> function) {
             return guard.acquire(() -> {
                 if (db == null) {
-                    return null;
+                    throw fetchException != null
+                            ? fetchException
+                            : new RuntimeException("Snapshot database is not available");
                 }
                 return function.apply(db);
             });

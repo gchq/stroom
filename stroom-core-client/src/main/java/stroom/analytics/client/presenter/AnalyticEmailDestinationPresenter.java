@@ -22,10 +22,10 @@ import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.Analy
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.StringWrapper;
@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 
 public class AnalyticEmailDestinationPresenter
         extends MyPresenterWidget<AnalyticEmailDestinationView>
-        implements DirtyUiHandlers, HasDirtyHandlers {
+        implements ChangeUiHandlers, HasChangeHandlers {
 
     // TODO Make a jinja mode
     private static final AceEditorMode ACE_EDITOR_MODE = AceEditorMode.TEXT;
@@ -203,7 +203,7 @@ public class AnalyticEmailDestinationPresenter
         editorPresenter.getViewAsHexOption().setUnavailable();
         editorPresenter.getFormatAction().setUnavailable();
 
-        editorPresenter.addValueChangeHandler(event -> onDirty());
+        editorPresenter.addValueChangeHandler(event -> onChange());
     }
 
     public void read(final NotificationEmailDestination destination) {
@@ -234,19 +234,19 @@ public class AnalyticEmailDestinationPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     // --------------------------------------------------------------------------------
 
 
-    public interface AnalyticEmailDestinationView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticEmailDestinationView extends View, HasUiHandlers<ChangeUiHandlers> {
 
         String getTo();
 

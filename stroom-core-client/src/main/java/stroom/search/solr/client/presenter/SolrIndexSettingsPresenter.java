@@ -116,6 +116,7 @@ public class SolrIndexSettingsPresenter
         }
 
         getView().setCollection(index.getCollection());
+        getView().setTimeField(index.getTimeField());
 
         ExpressionOperator retentionExpression = index.getRetentionExpression();
         if (retentionExpression == null) {
@@ -147,6 +148,7 @@ public class SolrIndexSettingsPresenter
         return index
                 .copy()
                 .collection(collection)
+                .timeField(getView().getTimeField())
                 .solrConnectionConfig(connectionConfig)
                 .retentionExpression(editExpressionPresenter.write())
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())

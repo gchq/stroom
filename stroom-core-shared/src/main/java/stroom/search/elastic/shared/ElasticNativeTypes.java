@@ -54,6 +54,8 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("ip", FieldType.IPV4_ADDRESS);
 
         NATIVE_TYPE_MAP.put("dense_vector", FieldType.DENSE_VECTOR);
+
+        NATIVE_TYPE_MAP.put("nested", FieldType.NESTED);
     }
 
     /**

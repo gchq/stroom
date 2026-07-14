@@ -70,8 +70,8 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
                         editorPresenter::setText);
 
 
-                registerHandler(editorPresenter.addValueChangeHandler(event -> fireDirtyEvent(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> fireDirtyEvent(true)));
+                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 
