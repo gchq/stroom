@@ -16,12 +16,13 @@
 
 package stroom.widget.form.client;
 
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ResourceKey;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,11 +30,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
-import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 public class CustomFileUpload extends Composite {
 
@@ -45,14 +45,13 @@ public class CustomFileUpload extends Composite {
     @UiField
     Label fileName;
     @UiField
-    FormPanel form;
-    @UiField
     FileUpload fileUpload;
+
+    private String actionUrl;
+    private final FileUploadResultHandler resultHandler = new FileUploadResultHandler();
 
     private CustomFileUpload() {
         widget = BINDER.createAndBindUi(this);
-        form.setEncoding(FormPanel.ENCODING_MULTIPART);
-        form.setMethod(FormPanel.METHOD_POST);
         fileUpload.setVisible(false);
         initWidget(widget);
     }
@@ -62,44 +61,49 @@ public class CustomFileUpload extends Composite {
         return widget;
     }
 
-    public FormPanel getForm() {
-        return form;
-    }
-
     public String getFilename() {
         return fileUpload.getFilename();
     }
 
-    public HandlerRegistration addSubmitCompleteHandler(final SubmitCompleteHandler handler) {
-        return form.addSubmitCompleteHandler(handler);
+    /**
+     * Set the consumer called with the {@link ResourceKey} of the uploaded file when an upload
+     * triggered by {@link #submit()} succeeds.
+     */
+    public CustomFileUpload onSuccess(final Consumer<ResourceKey> successConsumer) {
+        resultHandler.onSuccess(successConsumer);
+        return this;
     }
 
-    public HandlerRegistration addSubmitHandler(final SubmitHandler handler) {
-        return form.addSubmitHandler(handler);
+    /**
+     * Set the consumer called with an error message when an upload triggered by {@link #submit()}
+     * fails.
+     */
+    public CustomFileUpload onFailure(final Consumer<String> failureConsumer) {
+        resultHandler.onFailure(failureConsumer);
+        return this;
     }
 
-    public void reset() {
-        form.reset();
+    /**
+     * Set the task monitor factory used to indicate progress for the duration of the upload.
+     */
+    public CustomFileUpload taskMonitorFactory(final TaskMonitorFactory taskMonitorFactory,
+                                               final String taskMessage) {
+        resultHandler.taskMonitorFactory(taskMonitorFactory, taskMessage);
+        return this;
     }
 
     public void setAction(@IsSafeUri final String url) {
-        form.setAction(url);
+        this.actionUrl = url;
     }
 
     public void setAction(final SafeUri url) {
-        form.setAction(url);
-    }
-
-    public void setEncoding(final String encodingType) {
-        form.setEncoding(encodingType);
-    }
-
-    public void setMethod(final String method) {
-        form.setMethod(method);
+        this.actionUrl = url.asString();
     }
 
     public void submit() {
-        form.submit();
+        // Upload via XMLHttpRequest rather than a native form submission so we can attach the
+        // X-CSRF header that the server requires for session-authenticated requests.
+        FileUploadSubmitter.submit(actionUrl, fileUpload.getElement(), resultHandler);
     }
 
     public void focus() {

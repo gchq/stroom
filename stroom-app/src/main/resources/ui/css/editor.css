@@ -26,6 +26,10 @@
     height: 100%;
 }
 
+.ace_gutter-cell {
+    color: var(--text-color);
+}
+
 .editor .hl {
     position: absolute;
     /* Your styling options here are limited as the highlight is a separate layer to the text
