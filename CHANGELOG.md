@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.9] - 2026-07-14
+
+* Bug : Fix type in Data Volume validation message.
+
+* Bug **#5657** : Improve Plan B lookup error handling.
+
+
 ## [v7.12.8] - 2026-07-06
 
 * Bug **#5596** : Change S3Appender to replace path variables using the current time rather than the stream create time. This is to bring it into line with the FileAppender.
@@ -2192,7 +2199,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.9...HEAD
+[v7.12.9]: https://github.com/gchq/stroom/compare/v7.12.8...v7.12.9
 [v7.12.8]: https://github.com/gchq/stroom/compare/v7.12.7...v7.12.8
 [v7.12.7]: https://github.com/gchq/stroom/compare/v7.12.6...v7.12.7
 [v7.12.6]: https://github.com/gchq/stroom/compare/v7.12.5...v7.12.6
