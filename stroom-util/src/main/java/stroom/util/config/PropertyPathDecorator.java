@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 
 public class PropertyPathDecorator {
@@ -66,6 +67,17 @@ public class PropertyPathDecorator {
                         if (propValue != null) {
                             final HasPropertyPath childConfigObject = (HasPropertyPath) propValue;
                             decoratePaths(childConfigObject, propPath);
+                        }
+                    } else if (propValue != null && List.class.isAssignableFrom(propValueType)) {
+                        // Decorate lists like this 'proxyConfig.forwardS3Destinations.[0].queue'
+                        final List<?> list = (List<?>) propValue;
+                        for (int i = 0; i < list.size(); i++) {
+                            final Object childConfigObject = list.get(i);
+                            if (childConfigObject instanceof HasPropertyPath) {
+                                decoratePaths(
+                                        (HasPropertyPath) childConfigObject,
+                                        propPath.merge("[" + i + "]"));
+                            }
                         }
                     }
                 });

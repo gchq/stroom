@@ -139,7 +139,7 @@ public class S3ClientHelper {
             if (s3ClientConfig.isCreateBuckets()) {
                 debug("Error uploading: ", bucketName, key, sourceFile, e);
 
-                // If we are creating buckets then try to create the bucket and upload again.
+                // If we are creating buckets, then try to create the bucket and upload again.
                 try {
                     createBucket(bucketName);
                     return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);

@@ -126,8 +126,8 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     }
 
     @JsonPropertyDescription("Whether this stroom-proxy has a downstream stroom/stroom-proxy instance " +
-                             "to use for feed/API key/receipt poliocy checking. If this proxy is just used " +
-                             "to forward to file only then set to false.")
+                             "to use for feed/API key/receipt policy checking/S3 notification. " +
+                             "If this proxy is just used to forward to file only then set to false.")
     @JsonProperty("enabled")
     public boolean isEnabled() {
         return enabled;

@@ -52,6 +52,8 @@ class TestForwarder {
     @Mock
     private ForwardFileDestinationFactory mockForwardFileDestFactory;
     @Mock
+    private ForwardS3DestinationFactory mockForwardS3DestFactory;
+    @Mock
     private CleanupDirQueue mockCleanupDirQueue;
 
     private Path dataDir = null;
@@ -84,6 +86,7 @@ class TestForwarder {
                 () -> proxyConfig,
                 mockForwardFileDestFactory,
                 mockForwardHttpDestFactory,
+                mockForwardS3DestFactory,
                 mockCleanupDirQueue);
 
         final Path sourceDir1 = createSourceDir(1);
@@ -128,6 +131,7 @@ class TestForwarder {
                 () -> proxyConfig,
                 mockForwardFileDestFactory,
                 mockForwardHttpDestFactory,
+                mockForwardS3DestFactory,
                 mockCleanupDirQueue);
 
         final Path sourceDir1 = createSourceDir(1);

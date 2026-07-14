@@ -30,6 +30,8 @@ import stroom.data.store.impl.fs.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
@@ -42,6 +44,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ReadOnlyStreamStore.class);
 
     // Delegates everything that is a read only to this
     final S3StreamStore streamStore;
@@ -96,6 +100,7 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
 
     @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
+        LOGGER.debug("openSource() - meta: {}, dataVolume: {}", meta, dataVolume);
         Objects.requireNonNull(meta);
         Objects.requireNonNull(dataVolume);
 

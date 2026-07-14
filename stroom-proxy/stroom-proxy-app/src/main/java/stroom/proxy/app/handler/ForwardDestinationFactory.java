@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 package stroom.proxy.app.handler;
 
-public interface ForwardFileDestinationFactory extends ForwardDestinationFactory<ForwardFileConfig> {
 
-    default Class<ForwardFileConfig> getConfigClass() {
-        return ForwardFileConfig.class;
-    }
+public interface ForwardDestinationFactory<T extends ForwarderConfig> {
+
+    ForwardDestination create(T config);
+
+    Class<T> getConfigClass();
+
 }

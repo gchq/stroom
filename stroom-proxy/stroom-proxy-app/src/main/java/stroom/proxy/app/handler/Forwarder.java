@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Singleton
 public class Forwarder {
@@ -46,15 +45,14 @@ public class Forwarder {
                      final Provider<ProxyConfig> proxyConfigProvider,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ForwardHttpPostDestinationFactory forwardHttpPostDestinationFactory,
+                     final ForwardS3DestinationFactory forwardS3DestinationFactory,
                      final CleanupDirQueue cleanupDirQueue) {
         // Find out how many forward destinations are enabled.
         final ProxyConfig proxyConfig = proxyConfigProvider.get();
-        final long enabledForwardCount = Stream
-                .concat(NullSafe.stream(proxyConfig.getForwardHttpDestinations())
-                                .filter(ForwardHttpPostConfig::isEnabled),
-                        NullSafe.stream(proxyConfig.getForwardFileDestinations())
-                                .filter(ForwardFileConfig::isEnabled))
+        final long enabledForwardCount = NullSafe.stream(proxyConfig.getAllForwardDestinations())
+                .filter(ForwarderConfig::isEnabled)
                 .count();
+
         LOGGER.debug("enabledForwardCount: {}", enabledForwardCount);
 
         if (enabledForwardCount == 0) {
@@ -73,7 +71,17 @@ public class Forwarder {
                 .map(forwardFileDestinationFactory::create)
                 .forEach(destinations::add);
 
+        // Add S3 destinations.
+        NullSafe.stream(proxyConfig.getForwardS3Destinations())
+                .filter(ForwardS3Config::isEnabled)
+                .map(forwardS3DestinationFactory::create)
+                .forEach(destinations::add);
+
         final NumberedDirProvider copiesDirProvider = createCopiesDirProvider(dataDirProvider);
+
+        destinations.forEach(destination ->
+                LOGGER.info("Adding {} forward destination '{}'",
+                        destination.getDestinationType(), destination.getDestinationDescription()));
 
         if (destinations.size() == 1) {
             // Most stroom-proxy instances will only have one destination

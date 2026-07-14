@@ -16,7 +16,11 @@
 
 package stroom.proxy.app.handler;
 
-public interface ForwardS3DestinationFactory {
+public interface ForwardS3DestinationFactory extends ForwardDestinationFactory<ForwardS3Config> {
+
+    default Class<ForwardS3Config> getConfigClass() {
+        return ForwardS3Config.class;
+    }
 
     ForwardDestination create(ForwardS3Config forwardS3Config);
 }

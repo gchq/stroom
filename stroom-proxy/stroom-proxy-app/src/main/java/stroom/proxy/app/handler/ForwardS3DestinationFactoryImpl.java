@@ -39,7 +39,6 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardS3DestinationFactoryImpl.class);
 
-    private final Provider<ForwardS3Config> s3ConfigProvider;
     private final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
     private final DirQueueFactory dirQueueFactory;
     private final DataDirProvider dataDirProvider;
@@ -53,8 +52,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
     private final JerseyClientFactory jerseyClientFactory;
 
     @Inject
-    public ForwardS3DestinationFactoryImpl(final Provider<ForwardS3Config> s3ConfigProvider,
-                                           final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
+    public ForwardS3DestinationFactoryImpl(final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
                                            final DirQueueFactory dirQueueFactory,
                                            final DataDirProvider dataDirProvider,
                                            final SimplePathCreator simplePathCreator,
@@ -65,7 +63,6 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                                            final S3MetaFieldsMapper s3MetaFieldsMapper,
                                            final CleanupDirQueue cleanupDirQueue,
                                            final JerseyClientFactory jerseyClientFactory) {
-        this.s3ConfigProvider = s3ConfigProvider;
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
@@ -85,7 +82,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
         final String name = forwardS3Config.getName();
         final ForwardS3DestinationImpl forwardS3Destination = new ForwardS3DestinationImpl(
                 name,
-                s3ConfigProvider.get(),
+                forwardS3Config,
                 downstreamHostConfigProvider.get(),
                 s3ClientPool,
                 templateCache,

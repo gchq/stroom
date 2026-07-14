@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.NonNull;
 
@@ -67,7 +68,7 @@ public final class ForwardS3Config
                            @JsonProperty("notificationType") final NotificationType notificationType,
                            @JsonProperty("name") final String name,
                            @JsonProperty("client") final S3ClientConfig clientConfig,
-                           @JsonProperty("forwardQueueConfig") final ForwardS3QueueConfig forwardQueueConfig) {
+                           @JsonProperty("queue") final ForwardS3QueueConfig forwardQueueConfig) {
         if (instant) {
             throw new IllegalArgumentException("instant is not supported by the S3 forwarder");
         } else {
@@ -75,8 +76,8 @@ public final class ForwardS3Config
         }
         this.enabled = enabled;
         this.notificationType = Objects.requireNonNullElse(notificationType, DEFAULT_NOTIFICATION_TYPE);
-        this.name = NullSafe.requireNonBlankString(name);
-        this.clientConfig = Objects.requireNonNull(clientConfig);
+        this.name = name;
+        this.clientConfig = clientConfig;
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardS3QueueConfig::new);
     }
 
@@ -84,14 +85,14 @@ public final class ForwardS3Config
      * True if received streams should be forwarded to another stroom(-proxy) instance.
      */
     @Override
-    @JsonProperty
+    @JsonProperty("enabled")
     public boolean isEnabled() {
         return enabled;
     }
 
     @Override
     @NotNull
-    @JsonProperty
+    @JsonProperty("instant")
     @JsonPropertyDescription("Should data be forwarded instantly during the receipt process, i.e. must we" +
                              " successfully forward before returning a success response to the sender.")
     public boolean isInstant() {
@@ -99,8 +100,8 @@ public final class ForwardS3Config
     }
 
     @Override
-    @NotNull
-    @JsonProperty
+    @NotEmpty
+    @JsonProperty("name")
     @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
                              "The name is used in the directories on the file system, so do not change the name " +
                              "once proxy has processed data. Must be provided.")
@@ -120,6 +121,12 @@ public final class ForwardS3Config
         return forwardQueueConfig;
     }
 
+    @JsonProperty("notificationType")
+    @JsonPropertyDescription(
+            "The type of notification to use when sending data to S3. Valid values are: " +
+            "(S3_EVENT|REST). S3_EVENT means proxy relies on S3 event notifications to inform the " +
+            "downstream about the data. REST means proxy will send a REST request to the downstream " +
+            "to notify it of the location of the file on S3.")
     public NotificationType getNotificationType() {
         return notificationType;
     }

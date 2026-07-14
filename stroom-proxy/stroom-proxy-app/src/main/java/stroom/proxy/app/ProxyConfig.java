@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -246,6 +247,17 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS)
     public List<ForwardS3Config> getForwardS3Destinations() {
         return forwardS3Destinations;
+    }
+
+    @JsonIgnore
+    public List<ForwarderConfig> getAllForwardDestinations() {
+        return Stream.of(
+                        forwardFileDestinations,
+                        forwardHttpDestinations,
+                        forwardS3Destinations)
+                .filter(Objects::nonNull)
+                .flatMap(NullSafe::stream)
+                .collect(Collectors.toList());
     }
 
     @JsonProperty(PROP_NAME_LOG_STREAM)

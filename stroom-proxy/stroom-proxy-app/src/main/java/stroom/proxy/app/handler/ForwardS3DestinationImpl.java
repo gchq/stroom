@@ -21,6 +21,7 @@ import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientPool;
 import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.client.S3UploadProperties;
+import stroom.aws.s3.client.S3Util;
 import stroom.aws.s3.shared.S3EventResource;
 import stroom.aws.s3.shared.S3EventResource.S3EventRequest;
 import stroom.aws.s3.shared.S3Location;
@@ -52,6 +53,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -61,6 +63,7 @@ import java.util.stream.Collectors;
 public class ForwardS3DestinationImpl implements ForwardS3Destination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardS3DestinationImpl.class);
+
     private static final CIKey FEED_VAR = CIKeys.FEED;
     private static final CIKey TYPE_VAR = CIKeys.TYPE;
     private static final CIKey RECEIPT_ID_VAR = CIKey.internStaticKey(StandardHeaderArguments.RECEIPT_ID);
@@ -113,19 +116,28 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
             LOGGER.debug("add() - sourceDir: {}, feedKey: {}, bucketName: {}, keyPattern: {}",
                     sourceDir, feedKey, bucketName, key);
 
-            final Map<String, String> s3Tags = Map.of(
-                    S3ClientHelper.FEED_TAG_KEY, feedKey.feed(),
-                    S3ClientHelper.STREAM_TYPE_TAG_KEY, feedKey.type());
+            final Map<String, String> s3Tags = new HashMap<>(2);
+            NullSafe.consumeNonBlankString(feedKey.feed(), val ->
+                    s3Tags.put(S3ClientHelper.FEED_TAG_KEY, val));
+            NullSafe.consumeNonBlankString(feedKey.type(), val ->
+                    s3Tags.put(S3ClientHelper.STREAM_TYPE_TAG_KEY, val));
+
             final Map<CIKey, String> s3MetaData = buildS3MetaData(attributeMap);
 
             try {
-                s3ClientHelper.upload(
-                        bucketName,
-                        key,
-                        s3Tags,
-                        s3MetaData,
-                        DEFAULT_UPLOAD_PROPERTIES,
-                        zipFile);
+                try {
+                    s3ClientHelper.upload(
+                            bucketName,
+                            key,
+                            s3Tags,
+                            s3MetaData,
+                            DEFAULT_UPLOAD_PROPERTIES,
+                            zipFile);
+                } catch (final Exception e) {
+                    throw new RuntimeException(LogUtil.message(
+                            "Error uploading file {} to S3, bucketName: {}, key: {} - {}",
+                            zipFile, bucketName, key, LogUtil.exceptionMessage(e)), e);
+                }
 
                 LOGGER.debug("add() - Uploaded {} to S3, bucket: {}, key: {}", zipFile, bucketName, key);
 
@@ -162,15 +174,17 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
 
         final WebTarget target = jerseyClient.target(uri);
         try (final Response response = sendRequest(target, request)) {
+            LOGGER.debug("sendRestNotification() - uri: {}, request: {}, response: {}", uri, request, response);
             if (response.getStatus() != HttpServletResponse.SC_OK) {
                 final String error;
                 try {
                     error = response.readEntity(String.class);
+                    LOGGER.debug("sendRestNotification() - uri: {}, request: {}, error: {}", uri, request, error);
                 } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
                 throw new RuntimeException(LogUtil.message(
-                        "Error sending S3 notification {} to {} - {}", request, uri, error));
+                        "Error sending S3 notification {} to {} - {} - {}", request, uri, response, error));
             }
         }
     }
@@ -205,13 +219,19 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
     private String createBucketName(final FeedKey feedKey, final AttributeMap attributeMap) {
         final String bucketName = forwardS3Config.getClientConfig().getBucketName();
         NullSafe.requireNonBlankString(bucketName);
-        return applyTemplate(bucketName, feedKey, attributeMap);
+        final String bucket = applyTemplate(bucketName, feedKey, attributeMap);
+        final String cleaned = S3Util.cleanKeyName(bucket);
+        LOGGER.debug("createKey() - bucket: '{}', cleaned: '{}'", bucket, cleaned);
+        return cleaned;
     }
 
     private String createKey(final FeedKey feedKey, final AttributeMap attributeMap) {
         final String keyPattern = forwardS3Config.getClientConfig().getKeyPattern();
         NullSafe.requireNonBlankString(keyPattern);
-        return applyTemplate(keyPattern, feedKey, attributeMap);
+        final String key = applyTemplate(keyPattern, feedKey, attributeMap);
+        final String cleaned = S3Util.cleanKeyName(key);
+        LOGGER.debug("createKey() - key: '{}', cleaned: '{}'", key, cleaned);
+        return cleaned;
     }
 
     private String applyTemplate(final String templateStr,
@@ -232,7 +252,8 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
                         attributeMap.get(RECEIPT_ID_VAR))
                 .execute();
 
-        LOGGER.debug("applyTemplate() - template: '{}', output: '{}", template, output);
+        LOGGER.debug("applyTemplate() - template: '{}', output: '{}', feedKey: '{}', attributeMap: '{}'",
+                template, output, feedKey, attributeMap);
         return output;
     }
 
