@@ -13,6 +13,18 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.6] - 2026-07-14
+
+* Bug **#5647** : Fix user entered name being ignored when creating a new volume group.
+
+* Bug **#5646** : Fix onChange() behaviour for document edits.
+
+* Feature **#5652** : Support Elasticsearch nested field types in search.
+
+* Feature **#5654** : Support multiple dense_vector fields in Elasticsearch rerank search.
+
+* Bug **#5651** : Fix file uploads bug introduced by CSRF change.
+
 * Bug : Fix type in Data Volume validation message.
 
 * Bug **#5657** : Improve Plan B lookup error handling.
@@ -2350,7 +2362,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.6...HEAD
+[v7.13-beta.6]: https://github.com/gchq/stroom/compare/v7.13-beta.5...v7.13-beta.6
 [v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5
 [v7.13-beta.4]: https://github.com/gchq/stroom/compare/v7.13-beta.3...v7.13-beta.4
 [v7.13-beta.3]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v7.13-beta.3
