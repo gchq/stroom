@@ -4,23 +4,25 @@
 package stroom.docstore.impl.db.jooq;
 
 
+import stroom.docstore.impl.db.jooq.tables.Doc;
+import stroom.docstore.impl.db.jooq.tables.DocAudit;
+import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocData;
+import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
+import stroom.docstore.impl.db.jooq.tables.records.DocAuditDataSnapshotRecord;
+import stroom.docstore.impl.db.jooq.tables.records.DocAuditRecord;
+import stroom.docstore.impl.db.jooq.tables.records.DocDataRecord;
+import stroom.docstore.impl.db.jooq.tables.records.DocDataSnapshotRecord;
+import stroom.docstore.impl.db.jooq.tables.records.DocDependencyRecord;
+import stroom.docstore.impl.db.jooq.tables.records.DocRecord;
+
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 import org.jooq.impl.QOM.ForeignKeyRule;
-
-import stroom.docstore.impl.db.jooq.tables.Doc;
-import stroom.docstore.impl.db.jooq.tables.DocAudit;
-import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.DocData;
-import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.records.DocAuditDataSnapshotRecord;
-import stroom.docstore.impl.db.jooq.tables.records.DocAuditRecord;
-import stroom.docstore.impl.db.jooq.tables.records.DocDataRecord;
-import stroom.docstore.impl.db.jooq.tables.records.DocDataSnapshotRecord;
-import stroom.docstore.impl.db.jooq.tables.records.DocRecord;
 
 
 /**
@@ -41,6 +43,8 @@ public class Keys {
     public static final UniqueKey<DocDataRecord> KEY_DOC_DATA_DOC_DATA_FK_DOC_ID_EXT_IDX = Internal.createUniqueKey(DocData.DOC_DATA, DSL.name("KEY_doc_data_doc_data_fk_doc_id_ext_idx"), new TableField[] { DocData.DOC_DATA.FK_DOC_ID, DocData.DOC_DATA.EXT }, true);
     public static final UniqueKey<DocDataRecord> KEY_DOC_DATA_PRIMARY = Internal.createUniqueKey(DocData.DOC_DATA, DSL.name("KEY_doc_data_PRIMARY"), new TableField[] { DocData.DOC_DATA.ID }, true);
     public static final UniqueKey<DocDataSnapshotRecord> KEY_DOC_DATA_SNAPSHOT_PRIMARY = Internal.createUniqueKey(DocDataSnapshot.DOC_DATA_SNAPSHOT, DSL.name("KEY_doc_data_snapshot_PRIMARY"), new TableField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.ID }, true);
+    public static final UniqueKey<DocDependencyRecord> KEY_DOC_DEPENDENCY_DOC_DEPENDENCY_FROM_TO = Internal.createUniqueKey(DocDependency.DOC_DEPENDENCY, DSL.name("KEY_doc_dependency_doc_dependency_from_to"), new TableField[] { DocDependency.DOC_DEPENDENCY.FROM_UUID, DocDependency.DOC_DEPENDENCY.TO_UUID }, true);
+    public static final UniqueKey<DocDependencyRecord> KEY_DOC_DEPENDENCY_PRIMARY = Internal.createUniqueKey(DocDependency.DOC_DEPENDENCY, DSL.name("KEY_doc_dependency_PRIMARY"), new TableField[] { DocDependency.DOC_DEPENDENCY.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

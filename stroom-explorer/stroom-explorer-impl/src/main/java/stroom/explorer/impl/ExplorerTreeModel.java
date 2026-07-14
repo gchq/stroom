@@ -17,6 +17,8 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.security.api.SecurityContext;
@@ -63,10 +65,10 @@ class ExplorerTreeModel implements EntityEvent.Handler {
     private final ExplorerSession explorerSession;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final ExplorerActionHandlers explorerActionHandlers;
-    private final BrokenDependenciesCache brokenDependenciesCache;
+    private final DocDependencyService docDependencyService;
     private final SecurityContext securityContext;
     private final Provider<ExplorerConfig> explorerConfigProvider;
+    private final ExplorerDecorator explorerDecorator;
 
     private volatile UnmodifiableTreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
@@ -78,18 +80,18 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                       final ExplorerSession explorerSession,
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
-                      final ExplorerActionHandlers explorerActionHandlers,
-                      final BrokenDependenciesCache brokenDependenciesCache,
+                      final DocDependencyService docDependencyService,
                       final SecurityContext securityContext,
-                      final Provider<ExplorerConfig> explorerConfigProvider) {
+                      final Provider<ExplorerConfig> explorerConfigProvider,
+                      final ExplorerDecorator explorerDecorator) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.explorerActionHandlers = explorerActionHandlers;
-        this.brokenDependenciesCache = brokenDependenciesCache;
+        this.docDependencyService = docDependencyService;
         this.securityContext = securityContext;
         this.explorerConfigProvider = explorerConfigProvider;
+        this.explorerDecorator = explorerDecorator;
     }
 
     private boolean isSynchronousUpdateRequired(final long minId, final long now) {
@@ -173,7 +175,7 @@ class ExplorerTreeModel implements EntityEvent.Handler {
 
                 // Make sure the cache is fresh for our new model
                 if (explorerConfigProvider.get().getDependencyWarningsEnabled()) {
-                    brokenDependenciesCache.invalidate();
+                    docDependencyService.invalidateBrokenDependencyCache();
                     LOGGER.logDurationIfDebugEnabled(() ->
                                     addBrokenDependencies(newModel),
                             "Add dependencies to model");
@@ -190,7 +192,14 @@ class ExplorerTreeModel implements EntityEvent.Handler {
     }
 
     private void addBrokenDependencies(final TreeModel treeModel) {
-        final Map<DocRef, Set<DocRef>> brokenDepsMap = NullSafe.map(brokenDependenciesCache.getMap());
+        // Collect the UUIDs of known pseudo-refs so they are not flagged as broken
+        final Set<String> pseudoRefUuids = explorerDecorator.list()
+                .stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toSet());
+
+        final Map<DocRef, Set<DocRef>> brokenDepsMap =
+                NullSafe.map(docDependencyService.fetchBrokenDependencies(pseudoRefUuids));
         brokenDepsMap.forEach((nodeDocRef, missingDepDocRefs) -> {
             final ExplorerNode node = treeModel.getNode(nodeDocRef);
             if (node != null) {
@@ -254,10 +263,10 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                 // The model doesn't care about UPDATE as that is an update of the content of the doc
                 // rather than an update to the node (e.g. tags).
                 case CREATE,
-                        DELETE,
-                        UPDATE_EXPLORER_NODE,
-                        DELETE_EXPLORER_NODE,
-                        CREATE_EXPLORER_NODE -> {
+                     DELETE,
+                     UPDATE_EXPLORER_NODE,
+                     DELETE_EXPLORER_NODE,
+                     CREATE_EXPLORER_NODE -> {
                     // E.g. tags on a node have changed
                     LOGGER.debug("Rebuilding tree model due to entity event {}", event);
                     rebuild();

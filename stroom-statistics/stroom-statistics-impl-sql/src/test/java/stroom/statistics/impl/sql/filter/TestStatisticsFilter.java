@@ -572,6 +572,7 @@ class TestStatisticsFilter implements Statistics {
                         persistence,
                         null,
                         securityContext,
+                        null,
                         null),
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }

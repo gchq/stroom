@@ -32,6 +32,8 @@ import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.DeleteConfirmation;
+import stroom.explorer.shared.DeleteConfirmationRequest;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentTypes;
@@ -123,6 +125,12 @@ class ExplorerResourceImpl implements ExplorerResource {
                 .toList();
         return explorerServiceProvider.get()
                 .delete(explorerNodes);
+    }
+
+    @Override
+    @AutoLogged(OperationType.VIEW)
+    public DeleteConfirmation fetchDeleteConfirmation(final DeleteConfirmationRequest request) {
+        return explorerServiceProvider.get().getDeleteConfirmation(request.getDocRefs());
     }
 
     @Override

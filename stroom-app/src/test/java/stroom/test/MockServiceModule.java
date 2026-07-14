@@ -32,8 +32,10 @@ import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryStoreImpl;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;
@@ -126,6 +128,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockAiModule());
         install(new stroom.core.entity.event.EntityEventModule());
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(AiDao.class).to(MockAiDao.class);
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class);

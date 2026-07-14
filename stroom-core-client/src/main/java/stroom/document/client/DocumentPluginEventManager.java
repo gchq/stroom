@@ -17,6 +17,7 @@
 package stroom.document.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmCallback;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.ContentPlugin;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
@@ -68,6 +69,8 @@ import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.DeleteConfirmation;
+import stroom.explorer.shared.DeleteConfirmationRequest;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFavouriteResource;
@@ -114,11 +117,16 @@ import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -352,7 +360,8 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
                         event.getCallbackOnOpen(),
-                        event.getCallbackOnFailure().orElse(() -> {}),
+                        event.getCallbackOnFailure().orElse(() -> {
+                        }),
                         event.isDuplicate(),
                         explorerListener)));
 
@@ -410,15 +419,17 @@ public class DocumentPluginEventManager extends Plugin {
                             handleDeleteResult(result, event.getCallback()), explorerListener);
 
             if (event.getConfirm()) {
-                final int cnt = NullSafe.size(event.getDocRefs());
-                final String msg = NullSafe.size(event.getDocRefs()) > 1
-                        ? "Are you sure you want to delete these " + cnt + " items?"
-                        : "Are you sure you want to delete this item?";
-                ConfirmEvent.fire(DocumentPluginEventManager.this, msg, ok -> {
-                    if (ok) {
-                        action.run();
-                    }
-                });
+                // Look up what would be deleted (folder contents) and what depends on it, so we can warn
+                // the user before they confirm. If the lookup fails we warn but still allow the delete.
+                restFactory
+                        .create(EXPLORER_RESOURCE)
+                        .method(res -> res.fetchDeleteConfirmation(
+                                new DeleteConfirmationRequest(event.getDocRefs())))
+                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action))
+                        .onFailure(err -> confirmDeleteAfterLookupError(
+                                event.getDocRefs(), err.getMessage(), action))
+                        .taskMonitorFactory(explorerListener)
+                        .exec();
             } else {
                 action.run();
             }
@@ -753,6 +764,193 @@ public class DocumentPluginEventManager extends Plugin {
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
+    }
+
+    /**
+     * Show the delete confirmation. If the items being deleted have dependants the user is warned and
+     * the dependants they are permitted to see are listed; the existence of any dependants they cannot
+     * see is disclosed without naming them.
+     */
+    private void confirmDelete(final List<DocRef> docRefs,
+                               final DeleteConfirmation info,
+                               final Runnable action) {
+        final int cnt = NullSafe.size(docRefs);
+        final ConfirmCallback callback = ok -> {
+            if (ok) {
+                action.run();
+            }
+        };
+
+        if (info == null || info.isEmpty()) {
+            final String msg = cnt > 1
+                    ? "Are you sure you want to delete these " + cnt + " items?"
+                    : "Are you sure you want to delete this item?";
+            ConfirmEvent.fire(DocumentPluginEventManager.this, msg, callback);
+        } else {
+            ConfirmEvent.fireWarn(
+                    DocumentPluginEventManager.this,
+                    SafeHtmlUtil.getSafeHtml(buildDeleteWarningMessage(cnt, info)),
+                    buildDeleteConfirmationDetail(info),
+                    callback);
+        }
+    }
+
+    private String buildDeleteWarningMessage(final int cnt, final DeleteConfirmation info) {
+        final String subject = cnt > 1
+                ? "These " + cnt + " items"
+                : "This item";
+        final String have = cnt > 1
+                ? "contain"
+                : "contains";
+        final String are = cnt > 1
+                ? "are"
+                : "is";
+        final String them = cnt > 1
+                ? "them"
+                : "it";
+
+        final String body;
+        if (info.hasChildItems() && info.hasDependants()) {
+            body = subject + " " + have + " other items and " + are + " used by items elsewhere.";
+        } else if (info.hasChildItems()) {
+            body = subject + " " + have + " other items.";
+        } else {
+            body = subject + " " + are + " used by other items. Deleting " + them + " may break those "
+                   + "items.";
+        }
+        return body + " Are you sure you want to delete " + them + "?";
+    }
+
+    private SafeHtml buildDeleteConfirmationDetail(final DeleteConfirmation info) {
+        final HtmlBuilder builder = HtmlBuilder.builder();
+
+        // Items contained within the folder(s) being deleted.
+        if (info.hasChildItems()) {
+            final int count = info.getTotalChildCount();
+            if (count > 0) {
+                final String header = count == 1
+                        ? "The following contained item will also be deleted:"
+                        : "The following " + count + " contained items will also be deleted:";
+                // Summary: a header div followed by one div per doc type count.
+                builder.div(header, Attribute.className("deleteConfirm-summaryHeader"));
+                buildTypeCountLines(info.getChildTypeCounts()).forEach(line ->
+                        builder.div(line, Attribute.className("deleteConfirm-typeCount")));
+
+                // Extra gap between the summary and the detailed item list.
+                builder.div(hb -> {
+                }, Attribute.className("deleteConfirm-gap"), Attribute.style("height:6px"));
+
+                // Detail: one icon + name row per item.
+                appendDocRefRows(builder, info.getChildItems());
+                if (info.isChildItemsTruncated()) {
+                    builder.div("…and more", Attribute.className("docRefLinkContainer"));
+                }
+            }
+            if (info.isHasHiddenChildItems()) {
+                // Contained items the user cannot view they also cannot delete (permissions are
+                // hierarchical), and the server will not delete a folder that still contains such items.
+                final String msg = count > 0
+                        ? "The folder also contains items you do not have permission to delete, so the "
+                          + "folder itself will not be removed."
+                        : "This folder contains items you do not have permission to delete, so it cannot "
+                          + "be removed.";
+                builder.br();
+                builder.append(msg);
+            }
+        }
+
+        // Items outside the selection that depend on what is being deleted.
+        if (info.hasDependants()) {
+            if (info.hasChildItems()) {
+                builder.br();
+            }
+            if (NullSafe.hasItems(info.getVisibleDependants())) {
+                builder.div("The following items depend on this:",
+                        Attribute.className("deleteConfirm-summaryHeader"));
+                appendDocRefRows(builder, info.getVisibleDependants());
+            }
+            if (info.isHasHiddenDependants()) {
+                builder.br();
+                builder.append("There are also dependants that you do not have permission to view.");
+            }
+        }
+
+        return builder.toSafeHtml();
+    }
+
+    /**
+     * Build a per-type breakdown of the contained items, e.g. ["Feed (3)", "Pipeline (2)"], ordered by
+     * descending count then type. Uses each type's display name where known.
+     */
+    private List<String> buildTypeCountLines(final Map<String, Integer> typeCounts) {
+        if (typeCounts == null || typeCounts.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return typeCounts.entrySet().stream()
+                .sorted(Comparator
+                        .comparing(Map.Entry<String, Integer>::getValue, Comparator.reverseOrder())
+                        .thenComparing(Map.Entry::getKey))
+                .map(entry -> {
+                    final DocumentType documentType = DocumentTypeRegistry.get(entry.getKey());
+                    final String displayType = documentType != null
+                            ? documentType.getDisplayType()
+                            : entry.getKey();
+                    return displayType + " (" + entry.getValue() + ")";
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Render each DocRef as an icon + name row, reusing the same classes as the explorer/grid DocRef
+     * cells so it picks up the existing inline styling.
+     */
+    private void appendDocRefRows(final HtmlBuilder builder, final List<DocRef> docRefs) {
+        for (final DocRef docRef : docRefs) {
+            builder.div(hb -> {
+                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+                if (documentType != null && documentType.getIcon() != null) {
+                    hb.append(SvgImageUtil.toSafeHtml(
+                            documentType.getDisplayType(),
+                            documentType.getIcon(),
+                            "svgIcon",
+                            "docRefLinkIcon"));
+                }
+                final String name = NullSafe.isBlankString(docRef.getName())
+                        ? docRef.getUuid()
+                        : docRef.getName();
+                hb.append(name);
+            }, Attribute.className("docRefLinkContainer"));
+        }
+    }
+
+    /**
+     * The delete-confirmation lookup failed, so we cannot say what would be affected. Warn the user
+     * (surfacing the error) but still let them proceed with the delete rather than blocking it.
+     */
+    private void confirmDeleteAfterLookupError(final List<DocRef> docRefs,
+                                               final String errorMessage,
+                                               final Runnable action) {
+        final int cnt = NullSafe.size(docRefs);
+        final String msg = cnt > 1
+                ? "Unable to check what would be affected by deleting these " + cnt + " items. Are you "
+                  + "sure you want to delete them anyway?"
+                : "Unable to check what would be affected by deleting this item. Are you sure you want "
+                  + "to delete it anyway?";
+        final HtmlBuilder detail = HtmlBuilder.builder();
+        detail.append("The check failed:");
+        if (!NullSafe.isBlankString(errorMessage)) {
+            detail.br();
+            detail.append(errorMessage);
+        }
+        ConfirmEvent.fireWarn(
+                DocumentPluginEventManager.this,
+                SafeHtmlUtil.getSafeHtml(msg),
+                detail.toSafeHtml(),
+                ok -> {
+                    if (ok) {
+                        action.run();
+                    }
+                });
     }
 
     private void setAsFavourite(final DocRef docRef,

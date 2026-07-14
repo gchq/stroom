@@ -4,19 +4,20 @@
 package stroom.docstore.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.docstore.impl.db.jooq.tables.Doc;
+import stroom.docstore.impl.db.jooq.tables.DocAudit;
+import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocData;
+import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.docstore.impl.db.jooq.tables.Doc;
-import stroom.docstore.impl.db.jooq.tables.DocAudit;
-import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.DocData;
-import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -58,6 +59,11 @@ public class Stroom extends SchemaImpl {
     public final DocDataSnapshot DOC_DATA_SNAPSHOT = DocDataSnapshot.DOC_DATA_SNAPSHOT;
 
     /**
+     * The table <code>stroom.doc_dependency</code>.
+     */
+    public final DocDependency DOC_DEPENDENCY = DocDependency.DOC_DEPENDENCY;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -77,7 +83,8 @@ public class Stroom extends SchemaImpl {
             DocAudit.DOC_AUDIT,
             DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT,
             DocData.DOC_DATA,
-            DocDataSnapshot.DOC_DATA_SNAPSHOT
+            DocDataSnapshot.DOC_DATA_SNAPSHOT,
+            DocDependency.DOC_DEPENDENCY
         );
     }
 }

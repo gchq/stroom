@@ -16,12 +16,9 @@
 
 package stroom.importexport.impl;
 
-import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.api.ExportSummary;
-import stroom.importexport.shared.Dependency;
-import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -39,7 +36,6 @@ import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
@@ -49,7 +45,6 @@ import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,7 +57,6 @@ class ContentServiceImpl implements ContentService {
 
     private final ImportExportService importExportService;
     private final ResourceStore resourceStore;
-    private final DependencyService dependencyService;
     private final SecurityContext securityContext;
     private final Provider<ExportConfig> exportConfigProvider;
 
@@ -70,11 +64,9 @@ class ContentServiceImpl implements ContentService {
     ContentServiceImpl(final ImportExportService importExportService,
                        final Provider<ExportConfig> exportConfigProvider,
                        final ResourceStore resourceStore,
-                       final DependencyService dependencyService,
                        final SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
-        this.dependencyService = dependencyService;
         this.securityContext = securityContext;
         this.exportConfigProvider = exportConfigProvider;
     }
@@ -155,16 +147,6 @@ class ContentServiceImpl implements ContentService {
 
             return new ResourceGeneration(resourceKey, messageList);
         });
-    }
-
-    @Override
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> fetchBrokenDependencies() {
-        return dependencyService.getBrokenDependencies();
     }
 
     @Override

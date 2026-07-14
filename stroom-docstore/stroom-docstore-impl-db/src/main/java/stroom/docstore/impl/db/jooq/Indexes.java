@@ -4,15 +4,16 @@
 package stroom.docstore.impl.db.jooq;
 
 
-import org.jooq.Index;
-import org.jooq.OrderField;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.docstore.impl.db.jooq.tables.DocAudit;
 import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
 import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
+
+import org.jooq.Index;
+import org.jooq.OrderField;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**
@@ -32,5 +33,7 @@ public class Indexes {
     public static final Index DOC_DATA_SNAPSHOT_DOC_DATA_SNAPSHOT_DEDUP_IDX = Internal.createIndex(DSL.name("doc_data_snapshot_dedup_idx"), DocDataSnapshot.DOC_DATA_SNAPSHOT, new OrderField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.FK_DOC_ID, DocDataSnapshot.DOC_DATA_SNAPSHOT.EXT, DocDataSnapshot.DOC_DATA_SNAPSHOT.DATA_HASH }, false);
     public static final Index DOC_DATA_SNAPSHOT_DOC_DATA_SNAPSHOT_FK_DOC_ID_IDX = Internal.createIndex(DSL.name("doc_data_snapshot_fk_doc_id_idx"), DocDataSnapshot.DOC_DATA_SNAPSHOT, new OrderField[] { DocDataSnapshot.DOC_DATA_SNAPSHOT.FK_DOC_ID }, false);
     public static final Index DOC_DOC_DELETED_IDX = Internal.createIndex(DSL.name("doc_deleted_idx"), Doc.DOC, new OrderField[] { Doc.DOC.DELETED }, false);
+    public static final Index DOC_DEPENDENCY_DOC_DEPENDENCY_FROM_UUID = Internal.createIndex(DSL.name("doc_dependency_from_uuid"), DocDependency.DOC_DEPENDENCY, new OrderField[] { DocDependency.DOC_DEPENDENCY.FROM_UUID }, false);
+    public static final Index DOC_DEPENDENCY_DOC_DEPENDENCY_TO_UUID = Internal.createIndex(DSL.name("doc_dependency_to_uuid"), DocDependency.DOC_DEPENDENCY, new OrderField[] { DocDependency.DOC_DEPENDENCY.TO_UUID }, false);
     public static final Index DOC_DOC_TYPE_NAME_UUID_IDX = Internal.createIndex(DSL.name("doc_type_name_uuid_idx"), Doc.DOC, new OrderField[] { Doc.DOC.TYPE, Doc.DOC.NAME, Doc.DOC.UUID }, false);
 }

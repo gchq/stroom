@@ -32,7 +32,6 @@ import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,16 +156,6 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
     // ---------------------------------------------------------------------
     // START OF HasDependencies
     // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return Collections.emptySet();
-    }
 
     @Override
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {

@@ -16,6 +16,8 @@
 
 package stroom.docstore.impl;
 
+import stroom.docstore.api.DependencyRemapFunction;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
@@ -37,16 +39,19 @@ public class StoreFactoryImpl implements StoreFactory {
     private final EntityEventBus entityEventBus;
     private final SecurityContext securityContext;
     private final Provider<DocFinder> docFinderProvider;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
 
     @Inject
     public StoreFactoryImpl(final Persistence persistence,
                             final EntityEventBus entityEventBus,
                             final SecurityContext securityContext,
-                            final Provider<DocFinder> docFinderProvider) {
+                            final Provider<DocFinder> docFinderProvider,
+                            final Provider<DocDependencyService> docDependencyServiceProvider) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
         this.docFinderProvider = docFinderProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
     }
 
     @Override
@@ -54,15 +59,18 @@ public class StoreFactoryImpl implements StoreFactory {
             final DocumentSerialiser2<D> serialiser,
             final String type,
             final Supplier<B> builderSupplier,
-            final Function<D, B> builderFunction) {
+            final Function<D, B> builderFunction,
+            final Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier) {
         return new StoreImpl<>(
                 persistence,
                 entityEventBus,
                 securityContext,
                 docFinderProvider,
+                docDependencyServiceProvider,
                 serialiser,
                 type,
                 builderSupplier,
-                builderFunction);
+                builderFunction,
+                dependencyRemapFunctionSupplier);
     }
 }

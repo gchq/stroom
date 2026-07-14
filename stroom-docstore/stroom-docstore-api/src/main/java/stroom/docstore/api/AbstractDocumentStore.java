@@ -64,7 +64,8 @@ public abstract class AbstractDocumentStore<D extends AbstractDoc>
             final String type,
             final Supplier<B> builderSupplier,
             final Function<D, B> builderFunction) {
-        this.store = storeFactory.createStore(serialiser, type, builderSupplier, builderFunction);
+        this.store = storeFactory.createStore(
+                serialiser, type, builderSupplier, builderFunction, this::getDependencyRemapFunction);
     }
 
     /**
@@ -141,19 +142,9 @@ public abstract class AbstractDocumentStore<D extends AbstractDoc>
     // -------------------------------------------------------------------------
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(getDependencyRemapFunction());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, getDependencyRemapFunction());
-    }
-
-    @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, getDependencyRemapFunction());
+        store.remapDependencies(docRef, remappings);
     }
 
     // -------------------------------------------------------------------------

@@ -20,11 +20,11 @@ import stroom.docref.DocRef;
 import stroom.docref.EmbeddedDocRef;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
-import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.docstore.shared.AuditAction;
@@ -79,29 +79,35 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     private final EntityEventBus entityEventBus;
     private final SecurityContext securityContext;
     private final Provider<DocFinder> docFinderProvider;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
 
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
     private final Supplier<B> builderSupplier;
     private final Function<D, B> builderFunction;
+    private final Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier;
 
     @Inject
     StoreImpl(final Persistence persistence,
               final EntityEventBus entityEventBus,
               final SecurityContext securityContext,
               final Provider<DocFinder> docFinderProvider,
+              final Provider<DocDependencyService> docDependencyServiceProvider,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Supplier<B> builderSupplier,
-              final Function<D, B> builderFunction) {
+              final Function<D, B> builderFunction,
+              final Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
         this.docFinderProvider = docFinderProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
         this.serialiser = serialiser;
         this.type = type;
         this.builderSupplier = builderSupplier;
         this.builderFunction = builderFunction;
+        this.dependencyRemapFunctionSupplier = dependencyRemapFunctionSupplier;
     }
 
     // ---------------------------------------------------------------------
@@ -214,6 +220,8 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
         persistence.delete(docRef, securityContext.getUserRef());
         EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
+
+        removeDocDependencies(docRef);
     }
 
     // ---------------------------------------------------------------------
@@ -225,36 +233,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     // ---------------------------------------------------------------------
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies(final DependencyRemapFunction<D> mapper) {
-        return list()
-                .stream()
-                .filter(this::canRead)
-                .collect(Collectors.toMap(docRef -> docRef, docRef ->
-                        getDependencies(docRef, mapper)));
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef,
-                                       final DependencyRemapFunction<D> mapper) {
-        if (mapper != null) {
-            try {
-                D doc = readDocument(docRef);
-                if (doc != null) {
-                    final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-                    doc = mapper.remap(doc, dependencyRemapper);
-                    return dependencyRemapper.getDependencies();
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-        return Collections.emptySet();
-    }
-
-    @Override
     public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings,
-                                  final DependencyRemapFunction<D> mapper) {
+                                  final Map<DocRef, DocRef> remappings) {
+        final DependencyRemapFunction<D> mapper = getDependencyRemapFunction();
         if (mapper != null) {
             try {
                 D doc = readDocument(docRef);
@@ -417,6 +398,8 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
             }
 
+            updateDocDependencies(docRef, builtDoc, true);
+
             return newDocument;
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
@@ -520,6 +503,75 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return new DocRef(type, document.getUuid(), document.getName());
     }
 
+    /**
+     * Keep the doc_dependency store current for a create/update by extracting the document's
+     * dependencies <b>directly from the in-hand object</b> and writing them.
+     *
+     * @param propagateName if {@code true}, also propagate this document's (possibly changed) name
+     *                      to all edges that reference it as a target. Not required on create as
+     *                      nothing can reference a brand-new document yet.
+     */
+    private void updateDocDependencies(final DocRef docRef, final D document, final boolean propagateName) {
+        final DocDependencyService docDependencyService = getDocDependencyService();
+        if (docDependencyService != null) {
+            // The remap function may perform registry lookups for some doc types, so run as the
+            // processing user. Errors are swallowed and logged by the service so a dependency-update
+            // failure never blocks the document save (the table is a self-healing, rebuildable index).
+            securityContext.asProcessingUser(() -> {
+                final Set<DocRef> deps = extractDependencies(document, getDependencyRemapFunction());
+                docDependencyService.setDependencies(docRef, deps);
+                if (propagateName) {
+                    docDependencyService.propagateName(docRef);
+                }
+            });
+        }
+    }
+
+    /**
+     * Remove all of a deleted document's outgoing dependency edges directly (see
+     * {@link #updateDocDependencies}).
+     */
+    private void removeDocDependencies(final DocRef docRef) {
+        final DocDependencyService docDependencyService = getDocDependencyService();
+        if (docDependencyService != null) {
+            securityContext.asProcessingUser(() -> docDependencyService.removeDependencies(docRef));
+        }
+    }
+
+    /**
+     * Extract the dependencies of a document using this store's dependency remap function. Returns an
+     * empty set when this doc type has no mapper (i.e. it tracks no dependencies).
+     */
+    private Set<DocRef> extractDependencies(final D document, final DependencyRemapFunction<D> mapper) {
+        if (mapper == null || document == null) {
+            return Collections.emptySet();
+        }
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+        mapper.remap(document, dependencyRemapper);
+        return dependencyRemapper.getDependencies();
+    }
+
+    /**
+     * @return this store's dependency remap function, or {@code null} if it has none (either the doc
+     * type tracks no dependencies, or no supplier was provided, e.g. in lightweight tests).
+     */
+    private DependencyRemapFunction<D> getDependencyRemapFunction() {
+        return dependencyRemapFunctionSupplier != null
+                ? dependencyRemapFunctionSupplier.get()
+                : null;
+    }
+
+    /**
+     * @return the dependency service, or {@code null} when it has not been provided (e.g. in
+     * lightweight in-memory tests that construct a store directly, as with the nullable
+     * {@code entityEventBus}).
+     */
+    private DocDependencyService getDocDependencyService() {
+        return docDependencyServiceProvider != null
+                ? docDependencyServiceProvider.get()
+                : null;
+    }
+
     private D create(final D document) {
         try {
             final DocRef docRef = createDocRef(document);
@@ -527,6 +579,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             persistence.write(docRef, AuditAction.CREATE, securityContext.getUserRef(),
                     importExportDocument, null, document.getVersion());
             EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
+
+            // A copied document inherits the original's outgoing edges, so this is needed on create.
+            updateDocDependencies(docRef, document, false);
         } catch (final IOException e) {
             LOGGER.error("Error serialising {}", document.getType(), e);
             throw new UncheckedIOException(e);
@@ -643,6 +698,10 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             persistence.write(docRef, AuditAction.UPDATE, securityContext.getUserRef(),
                     newData, currentVersion, newVersion);
             EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
+
+            // Re-compute this doc's outgoing edges and propagate a potential name change to all
+            // edges that reference it (covers both a content save and a rename).
+            updateDocDependencies(docRef, updatedDoc, true);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
