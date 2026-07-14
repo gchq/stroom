@@ -128,13 +128,11 @@ public class DeleteConfirmation {
         return hasHiddenDependants;
     }
 
-    @JsonIgnore
     public boolean hasChildItems() {
         // Includes the case where every contained item is hidden (nothing viewable to count/list).
         return totalChildCount > 0 || hasHiddenChildItems;
     }
 
-    @JsonIgnore
     public boolean hasDependants() {
         return hasHiddenDependants || NullSafe.hasItems(visibleDependants);
     }
