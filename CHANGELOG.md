@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug : Fix type in Data Volume validation message.
+
+* Bug **#5657** : Improve Plan B lookup error handling.
+
+
 ## [v7.13-beta.5] - 2026-07-06
 
 * Feature **#5599** : Add XPath to query functions so that users can pull XML apart in Dashboard Tables.
