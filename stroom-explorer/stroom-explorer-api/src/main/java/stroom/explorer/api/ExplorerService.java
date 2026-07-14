@@ -21,7 +21,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.Dependants;
+import stroom.explorer.shared.DeleteConfirmation;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerNode;
@@ -98,12 +98,12 @@ public interface ExplorerService extends Clearable {
     BulkActionResult delete(List<ExplorerNode> explorerNodes);
 
     /**
-     * Find the documents that depend on the supplied documents (and, for folders, their descendants),
-     * ahead of a delete. Dependants that are themselves within the supplied set are excluded as they
-     * are also being deleted. The result separates dependants the current user may view from a flag
-     * indicating whether any further, non-viewable dependants exist.
+     * Gather the information needed to confirm a delete of the supplied documents: the items contained
+     * within any selected folders that would also be deleted, and the documents outside the selection
+     * that depend on what is being deleted. Contained items and dependants that the current user may
+     * view are returned; the existence of any they may not view is disclosed via flags.
      */
-    Dependants getDependants(List<DocRef> docRefs);
+    DeleteConfirmation getDeleteConfirmation(List<DocRef> docRefs);
 
     void rebuildTree();
 

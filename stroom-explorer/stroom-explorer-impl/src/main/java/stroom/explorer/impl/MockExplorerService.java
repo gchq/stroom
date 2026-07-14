@@ -22,7 +22,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.Dependants;
+import stroom.explorer.shared.DeleteConfirmation;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerConstants;
@@ -114,8 +114,8 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public Dependants getDependants(final List<DocRef> docRefs) {
-        return Dependants.EMPTY;
+    public DeleteConfirmation getDeleteConfirmation(final List<DocRef> docRefs) {
+        return DeleteConfirmation.EMPTY;
     }
 
     @Override

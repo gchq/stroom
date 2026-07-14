@@ -26,16 +26,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Request to find the documents that depend on the supplied documents, ahead of a (safe) delete.
+ * Request for the information needed to confirm a delete of the supplied documents: what would also be
+ * deleted (folder contents) and what depends on them.
  */
 @JsonInclude(Include.NON_NULL)
-public class FetchDependantsRequest {
+public class DeleteConfirmationRequest {
 
     @JsonProperty
     private final List<DocRef> docRefs;
 
     @JsonCreator
-    public FetchDependantsRequest(@JsonProperty("docRefs") final List<DocRef> docRefs) {
+    public DeleteConfirmationRequest(@JsonProperty("docRefs") final List<DocRef> docRefs) {
         this.docRefs = docRefs;
     }
 

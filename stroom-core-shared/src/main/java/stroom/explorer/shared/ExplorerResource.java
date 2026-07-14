@@ -59,11 +59,12 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     BulkActionResult delete(@Parameter(description = "request", required = true) ExplorerServiceDeleteRequest request);
 
     @POST
-    @Path("/fetchDependants")
+    @Path("/fetchDeleteConfirmation")
     @Operation(
-            summary = "Fetch the documents that depend on the supplied documents, ahead of a delete",
-            operationId = "fetchExplorerDependants")
-    Dependants fetchDependants(@Parameter(description = "request", required = true) FetchDependantsRequest request);
+            summary = "Fetch the information needed to confirm a delete (contained items and dependants)",
+            operationId = "fetchExplorerDeleteConfirmation")
+    DeleteConfirmation fetchDeleteConfirmation(
+            @Parameter(description = "request", required = true) DeleteConfirmationRequest request);
 
     @POST
     @Path("/copy")
