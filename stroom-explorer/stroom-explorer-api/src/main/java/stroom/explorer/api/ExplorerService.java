@@ -22,6 +22,7 @@ import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocContentHighlights;
+import stroom.explorer.shared.Dependants;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
@@ -95,6 +96,14 @@ public interface ExplorerService extends Clearable {
     void removeTags(List<DocRef> docRefs, Set<String> tags);
 
     BulkActionResult delete(List<ExplorerNode> explorerNodes);
+
+    /**
+     * Find the documents that depend on the supplied documents (and, for folders, their descendants),
+     * ahead of a delete. Dependants that are themselves within the supplied set are excluded as they
+     * are also being deleted. The result separates dependants the current user may view from a flag
+     * indicating whether any further, non-viewable dependants exist.
+     */
+    Dependants getDependants(List<DocRef> docRefs);
 
     void rebuildTree();
 

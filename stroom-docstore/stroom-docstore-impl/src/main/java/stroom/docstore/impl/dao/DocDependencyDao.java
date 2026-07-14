@@ -169,19 +169,58 @@ public class DocDependencyDao {
 
     /**
      * Get all documents that depend on the given document (reverse lookup for safe-delete).
+     * <p>
+     * Names are resolved live from the doc table (falling back to the stored snapshot). A dependant
+     * that is a non-explorer entity (its {@code from_uuid} is absent from the doc table, e.g. a
+     * ProcessorFilter) is rolled up to its owning explorer document (e.g. the filter's Pipeline, found
+     * via one of the source's own {@link #OWNER_DOC_TYPES owner-typed} dependency edges) so the
+     * dependant surfaces as a real explorer tree node. A non-explorer source with no such owner edge is
+     * returned as-is.
      */
     public Set<DocRef> getDependantsOf(final String toUuid) {
-        return JooqUtil.contextResult(connProvider, context ->
-                new HashSet<>(context
-                        .select(DOC_DEPENDENCY.FROM_TYPE,
-                                DOC_DEPENDENCY.FROM_UUID,
-                                DOC_DEPENDENCY.FROM_NAME)
-                        .from(DOC_DEPENDENCY)
-                        .where(DOC_DEPENDENCY.TO_UUID.eq(toUuid))
-                        .fetch(r -> new DocRef(
-                                r.get(DOC_DEPENDENCY.FROM_TYPE),
-                                r.get(DOC_DEPENDENCY.FROM_UUID),
-                                r.get(DOC_DEPENDENCY.FROM_NAME)))));
+        return JooqUtil.contextResult(connProvider, ctx -> {
+            // FROM_DOC.UUID tells us whether the dependant is itself an explorer document (non-null) or
+            // a non-explorer entity that needs rolling up (null).
+            final Result<Record> records = ctx
+                    .select(List.of(
+                            DOC_DEPENDENCY.FROM_TYPE,
+                            DOC_DEPENDENCY.FROM_UUID,
+                            FROM_NAME_RESOLVED,
+                            FROM_DOC.UUID))
+                    .from(DOC_DEPENDENCY)
+                    .leftJoin(FROM_DOC).on(FROM_DOC.UUID.eq(DOC_DEPENDENCY.FROM_UUID)
+                            .and(FROM_DOC.DELETED.isNull()))
+                    .where(DOC_DEPENDENCY.TO_UUID.eq(toUuid))
+                    .fetch();
+
+            final Set<DocRef> dependants = new HashSet<>();
+            // Non-explorer sources, keyed by uuid, deferred until we've resolved their owners.
+            final Map<String, DocRef> nonExplorerSourceByUuid = new HashMap<>();
+            for (final Record r : records) {
+                final DocRef fromRef = new DocRef(
+                        r.get(DOC_DEPENDENCY.FROM_TYPE),
+                        r.get(DOC_DEPENDENCY.FROM_UUID),
+                        r.get(FROM_NAME_RESOLVED));
+                if (r.get(FROM_DOC.UUID) == null) {
+                    nonExplorerSourceByUuid.put(fromRef.getUuid(), fromRef);
+                } else {
+                    dependants.add(fromRef);
+                }
+            }
+
+            // Roll up any non-explorer source to its owning explorer document, falling back to the
+            // source itself where no owner edge exists.
+            if (!nonExplorerSourceByUuid.isEmpty()) {
+                final Map<String, DocRef> ownerBySourceUuid =
+                        getOwnerDocRefs(ctx, nonExplorerSourceByUuid.keySet());
+                nonExplorerSourceByUuid.forEach((uuid, sourceRef) -> {
+                    final DocRef owner = ownerBySourceUuid.get(uuid);
+                    dependants.add(owner != null ? owner : sourceRef);
+                });
+            }
+
+            return dependants;
+        });
     }
 
     /**

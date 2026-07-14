@@ -17,6 +17,7 @@
 package stroom.document.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmCallback;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.ContentPlugin;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
@@ -68,6 +69,7 @@ import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.Dependants;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFavouriteResource;
@@ -79,6 +81,7 @@ import stroom.explorer.shared.ExplorerServiceCreateRequest;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
+import stroom.explorer.shared.FetchDependantsRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
@@ -117,8 +120,12 @@ import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -410,15 +417,16 @@ public class DocumentPluginEventManager extends Plugin {
                             handleDeleteResult(result, event.getCallback()), explorerListener);
 
             if (event.getConfirm()) {
-                final int cnt = NullSafe.size(event.getDocRefs());
-                final String msg = NullSafe.size(event.getDocRefs()) > 1
-                        ? "Are you sure you want to delete these " + cnt + " items?"
-                        : "Are you sure you want to delete this item?";
-                ConfirmEvent.fire(DocumentPluginEventManager.this, msg, ok -> {
-                    if (ok) {
-                        action.run();
-                    }
-                });
+                // Look up any dependants first so we can warn the user before they confirm the delete.
+                // If the lookup fails we fall back to the plain confirmation rather than blocking.
+                restFactory
+                        .create(EXPLORER_RESOURCE)
+                        .method(res -> res.fetchDependants(new FetchDependantsRequest(event.getDocRefs())))
+                        .onSuccess(dependants -> confirmDelete(event.getDocRefs(), dependants, action))
+                        .onFailure(err -> confirmDeleteAfterDependencyError(
+                                event.getDocRefs(), err.getMessage(), action))
+                        .taskMonitorFactory(explorerListener)
+                        .exec();
             } else {
                 action.run();
             }
@@ -753,6 +761,104 @@ public class DocumentPluginEventManager extends Plugin {
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
+    }
+
+    /**
+     * Show the delete confirmation. If the items being deleted have dependants the user is warned and
+     * the dependants they are permitted to see are listed; the existence of any dependants they cannot
+     * see is disclosed without naming them.
+     */
+    private void confirmDelete(final List<DocRef> docRefs,
+                               final Dependants dependants,
+                               final Runnable action) {
+        final int cnt = NullSafe.size(docRefs);
+        final ConfirmCallback callback = ok -> {
+            if (ok) {
+                action.run();
+            }
+        };
+
+        if (dependants == null || dependants.isEmpty()) {
+            final String msg = cnt > 1
+                    ? "Are you sure you want to delete these " + cnt + " items?"
+                    : "Are you sure you want to delete this item?";
+            ConfirmEvent.fire(DocumentPluginEventManager.this, msg, callback);
+        } else {
+            final String msg = cnt > 1
+                    ? "These " + cnt + " items are used by other items. Deleting them may break those " +
+                      "items. Are you sure you want to delete them?"
+                    : "This item is used by other items. Deleting it may break those items. Are you " +
+                      "sure you want to delete it?";
+            ConfirmEvent.fireWarn(
+                    DocumentPluginEventManager.this,
+                    SafeHtmlUtil.getSafeHtml(msg),
+                    buildDependantsDetail(dependants),
+                    callback);
+        }
+    }
+
+    /**
+     * The dependency lookup failed, so we cannot say whether the items are used elsewhere. Warn the
+     * user (surfacing the error) but still let them proceed with the delete rather than blocking it.
+     */
+    private void confirmDeleteAfterDependencyError(final List<DocRef> docRefs,
+                                                   final String errorMessage,
+                                                   final Runnable action) {
+        final int cnt = NullSafe.size(docRefs);
+        final String msg = cnt > 1
+                ? "Unable to check whether these " + cnt + " items are used by other items. Are you " +
+                  "sure you want to delete them anyway?"
+                : "Unable to check whether this item is used by other items. Are you sure you want to " +
+                  "delete it anyway?";
+        final SafeHtmlBuilder detail = new SafeHtmlBuilder();
+        detail.append(SafeHtmlUtil.getSafeHtml("The dependency check failed:"));
+        if (!NullSafe.isBlankString(errorMessage)) {
+            detail.appendHtmlConstant("<br/>")
+                    .append(SafeHtmlUtil.getSafeHtml(errorMessage));
+        }
+        ConfirmEvent.fireWarn(
+                DocumentPluginEventManager.this,
+                SafeHtmlUtil.getSafeHtml(msg),
+                detail.toSafeHtml(),
+                ok -> {
+                    if (ok) {
+                        action.run();
+                    }
+                });
+    }
+
+    private SafeHtml buildDependantsDetail(final Dependants dependants) {
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+
+        if (NullSafe.hasItems(dependants.getVisibleDependants())) {
+            builder.append(SafeHtmlUtil.getSafeHtml("The following items depend on this:"));
+            for (final DocRef dependant : dependants.getVisibleDependants()) {
+                // Render each dependant as an icon + name row, reusing the same classes as the
+                // explorer/grid DocRef cells so it picks up the existing inline styling.
+                builder.appendHtmlConstant("<div class=\"docRefLinkContainer\">");
+                final DocumentType documentType = DocumentTypeRegistry.get(dependant.getType());
+                if (documentType != null && documentType.getIcon() != null) {
+                    builder.append(SvgImageUtil.toSafeHtml(
+                            documentType.getDisplayType(),
+                            documentType.getIcon(),
+                            "svgIcon",
+                            "docRefLinkIcon"));
+                }
+                final String name = NullSafe.isBlankString(dependant.getName())
+                        ? dependant.getUuid()
+                        : dependant.getName();
+                builder.append(SafeHtmlUtil.getSafeHtml(name))
+                        .appendHtmlConstant("</div>");
+            }
+        }
+
+        if (dependants.isHasHiddenDependants()) {
+            builder.appendHtmlConstant("<br/>")
+                    .append(SafeHtmlUtil.getSafeHtml(
+                            "There are also dependants that you do not have permission to view."));
+        }
+
+        return builder.toSafeHtml();
     }
 
     private void setAsFavourite(final DocRef docRef,

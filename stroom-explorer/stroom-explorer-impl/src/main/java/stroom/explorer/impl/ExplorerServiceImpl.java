@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -31,6 +32,7 @@ import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocContentMatch;
+import stroom.explorer.shared.Dependants;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFields;
@@ -137,6 +139,7 @@ class ExplorerServiceImpl
     private final DocumentPermissionService documentPermissionService;
     private final ContentIndex contentIndex;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final DocDependencyService docDependencyService;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -149,7 +152,8 @@ class ExplorerServiceImpl
                         final EntityEventBus entityEventBus,
                         final DocumentPermissionService documentPermissionService,
                         final ContentIndex contentIndex,
-                        final ExpressionPredicateFactory expressionPredicateFactory) {
+                        final ExpressionPredicateFactory expressionPredicateFactory,
+                        final DocDependencyService docDependencyService) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -161,6 +165,7 @@ class ExplorerServiceImpl
         this.documentPermissionService = documentPermissionService;
         this.contentIndex = contentIndex;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.docDependencyService = docDependencyService;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -1419,6 +1424,66 @@ class ExplorerServiceImpl
                         EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE_EXPLORER_NODE));
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
+    }
+
+    @Override
+    public Dependants getDependants(final List<DocRef> docRefs) {
+        if (NullSafe.isEmptyCollection(docRefs)) {
+            return Dependants.EMPTY;
+        }
+
+        // Expand the supplied docs to include folder descendants, as a delete recurses into folders.
+        // getDescendants includes the folder itself, so the delete set covers everything that will go.
+        final Set<DocRef> deleteSet = new HashSet<>();
+        for (final DocRef docRef : docRefs) {
+            explorerNodeService.getDescendants(docRef)
+                    .forEach(node -> deleteSet.add(node.getDocRef()));
+        }
+        // Belt and braces - make sure the originally supplied refs are in the set even if a node
+        // lookup returned nothing for them.
+        deleteSet.addAll(docRefs);
+
+        final Set<String> deleteUuids = deleteSet.stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toSet());
+
+        // Union the dependants of everything being deleted.
+        final Set<DocRef> dependants = new HashSet<>();
+        for (final DocRef docRef : deleteSet) {
+            dependants.addAll(docDependencyService.getDependantsOf(docRef));
+        }
+
+        // Drop dependants that are themselves inside the delete set - they are going too.
+        // DocRef equality is UUID-only, so matching on UUID de-dupes correctly.
+        dependants.removeIf(dep -> deleteUuids.contains(dep.getUuid()));
+
+        // Partition the remaining dependants by whether the user may view them. Those they cannot
+        // view are not named, but their existence is disclosed via the hasHiddenDependants flag.
+        final List<DocRef> visible = new ArrayList<>();
+        boolean hasHidden = false;
+        for (final DocRef dep : dependants) {
+            if (canView(dep)) {
+                visible.add(dep);
+            } else {
+                hasHidden = true;
+            }
+        }
+        visible.sort(Comparator
+                .comparing(DocRef::getType, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(DocRef::getName, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        return new Dependants(visible, hasHidden);
+    }
+
+    private boolean canView(final DocRef docRef) {
+        try {
+            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+        } catch (final RuntimeException e) {
+            // If the permission check fails (e.g. the type isn't a real document, such as a
+            // ProcessorFilter source) allow it through rather than hiding the dependant, mirroring
+            // DocDependencyServiceImpl's fail-open behaviour for the dependencies grid.
+            return true;
+        }
     }
 
     private void recursiveDelete(final List<ExplorerNode> explorerNodes,

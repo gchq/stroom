@@ -32,6 +32,7 @@ import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.Dependants;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentTypes;
@@ -45,6 +46,7 @@ import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.FetchDependantsRequest;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.FetchHighlightsRequest;
@@ -123,6 +125,12 @@ class ExplorerResourceImpl implements ExplorerResource {
                 .toList();
         return explorerServiceProvider.get()
                 .delete(explorerNodes);
+    }
+
+    @Override
+    @AutoLogged(OperationType.VIEW)
+    public Dependants fetchDependants(final FetchDependantsRequest request) {
+        return explorerServiceProvider.get().getDependants(request.getDocRefs());
     }
 
     @Override

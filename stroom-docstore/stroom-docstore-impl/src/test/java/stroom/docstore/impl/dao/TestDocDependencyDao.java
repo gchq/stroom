@@ -180,6 +180,63 @@ class TestDocDependencyDao {
         assertThat(dao.getDependantsOf(UUID.randomUUID().toString())).isEmpty();
     }
 
+    @Test
+    void testGetDependantsOf_resolvesLiveNameFromDocTable() {
+        final DocRef target = docRef("Index", "Shared Index");
+        // The edge stores the snapshot name, but the doc table holds a newer (live) name.
+        final DocRef dependant = docRef("Dashboard", "Stored Dashboard Name");
+        final DocRef liveDependant = new DocRef("Dashboard", dependant.getUuid(), "Live Dashboard Name");
+
+        createDocRow(liveDependant);
+        dao.setDependencies(dependant, Set.of(target));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(target.getUuid());
+        assertThat(dependants).hasSize(1);
+        // Name is resolved live from the doc table, not the stored snapshot.
+        assertThat(dependants.iterator().next().getName()).isEqualTo("Live Dashboard Name");
+    }
+
+    @Test
+    void testGetDependantsOf_rollsUpNonExplorerDependantToOwner() {
+        // A ProcessorFilter depends on a shared Dictionary. The filter is not an explorer tree node;
+        // its owning Pipeline is, so the dependant surfaces as the pipeline.
+        final DocRef sharedDict = docRef("Dictionary", "Shared Dictionary");
+        final DocRef filter = docRef("ProcessorFilter", "");   // no doc row -> non-explorer source
+        final DocRef pipeline = docRef("Pipeline", "Owning Pipeline");
+
+        createDocRow(sharedDict);
+        createDocRow(pipeline);        // owner exists in the doc table
+        // filter is NOT created
+
+        // The filter depends on its pipeline (owner edge) and the shared dictionary.
+        dao.setDependencies(filter, Set.of(pipeline, sharedDict));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(sharedDict.getUuid());
+
+        // The dependant is attributed to the pipeline (a real tree node), not the filter, with the
+        // owner's live name.
+        assertThat(dependants).hasSize(1);
+        final DocRef dependant = dependants.iterator().next();
+        assertThat(dependant.getUuid()).isEqualTo(pipeline.getUuid());
+        assertThat(dependant.getName()).isEqualTo("Owning Pipeline");
+    }
+
+    @Test
+    void testGetDependantsOf_nonExplorerDependantWithoutOwnerIsNotRolledUp() {
+        final DocRef sharedDict = docRef("Dictionary", "Shared Dictionary");
+        final DocRef filter = docRef("ProcessorFilter", "Orphan Filter");
+
+        createDocRow(sharedDict);
+        // filter has no doc row and no owner-typed (Pipeline) edge.
+        dao.setDependencies(filter, Set.of(sharedDict));
+
+        final Set<DocRef> dependants = dao.getDependantsOf(sharedDict.getUuid());
+
+        // No owner to roll up to, so it stays as the filter itself.
+        assertThat(dependants).hasSize(1);
+        assertThat(dependants.iterator().next().getUuid()).isEqualTo(filter.getUuid());
+    }
+
     // --- deleteAllForDoc ---
 
     @Test
