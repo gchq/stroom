@@ -17,16 +17,57 @@
 package stroom.data.store.impl.fs.s3v1;
 
 
+import stroom.data.store.impl.fs.FsPrefixUtil;
+import stroom.util.string.StringUtil;
+
+import java.util.function.LongFunction;
+
+/**
+ * Different padding styles for numeric filenames
+ */
 public enum FilePadStyle {
 
     /**
      * A number left padded with zeros to ten digits.
+     * <p>
+     * This is the style used in proxy zips.
+     * </p>
      */
-    TEN_DIGITS,
+    TEN_DIGITS(id -> StringUtil.zeroPad(id, 10)),
 
     /**
      * A number left padded with zeros to a multiple of three digits, e.g. 001, 001234.
+     * <p>
+     * This is the style used by {@link S3Target} and by {@link stroom.data.store.impl.fs.standard.FsTarget}
+     * </p>
      */
-    MULTIPLE_OF_THREE_DIGITS,
+    MULTIPLE_OF_THREE_DIGITS(FsPrefixUtil::padId),
     ;
+
+    private final LongFunction<String> padFunc;
+
+    FilePadStyle(final LongFunction<String> padFunc) {
+        this.padFunc = padFunc;
+    }
+
+    /**
+     * Pads the id using the configured style.
+     */
+    public String padId(final long id) {
+        return padFunc.apply(id);
+    }
+
+    /**
+     * Removes the padding and returns the ID as a long.
+     */
+    public long dePadLong(final String str) {
+        return StringUtil.dePadLong(str);
+    }
+
+    /**
+     * Removes the padding and returns the ID as an int.
+     */
+    public long dePadInteger(final String str) {
+        return StringUtil.dePadInteger(str);
+    }
 }

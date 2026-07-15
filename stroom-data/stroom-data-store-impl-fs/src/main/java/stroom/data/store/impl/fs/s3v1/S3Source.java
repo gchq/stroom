@@ -22,7 +22,6 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
-import stroom.data.store.impl.fs.FsPrefixUtil;
 import stroom.data.store.impl.fs.RASegmentInputStream;
 import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.meta.api.AttributeMap;
@@ -32,7 +31,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.string.StringUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -67,15 +65,18 @@ final class S3Source implements Source {
     private final Meta meta;
     private boolean closed;
     private final Map<String, Long> counts;
+    private final FilePadStyle filePadStyle;
 
     public S3Source(final S3StreamStore s3StreamStore,
                     final Path tempDir,
                     final String s3Location,
-                    final Meta meta) {
+                    final Meta meta,
+                    final FilePadStyle filePadStyle) {
         this.s3StreamStore = s3StreamStore;
         this.tempDir = tempDir;
         this.s3Location = s3Location;
         this.meta = meta;
+        this.filePadStyle = filePadStyle;
         counts = countTypes();
     }
 
@@ -179,7 +180,7 @@ final class S3Source implements Source {
     @Override
     public InputStreamProvider get(final long index) {
         final long partNo = index + 1;
-        final S3InputStreamProvider s3InputStreamProvider = new S3InputStreamProvider(tempDir, partNo);
+        final S3InputStreamProvider s3InputStreamProvider = new S3InputStreamProvider(tempDir, partNo, filePadStyle);
         partMap.put(partNo, s3InputStreamProvider);
         return s3InputStreamProvider;
     }
@@ -211,7 +212,7 @@ final class S3Source implements Source {
                 if (index >= 0) {
                     final String extension = fileName.substring(index);
                     final String numPart = fileName.substring(0, index);
-                    final long partNo = StringUtil.dePadLong(numPart);
+                    final long partNo = filePadStyle.dePadLong(numPart);
                     counts.compute(extension, (k, v) -> {
                         if (v == null) {
                             return partNo;
@@ -240,11 +241,14 @@ final class S3Source implements Source {
         private final List<SegmentInputStream> segmentInputStreams = new ArrayList<>();
         private SegmentInputStream dataStream;
 
-        public S3InputStreamProvider(final Path dir, final long partNo) {
+        public S3InputStreamProvider(final Path dir,
+                                     final long partNo,
+                                     final FilePadStyle filePadStyle) {
             this.dir = dir;
-            this.partString = FsPrefixUtil.padId(partNo);
-            LOGGER.debug(() -> LogUtil.message("ctor() - dir: {}, partNo: {}, partString: {}",
-                    dir, partNo, partString));
+            this.partString = filePadStyle.padId(partNo);
+
+            LOGGER.debug(() -> LogUtil.message("ctor() - dir: {}, partNo: {}, filePadStyle: {}, partString: {}",
+                    dir, partNo, filePadStyle, partString));
         }
 
         @Override

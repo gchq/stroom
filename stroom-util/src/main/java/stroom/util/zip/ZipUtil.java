@@ -170,7 +170,7 @@ public final class ZipUtil {
         if (Files.exists(targetDir) && !Files.isDirectory(targetDir)) {
             throw new IOException(LogUtil.message("'{}' is not a directory.", targetDir.toAbsolutePath()));
         }
-        try (ZipFile zipArchive = createZipFile(zipFile)) {
+        try (final ZipFile zipArchive = createZipFile(zipFile)) {
             // This will check zip entry paths are not outside the targetDir
             new Expander().expand(zipArchive, targetDir);
         }

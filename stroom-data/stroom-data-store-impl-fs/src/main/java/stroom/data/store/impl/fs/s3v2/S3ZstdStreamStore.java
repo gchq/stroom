@@ -72,7 +72,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
 
     private static final int MAX_CACHED_ITEMS = 10;
 
-    //    private final TemplateCache templateCache;
+    private final TemplateCache templateCache;
     private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
@@ -102,7 +102,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
             final ZstdDictionaryService zstdDictionaryService,
             final ExecutorProvider executorProvider) {
         super(templateCache);
-//        this.templateCache = templateCache;
+        this.templateCache = templateCache;
         this.metaService = metaService;
 //        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
@@ -207,7 +207,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
             if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {
                 Template template = Template.EMPTY_TEMPLATE;
                 try {
-                    template = getTemplateCache().getTemplate(s3ClientConfig.getBucketName());
+                    template = templateCache.getTemplate(s3ClientConfig.getBucketName());
                 } catch (final RuntimeException e) {
                     validationResult = ValidationResult.error(LogUtil.message(
                             "Bucket name '{}' must be a valid static template - {}",

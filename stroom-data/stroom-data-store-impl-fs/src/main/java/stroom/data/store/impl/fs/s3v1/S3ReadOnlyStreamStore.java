@@ -110,7 +110,7 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
             final S3Location s3Location = s3Locations.stream()
                     .findAny()
                     .orElseThrow();
-            return streamStore.openSource(meta, dataVolume, s3Location);
+            return streamStore.openSource(meta, dataVolume, s3Location, FilePadStyle.TEN_DIGITS);
         } else {
             throw new IllegalStateException(LogUtil.message(
                     "Only one s3Location is supported, found {}, dataVolume: {}, s3Locations: {}",

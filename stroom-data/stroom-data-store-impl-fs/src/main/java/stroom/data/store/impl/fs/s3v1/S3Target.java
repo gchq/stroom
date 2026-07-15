@@ -22,7 +22,6 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.data.store.impl.fs.FsPrefixUtil;
 import stroom.data.store.impl.fs.RASegmentOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -292,6 +291,7 @@ public final class S3Target implements Target {
     private static class S3OutputStreamProvider implements OutputStreamProvider {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3OutputStreamProvider.class);
+        private static final FilePadStyle FILE_PAD_STYLE = FilePadStyle.MULTIPLE_OF_THREE_DIGITS;
 
         private final Path dir;
         private final String partString;
@@ -300,7 +300,7 @@ public final class S3Target implements Target {
 
         public S3OutputStreamProvider(final Path dir, final long partNo) {
             this.dir = dir;
-            this.partString = FsPrefixUtil.padId(partNo);
+            this.partString = FILE_PAD_STYLE.padId(partNo);
             LOGGER.debug(() -> LogUtil.message("ctor() - dir: {}, partNo: {}, partString: {}",
                     dir, partNo, partString));
         }

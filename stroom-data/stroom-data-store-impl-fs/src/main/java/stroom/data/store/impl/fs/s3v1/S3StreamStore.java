@@ -118,12 +118,13 @@ public class S3StreamStore extends AbstractS3StreamStore {
 
     @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
-        return openSource(meta, dataVolume, null);
+        return openSource(meta, dataVolume, null, FilePadStyle.MULTIPLE_OF_THREE_DIGITS);
     }
 
-    public Source openSource(final Meta meta,
-                             final DataVolume dataVolume,
-                             final S3Location s3Location) throws DataException {
+    Source openSource(final Meta meta,
+                      final DataVolume dataVolume,
+                      final S3Location s3Location,
+                      final FilePadStyle filePadStyle) throws DataException {
 
         final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
@@ -170,7 +171,12 @@ public class S3StreamStore extends AbstractS3StreamStore {
             }
         });
 
-        return new S3Source(this, trackedSource.getPath(), getS3Path(dataVolume, meta), meta);
+        return new S3Source(
+                this,
+                trackedSource.getPath(),
+                getS3Path(dataVolume, meta),
+                meta,
+                filePadStyle);
     }
 
     @Override
