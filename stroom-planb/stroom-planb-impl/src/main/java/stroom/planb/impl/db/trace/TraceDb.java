@@ -188,6 +188,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private final TraceRootValueSerde traceRootValueSerde;
 //    private final TimeSerde updateTimeSerde;
 
+    /**
+     * Trace IDs (hex) whose stored root should be recomputed over the fully-merged span set at
+     * the end of the current merge cycle — see {@link #mergeComplete()}. Populated during
+     * {@link #merge}. The per-batch root copy in merge() reflects only that batch's spans, so
+     * depth/services/totalSpans must be re-derived once all batches are present.
+     */
+    private final Set<String> pendingRootRebuilds = ConcurrentHashMap.newKeySet();
+
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final ByteBufferFactory byteBufferFactory,
@@ -530,6 +538,18 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 sourceDb.env.read(readTxn -> {
                     try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, sourceDb.dbi)) {
                         stream.forEach(entry -> {
+                            // Queue EVERY trace whose spans are merged this cycle for a full
+                            // root recompute at mergeComplete — not just traces whose root span
+                            // appears. A span key is prefixed with the 16-byte traceId. Without
+                            // this, a trace whose children arrive after its root was processed
+                            // (root in an earlier cycle) keeps stale depth/services/totalSpans.
+                            final ByteBuffer spanKeyBuf = entry.getKey().duplicate();
+                            if (spanKeyBuf.remaining() >= TRACE_ID_BYTES) {
+                                final byte[] tid = new byte[TRACE_ID_BYTES];
+                                spanKeyBuf.get(tid);
+                                pendingRootRebuilds.add(HexStringUtil.encode(tid));
+                            }
+
                             if (sourceDb.keySerde.usesLookup(entry.getKey()) ||
                                 sourceDb.valueSerde.usesLookup(entry.getVal())) {
                                 // We need to do a full read and merge.
@@ -549,13 +569,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     // also populate the six sort indexes so the target shard remains
                     // fully queryable without a subsequent full scan.
                     LmdbIterable.iterate(readTxn, sourceDb.traceRootsDbi, (key, val) -> {
-                        if (traceRootsDbi.put(writer.getWriteTxn(), key, val, putFlags)) {
-                            final byte[] traceIdBytes = new byte[key.remaining()];
-                            key.duplicate().get(traceIdBytes);
+                        final byte[] traceIdBytes = new byte[key.remaining()];
+                        key.duplicate().get(traceIdBytes);
+                        // Use MDB_NOOVERWRITE (NOT the shard's shared putFlags — which is
+                        // overwrite mode for this store): only seed the root + its indexes when
+                        // the traceId is genuinely new. Overwriting an existing root with this
+                        // batch's *partial* value would clobber the more-complete stored value
+                        // and strand its differently-valued depth/services/total-spans index
+                        // entries (the value-addressed delete could no longer match them).
+                        // mergeComplete recomputes the authoritative root + indexes for every
+                        // queued traceId at the end of the cycle.
+                        if (traceRootsDbi.put(writer.getWriteTxn(), key, val, PutFlags.MDB_NOOVERWRITE)) {
                             final TraceRoot root = traceRootValueSerde.read(val.duplicate());
                             writeSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, root);
                             writer.tryCommit();
                         }
+                        pendingRootRebuilds.add(HexStringUtil.encode(traceIdBytes));
                     });
 
                     // Write trace-roots-merge-time entries using the TARGET node's
@@ -586,6 +615,52 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         // Delete source now we have merged.
         FileUtil.deleteDir(source);
+    }
+
+    /**
+     * Recomputes the stored {@link TraceRoot} for every trace whose root was merged during the
+     * current cycle, deriving depth/services/totalSpans from the <em>fully-merged</em> span set
+     * rather than the single batch that carried the root span. Called once per merge cycle
+     * after all batches have been merged (see {@link #merge}), so the whole trace is present.
+     */
+    @Override
+    public void mergeComplete() {
+        if (pendingRootRebuilds.isEmpty()) {
+            return;
+        }
+        // Snapshot and clear so the next cycle starts fresh even if this throws partway.
+        final List<String> traceIds = new ArrayList<>(pendingRootRebuilds);
+        pendingRootRebuilds.clear();
+
+        env.write(writer -> {
+            final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
+            for (final String hex : traceIds) {
+                final byte[] traceIdBytes = HexStringUtil.decode(hex);
+                final Trace trace = getTrace(writeTxn, traceIdBytes);
+                // Only (re)build a root when the root span is actually present; a trace whose
+                // root never arrived (orphan children) has no queryable root.
+                if (NullSafe.isEmptyCollection(trace.getParentSpanIdMap().get(""))) {
+                    continue;
+                }
+                final TraceRoot rebuilt = new TraceRoot(trace);
+                final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
+
+                // Drop stale sort-index entries for the existing stored root, then overwrite.
+                traceRootKeySerde.write(traceRootKey, keyBuf -> {
+                    final ByteBuffer existing = traceRootsDbi.get(writeTxn, keyBuf);
+                    if (existing != null) {
+                        deleteSecondaryIndexes(writeTxn, traceIdBytes,
+                                traceRootValueSerde.read(existing.duplicate()));
+                    }
+                });
+                traceRootKeySerde.write(traceRootKey, keyBuf ->
+                        traceRootValueSerde.write(rebuilt, valBuf ->
+                                traceRootsDbi.put(writeTxn, keyBuf, valBuf)));
+                writeSecondaryIndexes(writeTxn, traceIdBytes, rebuilt);
+                writer.tryCommit();
+            }
+            return null;
+        });
     }
 
     @Override

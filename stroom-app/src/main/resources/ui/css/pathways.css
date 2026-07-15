@@ -470,6 +470,10 @@
 .operation-name {
     color: #b0b0b0;
     flex: 1;
+    min-width: 0;              /* allow the flex item to shrink below its content width */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;   /* truncate long names instead of wrapping/overflowing */
 }
 
 .waterfall-container {
@@ -503,18 +507,8 @@
     transition: all 0.2s ease;
 }
 
-.indent-0 {
-    padding-left: 0px;
-}
-.indent-1 {
-    padding-left: 30px;
-}
-.indent-2 {
-    padding-left: 60px;
-}
-.indent-3 {
-    padding-left: 90px;
-}
+/* Operation-name indentation is applied inline (padding-left = depth * 30px) by
+ * TraceOverviewWidget.appendOperationItem, so it works at any nesting depth. */
 
 /* ---- TracesViewImpl ---- */
 

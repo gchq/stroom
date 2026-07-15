@@ -375,8 +375,75 @@ class TestArchiveOldData {
     }
 
     // -----------------------------------------------------------------------
+    // mergeComplete recomputes derived root fields over the fully-merged trace
+    // -----------------------------------------------------------------------
+
+    /**
+     * Regression guard for the "Depth = 1" bug: a trace root's derived fields
+     * (depth/services/totalSpans) must be recomputed over the fully-merged span set at
+     * {@code mergeComplete()}, not left at the value computed from the single batch that
+     * carried the root span. Verified regardless of the order batches are merged in.
+     */
+    @Test
+    void mergeComplete_recomputesRootDepthOverFullyMergedTrace(@TempDir final Path tempDir)
+            throws IOException {
+        assertDepthRebuilt(Files.createDirectory(tempDir.resolve("descendants-first")), true);
+        assertDepthRebuilt(Files.createDirectory(tempDir.resolve("root-first")), false);
+    }
+
+    private void assertDepthRebuilt(final Path base, final boolean descendantsFirst) throws IOException {
+        final PlanBDoc doc = buildDoc();
+        final Instant t = Instant.parse("2024-03-01T09:00:00.000Z");
+        final String root = "1111111111111111";
+        final String child = "2222222222222222";
+        final String grandchild = "3333333333333333";
+
+        // Source containing ONLY the root span -> its per-batch trace-root depth is 1.
+        final Path rootSrc = Files.createDirectory(base.resolve("root-src"));
+        try (final TraceDb db = TraceDb.create(rootSrc, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(w -> db.insert(w, new SpanKV(spanKey(TRACE_A, "", root), span(t, t))));
+        }
+        // Source containing the two descendants (no root span -> no trace-root entry).
+        final Path descSrc = Files.createDirectory(base.resolve("desc-src"));
+        try (final TraceDb db = TraceDb.create(descSrc, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(w -> {
+                db.insert(w, new SpanKV(spanKey(TRACE_A, root, child), span(t, t)));
+                db.insert(w, new SpanKV(spanKey(TRACE_A, child, grandchild), span(t, t)));
+            });
+        }
+
+        final Path target = Files.createDirectory(base.resolve("target"));
+        try (final TraceDb db = TraceDb.create(target, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            if (descendantsFirst) {
+                db.merge(descSrc);
+                db.merge(rootSrc);
+            } else {
+                db.merge(rootSrc);
+                db.merge(descSrc);
+            }
+            // Per-batch the stored root reflects only the root span's batch (depth 1);
+            // mergeComplete must recompute it over root + child + grandchild.
+            db.mergeComplete();
+        }
+
+        try (final TraceDb db = TraceDb.create(target, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            final TracesResultPage page = db.findTraces(new FindTraceCriteria(
+                    new PageRequest(0, 100), null, null, SimpleDuration.ZERO));
+            assertThat(page.getValues()).hasSize(1);
+            final TraceRoot rebuilt = page.getValues().getFirst();
+            assertThat(rebuilt.getTraceId()).isEqualTo(TRACE_A);
+            assertThat(rebuilt.getDepth()).isEqualTo(3);      // root -> child -> grandchild
+            assertThat(rebuilt.getTotalSpans()).isEqualTo(3);
+        }
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    private static SpanKey spanKey(final String traceId, final String parentSpanId, final String spanId) {
+        return SpanKey.builder().traceId(traceId).parentSpanId(parentSpanId).spanId(spanId).build();
+    }
 
     private static PlanBDoc buildSharedDoc(final Path sharedPath) {
         return PlanBDoc.builder()

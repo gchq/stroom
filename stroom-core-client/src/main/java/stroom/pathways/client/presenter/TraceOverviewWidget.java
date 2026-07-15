@@ -556,8 +556,13 @@ public class TraceOverviewWidget extends Composite {
             div.div(c -> {
 //                c.span("▼", Attribute.className("expand-icon"));
 //                c.span(span.getName(), Attribute.className("service-name"));
+                // Indent computed from depth so nesting works at any depth (there is no
+                // fixed set of indent-N CSS classes to run out of). The name is truncated
+                // with an ellipsis by CSS, so expose the full name as a hover tooltip.
                 c.span(span.getName(),
-                        Attribute.className("operation-name indent-" + depth));
+                        Attribute.className("operation-name"),
+                        Attribute.title(span.getName()),
+                        Attribute.style("padding-left: " + (depth * 30) + "px;"));
             }, Attribute.className("operation-content"));
             div.div(c -> {
                 final NanoDuration windowSize = windowEnd.subtract(windowStart);

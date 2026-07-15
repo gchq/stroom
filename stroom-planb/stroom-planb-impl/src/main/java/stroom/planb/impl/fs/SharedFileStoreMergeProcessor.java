@@ -315,6 +315,11 @@ public class SharedFileStoreMergeProcessor {
         for (final Path batchDir : completeBatchDirs) {
             modified |= mergeSingleBatch(shard, batchDir);
         }
+        if (modified) {
+            // Recompute derived trace-root fields (depth/services/totalSpans) over the
+            // fully-merged spans, now that every batch of this cycle is present.
+            shard.mergeComplete();
+        }
         return modified;
     }
 

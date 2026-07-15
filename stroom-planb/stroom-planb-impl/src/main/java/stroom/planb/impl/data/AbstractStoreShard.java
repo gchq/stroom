@@ -178,6 +178,20 @@ public abstract class AbstractStoreShard implements Shard {
         }
     }
 
+    public void mergeComplete() {
+        try {
+            writeLock.lockInterruptibly();
+            try {
+                db.mergeComplete();
+                lastWriteTime = Instant.now();
+            } finally {
+                writeLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+    }
+
     @Override
     public long deleteOldData(final PlanBDocument doc) {
         long result = 0;
@@ -390,7 +404,7 @@ public abstract class AbstractStoreShard implements Shard {
 
     /**
      * Closes the LMDB environment without deleting any data files.
-     * Called by {@link SharedFileStoreMergeProcessor} when discarding a
+     * Called by {@link stroom.planb.impl.fs.SharedFileStoreMergeProcessor} when discarding a
      * transient per-cycle shard instance.
      */
     public void dispose() {

@@ -45,6 +45,9 @@ public interface Db<K, V> extends AutoCloseable {
 
     void merge(Path source);
 
+    default void mergeComplete() {
+    }
+
     long deleteOldData(Instant deleteBefore,
                        boolean useStateTime);
 
