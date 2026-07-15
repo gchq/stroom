@@ -36,18 +36,25 @@ public class SharedElementData {
     private final boolean formatInput;
     @JsonProperty
     private final boolean formatOutput;
+    // Whether the element actually produced output for the record. Captured explicitly rather than
+    // inferred from the output string as an empty XML element (e.g. <Event/>) has a non-empty output
+    // string but no real content, which the skip-to-empty-output filter needs to distinguish.
+    @JsonProperty
+    private final boolean hasOutput;
 
     @JsonCreator
     public SharedElementData(@JsonProperty("input") final String input,
                              @JsonProperty("output") final String output,
                              @JsonProperty("indicators") final Indicators indicators,
                              @JsonProperty("formatInput") final boolean formatInput,
-                             @JsonProperty("formatOutput") final boolean formatOutput) {
+                             @JsonProperty("formatOutput") final boolean formatOutput,
+                             @JsonProperty("hasOutput") final boolean hasOutput) {
         this.input = input;
         this.output = output;
         this.indicators = indicators;
         this.formatInput = formatInput;
         this.formatOutput = formatOutput;
+        this.hasOutput = hasOutput;
     }
 
     public String getInput() {
@@ -76,6 +83,10 @@ public class SharedElementData {
         return formatOutput;
     }
 
+    public boolean isHasOutput() {
+        return hasOutput;
+    }
+
     @Override
     public String toString() {
         return "SharedElementData{" +
@@ -84,6 +95,7 @@ public class SharedElementData {
                 ", indicators=" + indicators +
                 ", formatInput=" + formatInput +
                 ", formatOutput=" + formatOutput +
+                ", hasOutput=" + hasOutput +
                 '}';
     }
 }

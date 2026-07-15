@@ -1,0 +1,370 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.stepping;
+
+import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * On-disk, content-addressed store of per-element stepping IO for a single stream (metaId).
+ * <p>
+ * Each steppable element's IO is persisted to its own segmented file keyed by a config
+ * {@code fingerprint} (see {@link ElementFingerprinter}). A record's IO is one segment within that
+ * file, addressed by record index, giving O(1) random access. Because files are keyed by fingerprint,
+ * editing an element writes to a new file while leaving upstream (and prior-version) files intact, so
+ * reverting an edit reuses the still-present file. Layout under the stream directory:
+ * <pre>
+ *   {partIndex}/{urlEncodedElementId}/{fingerprint}.dat
+ * </pre>
+ * <p>
+ * This is a purpose-built segmented file (data file + in-memory offset index) rather than the fs
+ * data-store's {@code RASegment*} classes, which are package-private to {@code stroom-data-store-impl-fs}
+ * and not reachable from this module. The data spills to disk; only the small offset index is held in
+ * memory.
+ * <p>
+ * All public methods synchronize on the instance, so writes and reads are serialized (a large read
+ * briefly blocks capture). That is fine for Phase 1; a later phase may switch to a read/write or
+ * per-file lock if capture latency matters. Callers must not read a record index beyond what has been
+ * written (the session watermark, Phase 3, enforces this); an unwritten record reads back as
+ * {@link Optional#empty()}.
+ */
+public class StepDataStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StepDataStore.class);
+
+    private final Path streamDir;
+    private final SteppingConfig config;
+
+    // Open segment files keyed by part+element+fingerprint.
+    private final Map<FileKey, ElementSegmentFile> openFiles = new HashMap<>();
+    // Distinct record count seen per part index.
+    private final Map<Long, Long> partRecordCounts = new HashMap<>();
+    // Per-element LRU of retained fingerprints (access-ordered; eldest first) for version eviction.
+    private final Map<String, LinkedHashMap<String, Boolean>> elementFingerprintLru = new HashMap<>();
+
+    private long totalBytes;
+    private boolean deleted;
+
+    public StepDataStore(final Path streamDir, final SteppingConfig config) {
+        this.streamDir = streamDir;
+        this.config = config;
+    }
+
+    /**
+     * Persist one element's IO for one record. Records for a given (part, element, fingerprint) must be
+     * appended in ascending record-index order starting at 0.
+     */
+    public synchronized void putElementData(final StepLocation location,
+                                            final ElementId elementId,
+                                            final String fingerprint,
+                                            final SharedElementData data) {
+        checkNotDeleted();
+        final byte[] bytes = JsonUtil.writeValueAsBytes(data, false);
+        if (bytes == null) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Unable to serialise element data for {} at {}", elementId, location));
+        }
+        if (bytes.length > config.getMaxRecordSizeBytes()) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Element IO for {} at {} is {} bytes which exceeds the {} byte limit",
+                    elementId, location, bytes.length, config.getMaxRecordSizeBytes()));
+        }
+        if (totalBytes + bytes.length > config.getMaxBytesPerStream()) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Stepping store for this stream would exceed the {} byte limit; narrow your selection",
+                    config.getMaxBytesPerStream()));
+        }
+
+        final long recordIndex = location.getRecordIndex();
+        if (recordIndex >= config.getMaxRecordsPerStream()) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Stepping store for this stream would exceed the {} record limit; narrow your selection",
+                    config.getMaxRecordsPerStream()));
+        }
+
+        // Validate ordering against the existing file BEFORE creating one, so a rejected out-of-order
+        // write never leaves an empty file/open channel behind.
+        final ElementSegmentFile existing = openFiles.get(new FileKey(location.getPartIndex(), elementId, fingerprint));
+        final long expected = existing == null ? 0L : existing.recordCount();
+        if (recordIndex != expected) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Records must be appended in order for {} fingerprint {}; expected index {} but got {}",
+                    elementId, fingerprint, expected, recordIndex));
+        }
+
+        final ElementSegmentFile file = existing != null
+                ? existing
+                : getOrCreateFile(location.getPartIndex(), elementId, fingerprint);
+        file.append(bytes);
+        totalBytes += bytes.length;
+        partRecordCounts.merge(location.getPartIndex(), recordIndex + 1, Math::max);
+        touchFingerprint(elementId, fingerprint);
+    }
+
+    /**
+     * Read back one element's IO for one record, or empty if not present (element/fingerprint unknown or
+     * record not yet written).
+     */
+    public synchronized Optional<SharedElementData> getElementData(final StepLocation location,
+                                                                   final ElementId elementId,
+                                                                   final String fingerprint) {
+        checkNotDeleted();
+        final ElementSegmentFile file = openFiles.get(new FileKey(location.getPartIndex(), elementId, fingerprint));
+        if (file == null) {
+            return Optional.empty();
+        }
+        final long recordIndex = location.getRecordIndex();
+        if (recordIndex < 0 || recordIndex >= file.recordCount()) {
+            return Optional.empty();
+        }
+        final byte[] bytes = file.read(recordIndex);
+        touchFingerprint(elementId, fingerprint);
+        return Optional.ofNullable(JsonUtil.readValue(bytes, SharedElementData.class));
+    }
+
+    /**
+     * @return true if any IO has been stored for this element at this fingerprint (across parts).
+     */
+    public synchronized boolean hasElement(final ElementId elementId, final String fingerprint) {
+        checkNotDeleted();
+        return openFiles.keySet().stream()
+                .anyMatch(key -> key.elementId.equals(elementId) && key.fingerprint.equals(fingerprint));
+    }
+
+    /**
+     * @return the number of records captured for the given part index.
+     */
+    public synchronized long getRecordCount(final long partIndex) {
+        return partRecordCounts.getOrDefault(partIndex, 0L);
+    }
+
+    /**
+     * @return the number of distinct parts that have had records captured.
+     */
+    public synchronized int getPartCount() {
+        return partRecordCounts.size();
+    }
+
+    /**
+     * Evict (close and delete) all files for the given element at the given fingerprint, across all parts.
+     */
+    public synchronized void evictElement(final ElementId elementId, final String fingerprint) {
+        checkNotDeleted();
+        removeFingerprintFiles(elementId, fingerprint);
+        final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.get(elementId.getId());
+        if (lru != null) {
+            lru.remove(fingerprint);
+            if (lru.isEmpty()) {
+                elementFingerprintLru.remove(elementId.getId());
+            }
+        }
+    }
+
+    /**
+     * Close all open files and delete the stream directory. The store must not be used afterwards.
+     */
+    public synchronized void deleteAll() {
+        if (deleted) {
+            return;
+        }
+        for (final ElementSegmentFile file : openFiles.values()) {
+            file.closeQuietly();
+        }
+        openFiles.clear();
+        partRecordCounts.clear();
+        elementFingerprintLru.clear();
+        totalBytes = 0;
+        FileUtil.deleteDir(streamDir);
+        deleted = true;
+    }
+
+    Path getStreamDir() {
+        return streamDir;
+    }
+
+    private ElementSegmentFile getOrCreateFile(final long partIndex,
+                                               final ElementId elementId,
+                                               final String fingerprint) {
+        final FileKey key = new FileKey(partIndex, elementId, fingerprint);
+        return openFiles.computeIfAbsent(key, k -> {
+            final Path dataFile = streamDir
+                    .resolve(Long.toString(partIndex))
+                    .resolve(encode(elementId.getId()))
+                    .resolve(fingerprint + ".dat");
+            try {
+                FileUtil.mkdirs(dataFile.getParent());
+                return new ElementSegmentFile(dataFile);
+            } catch (final IOException e) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Unable to open stepping store file {}", FileUtil.getCanonicalPath(dataFile)), e);
+            }
+        });
+    }
+
+    private void touchFingerprint(final ElementId elementId, final String fingerprint) {
+        // NOTE: this is a plain LRU. When staged reprocess (Phase 2) writes a new fingerprint for an
+        // element while an older one is still in use, the active fingerprints for the current pipeline
+        // config must be pinned (or maxRetainedFingerprintsPerElement kept >= the active count) so a
+        // fingerprint currently being captured/served is never evicted.
+        final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.computeIfAbsent(
+                elementId.getId(),
+                k -> new LinkedHashMap<>(16, 0.75f, true));
+        lru.put(fingerprint, Boolean.TRUE);
+
+        // Always retain at least the fingerprint we just touched; a misconfigured 0/negative retain
+        // limit must not delete the data being written.
+        final int max = Math.max(1, config.getMaxRetainedFingerprintsPerElement());
+        while (lru.size() > max) {
+            final String eldest = lru.entrySet().iterator().next().getKey();
+            lru.remove(eldest);
+            removeFingerprintFiles(elementId, eldest);
+            LOGGER.debug(() -> LogUtil.message(
+                    "Evicted stepping IO for element {} fingerprint {} (retain limit {})",
+                    elementId, eldest, max));
+        }
+    }
+
+    private void removeFingerprintFiles(final ElementId elementId, final String fingerprint) {
+        final List<FileKey> toRemove = new ArrayList<>();
+        for (final FileKey key : openFiles.keySet()) {
+            if (key.elementId.equals(elementId) && key.fingerprint.equals(fingerprint)) {
+                toRemove.add(key);
+            }
+        }
+        for (final FileKey key : toRemove) {
+            final ElementSegmentFile file = openFiles.remove(key);
+            if (file != null) {
+                // Reclaim the byte budget so the maxBytesPerStream cap reflects only live data.
+                totalBytes = Math.max(0, totalBytes - file.size);
+                file.closeQuietly();
+                FileUtil.deleteFile(file.dataFile);
+            }
+        }
+    }
+
+    private void checkNotDeleted() {
+        if (deleted) {
+            throw new StepDataStoreException("Stepping store for this stream has been deleted");
+        }
+    }
+
+    private static String encode(final String value) {
+        // URLEncoder encodes path separators but leaves '.' untouched, so also escape dots to stop an
+        // element id of "." or ".." from resolving to a parent directory.
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace(".", "%2E");
+    }
+
+    // --------------------------------------------------------------------------------
+
+    private record FileKey(long partIndex, ElementId elementId, String fingerprint) {
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /**
+     * A single element's segmented data file: raw record bytes appended to a data file, with an
+     * in-memory index of record end offsets for O(1) random access by record index.
+     */
+    private static final class ElementSegmentFile {
+
+        private final Path dataFile;
+        private final FileChannel channel;
+        // endOffsets.get(r) = exclusive end byte offset of record r; start of r = r==0 ? 0 : endOffsets[r-1].
+        private final List<Long> endOffsets = new ArrayList<>();
+        private long size;
+
+        private ElementSegmentFile(final Path dataFile) throws IOException {
+            this.dataFile = dataFile;
+            this.channel = FileChannel.open(dataFile,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.WRITE);
+        }
+
+        private void append(final byte[] bytes) {
+            try {
+                final ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                long position = size;
+                while (buffer.hasRemaining()) {
+                    position += channel.write(buffer, position);
+                }
+                size = position;
+                endOffsets.add(size);
+            } catch (final IOException e) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Unable to write to stepping store file {}", FileUtil.getCanonicalPath(dataFile)), e);
+            }
+        }
+
+        private byte[] read(final long recordIndex) {
+            final int index = (int) recordIndex;
+            final long start = index == 0 ? 0L : endOffsets.get(index - 1);
+            final long end = endOffsets.get(index);
+            final int length = (int) (end - start);
+            final ByteBuffer buffer = ByteBuffer.allocate(length);
+            try {
+                long position = start;
+                while (buffer.hasRemaining()) {
+                    final int read = channel.read(buffer, position);
+                    if (read < 0) {
+                        throw new StepDataStoreException(LogUtil.message(
+                                "Unexpected end of stepping store file {} reading record {}",
+                                FileUtil.getCanonicalPath(dataFile), recordIndex));
+                    }
+                    position += read;
+                }
+            } catch (final IOException e) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Unable to read stepping store file {}", FileUtil.getCanonicalPath(dataFile)), e);
+            }
+            return buffer.array();
+        }
+
+        private long recordCount() {
+            return endOffsets.size();
+        }
+
+        private void closeQuietly() {
+            try {
+                channel.close();
+            } catch (final IOException e) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "Error closing stepping store file {}", FileUtil.getCanonicalPath(dataFile)), e);
+            }
+        }
+    }
+}

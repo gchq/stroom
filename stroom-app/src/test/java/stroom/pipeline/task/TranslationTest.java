@@ -729,7 +729,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                        }
 
                         final SharedElementData newElementData = new SharedElementData(
-                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
+                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput(),
+                                elementData.isHasOutput());
                         final SharedStepData newStepData = NullSafe.getOrElseGet(
                                 newResponse,
                                 SteppingResult::getStepData,
