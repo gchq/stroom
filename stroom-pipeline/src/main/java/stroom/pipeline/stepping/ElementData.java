@@ -29,6 +29,7 @@ public class ElementData {
     private Object output;
     private boolean formatInput;
     private boolean formatOutput;
+    private boolean hasOutput;
     private Indicators indicators;
 
     public ElementData(final ElementId elementId, final PipelineElementType elementType) {
@@ -78,6 +79,14 @@ public class ElementData {
         return formatOutput;
     }
 
+    public boolean isHasOutput() {
+        return hasOutput;
+    }
+
+    public void setHasOutput(final boolean hasOutput) {
+        this.hasOutput = hasOutput;
+    }
+
     public void setFormatOutput(final boolean formatOutput) {
         this.formatOutput = formatOutput;
     }
@@ -91,9 +100,6 @@ public class ElementData {
     }
 
     public SharedElementData convertToShared() {
-        // Phase 1: derive hasOutput from the output string as a baseline. Phase 2 capture will set this
-        // precisely (e.g. from SAXEventRecorder maxElementDepth) so empty XML elements are distinguished.
-        final boolean hasOutput = output != null && !getOutput().isBlank();
         return new SharedElementData(getInput(), getOutput(), indicators, formatInput,
                 formatOutput, hasOutput);
     }

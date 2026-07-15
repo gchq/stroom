@@ -18,6 +18,7 @@ package stroom.pipeline.stepping;
 
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
+import stroom.pipeline.filter.SAXEventRecorder;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.util.logging.LogUtil;
@@ -96,9 +97,17 @@ public class ElementMonitor {
                 final Object data = outputRecorder.getData(textRange);
                 elementData.setOutput(data);
                 elementData.setFormatOutput(!(data == null || data instanceof String) || element instanceof XMLWriter);
+                // For SAX elements match the live skip-to-output rule (maxElementDepth > 1); otherwise
+                // fall back to whether any non-blank output was produced.
+                if (outputRecorder instanceof final SAXEventRecorder saxEventRecorder) {
+                    elementData.setHasOutput(saxEventRecorder.hasContent());
+                } else {
+                    elementData.setHasOutput(data != null && !data.toString().isBlank());
+                }
             } catch (final Exception e) {
                 elementData.setOutput(null);
                 elementData.setFormatOutput(false);
+                elementData.setHasOutput(false);
                 logError(loggingErrorReceiver, textRange, "output", e);
             }
         }

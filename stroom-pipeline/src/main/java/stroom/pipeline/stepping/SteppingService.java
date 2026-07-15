@@ -82,6 +82,7 @@ public class SteppingService {
     private final ElementFactory elementFactory;
     private final Map<Key, SteppingRequestHandler> currentHandlers = new ConcurrentHashMap<>();
     private final TaskManager taskManager;
+    private final StepDataStoreManager stepDataStoreManager;
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -93,7 +94,8 @@ public class SteppingService {
                            final PipelineScopeRunnable pipelineScopeRunnable,
                            final ElementRegistryFactory pipelineElementRegistryFactory,
                            final ElementFactory elementFactory,
-                           final TaskManager taskManager) {
+                           final TaskManager taskManager,
+                           final StepDataStoreManager stepDataStoreManager) {
         this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
         this.executorProvider = executorProvider;
@@ -104,6 +106,38 @@ public class SteppingService {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
         this.taskManager = taskManager;
+        this.stepDataStoreManager = stepDataStoreManager;
+    }
+
+    /**
+     * Phase 2 capture: process a whole stream in capture mode into a fresh {@link StepDataStore} and
+     * return the store plus the fingerprints that key the captured IO. Synchronous. The caller owns the
+     * returned session and should call {@link #deleteCaptureSession} when done. (The live step() path is
+     * not yet cut over to this - that is the Phase 4 durable-session work.)
+     */
+    public SteppingCaptureResult capture(final PipelineStepRequest request, final long metaId) {
+        final String sessionId = UUID.randomUUID().toString();
+        final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
+        final AtomicReference<SteppingRequestHandler> reference = new AtomicReference<>();
+        final Executor executor = executorProvider.get(THREAD_POOL);
+
+        try {
+            CompletableFuture.runAsync(taskContextFactory.context("Stepping capture", taskContext -> {
+                final SteppingRequestHandler handler = steppingRequestHandlerProvider.get();
+                reference.set(handler);
+                handler.execCapture(taskContext, request, metaId, store);
+            }), executor).join();
+
+            return new SteppingCaptureResult(sessionId, store, reference.get().getCaptureFingerprints());
+        } catch (final RuntimeException e) {
+            // Don't leak the store (open channels + temp dir) if capture failed part way through.
+            deleteCaptureSession(sessionId);
+            throw e;
+        }
+    }
+
+    public void deleteCaptureSession(final String sessionId) {
+        stepDataStoreManager.deleteSession(sessionId);
     }
 
     public SteppingResult step(final PipelineStepRequest request) {
@@ -308,6 +342,18 @@ public class SteppingService {
 
 
     public record Key(UserIdentity userIdentity, String uuid) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The result of a {@link #capture} call: the session id owning the persisted data, the store, and the
+     * fingerprints needed to read element chunks back (e.g. via {@code StepResultResolver}).
+     */
+    public record SteppingCaptureResult(String sessionId, StepDataStore store, ElementFingerprints fingerprints) {
 
     }
 }

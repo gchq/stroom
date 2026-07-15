@@ -570,7 +570,11 @@ public class PipelineFactory {
                 // single records.
                 final SplitFilter splitFilter = elementFactory.getElementInstance(SplitFilter.class);
                 splitFilter.setSplitDepth(controllerSplitDepth);
-                splitFilter.setSplitCount(controller.getRequest().getStepSize());
+                // In capture mode every record is captured individually (step-size grouping becomes a
+                // query concern); the legacy per-step path keeps honouring the request's step size.
+                splitFilter.setSplitCount(controller.isCaptureMode()
+                        ? 1
+                        : controller.getRequest().getStepSize());
                 parser.setTarget(splitFilter);
 
                 // Create SAX event recorder.

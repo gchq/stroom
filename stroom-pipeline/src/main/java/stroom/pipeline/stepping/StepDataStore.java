@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,8 +72,11 @@ public class StepDataStore {
 
     // Open segment files keyed by part+element+fingerprint.
     private final Map<FileKey, ElementSegmentFile> openFiles = new HashMap<>();
-    // Distinct record count seen per part index.
-    private final Map<Long, Long> partRecordCounts = new HashMap<>();
+    // Per-part record-index range (min/max) seen. Record indices are per-part but NOT necessarily
+    // 0-based: SAX record detection is 0-based, reader/text record detection is 1-based, so the store
+    // preserves whatever index the detector produced (matching the StepLocations the legacy stepper uses).
+    private final Map<Long, Long> partMinRecordIndex = new HashMap<>();
+    private final Map<Long, Long> partMaxRecordIndex = new HashMap<>();
     // Per-element LRU of retained fingerprints (access-ordered; eldest first) for version eviction.
     private final Map<String, LinkedHashMap<String, Boolean>> elementFingerprintLru = new HashMap<>();
 
@@ -116,22 +120,26 @@ public class StepDataStore {
                     config.getMaxRecordsPerStream()));
         }
 
-        // Validate ordering against the existing file BEFORE creating one, so a rejected out-of-order
-        // write never leaves an empty file/open channel behind.
+        // The first write for a (part, element, fingerprint) establishes the base record index (which may
+        // be non-zero); subsequent writes must be strictly the next contiguous index. Validating before
+        // creating a file means a rejected out-of-order write never leaves an empty file/channel behind.
         final ElementSegmentFile existing = openFiles.get(new FileKey(location.getPartIndex(), elementId, fingerprint));
-        final long expected = existing == null ? 0L : existing.recordCount();
-        if (recordIndex != expected) {
-            throw new StepDataStoreException(LogUtil.message(
-                    "Records must be appended in order for {} fingerprint {}; expected index {} but got {}",
-                    elementId, fingerprint, expected, recordIndex));
+        if (existing != null && existing.recordCount() > 0) {
+            final long expected = existing.nextRecordIndex();
+            if (recordIndex != expected) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Records must be appended in order for {} fingerprint {}; expected index {} but got {}",
+                        elementId, fingerprint, expected, recordIndex));
+            }
         }
 
         final ElementSegmentFile file = existing != null
                 ? existing
                 : getOrCreateFile(location.getPartIndex(), elementId, fingerprint);
-        file.append(bytes);
+        file.append(recordIndex, bytes);
         totalBytes += bytes.length;
-        partRecordCounts.merge(location.getPartIndex(), recordIndex + 1, Math::max);
+        partMinRecordIndex.merge(location.getPartIndex(), recordIndex, Math::min);
+        partMaxRecordIndex.merge(location.getPartIndex(), recordIndex, Math::max);
         touchFingerprint(elementId, fingerprint);
     }
 
@@ -144,14 +152,10 @@ public class StepDataStore {
                                                                    final String fingerprint) {
         checkNotDeleted();
         final ElementSegmentFile file = openFiles.get(new FileKey(location.getPartIndex(), elementId, fingerprint));
-        if (file == null) {
+        if (file == null || !file.contains(location.getRecordIndex())) {
             return Optional.empty();
         }
-        final long recordIndex = location.getRecordIndex();
-        if (recordIndex < 0 || recordIndex >= file.recordCount()) {
-            return Optional.empty();
-        }
-        final byte[] bytes = file.read(recordIndex);
+        final byte[] bytes = file.read(location.getRecordIndex());
         touchFingerprint(elementId, fingerprint);
         return Optional.ofNullable(JsonUtil.readValue(bytes, SharedElementData.class));
     }
@@ -169,14 +173,39 @@ public class StepDataStore {
      * @return the number of records captured for the given part index.
      */
     public synchronized long getRecordCount(final long partIndex) {
-        return partRecordCounts.getOrDefault(partIndex, 0L);
+        final Long min = partMinRecordIndex.get(partIndex);
+        final Long max = partMaxRecordIndex.get(partIndex);
+        return (min == null || max == null) ? 0L : (max - min + 1);
+    }
+
+    /**
+     * @return the first (lowest) record index captured for the part, or -1 if none.
+     */
+    public synchronized long getFirstRecordIndex(final long partIndex) {
+        return partMinRecordIndex.getOrDefault(partIndex, -1L);
+    }
+
+    /**
+     * @return the last (highest) record index captured for the part, or -1 if none.
+     */
+    public synchronized long getLastRecordIndex(final long partIndex) {
+        return partMaxRecordIndex.getOrDefault(partIndex, -1L);
     }
 
     /**
      * @return the number of distinct parts that have had records captured.
      */
     public synchronized int getPartCount() {
-        return partRecordCounts.size();
+        return partMinRecordIndex.size();
+    }
+
+    /**
+     * @return the part indices that have records, in ascending order.
+     */
+    public synchronized List<Long> getPartIndices() {
+        final List<Long> parts = new ArrayList<>(partMinRecordIndex.keySet());
+        parts.sort(Comparator.naturalOrder());
+        return parts;
     }
 
     /**
@@ -205,7 +234,8 @@ public class StepDataStore {
             file.closeQuietly();
         }
         openFiles.clear();
-        partRecordCounts.clear();
+        partMinRecordIndex.clear();
+        partMaxRecordIndex.clear();
         elementFingerprintLru.clear();
         totalBytes = 0;
         FileUtil.deleteDir(streamDir);
@@ -303,8 +333,11 @@ public class StepDataStore {
 
         private final Path dataFile;
         private final FileChannel channel;
-        // endOffsets.get(r) = exclusive end byte offset of record r; start of r = r==0 ? 0 : endOffsets[r-1].
+        // endOffsets.get(s) = exclusive end byte offset of segment s; segment s = recordIndex - baseRecordIndex.
         private final List<Long> endOffsets = new ArrayList<>();
+        // The record index of the first record written (segment 0); may be non-zero (e.g. reader detectors
+        // are 1-based). -1 until the first append.
+        private long baseRecordIndex = -1;
         private long size;
 
         private ElementSegmentFile(final Path dataFile) throws IOException {
@@ -315,7 +348,10 @@ public class StepDataStore {
                     StandardOpenOption.WRITE);
         }
 
-        private void append(final byte[] bytes) {
+        private void append(final long recordIndex, final byte[] bytes) {
+            if (baseRecordIndex < 0) {
+                baseRecordIndex = recordIndex;
+            }
             try {
                 final ByteBuffer buffer = ByteBuffer.wrap(bytes);
                 long position = size;
@@ -331,7 +367,7 @@ public class StepDataStore {
         }
 
         private byte[] read(final long recordIndex) {
-            final int index = (int) recordIndex;
+            final int index = (int) (recordIndex - baseRecordIndex);
             final long start = index == 0 ? 0L : endOffsets.get(index - 1);
             final long end = endOffsets.get(index);
             final int length = (int) (end - start);
@@ -356,6 +392,22 @@ public class StepDataStore {
 
         private long recordCount() {
             return endOffsets.size();
+        }
+
+        /**
+         * @return the next expected (contiguous) record index, or -1 if nothing written yet.
+         */
+        private long nextRecordIndex() {
+            return baseRecordIndex < 0 ? -1 : baseRecordIndex + endOffsets.size();
+        }
+
+        /**
+         * @return true if the given record index falls within the range written to this file.
+         */
+        private boolean contains(final long recordIndex) {
+            return baseRecordIndex >= 0
+                    && recordIndex >= baseRecordIndex
+                    && recordIndex < baseRecordIndex + endOffsets.size();
         }
 
         private void closeQuietly() {

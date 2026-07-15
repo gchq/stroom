@@ -87,6 +87,15 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         return namespaceContext;
     }
 
+    /**
+     * @return true if this element actually produced output content for the current record. Mirrors the
+     * live skip-to-output check ({@code maxElementDepth > 1}): a bare empty root element counts as no
+     * output. Valid until the recorder is cleared for the next record.
+     */
+    public boolean hasContent() {
+        return maxElementDepth > 1;
+    }
+
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
@@ -109,26 +118,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
      * the pipeline.
      */
     private boolean checkFilterApplied() {
-        if (settings != null) {
-            if (settings.getSkipToSeverity() != null || settings.getSkipToOutput() != null) {
-                return true;
-            }
-            if (settings.getFilters() != null) {
-                for (final XPathFilter xPathFilter : settings.getFilters()) {
-                    if (NullSafe.allNonNull(xPathFilter.getMatchType(), xPathFilter.getPath())) {
-                        if (xPathFilter.getMatchType().isNeedsValue()) {
-                            if (NullSafe.isNonEmptyString(xPathFilter.getValue())) {
-                                return true;
-                            }
-                        } else {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
+        return settings != null && settings.isFilterApplied();
     }
 
     /**
@@ -211,6 +201,57 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         }
 
         return false;
+    }
+
+    /**
+     * Evaluate the given XPath filters against the document currently buffered in this recorder, returning
+     * true if any matches. Used to apply stepping XPath filters to persisted output XML that has been
+     * re-parsed into a recorder (the severity / output filters are handled separately from the persisted
+     * {@code SharedElementData}). Mirrors the XPath portion of {@link #filterMatches(long)}.
+     */
+    public boolean matchesXPathFilters(final List<XPathFilter> filters,
+                                       final long metaId,
+                                       final long recordIndex) {
+        final Set<CompiledXPathFilter> compiled = compileXPathFilters(filters);
+        if (compiled.isEmpty()) {
+            return false;
+        }
+        try {
+            final NodeInfo nodeInfo = getEvents();
+            if (nodeInfo == null) {
+                return false;
+            }
+            final NodeInfo documentInfo = nodeInfo.getRoot();
+            for (final CompiledXPathFilter compiledXPathFilter : compiled) {
+                @SuppressWarnings("unchecked")
+                final List<Object> objects = (List<Object>) compiledXPathFilter.getXPathExpression()
+                        .evaluate(documentInfo, XPathConstants.NODESET);
+                if (NullSafe.hasItems(objects) && isFilterMatch(objects, compiledXPathFilter, metaId, recordIndex)) {
+                    return true;
+                }
+            }
+        } catch (final XPathExpressionException | RuntimeException e) {
+            throw ProcessException.wrap(e);
+        }
+        return false;
+    }
+
+    private Set<CompiledXPathFilter> compileXPathFilters(final List<XPathFilter> filters) {
+        final Set<CompiledXPathFilter> compiled = new HashSet<>();
+        if (filters != null) {
+            for (final XPathFilter xPathFilter : filters) {
+                try {
+                    // Only compile filters that check uniqueness/existence or have a value specified.
+                    if (!xPathFilter.getMatchType().isNeedsValue() || xPathFilter.getValue() != null) {
+                        compiled.add(new CompiledXPathFilter(
+                                xPathFilter, getConfiguration(), getNamespaceContext()));
+                    }
+                } catch (final XPathExpressionException e) {
+                    throw ProcessException.create("Error in XPath filter expression", e);
+                }
+            }
+        }
+        return compiled;
     }
 
     /**

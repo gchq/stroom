@@ -193,22 +193,36 @@ class TestStepDataStore {
     }
 
     @Test
-    void testRejectedOutOfOrderFirstWriteLeavesNoState(@TempDir final Path tempDir) {
+    void testNonContiguousWriteRejectedPriorIntact(@TempDir final Path tempDir) {
         final StepDataStore store = newStore(tempDir, new SteppingConfig());
 
-        // First write for a new (part, element, fingerprint) with a non-zero record index is rejected...
-        assertThatThrownBy(() -> store.putElementData(loc(0, 5), E1, FP_A, data("x", "x")))
+        // The first write establishes the base index; a subsequent non-contiguous (gap) write is rejected.
+        store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
+        assertThatThrownBy(() -> store.putElementData(loc(0, 2), E1, FP_A, data("c", "c")))
                 .isInstanceOf(StepDataStoreException.class)
                 .hasMessageContaining("in order");
 
-        // ...and must not have created a file or registered the element/fingerprint.
-        assertThat(store.hasElement(E1, FP_A)).isFalse();
-        assertThat(store.getElementData(loc(0, 5), E1, FP_A)).isEmpty();
-        assertThat(Files.exists(store.getStreamDir().resolve("0").resolve(E1.getId()).resolve(FP_A + ".dat")))
-                .isFalse();
-        // A subsequent correctly-ordered write still works.
-        store.putElementData(loc(0, 0), E1, FP_A, data("ok", "ok"));
-        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(SharedElementData::getOutput).contains("ok");
+        // The already-written record is intact and the rejected one is absent.
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(SharedElementData::getOutput).contains("a");
+        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).isEmpty();
+    }
+
+    @Test
+    void testNonZeroBaseRecordIndex(@TempDir final Path tempDir) {
+        // Reader/text record detectors are 1-based; the store must preserve that indexing.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putElementData(loc(0, 1), E1, FP_A, data("r1", "r1"));
+        store.putElementData(loc(0, 2), E1, FP_A, data("r2", "r2"));
+        store.putElementData(loc(0, 3), E1, FP_A, data("r3", "r3"));
+
+        assertThat(store.getFirstRecordIndex(0)).isEqualTo(1);
+        assertThat(store.getLastRecordIndex(0)).isEqualTo(3);
+        assertThat(store.getRecordCount(0)).isEqualTo(3);
+        assertThat(store.getElementData(loc(0, 1), E1, FP_A)).map(SharedElementData::getOutput).contains("r1");
+        assertThat(store.getElementData(loc(0, 3), E1, FP_A)).map(SharedElementData::getOutput).contains("r3");
+        // Indices outside the captured range read back empty.
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).isEmpty();
+        assertThat(store.getElementData(loc(0, 4), E1, FP_A)).isEmpty();
     }
 
     @Test

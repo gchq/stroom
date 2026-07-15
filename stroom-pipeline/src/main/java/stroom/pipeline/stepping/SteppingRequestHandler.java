@@ -94,6 +94,7 @@ class SteppingRequestHandler {
     private final SteppingResponseCache steppingResponseCache;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final PipelineContext pipelineContext;
+    private final ElementFingerprinter elementFingerprinter;
     private final SecurityContext securityContext;
 
     private TaskContext taskContext;
@@ -115,6 +116,8 @@ class SteppingRequestHandler {
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
     private final Instant createTime;
     private Instant lastRequestTime;
+    // Phase 2 capture: the fingerprints used to key captured IO, exposed so the caller can read chunks back.
+    private ElementFingerprints captureFingerprints;
 
     @Inject
     SteppingRequestHandler(final Store streamStore,
@@ -133,7 +136,9 @@ class SteppingRequestHandler {
                            final SteppingResponseCache steppingResponseCache,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final PipelineContext pipelineContext,
+                           final ElementFingerprinter elementFingerprinter,
                            final SecurityContext securityContext) {
+        this.elementFingerprinter = elementFingerprinter;
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.feedProperties = feedProperties;
@@ -190,7 +195,7 @@ class SteppingRequestHandler {
                 }
 
                 // Make sure all resources are returned to pools.
-                if (lastFeedName != null) {
+                if (lastFeedName != null && pipeline != null) {
                     // destroy the last pipeline.
                     pipeline.endProcessing();
                     lastFeedName = null;
@@ -199,6 +204,114 @@ class SteppingRequestHandler {
                 setResult(createResult(true));
             });
         });
+    }
+
+    /**
+     * Phase 2 capture: process one whole stream through the pipeline in capture mode, persisting every
+     * record's per-element IO into the given store. Unlike {@link #exec} this does no step navigation and
+     * never terminates early - the requested step is served afterwards by scanning the store.
+     */
+    public void execCapture(final TaskContext taskContext,
+                            final PipelineStepRequest request,
+                            final long metaId,
+                            final StepDataStore store) {
+        this.taskContext = taskContext;
+        this.request = request;
+        taskContext.info(() -> "Capturing stepping data");
+
+        securityContext.secure(AppPermission.STEPPING_PERMISSION, () -> {
+            securityContext.useAsRead(() -> {
+                currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
+
+                loggingErrorReceiver = new LoggingErrorReceiver();
+                errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
+
+                controller.setRequest(request);
+                controller.setTaskContext(taskContext);
+
+                // Compute the fingerprints that key the captured IO (from the same merged data the
+                // pipeline is built from) and put the controller into capture mode before the pipeline is
+                // created, so the SplitFilter is configured for per-record capture.
+                final PipelineDataHolder pipelineDataHolder =
+                        pipelineDataHolderFactory.create(request.getPipelineDoc());
+                captureFingerprints = elementFingerprinter.fingerprint(
+                        pipelineDataHolder.getMergedPipelineData(), NullSafe.map(request.getCode()));
+                controller.setCaptureTarget(store, captureFingerprints);
+
+                try (final Source source = streamStore.openSource(metaId)) {
+                    if (source != null) {
+                        captureStream(source, request.getChildStreamType());
+                    }
+                } catch (final IOException | RuntimeException e) {
+                    error(e);
+                }
+
+                if (lastFeedName != null && pipeline != null) {
+                    pipeline.endProcessing();
+                    lastFeedName = null;
+                }
+
+                setResult(createResult(true));
+            });
+        });
+    }
+
+    private void captureStream(final Source source, final String childDataType) {
+        final Meta meta = source.getMeta();
+        final String feedName = meta.getFeedName();
+        controller.setStreamInfo(createStreamInfo(feedName, meta));
+        metaHolder.setMeta(meta);
+        metaHolder.setChildDataType(childDataType);
+
+        // Build the pipeline (this also wires the feed/meta/pipeline holders) and start it.
+        lastFeedName = feedName;
+        createPipeline(controller, feedName);
+        if (pipeline == null || !loggingErrorReceiver.isAllOk()) {
+            return;
+        }
+        try {
+            pipeline.startProcessing();
+            startProcessIndicatorMap = getErrorReceiverIndicatorsMap();
+        } catch (final LoggedException e) {
+            return;
+        }
+
+        try {
+            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+            locationFactory.setLocationFactory(streamLocationFactory);
+            final long maxPartIndex = source.count() - 1;
+            final String encoding = feedProperties.getEncoding(feedName, meta.getTypeName(), childDataType);
+
+            for (long partIndex = 0; partIndex <= maxPartIndex && !taskContext.isTerminated(); partIndex++) {
+                metaHolder.setPartIndex(partIndex);
+                streamLocationFactory.setPartIndex(partIndex);
+                controller.clearAllFilters(null);
+
+                try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
+                    metaHolder.setInputStreamProvider(inputStreamProvider);
+                    final SegmentInputStream inputStream = inputStreamProvider.get(childDataType);
+                    isSegmentedData = inputStream.count() > 1;
+                    if (inputStream.size() > 0) {
+                        controller.setIsSegmentedData(isSegmentedData);
+                        controller.setStepLocation(null);
+                        pipeline.process(inputStream, encoding);
+                    }
+                } catch (final LoggedException e) {
+                    // Already recorded in the logging error receiver.
+                } catch (final IOException | RuntimeException e) {
+                    error(e);
+                }
+            }
+        } catch (final IOException | RuntimeException e) {
+            error(e);
+        }
+    }
+
+    /**
+     * @return the fingerprints used to key the captured IO (available after {@link #execCapture}).
+     */
+    public ElementFingerprints getCaptureFingerprints() {
+        return captureFingerprints;
     }
 
     private void setResult(final SteppingResult result) {

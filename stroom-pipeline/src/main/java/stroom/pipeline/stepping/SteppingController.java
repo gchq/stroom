@@ -64,6 +64,12 @@ public class SteppingController {
     private RecordDetector recordDetector;
     private boolean isSegmentedData;
 
+    // Phase 2 capture mode: when a store (and fingerprints) are set, endRecord persists every record's
+    // per-element IO to the store and never terminates early, so the whole stream is captured. When unset
+    // the controller behaves as the legacy per-step (find-one-record-then-stop) stepper.
+    private StepDataStore stepDataStore;
+    private ElementFingerprints fingerprints;
+
     private TaskContext taskContext;
 
     @Inject
@@ -91,6 +97,19 @@ public class SteppingController {
 
     public void setRecordDetector(final RecordDetector recordDetector) {
         this.recordDetector = recordDetector;
+    }
+
+    /**
+     * Put the controller into capture mode: every record's per-element IO is persisted to the store,
+     * keyed by each element's cumulative fingerprint, and the parse runs to the end of the stream.
+     */
+    public void setCaptureTarget(final StepDataStore stepDataStore, final ElementFingerprints fingerprints) {
+        this.stepDataStore = stepDataStore;
+        this.fingerprints = fingerprints;
+    }
+
+    public boolean isCaptureMode() {
+        return stepDataStore != null;
     }
 
     public PipelineStepRequest getRequest() {
@@ -168,6 +187,14 @@ public class SteppingController {
                     opt -> opt.orElse(null));
         }
 
+        // Capture mode: persist every element's IO for this record and keep going to the end of the
+        // stream (the requested step is served later by scanning the store).
+        if (isCaptureMode()) {
+            captureRecord(progressLocation, highlight);
+            clearAllFilters(highlight);
+            return false;
+        }
+
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
         // etc.
@@ -222,6 +249,24 @@ public class SteppingController {
                && stepLocation != null
                && currentStreamIndex == stepLocation.getPartIndex()
                && currentRecordIndex >= stepLocation.getRecordIndex() - 1;
+    }
+
+    /**
+     * Capture mode: persist each monitored element's IO for this record to the store, keyed by the
+     * element's cumulative fingerprint.
+     */
+    private void captureRecord(final StepLocation location, final TextRange highlight) {
+        final LoggingErrorReceiver errorReceiver = getErrorReceiver();
+        for (final ElementMonitor monitor : monitors) {
+            final String fingerprint = fingerprints == null
+                    ? null
+                    : fingerprints.getCumulativeFingerprint(monitor.getElementId().getId());
+            if (fingerprint != null) {
+                final ElementData elementData = monitor.getElementData(errorReceiver, highlight);
+                stepDataStore.putElementData(
+                        location, monitor.getElementId(), fingerprint, elementData.convertToShared());
+            }
+        }
     }
 
     StepData createStepData(final TextRange textRange) {
