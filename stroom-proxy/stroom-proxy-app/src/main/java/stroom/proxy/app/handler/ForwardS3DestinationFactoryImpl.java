@@ -50,6 +50,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final CleanupDirQueue cleanupDirQueue;
     private final JerseyClientFactory jerseyClientFactory;
+    private final RemoteS3EventClient remoteS3EventClient;
 
     @Inject
     public ForwardS3DestinationFactoryImpl(final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
@@ -62,7 +63,8 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                                            final TemplateCache templateCache,
                                            final S3MetaFieldsMapper s3MetaFieldsMapper,
                                            final CleanupDirQueue cleanupDirQueue,
-                                           final JerseyClientFactory jerseyClientFactory) {
+                                           final JerseyClientFactory jerseyClientFactory,
+                                           final RemoteS3EventClient remoteS3EventClient) {
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
@@ -74,6 +76,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.cleanupDirQueue = cleanupDirQueue;
         this.jerseyClientFactory = jerseyClientFactory;
+        this.remoteS3EventClient = remoteS3EventClient;
     }
 
     @Override
@@ -88,7 +91,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                 templateCache,
                 s3MetaFieldsMapper,
                 cleanupDirQueue,
-                jerseyClientFactory);
+                remoteS3EventClient);
 
         final ForwardDestination destination = getWrappedForwardDestination(
                 forwardS3Config, forwardS3Destination);

@@ -50,15 +50,19 @@ public interface S3EventResource extends RestResource {
     @Operation(
             summary = "Submit a notification of the presence of a data file on S3",
             operationId = "notify")
-    void notify(@Parameter(description = "S3EventRequest", required = true) S3EventRequest request);
+    void notify(@Parameter(description = "S3EventRequest", required = true) S3EventNotificationRequest request);
 
 
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Used for notifying Stroom of the presence of a data file on S3. This is an alternative to relying
+     * on Event Notifications produced by the S3 service.
+     */
     @JsonPropertyOrder(alphabetic = true)
     @JsonInclude(Include.NON_NULL)
-    class S3EventRequest {
+    class S3EventNotificationRequest {
 
         @JsonProperty
         private final S3Location s3Location;
@@ -66,8 +70,8 @@ public interface S3EventResource extends RestResource {
         private final Map<String, String> metaData;
 
         @JsonCreator
-        public S3EventRequest(@JsonProperty("s3Location") final S3Location s3Location,
-                              @JsonProperty("metaData") final Map<String, String> metaData) {
+        public S3EventNotificationRequest(@JsonProperty("s3Location") final S3Location s3Location,
+                                          @JsonProperty("metaData") final Map<String, String> metaData) {
             this.s3Location = s3Location;
             this.metaData = metaData;
         }

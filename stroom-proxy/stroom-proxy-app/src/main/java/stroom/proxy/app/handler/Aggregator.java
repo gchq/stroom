@@ -73,7 +73,7 @@ public class Aggregator {
 
     public void addDir(final Path dir) {
         try {
-            // First count all files.
+            // First, count all files.
             final long sourceDirCount;
             try (final Stream<Path> stream = Files.list(dir)) {
                 sourceDirCount = stream.count();
@@ -118,9 +118,15 @@ public class Aggregator {
                                         commonHeaders.entrySet().iterator();
                                 while (iterator.hasNext()) {
                                     final Map.Entry<String, String> entry = iterator.next();
-                                    final String otherValue = headers.get(entry.getKey());
-                                    // If this header is different then remove the common header.
-                                    if (!Objects.equals(entry.getValue(), otherValue)) {
+                                    final String key = entry.getKey();
+                                    final String commonValue = entry.getValue();
+                                    final String otherValue = headers.get(key);
+                                    // If this header has a different value to the common header for the same key,
+                                    // remove the common header.
+                                    if (!Objects.equals(commonValue, otherValue)) {
+                                        LOGGER.trace("addDir() - dir: '{}', removing common header {}, " +
+                                                     "commonValue: '{}', otherValue: '{}'",
+                                                dir, entry.getKey(), commonValue, otherValue);
                                         iterator.remove();
                                     }
                                 }

@@ -154,7 +154,14 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
 
     @Override
     public Meta create(final MetaProperties metaProperties) {
+        LOGGER.debug("create() - metaProperties: {}", metaProperties);
         return metaDao.create(metaProperties);
+    }
+
+    @Override
+    public Meta create(final MetaProperties metaProperties, final Status status) {
+        LOGGER.debug("create() - metaProperties: {}, status: {}", metaProperties, status);
+        return metaDao.create(metaProperties, status);
     }
 
     @Override

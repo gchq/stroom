@@ -48,7 +48,7 @@ public class S3EventResourceImpl implements S3EventResource {
 
     @AutoLogged(OperationType.UNLOGGED) // Not a user operation
     @Override
-    public void notify(final S3EventRequest request) {
+    public void notify(final S3EventNotificationRequest request) {
         LOGGER.debug("notify() - request: {}", request);
         Objects.requireNonNull(request);
         // TODO Allow calls only from proxy at the moment. May want to open it up for

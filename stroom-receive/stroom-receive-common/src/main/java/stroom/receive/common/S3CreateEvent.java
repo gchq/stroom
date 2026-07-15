@@ -17,7 +17,7 @@
 package stroom.receive.common;
 
 
-import stroom.aws.s3.shared.S3EventResource.S3EventRequest;
+import stroom.aws.s3.shared.S3EventResource.S3EventNotificationRequest;
 import stroom.aws.s3.shared.S3Location;
 import stroom.meta.api.AttributeMap;
 import stroom.util.shared.NullSafe;
@@ -37,7 +37,7 @@ public record S3CreateEvent(S3Location s3Location, AttributeMap attributeMap) {
         this.attributeMap = Objects.requireNonNullElseGet(attributeMap, AttributeMap::new);
     }
 
-    public static S3CreateEvent create(final S3EventRequest request) {
+    public static S3CreateEvent create(final S3EventNotificationRequest request) {
         Objects.requireNonNull(request);
         return new S3CreateEvent(
                 request.getS3Location(),

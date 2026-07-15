@@ -22,8 +22,7 @@ import stroom.aws.s3.client.S3ClientPool;
 import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.client.S3Util;
-import stroom.aws.s3.shared.S3EventResource;
-import stroom.aws.s3.shared.S3EventResource.S3EventRequest;
+import stroom.aws.s3.shared.S3EventResource.S3EventNotificationRequest;
 import stroom.aws.s3.shared.S3Location;
 import stroom.cache.api.TemplateCache;
 import stroom.meta.api.AttributeMap;
@@ -31,24 +30,14 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.app.handler.ForwardS3Config.NotificationType;
-import stroom.util.jersey.JerseyClientFactory;
-import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.string.CIKey;
 import stroom.util.shared.string.CIKeys;
 import stroom.util.string.TemplateUtil.Template;
-
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -78,7 +67,7 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
     private final S3ClientHelper s3ClientHelper;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final CleanupDirQueue cleanupDirQueue;
-    private final Client jerseyClient;
+    private final RemoteS3EventClient remoteS3EventClient;
 
     public ForwardS3DestinationImpl(final String destinationName,
                                     final ForwardS3Config forwardS3Config,
@@ -87,7 +76,7 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
                                     final TemplateCache templateCache,
                                     final S3MetaFieldsMapper s3MetaFieldsMapper,
                                     final CleanupDirQueue cleanupDirQueue,
-                                    final JerseyClientFactory jerseyClientFactory) {
+                                    final RemoteS3EventClient remoteS3EventClient) {
         this.destinationName = destinationName;
         this.forwardS3Config = forwardS3Config;
         this.downstreamHostConfig = downstreamHostConfig;
@@ -95,7 +84,7 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.cleanupDirQueue = cleanupDirQueue;
         this.s3ClientHelper = new S3ClientHelper(forwardS3Config.getClientConfig(), s3ClientPool);
-        this.jerseyClient = jerseyClientFactory.getNamedClient(JerseyClientName.DOWNSTREAM);
+        this.remoteS3EventClient = remoteS3EventClient;
     }
 
     @Override
@@ -143,7 +132,12 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
 
                 // If not, we rely on Event Notifications from S3+SQS
                 if (NotificationType.REST == forwardS3Config.getNotificationType()) {
-                    sendRestNotification(bucketName, key, attributeMap);
+                    final S3Location s3Location = new S3Location(
+                            forwardS3Config.getClientConfig().getRegion(),
+                            bucketName,
+                            key);
+                    final S3EventNotificationRequest request = new S3EventNotificationRequest(s3Location, attributeMap);
+                    remoteS3EventClient.sendNotification(request);
                 }
 
                 // Success, so remove the source file.
@@ -156,44 +150,6 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    private void sendRestNotification(final String bucketName,
-                                      final String key,
-                                      final Map<String, String> meta) {
-        final S3Location s3Location = new S3Location(
-                forwardS3Config.getClientConfig().getRegion(),
-                bucketName,
-                key);
-        final S3EventRequest request = new S3EventRequest(s3Location, meta);
-        final String uriPath = ResourcePaths.buildAuthenticatedApiPath(
-                S3EventResource.BASE_RESOURCE_PATH,
-                S3EventResource.NOTIFY_PATH_PART);
-        final String uri = downstreamHostConfig.createUri(uriPath);
-        LOGGER.debug("sendRestNotification() - uri: {}, request: {}", uri, request);
-
-        final WebTarget target = jerseyClient.target(uri);
-        try (final Response response = sendRequest(target, request)) {
-            LOGGER.debug("sendRestNotification() - uri: {}, request: {}, response: {}", uri, request, response);
-            if (response.getStatus() != HttpServletResponse.SC_OK) {
-                final String error;
-                try {
-                    error = response.readEntity(String.class);
-                    LOGGER.debug("sendRestNotification() - uri: {}, request: {}, error: {}", uri, request, error);
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
-                throw new RuntimeException(LogUtil.message(
-                        "Error sending S3 notification {} to {} - {} - {}", request, uri, response, error));
-            }
-        }
-    }
-
-    private static Response sendRequest(final WebTarget target, final S3EventRequest request) {
-        final Response response = target.request(MediaType.APPLICATION_JSON)
-                .post(Entity.json(request));
-        LOGGER.debug("sendRequest() - response: {}", response);
-        return response;
     }
 
     private Map<CIKey, String> buildS3MetaData(final AttributeMap attributeMap) {

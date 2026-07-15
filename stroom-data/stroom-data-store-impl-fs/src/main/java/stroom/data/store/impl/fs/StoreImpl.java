@@ -33,6 +33,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -120,12 +121,18 @@ public class StoreImpl implements Store, AttributeMapFactory {
                         "No S3 volume found with region '{}' and bucket: '{}'",
                         s3Location.regionName(), s3Location.bucketName())));
 
-        final Meta meta = metaService.create(metaProperties);
+        // Create in UNLOCKED state as the stream's data already exists
+        final Meta meta = metaService.create(metaProperties, Status.UNLOCKED);
         final long metaId = meta.getId();
         dataVolumeService.createS3LocationDataVolume(metaId, volume, Set.of(s3Location));
 
-        LOGGER.debug("addExistingS3Source() - metaProperties: {}, s3Location: {}, volume: {}, metaId: {}",
-                metaProperties, s3Location, volume, metaId);
+        LOGGER.debug(
+                "addExistingS3Source() - Created stream {}, metaProperties: {}, s3Location: {}, volume: {}, meta: {}",
+                metaId,
+                metaProperties,
+                s3Location,
+                volume,
+                meta);
     }
 
     @Override

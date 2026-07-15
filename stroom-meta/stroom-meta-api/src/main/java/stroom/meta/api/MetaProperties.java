@@ -101,6 +101,21 @@ public class MetaProperties {
         return new Builder(this);
     }
 
+    @Override
+    public String toString() {
+        return "MetaProperties{" +
+               "parentId=" + parentId +
+               ", typeName='" + typeName + '\'' +
+               ", feedName='" + feedName + '\'' +
+               ", processorUuid='" + processorUuid + '\'' +
+               ", pipelineUuid='" + pipelineUuid + '\'' +
+               ", processorFilterId=" + processorFilterId +
+               ", processorTaskId=" + processorTaskId +
+               ", createMs=" + createMs +
+               ", effectiveMs=" + effectiveMs +
+               ", statusMs=" + statusMs +
+               '}';
+    }
 
     // --------------------------------------------------------------------------------
 

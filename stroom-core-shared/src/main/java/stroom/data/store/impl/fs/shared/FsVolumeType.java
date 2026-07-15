@@ -84,12 +84,7 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     }
 
     public static FsVolumeType fromId(final int id) {
-        final byte b;
-        try {
-            b = (byte) id;
-        } catch (final Exception e) {
-            throw new IllegalArgumentException("Invalid id " + id);
-        }
+        final byte b = PrimitiveValueConverter.castId(FsVolumeType.class, id);
         return PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(b, STANDARD);
     }
 

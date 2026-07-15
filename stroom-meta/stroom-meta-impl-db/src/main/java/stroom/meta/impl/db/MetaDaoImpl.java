@@ -182,7 +182,7 @@ public class MetaDaoImpl implements MetaDao {
             .processorFilterId(record.get(META_M.PROCESSOR_FILTER_ID))
             .processorTaskId(record.get(META_M.PROCESSOR_TASK_ID))
             .parentDataId(record.get(META_M.PARENT_ID))
-            .status(MetaStatusId.getStatus(record.get(META_M.STATUS)))
+            .status(getStatus(record.get(META_M.STATUS)))
             .statusMs(record.get(META_M.STATUS_TIME))
             .createMs(record.get(META_M.CREATE_TIME))
             .effectiveMs(record.get(META_M.EFFECTIVE_TIME))
@@ -197,11 +197,15 @@ public class MetaDaoImpl implements MetaDao {
             .processorFilterId(record.get(parent.PROCESSOR_FILTER_ID))
             .processorTaskId(record.get(parent.PROCESSOR_TASK_ID))
             .parentDataId(record.get(parent.PARENT_ID))
-            .status(MetaStatusId.getStatus(record.get(parent.STATUS)))
+            .status(getStatus(record.get(parent.STATUS)))
             .statusMs(record.get(parent.STATUS_TIME))
             .createMs(record.get(parent.CREATE_TIME))
             .effectiveMs(record.get(parent.EFFECTIVE_TIME))
             .build();
+
+    private static final byte STATUS_ID_UNLOCKED = Status.UNLOCKED.getPrimitiveValue();
+    private static final byte STATUS_ID_LOCKED = Status.LOCKED.getPrimitiveValue();
+    private static final byte STATUS_ID_DELETED = Status.DELETED.getPrimitiveValue();
 
     private final MetaDbConnProvider metaDbConnProvider;
     private final MetaFeedDaoImpl feedDao;
@@ -262,7 +266,7 @@ public class MetaDaoImpl implements MetaDao {
         expressionMapper.multiMap(
                 MetaFields.PIPELINE_NAME, META_PROCESSOR_P.PIPELINE_UUID, this::getPipelineUuidsByName, true);
         expressionMapper.map(MetaFields.STATUS, META_M.STATUS, value ->
-                MetaStatusId.getPrimitiveValue(value.toUpperCase()));
+                Status.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.STATUS_TIME, META_M.STATUS_TIME, value ->
                 DateExpressionParser.getMs(MetaFields.STATUS_TIME.getFldName(), value));
         expressionMapper.map(MetaFields.CREATE_TIME, META_M.CREATE_TIME, value ->
@@ -273,7 +277,7 @@ public class MetaDaoImpl implements MetaDao {
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, META_M.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value ->
-                MetaStatusId.getPrimitiveValue(value.toUpperCase()));
+                Status.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value ->
                 DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getFldName(), value));
         expressionMapper.map(MetaFields.PARENT_EFFECTIVE_TIME, parent.EFFECTIVE_TIME, value ->
@@ -290,7 +294,7 @@ public class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, META_M.PROCESSOR_ID, ValInteger::create);
         valueMapper.map(MetaFields.META_PROCESSOR_FILTER_ID, META_M.PROCESSOR_FILTER_ID, ValInteger::create);
         valueMapper.map(MetaFields.META_PROCESSOR_TASK_ID, META_M.PROCESSOR_TASK_ID, ValLong::create);
-        valueMapper.map(MetaFields.STATUS, META_M.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
+        valueMapper.map(MetaFields.STATUS, META_M.STATUS, v -> Optional.of(getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
                 .orElse(ValNull.INSTANCE));
         valueMapper.map(MetaFields.STATUS_TIME, META_M.STATUS_TIME, ValDate::create);
@@ -361,10 +365,17 @@ public class MetaDaoImpl implements MetaDao {
 
     @Override
     public Meta create(final MetaProperties metaProperties) {
+        return create(metaProperties, null);
+    }
+
+    @Override
+    public Meta create(final MetaProperties metaProperties, final Status status) {
         final Integer feedId = feedDao.getOrCreate(metaProperties.getFeedName());
         final Integer typeId = metaTypeDao.getOrCreate(metaProperties.getTypeName());
         final Integer processorId = metaProcessorDao.getOrCreate(
                 metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid());
+        final byte metaStatusId = Objects.requireNonNullElse(status, Status.LOCKED)
+                .getPrimitiveValue();
 
         final long id = JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .insertInto(META,
@@ -382,7 +393,7 @@ public class MetaDaoImpl implements MetaDao {
                                 metaProperties.getCreateMs(),
                                 metaProperties.getEffectiveMs(),
                                 metaProperties.getParentId(),
-                                MetaStatusId.LOCKED,
+                                metaStatusId,
                                 metaProperties.getStatusMs(),
                                 feedId,
                                 typeId,
@@ -440,7 +451,7 @@ public class MetaDaoImpl implements MetaDao {
                         metaProcessorDao.getOrCreate(tuple._1(), tuple._2())))
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
-        final byte statusId = MetaStatusId.getPrimitiveValue(status);
+        final byte statusId = getStatusId(status);
 
         // Create a batch of insert stmts, each with n value sets
         JooqUtil.context(metaDbConnProvider, context -> context
@@ -527,7 +538,7 @@ public class MetaDaoImpl implements MetaDao {
                                 "newStatus: {}, statusTime: {}",
                         expression, currentStatus, newStatus, LogUtil.instant(statusTime)));
 
-        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        final byte newStatusId = getStatusId(newStatus);
         final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
 
         final Condition conditions = createUpdateStatusCondition(expression, currentStatus, newStatus);
@@ -561,7 +572,7 @@ public class MetaDaoImpl implements MetaDao {
                                 "newStatus: {}, statusTime: {}",
                         expression, currentStatus, newStatus, LogUtil.instant(statusTime)));
 
-        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        final byte newStatusId = getStatusId(newStatus);
         final int batchSize = metaServiceConfigProvider.get().getMetaStatusUpdateBatchSize();
 
         final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
@@ -661,10 +672,10 @@ public class MetaDaoImpl implements MetaDao {
             final Status newStatus) {
 
         if (currentStatus != null) {
-            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
+            final byte currentStatusId = getStatusId(currentStatus);
             return META_M.STATUS.eq(currentStatusId);
         } else {
-            final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+            final byte newStatusId = getStatusId(newStatus);
             return META_M.STATUS.ne(newStatusId);
         }
     }
@@ -826,8 +837,6 @@ public class MetaDaoImpl implements MetaDao {
             // If none of the rules matches then we don't to delete so return false
             final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise((Field<Integer>) null);
 
-            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
-
             final Field<Integer> ruleNoField = DSL.field("rule_no", Integer.class);
             final Field<String> feedNameField = DSL.field("feed_name", String.class);
             final Field<String> typeNameField = DSL.field("type_name", String.class);
@@ -862,7 +871,7 @@ public class MetaDaoImpl implements MetaDao {
                                                 ruleNoCaseField.as(ruleNoField),
                                                 META_M.CREATE_TIME.as(metaCreateTimeField))
                                         .from(fromClause)
-                                        .where(META_M.STATUS.notEqual(statusIdDeleted))
+                                        .where(META_M.STATUS.notEqual(STATUS_ID_DELETED))
 //                                        .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
                                         .and(DSL.or(orConditions)) // Here to help use indexes
                                         .and(getFilterCriteriaCondition(criteria)) // UI filtering
@@ -984,7 +993,6 @@ public class MetaDaoImpl implements MetaDao {
         final AtomicInteger totalUpdateCount = new AtomicInteger(0);
         if (ruleActions != null && !ruleActions.isEmpty()) {
             final DataRetentionConfig dataRetentionConfig = dataRetentionConfigProvider.get();
-            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
             final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getFldName(),
@@ -1040,7 +1048,7 @@ public class MetaDaoImpl implements MetaDao {
                             // add the join to meta_processor
                             final Table<?> tableClause = rulesUsePipelineField
                                     ? META_M.leftOuterJoin(META_PROCESSOR_P)
-                                      .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
+                                    .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
                                     : META_M;
 
                             // We might want to do this delete using a temp table like we do for
@@ -1048,7 +1056,7 @@ public class MetaDaoImpl implements MetaDao {
                             // an issue.
                             final UpdateConditionStep<?> query = context
                                     .update(tableClause)
-                                    .set(META_M.STATUS, statusIdDeleted)
+                                    .set(META_M.STATUS, STATUS_ID_DELETED)
                                     .set(META_M.STATUS_TIME, Instant.now().toEpochMilli())
                                     .where(conditions)
                                     .and(META_M.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
@@ -1118,7 +1126,7 @@ public class MetaDaoImpl implements MetaDao {
                                     // add the join to meta_processor
                                     final Table<?> fromClause = includesMetaProcessorTbl
                                             ? META_M.straightJoin(META_PROCESSOR_P)
-                                              .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
+                                            .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
                                             : META_M;
 
                                     final Table<?> orderedFullSet = context
@@ -1175,11 +1183,9 @@ public class MetaDaoImpl implements MetaDao {
         }
 
         final List<Condition> conditions = new ArrayList<>();
-        final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
-
         // Ensure we only 'delete' unlocked records, also ensures we don't touch
         // records we have already deleted in a previous pass
-        conditions.add(META_M.STATUS.eq(statusIdUnlocked));
+        conditions.add(META_M.STATUS.eq(STATUS_ID_UNLOCKED));
 
         // What we are building is roughly:
         // WHERE (CASE
@@ -1680,7 +1686,7 @@ public class MetaDaoImpl implements MetaDao {
         return splitGroupConcat(str)
                 .stream()
                 .map(Byte::parseByte)
-                .map(MetaStatusId::getStatus)
+                .map(MetaDaoImpl::getStatus)
                 .map(Status::getDisplayValue)
                 .collect(Collectors.toSet());
     }
@@ -1777,8 +1783,8 @@ public class MetaDaoImpl implements MetaDao {
                                             usedValKeys)
                                     .where(conditions)
                                     .and(parent.ID.isNotNull())
-                                    .and(parent.STATUS.notEqual(MetaStatusId.getPrimitiveValue(Status.DELETED)))
-                                    .and(META_M.STATUS.notEqual(MetaStatusId.getPrimitiveValue(Status.DELETED)))
+                                    .and(parent.STATUS.notEqual(STATUS_ID_DELETED))
+                                    .and(META_M.STATUS.notEqual(STATUS_ID_DELETED))
                                     .limit(offset, numberOfRows);
 
                             LOGGER.debug("getReprocessSelectionSummary() - sql:\n{}", sql);
@@ -1820,7 +1826,7 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .selectCount()
                         .from(META_M)
-                        .where(META_M.STATUS.eq(MetaStatusId.LOCKED))
+                        .where(META_M.STATUS.eq(STATUS_ID_LOCKED))
                         .fetchOptional()
                         .map(Record1::value1))
                 .orElse(0);
@@ -1905,8 +1911,6 @@ public class MetaDaoImpl implements MetaDao {
             final int feedId,
             final int metaTypeId) {
 
-        final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
-
         // Force the idx to ensure mysql uses the idx with feed_id|effective_time rather than
         return context.select(
                         META_M.ID,
@@ -1914,7 +1918,7 @@ public class MetaDaoImpl implements MetaDao {
                 .from(META_M)
                 .where(META_M.FEED_ID.eq(feedId))
                 .and(META_M.TYPE_ID.eq(metaTypeId))
-                .and(META_M.STATUS.eq(unlockedId));
+                .and(META_M.STATUS.eq(STATUS_ID_UNLOCKED));
     }
 
     @Override
@@ -2001,7 +2005,6 @@ public class MetaDaoImpl implements MetaDao {
         Objects.requireNonNull(deleteThreshold);
         final List<SimpleMeta> simpleMetas;
         if (batchSize > 0) {
-            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
             // Get a batch starting from the cut off threshold and working backwards in time.
             // This is so next time we can work from the previous min status time.
             final TimedResult<List<SimpleMeta>> timedResult = JooqUtil.timedContextResult(
@@ -2013,7 +2016,7 @@ public class MetaDaoImpl implements MetaDao {
                                 .from(META_M)
                                 .straightJoin(META_TYPE_T).on(META_M.TYPE_ID.eq(META_TYPE_T.ID))
                                 .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))
-                                .where(META_M.STATUS.eq(statusIdDeleted))
+                                .where(META_M.STATUS.eq(STATUS_ID_DELETED))
                                 .and(META_M.STATUS_TIME.lessOrEqual(deleteThreshold.toEpochMilli()));
 
                         // Here to stop us trying to pick up any failed ones from the previous batch.
@@ -2092,7 +2095,7 @@ public class MetaDaoImpl implements MetaDao {
                 .select(META.ID)
                 .from(META)
                 .where(META.ID.in(metaIdCollection))
-                .and(META.STATUS.eq(MetaStatusId.LOCKED))
+                .and(META.STATUS.eq(STATUS_ID_LOCKED))
                 .fetchSet(META.ID));
     }
 
@@ -2146,5 +2149,14 @@ public class MetaDaoImpl implements MetaDao {
                 return new HashSet<>(select.fetch(META_M.ID));
             });
         }
+    }
+
+    private static byte getStatusId(final Status status) {
+        return Objects.requireNonNull(status)
+                .getPrimitiveValue();
+    }
+
+    private static Status getStatus(final byte b) {
+        return Status.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValueOrThrow(b);
     }
 }

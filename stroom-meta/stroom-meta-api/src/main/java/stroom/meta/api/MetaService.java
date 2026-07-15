@@ -62,6 +62,15 @@ public interface MetaService {
     Meta create(MetaProperties properties);
 
     /**
+     * Create meta data with the supplied properties.
+     *
+     * @param properties The properties that the newly created meta data will have.
+     * @param status     The status that the newly created meta data will have.
+     * @return A new locked meta data ready to associate written data with.
+     */
+    Meta create(MetaProperties properties, Status status);
+
+    /**
      * Get meta data from the meta service by id.
      *
      * @param id The id of the meta data to retrieve.

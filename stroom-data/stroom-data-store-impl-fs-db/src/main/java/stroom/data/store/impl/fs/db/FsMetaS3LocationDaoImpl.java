@@ -66,25 +66,25 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
 
             if (NullSafe.hasItems(s3Locations)) {
                 final List<S3Location> s3LocationList = List.copyOf(s3Locations);
-                JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-                    @SuppressWarnings("VariableTypeCanBeExplicit")
-                    var insert = context.insertInto(
-                            FS_META_S3_LOCATION,
-                            FS_META_S3_LOCATION.META_ID,
-                            FS_META_S3_LOCATION.S3_REGION,
-                            FS_META_S3_LOCATION.S3_BUCKET,
-                            FS_META_S3_LOCATION.S3_KEY);
+//                JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
+                @SuppressWarnings("VariableTypeCanBeExplicit")
+                var insert = txnContext.insertInto(
+                        FS_META_S3_LOCATION,
+                        FS_META_S3_LOCATION.META_ID,
+                        FS_META_S3_LOCATION.S3_REGION,
+                        FS_META_S3_LOCATION.S3_BUCKET,
+                        FS_META_S3_LOCATION.S3_KEY);
 
-                    for (final S3Location s3Location : s3LocationList) {
-                        insert = insert.values(
-                                metaId,
-                                s3Location.regionName(),
-                                s3Location.bucketName(),
-                                s3Location.key());
-                    }
+                for (final S3Location s3Location : s3LocationList) {
+                    insert = insert.values(
+                            metaId,
+                            s3Location.regionName(),
+                            s3Location.bucketName(),
+                            s3Location.key());
+                }
 
-                    return insert.execute();
-                });
+                insert.execute();
+//                });
                 return new S3LocationDataVolume(dataVolume, s3Locations);
             } else {
                 return new S3LocationDataVolume(dataVolume, Collections.emptySet());

@@ -39,7 +39,21 @@ public class S3MetaFieldsMapper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3MetaFieldsMapper.class);
 
+//    private static final Set<String> ADDITIONAL_FIELD_NAMES = Stream.of(
+//            CIKeys.USER___AGENT,
+//            CIKeys.CONTENT___TYPE,
+//            CIKeys.,
+//
+//
+//    )
+
+    /**
+     * Key => cleaned key
+     */
     private final Map<CIKey, CIKey> forwardMap;
+    /**
+     * Cleaned key => key
+     */
     private final Map<CIKey, CIKey> reverseMap;
 
     @Inject

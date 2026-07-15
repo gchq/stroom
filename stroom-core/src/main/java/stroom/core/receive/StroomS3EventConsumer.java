@@ -19,9 +19,12 @@ package stroom.core.receive;
 
 import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.api.Store;
+import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.S3CreateEvent;
@@ -41,12 +44,18 @@ public class StroomS3EventConsumer implements S3EventConsumer {
 
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final Store store;
+    private final MetaService metaService;
+    private final FeedProperties feedProperties;
 
     @Inject
     public StroomS3EventConsumer(final AttributeMapFilterFactory attributeMapFilterFactory,
-                                 final Store store) {
+                                 final Store store,
+                                 final MetaService metaService,
+                                 final FeedProperties feedProperties) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.store = store;
+        this.metaService = metaService;
+        this.feedProperties = feedProperties;
     }
 
     @Override
@@ -72,12 +81,28 @@ public class StroomS3EventConsumer implements S3EventConsumer {
 
     private void receiveEvent(final S3Location s3Location, final AttributeMap attributeMap) {
         // Get the effective time if one has been provided.
+        String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
         final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(attributeMap, true);
+        LOGGER.debug("receiveEvent() - feedName: '{}', typeName: '{}', effectiveMs: {}, s3Location: {}",
+                feedName, typeName, effectiveMs, s3Location);
+
+        if (typeName == null || typeName.isEmpty()) {
+            // If no type name is supplied then get the default for the feed.
+            typeName = feedProperties.getStreamTypeName(feedName);
+        }
+
+        // Validate the data type name.
+        if (!metaService.getTypes().contains(typeName)) {
+            throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE, attributeMap);
+        }
+
         final MetaProperties metaProperties = MetaProperties.builder()
-                .typeName(attributeMap.get(StandardHeaderArguments.TYPE))
-                .feedName(attributeMap.get(StandardHeaderArguments.FEED))
+                .typeName(typeName)
+                .feedName(feedName)
                 .effectiveMs(effectiveMs)
                 .build();
+
         // Don't need a target as the data is on S3 and staying put for stroom to read from it.
         store.addExistingS3Source(metaProperties, s3Location);
     }

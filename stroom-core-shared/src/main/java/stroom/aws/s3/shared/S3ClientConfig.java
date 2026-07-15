@@ -37,6 +37,10 @@ public class S3ClientConfig extends AbstractConfig implements IsProxyConfig {
     public static final String DEFAULT_BUCKET_NAME = "stroom.${feed}.${type}";
     public static final String DEFAULT_KEY_PATTERN =
             "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip";
+    public static final boolean DEFAULT_CROSS_REGION_ENALBED = false;
+    public static final boolean DEFAULT_ASYNC_ENABLED = false;
+    public static final boolean DEFAULT_MULTIPART_ENABLED = false;
+    public static final boolean DEFAULT_CREATE_BUCKETS_ENABLED = false;
 
     @JsonProperty
     private final AwsCredentials credentials;
@@ -101,11 +105,11 @@ public class S3ClientConfig extends AbstractConfig implements IsProxyConfig {
                           @JsonProperty("accelerate") final Boolean accelerate,
                           @JsonProperty("forcePathStyle") final Boolean forcePathStyle,
                           @JsonProperty("numRetries") final Integer numRetries,
-                          @JsonProperty("crossRegionAccessEnabled") final boolean crossRegionAccessEnabled,
+                          @JsonProperty("crossRegionAccessEnabled") final Boolean crossRegionAccessEnabled,
                           @JsonProperty("thresholdInBytes") final Long thresholdInBytes,
-                          @JsonProperty("async") final boolean async,
-                          @JsonProperty("multipart") final boolean multipart,
-                          @JsonProperty("createBuckets") final boolean createBuckets,
+                          @JsonProperty("async") final Boolean async,
+                          @JsonProperty("multipart") final Boolean multipart,
+                          @JsonProperty("createBuckets") final Boolean createBuckets,
                           @JsonProperty("bucketName") final String bucketName,
                           @JsonProperty("keyPattern") final String keyPattern) {
         this.credentials = credentials;
@@ -121,11 +125,12 @@ public class S3ClientConfig extends AbstractConfig implements IsProxyConfig {
         this.accelerate = accelerate;
         this.forcePathStyle = forcePathStyle;
         this.numRetries = numRetries;
-        this.crossRegionAccessEnabled = crossRegionAccessEnabled;
+        this.crossRegionAccessEnabled = Objects.requireNonNullElse(
+                crossRegionAccessEnabled, DEFAULT_CROSS_REGION_ENALBED);
         this.thresholdInBytes = thresholdInBytes;
-        this.async = async;
-        this.multipart = multipart;
-        this.createBuckets = createBuckets;
+        this.async = Objects.requireNonNullElse(async, DEFAULT_ASYNC_ENABLED);
+        this.multipart = Objects.requireNonNullElse(multipart, DEFAULT_MULTIPART_ENABLED);
+        this.createBuckets = Objects.requireNonNullElse(createBuckets, DEFAULT_CREATE_BUCKETS_ENABLED);
         this.bucketName = bucketName;
         this.keyPattern = keyPattern;
     }

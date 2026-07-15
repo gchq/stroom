@@ -65,14 +65,35 @@ public interface PrimitiveValueConverter<E extends HasPrimitiveValue> {
     E fromPrimitiveValue(final byte i);
 
     /**
+     * @return The value corresponding to primitive value i. If {@code i} does not
+     * correspond a value, a {@link RuntimeException} will be thrown.
+     */
+    E fromPrimitiveValueOrThrow(final byte i);
+
+    /**
      * @return The value corresponding to primitive value i or null if an unknown
      * primitive value is supplied or i is null.
      */
     E fromPrimitiveValue(final Byte i);
+
 
     /**
      * Converts a primitive or returns defaultValue if i is null.
      * If i is an unknown primitive value then null will be returned.
      */
     E fromPrimitiveValue(final Byte i, final E defaultValue);
+
+
+    /**
+     * If the supplied id cannot be converted to a byte an {@link IllegalArgumentException} will be thrown.
+     */
+    static <T extends Enum<T>> byte castId(final Class<T> clazz, final int id) {
+        final byte b;
+        try {
+            b = (byte) id;
+        } catch (final Exception e) {
+            throw new IllegalArgumentException("Invalid id " + id + " for enum " + clazz);
+        }
+        return b;
+    }
 }
