@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -37,6 +39,18 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TableFilterComponentSettings.class, name = "table-filter"),
 })
 @JsonInclude(Include.NON_NULL)
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "query", schema = QueryComponentSettings.class),
+                @DiscriminatorMapping(value = "table", schema = TableComponentSettings.class),
+                @DiscriminatorMapping(value = "vis", schema = VisComponentSettings.class),
+                @DiscriminatorMapping(value = "text", schema = TextComponentSettings.class),
+                @DiscriminatorMapping(value = "key-value-input", schema = KeyValueInputComponentSettings.class),
+                @DiscriminatorMapping(value = "list-input", schema = ListInputComponentSettings.class),
+                @DiscriminatorMapping(value = "text-input", schema = TextInputComponentSettings.class),
+                @DiscriminatorMapping(value = "embedded-query", schema = EmbeddedQueryComponentSettings.class),
+                @DiscriminatorMapping(value = "table-filter", schema = TableFilterComponentSettings.class)})
 public sealed interface ComponentSettings permits
         QueryComponentSettings,
         TableComponentSettings,

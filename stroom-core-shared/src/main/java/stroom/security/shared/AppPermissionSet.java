@@ -23,6 +23,8 @@ import stroom.util.shared.NullSafe;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Collection;
 import java.util.Set;
@@ -44,6 +46,12 @@ import java.util.stream.Stream;
         @JsonSubTypes.Type(value = AppPermissionSetImpl.class, name = "multiple"),
         @JsonSubTypes.Type(value = SingletonAppPermissionSet.class, name = "single"),
         @JsonSubTypes.Type(value = EmptyAppPermissionSet.class, name = "empty")})
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "multiple", schema = AppPermissionSetImpl.class),
+                @DiscriminatorMapping(value = "single", schema = SingletonAppPermissionSet.class),
+                @DiscriminatorMapping(value = "empty", schema = EmptyAppPermissionSet.class)})
 public interface AppPermissionSet extends Iterable<AppPermission> {
 
     /**

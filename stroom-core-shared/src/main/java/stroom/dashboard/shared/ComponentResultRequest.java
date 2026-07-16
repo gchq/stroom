@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
@@ -35,6 +36,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
         @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
 })
 @JsonInclude(Include.NON_NULL)
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "table", schema = TableResultRequest.class),
+                @DiscriminatorMapping(value = "vis", schema = VisResultRequest.class)})
 public abstract sealed class ComponentResultRequest permits TableResultRequest, VisResultRequest {
 
     @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",

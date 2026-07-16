@@ -18,6 +18,8 @@ package stroom.analytics.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -27,6 +29,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NotificationStreamDestination.class, name = "stream"),
         @JsonSubTypes.Type(value = NotificationEmailDestination.class, name = "email")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "stream", schema = NotificationStreamDestination.class),
+                @DiscriminatorMapping(value = "email", schema = NotificationEmailDestination.class)})
 public abstract sealed class NotificationDestination permits
         NotificationStreamDestination,
         NotificationEmailDestination {

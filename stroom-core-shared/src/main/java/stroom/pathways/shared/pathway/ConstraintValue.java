@@ -18,6 +18,8 @@ package stroom.pathways.shared.pathway;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -42,6 +44,26 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = DoubleSet.class, name = "doubleSet"),
         @JsonSubTypes.Type(value = DoubleRange.class, name = "doubleRange")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "anyValue", schema = AnyTypeValue.class),
+                @DiscriminatorMapping(value = "duration", schema = NanoTimeValue.class),
+                @DiscriminatorMapping(value = "durationRange", schema = NanoTimeRange.class),
+                @DiscriminatorMapping(value = "string", schema = StringValue.class),
+                @DiscriminatorMapping(value = "stringSet", schema = StringSet.class),
+                @DiscriminatorMapping(value = "regex", schema = Regex.class),
+                @DiscriminatorMapping(value = "boolean", schema = BooleanValue.class),
+                @DiscriminatorMapping(value = "booleanSet", schema = AnyBoolean.class),
+                @DiscriminatorMapping(value = "integer", schema = IntegerValue.class),
+                @DiscriminatorMapping(value = "integerSet", schema = IntegerSet.class),
+                @DiscriminatorMapping(value = "integerRange", schema = IntegerRange.class),
+                @DiscriminatorMapping(value = "long", schema = LongValue.class),
+                @DiscriminatorMapping(value = "longSet", schema = LongSet.class),
+                @DiscriminatorMapping(value = "longRange", schema = LongRange.class),
+                @DiscriminatorMapping(value = "double", schema = DoubleValue.class),
+                @DiscriminatorMapping(value = "doubleSet", schema = DoubleSet.class),
+                @DiscriminatorMapping(value = "doubleRange", schema = DoubleRange.class)})
 public sealed interface ConstraintValue permits
         AnyTypeValue,
         NanoTimeValue,

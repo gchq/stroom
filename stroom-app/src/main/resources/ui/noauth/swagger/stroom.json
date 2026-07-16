@@ -13638,6 +13638,22 @@
       "AbstractAnnotationChange" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "addTable" : "#/components/schemas/AddAnnotationTable",
+            "addTag" : "#/components/schemas/AddTag",
+            "assignedTo" : "#/components/schemas/ChangeAssignedTo",
+            "comment" : "#/components/schemas/ChangeComment",
+            "description" : "#/components/schemas/ChangeDescription",
+            "linkAnnotations" : "#/components/schemas/LinkAnnotations",
+            "linkEvents" : "#/components/schemas/LinkEvents",
+            "removeTag" : "#/components/schemas/RemoveTag",
+            "retentionPeriod" : "#/components/schemas/ChangeRetentionPeriod",
+            "setTag" : "#/components/schemas/SetTag",
+            "subject" : "#/components/schemas/ChangeSubject",
+            "title" : "#/components/schemas/ChangeTitle",
+            "unlinkAnnotations" : "#/components/schemas/UnlinkAnnotations",
+            "unlinkEvents" : "#/components/schemas/UnlinkEvents"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13650,6 +13666,10 @@
       "AbstractAppPermissionChange" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "AddAppPermission" : "#/components/schemas/AddAppPermission",
+            "RemoveAppPermission" : "#/components/schemas/RemoveAppPermission"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13669,6 +13689,18 @@
       "AbstractDocumentPermissionsChange" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "AddAllDocumentUserCreatePermissions" : "#/components/schemas/AddAllDocumentUserCreatePermissions",
+            "AddAllPermissionsFrom" : "#/components/schemas/AddAllPermissionsFrom",
+            "AddDocumentUserCreatePermission" : "#/components/schemas/AddDocumentUserCreatePermission",
+            "RemoveAllDocumentUserCreatePermissions" : "#/components/schemas/RemoveAllDocumentUserCreatePermissions",
+            "RemoveAllPermissions" : "#/components/schemas/RemoveAllPermissions",
+            "RemoveDocumentUserCreatePermission" : "#/components/schemas/RemoveDocumentUserCreatePermission",
+            "RemovePermission" : "#/components/schemas/RemovePermission",
+            "SetAllPermissionsFrom" : "#/components/schemas/SetAllPermissionsFrom",
+            "SetDocumentUserCreatePermissions" : "#/components/schemas/SetDocumentUserCreatePermissions",
+            "SetPermission" : "#/components/schemas/SetPermission"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13681,6 +13713,10 @@
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "data" : "#/components/schemas/FetchDataResult",
+            "marker" : "#/components/schemas/FetchMarkerResult"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13731,6 +13767,16 @@
       "AbstractPlanBSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "histogram" : "#/components/schemas/HistogramSettings",
+            "metric" : "#/components/schemas/MetricSettings",
+            "rangeState" : "#/components/schemas/RangeStateSettings",
+            "session" : "#/components/schemas/SessionSettings",
+            "state" : "#/components/schemas/StateSettings",
+            "temporalRangeState" : "#/components/schemas/TemporalRangeStateSettings",
+            "temporalState" : "#/components/schemas/TemporalStateSettings",
+            "trace" : "#/components/schemas/TraceSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14282,6 +14328,11 @@
       "AnalyticProcessConfig" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "scheduled_query" : "#/components/schemas/ScheduledQueryAnalyticProcessConfig",
+            "streaming" : "#/components/schemas/StreamingAnalyticProcessConfig",
+            "table_builder" : "#/components/schemas/TableBuilderAnalyticProcessConfig"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14392,6 +14443,11 @@
       "AnalyticTrackerData" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "scheduled_query" : "#/components/schemas/ScheduledQueryAnalyticTrackerData",
+            "streaming" : "#/components/schemas/StreamingAnalyticTrackerData",
+            "table_builder" : "#/components/schemas/TableBuilderAnalyticTrackerData"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14638,6 +14694,11 @@
       "AppPermissionSet" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "empty" : "#/components/schemas/EmptyAppPermissionSet",
+            "multiple" : "#/components/schemas/AppPermissionSetImpl",
+            "single" : "#/components/schemas/SingletonAppPermissionSet"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14791,6 +14852,11 @@
       "AskStroomAiContext" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "dashboardTable" : "#/components/schemas/DashboardTableContext",
+            "generalTable" : "#/components/schemas/GeneralTableContext",
+            "queryTable" : "#/components/schemas/QueryTableContext"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14982,6 +15048,16 @@
       "AwsCredentials" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "anonymous" : "#/components/schemas/AwsAnonymousCredentials",
+            "basic" : "#/components/schemas/AwsBasicCredentials",
+            "default" : "#/components/schemas/AwsDefaultCredentials",
+            "environment" : "#/components/schemas/AwsEnvironmentVariableCredentials",
+            "profile" : "#/components/schemas/AwsProfileCredentials",
+            "session" : "#/components/schemas/AwsSessionCredentials",
+            "system" : "#/components/schemas/AwsSystemPropertyCredentials",
+            "web" : "#/components/schemas/AwsWebCredentials"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15627,6 +15703,10 @@
       "CompletionItem" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "snippet" : "#/components/schemas/CompletionSnippet",
+            "value" : "#/components/schemas/CompletionValue"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15733,6 +15813,10 @@
       "ComponentResultRequest" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "table" : "#/components/schemas/TableResultRequest",
+            "vis" : "#/components/schemas/VisResultRequest"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15770,6 +15854,17 @@
       "ComponentSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "embedded-query" : "#/components/schemas/EmbeddedQueryComponentSettings",
+            "key-value-input" : "#/components/schemas/KeyValueInputComponentSettings",
+            "list-input" : "#/components/schemas/ListInputComponentSettings",
+            "query" : "#/components/schemas/QueryComponentSettings",
+            "table" : "#/components/schemas/TableComponentSettings",
+            "table-filter" : "#/components/schemas/TableFilterComponentSettings",
+            "text" : "#/components/schemas/TextComponentSettings",
+            "text-input" : "#/components/schemas/TextInputComponentSettings",
+            "vis" : "#/components/schemas/VisComponentSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15909,6 +16004,25 @@
       "ConstraintValue" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "anyValue" : "#/components/schemas/AnyTypeValue",
+            "boolean" : "#/components/schemas/BooleanValue",
+            "booleanSet" : "#/components/schemas/AnyBoolean",
+            "double" : "#/components/schemas/DoubleValue",
+            "doubleRange" : "#/components/schemas/DoubleRange",
+            "doubleSet" : "#/components/schemas/DoubleSet",
+            "duration" : "#/components/schemas/NanoTimeValue",
+            "durationRange" : "#/components/schemas/NanoTimeRange",
+            "integer" : "#/components/schemas/IntegerValue",
+            "integerRange" : "#/components/schemas/IntegerRange",
+            "integerSet" : "#/components/schemas/IntegerSet",
+            "long" : "#/components/schemas/LongValue",
+            "longRange" : "#/components/schemas/LongRange",
+            "longSet" : "#/components/schemas/LongSet",
+            "regex" : "#/components/schemas/Regex",
+            "string" : "#/components/schemas/StringValue",
+            "stringSet" : "#/components/schemas/StringSet"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -16113,6 +16227,10 @@
       "CoprocessorSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "event" : "#/components/schemas/EventCoprocessorSettings",
+            "table" : "#/components/schemas/TableCoprocessorSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -17828,6 +17946,11 @@
       "EntryValue" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "rows" : "#/components/schemas/AnnotationTable",
+            "string" : "#/components/schemas/StringEntryValue",
+            "user" : "#/components/schemas/UserRefEntryValue"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -18310,6 +18433,10 @@
         "type" : "object",
         "description" : "Base type for an item in an expression tree",
         "discriminator" : {
+          "mapping" : {
+            "operator" : "#/components/schemas/ExpressionOperator",
+            "term" : "#/components/schemas/ExpressionTerm"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -19615,6 +19742,10 @@
       "FormatSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "date" : "#/components/schemas/DateTimeFormatSettings",
+            "number" : "#/components/schemas/NumberFormatSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -21007,6 +21138,10 @@
       "LayoutConfig" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "splitLayout" : "#/components/schemas/SplitLayoutConfig",
+            "tabLayout" : "#/components/schemas/TabLayoutConfig"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -21149,6 +21284,10 @@
       "Location" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "default" : "#/components/schemas/DefaultLocation",
+            "stream" : "#/components/schemas/StreamLocation"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -21365,6 +21504,10 @@
       "Marker" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "storedError" : "#/components/schemas/StoredError",
+            "summary" : "#/components/schemas/Summary"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -21854,6 +21997,10 @@
       "NotificationDestination" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "email" : "#/components/schemas/NotificationEmailDestination",
+            "stream" : "#/components/schemas/NotificationStreamDestination"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -22090,6 +22237,11 @@
       "PathKey" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "name" : "#/components/schemas/NamePathKey",
+            "names" : "#/components/schemas/NamesPathKey",
+            "terminal" : "#/components/schemas/TerminalPathKey"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -22654,6 +22806,15 @@
       "PlanBValue" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "histogram" : "#/components/schemas/TemporalValue",
+            "rangeState" : "#/components/schemas/RangeState",
+            "session" : "#/components/schemas/Session",
+            "state" : "#/components/schemas/State",
+            "temporalRangeState" : "#/components/schemas/TemporalRangeState",
+            "temporalState" : "#/components/schemas/TemporalState",
+            "trace" : "#/components/schemas/SpanKV"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -22907,6 +23068,10 @@
       "ProcessorListRow" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "processor" : "#/components/schemas/ProcessorRow",
+            "processorFilter" : "#/components/schemas/ProcessorFilterRow"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -23416,6 +23581,11 @@
       "QueryHelpData" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "document" : "#/components/schemas/QueryHelpDocument",
+            "field" : "#/components/schemas/QueryHelpField",
+            "functionSignature" : "#/components/schemas/QueryHelpFunctionSignature"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -24183,6 +24353,12 @@
         "type" : "object",
         "description" : "Base object for describing a set of result data",
         "discriminator" : {
+          "mapping" : {
+            "flat" : "#/components/schemas/FlatResult",
+            "ql_vis" : "#/components/schemas/QLVisResult",
+            "table" : "#/components/schemas/TableResult",
+            "vis" : "#/components/schemas/VisResult"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -25383,6 +25559,12 @@
       "Secret" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "accessToken" : "#/components/schemas/AccessTokenSecret",
+            "keyStore" : "#/components/schemas/KeyStoreSecret",
+            "sshKey" : "#/components/schemas/SshKeySecret",
+            "usernamePassword" : "#/components/schemas/UsernamePasswordSecret"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -28297,6 +28479,22 @@
       "Val" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "boolean" : "#/components/schemas/ValBoolean",
+            "byte" : "#/components/schemas/ValByte",
+            "date" : "#/components/schemas/ValDate",
+            "double" : "#/components/schemas/ValDouble",
+            "duration" : "#/components/schemas/ValDuration",
+            "err" : "#/components/schemas/ValErr",
+            "float" : "#/components/schemas/ValFloat",
+            "integer" : "#/components/schemas/ValInteger",
+            "long" : "#/components/schemas/ValLong",
+            "null" : "#/components/schemas/ValNull",
+            "number" : "#/components/schemas/ValNumber",
+            "short" : "#/components/schemas/ValShort",
+            "string" : "#/components/schemas/ValString",
+            "xml" : "#/components/schemas/ValXml"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -28804,6 +29002,9 @@
       "Window" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "hopping" : "#/components/schemas/HoppingWindow"
+          },
           "propertyName" : "type"
         },
         "properties" : {

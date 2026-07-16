@@ -18,6 +18,8 @@ package stroom.annotation.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -28,6 +30,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = UserRefEntryValue.class, name = "user"),
         @JsonSubTypes.Type(value = AnnotationTable.class, name = "rows")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "string", schema = StringEntryValue.class),
+                @DiscriminatorMapping(value = "user", schema = UserRefEntryValue.class),
+                @DiscriminatorMapping(value = "rows", schema = AnnotationTable.class)})
 public sealed interface EntryValue permits StringEntryValue, UserRefEntryValue, AnnotationTable {
 
     String asUiValue();

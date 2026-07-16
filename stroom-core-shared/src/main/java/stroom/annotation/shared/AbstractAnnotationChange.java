@@ -18,6 +18,8 @@ package stroom.annotation.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -39,6 +41,23 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = UnlinkAnnotations.class, name = "unlinkAnnotations"),
         @JsonSubTypes.Type(value = AddAnnotationTable.class, name = "addTable"),
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "title", schema = ChangeTitle.class),
+                @DiscriminatorMapping(value = "subject", schema = ChangeSubject.class),
+                @DiscriminatorMapping(value = "addTag", schema = AddTag.class),
+                @DiscriminatorMapping(value = "removeTag", schema = RemoveTag.class),
+                @DiscriminatorMapping(value = "setTag", schema = SetTag.class),
+                @DiscriminatorMapping(value = "assignedTo", schema = ChangeAssignedTo.class),
+                @DiscriminatorMapping(value = "comment", schema = ChangeComment.class),
+                @DiscriminatorMapping(value = "retentionPeriod", schema = ChangeRetentionPeriod.class),
+                @DiscriminatorMapping(value = "description", schema = ChangeDescription.class),
+                @DiscriminatorMapping(value = "linkEvents", schema = LinkEvents.class),
+                @DiscriminatorMapping(value = "unlinkEvents", schema = UnlinkEvents.class),
+                @DiscriminatorMapping(value = "linkAnnotations", schema = LinkAnnotations.class),
+                @DiscriminatorMapping(value = "unlinkAnnotations", schema = UnlinkAnnotations.class),
+                @DiscriminatorMapping(value = "addTable", schema = AddAnnotationTable.class)})
 public abstract sealed class AbstractAnnotationChange permits
         ChangeTitle,
         ChangeSubject,

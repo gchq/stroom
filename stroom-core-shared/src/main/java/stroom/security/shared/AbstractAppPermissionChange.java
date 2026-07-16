@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -39,6 +41,11 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = AddAppPermission.class, name = "AddAppPermission"),
         @JsonSubTypes.Type(value = RemoveAppPermission.class, name = "RemoveAppPermission"),
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "AddAppPermission", schema = AddAppPermission.class),
+                @DiscriminatorMapping(value = "RemoveAppPermission", schema = RemoveAppPermission.class)})
 public abstract sealed class AbstractAppPermissionChange permits AddAppPermission, RemoveAppPermission {
 
     @JsonProperty
