@@ -16989,16 +16989,9 @@
       },
       "DefaultLocation" : {
         "type" : "object",
-        "properties" : {
-          "colNo" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "lineNo" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Location"
+        } ]
       },
       "DeleteAnnotationEntryRequest" : {
         "type" : "object",
@@ -18453,25 +18446,25 @@
       },
       "ExpressionOperator" : {
         "type" : "object",
-        "description" : "A logical addOperator term in a query expression tree",
-        "properties" : {
-          "children" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ExpressionItem"
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ExpressionItem"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ExpressionItem"
+              }
+            },
+            "op" : {
+              "type" : "string",
+              "description" : "The logical addOperator type",
+              "enum" : [ "AND", "OR", "NOT" ]
             }
-          },
-          "enabled" : {
-            "type" : "boolean",
-            "description" : "Whether this item in the expression tree is enabled or not",
-            "example" : true
-          },
-          "op" : {
-            "type" : "string",
-            "description" : "The logical addOperator type",
-            "enum" : [ "AND", "OR", "NOT" ]
           }
-        }
+        } ],
+        "description" : "A logical addOperator term in a query expression tree"
       },
       "ExpressionTerm" : {
         "type" : "object",
@@ -26772,25 +26765,26 @@
       },
       "StoredError" : {
         "type" : "object",
-        "properties" : {
-          "elementId" : {
-            "$ref" : "#/components/schemas/ElementId"
-          },
-          "errorType" : {
-            "type" : "string",
-            "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
-          },
-          "location" : {
-            "$ref" : "#/components/schemas/Location"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "severity" : {
-            "type" : "string",
-            "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Marker"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "elementId" : {
+              "$ref" : "#/components/schemas/ElementId"
+            },
+            "errorType" : {
+              "type" : "string",
+              "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
+            },
+            "location" : {
+              "$ref" : "#/components/schemas/Location"
+            },
+            "message" : {
+              "type" : "string"
+            }
           }
-        }
+        } ]
       },
       "StoredQuery" : {
         "type" : "object",
