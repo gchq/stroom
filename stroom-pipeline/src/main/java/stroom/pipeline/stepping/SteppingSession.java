@@ -16,78 +16,139 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
+
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
  * A durable stepping session scoped to one pipeline + stream selection. It owns the ordered list of
  * candidate stream ids and lazily sweeps them: a {@link StreamSweep} is launched for a stream only the
  * first time a step targets it (never all streams up front), via the supplied {@link SweepLauncher}.
- * The element fingerprints (keys for the captured IO) are computed once as they are the same for every
- * stream. {@link #close()} tears down the session (cancels sweeps + deletes persisted data).
+ * The session outlives an individual step - it is torn down only by terminate, idle reap, or close.
+ * {@link #close()} cancels sweeps and deletes the persisted data.
+ * <p>
+ * The user edits code while stepping, and an edit changes the fingerprints that key the captured IO. A
+ * sweep is therefore identified by <em>both</em> the stream and the fingerprint signature it captured
+ * under, and {@link #refresh} re-points the session at the current code on every step. Superseded sweeps
+ * that have already completed are kept: reverting an edit restores the previous signature, finds that
+ * sweep still cached, and serves the stream with no reprocessing at all. The underlying
+ * {@link StepDataStore} is shared by every sweep of a stream and keys IO by fingerprint, so the elements
+ * an edit did not touch are reused rather than recaptured.
  */
 public class SteppingSession {
 
     private final String sessionId;
     private final List<Long> streamIdList;
-    private final ElementFingerprints fingerprints;
     private final SweepLauncher launcher;
     private final Consumer<SteppingSession> onClose;
+    private final Consumer<StreamSweep> onTerminateSweep;
     private final int maxSweptStreams;
 
-    private final Map<Long, StreamSweep> sweeps = new ConcurrentHashMap<>();
+    private final Map<SweepKey, StreamSweep> sweeps = new HashMap<>();
     private volatile Instant lastAccessTime = Instant.now();
+
+    // The code/config this session is currently stepping. Updated by refresh() on every step.
+    private PipelineStepRequest currentRequest;
+    private ElementFingerprints currentFingerprints;
+    private Map<String, String> currentSignature;
 
     // Guards sweep creation against teardown. StepDataStoreManager requires that a store is never created
     // for a session that is being deleted (a create racing a delete re-creates the map entry and directory
     // that the delete just removed, leaking its channels and temp dir forever). This session is the owner
-    // that serialises the two, so ensureStreamSwept and close() are mutually exclusive.
+    // that serialises the two, so ensureStreamSwept and close() are mutually exclusive. It also guards the
+    // sweeps map and the current-request fields.
     private final Object lifecycleLock = new Object();
     private boolean closed;
 
     public SteppingSession(final String sessionId,
                            final List<Long> streamIdList,
+                           final PipelineStepRequest request,
                            final ElementFingerprints fingerprints,
                            final SweepLauncher launcher,
                            final Consumer<SteppingSession> onClose,
+                           final Consumer<StreamSweep> onTerminateSweep,
                            final int maxSweptStreams) {
         this.sessionId = sessionId;
         this.streamIdList = List.copyOf(streamIdList);
-        this.fingerprints = fingerprints;
         this.launcher = launcher;
         this.onClose = onClose;
+        this.onTerminateSweep = onTerminateSweep;
         this.maxSweptStreams = maxSweptStreams;
+        this.currentRequest = request;
+        this.currentFingerprints = fingerprints;
+        this.currentSignature = fingerprints.getCumulativeFingerprints();
     }
 
     /**
-     * Get (launching a sweep the first time) the sweep for a stream.
+     * Point the session at the code/config of the step about to be served. If the fingerprints changed (the
+     * user edited an element), any sweep still capturing under the old signature is abandoned - its output
+     * can no longer be reached - but completed ones are kept so that reverting the edit is free.
+     *
+     * @throws IllegalStateException if the session has been closed.
+     */
+    public void refresh(final PipelineStepRequest request, final ElementFingerprints fingerprints) {
+        synchronized (lifecycleLock) {
+            checkNotClosed();
+            lastAccessTime = Instant.now();
+            currentRequest = request;
+
+            final Map<String, String> signature = fingerprints.getCumulativeFingerprints();
+            if (!signature.equals(currentSignature)) {
+                sweeps.forEach((key, sweep) -> {
+                    if (!key.signature().equals(signature) && !sweep.isComplete()) {
+                        onTerminateSweep.accept(sweep);
+                    }
+                });
+                currentSignature = signature;
+                currentFingerprints = fingerprints;
+            }
+        }
+    }
+
+    /**
+     * Get (launching a sweep the first time) the sweep for a stream under the session's current
+     * fingerprints.
      *
      * @throws IllegalStateException if the session has been closed.
      */
     public StreamSweep ensureStreamSwept(final long metaId) {
         synchronized (lifecycleLock) {
-            if (closed) {
-                throw new IllegalStateException(
-                        "Stepping session " + sessionId + " has been closed");
-            }
+            checkNotClosed();
             lastAccessTime = Instant.now();
-            final StreamSweep existing = sweeps.get(metaId);
+
+            final SweepKey key = new SweepKey(metaId, currentSignature);
+            final StreamSweep existing = sweeps.get(key);
             if (existing != null) {
                 return existing;
             }
-            if (sweeps.size() >= maxSweptStreams) {
+            if (!isStreamSwept(metaId) && countSweptStreams() >= maxSweptStreams) {
                 throw new StepDataStoreException(
                         "This stepping session has already swept the maximum of " + maxSweptStreams
                         + " streams; narrow your selection");
             }
-            final StreamSweep sweep = launcher.launch(metaId);
-            sweeps.put(metaId, sweep);
+            final StreamSweep sweep = launcher.launch(metaId, currentRequest, currentFingerprints);
+            sweeps.put(key, sweep);
             return sweep;
+        }
+    }
+
+    private boolean isStreamSwept(final long metaId) {
+        return sweeps.keySet().stream().anyMatch(key -> key.metaId() == metaId);
+    }
+
+    private long countSweptStreams() {
+        return sweeps.keySet().stream().map(SweepKey::metaId).distinct().count();
+    }
+
+    private void checkNotClosed() {
+        if (closed) {
+            throw new IllegalStateException("Stepping session " + sessionId + " has been closed");
         }
     }
 
@@ -96,6 +157,13 @@ public class SteppingSession {
      */
     public boolean containsStream(final long metaId) {
         return streamIdList.contains(metaId);
+    }
+
+    /**
+     * @return true if this session was created for the same stream selection, i.e. it can serve the request.
+     */
+    public boolean matchesSelection(final List<Long> streamIds) {
+        return streamIdList.equals(streamIds);
     }
 
     public String getSessionId() {
@@ -107,11 +175,15 @@ public class SteppingSession {
     }
 
     public ElementFingerprints getFingerprints() {
-        return fingerprints;
+        synchronized (lifecycleLock) {
+            return currentFingerprints;
+        }
     }
 
     public Collection<StreamSweep> getActiveSweeps() {
-        return sweeps.values();
+        synchronized (lifecycleLock) {
+            return List.copyOf(sweeps.values());
+        }
     }
 
     public Instant getLastAccessTime() {
@@ -170,12 +242,20 @@ public class SteppingSession {
     // --------------------------------------------------------------------------------
 
     /**
+     * Identifies a sweep by the stream it captured and the fingerprint signature it captured under, so that
+     * an edit starts a new sweep while the pre-edit one stays available for a revert.
+     */
+    private record SweepKey(long metaId, Map<String, String> signature) {
+
+    }
+
+    /**
      * Launches (starts capturing) a stream's sweep. Supplied by the owner (e.g. {@code SteppingService}),
-     * bound to the session's request.
+     * bound to the session's current request and fingerprints, which change as the user edits code.
      */
     @FunctionalInterface
     public interface SweepLauncher {
 
-        StreamSweep launch(long metaId);
+        StreamSweep launch(long metaId, PipelineStepRequest request, ElementFingerprints fingerprints);
     }
 }

@@ -23,6 +23,7 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.pipeline.stepping.StepDataStoreManager;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
@@ -65,10 +66,18 @@ public class PipelineModule extends AbstractModule {
                 .bindJobTo(PipelineDestinationRoll.class, builder -> builder
                         .name("Pipeline Destination Roll")
                         .description("Roll any destinations based on their roll settings")
-                        .frequencySchedule("1m"));
+                        .frequencySchedule("1m"))
+                .bindJobTo(SteppingStoreCleanup.class, builder -> builder
+                        .name("Stepping Store Cleanup")
+                        .description("Delete orphaned pipeline stepping data left in the temp directory by " +
+                                     "sessions that did not shut down cleanly, as configured by " +
+                                     "'orphanMaxAge'.")
+                        .managed(false)
+                        .frequencySchedule("1h"));
 
         LifecycleBinder.create(binder())
-                .bindShutdownTaskTo(RollingDestinationsForceRoll.class);
+                .bindShutdownTaskTo(RollingDestinationsForceRoll.class)
+                .bindShutdownTaskTo(SteppingStoreShutdown.class);
     }
 
     private static class PipelineDestinationRoll extends RunnableWrapper {
@@ -84,6 +93,22 @@ public class PipelineModule extends AbstractModule {
         @Inject
         RollingDestinationsForceRoll(final RollingDestinations rollingDestinations) {
             super(rollingDestinations::forceRoll);
+        }
+    }
+
+    private static class SteppingStoreCleanup extends RunnableWrapper {
+
+        @Inject
+        SteppingStoreCleanup(final StepDataStoreManager stepDataStoreManager) {
+            super(stepDataStoreManager::cleanupOrphans);
+        }
+    }
+
+    private static class SteppingStoreShutdown extends RunnableWrapper {
+
+        @Inject
+        SteppingStoreShutdown(final StepDataStoreManager stepDataStoreManager) {
+            super(stepDataStoreManager::deleteAllSessions);
         }
     }
 }

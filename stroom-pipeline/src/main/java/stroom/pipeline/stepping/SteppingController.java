@@ -55,7 +55,6 @@ public class SteppingController {
     private final Set<ElementMonitor> monitors = new HashSet<>();
 
     private final MetaHolder metaHolder;
-    private final SteppingResponseCache steppingResponseCache;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationHolder locationHolder;
 
@@ -78,11 +77,9 @@ public class SteppingController {
 
     @Inject
     SteppingController(final MetaHolder metaHolder,
-                       final SteppingResponseCache steppingResponseCache,
                        final ErrorReceiverProxy errorReceiverProxy,
                        final LocationHolder locationHolder) {
         this.metaHolder = metaHolder;
-        this.steppingResponseCache = steppingResponseCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationHolder = locationHolder;
     }
@@ -234,11 +231,6 @@ public class SteppingController {
                 // Create a location for each monitoring filter to store data
                 // against.
                 foundLocation = progressLocation;
-
-                // Create step data for the current step.
-                final StepData stepData = createStepData(highlight);
-
-                steppingResponseCache.setStepData(foundLocation, stepData);
 
                 // We want to exit early if we have found a record and are
                 // stepping first, forward or refreshing.

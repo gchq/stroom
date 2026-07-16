@@ -18,7 +18,11 @@ package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.task.api.TaskContext;
+import stroom.util.shared.ElementId;
+import stroom.util.shared.Indicators;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,6 +56,12 @@ public class StreamSweep {
     // Set by the session when it wants this sweep to stop. Read by the capture task once it has published
     // its task context, closing the window where a close() sees a null context and skips termination.
     private volatile boolean terminateRequested;
+
+    // Per-stream state that a step result needs but that is not part of any single record's IO. The live
+    // path reads these off the handler after its one-shot run; a capture has to remember them because the
+    // run that produced them is long gone by the time a step is served from the store.
+    private final Map<Long, Boolean> segmentedByPart = new ConcurrentHashMap<>();
+    private volatile Map<ElementId, Indicators> startProcessIndicators = Map.of();
 
     public StreamSweep(final long metaId, final StepDataStore store) {
         this.metaId = metaId;
@@ -213,5 +223,29 @@ public class StreamSweep {
 
     public boolean isTerminateRequested() {
         return terminateRequested;
+    }
+
+    /**
+     * Record whether a part's data is segmented. Held per part, not per stream, because the live path
+     * reports the flag for the part holding the found record - the last part processed would be wrong.
+     */
+    void setSegmented(final long partIndex, final boolean segmented) {
+        segmentedByPart.put(partIndex, segmented);
+    }
+
+    public boolean isSegmented(final long partIndex) {
+        return Boolean.TRUE.equals(segmentedByPart.get(partIndex));
+    }
+
+    /**
+     * Indicators raised while the pipeline was starting up, before any record was processed. They belong to
+     * the stream rather than to a record, and are merged into whichever record a step resolves to.
+     */
+    void setStartProcessIndicators(final Map<ElementId, Indicators> indicators) {
+        this.startProcessIndicators = indicators == null ? Map.of() : Map.copyOf(indicators);
+    }
+
+    public Map<ElementId, Indicators> getStartProcessIndicators() {
+        return startProcessIndicators;
     }
 }

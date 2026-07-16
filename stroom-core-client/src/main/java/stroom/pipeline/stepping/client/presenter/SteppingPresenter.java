@@ -722,6 +722,12 @@ public class SteppingPresenter
 
         requestBuilder.childStreamType(childStreamType);
 
+        // A stepping session is scoped to the stream selection it was created with, so this starts a new
+        // one. Dropping the id also lets the server release the old session's captured data rather than
+        // holding it until the idle reap.
+        terminate();
+        requestBuilder.sessionUuid(null);
+
         if (stepType != null) {
             step(stepType, new StepLocation(
                     meta.getId(),
@@ -833,8 +839,11 @@ public class SteppingPresenter
             stepMessage.setVisible(true);
             terminateButton.setEnabled(true);
 
-            // Set a null session UUID as this is a new stepping session.
-            requestBuilder.sessionUuid(null);
+            // Keep the session UUID from previous steps. The server holds the stepping session - the data it
+            // has already captured for this stream selection - against that id, so preserving it across
+            // FIRST/FORWARD/BACKWARD/LAST/REFRESH is what lets each step be served from what was captured
+            // instead of running the pipeline again. It is cleared only when the selection changes (see
+            // beginStepping/setExpression); the server issues a new id if it no longer knows this one.
 
             final PipelineData pipelineData = pipelineModel.diff();
             pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
@@ -886,12 +895,16 @@ public class SteppingPresenter
                 .create(STEPPING_RESOURCE)
                 .method(res -> res.step(requestBuilder.build()))
                 .onSuccess(response -> {
+                    // Adopt the session id whether or not this step finished. A step that resolves on its
+                    // first poll would otherwise leave us with no id, so the next press would start a new
+                    // server session and re-capture the stream from scratch.
+                    requestBuilder.sessionUuid(response.getSessionUuid());
+
                     if (!response.isComplete()) {
                         if (busyTranslating) {
                             final StepLocation progressLocation = response.getProgressLocation();
                             stepMessage.getElement().setInnerHTML("Stepping... " +
                                                                   getStepLocationText(progressLocation));
-                            requestBuilder.sessionUuid(response.getSessionUuid());
                             poll();
                         } else {
                             stop();

@@ -165,6 +165,18 @@ public class StepDataStore {
         final List<PreparedWrite> prepared = new ArrayList<>(elements.size());
         long batchBytes = 0;
         for (final ElementRecord element : elements) {
+            final FileKey key = new FileKey(location.getPartIndex(), element.elementId(), element.fingerprint());
+            final ElementSegmentFile existing = openFiles.get(key);
+
+            // Already captured under this exact fingerprint, so by definition it is byte-identical - the
+            // fingerprint covers the element's config, its upstream config and the injected code. Skipping
+            // is what lets a stream be re-swept after an element is edited: the edited element and its
+            // downstream get new fingerprints and are written, while everything upstream is left alone
+            // (re-appending it would trip the in-order check below).
+            if (existing != null && existing.contains(location.getRecordIndex())) {
+                continue;
+            }
+
             final byte[] bytes = JsonUtil.writeValueAsBytes(element.data(), false);
             if (bytes == null) {
                 throw new StepDataStoreException(LogUtil.message(
@@ -177,8 +189,6 @@ public class StepDataStore {
             }
             batchBytes += bytes.length;
 
-            final FileKey key = new FileKey(location.getPartIndex(), element.elementId(), element.fingerprint());
-            final ElementSegmentFile existing = openFiles.get(key);
             if (existing != null && existing.recordCount() > 0) {
                 final long expected = existing.nextRecordIndex();
                 if (recordIndex != expected) {

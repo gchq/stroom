@@ -26,6 +26,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,6 +77,48 @@ class TestStepDataStoreManager {
         // A subsequent session for the same stream id gets a fresh store.
         final StepDataStore fresh = manager.getOrCreateStore("session1", 100L);
         assertThat(fresh.getRecordCount(0)).isZero();
+    }
+
+    @Test
+    void testCleanupOrphansDeletesOnlyStrandedOldDirs(@TempDir final Path tempDir) throws Exception {
+        final StepDataStoreManager manager = newManager(tempDir);
+
+        // A live session - its data is in use and must survive however old it looks.
+        manager.getOrCreateStore("live", 100L)
+                .putElementData(new StepLocation(100L, 0, 0), E1, "fp", data("a"));
+        final Path liveDir = manager.getSessionDir("live");
+        Files.setLastModifiedTime(liveDir, FileTime.from(Instant.now().minus(Duration.ofDays(1))));
+
+        // Stranded by a hard shutdown: no live session owns it, and it is older than orphanMaxAge (1h).
+        final Path orphanDir = manager.getBaseDir().resolve("orphan");
+        Files.createDirectories(orphanDir.resolve("100"));
+        Files.setLastModifiedTime(orphanDir, FileTime.from(Instant.now().minus(Duration.ofDays(1))));
+
+        // Unowned but recent - could belong to a session mid-creation, so it must be left alone.
+        final Path recentDir = manager.getBaseDir().resolve("recent");
+        Files.createDirectories(recentDir.resolve("100"));
+
+        manager.cleanupOrphans();
+
+        assertThat(Files.exists(orphanDir)).isFalse();
+        assertThat(Files.exists(liveDir)).isTrue();
+        assertThat(Files.exists(recentDir)).isTrue();
+        // The live session's data is still readable.
+        assertThat(manager.getOrCreateStore("live", 100L)
+                .getElementData(new StepLocation(100L, 0, 0), E1, "fp"))
+                .map(SharedElementData::getOutput).contains("a");
+    }
+
+    @Test
+    void testDeleteAllSessionsClearsTheBaseDir(@TempDir final Path tempDir) {
+        final StepDataStoreManager manager = newManager(tempDir);
+        manager.getOrCreateStore("s1", 1L).putElementData(new StepLocation(1L, 0, 0), E1, "fp", data("a"));
+        manager.getOrCreateStore("s2", 2L).putElementData(new StepLocation(2L, 0, 0), E1, "fp", data("b"));
+
+        manager.deleteAllSessions();
+
+        assertThat(Files.exists(manager.getSessionDir("s1"))).isFalse();
+        assertThat(Files.exists(manager.getSessionDir("s2"))).isFalse();
     }
 
     @Test

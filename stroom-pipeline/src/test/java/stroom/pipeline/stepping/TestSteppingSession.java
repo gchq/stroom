@@ -66,12 +66,21 @@ class TestSteppingSession {
                                     final Map<Long, StreamSweep> sweeps,
                                     final AtomicInteger launchCount) {
         final ElementFingerprints fingerprints = new ElementFingerprints(Map.of("e1", FP), Map.of("e1", FP));
-        final SteppingSession.SweepLauncher launcher = metaId -> {
+        final SteppingSession.SweepLauncher launcher = (metaId, request, fp) -> {
             launchCount.incrementAndGet();
             return sweeps.get(metaId);
         };
-        return new SteppingSession("session", order, fingerprints, launcher, s -> {
-        }, new SteppingConfig().getMaxSweptStreamsPerSession());
+        return new SteppingSession(
+                "session",
+                order,
+                req(StepType.FIRST, null),
+                fingerprints,
+                launcher,
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
     }
 
     private PipelineStepRequest req(final StepType type, final StepLocation ref) {
@@ -200,8 +209,15 @@ class TestSteppingSession {
         final AtomicInteger closed = new AtomicInteger();
         final ElementFingerprints fingerprints = new ElementFingerprints(Map.of(), Map.of());
         final SteppingSession session = new SteppingSession(
-                "s", List.of(1L), fingerprints, metaId -> new StreamSweep(metaId, null),
-                s -> closed.incrementAndGet(), new SteppingConfig().getMaxSweptStreamsPerSession());
+                "s",
+                List.of(1L),
+                req(StepType.FIRST, null),
+                fingerprints,
+                (metaId, request, fp) -> new StreamSweep(metaId, null),
+                s -> closed.incrementAndGet(),
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
         session.close();
         assertThat(closed.get()).isEqualTo(1);
 
@@ -235,12 +251,15 @@ class TestSteppingSession {
         final SteppingSession session = new SteppingSession(
                 "session",
                 List.of(10L, 20L, 30L),
+                req(StepType.FIRST, null),
                 fingerprints,
-                metaId -> {
+                (metaId, request, fp) -> {
                     launches.incrementAndGet();
                     return new StreamSweep(metaId, null);
                 },
                 s -> {
+                },
+                sweep -> {
                 },
                 2);
 
@@ -315,6 +334,39 @@ class TestSteppingSession {
         assertThat(result.foundRecord()).isTrue();
         // Record 5 of stream 10, NOT record 0 of stream 20.
         assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 5));
+    }
+
+    @Test
+    void testBackwardFromARecordTheSweepHasNotReachedWaitsRatherThanLanding(@TempDir final Path dir) {
+        // A step's reference location can be ahead of what this session has captured - a fresh session after
+        // an idle reap, say, still stepping from where the user was. Stepping back from it must not walk
+        // down over the not-yet-captured records, find each one absent, take that for "no match" and land on
+        // the first record of the part. It must wait for the sweep instead.
+        final StepDataStore store = new StepDataStore(dir.resolve("10"), new SteppingConfig());
+        store.putRecord(new StepLocation(10L, 0, 0),
+                List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r0"))));
+        // Record 0 is captured; the sweep is still running and has not reached records 1-9.
+        final StreamSweep s10 = new StreamSweep(10L, store);
+        final SteppingSession session = session(List.of(10L), Map.of(10L, s10), new AtomicInteger());
+
+        final SessionStepResult result = resolver.resolveSession(
+                session, req(StepType.BACKWARD, new StepLocation(10L, 0, 9)), 200);
+
+        assertThat(result.foundRecord()).isFalse();
+        assertThat(result.complete()).isFalse();
+        assertThat(result.foundLocation()).isNull();
+    }
+
+    @Test
+    void testBackwardStepsToThePreviousRecordOnceCaptured(@TempDir final Path dir) {
+        final StreamSweep s10 = sweptStream(dir, 10L, 10, true);
+        final SteppingSession session = session(List.of(10L), Map.of(10L, s10), new AtomicInteger());
+
+        final SessionStepResult result = resolver.resolveSession(
+                session, req(StepType.BACKWARD, new StepLocation(10L, 0, 9)), 5_000);
+
+        assertThat(result.foundRecord()).isTrue();
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 8));
     }
 
     // --------------------------------------------------------------------------------

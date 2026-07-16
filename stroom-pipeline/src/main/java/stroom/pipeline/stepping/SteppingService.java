@@ -39,6 +39,7 @@ import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.stepping.StepResultResolver.SessionStepResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
@@ -58,14 +59,14 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
 public class SteppingService {
@@ -83,12 +84,16 @@ public class SteppingService {
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
-    private final Map<Key, SteppingRequestHandler> currentHandlers = new ConcurrentHashMap<>();
+    // The durable stepping sessions, keyed by (user, session id). A session is NOT removed when a step
+    // completes - it lives until terminate, idle reap, or close, and that is what makes subsequent steps
+    // cheap.
+    private final Map<Key, SteppingSession> currentSessions = new ConcurrentHashMap<>();
     private final TaskManager taskManager;
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
     private final SteppingConfig steppingConfig;
+    private final StepResultResolver stepResultResolver;
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -104,7 +109,8 @@ public class SteppingService {
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final ElementFingerprinter elementFingerprinter,
-                           final SteppingConfig steppingConfig) {
+                           final SteppingConfig steppingConfig,
+                           final StepResultResolver stepResultResolver) {
         this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
         this.executorProvider = executorProvider;
@@ -119,6 +125,7 @@ public class SteppingService {
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
         this.steppingConfig = steppingConfig;
+        this.stepResultResolver = stepResultResolver;
     }
 
     /**
@@ -209,34 +216,40 @@ public class SteppingService {
      * {@link SteppingSession#close()} when finished.
      */
     public SteppingSession createSession(final PipelineStepRequest request) {
-        return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () -> {
-            final String sessionId = UUID.randomUUID().toString();
-            final ElementFingerprints fingerprints = computeFingerprints(request);
-            final List<Long> streamIds = getStreamIdList(request.getCriteria());
-            final SteppingSession.SweepLauncher launcher =
-                    metaId -> launchSweep(sessionId, request, metaId, fingerprints);
-            return new SteppingSession(
-                    sessionId,
-                    streamIds,
-                    fingerprints,
-                    launcher,
-                    this::closeSession,
-                    steppingConfig.getMaxSweptStreamsPerSession());
-        });
+        return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () ->
+                createSession(request, computeFingerprints(request), getStreamIdList(request.getCriteria())));
+    }
+
+    private SteppingSession createSession(final PipelineStepRequest request,
+                                          final ElementFingerprints fingerprints,
+                                          final List<Long> streamIds) {
+        final String sessionId = UUID.randomUUID().toString();
+        return new SteppingSession(
+                sessionId,
+                streamIds,
+                request,
+                fingerprints,
+                (metaId, sweepRequest, sweepFingerprints) ->
+                        launchSweep(sessionId, sweepRequest, metaId, sweepFingerprints),
+                this::closeSession,
+                this::terminateSweep,
+                steppingConfig.getMaxSweptStreamsPerSession());
     }
 
     private void closeSession(final SteppingSession session) {
-        session.getActiveSweeps().forEach(sweep -> {
-            // Request termination BEFORE reading the task context. A sweep that has been launched but whose
-            // task has not started yet has no context to terminate; the flag is what stops it, and this
-            // ordering is the half of the handshake that guarantees the capture task sees it.
-            sweep.requestTerminate();
-            final TaskContext taskContext = sweep.getTaskContext();
-            if (taskContext != null) {
-                taskManager.terminate(taskContext.getTaskId());
-            }
-        });
+        session.getActiveSweeps().forEach(this::terminateSweep);
         deleteCaptureSession(session.getSessionId());
+    }
+
+    private void terminateSweep(final StreamSweep sweep) {
+        // Request termination BEFORE reading the task context. A sweep that has been launched but whose
+        // task has not started yet has no context to terminate; the flag is what stops it, and this
+        // ordering is the half of the handshake that guarantees the capture task sees it.
+        sweep.requestTerminate();
+        final TaskContext taskContext = sweep.getTaskContext();
+        if (taskContext != null) {
+            taskManager.terminate(taskContext.getTaskId());
+        }
     }
 
     /**
@@ -252,71 +265,102 @@ public class SteppingService {
                                 .toList()));
     }
 
+    /**
+     * Serve one step from the user's durable stepping session, sweeping streams into the persisted store as
+     * they are needed. Unlike the pipeline-per-step path this replaced, the session is NOT torn down when a
+     * step completes - that is what lets subsequent steps be served from the store instead of re-running the
+     * pipeline. It is removed only by terminate, by the idle reap below, or by close.
+     */
     public SteppingResult step(final PipelineStepRequest request) {
         LOGGER.trace(() -> "step() - " + request);
-        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () -> {
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            final ElementFingerprints fingerprints = computeFingerprints(request);
+            final List<Long> streamIds = getStreamIdList(request.getCriteria());
 
-        final Key key;
-        final SteppingResult result;
-        if (request.getSessionUuid() == null) {
-            LOGGER.debug("New Stepping Session");
+            final SteppingSession session = getOrCreateSession(userIdentity, request, fingerprints, streamIds);
+            // Point the session at this step's code. If an element was edited its fingerprint (and its
+            // downstream) changed, so this step is served under new keys while the untouched elements are
+            // still read from what was already captured.
+            session.refresh(request, fingerprints);
 
-            // Create a new session UUID on the request.
-            final PipelineStepRequest modifiedRequest = request
-                    .copy()
-                    .sessionUuid(UUID.randomUUID().toString())
-                    .build();
-            key = new Key(userIdentity, modifiedRequest.getSessionUuid());
-            final SteppingRequestHandler handler = currentHandlers.computeIfAbsent(key, k -> {
-                final AtomicReference<SteppingRequestHandler> reference = new AtomicReference<>();
-                final CountDownLatch countDownLatch = new CountDownLatch(1);
-                final Executor executor = executorProvider.get(THREAD_POOL);
+            final SessionStepResult sessionResult = stepResultResolver.resolveSession(
+                    session, request, request.getTimeout() == null ? 0L : request.getTimeout());
 
-                CompletableFuture.runAsync(taskContextFactory.context("Translation stepping", taskContext -> {
-                    final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
-                    reference.set(steppingRequestHandler);
-                    countDownLatch.countDown();
-                    steppingRequestHandler.exec(taskContext, modifiedRequest);
-                }), executor);
+            reapIdleSessions();
 
-                try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    // Continue to interrupt this thread.
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e.getMessage(), e);
-                }
+            return toSteppingResult(request, session, sessionResult);
+        });
+    }
 
-                return reference.get();
-            });
-            result = handler.getResult(modifiedRequest);
-
-        } else {
-            LOGGER.debug(() -> "Polling stepping session: " + request.getSessionUuid());
-
-            key = new Key(userIdentity, request.getSessionUuid());
-            final SteppingRequestHandler handler = currentHandlers.get(key);
-            if (handler == null) {
-                throw new RuntimeException("No stepping session found for key: " + request.getSessionUuid());
+    private SteppingSession getOrCreateSession(final UserIdentity userIdentity,
+                                               final PipelineStepRequest request,
+                                               final ElementFingerprints fingerprints,
+                                               final List<Long> streamIds) {
+        final String requestedId = request.getSessionUuid();
+        if (requestedId != null) {
+            final SteppingSession existing = currentSessions.get(new Key(userIdentity, requestedId));
+            // A session is scoped to the stream selection it was created with; if the selection changed
+            // underneath us its stream list and captured data no longer answer this request.
+            if (existing != null && !existing.isClosed() && existing.matchesSelection(streamIds)) {
+                return existing;
             }
-
-            result = handler.getResult(request);
+            if (existing != null) {
+                removeSession(new Key(userIdentity, requestedId));
+            }
+            // Otherwise fall through and start a fresh session. The client is told the new id in the
+            // response and adopts it, so a reaped or stale session self-heals into a re-sweep rather than
+            // failing the step.
+            LOGGER.debug(() -> "Replacing stale stepping session: " + requestedId);
         }
 
-        // Remove handler if complete.
-        if (result.isComplete()) {
-            currentHandlers.remove(key);
-        }
+        final SteppingSession session = createSession(request, fingerprints, streamIds);
+        currentSessions.put(new Key(userIdentity, session.getSessionId()), session);
+        return session;
+    }
 
-        // Also remove old handlers for dead stepping tasks and terminate them.
-        final Instant oldest = Instant.now().minusSeconds(10);
-        currentHandlers.forEach((key1, value) -> {
-            if (value.getLastRequestTime().isBefore(oldest)) {
-                terminate(key1);
+    /**
+     * Map the session's answer onto the wire result. {@code complete} means "this step query resolved" - the
+     * client polls while a sweep is still working towards the requested record.
+     */
+    private SteppingResult toSteppingResult(final PipelineStepRequest request,
+                                            final SteppingSession session,
+                                            final SessionStepResult result) {
+        final Set<String> generalErrors = result.generalError() == null
+                ? Collections.emptySet()
+                : Set.of(result.generalError());
+        final Integer streamOffset = result.foundLocation() == null
+                ? null
+                : session.getStreamIdList().indexOf(result.foundLocation().getMetaId());
+
+        return new SteppingResult(
+                session.getSessionId(),
+                request.getStepFilterMap(),
+                result.progressLocation(),
+                result.foundLocation(),
+                result.stepData(),
+                streamOffset,
+                result.foundRecord(),
+                generalErrors,
+                result.segmentedData(),
+                result.complete());
+    }
+
+    private void reapIdleSessions() {
+        final Instant oldest = Instant.now().minus(steppingConfig.getMaxSessionIdleTime().getDuration());
+        currentSessions.forEach((key, session) -> {
+            if (session.getLastAccessTime().isBefore(oldest)) {
+                LOGGER.debug(() -> "Reaping idle stepping session: " + key);
+                removeSession(key);
             }
         });
+    }
 
-        return result;
+    private void removeSession(final Key key) {
+        final SteppingSession session = currentSessions.remove(key);
+        if (session != null) {
+            session.close();
+        }
     }
 
     public Boolean terminateStepping(final PipelineStepRequest request) {
@@ -326,17 +370,10 @@ public class SteppingService {
             LOGGER.debug(() -> "Terminate stepping: " + request.getSessionUuid());
             final UserIdentity userIdentity = securityContext.getUserIdentity();
             final Key key = new Key(userIdentity, request.getSessionUuid());
-            return terminate(key);
-        }
-        return false;
-    }
-
-    private Boolean terminate(final Key key) {
-        LOGGER.debug(() -> "Terminate: " + key);
-        final SteppingRequestHandler handler = currentHandlers.remove(key);
-        if (handler != null) {
-            taskManager.terminate(handler.getTaskContext().getTaskId());
-            return true;
+            if (currentSessions.containsKey(key)) {
+                removeSession(key);
+                return true;
+            }
         }
         return false;
     }

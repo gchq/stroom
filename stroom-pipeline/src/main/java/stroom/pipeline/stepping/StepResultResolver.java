@@ -24,6 +24,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
@@ -58,7 +59,12 @@ public class StepResultResolver {
     public SessionStepResult resolveSession(final SteppingSession session,
                                             final PipelineStepRequest request,
                                             final long timeoutMs) {
-        final long deadline = System.currentTimeMillis() + timeoutMs;
+        // Saturate rather than overflow: callers legitimately pass Long.MAX_VALUE to mean "wait as long as it
+        // takes", and a wrapped deadline lands in the past, which would abandon every step immediately.
+        final long now = System.currentTimeMillis();
+        final long deadline = timeoutMs >= Long.MAX_VALUE - now
+                ? Long.MAX_VALUE
+                : now + timeoutMs;
         final StepType stepType = request.getStepType();
         final boolean forward = stepType == StepType.FIRST || stepType == StepType.FORWARD;
         final StepLocation ref = request.getStepLocation();
@@ -103,7 +109,13 @@ public class StepResultResolver {
             final Optional<ResolvedStep> resolved = resolve(
                     sweep.getStore(), currentStream, session.getFingerprints(), streamRequest);
             if (resolved.isPresent()) {
-                return SessionStepResult.resolved(resolved.get().foundLocation(), resolved.get().stepData());
+                final StepLocation found = resolved.get().foundLocation();
+                return SessionStepResult.resolved(
+                        found,
+                        // Indicators raised during pipeline startup belong to the stream, so they are folded
+                        // into whichever record the step lands on - exactly as the live path does.
+                        mergeStartProcessIndicators(resolved.get().stepData(), sweep.getStartProcessIndicators()),
+                        sweep.isSegmented(found.getPartIndex()));
             }
 
             if (sweep.getError() != null) {
@@ -288,6 +300,14 @@ public class StepResultResolver {
         return new StepLocation(metaId, lastPart, store.getLastRecordIndex(lastPart));
     }
 
+    /**
+     * The neighbouring records of a location, or empty if the store cannot answer yet.
+     * <p>
+     * A sweep fills a part in record order, so the store holds a contiguous range and anything outside it is
+     * simply "not captured yet". Both directions must refuse to step onto such a record: empty makes
+     * {@code resolveSession} wait for the sweep to get there (and only means "there is no such record", i.e.
+     * cross into the neighbouring stream, once the sweep has completed and the range is final).
+     */
     private Optional<StepLocation> next(final StepDataStore store,
                                         final List<Long> parts,
                                         final long metaId,
@@ -296,6 +316,10 @@ public class StepResultResolver {
         final long record = loc.getRecordIndex();
         if (record < store.getLastRecordIndex(part)) {
             return Optional.of(new StepLocation(metaId, part, record + 1));
+        }
+        if (record > store.getLastRecordIndex(part)) {
+            // Ahead of the sweep - the next record may yet be captured in this part.
+            return Optional.empty();
         }
         final int idx = parts.indexOf(part);
         if (idx >= 0 && idx + 1 < parts.size()) {
@@ -312,7 +336,16 @@ public class StepResultResolver {
         final long part = loc.getPartIndex();
         final long record = loc.getRecordIndex();
         if (record > store.getFirstRecordIndex(part)) {
-            return Optional.of(new StepLocation(metaId, part, record - 1));
+            final long candidate = record - 1;
+            // Stepping back from a reference the sweep has not reached yet would walk down over records
+            // that are merely absent-so-far, treat each as a non-match, and land on the first record of the
+            // part. Wait for the sweep instead.
+            return candidate <= store.getLastRecordIndex(part)
+                    ? Optional.of(new StepLocation(metaId, part, candidate))
+                    : Optional.empty();
+        }
+        if (record > store.getLastRecordIndex(part)) {
+            return Optional.empty();
         }
         final int idx = parts.indexOf(part);
         if (idx > 0) {
@@ -329,6 +362,33 @@ public class StepResultResolver {
     }
 
     // --- assembly -------------------------------------------------------------------------------
+
+    /**
+     * Fold a stream's startup indicators into the step data for a record. The live path merges these into
+     * the element data it is about to return; here the data has been read back from the store, so the
+     * (immutable) element data is rebuilt with the combined indicators. An element that raised indicators
+     * while starting up but never captured any IO still gets an entry, or its errors would be invisible.
+     */
+    private SharedStepData mergeStartProcessIndicators(final SharedStepData stepData,
+                                                       final Map<ElementId, Indicators> startProcessIndicators) {
+        if (stepData == null || startProcessIndicators.isEmpty()) {
+            return stepData;
+        }
+        final Map<String, SharedElementData> merged = new HashMap<>(stepData.getElementMap());
+        startProcessIndicators.forEach((elementId, indicators) -> {
+            final SharedElementData existing = merged.get(elementId.getId());
+            merged.put(elementId.getId(), existing == null
+                    ? new SharedElementData(null, null, indicators, false, false, false)
+                    : new SharedElementData(
+                            existing.getInput(),
+                            existing.getOutput(),
+                            Indicators.combine(indicators, existing.getIndicators()),
+                            existing.isFormatInput(),
+                            existing.isFormatOutput(),
+                            existing.isHasOutput()));
+        });
+        return new SharedStepData(stepData.getSourceLocation(), merged);
+    }
 
     private SharedStepData assemble(final StepDataStore store,
                                     final long metaId,
@@ -382,22 +442,25 @@ public class StepResultResolver {
                                     StepLocation foundLocation,
                                     SharedStepData stepData,
                                     StepLocation progressLocation,
-                                    String generalError) {
+                                    String generalError,
+                                    boolean segmentedData) {
 
-        static SessionStepResult resolved(final StepLocation location, final SharedStepData stepData) {
-            return new SessionStepResult(true, true, location, stepData, null, null);
+        static SessionStepResult resolved(final StepLocation location,
+                                          final SharedStepData stepData,
+                                          final boolean segmentedData) {
+            return new SessionStepResult(true, true, location, stepData, null, null, segmentedData);
         }
 
         static SessionStepResult notFound() {
-            return new SessionStepResult(false, true, null, null, null, null);
+            return new SessionStepResult(false, true, null, null, null, null, false);
         }
 
         static SessionStepResult incomplete(final StepLocation progressLocation) {
-            return new SessionStepResult(false, false, null, null, progressLocation, null);
+            return new SessionStepResult(false, false, null, null, progressLocation, null, false);
         }
 
         static SessionStepResult error(final String message) {
-            return new SessionStepResult(false, true, null, null, null, message);
+            return new SessionStepResult(false, true, null, null, null, message, false);
         }
     }
 }
