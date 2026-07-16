@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.10] - 2026-07-16
+
+* Bug **#5665** : Change the basis for time variable replacement from now() to the meta create time when the stream store uses S3. The S3Appender still used now(). Also fix a bug with use of pipeline scoped objects outside of pipeline scope.
+
+
 ## [v7.12.9] - 2026-07-14
 
 * Bug : Fix type in Data Volume validation message.
@@ -2199,7 +2204,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.10...HEAD
+[v7.12.10]: https://github.com/gchq/stroom/compare/v7.12.9...v7.12.10
 [v7.12.9]: https://github.com/gchq/stroom/compare/v7.12.8...v7.12.9
 [v7.12.8]: https://github.com/gchq/stroom/compare/v7.12.7...v7.12.8
 [v7.12.7]: https://github.com/gchq/stroom/compare/v7.12.6...v7.12.7
