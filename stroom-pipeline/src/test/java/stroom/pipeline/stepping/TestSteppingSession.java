@@ -30,8 +30,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestSteppingSession {
 
@@ -69,7 +71,7 @@ class TestSteppingSession {
             return sweeps.get(metaId);
         };
         return new SteppingSession("session", order, fingerprints, launcher, s -> {
-        });
+        }, new SteppingConfig().getMaxSweptStreamsPerSession());
     }
 
     private PipelineStepRequest req(final StepType type, final StepLocation ref) {
@@ -199,8 +201,147 @@ class TestSteppingSession {
         final ElementFingerprints fingerprints = new ElementFingerprints(Map.of(), Map.of());
         final SteppingSession session = new SteppingSession(
                 "s", List.of(1L), fingerprints, metaId -> new StreamSweep(metaId, null),
-                s -> closed.incrementAndGet());
+                s -> closed.incrementAndGet(), new SteppingConfig().getMaxSweptStreamsPerSession());
         session.close();
         assertThat(closed.get()).isEqualTo(1);
+
+        // Closing is idempotent - an idle reap racing a user-driven close must not tear down twice.
+        session.close();
+        assertThat(closed.get()).isEqualTo(1);
+    }
+
+    @Test
+    void testSweepCannotBeLaunchedAfterClose() {
+        // A sweep launched after teardown re-creates the store dir and map entry that close() just deleted,
+        // and nothing would ever clean them up again.
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session =
+                session(List.of(10L, 20L), Map.of(20L, new StreamSweep(20L, null)), launches);
+
+        session.close();
+
+        assertThatThrownBy(() -> session.ensureStreamSwept(20L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("closed");
+        assertThat(launches.get()).isZero();
+        assertThat(session.isClosed()).isTrue();
+    }
+
+    @Test
+    void testSweptStreamsAreCappedPerSession() {
+        // Without this cap a filtered step matching nothing sweeps every stream in the selection to disk.
+        final AtomicInteger launches = new AtomicInteger();
+        final ElementFingerprints fingerprints = new ElementFingerprints(Map.of("e1", FP), Map.of("e1", FP));
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L, 20L, 30L),
+                fingerprints,
+                metaId -> {
+                    launches.incrementAndGet();
+                    return new StreamSweep(metaId, null);
+                },
+                s -> {
+                },
+                2);
+
+        session.ensureStreamSwept(10L);
+        session.ensureStreamSwept(20L);
+        // An already-swept stream is still served from the cache once the cap is reached.
+        assertThat(session.ensureStreamSwept(10L)).isNotNull();
+
+        assertThatThrownBy(() -> session.ensureStreamSwept(30L))
+                .isInstanceOf(StepDataStoreException.class)
+                .hasMessageContaining("narrow your selection");
+        assertThat(launches.get()).isEqualTo(2);
+    }
+
+    @Test
+    void testForwardIgnoresAReferenceToAStreamOutsideTheSession(@TempDir final Path dir) {
+        // The reference location comes from the client. Honouring a stream outside the session's (permission
+        // filtered) list would sweep data the session was never scoped to; the live path resets FORWARD to
+        // the first stream instead.
+        final AtomicInteger launches = new AtomicInteger();
+        final Map<Long, StreamSweep> sweeps = Map.of(10L, sweptStream(dir, 10L, 2, true));
+        final SteppingSession session = session(List.of(10L), sweeps, launches);
+
+        final SessionStepResult result = resolver.resolveSession(
+                session, req(StepType.FORWARD, new StepLocation(999L, 0, 5)), 5_000);
+
+        assertThat(result.foundRecord()).isTrue();
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 0));
+        // The out-of-session stream was never swept.
+        assertThat(launches.get()).isEqualTo(1);
+        assertThat(session.getActiveSweeps()).containsExactly(sweeps.get(10L));
+    }
+
+    @Test
+    void testRefreshIgnoresAReferenceToAStreamOutsideTheSession(@TempDir final Path dir) {
+        final SteppingSession session =
+                session(List.of(10L), Map.of(10L, sweptStream(dir, 10L, 2, true)), new AtomicInteger());
+
+        final SessionStepResult result = resolver.resolveSession(
+                session, req(StepType.REFRESH, new StepLocation(999L, 0, 0)), 5_000);
+
+        assertThat(result.foundRecord()).isFalse();
+    }
+
+    @Test
+    void testRecordLandingDuringTheScanIsNotSteppedOver(@TempDir final Path dir) {
+        // The resolver reads the sweep's version, scans the store, then asks whether the sweep is complete.
+        // A record committed inside that window is absent from the scan but present in a now-complete
+        // stream: concluding "no match here" would cross into the next stream and leave it unreachable
+        // forever. RacingSweep reproduces that interleaving deterministically.
+        final StepDataStore store10 = new StepDataStore(dir.resolve("10"), new SteppingConfig());
+        for (int r = 0; r <= 4; r++) {
+            store10.putRecord(new StepLocation(10L, 0, r),
+                    List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r" + r))));
+        }
+
+        final RacingSweep s10 = new RacingSweep(10L, store10, sweep -> {
+            // Commit record 5 and finish the stream, exactly between the scan and the completeness check.
+            final StepLocation loc = new StepLocation(10L, 0, 5);
+            store10.putRecord(loc, List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r5"))));
+            sweep.recordCaptured(loc);
+            sweep.markComplete();
+        });
+
+        final Map<Long, StreamSweep> sweeps = Map.of(10L, s10, 20L, sweptStream(dir, 20L, 1, true));
+        final SteppingSession session = session(List.of(10L, 20L), sweeps, new AtomicInteger());
+
+        final SessionStepResult result = resolver.resolveSession(
+                session, req(StepType.FORWARD, new StepLocation(10L, 0, 4)), 5_000);
+
+        assertThat(s10.fired).isTrue();
+        assertThat(result.foundRecord()).isTrue();
+        // Record 5 of stream 10, NOT record 0 of stream 20.
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 5));
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /**
+     * A sweep that commits a record the first time it is asked whether it is complete, reproducing a record
+     * landing in the window between the resolver's scan and its completeness check.
+     */
+    private static final class RacingSweep extends StreamSweep {
+
+        private final Consumer<RacingSweep> onFirstIsComplete;
+        private boolean fired;
+
+        private RacingSweep(final long metaId,
+                            final StepDataStore store,
+                            final Consumer<RacingSweep> onFirstIsComplete) {
+            super(metaId, store);
+            this.onFirstIsComplete = onFirstIsComplete;
+        }
+
+        @Override
+        public boolean isComplete() {
+            if (!fired) {
+                fired = true;
+                onFirstIsComplete.accept(this);
+            }
+            return super.isComplete();
+        }
     }
 }

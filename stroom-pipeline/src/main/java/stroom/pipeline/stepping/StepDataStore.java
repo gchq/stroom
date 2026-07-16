@@ -195,12 +195,24 @@ public class StepDataStore {
                     config.getMaxBytesPerStream()));
         }
 
-        // Commit all elements now that everything has validated.
+        // Open every target file before committing anything. Creating a file (mkdirs + FileChannel.open) can
+        // fail, and doing it here rather than in the append loop means such a failure happens while the
+        // record is still all-or-nothing, instead of after a sibling element has already been appended.
+        final List<ElementSegmentFile> targetFiles = new ArrayList<>(prepared.size());
         for (final PreparedWrite write : prepared) {
-            final ElementSegmentFile file = openFiles.containsKey(write.key())
-                    ? openFiles.get(write.key())
-                    : getOrCreateFile(location.getPartIndex(), write.elementId(), write.fingerprint());
-            file.append(recordIndex, write.bytes());
+            final ElementSegmentFile file = openFiles.get(write.key());
+            targetFiles.add(file != null
+                    ? file
+                    : getOrCreateFile(location.getPartIndex(), write.elementId(), write.fingerprint()));
+        }
+
+        // Commit all elements now that everything has validated and every file is open. An append can still
+        // fail on IO; that leaves earlier elements of this record written, but the record is never made
+        // visible because partMin/MaxRecordIndex below are what readers navigate by, and the exception fails
+        // the whole sweep rather than being skipped over.
+        for (int i = 0; i < prepared.size(); i++) {
+            final PreparedWrite write = prepared.get(i);
+            targetFiles.get(i).append(recordIndex, write.bytes());
             totalBytes += write.bytes().length;
             touchFingerprint(write.elementId(), write.fingerprint());
         }

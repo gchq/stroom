@@ -49,6 +49,10 @@ public class StreamSweep {
     // Set when the async capture task is launched, so the owning session can terminate it on close.
     private volatile TaskContext taskContext;
 
+    // Set by the session when it wants this sweep to stop. Read by the capture task once it has published
+    // its task context, closing the window where a close() sees a null context and skips termination.
+    private volatile boolean terminateRequested;
+
     public StreamSweep(final long metaId, final StepDataStore store) {
         this.metaId = metaId;
         this.store = store;
@@ -140,7 +144,7 @@ public class StreamSweep {
      *
      * @param knownVersion the version observed before reading the store.
      * @param timeoutMs     the maximum time to wait.
-     * @return true if progress/completion occurred, false if the timeout elapsed first.
+     * @return true if progress/completion occurred, false if the timeout elapsed or the wait was interrupted.
      */
     public boolean awaitChangeSince(final long knownVersion, final long timeoutMs) {
         lock.lock();
@@ -155,7 +159,10 @@ public class StreamSweep {
             return true;
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            return true;
+            // No progress was observed. Reporting progress here would send the caller round its resolve loop
+            // again, where the still-set interrupt flag makes the next await throw immediately - spinning a
+            // full store re-scan until its deadline. Consistent with awaitComplete, which returns `complete`.
+            return false;
         } finally {
             lock.unlock();
         }
@@ -191,5 +198,20 @@ public class StreamSweep {
 
     public TaskContext getTaskContext() {
         return taskContext;
+    }
+
+    /**
+     * Ask this sweep to stop. The capture task may not have published its {@link TaskContext} yet, so this
+     * flag is the other half of a handshake: the session sets it <em>before</em> reading
+     * {@link #getTaskContext()}, and the capture task publishes its context <em>before</em> reading this
+     * flag. Whichever order the two threads run in, at least one of them sees the other's write, so a sweep
+     * can never start (or keep running) after its session has been closed.
+     */
+    public void requestTerminate() {
+        terminateRequested = true;
+    }
+
+    public boolean isTerminateRequested() {
+        return terminateRequested;
     }
 }

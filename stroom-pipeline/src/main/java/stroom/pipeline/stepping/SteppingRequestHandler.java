@@ -117,6 +117,12 @@ class SteppingRequestHandler {
     private Instant lastRequestTime;
     // Phase 2 capture: the fingerprints used to key captured IO, exposed so the caller can read chunks back.
     private ElementFingerprints captureFingerprints;
+    // Capture mode only. On the live step() path a failure is reported to the user through the result's
+    // generalErrors, but an async reader never sees that set - it only sees the sweep's complete/error
+    // signal. So a capture must remember its first failure and turn it into markError, or a truncated
+    // stream would be indistinguishable from a fully captured one.
+    private volatile boolean capturing;
+    private volatile Throwable captureFailure;
 
     @Inject
     SteppingRequestHandler(final Store streamStore,
@@ -216,7 +222,19 @@ class SteppingRequestHandler {
         this.taskContext = taskContext;
         this.request = request;
         this.captureFingerprints = fingerprints;
+        this.capturing = true;
+        this.captureFailure = null;
+
+        // Publish the task context BEFORE reading the terminate flag. The session sets that flag before
+        // reading the context, so whichever of us runs second sees the other's write and the sweep cannot
+        // start after its session has already been closed.
         streamSweep.setTaskContext(taskContext);
+        if (streamSweep.isTerminateRequested()) {
+            streamSweep.markError(new RuntimeException(
+                    "Stepping capture of stream " + metaId + " was terminated before it started"));
+            return;
+        }
+
         taskContext.info(() -> "Capturing stepping data");
         final StepDataStore store = streamSweep.getStore();
 
@@ -247,10 +265,25 @@ class SteppingRequestHandler {
                     }
                 });
             });
-            // Signal that this stream is fully captured so waiting readers can stop and see all records.
-            streamSweep.markComplete();
-        } catch (final RuntimeException e) {
-            streamSweep.markError(e);
+
+            // Only a capture that ran to the end of the stream without failing may be reported as complete:
+            // a reader treats "complete" as "every record this stream will ever have is now in the store",
+            // and will happily navigate past the end of a truncated stream into the next one.
+            if (captureFailure != null) {
+                streamSweep.markError(captureFailure);
+            } else if (taskContext.isTerminated() || streamSweep.isTerminateRequested()) {
+                streamSweep.markError(new RuntimeException(
+                        "Stepping capture of stream " + metaId + " was terminated"));
+            } else {
+                streamSweep.markComplete();
+            }
+        } catch (final Throwable t) {
+            // Throwable, not RuntimeException: an Error here (OOM is plausible on a large stream) would
+            // otherwise leave the sweep neither complete nor errored, hanging every reader on it.
+            streamSweep.markError(t);
+            throw t;
+        } finally {
+            capturing = false;
         }
     }
 
@@ -265,6 +298,14 @@ class SteppingRequestHandler {
         lastFeedName = feedName;
         createPipeline(controller, feedName);
         if (pipeline == null || !loggingErrorReceiver.isAllOk()) {
+            // The pipeline could not be built (isAllOk is only false for ERROR/FATAL_ERROR, and nothing has
+            // been processed yet). The live path shows the user these errors via the step result; a capture
+            // has to surface them through the sweep or the reader just sees an empty, "successful" stream.
+            final String detail = loggingErrorReceiver.getMessage();
+            error(ProcessException.create("Unable to create pipeline for stepping capture"
+                                          + (detail == null || detail.isBlank()
+                                                  ? ""
+                                                  : ": " + detail)));
             return;
         }
         try {
@@ -834,6 +875,10 @@ class SteppingRequestHandler {
 
     private void error(final Exception e) {
         LOGGER.debug(e.getMessage(), e);
+
+        if (capturing && captureFailure == null) {
+            captureFailure = e;
+        }
 
         if (e.getMessage() == null || e.getMessage().trim().isEmpty()) {
             generalErrors.add(e.toString());

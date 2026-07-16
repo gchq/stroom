@@ -20,6 +20,8 @@ import stroom.pipeline.shared.stepping.StepLocation;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamSweep {
@@ -102,6 +104,59 @@ class TestStreamSweep {
         assertThat(sweep.getError()).isSameAs(boom);
         // Awaiting on a completed sweep returns immediately.
         assertThat(sweep.awaitChangeSince(sweep.getVersion(), 5_000)).isTrue();
+    }
+
+    @Test
+    void testAwaitChangeSinceReportsNoProgressWhenInterrupted() throws InterruptedException {
+        // An interrupted wait must not claim progress: a caller that believes a record landed goes round
+        // its resolve loop again, where the still-set interrupt flag makes the next await throw at once -
+        // spinning a full store re-scan until its deadline instead of bailing out.
+        final StreamSweep sweep = newSweep();
+        final AtomicBoolean signalled = new AtomicBoolean(true);
+        final AtomicBoolean interruptFlagPreserved = new AtomicBoolean();
+
+        final Thread waiter = new Thread(() -> {
+            signalled.set(sweep.awaitChangeSince(sweep.getVersion(), 30_000));
+            interruptFlagPreserved.set(Thread.currentThread().isInterrupted());
+        });
+        waiter.start();
+        // Give the waiter time to park, then interrupt it rather than letting it time out.
+        sleep(100);
+        waiter.interrupt();
+        waiter.join(5_000);
+
+        assertThat(waiter.isAlive()).isFalse();
+        assertThat(signalled).isFalse();
+        // The interrupt is still restored for the caller.
+        assertThat(interruptFlagPreserved).isTrue();
+    }
+
+    @Test
+    void testAwaitCompleteReportsIncompleteWhenInterrupted() throws InterruptedException {
+        final StreamSweep sweep = newSweep();
+        final AtomicBoolean completed = new AtomicBoolean(true);
+
+        final Thread waiter = new Thread(() -> completed.set(sweep.awaitComplete(30_000)));
+        waiter.start();
+        sleep(100);
+        waiter.interrupt();
+        waiter.join(5_000);
+
+        assertThat(waiter.isAlive()).isFalse();
+        assertThat(completed).isFalse();
+    }
+
+    @Test
+    void testTerminateRequestIsVisibleToACaptureThatHasNotStarted() {
+        // The session sets this flag before reading the task context; a capture task publishes its context
+        // before reading the flag. This is what stops a queued sweep starting after its session closed.
+        final StreamSweep sweep = newSweep();
+        assertThat(sweep.isTerminateRequested()).isFalse();
+        assertThat(sweep.getTaskContext()).isNull();
+
+        sweep.requestTerminate();
+
+        assertThat(sweep.isTerminateRequested()).isTrue();
     }
 
     private static void sleep(final long ms) {

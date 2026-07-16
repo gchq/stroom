@@ -69,12 +69,17 @@ public class StepResultResolver {
         }
         long currentStream = initial.getAsLong();
         boolean crossed = false;
+        StreamSweep lastSweep = null;
 
         while (true) {
             if (System.currentTimeMillis() >= deadline) {
-                return SessionStepResult.incomplete(null);
+                // Report how far the sweep got, so the UI's progress indicator keeps advancing rather than
+                // blanking out when a step's budget expires mid-sweep.
+                return SessionStepResult.incomplete(
+                        lastSweep == null ? null : lastSweep.getLastCapturedLocation());
             }
             final StreamSweep sweep = session.ensureStreamSwept(currentStream);
+            lastSweep = sweep;
             final long version = sweep.getVersion();
 
             // On the first stream use the requested step; after crossing a boundary, take the first
@@ -115,6 +120,13 @@ public class StepResultResolver {
                 continue;
             }
 
+            if (sweep.getVersion() != version) {
+                // Records landed while we were scanning, and the sweep has since completed. Our scan is
+                // stale, so concluding "no match in this stream" here would step straight over them into the
+                // next stream - and they would never be reachable again. Re-scan against the final store.
+                continue;
+            }
+
             // Stream fully captured with no match in the required direction. REFRESH is exact - no cross.
             if (stepType == StepType.REFRESH) {
                 return SessionStepResult.notFound();
@@ -130,15 +142,27 @@ public class StepResultResolver {
         }
     }
 
+    /**
+     * Pick the stream a step starts from. The reference location comes from the client, so its stream is
+     * only honoured if it is one of the session's candidate streams - that list is resolved as the
+     * requesting user, and sweeping a stream outside it would both read data the session was never scoped
+     * to and capture a stream the user may have no permission to see.
+     * <p>
+     * FORWARD falls back to the first stream when the reference is unusable, mirroring the live path
+     * (which resets to {@code StepLocation.first} when the stream is not in its filtered list).
+     */
     private OptionalLong initialStream(final SteppingSession session,
                                        final StepType stepType,
                                        final StepLocation ref) {
+        final OptionalLong refStream = ref != null && session.containsStream(ref.getMetaId())
+                ? OptionalLong.of(ref.getMetaId())
+                : OptionalLong.empty();
         return switch (stepType) {
             case FIRST -> session.firstStreamId();
             case LAST -> session.lastStreamId();
-            case FORWARD -> ref != null ? OptionalLong.of(ref.getMetaId()) : session.firstStreamId();
-            case BACKWARD -> ref != null ? OptionalLong.of(ref.getMetaId()) : session.lastStreamId();
-            case REFRESH -> ref != null ? OptionalLong.of(ref.getMetaId()) : OptionalLong.empty();
+            case FORWARD -> refStream.isPresent() ? refStream : session.firstStreamId();
+            case BACKWARD -> refStream.isPresent() ? refStream : session.lastStreamId();
+            case REFRESH -> refStream;
         };
     }
 

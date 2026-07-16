@@ -41,6 +41,7 @@ import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -87,6 +88,7 @@ public class SteppingService {
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
+    private final SteppingConfig steppingConfig;
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -101,7 +103,8 @@ public class SteppingService {
                            final TaskManager taskManager,
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
-                           final ElementFingerprinter elementFingerprinter) {
+                           final ElementFingerprinter elementFingerprinter,
+                           final SteppingConfig steppingConfig) {
         this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
         this.executorProvider = executorProvider;
@@ -115,6 +118,7 @@ public class SteppingService {
         this.stepDataStoreManager = stepDataStoreManager;
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
+        this.steppingConfig = steppingConfig;
     }
 
     /**
@@ -128,8 +132,16 @@ public class SteppingService {
         try {
             final ElementFingerprints fingerprints = computeFingerprints(request);
             final StreamSweep sweep = launchSweep(sessionId, request, metaId, fingerprints);
-            // Synchronous variant: wait for the whole stream to be captured.
-            sweep.awaitComplete(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout());
+            // Synchronous variant: wait for the whole stream to be captured. A timed-out wait must not be
+            // mistaken for a complete capture - the sweep is still writing to the store we would return.
+            if (!sweep.awaitComplete(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
+                final TaskContext taskContext = sweep.getTaskContext();
+                sweep.requestTerminate();
+                if (taskContext != null) {
+                    taskManager.terminate(taskContext.getTaskId());
+                }
+                throw new RuntimeException("Timed out waiting for stepping capture of stream " + metaId);
+            }
             if (sweep.getError() != null) {
                 throw new RuntimeException("Stepping capture failed", sweep.getError());
             }
@@ -152,9 +164,28 @@ public class SteppingService {
         final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
         final StreamSweep sweep = new StreamSweep(metaId, store);
         final Executor executor = executorProvider.get(THREAD_POOL);
-        CompletableFuture.runAsync(taskContextFactory.context("Stepping capture", taskContext ->
-                steppingRequestHandlerProvider.get().execCapture(
-                        taskContext, request, metaId, sweep, fingerprints)), executor);
+        try {
+            CompletableFuture
+                    .runAsync(taskContextFactory.context("Stepping capture", taskContext ->
+                            steppingRequestHandlerProvider.get().execCapture(
+                                    taskContext, request, metaId, sweep, fingerprints)), executor)
+                    // A reader blocks on this sweep until it signals, so every way the task can end must
+                    // signal. execCapture handles its own failures, but anything it cannot catch (an Error,
+                    // or a failure constructing the handler/task context) would otherwise leave the sweep
+                    // neither complete nor errored, hanging every reader until its deadline - forever, for
+                    // an unbounded await. This is the backstop for those paths.
+                    .whenComplete((unused, t) -> {
+                        if (t != null) {
+                            sweep.markError(t);
+                        } else if (!sweep.isComplete()) {
+                            sweep.markError(new RuntimeException(
+                                    "Stepping capture of stream " + metaId + " ended without completing"));
+                        }
+                    });
+        } catch (final RuntimeException e) {
+            // e.g. the executor rejected the task - nothing will ever run to signal the sweep.
+            sweep.markError(e);
+        }
         return sweep;
     }
 
@@ -178,16 +209,28 @@ public class SteppingService {
      * {@link SteppingSession#close()} when finished.
      */
     public SteppingSession createSession(final PipelineStepRequest request) {
-        final String sessionId = UUID.randomUUID().toString();
-        final ElementFingerprints fingerprints = computeFingerprints(request);
-        final List<Long> streamIds = getStreamIdList(request.getCriteria());
-        final SteppingSession.SweepLauncher launcher =
-                metaId -> launchSweep(sessionId, request, metaId, fingerprints);
-        return new SteppingSession(sessionId, streamIds, fingerprints, launcher, this::closeSession);
+        return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () -> {
+            final String sessionId = UUID.randomUUID().toString();
+            final ElementFingerprints fingerprints = computeFingerprints(request);
+            final List<Long> streamIds = getStreamIdList(request.getCriteria());
+            final SteppingSession.SweepLauncher launcher =
+                    metaId -> launchSweep(sessionId, request, metaId, fingerprints);
+            return new SteppingSession(
+                    sessionId,
+                    streamIds,
+                    fingerprints,
+                    launcher,
+                    this::closeSession,
+                    steppingConfig.getMaxSweptStreamsPerSession());
+        });
     }
 
     private void closeSession(final SteppingSession session) {
         session.getActiveSweeps().forEach(sweep -> {
+            // Request termination BEFORE reading the task context. A sweep that has been launched but whose
+            // task has not started yet has no context to terminate; the flag is what stops it, and this
+            // ordering is the half of the handshake that guarantees the capture task sees it.
+            sweep.requestTerminate();
             final TaskContext taskContext = sweep.getTaskContext();
             if (taskContext != null) {
                 taskManager.terminate(taskContext.getTaskId());
@@ -196,11 +239,17 @@ public class SteppingService {
         deleteCaptureSession(session.getSessionId());
     }
 
+    /**
+     * Resolve the session's candidate streams as the requesting user. This must never run as the processing
+     * user: the returned ids drive what the session will sweep and show, so doing so would let a user step
+     * through data they have no permission to read.
+     */
     private List<Long> getStreamIdList(final FindMetaCriteria criteria) {
-        return securityContext.asProcessingUserResult(() ->
-                metaService.find(criteria).getValues().stream()
-                        .map(Meta::getId)
-                        .toList());
+        return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () ->
+                securityContext.useAsReadResult(() ->
+                        metaService.find(criteria).getValues().stream()
+                                .map(Meta::getId)
+                                .toList()));
     }
 
     public SteppingResult step(final PipelineStepRequest request) {
