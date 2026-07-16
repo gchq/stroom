@@ -94,7 +94,6 @@ class SteppingRequestHandler {
     private final SteppingResponseCache steppingResponseCache;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final PipelineContext pipelineContext;
-    private final ElementFingerprinter elementFingerprinter;
     private final SecurityContext securityContext;
 
     private TaskContext taskContext;
@@ -136,9 +135,7 @@ class SteppingRequestHandler {
                            final SteppingResponseCache steppingResponseCache,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final PipelineContext pipelineContext,
-                           final ElementFingerprinter elementFingerprinter,
                            final SecurityContext securityContext) {
-        this.elementFingerprinter = elementFingerprinter;
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.feedProperties = feedProperties;
@@ -214,46 +211,47 @@ class SteppingRequestHandler {
     public void execCapture(final TaskContext taskContext,
                             final PipelineStepRequest request,
                             final long metaId,
-                            final StepDataStore store) {
+                            final StreamSweep streamSweep,
+                            final ElementFingerprints fingerprints) {
         this.taskContext = taskContext;
         this.request = request;
+        this.captureFingerprints = fingerprints;
+        streamSweep.setTaskContext(taskContext);
         taskContext.info(() -> "Capturing stepping data");
+        final StepDataStore store = streamSweep.getStore();
 
-        securityContext.secure(AppPermission.STEPPING_PERMISSION, () -> {
-            securityContext.useAsRead(() -> {
-                currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
+        try {
+            securityContext.secure(AppPermission.STEPPING_PERMISSION, () -> {
+                securityContext.useAsRead(() -> {
+                    currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
 
-                loggingErrorReceiver = new LoggingErrorReceiver();
-                errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
+                    loggingErrorReceiver = new LoggingErrorReceiver();
+                    errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
-                controller.setRequest(request);
-                controller.setTaskContext(taskContext);
+                    controller.setRequest(request);
+                    controller.setTaskContext(taskContext);
+                    // Capture mode: persist each record atomically and advance the sweep's progress signal.
+                    controller.setCaptureTarget(store, fingerprints, streamSweep::recordCaptured);
 
-                // Compute the fingerprints that key the captured IO (from the same merged data the
-                // pipeline is built from) and put the controller into capture mode before the pipeline is
-                // created, so the SplitFilter is configured for per-record capture.
-                final PipelineDataHolder pipelineDataHolder =
-                        pipelineDataHolderFactory.create(request.getPipelineDoc());
-                captureFingerprints = elementFingerprinter.fingerprint(
-                        pipelineDataHolder.getMergedPipelineData(), NullSafe.map(request.getCode()));
-                controller.setCaptureTarget(store, captureFingerprints);
-
-                try (final Source source = streamStore.openSource(metaId)) {
-                    if (source != null) {
-                        captureStream(source, request.getChildStreamType());
+                    try (final Source source = streamStore.openSource(metaId)) {
+                        if (source != null) {
+                            captureStream(source, request.getChildStreamType());
+                        }
+                    } catch (final IOException | RuntimeException e) {
+                        error(e);
                     }
-                } catch (final IOException | RuntimeException e) {
-                    error(e);
-                }
 
-                if (lastFeedName != null && pipeline != null) {
-                    pipeline.endProcessing();
-                    lastFeedName = null;
-                }
-
-                setResult(createResult(true));
+                    if (lastFeedName != null && pipeline != null) {
+                        pipeline.endProcessing();
+                        lastFeedName = null;
+                    }
+                });
             });
-        });
+            // Signal that this stream is fully captured so waiting readers can stop and see all records.
+            streamSweep.markComplete();
+        } catch (final RuntimeException e) {
+            streamSweep.markError(e);
+        }
     }
 
     private void captureStream(final Source source, final String childDataType) {

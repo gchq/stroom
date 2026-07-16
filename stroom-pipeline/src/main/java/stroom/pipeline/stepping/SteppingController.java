@@ -37,8 +37,11 @@ import stroom.util.shared.TextRange;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 @PipelineScoped
 public class SteppingController {
@@ -69,6 +72,7 @@ public class SteppingController {
     // the controller behaves as the legacy per-step (find-one-record-then-stop) stepper.
     private StepDataStore stepDataStore;
     private ElementFingerprints fingerprints;
+    private Consumer<StepLocation> recordListener;
 
     private TaskContext taskContext;
 
@@ -101,11 +105,16 @@ public class SteppingController {
 
     /**
      * Put the controller into capture mode: every record's per-element IO is persisted to the store,
-     * keyed by each element's cumulative fingerprint, and the parse runs to the end of the stream.
+     * keyed by each element's cumulative fingerprint, and the parse runs to the end of the stream. The
+     * {@code recordListener} (if any) is notified once each record has been fully committed, so an async
+     * sweep can advance its progress signal.
      */
-    public void setCaptureTarget(final StepDataStore stepDataStore, final ElementFingerprints fingerprints) {
+    public void setCaptureTarget(final StepDataStore stepDataStore,
+                                 final ElementFingerprints fingerprints,
+                                 final Consumer<StepLocation> recordListener) {
         this.stepDataStore = stepDataStore;
         this.fingerprints = fingerprints;
+        this.recordListener = recordListener;
     }
 
     public boolean isCaptureMode() {
@@ -257,15 +266,21 @@ public class SteppingController {
      */
     private void captureRecord(final StepLocation location, final TextRange highlight) {
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
+        final List<StepDataStore.ElementRecord> records = new ArrayList<>();
         for (final ElementMonitor monitor : monitors) {
             final String fingerprint = fingerprints == null
                     ? null
                     : fingerprints.getCumulativeFingerprint(monitor.getElementId().getId());
             if (fingerprint != null) {
                 final ElementData elementData = monitor.getElementData(errorReceiver, highlight);
-                stepDataStore.putElementData(
-                        location, monitor.getElementId(), fingerprint, elementData.convertToShared());
+                records.add(new StepDataStore.ElementRecord(
+                        monitor.getElementId(), fingerprint, elementData.convertToShared()));
             }
+        }
+        // Commit the whole record atomically, then signal that it is available.
+        stepDataStore.putRecord(location, records);
+        if (recordListener != null) {
+            recordListener.accept(location);
         }
     }
 

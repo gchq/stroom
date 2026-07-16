@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * Resolves a requested step (FIRST/FORWARD/BACKWARD/LAST/REFRESH, with optional filters) against a
@@ -43,6 +44,103 @@ import java.util.Optional;
 public class StepResultResolver {
 
     private final PersistedFilterEvaluator filterEvaluator = new PersistedFilterEvaluator();
+
+    /**
+     * Resolve a step across a whole {@link SteppingSession}, waiting for records to be captured and
+     * lazily sweeping neighbouring streams as navigation crosses stream boundaries. Streams are swept on
+     * demand (never all up front): FORWARD/FIRST that exhaust a completed stream continue into the next
+     * stream; BACKWARD/LAST into the previous. LAST waits for the target stream to finish so it can find
+     * the true last record. REFRESH is exact and never crosses.
+     *
+     * @param timeoutMs how long to wait for the requested record before returning an "incomplete" result
+     *                  (the client then polls again).
+     */
+    public SessionStepResult resolveSession(final SteppingSession session,
+                                            final PipelineStepRequest request,
+                                            final long timeoutMs) {
+        final long deadline = System.currentTimeMillis() + timeoutMs;
+        final StepType stepType = request.getStepType();
+        final boolean forward = stepType == StepType.FIRST || stepType == StepType.FORWARD;
+        final StepLocation ref = request.getStepLocation();
+
+        final OptionalLong initial = initialStream(session, stepType, ref);
+        if (initial.isEmpty()) {
+            return SessionStepResult.notFound();
+        }
+        long currentStream = initial.getAsLong();
+        boolean crossed = false;
+
+        while (true) {
+            if (System.currentTimeMillis() >= deadline) {
+                return SessionStepResult.incomplete(null);
+            }
+            final StreamSweep sweep = session.ensureStreamSwept(currentStream);
+            final long version = sweep.getVersion();
+
+            // On the first stream use the requested step; after crossing a boundary, take the first
+            // (forward) or last (backward) record of the neighbour, preserving any filters.
+            final PipelineStepRequest streamRequest = crossed
+                    ? request.copy()
+                            .stepType(forward ? StepType.FIRST : StepType.LAST)
+                            .stepLocation(null)
+                            .build()
+                    : request;
+
+            // LAST needs the stream fully captured to know the true last record.
+            if (streamRequest.getStepType() == StepType.LAST && !sweep.isComplete()) {
+                final long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0 || !sweep.awaitComplete(remaining)) {
+                    return SessionStepResult.incomplete(sweep.getLastCapturedLocation());
+                }
+                continue;
+            }
+
+            final Optional<ResolvedStep> resolved = resolve(
+                    sweep.getStore(), currentStream, session.getFingerprints(), streamRequest);
+            if (resolved.isPresent()) {
+                return SessionStepResult.resolved(resolved.get().foundLocation(), resolved.get().stepData());
+            }
+
+            if (sweep.getError() != null) {
+                final String message = sweep.getError().getMessage();
+                return SessionStepResult.error(message != null ? message : "Stepping capture error");
+            }
+
+            if (!sweep.isComplete()) {
+                // The target record may still be captured in this stream; wait for progress.
+                final long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0 || !sweep.awaitChangeSince(version, remaining)) {
+                    return SessionStepResult.incomplete(sweep.getLastCapturedLocation());
+                }
+                continue;
+            }
+
+            // Stream fully captured with no match in the required direction. REFRESH is exact - no cross.
+            if (stepType == StepType.REFRESH) {
+                return SessionStepResult.notFound();
+            }
+            final OptionalLong neighbour = forward
+                    ? session.nextStreamId(currentStream)
+                    : session.prevStreamId(currentStream);
+            if (neighbour.isEmpty()) {
+                return SessionStepResult.notFound();
+            }
+            currentStream = neighbour.getAsLong();
+            crossed = true;
+        }
+    }
+
+    private OptionalLong initialStream(final SteppingSession session,
+                                       final StepType stepType,
+                                       final StepLocation ref) {
+        return switch (stepType) {
+            case FIRST -> session.firstStreamId();
+            case LAST -> session.lastStreamId();
+            case FORWARD -> ref != null ? OptionalLong.of(ref.getMetaId()) : session.firstStreamId();
+            case BACKWARD -> ref != null ? OptionalLong.of(ref.getMetaId()) : session.lastStreamId();
+            case REFRESH -> ref != null ? OptionalLong.of(ref.getMetaId()) : OptionalLong.empty();
+        };
+    }
 
     /**
      * @return the resolved record location and assembled step data, or empty if no matching record exists
@@ -243,5 +341,39 @@ public class StepResultResolver {
      * A resolved step: the record that was found and the per-element data assembled for it.
      */
     public record ResolvedStep(StepLocation foundLocation, SharedStepData stepData) {
+    }
+
+    /**
+     * The outcome of a whole-session step resolution.
+     *
+     * @param foundRecord      whether a matching record was found.
+     * @param complete         whether the step query resolved (true) or is still waiting on capture (false).
+     * @param foundLocation    the resolved record (when found).
+     * @param stepData         the assembled per-element data (when found).
+     * @param progressLocation the furthest-captured record while still sweeping (for progress display).
+     * @param generalError     a capture error message, if the sweep failed.
+     */
+    public record SessionStepResult(boolean foundRecord,
+                                    boolean complete,
+                                    StepLocation foundLocation,
+                                    SharedStepData stepData,
+                                    StepLocation progressLocation,
+                                    String generalError) {
+
+        static SessionStepResult resolved(final StepLocation location, final SharedStepData stepData) {
+            return new SessionStepResult(true, true, location, stepData, null, null);
+        }
+
+        static SessionStepResult notFound() {
+            return new SessionStepResult(false, true, null, null, null, null);
+        }
+
+        static SessionStepResult incomplete(final StepLocation progressLocation) {
+            return new SessionStepResult(false, false, null, null, progressLocation, null);
+        }
+
+        static SessionStepResult error(final String message) {
+            return new SessionStepResult(false, true, null, null, null, message);
+        }
     }
 }

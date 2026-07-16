@@ -29,6 +29,7 @@ import stroom.pipeline.factory.Element;
 import stroom.pipeline.factory.ElementFactory;
 import stroom.pipeline.factory.ElementRegistry;
 import stroom.pipeline.factory.ElementRegistryFactory;
+import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.shared.PipelineDoc;
@@ -41,6 +42,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.api.ThreadPoolImpl;
@@ -83,6 +85,8 @@ public class SteppingService {
     private final Map<Key, SteppingRequestHandler> currentHandlers = new ConcurrentHashMap<>();
     private final TaskManager taskManager;
     private final StepDataStoreManager stepDataStoreManager;
+    private final PipelineDataHolderFactory pipelineDataHolderFactory;
+    private final ElementFingerprinter elementFingerprinter;
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -95,7 +99,9 @@ public class SteppingService {
                            final ElementRegistryFactory pipelineElementRegistryFactory,
                            final ElementFactory elementFactory,
                            final TaskManager taskManager,
-                           final StepDataStoreManager stepDataStoreManager) {
+                           final StepDataStoreManager stepDataStoreManager,
+                           final PipelineDataHolderFactory pipelineDataHolderFactory,
+                           final ElementFingerprinter elementFingerprinter) {
         this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
         this.executorProvider = executorProvider;
@@ -107,6 +113,8 @@ public class SteppingService {
         this.elementFactory = elementFactory;
         this.taskManager = taskManager;
         this.stepDataStoreManager = stepDataStoreManager;
+        this.pipelineDataHolderFactory = pipelineDataHolderFactory;
+        this.elementFingerprinter = elementFingerprinter;
     }
 
     /**
@@ -117,18 +125,15 @@ public class SteppingService {
      */
     public SteppingCaptureResult capture(final PipelineStepRequest request, final long metaId) {
         final String sessionId = UUID.randomUUID().toString();
-        final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
-        final AtomicReference<SteppingRequestHandler> reference = new AtomicReference<>();
-        final Executor executor = executorProvider.get(THREAD_POOL);
-
         try {
-            CompletableFuture.runAsync(taskContextFactory.context("Stepping capture", taskContext -> {
-                final SteppingRequestHandler handler = steppingRequestHandlerProvider.get();
-                reference.set(handler);
-                handler.execCapture(taskContext, request, metaId, store);
-            }), executor).join();
-
-            return new SteppingCaptureResult(sessionId, store, reference.get().getCaptureFingerprints());
+            final ElementFingerprints fingerprints = computeFingerprints(request);
+            final StreamSweep sweep = launchSweep(sessionId, request, metaId, fingerprints);
+            // Synchronous variant: wait for the whole stream to be captured.
+            sweep.awaitComplete(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout());
+            if (sweep.getError() != null) {
+                throw new RuntimeException("Stepping capture failed", sweep.getError());
+            }
+            return new SteppingCaptureResult(sessionId, sweep.getStore(), fingerprints);
         } catch (final RuntimeException e) {
             // Don't leak the store (open channels + temp dir) if capture failed part way through.
             deleteCaptureSession(sessionId);
@@ -136,8 +141,66 @@ public class SteppingService {
         }
     }
 
+    /**
+     * Launch an asynchronous capture of one stream into a fresh {@link StreamSweep}; returns immediately.
+     * Readers wait on the sweep for records to become available.
+     */
+    public StreamSweep launchSweep(final String sessionId,
+                                   final PipelineStepRequest request,
+                                   final long metaId,
+                                   final ElementFingerprints fingerprints) {
+        final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
+        final StreamSweep sweep = new StreamSweep(metaId, store);
+        final Executor executor = executorProvider.get(THREAD_POOL);
+        CompletableFuture.runAsync(taskContextFactory.context("Stepping capture", taskContext ->
+                steppingRequestHandlerProvider.get().execCapture(
+                        taskContext, request, metaId, sweep, fingerprints)), executor);
+        return sweep;
+    }
+
+    /**
+     * Compute the element fingerprints (keys for the captured IO) for a request's pipeline. Computed once
+     * per session as they are the same for every stream.
+     */
+    public ElementFingerprints computeFingerprints(final PipelineStepRequest request) {
+        return elementFingerprinter.fingerprint(
+                pipelineDataHolderFactory.create(request.getPipelineDoc()).getMergedPipelineData(),
+                NullSafe.map(request.getCode()));
+    }
+
     public void deleteCaptureSession(final String sessionId) {
         stepDataStoreManager.deleteSession(sessionId);
+    }
+
+    /**
+     * Create a durable stepping session for a request: computes the fingerprints once and resolves the
+     * ordered candidate stream id list. Streams are swept lazily as steps target them. Call
+     * {@link SteppingSession#close()} when finished.
+     */
+    public SteppingSession createSession(final PipelineStepRequest request) {
+        final String sessionId = UUID.randomUUID().toString();
+        final ElementFingerprints fingerprints = computeFingerprints(request);
+        final List<Long> streamIds = getStreamIdList(request.getCriteria());
+        final SteppingSession.SweepLauncher launcher =
+                metaId -> launchSweep(sessionId, request, metaId, fingerprints);
+        return new SteppingSession(sessionId, streamIds, fingerprints, launcher, this::closeSession);
+    }
+
+    private void closeSession(final SteppingSession session) {
+        session.getActiveSweeps().forEach(sweep -> {
+            final TaskContext taskContext = sweep.getTaskContext();
+            if (taskContext != null) {
+                taskManager.terminate(taskContext.getTaskId());
+            }
+        });
+        deleteCaptureSession(session.getSessionId());
+    }
+
+    private List<Long> getStreamIdList(final FindMetaCriteria criteria) {
+        return securityContext.asProcessingUserResult(() ->
+                metaService.find(criteria).getValues().stream()
+                        .map(Meta::getId)
+                        .toList());
     }
 
     public SteppingResult step(final PipelineStepRequest request) {

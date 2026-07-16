@@ -144,6 +144,71 @@ public class StepDataStore {
     }
 
     /**
+     * Atomically persist all of a record's per-element IO. Every element is serialised and validated
+     * (size/byte caps, contiguous ordering) BEFORE anything is written, so a rejected record leaves the
+     * store untouched and a reader never observes a partially-written ("torn") trailing record. Capture
+     * uses this so that a record only becomes visible/navigable once every element for it is committed.
+     */
+    public synchronized void putRecord(final StepLocation location, final List<ElementRecord> elements) {
+        checkNotDeleted();
+        if (elements == null || elements.isEmpty()) {
+            return;
+        }
+        final long recordIndex = location.getRecordIndex();
+        if (recordIndex >= config.getMaxRecordsPerStream()) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Stepping store for this stream would exceed the {} record limit; narrow your selection",
+                    config.getMaxRecordsPerStream()));
+        }
+
+        // Pre-serialise and validate every element up-front so nothing is written unless all will succeed.
+        final List<PreparedWrite> prepared = new ArrayList<>(elements.size());
+        long batchBytes = 0;
+        for (final ElementRecord element : elements) {
+            final byte[] bytes = JsonUtil.writeValueAsBytes(element.data(), false);
+            if (bytes == null) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Unable to serialise element data for {} at {}", element.elementId(), location));
+            }
+            if (bytes.length > config.getMaxRecordSizeBytes()) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Element IO for {} at {} is {} bytes which exceeds the {} byte limit",
+                        element.elementId(), location, bytes.length, config.getMaxRecordSizeBytes()));
+            }
+            batchBytes += bytes.length;
+
+            final FileKey key = new FileKey(location.getPartIndex(), element.elementId(), element.fingerprint());
+            final ElementSegmentFile existing = openFiles.get(key);
+            if (existing != null && existing.recordCount() > 0) {
+                final long expected = existing.nextRecordIndex();
+                if (recordIndex != expected) {
+                    throw new StepDataStoreException(LogUtil.message(
+                            "Records must be appended in order for {} fingerprint {}; expected index {} but got {}",
+                            element.elementId(), element.fingerprint(), expected, recordIndex));
+                }
+            }
+            prepared.add(new PreparedWrite(key, element.elementId(), element.fingerprint(), bytes));
+        }
+        if (totalBytes + batchBytes > config.getMaxBytesPerStream()) {
+            throw new StepDataStoreException(LogUtil.message(
+                    "Stepping store for this stream would exceed the {} byte limit; narrow your selection",
+                    config.getMaxBytesPerStream()));
+        }
+
+        // Commit all elements now that everything has validated.
+        for (final PreparedWrite write : prepared) {
+            final ElementSegmentFile file = openFiles.containsKey(write.key())
+                    ? openFiles.get(write.key())
+                    : getOrCreateFile(location.getPartIndex(), write.elementId(), write.fingerprint());
+            file.append(recordIndex, write.bytes());
+            totalBytes += write.bytes().length;
+            touchFingerprint(write.elementId(), write.fingerprint());
+        }
+        partMinRecordIndex.merge(location.getPartIndex(), recordIndex, Math::min);
+        partMaxRecordIndex.merge(location.getPartIndex(), recordIndex, Math::max);
+    }
+
+    /**
      * Read back one element's IO for one record, or empty if not present (element/fingerprint unknown or
      * record not yet written).
      */
@@ -321,6 +386,15 @@ public class StepDataStore {
     // --------------------------------------------------------------------------------
 
     private record FileKey(long partIndex, ElementId elementId, String fingerprint) {
+    }
+
+    /**
+     * One element's IO for a record, for an atomic {@link #putRecord} write.
+     */
+    public record ElementRecord(ElementId elementId, String fingerprint, SharedElementData data) {
+    }
+
+    private record PreparedWrite(FileKey key, ElementId elementId, String fingerprint, byte[] bytes) {
     }
 
     // --------------------------------------------------------------------------------

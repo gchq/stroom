@@ -25,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -205,6 +206,36 @@ class TestStepDataStore {
         // The already-written record is intact and the rejected one is absent.
         assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(SharedElementData::getOutput).contains("a");
         assertThat(store.getElementData(loc(0, 2), E1, FP_A)).isEmpty();
+    }
+
+    @Test
+    void testPutRecordWritesAllElementsAtomically(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 3; r++) {
+            store.putRecord(loc(0, r), List.of(
+                    new StepDataStore.ElementRecord(E1, FP_A, data("e1in" + r, "e1out" + r)),
+                    new StepDataStore.ElementRecord(E2, FP_B, data("e2in" + r, "e2out" + r))));
+        }
+        assertThat(store.getRecordCount(0)).isEqualTo(3);
+        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(SharedElementData::getOutput).contains("e1out2");
+        assertThat(store.getElementData(loc(0, 2), E2, FP_B)).map(SharedElementData::getInput).contains("e2in2");
+    }
+
+    @Test
+    void testPutRecordIsAllOrNothingOnCapFailure(@TempDir final Path tempDir) {
+        // A record-size cap that the second element's IO exceeds; the whole record must be rejected so the
+        // first element is NOT left committed (no torn record).
+        final SteppingConfig config = new SteppingConfig(null, null, null, 60L, null, null, null, null);
+        final StepDataStore store = newStore(tempDir, config);
+
+        assertThatThrownBy(() -> store.putRecord(loc(0, 0), List.of(
+                new StepDataStore.ElementRecord(E1, FP_A, data("ok", "ok")),
+                new StepDataStore.ElementRecord(E2, FP_B, data("x".repeat(200), "y".repeat(200))))))
+                .isInstanceOf(StepDataStoreException.class);
+
+        assertThat(store.hasElement(E1, FP_A)).isFalse();
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).isEmpty();
+        assertThat(store.getRecordCount(0)).isZero();
     }
 
     @Test
