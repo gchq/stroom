@@ -36,6 +36,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -63,6 +65,39 @@ import java.util.Set;
         @JsonSubTypes.Type(value = SetAllPermissionsFrom.class, name = "SetAllPermissionsFrom"),
         @JsonSubTypes.Type(value = RemoveAllPermissions.class, name = "RemoveAllPermissions"),
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(
+                        value = "SetPermission",
+                        schema = SetPermission.class),
+                @DiscriminatorMapping(
+                        value = "RemovePermission",
+                        schema = RemovePermission.class),
+                @DiscriminatorMapping(
+                        value = "AddDocumentUserCreatePermission",
+                        schema = AddDocumentUserCreatePermission.class),
+                @DiscriminatorMapping(
+                        value = "RemoveDocumentUserCreatePermission",
+                        schema = RemoveDocumentUserCreatePermission.class),
+                @DiscriminatorMapping(
+                        value = "SetDocumentUserCreatePermissions",
+                        schema = SetDocumentUserCreatePermissions.class),
+                @DiscriminatorMapping(
+                        value = "AddAllDocumentUserCreatePermissions",
+                        schema = AddAllDocumentUserCreatePermissions.class),
+                @DiscriminatorMapping(
+                        value = "RemoveAllDocumentUserCreatePermissions",
+                        schema = RemoveAllDocumentUserCreatePermissions.class),
+                @DiscriminatorMapping(
+                        value = "AddAllPermissionsFrom",
+                        schema = AddAllPermissionsFrom.class),
+                @DiscriminatorMapping(
+                        value = "SetAllPermissionsFrom",
+                        schema = SetAllPermissionsFrom.class),
+                @DiscriminatorMapping(
+                        value = "RemoveAllPermissions",
+                        schema = RemoveAllPermissions.class)})
 public abstract sealed class AbstractDocumentPermissionsChange permits
         SetPermission,
         RemovePermission,

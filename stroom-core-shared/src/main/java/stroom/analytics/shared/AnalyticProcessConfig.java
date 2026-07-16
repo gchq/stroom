@@ -18,6 +18,8 @@ package stroom.analytics.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -28,6 +30,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TableBuilderAnalyticProcessConfig.class, name = "table_builder"),
         @JsonSubTypes.Type(value = ScheduledQueryAnalyticProcessConfig.class, name = "scheduled_query"),
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "streaming", schema = StreamingAnalyticProcessConfig.class),
+                @DiscriminatorMapping(value = "table_builder", schema = TableBuilderAnalyticProcessConfig.class),
+                @DiscriminatorMapping(value = "scheduled_query", schema = ScheduledQueryAnalyticProcessConfig.class)})
 public abstract sealed class AnalyticProcessConfig permits
         StreamingAnalyticProcessConfig,
         TableBuilderAnalyticProcessConfig,

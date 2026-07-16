@@ -19,6 +19,8 @@ package stroom.analytics.shared;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -31,6 +33,12 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = TableBuilderAnalyticTrackerData.class, name = "table_builder"),
         @JsonSubTypes.Type(value = ScheduledQueryAnalyticTrackerData.class, name = "scheduled_query"),
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "streaming", schema = StreamingAnalyticTrackerData.class),
+                @DiscriminatorMapping(value = "table_builder", schema = TableBuilderAnalyticTrackerData.class),
+                @DiscriminatorMapping(value = "scheduled_query", schema = ScheduledQueryAnalyticTrackerData.class)})
 public abstract sealed class AnalyticTrackerData permits
         StreamingAnalyticTrackerData,
         TableBuilderAnalyticTrackerData,

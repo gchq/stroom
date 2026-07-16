@@ -73,17 +73,12 @@ public final class Column implements HasDisplayValue {
     @JsonProperty
     private final Integer group;
 
-    // Settings for visible table only.
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
+    // Settings for visible table only. Set and used by the UI; serialised on the wire, so they must
+    // stay in the OpenAPI spec (previously @Schema(hidden = true), which wrongly dropped them).
     @JsonProperty
     private final Integer width;
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
     @JsonProperty
     private final Boolean visible;
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
     @JsonProperty
     private final Boolean special;
     @JsonProperty

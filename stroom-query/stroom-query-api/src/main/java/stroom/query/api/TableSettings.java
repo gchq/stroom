@@ -97,13 +97,11 @@ public final class TableSettings {
     @JsonProperty
     private final Boolean showDetail;
 
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
+    // Set and used by the UI; serialised on the wire, so it must stay in the OpenAPI spec
+    // (previously @Schema(hidden = true), which wrongly dropped it from generated clients).
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
 
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
     @JsonProperty("modelVersion")
     @Deprecated
     private String modelVersion;

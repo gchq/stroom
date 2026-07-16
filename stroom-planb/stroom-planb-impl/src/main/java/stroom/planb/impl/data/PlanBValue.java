@@ -18,6 +18,8 @@ package stroom.planb.impl.data;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -32,6 +34,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TemporalValue.class, name = "histogram"),
         @JsonSubTypes.Type(value = SpanKV.class, name = "trace")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "state", schema = State.class),
+                @DiscriminatorMapping(value = "temporalState", schema = TemporalState.class),
+                @DiscriminatorMapping(value = "rangeState", schema = RangeState.class),
+                @DiscriminatorMapping(value = "temporalRangeState", schema = TemporalRangeState.class),
+                @DiscriminatorMapping(value = "session", schema = Session.class),
+                @DiscriminatorMapping(value = "histogram", schema = TemporalValue.class),
+                @DiscriminatorMapping(value = "trace", schema = SpanKV.class)})
 public sealed interface PlanBValue permits
         State,
         TemporalState,
