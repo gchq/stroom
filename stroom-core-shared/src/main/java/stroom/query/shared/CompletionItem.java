@@ -18,6 +18,8 @@ package stroom.query.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -27,6 +29,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = CompletionValue.class, name = "value"),
         @JsonSubTypes.Type(value = CompletionSnippet.class, name = "snippet")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "value", schema = CompletionValue.class),
+                @DiscriminatorMapping(value = "snippet", schema = CompletionSnippet.class)})
 public sealed interface CompletionItem permits CompletionValue, CompletionSnippet {
 
     String getCaption();

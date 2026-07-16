@@ -29,6 +29,7 @@ dependencies {
     implementation libs.jackson.jq
     implementation libs.kryo
     implementation libs.slf4j.api
+    implementation libs.swagger.annotations
     implementation libs.vavr
 
     testImplementation project(':stroom-bytebuffer')

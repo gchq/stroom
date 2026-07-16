@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -27,6 +29,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NumberFormatSettings.class, name = "number"),
         @JsonSubTypes.Type(value = DateTimeFormatSettings.class, name = "date")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "number", schema = NumberFormatSettings.class),
+                @DiscriminatorMapping(value = "date", schema = DateTimeFormatSettings.class)})
 public sealed interface FormatSettings permits NumberFormatSettings, DateTimeFormatSettings {
 
     boolean isDefault();

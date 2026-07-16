@@ -21,6 +21,8 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -47,6 +49,23 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = ValDate.class, name = "date"),
         @JsonSubTypes.Type(value = ValDuration.class, name = "duration")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "number", schema = ValNumber.class),
+                @DiscriminatorMapping(value = "string", schema = ValString.class),
+                @DiscriminatorMapping(value = "err", schema = ValErr.class),
+                @DiscriminatorMapping(value = "null", schema = ValNull.class),
+                @DiscriminatorMapping(value = "boolean", schema = ValBoolean.class),
+                @DiscriminatorMapping(value = "xml", schema = ValXml.class),
+                @DiscriminatorMapping(value = "byte", schema = ValByte.class),
+                @DiscriminatorMapping(value = "short", schema = ValShort.class),
+                @DiscriminatorMapping(value = "integer", schema = ValInteger.class),
+                @DiscriminatorMapping(value = "long", schema = ValLong.class),
+                @DiscriminatorMapping(value = "float", schema = ValFloat.class),
+                @DiscriminatorMapping(value = "double", schema = ValDouble.class),
+                @DiscriminatorMapping(value = "date", schema = ValDate.class),
+                @DiscriminatorMapping(value = "duration", schema = ValDuration.class)})
 public sealed interface Val
         extends Param, Appendable, Comparable<Val>
         permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml {

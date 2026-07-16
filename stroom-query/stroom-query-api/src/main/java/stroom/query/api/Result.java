@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -40,7 +41,19 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = QLVisResult.class, name = "ql_vis"),
 })
 @JsonInclude(Include.NON_NULL)
-@Schema(
+@Schema(discriminatorProperty = "type", discriminatorMapping = {
+        @DiscriminatorMapping(
+                value = "table",
+                schema = TableResult.class),
+        @DiscriminatorMapping(
+                value = "flat",
+                schema = FlatResult.class),
+        @DiscriminatorMapping(
+                value = "vis",
+                schema = VisResult.class),
+        @DiscriminatorMapping(
+                value = "ql_vis",
+                schema = QLVisResult.class)},
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class, VisResult.class, QLVisResult.class})
 public abstract sealed class Result permits TableResult, FlatResult, VisResult, QLVisResult {
