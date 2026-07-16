@@ -57,4 +57,8 @@ public class PipelineScopeRunnable {
 
         return result;
     }
+
+    public boolean isScopeActive() {
+        return scope.isScopeActive();
+    }
 }

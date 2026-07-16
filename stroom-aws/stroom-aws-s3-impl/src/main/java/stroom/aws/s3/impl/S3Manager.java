@@ -16,14 +16,20 @@
 
 package stroom.aws.s3.impl;
 
+import stroom.aws.s3.shared.AwsAnonymousCredentials;
 import stroom.aws.s3.shared.AwsAssumeRole;
 import stroom.aws.s3.shared.AwsAssumeRoleClientConfig;
 import stroom.aws.s3.shared.AwsAssumeRoleRequest;
+import stroom.aws.s3.shared.AwsDefaultCredentials;
+import stroom.aws.s3.shared.AwsEnvironmentVariableCredentials;
 import stroom.aws.s3.shared.AwsHttpConfig;
 import stroom.aws.s3.shared.AwsPolicyDescriptorType;
+import stroom.aws.s3.shared.AwsProfileCredentials;
 import stroom.aws.s3.shared.AwsProvidedContext;
 import stroom.aws.s3.shared.AwsProxyConfig;
+import stroom.aws.s3.shared.AwsSystemPropertyCredentials;
 import stroom.aws.s3.shared.AwsTag;
+import stroom.aws.s3.shared.AwsWebCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
@@ -31,7 +37,9 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.time.TimeBasis;
 
+import org.jspecify.annotations.NonNull;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
@@ -67,6 +75,7 @@ import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sts.StsAsyncClient;
 import software.amazon.awssdk.services.sts.StsAsyncClientBuilder;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest.Builder;
 import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
 import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.PolicyDescriptorType;
@@ -85,9 +94,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -226,7 +239,7 @@ public class S3Manager {
     }
 
     private AssumeRoleRequest createAssumeRoleRequest(final AwsAssumeRoleRequest config) {
-        final AssumeRoleRequest.Builder builder = AssumeRoleRequest.builder();
+        final Builder builder = AssumeRoleRequest.builder();
         if (config.getRoleArn() != null) {
             builder.roleArn(config.getRoleArn());
         }
@@ -315,7 +328,7 @@ public class S3Manager {
 
         if (awsCredentials != null) {
             switch (awsCredentials) {
-                case final stroom.aws.s3.shared.AwsAnonymousCredentials awsAnonymousCredentials -> {
+                case final AwsAnonymousCredentials awsAnonymousCredentials -> {
                     LOGGER.debug("Using AWS anonymous credentials");
                     return AnonymousCredentialsProvider.create();
                 }
@@ -326,15 +339,15 @@ public class S3Manager {
                     return StaticCredentialsProvider.create(credentials);
 
                 }
-                case final stroom.aws.s3.shared.AwsDefaultCredentials awsDefaultCredentials -> {
+                case final AwsDefaultCredentials awsDefaultCredentials -> {
                     LOGGER.debug("Using AWS default credentials");
                     return DefaultCredentialsProvider.create();
                 }
-                case final stroom.aws.s3.shared.AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
+                case final AwsEnvironmentVariableCredentials awsEnvironmentVariableCredentials -> {
                     LOGGER.debug("Using AWS environment variable credentials");
                     return EnvironmentVariableCredentialsProvider.create();
                 }
-                case final stroom.aws.s3.shared.AwsProfileCredentials awsProfileCredentials -> {
+                case final AwsProfileCredentials awsProfileCredentials -> {
                     LOGGER.debug("Using AWS profile credentials");
                     if (!NullSafe.isBlankString(awsProfileCredentials.getProfileFilePath())) {
                         final Path path = Paths.get(awsProfileCredentials.getProfileFilePath());
@@ -360,11 +373,11 @@ public class S3Manager {
                     return StaticCredentialsProvider.create(credentials);
 
                 }
-                case final stroom.aws.s3.shared.AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
+                case final AwsSystemPropertyCredentials awsSystemPropertyCredentials -> {
                     LOGGER.debug("Using AWS system property credentials");
                     return SystemPropertyCredentialsProvider.create();
                 }
-                case final stroom.aws.s3.shared.AwsWebCredentials awsWebCredentials -> {
+                case final AwsWebCredentials awsWebCredentials -> {
                     LOGGER.debug("Using AWS web identity credentials");
                     return WebIdentityTokenFileCredentialsProvider
                             .builder()
@@ -431,8 +444,15 @@ public class S3Manager {
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source,
-                                    final S3UploadProperties uploadProperties) {
-        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, attributeMap, source, uploadProperties);
+                                    final S3UploadProperties uploadProperties,
+                                    final TimeBasis timeBasis) {
+        return upload(getBucketNamePattern(),
+                getKeyNamePattern(),
+                meta,
+                attributeMap,
+                source,
+                uploadProperties,
+                timeBasis);
     }
 
     public PutObjectResponse upload(final String bucketNamePattern,
@@ -440,9 +460,10 @@ public class S3Manager {
                                     final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source,
-                                    final S3UploadProperties uploadProperties) {
+                                    final S3UploadProperties uploadProperties,
+                                    final TimeBasis timeBasis) {
         final String bucketName = createBucketName(bucketNamePattern, meta);
-        final String key = createKey(keyNamePattern, meta);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
 
         try {
             return tryUpload(bucketName, key, meta, attributeMap, source, uploadProperties);
@@ -540,9 +561,10 @@ public class S3Manager {
     }
 
     public GetObjectResponse download(final Meta meta,
-                                      final Path dest) {
+                                      final Path dest,
+                                      final TimeBasis timeBasis) {
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta, timeBasis);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -595,9 +617,9 @@ public class S3Manager {
         return response;
     }
 
-    public DeleteObjectResponse delete(final Meta meta) {
+    public DeleteObjectResponse delete(final Meta meta, final TimeBasis timeBasis) {
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta, timeBasis);
         final DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -635,18 +657,41 @@ public class S3Manager {
                 .build();
     }
 
-    public String createKey(final String keyPattern, final Meta meta) {
+    @NonNull
+    private ZonedDateTime getTimeForVariableReplacement(final TimeBasis timeBasis,
+                                                        final Meta meta) {
+        final ZonedDateTime time = switch (timeBasis) {
+            case CURRENT_TIME -> ZonedDateTime.now();
+            case META_CREATION_TIME ->
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(Objects.requireNonNull(meta).getCreateMs()),
+                            ZoneOffset.UTC);
+            case null -> ZonedDateTime.now();
+        };
+
+        LOGGER.debug("getTimeForVariableReplacement() - timeBasis: {}, meta: {}, time: {}",
+                timeBasis, meta, time);
+        return time;
+    }
+
+    public String createKey(final String keyPattern,
+                            final Meta meta,
+                            final TimeBasis timeBasis) {
         String keyName = keyPattern;
         final String idPadded = padId(meta.getId());
         // Use now() so when one of rolling, agg splitting and record splitting is used,
         // the time vars can distinguish multiple files coming from the same stream
-        keyName = pathCreator.replaceTimeVars(keyName);
+
+
+        final ZonedDateTime zonedDateTime = getTimeForVariableReplacement(timeBasis, meta);
+        keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
+
         // Parse for stuff like partNo, pipeline, node, etc.
         keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
         keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
         keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
         keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
         keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
+        // These context vars can only be replaced if we are in a pipeline scope
         keyName = pathCreator.replaceContextVars(keyName);
         keyName = pathCreator.replaceUUIDVars(keyName);
 

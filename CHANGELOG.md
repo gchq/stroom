@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.7] - 2026-07-16
+
+* Bug **#5663** : Fix OpenAPI spec for polymorphic types.
+
+* Bug **#5665** : Change the basis for time variable replacement from now() to the meta create time when the stream store uses S3. The S3Appender still used now(). Also fix a bug with use of pipeline scoped objects outside of pipeline scope.
+
+
 ## [v7.13-beta.6] - 2026-07-14
 
 * Bug **#5647** : Fix user entered name being ignored when creating a new volume group.
@@ -2362,7 +2369,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.7...HEAD
+[v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7
 [v7.13-beta.6]: https://github.com/gchq/stroom/compare/v7.13-beta.5...v7.13-beta.6
 [v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5
 [v7.13-beta.4]: https://github.com/gchq/stroom/compare/v7.13-beta.3...v7.13-beta.4
