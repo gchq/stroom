@@ -65,6 +65,10 @@ public interface PathCreator {
 
     String replaceAll(String path);
 
+    /**
+     * Replacements depend on the implementation of the PathCreator used. It may be a no-op.
+     * The implementation may also depend on being in a pipeline scope to work fully.
+     */
     String replaceContextVars(String path);
 
     @Override
