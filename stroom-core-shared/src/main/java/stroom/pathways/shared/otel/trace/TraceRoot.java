@@ -45,6 +45,24 @@ public class TraceRoot {
     private final int depth;
     @JsonProperty
     private final int totalSpans;
+    /**
+     * Wall-clock epoch millis of the most recent merge cycle that touched this trace.
+     * Drives the retention/archival "is this trace still active?" decision so a
+     * long-running trace's root is retained (kept live and current) rather than aged
+     * out by its (fixed) start time. Zero when unknown.
+     */
+    @JsonProperty
+    private final long lastActivityMs;
+    /**
+     * The root span's <em>own</em> end time (its {@code endTimeUnixNano}), as opposed to
+     * {@link #endTime} which is the maximum end time across <em>all</em> spans in the trace.
+     * When a background/pool thread captures the trace's OTel context and later emits spans
+     * long after the root finished, {@link #endTime} is dragged far into the future while this
+     * stays fixed; the gap between the two reveals such "trailing leaked activity". Nullable
+     * when unknown.
+     */
+    @JsonProperty
+    private final NanoTime rootEndTime;
 
     public TraceRoot(final Trace trace) {
         this.traceId = trace.getTraceId();
@@ -54,6 +72,8 @@ public class TraceRoot {
         this.services = services(trace);
         this.depth = depth(trace);
         this.totalSpans = totalSpans(trace);
+        this.lastActivityMs = 0L;
+        this.rootEndTime = trace.root().end();
     }
 
     private static int services(final Trace trace) {
@@ -101,7 +121,9 @@ public class TraceRoot {
                      @JsonProperty("endTime") final NanoTime endTime,
                      @JsonProperty("services") final int services,
                      @JsonProperty("depth") final int depth,
-                     @JsonProperty("totalSpans") final int totalSpans) {
+                     @JsonProperty("totalSpans") final int totalSpans,
+                     @JsonProperty("lastActivityMs") final long lastActivityMs,
+                     @JsonProperty("rootEndTime") final NanoTime rootEndTime) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
@@ -109,6 +131,8 @@ public class TraceRoot {
         this.services = services;
         this.depth = depth;
         this.totalSpans = totalSpans;
+        this.lastActivityMs = lastActivityMs;
+        this.rootEndTime = rootEndTime;
     }
 
     public String getTraceId() {
@@ -139,6 +163,14 @@ public class TraceRoot {
         return totalSpans;
     }
 
+    public long getLastActivityMs() {
+        return lastActivityMs;
+    }
+
+    public NanoTime getRootEndTime() {
+        return rootEndTime;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -151,15 +183,18 @@ public class TraceRoot {
         return services == traceRoot.services &&
                depth == traceRoot.depth &&
                totalSpans == traceRoot.totalSpans &&
+               lastActivityMs == traceRoot.lastActivityMs &&
                Objects.equals(traceId, traceRoot.traceId) &&
                Objects.equals(name, traceRoot.name) &&
                Objects.equals(startTime, traceRoot.startTime) &&
-               Objects.equals(endTime, traceRoot.endTime);
+               Objects.equals(endTime, traceRoot.endTime) &&
+               Objects.equals(rootEndTime, traceRoot.rootEndTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans);
+        return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans,
+                lastActivityMs, rootEndTime);
     }
 
     public static Builder builder() {
@@ -179,6 +214,8 @@ public class TraceRoot {
         private int services;
         private int depth;
         private int totalSpans;
+        private long lastActivityMs;
+        private NanoTime rootEndTime;
 
         private Builder() {
         }
@@ -191,6 +228,8 @@ public class TraceRoot {
             this.services = traceRoot.services;
             this.depth = traceRoot.depth;
             this.totalSpans = traceRoot.totalSpans;
+            this.lastActivityMs = traceRoot.lastActivityMs;
+            this.rootEndTime = traceRoot.rootEndTime;
         }
 
         public Builder traceId(final String traceId) {
@@ -228,6 +267,16 @@ public class TraceRoot {
             return self();
         }
 
+        public Builder lastActivityMs(final long lastActivityMs) {
+            this.lastActivityMs = lastActivityMs;
+            return self();
+        }
+
+        public Builder rootEndTime(final NanoTime rootEndTime) {
+            this.rootEndTime = rootEndTime;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -242,7 +291,9 @@ public class TraceRoot {
                     endTime,
                     services,
                     depth,
-                    totalSpans
+                    totalSpans,
+                    lastActivityMs,
+                    rootEndTime
             );
         }
     }

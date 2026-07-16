@@ -32,6 +32,7 @@ import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.TimeRange;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DurationUtil;
 import stroom.util.client.NumberUtil;
@@ -39,8 +40,12 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -54,6 +59,14 @@ public class TracesListPresenter
         extends MyPresenterWidget<PagerView> {
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
+
+    // A trace is flagged as having "trailing leaked activity" when spans keep arriving well after
+    // the root span itself ended — e.g. a pooled/background thread that captured the trace's OTel
+    // context emits spans long afterward, inflating the trace's Duration. Flagged when the
+    // post-root gap exceeds both an absolute floor and a multiple of the root's own duration (the
+    // floor avoids flagging short async tails; the multiple scales with genuinely long traces).
+    private static final long LEAK_ABSOLUTE_FLOOR_NANOS = 30L * 1_000_000_000L; // 30s
+    private static final long LEAK_MULTIPLIER = 5L;
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
@@ -102,12 +115,69 @@ public class TracesListPresenter
         addServicesColumn();
         addDepthColumn();
         addTotalSpansColumn();
+        addLastActivityColumn();
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
-        final Function<TraceRoot, String> valueExtractor = trace -> NullSafe.get(trace, TraceRoot::getName);
-        addTextColumn("Operation", 300, valueExtractor);
+        final Column<TraceRoot, SafeHtml> column = DataGridUtil
+                .htmlColumnBuilder(this::buildOperationCell)
+                .withSorting("Operation")
+                .build();
+        dataGrid.addResizableColumn(column, "Operation", 300);
+    }
+
+    /**
+     * Renders the operation name, prefixed with a warning icon (and hover tooltip) when the trace
+     * has trailing leaked activity — signalling that its Duration is inflated by spans emitted long
+     * after the root span finished. See {@link #hasTrailingLeak(TraceRoot)}.
+     */
+    private SafeHtml buildOperationCell(final TraceRoot trace) {
+        final String name = trace == null
+                ? ""
+                : trace.getName();
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString(
+                "<div style=\"display:flex;align-items:center;gap:4px;\">"));
+        if (hasTrailingLeak(trace)) {
+            sb.append(SvgImageUtil.toSafeHtml(leakTooltip(trace), SvgImage.WARNING));
+        }
+        sb.append(SafeHtmlUtil.getSafeHtml(name));
+        sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString("</div>"));
+        return sb.toSafeHtml();
+    }
+
+    /**
+     * A trace has trailing leaked activity when its last span ends significantly after the root
+     * span's own end — the gap must clear both an absolute floor and a multiple of the root's own
+     * duration. {@code endTime} is the max end across all spans; {@code rootEndTime} is the root
+     * span's own (fixed) end.
+     */
+    private boolean hasTrailingLeak(final TraceRoot trace) {
+        if (trace == null) {
+            return false;
+        }
+        final NanoTime start = trace.getStartTime();
+        final NanoTime rootEnd = trace.getRootEndTime();
+        final NanoTime end = trace.getEndTime();
+        if (start == null || rootEnd == null || end == null) {
+            return false;
+        }
+        // A ZERO/unknown root end would read as "before" the start — treat as not flagged.
+        if (rootEnd.isLessThan(start)) {
+            return false;
+        }
+        final long gapNanos = end.diff(rootEnd).getNanos();
+        final long rootDurationNanos = rootEnd.diff(start).getNanos();
+        return gapNanos > LEAK_ABSOLUTE_FLOOR_NANOS
+               && gapNanos > LEAK_MULTIPLIER * rootDurationNanos;
+    }
+
+    private String leakTooltip(final TraceRoot trace) {
+        final NanoDuration gap = trace.getEndTime().diff(trace.getRootEndTime());
+        return "Duration inflated by trailing leaked spans — the root span ended "
+               + DurationUtil.formatDuration(gap)
+               + " before the last span in this trace";
     }
 
     private void addIdColumn() {
@@ -155,6 +225,24 @@ public class TracesListPresenter
         final Function<TraceRoot, String> valueExtractor = trace ->
                 NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getTotalSpans));
         addTextColumn("Total Spans", 100, valueExtractor);
+    }
+
+    /**
+     * When a trace last received a span. Surfaces still-active long-running traces,
+     * whose fixed start time otherwise sinks them down the start-time-sorted list.
+     * Not server-sortable yet (no secondary index) — informative only.
+     */
+    private void addLastActivityColumn() {
+        final Function<TraceRoot, String> valueExtractor = trace -> {
+            if (trace == null || trace.getLastActivityMs() <= 0L) {
+                return "";
+            }
+            return dateTimeFormatter.format(trace.getLastActivityMs());
+        };
+        final Column<TraceRoot, String> column = DataGridUtil
+                .textColumnBuilder(valueExtractor)
+                .build();
+        dataGrid.addResizableColumn(column, "Last Activity", 200);
     }
 
     private void addTextColumn(final String name,

@@ -103,6 +103,29 @@ public class SpanValueSerde implements Serde<SpanValue> {
         return readNanoTime(val.duplicate());
     }
 
+    /**
+     * Reads the fields the bounded aggregate sweep needs — span {@code name},
+     * {@code insertTime} (receipt) and {@code endTime} — in a single pass, without
+     * deserialising the rest of the span. Field order in the layout is
+     * insertTime, name, kind, startTime, endTime. The name is resolved through the UID
+     * lookup table (so the lookup must be present).
+     *
+     * @param val raw serialised value buffer; its position is not modified.
+     */
+    public SpanSummary readSummary(final Txn<ByteBuffer> txn, final ByteBuffer val) {
+        final ByteBuffer input = val.duplicate();
+        final NanoTime insertTime = readNanoTime(input);
+        final String name = readString(txn, input);
+        input.get();                       // kind (1 byte) — skip
+        skipNanoTime(input);               // startTimeUnixNano — skip
+        final NanoTime endTime = readNanoTime(input);
+        return new SpanSummary(name, insertTime, endTime);
+    }
+
+    /** Lightweight subset of a span value read by {@link #readSummary}. */
+    public record SpanSummary(String name, NanoTime insertTime, NanoTime endTime) {
+    }
+
     private ByteBuffer writeKvList(final Txn<ByteBuffer> txn, final List<KeyValue> list, final ByteBuffer byteBuffer) {
         final List<KeyValue> values = NullSafe.list(list);
         ByteBuffer result = ensure(byteBuffer, Integer.BYTES);

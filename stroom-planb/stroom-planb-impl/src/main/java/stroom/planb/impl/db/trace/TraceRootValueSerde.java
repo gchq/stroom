@@ -49,6 +49,8 @@ public class TraceRootValueSerde {
             output.writeInt(traceRoot.getServices());
             output.writeInt(traceRoot.getDepth());
             output.writeInt(traceRoot.getTotalSpans());
+            output.writeLong(traceRoot.getLastActivityMs());
+            writeNanoTime(output, traceRoot.getRootEndTime());
             final ByteBuffer byteBuffer = output.getByteBuffer();
             byteBuffer.flip();
             consumer.accept(byteBuffer);
@@ -66,6 +68,8 @@ public class TraceRootValueSerde {
             final int services = input.readInt();
             final int depth = input.readInt();
             final int totalSpans = input.readInt();
+            final long lastActivityMs = input.readLong();
+            final NanoTime rootEndTime = readNanoTime(input);
             return new TraceRoot(
                     HexStringUtil.encode(traceId),
                     name,
@@ -73,7 +77,9 @@ public class TraceRootValueSerde {
                     endTimeUnixNano,
                     services,
                     depth,
-                    totalSpans);
+                    totalSpans,
+                    lastActivityMs,
+                    rootEndTime);
         }
     }
 
@@ -82,7 +88,10 @@ public class TraceRootValueSerde {
     }
 
     private void writeNanoTime(final Output output, final NanoTime nanoTime) {
-        output.writeLong(nanoTime.getSeconds());
-        output.writeInt(nanoTime.getNanos());
+        final NanoTime value = nanoTime == null
+                ? NanoTime.ZERO
+                : nanoTime;
+        output.writeLong(value.getSeconds());
+        output.writeInt(value.getNanos());
     }
 }

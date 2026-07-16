@@ -84,6 +84,7 @@ import org.lmdbjava.Txn;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -131,6 +132,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     /** Number of bytes used for the traceId suffix appended to every secondary-index key. */
     private static final int TRACE_ID_BYTES = 16;
+
+    /** Span-key layout (see {@link stroom.planb.impl.serde.trace.SpanKeySerde}):
+     * {@code traceId[16] ∥ parentSpanId[8] ∥ spanId[8]}. A span's children share the
+     * prefix {@code traceId ∥ thisSpanId}; the root's parentSpanId is all-zero. */
+    private static final int SPAN_ID_BYTES = 8;
+    private static final byte[] NO_PARENT_SPAN_ID = new byte[SPAN_ID_BYTES];
+
+    /**
+     * Trace span-count at or below which {@link #buildRootFromStats} recomputes depth every merge
+     * cycle (the bounded DFS is cheap at this size). Above it, depth is refreshed only when the
+     * span count doubles — keeping the DFS off the hot path for the huge, ever-growing traces.
+     */
+    private static final long DEPTH_EXACT_SPAN_THRESHOLD = 10_000L;
 
     /**
      * Returns a fresh zero-byte direct {@link ByteBuffer} for use as an empty
@@ -189,6 +203,20 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 //    private final TimeSerde updateTimeSerde;
 
     /**
+     * Per-trace incremental aggregate accumulator: {@code traceId → TraceStats}. Updated as each
+     * new span is inserted so {@link #mergeComplete()} reads O(1) stats rather than re-scanning
+     * every span. See {@link TraceStats}.
+     */
+    private final Dbi<ByteBuffer> traceStatsDbi;
+    /**
+     * Distinct service-name set per trace: {@code traceId[16] ∥ nameBytes → ∅}. Lets a
+     * genuinely-new name be detected (via {@link PutFlags#MDB_NOOVERWRITE}) so the cumulative
+     * {@code serviceCount} in {@link TraceStats} is exact.
+     */
+    private final Dbi<ByteBuffer> traceServiceNamesDbi;
+    private final TraceStatsSerde traceStatsSerde;
+
+    /**
      * Trace IDs (hex) whose stored root should be recomputed over the fully-merged span set at
      * the end of the current merge cycle — see {@link #mergeComplete()}. Populated during
      * {@link #merge}. The per-batch root copy in merge() reflects only that batch's spans, so
@@ -222,8 +250,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         traceRootKeySerde = new TraceRootKeySerde(byteBuffers);
         traceRootValueSerde = new TraceRootValueSerde(byteBufferFactory);
+        traceStatsSerde = new TraceStatsSerde(byteBufferFactory);
         traceRootsDbi = env.openDbi("trace-roots", DbiFlags.MDB_CREATE);
         traceRootsMergeTimeDbi = env.openDbi("trace-roots-merge-time", DbiFlags.MDB_CREATE);
+        traceStatsDbi = env.openDbi("trace-stats", DbiFlags.MDB_CREATE);
+        traceServiceNamesDbi = env.openDbi("trace-service-names", DbiFlags.MDB_CREATE);
 
         // Open one DBI per secondary sort index, keyed by the index definition.
         final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> indexDbis =
@@ -330,22 +361,40 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     @Override
     public void insert(final LmdbWriter writer, final KV<SpanKey, SpanValue> kv) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
+        // Spans are immutable (first write wins) — MDB_NOOVERWRITE makes a genuinely-new span
+        // detectable so the per-trace stats are counted exactly once (re-delivery is a no-op).
+        final boolean[] isNew = {false};
         keySerde.write(writeTxn, kv.key(), keyByteBuffer ->
                 valueSerde.write(writeTxn, kv.val(), valueByteBuffer ->
-                        dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, putFlags)));
+                        isNew[0] = dbi.put(writeTxn, keyByteBuffer, valueByteBuffer,
+                                PutFlags.MDB_NOOVERWRITE)));
 
         final byte[] traceIdBytes = HexStringUtil.decode(kv.key().getTraceId());
+
+        if (isNew[0]) {
+            final SpanValue v = kv.val();
+            recordNewSpan(writeTxn, traceIdBytes, v.getName(), v.getInsertTime(),
+                    NanoTime.fromString(v.getEndTimeUnixNano()));
+        }
+
         final boolean isRootSpan = NullSafe.isEmptyString(kv.key().getParentSpanId());
 
         if (isRootSpan) {
-            // Root span: do the full getTrace() rebuild so that depth, services, name
-            // and totalSpans are all computed correctly from the complete span set seen
-            // so far.  Also writes the trace-roots-merge-time entry that drives the
-            // PathwaysProcessor grace-period clock.
+            // Root span: (re)derive depth, services, name and totalSpans from the span
+            // set seen so far via the bounded streaming aggregate computation — it walks
+            // the span index without materialising the whole trace, so it never OOMs on a
+            // large/open-ended trace.  Also writes the trace-roots-merge-time entry that
+            // drives the PathwaysProcessor grace-period clock.
             try {
-                final Trace trace = getTrace(writeTxn, kv.key().getTraceId());
+                // The root span was just written, so a root is present; skip defensively
+                // if somehow absent.
+                final Optional<TraceRoot> optNewRoot =
+                        buildRootFromStats(writeTxn, traceIdBytes);
+                if (optNewRoot.isEmpty()) {
+                    return;
+                }
                 final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
-                final TraceRoot newRoot = new TraceRoot(trace);
+                final TraceRoot newRoot = optNewRoot.get();
 
                 // Delete stale secondary sort-index entries before overwriting.
                 traceRootKeySerde.write(traceRootKey, traceRootKeyBuf -> {
@@ -408,10 +457,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                             || spanEnd.compareTo(oldRoot.getEndTime()) > 0
                             ? spanEnd : oldRoot.getEndTime();
 
+                    final long spanInsertMs = NanoTimeUtil.toInstant(
+                            kv.val().getInsertTime()).toEpochMilli();
                     final TraceRoot newRoot = oldRoot.copy()
                             .startTime(newStart)
                             .endTime(newEnd)
                             .totalSpans(oldRoot.getTotalSpans() + 1)
+                            .lastActivityMs(Math.max(oldRoot.getLastActivityMs(), spanInsertMs))
                             .build();
 
                     traceRootKeySerde.write(traceRootKey, keyBuffer ->
@@ -544,21 +596,32 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                             // this, a trace whose children arrive after its root was processed
                             // (root in an earlier cycle) keeps stale depth/services/totalSpans.
                             final ByteBuffer spanKeyBuf = entry.getKey().duplicate();
+                            final byte[] tid;
                             if (spanKeyBuf.remaining() >= TRACE_ID_BYTES) {
-                                final byte[] tid = new byte[TRACE_ID_BYTES];
+                                tid = new byte[TRACE_ID_BYTES];
                                 spanKeyBuf.get(tid);
                                 pendingRootRebuilds.add(HexStringUtil.encode(tid));
+                            } else {
+                                tid = null;
                             }
 
                             if (sourceDb.keySerde.usesLookup(entry.getKey()) ||
                                 sourceDb.valueSerde.usesLookup(entry.getVal())) {
-                                // We need to do a full read and merge.
+                                // We need to do a full read and merge (insert() records stats).
                                 final SpanKey spanKey = sourceDb.keySerde.read(readTxn, entry.getKey());
                                 final SpanValue spanValue = sourceDb.valueSerde.read(readTxn, entry.getVal());
                                 insert(writer, new SpanKV(spanKey, spanValue));
                             } else {
-                                // Quick merge.
-                                if (dbi.put(writer.getWriteTxn(), entry.getKey(), entry.getVal(), putFlags)) {
+                                // Quick merge. MDB_NOOVERWRITE: only a genuinely-new span is
+                                // counted into the per-trace stats (re-delivery is a no-op).
+                                if (dbi.put(writer.getWriteTxn(), entry.getKey(), entry.getVal(),
+                                        PutFlags.MDB_NOOVERWRITE)) {
+                                    if (tid != null) {
+                                        final SpanValueSerde.SpanSummary s =
+                                                spanValueSerde.readSummary(writer.getWriteTxn(), entry.getVal());
+                                        recordNewSpan(writer.getWriteTxn(), tid, s.name(),
+                                                s.insertTime(), s.endTime());
+                                    }
                                     writer.tryCommit();
                                 }
                             }
@@ -636,13 +699,17 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
             for (final String hex : traceIds) {
                 final byte[] traceIdBytes = HexStringUtil.decode(hex);
-                final Trace trace = getTrace(writeTxn, traceIdBytes);
-                // Only (re)build a root when the root span is actually present; a trace whose
-                // root never arrived (orphan children) has no queryable root.
-                if (NullSafe.isEmptyCollection(trace.getParentSpanIdMap().get(""))) {
+                // Bounded, streaming recompute over the fully-merged span set — exact
+                // totalSpans/services and (safety-valve aside) exact depth, plus the
+                // latest insert time as lastActivityMs (so retention/archival keep an
+                // active trace's root), without materialising the whole trace. Empty ⇒ no
+                // root span present (orphan children only) ⇒ no queryable root, so skip.
+                final Optional<TraceRoot> optRebuilt =
+                        buildRootFromStats(writeTxn, traceIdBytes);
+                if (optRebuilt.isEmpty()) {
                     continue;
                 }
-                final TraceRoot rebuilt = new TraceRoot(trace);
+                final TraceRoot rebuilt = optRebuilt.get();
                 final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
 
                 // Drop stale sort-index entries for the existing stored root, then overwrite.
@@ -788,20 +855,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                final ArchivalGranularity granularity,
                                final Path archiveBaseDir) {
         final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(archiveBefore);
+        final long cutoffMs = archiveBefore.toEpochMilli();
 
-        // traceIdHex -> bucket label, for roots being archived.
+        // traceIdHex -> bucket label, for QUIET roots being archived (by start time).
         final Map<String, String> archivedRootLabels = new HashMap<>();
         // traceIdHex -> decoded root, used to rebuild the archive's sort indexes.
         final Map<String, TraceRoot> archivedRoots = new HashMap<>();
         // traceIdHex -> {rawTraceIdKey, rawRootVal}, for verbatim copy into the archive.
         final Map<String, byte[][]> archivedRootRawKV = new HashMap<>();
-        // Every traceId that has a root, so orphan spans can be distinguished.
-        final Set<String> allRootTraceIds = new HashSet<>();
-        // bucket label -> list of {rawSpanKey, rawSpanVal}.
-        final Map<String, List<byte[][]>> bucketSpans = new LinkedHashMap<>();
+        // The distinct insert-time bucket labels that have (non-root) spans to archive.
+        // Only labels are held here — NOT the spans — so memory stays O(labels), never
+        // O(spans): the OOM fix. Pass 2 re-derives each span's label and streams it.
+        final Set<String> spanLabels = new LinkedHashSet<>();
 
         // Pass 1: scan roots (to decide which traces to archive and how to label
-        // them) then spans (grouped into buckets by their trace's label).
+        // them), then spans (only to discover the set of bucket labels that have
+        // spans — the spans themselves are streamed later, not buffered).
         //
         // Span insert time is read via readInsertTime() — the first 8 bytes of the
         // value — which does NOT touch the UID lookup table, avoiding
@@ -814,11 +883,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 final byte[] traceIdBytes = new byte[key.remaining()];
                 key.duplicate().get(traceIdBytes);
                 final String hex = HexStringUtil.encode(traceIdBytes);
-                allRootTraceIds.add(hex);
 
                 final TraceRoot root = traceRootValueSerde.read(val.duplicate());
+                // Archive a root only once its trace has gone QUIET (no activity since the
+                // cutoff); active roots stay live. Bucket by the root's START time — the
+                // axis queries filter on — and its root span rides along (see
+                // spanBucketLabel).
                 final NanoTime startTime = root.getStartTime();
-                if (startTime != null && startTime.isBefore(nanoTimeBefore)) {
+                if (startTime != null && root.getLastActivityMs() < cutoffMs) {
                     final String label = ArchivalGranularityUtil.label(
                             granularity, NanoTimeUtil.toInstant(startTime));
                     archivedRootLabels.put(hex, label);
@@ -829,47 +901,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 }
             });
 
-            // 1b: spans. Bucket a span with its archived root; if it is an orphan
-            // (no root anywhere) archive it by insert time; otherwise (a live,
-            // not-yet-archived rooted trace) leave it in place.
+            // 1b: spans — record only the distinct labels that have spans to archive
+            // (no per-span buffering).
             LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                if (key.remaining() < TRACE_ID_BYTES) {
-                    return;
+                final String label = spanBucketLabel(
+                        key, val, archivedRootLabels, nanoTimeBefore, granularity);
+                if (label != null) {
+                    spanLabels.add(label);
                 }
-                final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
-                key.duplicate().get(traceIdBytes);
-                final String hex = HexStringUtil.encode(traceIdBytes);
-
-                final String label;
-                final String rootLabel = archivedRootLabels.get(hex);
-                if (rootLabel != null) {
-                    // Span of a trace being archived — goes in the root's bucket,
-                    // whatever this span's own timestamp is.
-                    label = rootLabel;
-                } else if (!allRootTraceIds.contains(hex)) {
-                    // Orphan span. Bucket by insert time (no queryable start axis).
-                    final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
-                    if (!insertTime.isBefore(nanoTimeBefore)) {
-                        return;
-                    }
-                    label = ArchivalGranularityUtil.label(
-                            granularity, NanoTimeUtil.toInstant(insertTime));
-                } else {
-                    // Span of a live rooted trace that is not being archived.
-                    return;
-                }
-
-                final byte[] rawKey = new byte[key.remaining()];
-                key.duplicate().get(rawKey);
-                final byte[] rawVal = new byte[val.remaining()];
-                val.duplicate().get(rawVal);
-                bucketSpans.computeIfAbsent(label, l -> new ArrayList<>())
-                        .add(new byte[][]{rawKey, rawVal});
             });
             return null;
         });
 
-        if (bucketSpans.isEmpty() && archivedRoots.isEmpty()) {
+        if (archivedRoots.isEmpty() && spanLabels.isEmpty()) {
             return 0L;
         }
 
@@ -881,13 +925,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         // Pass 2: write each bucket to its own archive environment.
         //
-        // Spans and roots are copied verbatim (the UID integers embedded in the
-        // bytes reference the lookup tables cloned by copyLookupsTo). The archive's
-        // six secondary sort indexes are rebuilt for this bucket's roots only, so
-        // the archive is fully queryable without holding any other bucket's roots.
+        // Spans are STREAMED straight from the source index into their bucket's
+        // archive env — one label at a time, holding only the current span — rather
+        // than buffered (which OOMs on a large/open-ended trace). Peak memory is
+        // O(labels + roots), never O(spans). Spans and roots are copied verbatim (the
+        // UID integers embedded in the bytes reference the lookup tables cloned by
+        // copyLookupsTo); the archive's six secondary sort indexes are rebuilt for
+        // this bucket's roots only, so the archive is fully queryable in isolation.
         final Set<String> allLabels = new LinkedHashSet<>();
-        allLabels.addAll(bucketSpans.keySet());
         allLabels.addAll(bucketRootHexes.keySet());
+        allLabels.addAll(spanLabels);
         for (final String label : allLabels) {
             final Path archiveDir = archiveBaseDir.resolve(label);
             try {
@@ -898,23 +945,36 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             try (final TraceDb archiveDb =
                          TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
                 archiveDb.env.write(archiveWriter -> {
-                    final Txn<ByteBuffer> writeTxn = archiveWriter.getWriteTxn();
-
-                    final List<byte[][]> spans = bucketSpans.get(label);
-                    if (spans != null) {
-                        for (final byte[][] rawKV : spans) {
-                            putDirect(archiveDb.dbi, writeTxn, rawKV[0], rawKV[1]);
-                        }
-                    }
-
+                    // Roots for this bucket + their secondary indexes.
                     final List<String> rootHexes = bucketRootHexes.get(label);
                     if (rootHexes != null) {
                         for (final String hex : rootHexes) {
                             final byte[][] rawKV = archivedRootRawKV.get(hex);
-                            putDirect(archiveDb.traceRootsDbi, writeTxn, rawKV[0], rawKV[1]);
-                            archiveDb.writeSecondaryIndexes(writeTxn, rawKV[0], archivedRoots.get(hex));
+                            putDirect(archiveDb.traceRootsDbi, archiveWriter.getWriteTxn(),
+                                    rawKV[0], rawKV[1]);
+                            archiveDb.writeSecondaryIndexes(archiveWriter.getWriteTxn(),
+                                    rawKV[0], archivedRoots.get(hex));
                         }
                     }
+
+                    // Spans for this bucket — streamed from the source index, never
+                    // buffered. Same predicate as pass 1b / pass 3, so archive and
+                    // delete stay symmetric.
+                    env.read(srcTxn -> {
+                        LmdbIterable.iterate(srcTxn, dbi, (key, val) -> {
+                            final String spanLabel = spanBucketLabel(key, val,
+                                    archivedRootLabels, nanoTimeBefore, granularity);
+                            if (label.equals(spanLabel)) {
+                                final byte[] rawKey = new byte[key.remaining()];
+                                key.duplicate().get(rawKey);
+                                final byte[] rawVal = new byte[val.remaining()];
+                                val.duplicate().get(rawVal);
+                                putDirect(archiveDb.dbi, archiveWriter.getWriteTxn(), rawKey, rawVal);
+                                archiveWriter.tryCommit();
+                            }
+                        });
+                        return null;
+                    });
                     return null;
                 });
                 // Clone the UID / hash lookup tables so the archive decodes span
@@ -935,21 +995,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return env.write(writer -> {
             final Count count = new Count();
             env.read(readTxn -> {
-                // Spans.
+                // Spans. Delete exactly those archived in pass 2 — the SAME predicate
+                // (spanBucketLabel != null): non-root spans older than the cutoff, and the
+                // root spans of quiet roots. Retained spans have their lookups recorded so
+                // deleteUnused keeps them.
                 LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                    boolean archived = false;
-                    if (key.remaining() >= TRACE_ID_BYTES) {
-                        final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
-                        key.duplicate().get(traceIdBytes);
-                        final String hex = HexStringUtil.encode(traceIdBytes);
-                        if (archivedRootLabels.containsKey(hex)) {
-                            archived = true;
-                        } else if (!allRootTraceIds.contains(hex)) {
-                            final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
-                            archived = insertTime.isBefore(nanoTimeBefore);
-                        }
-                    }
-
+                    final boolean archived = spanBucketLabel(
+                            key, val, archivedRootLabels, nanoTimeBefore, granularity) != null;
                     if (archived) {
                         dbi.delete(writer.getWriteTxn(), key);
                         count.increment();
@@ -968,6 +1020,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         traceRootsDbi.delete(writer.getWriteTxn(), keyBuf);
                     });
                     deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, e.getValue());
+                    deleteStatsOf(readTxn, writer, traceIdBytes);
                     count.increment();
                     writer.tryCommit();
                 }
@@ -1002,6 +1055,77 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 });
             }
             return count.get();
+        });
+    }
+
+    /**
+     * The archive bucket label a span belongs to, or {@code null} if it should stay in
+     * the live shard. Two rules, matching the retention model:
+     * <ul>
+     *   <li><b>Root span</b> — rides with its root entry: it takes the root's archive
+     *       label (the root's <em>start</em>-time bucket) when the trace is quiet, and
+     *       {@code null} (retained) while the trace is still active. This keeps an active
+     *       trace's root queryable regardless of when the root span was received.</li>
+     *   <li><b>Non-root span</b> — ages by its own <em>insert</em> (receipt) time: its
+     *       insert-time bucket when older than the cutoff, else {@code null} (retained).
+     *       This bounds the live shard even while the root is retained.</li>
+     * </ul>
+     * Reads only the insert time (no UID lookup). Shared by pass 1b (label discovery),
+     * pass 2 (streaming write) and pass 3 (delete) so bucketing is defined in one place.
+     */
+    private String spanBucketLabel(final ByteBuffer key,
+                                   final ByteBuffer val,
+                                   final Map<String, String> archivedRootLabels,
+                                   final NanoTime nanoTimeBefore,
+                                   final ArchivalGranularity granularity) {
+        if (key.remaining() < TRACE_ID_BYTES) {
+            return null;
+        }
+        if (isRootKey(key)) {
+            final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+            key.duplicate().get(traceIdBytes);
+            // Quiet root -> its start bucket; active root -> null (retained).
+            return archivedRootLabels.get(HexStringUtil.encode(traceIdBytes));
+        }
+        final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
+        if (insertTime.isBefore(nanoTimeBefore)) {
+            return ArchivalGranularityUtil.label(granularity, NanoTimeUtil.toInstant(insertTime));
+        }
+        return null;
+    }
+
+    /**
+     * Deletes the retained root span(s) of a trace (prefix {@code traceId ∥ 0*8}) from the
+     * live span DBI — used when a trace goes quiet and its root entry is removed. Increments
+     * {@code changeCount} per deleted span.
+     */
+    private void deleteRootSpansOf(final Txn<ByteBuffer> readTxn,
+                                   final LmdbWriter writer,
+                                   final byte[] traceIdBytes,
+                                   final Count changeCount) {
+        byteBuffers.useBytes(childPrefix(traceIdBytes, NO_PARENT_SPAN_ID), prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            LmdbIterable.iterate(readTxn, dbi, keyRange, (key, val) -> {
+                dbi.delete(writer.getWriteTxn(), key);
+                changeCount.increment();
+            });
+        });
+    }
+
+    /**
+     * Deletes a trace's incremental stats + distinct-name set (prefix {@code traceId}) — used
+     * when the trace's root is removed by retention/archival, so the counters don't leak.
+     */
+    private void deleteStatsOf(final Txn<ByteBuffer> readTxn,
+                               final LmdbWriter writer,
+                               final byte[] traceIdBytes) {
+        byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+            traceStatsDbi.delete(writer.getWriteTxn(), keyBuf);
+        });
+        byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuf).build();
+            LmdbIterable.iterate(readTxn, traceServiceNamesDbi, keyRange,
+                    (key, val) -> traceServiceNamesDbi.delete(writer.getWriteTxn(), key));
         });
     }
 
@@ -1082,8 +1206,18 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             // avoid "Unable to find value for UID" errors when the UID lookup
             // table is incomplete (e.g. after a cross-node shard sync).
             LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
+                // Root spans are governed by activity (with their root entry, below), not
+                // by insert time — so an active trace whose root span was inserted long ago
+                // (e.g. a pump root that ended at startup) keeps a queryable root. Retain
+                // and record its lookups; it is removed only when the trace goes quiet.
+                if (isRootKey(key)) {
+                    keyRecorder.recordUsed(writer, key);
+                    valueRecorder.recordUsed(writer, val);
+                    writer.tryCommit();
+                    return;
+                }
 
+                final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
                 if (insertTime.isBefore(deleteBefore)) {
                     // If this is data we no longer want to retain then delete it.
                     dbi.delete(writer.getWriteTxn(), key);
@@ -1096,15 +1230,25 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 writer.tryCommit();
             });
 
-            // Delete old trace roots and their secondary sort index entries.
+            final long deleteBeforeMs = NanoTimeUtil.toInstant(deleteBefore).toEpochMilli();
+
+            // Delete trace roots for traces that have gone QUIET (no activity since the
+            // retention cutoff) and their secondary sort index entries. Gating on
+            // last-activity rather than the root's start time keeps a still-active
+            // long-running trace's root live and current, instead of aging it out by its
+            // (fixed, possibly very old) start time. Its old spans still age out above.
             LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                 final TraceRoot value = traceRootValueSerde.read(val.duplicate());
-                if (value.getStartTime().isBefore(deleteBefore)) {
+                if (value.getLastActivityMs() < deleteBeforeMs) {
                     final byte[] traceIdBytes = new byte[key.remaining()];
                     key.duplicate().get(traceIdBytes);
-                    // Remove the trace root and all associated sort indexes atomically.
+                    // Trace has gone quiet: remove the root entry + its sort indexes, and
+                    // the root span(s) that were retained above (non-root spans have already
+                    // aged out by insert time).
                     traceRootsDbi.delete(writer.getWriteTxn(), key);
                     deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, value);
+                    deleteRootSpansOf(readTxn, writer, traceIdBytes, changeCount);
+                    deleteStatsOf(readTxn, writer, traceIdBytes);
                     changeCount.increment();
                 }
                 writer.tryCommit();
@@ -1113,7 +1257,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             // Delete stale trace-roots-merge-time entries.
             // Key layout: (mergeTimeMs_bigEndian || traceId) — read mergeTimeMs
             // from the first 8 bytes of the key.
-            final long deleteBeforeMs = NanoTimeUtil.toInstant(deleteBefore).toEpochMilli();
             LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
                 final long mergeTimeMs = key.duplicate().getLong();
                 if (mergeTimeMs < deleteBeforeMs) {
@@ -1467,6 +1610,270 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             findSpans(txn, traceId, traceBuilder::addSpan);
         });
         return traceBuilder.build();
+    }
+
+    // ------------------------------------------------------------------------
+    // Lazy, streaming trace traversal
+    //
+    // Walk a trace top-down straight off the span index
+    // (traceId ∥ parentSpanId ∥ spanId) instead of materialising the whole Trace
+    // in memory. A node's children are the prefix scan (traceId ∥ thisSpanId); the
+    // root is (traceId ∥ 0*8). Peak memory for a top-down consumer is its working
+    // set (depth + per-node sibling width), never O(total spans). Reusable by the
+    // aggregate computation below now, and by pathways / the UI later. All methods
+    // run against a caller-supplied txn.
+    // ------------------------------------------------------------------------
+
+    /**
+     * Returns the root span of a trace (the first span whose parentSpanId is
+     * empty), or empty if the trace has no root span in this shard.
+     */
+    public Optional<Span> rootSpan(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        final Span[] holder = new Span[1];
+        forEachChild(txn, traceIdBytes, NO_PARENT_SPAN_ID, span -> {
+            if (holder[0] == null) {
+                holder[0] = span;
+            }
+        });
+        return Optional.ofNullable(holder[0]);
+    }
+
+    /** Convenience: {@link #rootSpan(Txn, byte[])} in its own read transaction. */
+    public Optional<Span> rootSpan(final byte[] traceIdBytes) {
+        return env.read(readTxn -> rootSpan(readTxn, traceIdBytes));
+    }
+
+    /**
+     * Convenience: the direct children of {@code parentSpanIdBytes} as a list, in its
+     * own read transaction. Holds only this node's children (bounded by its width) —
+     * a lazy alternative to materialising the whole trace.
+     */
+    public List<Span> children(final byte[] traceIdBytes, final byte[] parentSpanIdBytes) {
+        final List<Span> children = new ArrayList<>();
+        env.read(readTxn -> {
+            streamChildren(readTxn, traceIdBytes, parentSpanIdBytes, children::add);
+            return null;
+        });
+        return children;
+    }
+
+    /**
+     * Streams the direct children of {@code parentSpanIdBytes} within a trace to
+     * {@code consumer}, reading each child span from the index on demand — holding
+     * only one span at a time rather than the whole tree.
+     */
+    public void streamChildren(final Txn<ByteBuffer> txn,
+                               final byte[] traceIdBytes,
+                               final byte[] parentSpanIdBytes,
+                               final Consumer<Span> consumer) {
+        forEachChild(txn, traceIdBytes, parentSpanIdBytes, consumer);
+    }
+
+    private void forEachChild(final Txn<ByteBuffer> txn,
+                              final byte[] traceIdBytes,
+                              final byte[] parentSpanIdBytes,
+                              final Consumer<Span> consumer) {
+        byteBuffers.useBytes(childPrefix(traceIdBytes, parentSpanIdBytes), prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            LmdbIterable.iterate(txn, dbi, keyRange, (key, val) -> {
+                final SpanKey spanKey = keySerde.read(txn, key);
+                final SpanValue spanValue = valueSerde.read(txn, val);
+                consumer.accept(createSpan(spanKey, spanValue));
+            });
+        });
+    }
+
+    /**
+     * Keys-only child walk: yields each child's raw 8-byte spanId without
+     * deserialising span values. Used by the depth DFS.
+     */
+    private void forEachChildSpanId(final Txn<ByteBuffer> txn,
+                                    final byte[] traceIdBytes,
+                                    final byte[] parentSpanIdBytes,
+                                    final Consumer<byte[]> spanIdConsumer) {
+        byteBuffers.useBytes(childPrefix(traceIdBytes, parentSpanIdBytes), prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            LmdbIterable.iterate(txn, dbi, keyRange, (key, val) ->
+                    spanIdConsumer.accept(readSpanId(key)));
+        });
+    }
+
+    private static byte[] childPrefix(final byte[] traceIdBytes, final byte[] parentSpanIdBytes) {
+        final byte[] prefix = new byte[TRACE_ID_BYTES + SPAN_ID_BYTES];
+        System.arraycopy(traceIdBytes, 0, prefix, 0, TRACE_ID_BYTES);
+        System.arraycopy(parentSpanIdBytes, 0, prefix, TRACE_ID_BYTES, SPAN_ID_BYTES);
+        return prefix;
+    }
+
+    /** Trailing 8-byte spanId of a span key, read without disturbing the buffer. */
+    private static byte[] readSpanId(final ByteBuffer key) {
+        final byte[] spanId = new byte[SPAN_ID_BYTES];
+        final ByteBuffer k = key.duplicate();
+        k.position(k.position() + TRACE_ID_BYTES + SPAN_ID_BYTES);
+        k.get(spanId);
+        return spanId;
+    }
+
+    /**
+     * Records a newly-inserted span into the per-trace incremental stats, in the caller's write
+     * txn: bump {@code spanCount}, add the service name to the distinct-name set (bump
+     * {@code serviceCount} if new), and ratchet {@code maxEnd} / {@code lastActivityMs}. O(1).
+     * Counts are cumulative — not decremented when spans later age out under retention. Called
+     * once per genuinely-new span (both merge paths), so re-delivery never double-counts.
+     */
+    private void recordNewSpan(final Txn<ByteBuffer> writeTxn,
+                               final byte[] traceIdBytes,
+                               final String name,
+                               final NanoTime insertTime,
+                               final NanoTime endTime) {
+        // Distinct service-name set → detect a genuinely new name.
+        final byte[] nameBytes = name == null
+                ? new byte[0]
+                : name.getBytes(StandardCharsets.UTF_8);
+        final byte[] nameKey = new byte[TRACE_ID_BYTES + nameBytes.length];
+        System.arraycopy(traceIdBytes, 0, nameKey, 0, TRACE_ID_BYTES);
+        System.arraycopy(nameBytes, 0, nameKey, TRACE_ID_BYTES, nameBytes.length);
+        final boolean[] newName = {false};
+        byteBuffers.useBytes(nameKey, nameKeyBuf -> {
+            newName[0] = traceServiceNamesDbi.put(
+                    writeTxn, nameKeyBuf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
+        });
+
+        final long insertMs = insertTime == null
+                ? 0L
+                : NanoTimeUtil.toInstant(insertTime).toEpochMilli();
+
+        byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+            final ByteBuffer existing = traceStatsDbi.get(writeTxn, keyBuf);
+            final TraceStats prev = existing != null
+                    ? traceStatsSerde.read(existing.duplicate())
+                    : TraceStats.EMPTY;
+            final NanoTime newMaxEnd = (endTime != null
+                    && (prev.maxEnd() == null || endTime.compareTo(prev.maxEnd()) > 0))
+                    ? endTime
+                    : prev.maxEnd();
+            final TraceStats next = new TraceStats(
+                    prev.spanCount() + 1,
+                    prev.serviceCount() + (newName[0] ? 1 : 0),
+                    newMaxEnd,
+                    Math.max(prev.lastActivityMs(), insertMs),
+                    prev.depth(),
+                    prev.spanCountAtLastDepth());
+            traceStatsSerde.write(next, valBuf -> traceStatsDbi.put(writeTxn, keyBuf, valBuf));
+        });
+    }
+
+    /** The 8-byte parentSpanId of a span key, read without disturbing the buffer. */
+    private static boolean isRootKey(final ByteBuffer key) {
+        final byte[] parentSpanId = new byte[SPAN_ID_BYTES];
+        final ByteBuffer k = key.duplicate();
+        k.position(k.position() + TRACE_ID_BYTES);
+        k.get(parentSpanId);
+        return Arrays.equals(parentSpanId, NO_PARENT_SPAN_ID);
+    }
+
+    /**
+     * Builds the stored {@link TraceRoot} from the per-trace incremental stats
+     * ({@link #recordNewSpan}) plus the root span — <b>O(1)</b>, no per-span rescan (this is what
+     * removes the merge-cycle cost that scaled with a growing trace). Returns empty if the trace
+     * has no root span (orphan children only), matching the previous skip guard.
+     *
+     * <ul>
+     *   <li>{@code totalSpans} / {@code services} — read from the cumulative counters;</li>
+     *   <li>{@code endTime} / {@code lastActivityMs} — the ratcheted max span end / insert;</li>
+     *   <li>{@code depth} — carried from the stats, recomputed by the bounded DFS only when never
+     *       computed or {@code spanCount >= 2 × spanCountAtLastDepth} (depth is stable, so the DFS
+     *       stays off the per-cycle hot path — amortised O(log N) runs over a trace's life).</li>
+     * </ul>
+     */
+    private Optional<TraceRoot> buildRootFromStats(final Txn<ByteBuffer> txn,
+                                                   final byte[] traceIdBytes) {
+        final Optional<Span> optRoot = rootSpan(txn, traceIdBytes);
+        if (optRoot.isEmpty()) {
+            return Optional.empty();
+        }
+        final Span root = optRoot.get();
+        TraceStats stats = readStats(txn, traceIdBytes);
+
+        int depth = stats.depth();
+        // Recompute depth when never computed, or (for a small trace) every cycle since the DFS
+        // is cheap, or (for a large trace) only when the span count has doubled — so the DFS
+        // stays off the hot path exactly for the huge, continuously-growing traces that motivated
+        // this change, while normal traces keep an always-current depth.
+        if (depth == 0
+                || stats.spanCount() <= DEPTH_EXACT_SPAN_THRESHOLD
+                || stats.spanCount() >= 2L * Math.max(1L, stats.spanCountAtLastDepth())) {
+            // Bounded DFS over child prefix scans; the path-visited guard in descend() skips
+            // back-edges so a malformed cyclic trace still terminates.
+            final int[] maxLevel = {0};
+            descend(txn, traceIdBytes, HexStringUtil.decode(root.getSpanId()), 1, maxLevel,
+                    new HashSet<>());
+            depth = maxLevel[0];
+            stats = new TraceStats(stats.spanCount(), stats.serviceCount(), stats.maxEnd(),
+                    stats.lastActivityMs(), depth, stats.spanCount());
+            writeStats(txn, traceIdBytes, stats);
+        }
+
+        final NanoTime end = stats.spanCount() > 0 && stats.maxEnd() != null
+                ? stats.maxEnd()
+                : root.end();
+        return Optional.of(TraceRoot.builder()
+                .traceId(HexStringUtil.encode(traceIdBytes))
+                .name(root.getName())
+                .startTime(root.start())
+                .endTime(end)
+                .services(stats.serviceCount())
+                .depth(depth)
+                .totalSpans((int) stats.spanCount())
+                .lastActivityMs(stats.lastActivityMs())
+                // The root span's own end time — fixed, unlike endTime (= max end across all
+                // spans). A large gap between the two flags trailing leaked activity (a pooled/
+                // background thread emitting spans under the trace long after the root finished).
+                .rootEndTime(root.end())
+                .build());
+    }
+
+    private TraceStats readStats(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        final TraceStats[] out = {TraceStats.EMPTY};
+        byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+            final ByteBuffer existing = traceStatsDbi.get(txn, keyBuf);
+            if (existing != null) {
+                out[0] = traceStatsSerde.read(existing.duplicate());
+            }
+        });
+        return out[0];
+    }
+
+    private void writeStats(final Txn<ByteBuffer> writeTxn,
+                            final byte[] traceIdBytes,
+                            final TraceStats stats) {
+        byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+            traceStatsSerde.write(stats, valBuf -> traceStatsDbi.put(writeTxn, keyBuf, valBuf));
+        });
+    }
+
+    /**
+     * DFS step: records the deepest level reached (root = level 1) and descends into
+     * children. {@code path} holds the spanIds on the current root→node path; a child
+     * already on the path is a back-edge (a malformed cyclic trace) and is skipped, so the
+     * walk always terminates. {@code path} is O(current depth).
+     */
+    private void descend(final Txn<ByteBuffer> txn,
+                         final byte[] traceIdBytes,
+                         final byte[] spanId,
+                         final int level,
+                         final int[] maxLevel,
+                         final Set<String> path) {
+        if (level > maxLevel[0]) {
+            maxLevel[0] = level;
+        }
+        path.add(HexStringUtil.encode(spanId));
+        forEachChildSpanId(txn, traceIdBytes, spanId, childSpanId -> {
+            if (!path.contains(HexStringUtil.encode(childSpanId))) {
+                descend(txn, traceIdBytes, childSpanId, level + 1, maxLevel, path);
+            }
+        });
+        path.remove(HexStringUtil.encode(spanId));
     }
 
     private void findSpans(final Txn<ByteBuffer> txn,
