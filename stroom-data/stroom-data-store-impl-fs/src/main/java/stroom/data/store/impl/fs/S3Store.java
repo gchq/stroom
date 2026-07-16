@@ -27,6 +27,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.time.TimeBasis;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 class S3Store {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Store.class);
+    private static final TimeBasis TIME_BASIS = TimeBasis.META_CREATION_TIME;
 
     private static final int MAX_CACHED_ITEMS = 10;
 
@@ -89,7 +91,9 @@ class S3Store {
                         // Download the zip from S3.
                         final S3Manager s3Manager =
                                 new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
-                        s3Manager.download(meta, zipFile);
+                        // Must use meta create time to give us deterministic time variable replacement
+                        // in the s3 key
+                        s3Manager.download(meta, zipFile, TIME_BASIS);
 
                         ZipUtil.unzip(zipFile, tempPath);
                     } catch (final IOException e) {
@@ -127,9 +131,9 @@ class S3Store {
     private String getS3Path(final DataVolume dataVolume, final Meta meta) {
         final S3Manager s3Manager = new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
         return "S3 > " +
-                s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
-                " > " +
-                s3Manager.createKey(s3Manager.getKeyNamePattern(), meta);
+               s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
+               " > " +
+               s3Manager.createKey(s3Manager.getKeyNamePattern(), meta, TIME_BASIS);
     }
 
     public void release(final Meta meta, final Path path) {
@@ -188,7 +192,7 @@ class S3Store {
 
             // Upload the zip to S3.
             final S3Manager s3Manager = new S3Manager(pathCreator, dataVolume.getVolume().getS3ClientConfig());
-            s3Manager.upload(meta, attributeMap, zipFile, null);
+            s3Manager.upload(meta, attributeMap, zipFile, null, TIME_BASIS);
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
