@@ -66,6 +66,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Singleton
 public class S3ZstdStreamStore extends AbstractS3StreamStore {
 
+    // TODO See TODOs in S3ZstdSource and S3ZstdTarget
+    //  Change to store all keys in the fs_meta_s3_location table so we don't rely on brittle
+    //  templated bucket names and can discover what files we have without the cost of hitting
+    //  S3.
+    //  Also consider if we want to allow child targets to live in different buckets to their parents.
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStreamStore.class);
 
     static final TimeBasis TIME_BASIS = TimeBasis.META_CREATION_TIME;

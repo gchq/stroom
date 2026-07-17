@@ -81,10 +81,12 @@ final class S3ZstdSource implements Source {
     private final DataVolume dataVolume;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
     /**
-     * The {@link FileKey} of the main stream type
+     * //     * The {@link FileKey} of the main stream type
      */
     private final FileKey parentFileKey;
     private final String parentS3Key;
+
+    // TODO derive and hold the bucket name
 
     private boolean closed;
     private AttributeMap attributeMap;
@@ -131,6 +133,8 @@ final class S3ZstdSource implements Source {
     }
 
     private Set<String> getChildTypes() {
+        // TODO this could come from the fs_meta_s3_location table if we store all keys
+
         if (childTypes == null) {
             childTypes = new HashSet<>(getAttributes().getAsList(MetaFields.CHILD_TYPES.getFldName()));
             LOGGER.debug(() -> LogUtil.message("getChildTypes() - childTypes: {}", NullSafe.sort(childTypes)));
@@ -139,6 +143,8 @@ final class S3ZstdSource implements Source {
     }
 
     private ZstdSegmentationType getSegmentationType() {
+        // TODO this could come from the fs_meta_s3_location table if we store all keys
+        //  and encode the segmentation type in the key
         if (zstdSegmentationType == null) {
             final String segmentationType = getAttributes().get(MetaFields.SEGMENTATION_TYPE.getFldName());
             LOGGER.debug("getSegmentationType() - segmentationType: {}", segmentationType);

@@ -20,6 +20,7 @@ import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -80,8 +81,11 @@ public final class S3ZstdTarget implements Target {
     private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
     private final FileKey fileKey;
+    @Deprecated // use s3Location
     private final String s3Bucket;
+    @Deprecated // use s3Location
     private final String s3Key;
+    private final S3Location s3Location;
     private final Path tempFilePath;
     private final Path tempDir;
     private final S3ZstdTarget parentTarget;
@@ -128,8 +132,14 @@ public final class S3ZstdTarget implements Target {
         this.parentTarget = parentTarget;
         this.isRootTarget = parentTarget == null;
         this.fileKey = FileKey.of(dataVolume, meta, childStreamType);
+
         this.s3Key = s3StreamTypeExtensions.getkey(fileKey);
         this.s3Bucket = s3Manager.getBucketNamePattern();
+
+        this.s3Location = new S3Location(
+                s3Manager.getRegion(),
+                s3Manager.createBucketName(meta, S3ZstdStreamStore.TIME_BASIS),
+                s3StreamTypeExtensions.getkey(fileKey));
         this.tempFilePath = createTempFilePath(tempDir, s3Key);
         LOGGER.debug(() ->
                 LogUtil.message(
@@ -394,6 +404,10 @@ public final class S3ZstdTarget implements Target {
         });
 
         s3Manager.upload(s3Bucket, s3Key, meta, s3MetaData, DEFAULT_UPLOAD_PROPERTIES, tempFilePath);
+
+        // TODO store the uploaded key in an instance variable so that the close() method on the parent
+        //  can gather them all and write them all to the fs_meta_s3_location table in one batch.
+
         LOGGER.debug("close() - Uploaded fileKey: {}, tempFilePath: {}, s3Bucket: {}, " +
                      "s3Key: {}, attributeMap: {}",
                 fileKey, tempFilePath, s3Bucket, s3Key, attributeMap);
