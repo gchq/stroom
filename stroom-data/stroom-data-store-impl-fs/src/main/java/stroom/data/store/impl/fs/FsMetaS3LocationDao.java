@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 
 import stroom.aws.s3.shared.S3Location;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 
 import org.jspecify.annotations.Nullable;
@@ -33,6 +34,9 @@ public interface FsMetaS3LocationDao {
 
     @Nullable
     S3LocationDataVolume getS3LocationDataVolume(final long metaId);
+
+    @Nullable
+    Set<S3Location> getS3LocationDataVolume(final DataVolume dataVolume);
 
     int delete(final Collection<Long> metaIds);
 }

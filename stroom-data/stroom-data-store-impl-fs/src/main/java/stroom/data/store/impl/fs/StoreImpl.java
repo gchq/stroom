@@ -124,7 +124,8 @@ public class StoreImpl implements Store, AttributeMapFactory {
         // Create in UNLOCKED state as the stream's data already exists
         final Meta meta = metaService.create(metaProperties, Status.UNLOCKED);
         final long metaId = meta.getId();
-        dataVolumeService.createS3LocationDataVolume(metaId, volume, Set.of(s3Location));
+        dataVolumeService.createS3LocationDataVolume(
+                metaId, volume, Set.of(s3Location), true);
 
         LOGGER.debug(
                 "addExistingS3Source() - Created stream {}, metaProperties: {}, s3Location: {}, volume: {}, meta: {}",

@@ -75,9 +75,14 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
      */
     @Override
     public DataVolume findDataVolume(final long metaId) {
-        final List<DataVolume> dataVolumes = findDataVolumes(List.of(metaId));
-        final DataVolume dataVolume = NullSafe.first(dataVolumes);
-        LOGGER.debug("findDataVolume() - metaId: {}, dataVolume: {}", metaId, dataVolume);
+        final DataVolume dataVolume = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
+                        .from(FS_META_VOLUME)
+                        .where(FS_META_VOLUME.META_ID.eq(metaId))
+                        .fetchOptional())
+                .map(this::mapRecordToDataVolume)
+                .orElse(null);
+        LOGGER.debug("findDataVolume - metaId: {}, dataVolume: {}", metaId, dataVolume);
         return dataVolume;
     }
 

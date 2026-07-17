@@ -79,6 +79,14 @@ public class DataVolumeService {
                 fsMetaS3LocationDao.getS3LocationDataVolume(metaId));
     }
 
+    /**
+     * Return the S3 location information for metaId
+     */
+    public Set<S3Location> findS3Locations(final DataVolume dataVolume) {
+        return securityContext.secureResult(() ->
+                fsMetaS3LocationDao.getS3LocationDataVolume(dataVolume));
+    }
+
     public List<DataVolume> findDataVolumes(final Collection<Long> metaIds) {
         return securityContext.secureResult(() ->
                 dataVolumeDao.findDataVolumes(metaIds));
@@ -95,11 +103,21 @@ public class DataVolumeService {
 //        return createS3Locations(metaId, Set.of(s3Locations));
 //    }
 
+    /**
+     * Creates a record in the MetaS3Location table for each s3Location, to link a meta record to its
+     * S3 object(s).
+     *
+     * @param validateLocationsAgainstVolume If true, it will check that the values in s3Locations match the volume.
+     */
     public S3LocationDataVolume createS3LocationDataVolume(final long metaId,
                                                            final FsVolume volume,
-                                                           final Set<S3Location> s3Locations) {
+                                                           final Set<S3Location> s3Locations,
+                                                           final boolean validateLocationsAgainstVolume) {
         return securityContext.secureResult(() -> {
-            validateS3Locations(volume, s3Locations);
+            // The volume may contain templated bucket/key in which case
+            if (validateLocationsAgainstVolume) {
+                validateS3Locations(volume, s3Locations);
+            }
             // This also creates the DataVolume
             final S3LocationDataVolume s3LocationDataVolume = fsMetaS3LocationDao.create(metaId, volume, s3Locations);
 

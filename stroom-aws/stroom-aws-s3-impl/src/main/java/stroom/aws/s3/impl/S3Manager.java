@@ -21,9 +21,11 @@ import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
 import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.client.S3Util;
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.aws.s3.shared.S3Location;
 import stroom.cache.api.TemplateCache;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -96,13 +98,21 @@ public class S3Manager {
     }
 
     /**
+     * Create an S3 bucket name the bucketName from the s3ClientConfig.
+     * {@link Meta} is used to provide values for the templated bucket name.
+     */
+    public String createBucketName(final SimpleMeta meta) {
+        return createBucketName(null, meta);
+    }
+
+    /**
      * Create an S3 bucket name using either the supplied bucketNamePattern or the bucketName from
      * the s3ClientConfig. {@link Meta} is used to provide values for the templated bucket name.
      *
      * @param bucketNamePattern If null, it will use the bucketName from the s3ClientConfig.
      */
     public String createBucketName(final String bucketNamePattern,
-                                   final Meta meta) {
+                                   final SimpleMeta meta) {
         Objects.requireNonNull(meta);
         final String effectiveBucketNamePattern = NullSafe.nonBlankStringElseGet(
                 bucketNamePattern,
@@ -125,13 +135,11 @@ public class S3Manager {
     }
 
     /**
-     * Create an S3 key using either the supplied keyPattern or the keyPattern from
-     * the s3ClientConfig. {@link Meta} is used to provide values for the templated key.
-     *
-     * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
+     * Create an S3 key using the keyPattern from the s3ClientConfig.
+     * {@link Meta} is used to provide values for the templated key.
      */
-    public String createKey(final String keyPattern, final Meta meta) {
-        return createKey(keyPattern, meta, null);
+    public String createKey(final SimpleMeta meta) {
+        return createKey(null, meta, null);
     }
 
     /**
@@ -140,7 +148,32 @@ public class S3Manager {
      *
      * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
      */
-    public String createKey(final String keyPattern, final Meta meta, final AtomicLong sequenceNumber) {
+    public String createKey(final String keyPattern, final SimpleMeta meta) {
+        return createKey(keyPattern, meta, null);
+    }
+
+    /**
+     * Derive an S3Location based on the configured region and bucket/key templates in
+     * combination with {@link SimpleMeta}.
+     */
+    public S3Location deriveS3Location(final SimpleMeta meta) {
+        final String region = s3ClientConfig.getRegion();
+        final String key = createKey(meta);
+        final String bucket = createBucketName(meta);
+        final S3Location s3Location = new S3Location(region, key, bucket);
+        LOGGER.debug("createS3Location() - meta: {}, s3Location: {}", meta, s3Location);
+        return s3Location;
+    }
+
+    /**
+     * Create an S3 key using either the supplied keyPattern or the keyPattern from
+     * the s3ClientConfig. {@link Meta} is used to provide values for the templated key.
+     *
+     * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
+     */
+    public String createKey(final String keyPattern,
+                            final SimpleMeta meta,
+                            final AtomicLong sequenceNumber) {
         Objects.requireNonNull(meta);
         final String effectiveKeyPattern = NullSafe.nonBlankStringElseGet(
                 keyPattern,
@@ -159,16 +192,28 @@ public class S3Manager {
         return key;
     }
 
+    /**
+     * @return The bucket name or pattern from client config, or a default if not set.
+     */
     public String getBucketNamePattern() {
-        return NullSafe
-                .nonBlank(s3ClientConfig.getBucketName())
-                .orElse(S3ClientConfig.DEFAULT_BUCKET_NAME);
+        return NullSafe.nonBlankStringElse(s3ClientConfig.getBucketName(),
+                S3ClientConfig.DEFAULT_BUCKET_NAME);
     }
 
+    /**
+     * @return The key or pattern from client config, or a default if not set.
+     */
     public String getKeyNamePattern() {
-        return NullSafe
-                .nonBlank(s3ClientConfig.getKeyPattern())
-                .orElse(S3ClientConfig.DEFAULT_KEY_PATTERN);
+        return NullSafe.nonBlankStringElse(
+                s3ClientConfig.getKeyPattern(),
+                S3ClientConfig.DEFAULT_KEY_PATTERN);
+    }
+
+    /**
+     * @return The region from client config
+     */
+    public String getRegion() {
+        return s3ClientConfig.getRegion();
     }
 
     /**
@@ -221,9 +266,9 @@ public class S3Manager {
     }
 
     /**
-     * @param bucketName The S3 bucket to upload to (Use {@link S3Manager#createBucketName(String, Meta)}
+     * @param bucketName The S3 bucket to upload to (Use {@link S3Manager#createBucketName(String, SimpleMeta)}
      *                   to create a bucket from a pattern).
-     * @param key        The S3 key to upload to (Use {@link S3Manager#createKey(String, Meta, AtomicLong)}
+     * @param key        The S3 key to upload to (Use {@link S3Manager#createKey(String, SimpleMeta, AtomicLong)}
      *                   to create a key from a pattern).
      */
     public PutObjectResponse upload(final String bucketName,
@@ -614,16 +659,19 @@ public class S3Manager {
                 META_ID_TAG_KEY, Long.toString(meta.getId()));
     }
 
-    private String applyTemplate(final String templateStr, final Meta meta) {
+    private String applyTemplate(final String templateStr, final SimpleMeta meta) {
         return applyTemplate(templateStr, meta, null);
     }
 
-    private String applyTemplate(final String templateStr, final Meta meta, final AtomicLong sequenceNumber) {
+    private String applyTemplate(final String templateStr,
+                                 final SimpleMeta meta,
+                                 final AtomicLong sequenceNumber) {
         final Template template = templateCache.getTemplate(templateStr);
         ExecutorBuilder executorBuilder = template.buildExecutor();
-        if (contextVariableResolver != null) {
-            contextVariableResolver.addContextReplacements(executorBuilder);
-        }
+
+        // TODO now() is only appropriate for s3 appender, not for stream store, which needs to use
+        //  meta create time for deterministic file names
+
         // Use now() for time replacements. When one of: rolling, agg splitting and record splitting is used,
         // the time vars can distinguish multiple files coming from the same stream
         executorBuilder = executorBuilder
@@ -634,6 +682,10 @@ public class S3Manager {
                 .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
                 .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
                 .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()));
+
+        if (contextVariableResolver != null) {
+            contextVariableResolver.addContextReplacements(executorBuilder);
+        }
 
         if (sequenceNumber != null) {
             executorBuilder = executorBuilder.addSequenceNumberReplacement(

@@ -27,6 +27,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.AbstractS3StreamStore;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeService;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
@@ -88,15 +89,18 @@ public class S3StreamStore extends AbstractS3StreamStore {
     private final MetaService metaService;
     private final TemplateCache templateCache;
     private final S3ManagerFactory s3ManagerFactory;
+    private final DataVolumeService dataVolumeService;
     private final Path tempDir;
 
     @Inject
     S3StreamStore(final TempDirProvider tempDirProvider,
                   final MetaService metaService,
+                  final DataVolumeService dataVolumeService,
                   final S3ManagerFactory s3ManagerFactory,
                   final TemplateCache templateCache) {
         super(templateCache);
         this.metaService = metaService;
+        this.dataVolumeService = dataVolumeService;
         this.s3ManagerFactory = s3ManagerFactory;
         this.templateCache = templateCache;
 
@@ -118,13 +122,38 @@ public class S3StreamStore extends AbstractS3StreamStore {
 
     @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
-        return openSource(meta, dataVolume, null, FilePadStyle.MULTIPLE_OF_THREE_DIGITS);
+        final Set<S3Location> s3Locations = dataVolumeService.findS3Locations(dataVolume);
+        if (NullSafe.size(s3Locations) > 1) {
+            throw new IllegalStateException(LogUtil.message(
+                    "DataVolume {} has more than one S3Location. This store only supports one S3Location. " +
+                    "s3Locations: {}",
+                    dataVolume, s3Locations));
+        }
+        // Legacy streams may still exist with no record in the s3Locations table,
+        // as we used to always derive the s3 bucket/key, thus it may be null, in which
+        // case it will be derived.
+        // As legacy streams are accessed, the s3 location will be persisted on successful download
+        // from S3.
+        final S3Location s3Location = NullSafe.first(s3Locations);
+        return openSource(meta, dataVolume, s3Location, FilePadStyle.MULTIPLE_OF_THREE_DIGITS);
     }
 
     Source openSource(final Meta meta,
                       final DataVolume dataVolume,
                       final S3Location s3Location,
                       final FilePadStyle filePadStyle) throws DataException {
+
+        final boolean shouldStoreLocation = s3Location == null;
+        // If no s3Location is provided (i.e. a legacy stream), derive it then we can store it
+        // after a successful download from S3.
+        final S3Location effectiveS3Location = Objects.requireNonNullElseGet(s3Location, () ->
+                deriveS3Location(dataVolume, meta));
+
+        Objects.requireNonNull(effectiveS3Location, "Null effectiveS3Location");
+
+        LOGGER.debug(
+                "openSource() - meta: {}, dataVolume: {}, s3Location: {}, filePadStyle: {}, effectiveS3Location: {}",
+                meta, dataVolume, s3Location, filePadStyle, effectiveS3Location);
 
         final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
@@ -136,15 +165,18 @@ public class S3StreamStore extends AbstractS3StreamStore {
                         zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
                         // Download the zip from S3.
                         final S3Manager s3Manager = createS3Manager(dataVolume);
-                        if (s3Location != null) {
-                            s3Manager.download(meta,
-                                    null,
-                                    s3Location.bucketName(),
-                                    s3Location.key(),
-                                    zipFile,
-                                    true);
-                        } else {
-                            s3Manager.download(meta, zipFile);
+
+                        s3Manager.download(
+                                meta,
+                                null,
+                                effectiveS3Location.bucketName(),
+                                effectiveS3Location.key(),
+                                zipFile,
+                                true);
+
+                        // Successful download so store the location for future use.
+                        if (shouldStoreLocation) {
+                            storeS3Location(dataVolume, meta, effectiveS3Location);
                         }
 
                         ZipUtil.unzip(zipFile, tempPath);
@@ -161,7 +193,16 @@ public class S3StreamStore extends AbstractS3StreamStore {
                     throw e;
                 }
 
-                return new TrackedSource(meta.getId(), tempPath, Instant.now(), new AtomicInteger(1));
+                final TrackedSource trackedSource2 = new TrackedSource(
+                        meta.getId(),
+                        tempPath,
+                        Instant.now(),
+                        new AtomicInteger(1),
+                        s3Location);
+
+                LOGGER.debug("openSource() - Created trackedSource2: {}", trackedSource2);
+
+                return trackedSource2;
             } else {
                 synchronized (S3StreamStore.this) {
                     evictable.remove(v);
@@ -174,7 +215,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
         return new S3Source(
                 this,
                 trackedSource.getPath(),
-                getS3Path(dataVolume, meta),
+                effectiveS3Location,
                 meta,
                 filePadStyle);
     }
@@ -187,7 +228,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
     @Override
     public Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException {
         final Path tempDir = createTempPath(meta.getId());
-        return new S3Target(metaService, this, tempDir, dataVolume, meta);
+        return new S3Target(metaService, dataVolumeService, this, tempDir, dataVolume, meta);
     }
 
     @Override
@@ -206,13 +247,39 @@ public class S3StreamStore extends AbstractS3StreamStore {
         return super.validateVolume(volume);
     }
 
-    private String getS3Path(final DataVolume dataVolume, final SimpleMeta simpleMeta) {
+    private S3Location deriveS3Location(final DataVolume dataVolume,
+                                        final SimpleMeta simpleMeta) {
+        Objects.requireNonNull(dataVolume);
+        Objects.requireNonNull(simpleMeta);
         final S3Manager s3Manager = createS3Manager(dataVolume);
-        return "S3 > " +
-               createBucketName(s3Manager.getBucketNamePattern(), simpleMeta) +
-               " > " +
-               createKey(s3Manager.getKeyNamePattern(), simpleMeta);
+        final S3Location s3Location = s3Manager.deriveS3Location(simpleMeta);
+        LOGGER.debug("deriveS3Location() - dataVolume: {}, simpleMeta: {}, s3Location: {}",
+                dataVolume, simpleMeta, s3Location);
+        return s3Location;
     }
+
+    private void storeS3Location(final DataVolume dataVolume,
+                                 final SimpleMeta simpleMeta,
+                                 final S3Location s3Location) {
+        Objects.requireNonNull(dataVolume);
+        Objects.requireNonNull(simpleMeta);
+        dataVolumeService.createS3LocationDataVolume(
+                simpleMeta.getId(),
+                dataVolume.volume(),
+                Set.of(s3Location),
+                false);
+        LOGGER.debug("storeS3Location() - dataVolume: {}, simpleMeta: {}, s3Location: {}",
+                dataVolume, simpleMeta, s3Location);
+    }
+
+
+//    private String getS3Path(final DataVolume dataVolume, final SimpleMeta simpleMeta) {
+//        final S3Manager s3Manager = createS3Manager(dataVolume);
+//        return "S3 > " +
+//               createBucketName(s3Manager.getBucketNamePattern(), simpleMeta) +
+//               " > " +
+//               createKey(s3Manager.getKeyNamePattern(), simpleMeta);
+//    }
 
     void release(final Meta meta, final Path path) {
         cache.compute(meta.getId(), (ignored, v) -> {
@@ -261,12 +328,11 @@ public class S3StreamStore extends AbstractS3StreamStore {
     /**
      * Zips the contents of tempDir into a single ZIP file then uploads it to S3
      */
-    public void upload(final Path tempDir,
-                       final DataVolume dataVolume,
-                       final Meta meta,
-                       final AttributeMap attributeMap) {
-        LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}",
-                tempDir, NullSafe.get(meta, Meta::getId), attributeMap));
+    public S3Location upload(final Path tempDir,
+                             final DataVolume dataVolume,
+                             final Meta meta,
+                             final AttributeMap attributeMap) {
+        final S3Location s3Location;
         // Create zip.
         Path zipFile = null;
         try {
@@ -275,13 +341,23 @@ public class S3StreamStore extends AbstractS3StreamStore {
 
             // Upload the zip to S3.
             final S3Manager s3Manager = createS3Manager(dataVolume);
-            s3Manager.upload(meta, attributeMap, zipFile);
+            s3Location = s3Manager.deriveS3Location(meta);
+            LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}, s3Location: {}",
+                    tempDir, NullSafe.get(meta, Meta::getId), attributeMap, s3Location));
+            s3Manager.upload(
+                    s3Location.bucketName(),
+                    s3Location.key(),
+                    meta,
+                    attributeMap,
+                    null,
+                    zipFile);
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         } finally {
             deleteFile("Deleting target zip: ", zipFile);
         }
+        return s3Location;
     }
 
     private Path createTempPath(final Long metaId) {
@@ -388,15 +464,22 @@ public class S3StreamStore extends AbstractS3StreamStore {
         private final Path path;
         private final Instant createTime;
         private final AtomicInteger useCount;
+        private final S3Location s3Location;
 
         public TrackedSource(final Long metaId,
                              final Path path,
                              final Instant createTime,
-                             final AtomicInteger useCount) {
+                             final AtomicInteger useCount,
+                             final S3Location s3Location) {
             this.metaId = metaId;
             this.path = path;
             this.createTime = createTime;
             this.useCount = useCount;
+            this.s3Location = s3Location;
+        }
+
+        public Long getMetaId() {
+            return metaId;
         }
 
         public Path getPath() {
@@ -409,6 +492,10 @@ public class S3StreamStore extends AbstractS3StreamStore {
 
         public AtomicInteger getUseCount() {
             return useCount;
+        }
+
+        public S3Location getS3Location() {
+            return s3Location;
         }
 
         @Override
@@ -426,6 +513,17 @@ public class S3StreamStore extends AbstractS3StreamStore {
         @Override
         public int hashCode() {
             return Objects.hash(metaId, path);
+        }
+
+        @Override
+        public String toString() {
+            return "TrackedSource{" +
+                   "metaId=" + metaId +
+                   ", path=" + path +
+                   ", createTime=" + createTime +
+                   ", useCount=" + useCount +
+                   ", s3Location=" + s3Location +
+                   '}';
         }
     }
 }

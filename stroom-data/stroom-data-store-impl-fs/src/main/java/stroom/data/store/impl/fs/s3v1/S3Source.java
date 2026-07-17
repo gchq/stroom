@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.impl.S3FileExtensions;
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
@@ -58,7 +59,7 @@ final class S3Source implements Source {
 
     private final Map<Long, S3InputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
-    private final String s3Location;
+    private final S3Location s3Location;
     private AttributeMap attributeMap;
 
     private final S3StreamStore s3StreamStore;
@@ -69,7 +70,7 @@ final class S3Source implements Source {
 
     public S3Source(final S3StreamStore s3StreamStore,
                     final Path tempDir,
-                    final String s3Location,
+                    final S3Location s3Location,
                     final Meta meta,
                     final FilePadStyle filePadStyle) {
         this.s3StreamStore = s3StreamStore;
@@ -96,26 +97,26 @@ final class S3Source implements Source {
 
     private void readManifest(final AttributeMap attributeMap) {
         final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
-        if (Files.isRegularFile(manifestFile)) {
-            try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(manifestFile))) {
-                AttributeMapUtil.read(inputStream, attributeMap);
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-            }
 
-            attributeMap.put("S3 Location", s3Location);
+        attributeMap.put("S3 Location", s3Location.getDisplayValue());
 
-            try {
-                try (final Stream<Path> stream = Files.list(tempDir)) {
-                    final String fileNames = stream
-                            .map(FileUtil::getCanonicalPath)
-                            .sorted()
-                            .collect(Collectors.joining("\n"));
-                    attributeMap.put("Temp Files", fileNames);
+        try {
+            if (Files.isRegularFile(manifestFile)) {
+                try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(manifestFile))) {
+                    AttributeMapUtil.read(inputStream, attributeMap);
+                } catch (final IOException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
             }
+            try (final Stream<Path> stream = Files.list(tempDir)) {
+                final String fileNames = stream
+                        .map(FileUtil::getCanonicalPath)
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+                attributeMap.put("Temp Files", fileNames);
+            }
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
         }
     }
 
@@ -191,7 +192,7 @@ final class S3Source implements Source {
     }
 
     @Override
-    public long count(final String childStreamType) throws IOException {
+    public long count(final String childStreamType) {
         if (childStreamType == null) {
             return count();
         }
@@ -213,7 +214,7 @@ final class S3Source implements Source {
                     final String extension = fileName.substring(index);
                     final String numPart = fileName.substring(0, index);
                     final long partNo = filePadStyle.dePadLong(numPart);
-                    counts.compute(extension, (k, v) -> {
+                    counts.compute(extension, (ignoredKey, v) -> {
                         if (v == null) {
                             return partNo;
                         } else {

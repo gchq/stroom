@@ -16,15 +16,22 @@
 
 package stroom.aws.s3.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+/**
+ * A concrete location on an S3 compatible service
+ */
 // TODO In theory we don't need region name as bucketName is globally unique in AWS.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public final class S3Location {
+public final class S3Location implements HasDisplayValue {
+
+    public static final String TEMPLATE_VARIABLE_PREFIX = "${";
 
     @JsonProperty
     private final String regionName;
@@ -40,6 +47,20 @@ public final class S3Location {
         this.regionName = Objects.requireNonNull(regionName);
         this.bucketName = Objects.requireNonNull(bucketName);
         this.key = Objects.requireNonNull(key);
+        checkNotTemplated();
+    }
+
+    private void checkNotTemplated() {
+        // Make sure we are only holding concrete S3 locations
+        if (regionName.contains(TEMPLATE_VARIABLE_PREFIX)) {
+            throw new IllegalArgumentException("Region '" + regionName + "' cannot contain template variables");
+        }
+        if (bucketName.contains(TEMPLATE_VARIABLE_PREFIX)) {
+            throw new IllegalArgumentException("Bucket name '" + bucketName + "' cannot contain template variables");
+        }
+        if (key.contains(TEMPLATE_VARIABLE_PREFIX)) {
+            throw new IllegalArgumentException("Key '" + key + "' cannot contain template variables");
+        }
     }
 
     public String regionName() {
@@ -76,5 +97,10 @@ public final class S3Location {
                "regionName=" + regionName + ", " +
                "bucketName=" + bucketName + ", " +
                "key=" + key + ']';
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return "S3://" + bucketName + "/" + key;
     }
 }

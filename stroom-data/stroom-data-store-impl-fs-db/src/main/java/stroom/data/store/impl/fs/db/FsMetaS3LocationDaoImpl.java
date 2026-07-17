@@ -96,23 +96,35 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
     @Nullable
     public S3LocationDataVolume getS3LocationDataVolume(final long metaId) {
         final DataVolume dataVolume = dataVolumeDaoImpl.findDataVolume(metaId);
+        final S3LocationDataVolume s3LocationDataVolume;
         if (dataVolume != null) {
-            final List<S3Location> s3Locations = JooqUtil.contextResult(
-                            fsDataStoreDbConnProvider, context -> context
-                                    .select(FS_META_S3_LOCATION.ID,
-                                            FS_META_S3_LOCATION.META_ID,
-                                            FS_META_S3_LOCATION.S3_REGION,
-                                            FS_META_S3_LOCATION.S3_BUCKET,
-                                            FS_META_S3_LOCATION.S3_KEY)
-                                    .from(FS_META_S3_LOCATION)
-                                    .where(FS_META_S3_LOCATION.META_ID.eq(metaId))
-                                    .fetch())
-                    .map(this::mapRecordToS3Location);
-            LOGGER.debug("getS3Locations() - metaId: {}, s3Locations: {}", metaId, s3Locations);
-            return new S3LocationDataVolume(dataVolume, Set.copyOf(s3Locations));
+            final Set<S3Location> s3Locations = getS3LocationDataVolume(dataVolume);
+            s3LocationDataVolume = new S3LocationDataVolume(dataVolume, s3Locations);
         } else {
-            return null;
+            s3LocationDataVolume = null;
         }
+        LOGGER.debug("getS3LocationDataVolume() - metaId: {}, s3LocationDataVolume: {}",
+                metaId, s3LocationDataVolume);
+        return s3LocationDataVolume;
+    }
+
+    @Override
+    public @Nullable Set<S3Location> getS3LocationDataVolume(final DataVolume dataVolume) {
+        Objects.requireNonNull(dataVolume);
+        final List<S3Location> list = JooqUtil.contextResult(
+                        fsDataStoreDbConnProvider, context -> context
+                                .select(FS_META_S3_LOCATION.ID,
+                                        FS_META_S3_LOCATION.META_ID,
+                                        FS_META_S3_LOCATION.S3_REGION,
+                                        FS_META_S3_LOCATION.S3_BUCKET,
+                                        FS_META_S3_LOCATION.S3_KEY)
+                                .from(FS_META_S3_LOCATION)
+                                .where(FS_META_S3_LOCATION.META_ID.eq(dataVolume.metaId()))
+                                .fetch())
+                .map(this::mapRecordToS3Location);
+        final Set<S3Location> s3Locations = NullSafe.asSet(list);
+        LOGGER.debug("getS3Locations() - dataVolume: {}, s3Locations: {}", dataVolume, s3Locations);
+        return s3Locations;
     }
 
     @Override

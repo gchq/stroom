@@ -17,11 +17,13 @@
 package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.impl.S3FileExtensions;
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.DataVolumeService;
 import stroom.data.store.impl.fs.RASegmentOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -43,6 +45,7 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,7 @@ public final class S3Target implements Target {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Target.class);
 
     private final MetaService metaService;
+    private final DataVolumeService dataVolumeService;
     private final S3StreamStore s3StreamStore;
     private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
@@ -70,12 +74,14 @@ public final class S3Target implements Target {
     private long partNo;
 
     public S3Target(final MetaService metaService,
+                    final DataVolumeService dataVolumeService,
                     final S3StreamStore s3StreamStore,
                     final Path tempDir,
                     final DataVolume dataVolume,
                     final Meta meta) {
         this.dataVolume = dataVolume;
         this.metaService = metaService;
+        this.dataVolumeService = dataVolumeService;
         this.s3StreamStore = s3StreamStore;
         this.meta = meta;
         this.tempDir = tempDir;
@@ -165,7 +171,14 @@ public final class S3Target implements Target {
                         final AttributeMap attributeMap = getAttributes();
 
                         // Zip and upload.
-                        s3StreamStore.upload(tempDir, dataVolume, meta, attributeMap);
+                        final S3Location s3Location = s3StreamStore.upload(tempDir, dataVolume, meta, attributeMap);
+                        // Record the concrete S3 location in the database rather than relying on the templates
+                        // in the volume s3 config staying the same.
+                        dataVolumeService.createS3LocationDataVolume(
+                                dataVolume.metaId(),
+                                dataVolume.volume(),
+                                Collections.singleton(s3Location),
+                                false);
 
                         // Unlock will update the meta data so set it back on the stream
                         // target so the client has the up to date copy

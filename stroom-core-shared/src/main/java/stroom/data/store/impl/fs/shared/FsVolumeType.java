@@ -112,4 +112,11 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     public static Set<FsVolumeType> getS3VolumeTypes() {
         return S3_VOLUME_TYPES;
     }
+
+    /**
+     * @return True if volumeType is an S3 volume type.
+     */
+    public static boolean isS3VolumeType(final FsVolumeType volumeType) {
+        return volumeType != null && getS3VolumeTypes().contains(volumeType);
+    }
 }

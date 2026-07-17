@@ -234,6 +234,17 @@ public class NullSafe {
     }
 
     /**
+     * @return The first item in the collection or null if collection is null or empty.
+     */
+    public static <T> T first(final Collection<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.iterator().next();
+        }
+    }
+
+    /**
      * @return The first item in the list or null if list is null or empty.
      */
     public static <T> T last(final List<T> list) {
@@ -830,6 +841,18 @@ public class NullSafe {
     }
 
     /**
+     * Returns the passed collection items as a non-null set.
+     * Does not support null items.
+     *
+     * @return A non-null unmodifiable set of items.
+     */
+    public static <T> Set<T> asSet(final Collection<T> collection) {
+        return collection == null || collection.isEmpty()
+                ? Collections.emptySet()
+                : Set.copyOf(collection);
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an empty list.
      */
     public static <L extends List<T>, T> List<T> list(final L list) {
@@ -854,8 +877,8 @@ public class NullSafe {
     public static <C extends Collection<T>, T> List<T> sort(final C collection) {
         return collection != null
                 ? collection.stream()
-                  .sorted()
-                  .collect(Collectors.toList())
+                .sorted()
+                .collect(Collectors.toList())
                 : Collections.emptyList();
     }
 

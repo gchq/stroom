@@ -51,6 +51,9 @@ public class S3Util {
     private S3Util() {
     }
 
+    /**
+     * Remove/replace any unwanted characters from the S3 bucket name.
+     */
     public static String cleanS3MetaDataKey(final String metaKey) {
         String result = Objects.requireNonNull(metaKey);
         result = result.toLowerCase(Locale.ROOT);
@@ -61,6 +64,9 @@ public class S3Util {
         return result;
     }
 
+    /**
+     * Remove/replace any unwanted characters from the S3 bucket name.
+     */
     public static String cleanBucketName(final String bucketName) {
         String result = Objects.requireNonNull(bucketName);
         result = result.toLowerCase(Locale.ROOT);
@@ -71,6 +77,9 @@ public class S3Util {
         return result;
     }
 
+    /**
+     * Remove/replace any unwanted characters from the S3 key name.
+     */
     public static String cleanKeyName(final String keyName) {
         String result = Objects.requireNonNull(keyName);
         result = S3_KEY_NAME_INVALID_CHARS_PATTERN.matcher(result).replaceAll("-");
