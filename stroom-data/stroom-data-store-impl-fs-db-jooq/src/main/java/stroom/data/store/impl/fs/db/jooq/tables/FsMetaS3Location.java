@@ -65,17 +65,22 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
     /**
      * The column <code>stroom.fs_meta_s3_location.s3_region</code>.
      */
-    public final TableField<FsMetaS3LocationRecord, String> S3_REGION = createField(DSL.name("s3_region"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<FsMetaS3LocationRecord, String> S3_REGION = createField(DSL.name("s3_region"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
      * The column <code>stroom.fs_meta_s3_location.s3_bucket</code>.
      */
-    public final TableField<FsMetaS3LocationRecord, String> S3_BUCKET = createField(DSL.name("s3_bucket"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<FsMetaS3LocationRecord, String> S3_BUCKET = createField(DSL.name("s3_bucket"), SQLDataType.VARCHAR(63).nullable(false), this, "");
 
     /**
      * The column <code>stroom.fs_meta_s3_location.s3_key</code>.
      */
-    public final TableField<FsMetaS3LocationRecord, String> S3_KEY = createField(DSL.name("s3_key"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<FsMetaS3LocationRecord, String> S3_KEY = createField(DSL.name("s3_key"), SQLDataType.VARCHAR(1024).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.fs_meta_s3_location.s3_hash</code>.
+     */
+    public final TableField<FsMetaS3LocationRecord, byte[]> S3_HASH = createField(DSL.name("s3_hash"), SQLDataType.BINARY(32).nullable(false), this, "");
 
     private FsMetaS3Location(Name alias, Table<FsMetaS3LocationRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -123,7 +128,7 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
 
     @Override
     public List<UniqueKey<FsMetaS3LocationRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_META_REGION_BUCKET_KEY_IDX);
+        return Arrays.asList(Keys.KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_META_S3_HASH_IDX);
     }
 
     @Override

@@ -88,6 +88,20 @@ public class FsMetaS3LocationRecord extends UpdatableRecordImpl<FsMetaS3Location
         return (String) get(4);
     }
 
+    /**
+     * Setter for <code>stroom.fs_meta_s3_location.s3_hash</code>.
+     */
+    public void setS3Hash(byte[] value) {
+        set(5, value);
+    }
+
+    /**
+     * Getter for <code>stroom.fs_meta_s3_location.s3_hash</code>.
+     */
+    public byte[] getS3Hash() {
+        return (byte[]) get(5);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -111,7 +125,7 @@ public class FsMetaS3LocationRecord extends UpdatableRecordImpl<FsMetaS3Location
     /**
      * Create a detached, initialised FsMetaS3LocationRecord
      */
-    public FsMetaS3LocationRecord(Long id, Long metaId, String s3Region, String s3Bucket, String s3Key) {
+    public FsMetaS3LocationRecord(Long id, Long metaId, String s3Region, String s3Bucket, String s3Key, byte[] s3Hash) {
         super(FsMetaS3Location.FS_META_S3_LOCATION);
 
         setId(id);
@@ -119,6 +133,7 @@ public class FsMetaS3LocationRecord extends UpdatableRecordImpl<FsMetaS3Location
         setS3Region(s3Region);
         setS3Bucket(s3Bucket);
         setS3Key(s3Key);
+        setS3Hash(s3Hash);
         resetTouchedOnNotNull();
     }
 }
