@@ -73,6 +73,11 @@ public class PipelineScope implements Scope {
         deque.offerLast(Maps.newHashMap());
     }
 
+    public boolean isScopeActive() {
+        final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
+        return deque != null && !deque.isEmpty();
+    }
+
     public void exit() {
         final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
         Preconditions.checkState(deque != null, "No scoping block in progress");

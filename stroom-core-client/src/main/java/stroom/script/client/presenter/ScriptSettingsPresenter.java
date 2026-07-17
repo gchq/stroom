@@ -17,7 +17,6 @@
 package stroom.script.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
@@ -41,8 +40,7 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = event -> onChange();
-        registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));
+        registerHandler(scriptDependencyListPresenter.addChangeHandler(this::onChange));
     }
 
     @Override

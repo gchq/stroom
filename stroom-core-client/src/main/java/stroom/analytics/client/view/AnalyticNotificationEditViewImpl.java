@@ -18,7 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.shared.NotificationDestinationType;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
@@ -36,7 +36,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticNotificationEditViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements AnalyticNotificationEditView {
 
     private final Widget widget;
@@ -127,27 +127,27 @@ public class AnalyticNotificationEditViewImpl
 
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("limitNotifications")
     public void onLimitNotifications(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("maxNotifications")
     public void onMaxNotifications(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("resumeAfter")
     public void onResumeAfter(final ValueChangeEvent<SimpleDuration> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("destinationType")
     public void onDestinationType(final ValueChangeEvent<NotificationDestinationType> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, AnalyticNotificationEditViewImpl> {

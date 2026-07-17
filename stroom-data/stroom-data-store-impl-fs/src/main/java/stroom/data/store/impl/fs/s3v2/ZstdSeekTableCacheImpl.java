@@ -244,7 +244,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
         }
         if (fileSize == null) {
             final String key = s3StreamTypeExtensions.getkey(fileKey);
-            fileSize = s3Manager.getFileSize(meta, childStreamType, key);
+            fileSize = s3Manager.getFileSize(meta, childStreamType, key, S3ZstdStreamStore.TIME_BASIS);
         }
         return fileSize;
     }
@@ -274,7 +274,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
             LOGGER.debug("fetchSeekTable() - meta: {}, childStreamType: {}, key: {}, range: {}",
                     meta, childStreamType, key, range);
             try (final ResponseInputStream<GetObjectResponse> response = s3Manager.getByteRange(
-                    meta, childStreamType, key, range)) {
+                    meta, childStreamType, key, range, S3ZstdStreamStore.TIME_BASIS)) {
                 // Seek table should not be massive so read it all into memory
                 rangeBytes = response.readAllBytes();
             }

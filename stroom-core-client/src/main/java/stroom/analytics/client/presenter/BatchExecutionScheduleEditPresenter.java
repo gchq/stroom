@@ -20,9 +20,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeClient;
@@ -53,7 +53,7 @@ import javax.inject.Inject;
 
 public class BatchExecutionScheduleEditPresenter
         extends MyPresenterWidget<BatchExecutionScheduleEditView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ProcessingStatusUiHandlers, HasChangeHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -100,9 +100,9 @@ public class BatchExecutionScheduleEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
-        registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onDirty()));
-        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onDirty()));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onChange()));
+        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onChange()));
     }
 
     public void show() {
@@ -148,13 +148,13 @@ public class BatchExecutionScheduleEditPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     public interface BatchExecutionScheduleEditView

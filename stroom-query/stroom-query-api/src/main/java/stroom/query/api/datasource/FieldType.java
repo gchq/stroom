@@ -154,6 +154,12 @@ public enum FieldType implements HasDisplayValue, HasPrimitiveValue {
             " * 'messages relating to Blockchain technology'\n" +
             " * 'recreational activity'\n" +
             " * 'medical facilities'",
+            false),
+    NESTED(13,
+            CIKey.internStaticKey("Nested"),
+            "nested",
+            "\n" +
+            "A nested inner document, enabling joining queries.",
             false);
 
     public static final List<FieldType> TYPES = Arrays.stream(values())

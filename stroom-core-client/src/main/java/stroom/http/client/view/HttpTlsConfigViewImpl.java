@@ -17,29 +17,26 @@
 package stroom.http.client.view;
 
 import stroom.credentials.shared.Credential;
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class HttpTlsConfigViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewImpl
         implements HttpTlsConfigView, ReadOnlyChangeHandler {
 
     private final Widget widget;
@@ -199,23 +196,6 @@ public class HttpTlsConfigViewImpl
     @Override
     public String getCertAlias() {
         return getText(certAlias.getValue());
-    }
-
-    @UiHandler({
-            "protocol",
-            "provider",
-            "keyStore",
-            "trustStore",
-            "trustSelfSignedCertificates",
-            "verifyHostname",
-            "supportedProtocols",
-            "supportedCiphers",
-            "certAlias",
-    })
-    public void onChange(final ValueChangeEvent<?> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
-        }
     }
 
     public interface Binder extends UiBinder<Widget, HttpTlsConfigViewImpl> {

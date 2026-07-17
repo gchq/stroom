@@ -92,19 +92,20 @@ public class TestS3 {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            s3Manager.delete(meta);
+            s3Manager.delete(meta, S3ZstdStreamStore.TIME_BASIS);
             LOGGER.debug("Deleted stream {}", meta.getId());
         } catch (final Exception e) {
             LOGGER.debug("Error deleting stream {}: {}", meta.getId(), LogUtil.exceptionMessage(e));
         }
-        final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
+        final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file, S3ZstdStreamStore.TIME_BASIS);
         final Long size = response.size();
         LOGGER.debug("Uploaded stream {}, size: {}", meta.getId(), size);
 
         try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
                 meta,
                 null,
-                Range.of(20L, 30L))) {
+                Range.of(20L, 30L),
+                S3ZstdStreamStore.TIME_BASIS)) {
             LOGGER.debug("response2: {}", response2);
 
             final byte[] bytes = response2.readAllBytes();
@@ -167,7 +168,10 @@ public class TestS3 {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
+            final PutObjectResponse response = s3Manager.upload(meta,
+                    attributeMap,
+                    file,
+                    S3ZstdStreamStore.TIME_BASIS);
             final Long size = response.size();
             LOGGER.debug("Uploaded stream {}, size: {}", meta.getId(), size);
 
@@ -177,7 +181,7 @@ public class TestS3 {
 //            final Range<Long> range = Range.of(seekTableFramePosition, seekTableFramePosition + seekTableFrameSize);
 
             try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
-                    meta, null, frameRange)) {
+                    meta, null, frameRange, S3ZstdStreamStore.TIME_BASIS)) {
                 LOGGER.debug("response2: {}", response2);
 
                 final byte[] rangeBytes = response2.readAllBytes();
@@ -196,7 +200,7 @@ public class TestS3 {
 
         } finally {
             try {
-                s3Manager.delete(meta);
+                s3Manager.delete(meta, S3ZstdStreamStore.TIME_BASIS);
                 LOGGER.debug("Deleted stream {}", meta.getId());
             } catch (final Exception e) {
                 LOGGER.debug("Error deleting stream {}: {}", meta.getId(), LogUtil.exceptionMessage(e));

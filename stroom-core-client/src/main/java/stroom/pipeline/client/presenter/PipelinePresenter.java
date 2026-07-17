@@ -275,8 +275,15 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     protected void onBind() {
         super.onBind();
 
-        steppingPresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
         pipelineStructurePresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
+
+        // Editing an element's code (e.g. XSLT) while stepping does not change the PipelineDoc itself,
+        // so onChange()'s structure comparison won't detect it. The stepping presenter fires a
+        // ChangeEvent on each edit; route it directly to onChange() so the pipeline's Save button is
+        // re-evaluated via hasAssociatedDirty() (which checks steppingPresenter.getDirtyDocs()). This
+        // is done here rather than through the tab framework because a replaceTab()-swapped provider
+        // never gets its handler registered by TabContentProvider.
+        registerHandler(steppingPresenter.addChangeHandler(this::onChange));
     }
 
     public void rebuildPipelineModel(final PipelineModel model) {

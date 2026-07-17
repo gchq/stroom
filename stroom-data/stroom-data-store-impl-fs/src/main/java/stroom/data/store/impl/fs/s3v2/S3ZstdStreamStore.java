@@ -41,6 +41,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil.Template;
+import stroom.util.time.TimeBasis;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -66,6 +67,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class S3ZstdStreamStore extends AbstractS3StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStreamStore.class);
+
+    static final TimeBasis TIME_BASIS = TimeBasis.META_CREATION_TIME;
 
 //    public static final String KEY_NAME_TEMPLATE_BASE =
 //    "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";

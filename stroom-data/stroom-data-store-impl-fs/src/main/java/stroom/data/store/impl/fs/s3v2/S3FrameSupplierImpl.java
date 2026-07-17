@@ -183,7 +183,8 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
                 meta,
                 childStreamType,
                 keyNameTemplate,
-                byteRange);
+                byteRange,
+                S3ZstdStreamStore.TIME_BASIS);
     }
 
     private static FileChannel openForReadWrite(final Path sparseFile) throws IOException {

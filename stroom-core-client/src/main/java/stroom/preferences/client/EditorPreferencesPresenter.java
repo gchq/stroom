@@ -16,10 +16,10 @@
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.ui.config.shared.Theme;
@@ -41,7 +41,7 @@ import java.util.Objects;
 
 public final class EditorPreferencesPresenter
         extends MyPresenterWidget<EditorPreferencesView>
-        implements DirtyUiHandlers, HasDirtyHandlers {
+        implements ChangeUiHandlers, HasChangeHandlers {
 
     private final UserPreferencesManager userPreferencesManager;
 
@@ -56,8 +56,8 @@ public final class EditorPreferencesPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     public boolean updateTheme(final ThemeType themeTypeBefore, final ThemeType themeTypeAfter) {
@@ -101,15 +101,15 @@ public final class EditorPreferencesPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface EditorPreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
+    public interface EditorPreferencesView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
 
         String getEditorTheme();
 

@@ -62,24 +62,21 @@ import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
 import co.elastic.clients.elasticsearch._types.mapping.NumberPropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
-import co.elastic.clients.elasticsearch._types.mapping.PropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
-import co.elastic.clients.elasticsearch.indices.GetFieldMappingRequest;
-import co.elastic.clients.elasticsearch.indices.GetFieldMappingResponse;
-import co.elastic.clients.elasticsearch.indices.get_field_mapping.TypeFieldMappings;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
+import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 
@@ -88,6 +85,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     public static final String ENTITY_TYPE = ElasticIndexDoc.TYPE;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchProvider.class);
+    private static final String FIELD_PATH_SEPARATOR = ".";
 
     private final ElasticIndexCache elasticIndexCache;
     private final SecurityContext securityContext;
@@ -281,7 +279,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .fldName(fieldName)
                 .fldType(elasticIndexFieldType)
                 .conditionSet(conditionSet)
-                .queryable(isIndexed)
+                .queryable(isIndexed && !FieldType.NESTED.equals(elasticIndexFieldType))
                 .build();
     }
 
@@ -412,10 +410,21 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return result;
     }
 
+    /**
+     * Reads the full, hierarchical mapping for the index and flattens it into a de-duplicated map keyed by
+     * full field name.
+     * <p>
+     * This uses the get-mapping API ({@code _mapping}) rather than the get-field-mapping API
+     * ({@code _mapping/field/*}). The latter flattens its response and does not reliably surface
+     * {@code nested} (or {@code object}) container fields, which means the nesting structure of the index is
+     * lost. The get-mapping API instead returns the complete property tree, from which the container fields
+     * and their descendants can be recovered at every level of nesting - a prerequisite for building multi
+     * level nested queries and for reading the grouped values back out of nested search hits.
+     */
     private static NavigableMap<String, FieldMapping> getFlattenedFieldMappings(
             final ElasticIndexDoc elasticIndex,
             final ElasticsearchClient elasticClient) {
-        // Flatten the mappings, which are keyed by index, into a de-duplicated list
+        // De-duplicated map keyed by full field name, ordered case-insensitively.
         final NavigableMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
             if (Objects.equals(o1, o2)) {
                 return 0;
@@ -428,43 +437,77 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         });
 
         final String indexName = elasticIndex.getIndexName();
-        final GetFieldMappingRequest request = GetFieldMappingRequest.of(r -> r
+        final GetMappingRequest request = GetMappingRequest.of(r -> r
                 .expandWildcards(ExpandWildcard.Open)
-                .index(indexName)
-                .fields("*"));
+                .index(indexName));
 
         try {
-            final GetFieldMappingResponse response = elasticClient.indices().getFieldMapping(request);
-            final Map<String, TypeFieldMappings> allMappings = response.fieldMappings();
+            final GetMappingResponse response = elasticClient.indices().getMapping(request);
 
-            // Build a list of all multi fields (i.e. those defined only in the field mapping).
-            // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
-            // of the returned `_source` field.
-            final Set<String> multiFieldMappings = new HashSet<>();
-            allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
-                final Property source = mapping.mapping().get(fieldName);
-                if (source != null && source._get() instanceof final PropertyBase propertyBase) {
-                    final Map<String, Property> multiFields = propertyBase.fields();
-
-                    if (!multiFields.isEmpty()) {
-                        multiFields.forEach((multiFieldName, multiFieldMapping) -> {
-                            final String fullName = mapping.fullName() + "." + multiFieldName;
-                            multiFieldMappings.add(fullName);
-                        });
-                    }
+            // The response is keyed by concrete index name (a wildcard or alias may resolve to several).
+            // Flatten across all matched indices, keeping the first definition seen for any given field name.
+            response.mappings().values().forEach(indexMapping -> {
+                final TypeMapping typeMapping = indexMapping.mappings();
+                if (typeMapping != null && typeMapping.properties() != null) {
+                    typeMapping.properties().forEach((fieldName, property) ->
+                            registerField(fieldName, property, mappings));
                 }
-            }));
-
-            allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
-                if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
-                    mappings.put(fieldName, mapping);
-                }
-            }));
+            });
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
         }
 
         return mappings;
+    }
+
+    /**
+     * Registers a field and, if it is an {@code object} or {@code nested} container, recursively registers
+     * each of its descendant fields under their full dotted path.
+     * <p>
+     * Container fields are retained (rather than merely descended into) so that their native type stays
+     * discoverable downstream; this is what allows {@code nested} containers such as {@code user} and
+     * {@code user.address} to be identified when a query targets a deeply nested field like
+     * {@code user.address.city}. Container types that are not usable as data source fields (e.g. plain
+     * {@code object}) are filtered out later during native type resolution.
+     *
+     * @param fullName the full (dot-delimited) name of the field
+     * @param property the field's mapping property
+     * @param out      the accumulating map of field name to field mapping
+     */
+    private static void registerField(final String fullName,
+                                      final Property property,
+                                      final NavigableMap<String, FieldMapping> out) {
+        // The synthesised FieldMapping only needs to carry the property; every downstream reader (type
+        // resolution, alias lookup, indexed detection) reads the mapping value, not its key.
+        out.putIfAbsent(fullName, FieldMapping.of(fm -> fm
+                .fullName(fullName)
+                .mapping(leafName(fullName), property)));
+
+        // Recurse into the children of object / nested containers, expanding each to its full dotted path.
+        // Multi-fields (Property.fields(), e.g. `title.keyword`) are deliberately NOT traversed: they are
+        // not part of the returned `_source` and must not be selectable by the user.
+        getChildProperties(property).forEach((childLeafName, childProperty) ->
+                registerField(fullName + FIELD_PATH_SEPARATOR + childLeafName, childProperty, out));
+    }
+
+    /**
+     * @return the child properties of an {@code object} or {@code nested} container, or an empty map for any
+     * other property type (leaf fields, aliases, etc.).
+     */
+    private static Map<String, Property> getChildProperties(final Property property) {
+        if (property.isNested()) {
+            return property.nested().properties();
+        } else if (property.isObject()) {
+            return property.object().properties();
+        }
+        return Map.of();
+    }
+
+    private static String leafName(final String fullName) {
+        final int idx = fullName.lastIndexOf(FIELD_PATH_SEPARATOR);
+        return idx < 0
+                ? fullName
+                : fullName.substring(idx + FIELD_PATH_SEPARATOR.length());
     }
 
     @Override

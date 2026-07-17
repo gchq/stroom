@@ -151,7 +151,7 @@ final class S3ZstdSource implements Source {
 
     private void readManifest(final AttributeMap attributeMap) {
         LOGGER.debug("readManifest() - attributeMap: {}", attributeMap);
-        final S3ObjectInfo objectInfo = s3Manager.getObjectInfo(meta, parentS3Key);
+        final S3ObjectInfo objectInfo = s3Manager.getObjectInfo(meta, parentS3Key, S3ZstdStreamStore.TIME_BASIS);
         final AttributeMap manifest = readManifest(objectInfo.s3Metadata());
         LOGGER.debug("readManifest() - manifest: {}", manifest);
         attributeMap.putAll(manifest);

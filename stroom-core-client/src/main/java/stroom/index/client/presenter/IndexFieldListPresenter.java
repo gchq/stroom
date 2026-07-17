@@ -27,7 +27,6 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
@@ -261,7 +260,6 @@ public class IndexFieldListPresenter
                             selectionModel.setSelected(indexField);
                             refresh();
                             e.hide();
-                            DirtyEvent.fire(IndexFieldListPresenter.this, true);
                         })
                         .onFailure(new DefaultErrorHandler(this, e::reset))
                         .taskMonitorFactory(pagerView)
@@ -290,7 +288,6 @@ public class IndexFieldListPresenter
                                     selectionModel.setSelected(indexField);
                                     refresh();
                                     e.hide();
-                                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
@@ -322,7 +319,6 @@ public class IndexFieldListPresenter
                                 .onSuccess(response -> {
                                     selectionModel.clear();
                                     refresh();
-                                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .taskMonitorFactory(pagerView)
                                 .exec();

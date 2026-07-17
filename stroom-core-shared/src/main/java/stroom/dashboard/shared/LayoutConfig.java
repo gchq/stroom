@@ -18,6 +18,8 @@ package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -27,6 +29,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = SplitLayoutConfig.class, name = "splitLayout"),
         @JsonSubTypes.Type(value = TabLayoutConfig.class, name = "tabLayout")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "splitLayout", schema = SplitLayoutConfig.class),
+                @DiscriminatorMapping(value = "tabLayout", schema = TabLayoutConfig.class)})
 public abstract sealed class LayoutConfig permits SplitLayoutConfig, TabLayoutConfig {
 
     public abstract Size getPreferredSize();

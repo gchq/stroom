@@ -33,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+import stroom.util.time.TimeBasis;
 
 import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.AfterEach;
@@ -120,11 +121,11 @@ public class TestS3Manager {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
+            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file, TimeBasis.META_CREATION_TIME);
             assertThat(response.size())
                     .isNull();  // Not present for a new upload
 
-            final long fileSize = s3Manager.getFileSize(meta, null);
+            final long fileSize = s3Manager.getFileSize(meta, null, TimeBasis.META_CREATION_TIME);
             assertThat(fileSize)
                     .isEqualTo(size);
         } finally {
@@ -159,10 +160,10 @@ public class TestS3Manager {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
+            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file, TimeBasis.META_CREATION_TIME);
 
             try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
-                    meta, null, Range.of(10L, 20L))) {
+                    meta, null, Range.of(10L, 20L), TimeBasis.META_CREATION_TIME)) {
 
                 final byte[] bytes = response2.readAllBytes();
                 assertThat(bytes)
@@ -230,13 +231,12 @@ public class TestS3Manager {
 
     private static void deleteFile(final S3Manager s3Manager, final Meta meta) {
         try {
-            s3Manager.delete(meta);
+            s3Manager.delete(meta, TimeBasis.META_CREATION_TIME);
             LOGGER.debug("Deleted stream {}", meta.getId());
         } catch (final Exception e) {
             LOGGER.debug("Error deleting stream {}: {}", meta.getId(), LogUtil.exceptionMessage(e));
         }
     }
-
 
     //    @Test
 //    void testUploadMultipart() throws IOException {

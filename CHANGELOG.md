@@ -13,6 +13,30 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.7] - 2026-07-16
+
+* Bug **#5663** : Fix OpenAPI spec for polymorphic types.
+
+* Bug **#5665** : Change the basis for time variable replacement from now() to the meta create time when the stream store uses S3. The S3Appender still used now(). Also fix a bug with use of pipeline scoped objects outside of pipeline scope.
+
+
+## [v7.13-beta.6] - 2026-07-14
+
+* Bug **#5647** : Fix user entered name being ignored when creating a new volume group.
+
+* Bug **#5646** : Fix onChange() behaviour for document edits.
+
+* Feature **#5652** : Support Elasticsearch nested field types in search.
+
+* Feature **#5654** : Support multiple dense_vector fields in Elasticsearch rerank search.
+
+* Bug **#5651** : Fix file uploads bug introduced by CSRF change.
+
+* Bug : Fix type in Data Volume validation message.
+
+* Bug **#5657** : Improve Plan B lookup error handling.
+
+
 ## [v7.13-beta.5] - 2026-07-06
 
 * Feature **#5599** : Add XPath to query functions so that users can pull XML apart in Dashboard Tables.
@@ -2345,7 +2369,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.7...HEAD
+[v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7
+[v7.13-beta.6]: https://github.com/gchq/stroom/compare/v7.13-beta.5...v7.13-beta.6
 [v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5
 [v7.13-beta.4]: https://github.com/gchq/stroom/compare/v7.13-beta.3...v7.13-beta.4
 [v7.13-beta.3]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v7.13-beta.3

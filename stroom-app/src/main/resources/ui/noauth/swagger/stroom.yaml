@@ -363,6 +363,26 @@ paths:
       summary: Create a new AI chat conversation
       tags:
       - AI
+  /ai/v1/deleteAllMessages/{chatId}:
+    post:
+      operationId: deleteAllMessages
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete all messages and attachments from an AI chat conversation
+      tags:
+      - AI
   /ai/v1/deleteChat/{chatId}:
     post:
       operationId: deleteChat
@@ -383,6 +403,32 @@ paths:
       summary: Delete an AI chat conversation
       tags:
       - AI
+  /ai/v1/deleteMessage/{chatId}/{messageId}:
+    post:
+      operationId: deleteMessage
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete a message from an AI chat conversation
+      tags:
+      - AI
   /ai/v1/downloadChatHistory:
     post:
       operationId: downloadChatHistory
@@ -401,6 +447,26 @@ paths:
                 $ref: "#/components/schemas/ResourceGeneration"
           description: default response
       summary: Download the chat history for a conversation as a Markdown file
+      tags:
+      - AI
+  /ai/v1/getAttachmentData:
+    post:
+      operationId: getAttachmentData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetAttachmentDataRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAttachmentDataPage"
+          description: default response
+      summary: Get a page of attachment table data
       tags:
       - AI
   /ai/v1/getChat/{chatId}:
@@ -1194,6 +1260,44 @@ paths:
       summary: Update a dictionary doc
       tags:
       - API Key
+  /auth/flow/v1/noauth/callback:
+    get:
+      operationId: authFlowCallback
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: state
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            text/html: {}
+          description: default response
+      summary: OIDC callback endpoint for the SPA authentication flow
+      tags:
+      - Auth Flow
+  /auth/flow/v1/noauth/status:
+    get:
+      operationId: authFlowStatus
+      parameters:
+      - in: query
+        name: redirect_uri
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthFlowResponse"
+          description: default response
+      summary: Check authentication status for the SPA
+      tags:
+      - Auth Flow
   /authentication/v1/noauth/changePassword:
     post:
       operationId: changePassword
@@ -7499,7 +7603,7 @@ paths:
       tags:
       - Sessions
   /session/v1/logout:
-    get:
+    post:
       operationId: stroomLogout
       parameters:
       - in: query
@@ -9229,6 +9333,21 @@ components:
     AbstractAnnotationChange:
       type: object
       discriminator:
+        mapping:
+          addTable: "#/components/schemas/AddAnnotationTable"
+          addTag: "#/components/schemas/AddTag"
+          assignedTo: "#/components/schemas/ChangeAssignedTo"
+          comment: "#/components/schemas/ChangeComment"
+          description: "#/components/schemas/ChangeDescription"
+          linkAnnotations: "#/components/schemas/LinkAnnotations"
+          linkEvents: "#/components/schemas/LinkEvents"
+          removeTag: "#/components/schemas/RemoveTag"
+          retentionPeriod: "#/components/schemas/ChangeRetentionPeriod"
+          setTag: "#/components/schemas/SetTag"
+          subject: "#/components/schemas/ChangeSubject"
+          title: "#/components/schemas/ChangeTitle"
+          unlinkAnnotations: "#/components/schemas/UnlinkAnnotations"
+          unlinkEvents: "#/components/schemas/UnlinkEvents"
         propertyName: type
       properties:
         type:
@@ -9238,6 +9357,9 @@ components:
     AbstractAppPermissionChange:
       type: object
       discriminator:
+        mapping:
+          AddAppPermission: "#/components/schemas/AddAppPermission"
+          RemoveAppPermission: "#/components/schemas/RemoveAppPermission"
         propertyName: type
       properties:
         permission:
@@ -9284,6 +9406,17 @@ components:
     AbstractDocumentPermissionsChange:
       type: object
       discriminator:
+        mapping:
+          AddAllDocumentUserCreatePermissions: "#/components/schemas/AddAllDocumentUserCreatePermissions"
+          AddAllPermissionsFrom: "#/components/schemas/AddAllPermissionsFrom"
+          AddDocumentUserCreatePermission: "#/components/schemas/AddDocumentUserCreatePermission"
+          RemoveAllDocumentUserCreatePermissions: "#/components/schemas/RemoveAllDocumentUserCreatePermissions"
+          RemoveAllPermissions: "#/components/schemas/RemoveAllPermissions"
+          RemoveDocumentUserCreatePermission: "#/components/schemas/RemoveDocumentUserCreatePermission"
+          RemovePermission: "#/components/schemas/RemovePermission"
+          SetAllPermissionsFrom: "#/components/schemas/SetAllPermissionsFrom"
+          SetDocumentUserCreatePermissions: "#/components/schemas/SetDocumentUserCreatePermissions"
+          SetPermission: "#/components/schemas/SetPermission"
         propertyName: type
       properties:
         type:
@@ -9293,6 +9426,9 @@ components:
     AbstractFetchDataResult:
       type: object
       discriminator:
+        mapping:
+          data: "#/components/schemas/FetchDataResult"
+          marker: "#/components/schemas/FetchMarkerResult"
         propertyName: type
       properties:
         availableChildStreamTypes:
@@ -9331,6 +9467,15 @@ components:
     AbstractPlanBSettings:
       type: object
       discriminator:
+        mapping:
+          histogram: "#/components/schemas/HistogramSettings"
+          metric: "#/components/schemas/MetricSettings"
+          rangeState: "#/components/schemas/RangeStateSettings"
+          session: "#/components/schemas/SessionSettings"
+          state: "#/components/schemas/StateSettings"
+          temporalRangeState: "#/components/schemas/TemporalRangeStateSettings"
+          temporalState: "#/components/schemas/TemporalStateSettings"
+          trace: "#/components/schemas/TraceSettings"
         propertyName: type
       properties:
         maxStoreSize:
@@ -9596,6 +9741,25 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         userRef:
           $ref: "#/components/schemas/UserRef"
+    AiAttachmentDataPage:
+      type: object
+      properties:
+        headers:
+          type: array
+          items:
+            type: string
+        offset:
+          type: integer
+          format: int32
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        totalRowCount:
+          type: integer
+          format: int32
     AiChat:
       type: object
       properties:
@@ -9714,6 +9878,10 @@ components:
     AnalyticProcessConfig:
       type: object
       discriminator:
+        mapping:
+          scheduled_query: "#/components/schemas/ScheduledQueryAnalyticProcessConfig"
+          streaming: "#/components/schemas/StreamingAnalyticProcessConfig"
+          table_builder: "#/components/schemas/TableBuilderAnalyticProcessConfig"
         propertyName: type
       properties:
         type:
@@ -9794,6 +9962,10 @@ components:
     AnalyticTrackerData:
       type: object
       discriminator:
+        mapping:
+          scheduled_query: "#/components/schemas/ScheduledQueryAnalyticTrackerData"
+          streaming: "#/components/schemas/StreamingAnalyticTrackerData"
+          table_builder: "#/components/schemas/TableBuilderAnalyticTrackerData"
         propertyName: type
       properties:
         message:
@@ -10002,6 +10174,10 @@ components:
     AppPermissionSet:
       type: object
       discriminator:
+        mapping:
+          empty: "#/components/schemas/EmptyAppPermissionSet"
+          multiple: "#/components/schemas/AppPermissionSetImpl"
+          single: "#/components/schemas/SingletonAppPermissionSet"
         propertyName: type
       properties:
         type:
@@ -10248,6 +10424,10 @@ components:
     AskStroomAiContext:
       type: object
       discriminator:
+        mapping:
+          dashboardTable: "#/components/schemas/DashboardTableContext"
+          generalTable: "#/components/schemas/GeneralTableContext"
+          queryTable: "#/components/schemas/QueryTableContext"
         propertyName: type
       properties:
         description:
@@ -10282,6 +10462,20 @@ components:
           type: string
         sourceTaskId:
           $ref: "#/components/schemas/TaskId"
+    AuthFlowResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        displayName:
+          type: string
+        expiresInSec:
+          type: integer
+          format: int64
+        redirectUrl:
+          type: string
+        subjectId:
+          type: string
     Automate:
       type: object
       properties:
@@ -10360,6 +10554,15 @@ components:
     AwsCredentials:
       type: object
       discriminator:
+        mapping:
+          anonymous: "#/components/schemas/AwsAnonymousCredentials"
+          basic: "#/components/schemas/AwsBasicCredentials"
+          default: "#/components/schemas/AwsDefaultCredentials"
+          environment: "#/components/schemas/AwsEnvironmentVariableCredentials"
+          profile: "#/components/schemas/AwsProfileCredentials"
+          session: "#/components/schemas/AwsSessionCredentials"
+          system: "#/components/schemas/AwsSystemPropertyCredentials"
+          web: "#/components/schemas/AwsWebCredentials"
         propertyName: type
       properties:
         type:
@@ -10744,6 +10947,13 @@ components:
           type: string
         sort:
           $ref: "#/components/schemas/Sort"
+        special:
+          type: boolean
+        visible:
+          type: boolean
+        width:
+          type: integer
+          format: int32
     ColumnFilter:
       type: object
       properties:
@@ -10806,6 +11016,9 @@ components:
     CompletionItem:
       type: object
       discriminator:
+        mapping:
+          snippet: "#/components/schemas/CompletionSnippet"
+          value: "#/components/schemas/CompletionValue"
         propertyName: type
       properties:
         caption:
@@ -10888,6 +11101,9 @@ components:
     ComponentResultRequest:
       type: object
       discriminator:
+        mapping:
+          table: "#/components/schemas/TableResultRequest"
+          vis: "#/components/schemas/VisResultRequest"
         propertyName: type
       properties:
         componentId:
@@ -10919,6 +11135,16 @@ components:
     ComponentSettings:
       type: object
       discriminator:
+        mapping:
+          embedded-query: "#/components/schemas/EmbeddedQueryComponentSettings"
+          key-value-input: "#/components/schemas/KeyValueInputComponentSettings"
+          list-input: "#/components/schemas/ListInputComponentSettings"
+          query: "#/components/schemas/QueryComponentSettings"
+          table: "#/components/schemas/TableComponentSettings"
+          table-filter: "#/components/schemas/TableFilterComponentSettings"
+          text: "#/components/schemas/TextComponentSettings"
+          text-input: "#/components/schemas/TextInputComponentSettings"
+          vis: "#/components/schemas/VisComponentSettings"
         propertyName: type
       properties:
         type:
@@ -11036,6 +11262,24 @@ components:
     ConstraintValue:
       type: object
       discriminator:
+        mapping:
+          anyValue: "#/components/schemas/AnyTypeValue"
+          boolean: "#/components/schemas/BooleanValue"
+          booleanSet: "#/components/schemas/AnyBoolean"
+          double: "#/components/schemas/DoubleValue"
+          doubleRange: "#/components/schemas/DoubleRange"
+          doubleSet: "#/components/schemas/DoubleSet"
+          duration: "#/components/schemas/NanoTimeValue"
+          durationRange: "#/components/schemas/NanoTimeRange"
+          integer: "#/components/schemas/IntegerValue"
+          integerRange: "#/components/schemas/IntegerRange"
+          integerSet: "#/components/schemas/IntegerSet"
+          long: "#/components/schemas/LongValue"
+          longRange: "#/components/schemas/LongRange"
+          longSet: "#/components/schemas/LongSet"
+          regex: "#/components/schemas/Regex"
+          string: "#/components/schemas/StringValue"
+          stringSet: "#/components/schemas/StringSet"
         propertyName: type
       properties:
         type:
@@ -11183,6 +11427,9 @@ components:
     CoprocessorSettings:
       type: object
       discriminator:
+        mapping:
+          event: "#/components/schemas/EventCoprocessorSettings"
+          table: "#/components/schemas/TableCoprocessorSettings"
         propertyName: type
       properties:
         coprocessorId:
@@ -12532,6 +12779,8 @@ components:
           type: string
         rerankModelRef:
           $ref: "#/components/schemas/DocRef"
+        rerankScoreFieldSuffix:
+          type: string
         rerankScoreMinimum:
           type: number
           format: float
@@ -12583,6 +12832,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         fldName:
           type: string
         fldType:
@@ -12601,6 +12851,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         nativeType:
@@ -12711,6 +12962,10 @@ components:
     EntryValue:
       type: object
       discriminator:
+        mapping:
+          rows: "#/components/schemas/AnnotationTable"
+          string: "#/components/schemas/StringEntryValue"
+          user: "#/components/schemas/UserRefEntryValue"
         propertyName: type
       properties:
         type:
@@ -13082,6 +13337,9 @@ components:
       type: object
       description: Base type for an item in an expression tree
       discriminator:
+        mapping:
+          operator: "#/components/schemas/ExpressionOperator"
+          term: "#/components/schemas/ExpressionTerm"
         propertyName: type
       properties:
         enabled:
@@ -14049,6 +14307,9 @@ components:
     FormatSettings:
       type: object
       discriminator:
+        mapping:
+          date: "#/components/schemas/DateTimeFormatSettings"
+          number: "#/components/schemas/NumberFormatSettings"
         propertyName: type
       properties:
         default:
@@ -14172,6 +14433,17 @@ components:
           $ref: "#/components/schemas/OffsetRange"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+    GetAttachmentDataRequest:
+      type: object
+      properties:
+        attachmentId:
+          type: integer
+          format: int32
+        chatId:
+          type: integer
+          format: int32
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
     GetFeedStatusRequest:
       type: object
       properties:
@@ -14731,6 +15003,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -15116,6 +15389,9 @@ components:
     LayoutConfig:
       type: object
       discriminator:
+        mapping:
+          splitLayout: "#/components/schemas/SplitLayoutConfig"
+          tabLayout: "#/components/schemas/TabLayoutConfig"
         propertyName: type
       properties:
         preferredSize:
@@ -15210,6 +15486,9 @@ components:
     Location:
       type: object
       discriminator:
+        mapping:
+          default: "#/components/schemas/DefaultLocation"
+          stream: "#/components/schemas/StreamLocation"
         propertyName: type
       properties:
         colNo:
@@ -15374,6 +15653,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -15390,6 +15670,9 @@ components:
     Marker:
       type: object
       discriminator:
+        mapping:
+          storedError: "#/components/schemas/StoredError"
+          summary: "#/components/schemas/Summary"
         propertyName: type
       properties:
         severity:
@@ -15769,6 +16052,9 @@ components:
     NotificationDestination:
       type: object
       discriminator:
+        mapping:
+          email: "#/components/schemas/NotificationEmailDestination"
+          stream: "#/components/schemas/NotificationStreamDestination"
         propertyName: type
       properties:
         type:
@@ -15850,6 +16136,9 @@ components:
           type: string
         description:
           type: string
+        embeddingModelDimensions:
+          type: integer
+          format: int32
         httpClientConfiguration:
           $ref: "#/components/schemas/HttpClientConfig"
         maxContextWindowTokens:
@@ -15935,6 +16224,10 @@ components:
     PathKey:
       type: object
       discriminator:
+        mapping:
+          name: "#/components/schemas/NamePathKey"
+          names: "#/components/schemas/NamesPathKey"
+          terminal: "#/components/schemas/TerminalPathKey"
         propertyName: type
       properties:
         type:
@@ -16540,6 +16833,14 @@ components:
     PlanBValue:
       type: object
       discriminator:
+        mapping:
+          histogram: "#/components/schemas/TemporalValue"
+          rangeState: "#/components/schemas/RangeState"
+          session: "#/components/schemas/Session"
+          state: "#/components/schemas/State"
+          temporalRangeState: "#/components/schemas/TemporalRangeState"
+          temporalState: "#/components/schemas/TemporalState"
+          trace: "#/components/schemas/SpanKV"
         propertyName: type
       properties:
         type:
@@ -16732,6 +17033,9 @@ components:
     ProcessorListRow:
       type: object
       discriminator:
+        mapping:
+          processor: "#/components/schemas/ProcessorRow"
+          processorFilter: "#/components/schemas/ProcessorFilterRow"
         propertyName: type
       properties:
         expander:
@@ -17141,6 +17445,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         name:
           type: string
         queryable:
@@ -17150,6 +17455,10 @@ components:
     QueryHelpData:
       type: object
       discriminator:
+        mapping:
+          document: "#/components/schemas/QueryHelpDocument"
+          field: "#/components/schemas/QueryHelpField"
+          functionSignature: "#/components/schemas/QueryHelpFunctionSignature"
         propertyName: type
       properties:
         type:
@@ -17729,6 +18038,11 @@ components:
       type: object
       description: Base object for describing a set of result data
       discriminator:
+        mapping:
+          flat: "#/components/schemas/FlatResult"
+          ql_vis: "#/components/schemas/QLVisResult"
+          table: "#/components/schemas/TableResult"
+          vis: "#/components/schemas/VisResult"
         propertyName: type
       properties:
         componentId:
@@ -18588,6 +18902,11 @@ components:
     Secret:
       type: object
       discriminator:
+        mapping:
+          accessToken: "#/components/schemas/AccessTokenSecret"
+          keyStore: "#/components/schemas/KeyStoreSecret"
+          sshKey: "#/components/schemas/SshKeySecret"
+          usernamePassword: "#/components/schemas/UsernamePasswordSecret"
         propertyName: type
       properties:
         type:
@@ -19083,6 +19402,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         multiValued:
@@ -19918,6 +20238,10 @@ components:
         properties:
           applyValueFilters:
             type: boolean
+          conditionalFormattingRules:
+            type: array
+            items:
+              $ref: "#/components/schemas/ConditionalFormattingRule"
           dataSourceRef:
             $ref: "#/components/schemas/DocRef"
           extractValues:
@@ -19946,6 +20270,8 @@ components:
           maxStringFieldLength:
             type: integer
             format: int32
+          modelVersion:
+            type: string
           overrideMaxStringFieldLength:
             type: boolean
           pageSize:
@@ -20054,6 +20380,10 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         applyValueFilters:
           type: boolean
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionalFormattingRule"
         extractValues:
           type: boolean
         extractionPipeline:
@@ -20079,6 +20409,8 @@ components:
         maxStringFieldLength:
           type: integer
           format: int32
+        modelVersion:
+          type: string
         overrideMaxStringFieldLength:
           type: boolean
         queryId:
@@ -20842,6 +21174,21 @@ components:
     Val:
       type: object
       discriminator:
+        mapping:
+          boolean: "#/components/schemas/ValBoolean"
+          byte: "#/components/schemas/ValByte"
+          date: "#/components/schemas/ValDate"
+          double: "#/components/schemas/ValDouble"
+          duration: "#/components/schemas/ValDuration"
+          err: "#/components/schemas/ValErr"
+          float: "#/components/schemas/ValFloat"
+          integer: "#/components/schemas/ValInteger"
+          long: "#/components/schemas/ValLong"
+          "null": "#/components/schemas/ValNull"
+          number: "#/components/schemas/ValNumber"
+          short: "#/components/schemas/ValShort"
+          string: "#/components/schemas/ValString"
+          xml: "#/components/schemas/ValXml"
         propertyName: type
       properties:
         type:
@@ -21178,6 +21525,8 @@ components:
     Window:
       type: object
       discriminator:
+        mapping:
+          hopping: "#/components/schemas/HoppingWindow"
         propertyName: type
       properties:
         type:

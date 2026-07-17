@@ -16,7 +16,7 @@
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.DecoratedItem;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
@@ -39,7 +39,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class EditorPreferencesViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements EditorPreferencesView {
 
     private final Widget widget;
@@ -147,21 +147,21 @@ public final class EditorPreferencesViewImpl
     @UiHandler("editorTheme")
     public void onEditorThemeValueChange(final ValueChangeEvent<EditorThemeName> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("editorKeyBindings")
     public void onEditorKeyBindingsValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("editorLiveAutoCompletion")
     public void onEditorLiveAutoCompletionValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.util.time;
 
-import stroom.document.client.event.ChangeUiHandlers;
 
-public interface ProcessingStatusUiHandlers extends ChangeUiHandlers {
+import java.time.Instant;
 
-    void onRefreshProcessingStatus();
+/**
+ * An enum for defining what time is used for things like time variable
+ * replacement in paths.
+ */
+public enum TimeBasis {
+
+    /**
+     * The current date and time, i.e. {@link Instant#now()}
+     */
+    CURRENT_TIME,
+
+    /**
+     * The fixed creation date and time of the stream.
+     */
+    META_CREATION_TIME,
+
+    ;
 }

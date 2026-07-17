@@ -181,27 +181,27 @@ public class ScheduledProcessEditViewImpl
 
     @UiHandler("name")
     public void onName(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("node")
     public void onNode(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("startTime")
     public void onStartTime(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("endTime")
     public void onEndTime(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, ScheduledProcessEditViewImpl> {

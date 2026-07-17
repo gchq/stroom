@@ -21,6 +21,8 @@ import stroom.util.shared.TreeRow;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -30,6 +32,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = ProcessorRow.class, name = "processor"),
         @Type(value = ProcessorFilterRow.class, name = "processorFilter")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "processor", schema = ProcessorRow.class),
+                @DiscriminatorMapping(value = "processorFilter", schema = ProcessorFilterRow.class)})
 public abstract sealed class ProcessorListRow implements TreeRow permits ProcessorRow, ProcessorFilterRow {
 
 }

@@ -36,6 +36,7 @@ import stroom.pipeline.writer.OutputFactory;
 import stroom.pipeline.writer.OutputProxy;
 import stroom.svg.shared.SvgImage;
 import stroom.util.io.CompressionUtil;
+import stroom.util.time.TimeBasis;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -160,12 +161,15 @@ public class S3Appender extends AbstractAppender {
                                 contentEncoding,
                                 contentType);
 
-                        final String bucketName = s3Manager.createBucketName(bucketNamePattern, meta);
-                        final String key = s3Manager.createKey(keyNamePattern, meta, sequenceNumber);
+                        final TimeBasis timeBasis = TimeBasis.CURRENT_TIME;
+                        final String bucketName = s3Manager.createBucketName(bucketNamePattern, meta, timeBasis);
+                        final String key = s3Manager.createKey(keyNamePattern, meta, sequenceNumber, timeBasis);
                         LOGGER.debug(
                                 "close() - Uploading file for meta: {}, bucketName: {}, key: {}, " +
                                 "tempFile: {}, attributeMap: {}",
                                 meta, bucketName, key, tempFile, attributeMap);
+                        // The appender is potentially creating multiple files so use current time for
+                        // time var replacement in s3 keys. This is consistent with FileAppender.
                         s3Manager.upload(
                                 bucketName,
                                 key,
@@ -173,6 +177,11 @@ public class S3Appender extends AbstractAppender {
                                 attributeMap,
                                 uploadProperties,
                                 tempFile);
+
+                        LOGGER.debug(
+                                "createOutput() - Uploaded tempFile '{}' to S3, meta: {}, bucketNamePattern: '{}', " +
+                                "keyNamePattern: '{}'",
+                                tempFile, meta, bucketNamePattern, keyNamePattern);
                     } catch (final RuntimeException e) {
                         fatal(e.getMessage(), e);
                     } finally {

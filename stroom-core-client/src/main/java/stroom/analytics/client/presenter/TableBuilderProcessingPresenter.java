@@ -24,9 +24,9 @@ import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.time.SimpleDuration;
@@ -48,7 +48,7 @@ import java.util.List;
 
 public class TableBuilderProcessingPresenter
         extends MyPresenterWidget<TableBuilderProcessingPresenter.TableBuilderProcessingView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ProcessingStatusUiHandlers, HasChangeHandlers {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
@@ -167,13 +167,13 @@ public class TableBuilderProcessingPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     public interface TableBuilderProcessingView extends View, HasUiHandlers<ProcessingStatusUiHandlers> {

@@ -37,7 +37,9 @@ import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil.ContextVariableResolver;
 import stroom.util.string.TemplateUtil.ExecutorBuilder;
 import stroom.util.string.TemplateUtil.Template;
+import stroom.util.time.TimeBasis;
 
+import org.jspecify.annotations.NonNull;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -45,6 +47,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -101,8 +106,8 @@ public class S3Manager {
      * Create an S3 bucket name the bucketName from the s3ClientConfig.
      * {@link Meta} is used to provide values for the templated bucket name.
      */
-    public String createBucketName(final SimpleMeta meta) {
-        return createBucketName(null, meta);
+    public String createBucketName(final SimpleMeta meta, final TimeBasis timeBasis) {
+        return createBucketName(null, timeBasis);
     }
 
     /**
@@ -112,13 +117,14 @@ public class S3Manager {
      * @param bucketNamePattern If null, it will use the bucketName from the s3ClientConfig.
      */
     public String createBucketName(final String bucketNamePattern,
-                                   final SimpleMeta meta) {
+                                   final SimpleMeta meta,
+                                   final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
         final String effectiveBucketNamePattern = NullSafe.nonBlankStringElseGet(
                 bucketNamePattern,
                 this::getBucketNamePattern);
 
-        String bucketName = applyTemplate(effectiveBucketNamePattern, meta);
+        String bucketName = applyTemplate(effectiveBucketNamePattern, meta, timeBasis);
         bucketName = S3Util.cleanBucketName(bucketName);
         final int len = bucketName.length();
         if (len < 3) {
@@ -138,8 +144,8 @@ public class S3Manager {
      * Create an S3 key using the keyPattern from the s3ClientConfig.
      * {@link Meta} is used to provide values for the templated key.
      */
-    public String createKey(final SimpleMeta meta) {
-        return createKey(null, meta, null);
+    public String createKey(final SimpleMeta meta, final TimeBasis timeBasis) {
+        return createKey(null, meta, null, timeBasis);
     }
 
     /**
@@ -148,18 +154,18 @@ public class S3Manager {
      *
      * @param keyPattern If null, it will use the keyPattern from the s3ClientConfig.
      */
-    public String createKey(final String keyPattern, final SimpleMeta meta) {
-        return createKey(keyPattern, meta, null);
+    public String createKey(final String keyPattern, final SimpleMeta meta, final TimeBasis timeBasis) {
+        return createKey(keyPattern, meta, null, timeBasis);
     }
 
     /**
      * Derive an S3Location based on the configured region and bucket/key templates in
      * combination with {@link SimpleMeta}.
      */
-    public S3Location deriveS3Location(final SimpleMeta meta) {
+    public S3Location deriveS3Location(final SimpleMeta meta, final TimeBasis timeBasis) {
         final String region = s3ClientConfig.getRegion();
-        final String key = createKey(meta);
-        final String bucket = createBucketName(meta);
+        final String key = createKey(meta, timeBasis);
+        final String bucket = createBucketName(meta, timeBasis);
         final S3Location s3Location = new S3Location(region, key, bucket);
         LOGGER.debug("createS3Location() - meta: {}, s3Location: {}", meta, s3Location);
         return s3Location;
@@ -173,13 +179,14 @@ public class S3Manager {
      */
     public String createKey(final String keyPattern,
                             final SimpleMeta meta,
-                            final AtomicLong sequenceNumber) {
+                            final AtomicLong sequenceNumber,
+                            final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
         final String effectiveKeyPattern = NullSafe.nonBlankStringElseGet(
                 keyPattern,
                 this::getKeyNamePattern);
 
-        String key = applyTemplate(effectiveKeyPattern, meta, sequenceNumber);
+        String key = applyTemplate(effectiveKeyPattern, meta, sequenceNumber, timeBasis);
         key = S3Util.cleanKeyName(key);
 
         final int keyBytesLen = key.getBytes(StandardCharsets.UTF_8).length;
@@ -255,20 +262,40 @@ public class S3Manager {
 
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
-                                    final Path source) {
-        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, attributeMap, null, source);
+                                    final Path source,
+                                    final TimeBasis timeBasis) {
+        return upload(
+                getBucketNamePattern(),
+                getKeyNamePattern(),
+                meta,
+                convertAttributeMapToS3Metadata(attributeMap),
+                null,
+                source,
+                timeBasis);
     }
 
     public PutObjectResponse upload(final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
-                                    final Path source) {
-        return upload(getBucketNamePattern(), getKeyNamePattern(), meta, s3MetaData, null, source);
+                                    final Path source,
+                                    final TimeBasis timeBasis) {
+        return upload(
+                getBucketNamePattern(),
+                getKeyNamePattern(),
+                meta,
+                s3MetaData,
+                null,
+                source,
+                timeBasis);
     }
 
     /**
-     * @param bucketName The S3 bucket to upload to (Use {@link S3Manager#createBucketName(String, SimpleMeta)}
+     * Upload method for fixed bucket/key, not templates.
+     *
+     * @param bucketName The S3 bucket to upload to (Use
+     *                   {@link S3Manager#createBucketName(String, SimpleMeta, TimeBasis)}
      *                   to create a bucket from a pattern).
-     * @param key        The S3 key to upload to (Use {@link S3Manager#createKey(String, SimpleMeta, AtomicLong)}
+     * @param key        The S3 key to upload to (Use
+     *                   {@link S3Manager#createKey(String, SimpleMeta, AtomicLong, TimeBasis)}
      *                   to create a key from a pattern).
      */
     public PutObjectResponse upload(final String bucketName,
@@ -289,14 +316,43 @@ public class S3Manager {
                 source);
     }
 
+    /**
+     * Upload method for fixed bucket/key, not templates.
+     *
+     * @param bucketName The S3 bucket to upload to (Use
+     *                   {@link S3Manager#createBucketName(String, SimpleMeta, TimeBasis)}
+     *                   to create a bucket from a pattern).
+     * @param key        The S3 key to upload to (Use
+     *                   {@link S3Manager#createKey(String, SimpleMeta, AtomicLong, TimeBasis)}
+     *                   to create a key from a pattern).
+     */
+    public PutObjectResponse upload(final String bucketName,
+                                    final String key,
+                                    final Meta meta,
+                                    final Map<CIKey, String> s3MetaData,
+                                    final S3UploadProperties uploadProperties,
+                                    final Path source) {
+        NullSafe.requireNonBlankString(bucketName);
+        NullSafe.requireNonBlankString(key);
+        final Map<String, String> tags = createS3TagsFromMeta(meta);
+        return s3ClientHelper.upload(
+                bucketName,
+                key,
+                tags,
+                s3MetaData,
+                uploadProperties,
+                source);
+    }
+
     public PutObjectResponse upload(final String bucketNamePattern,
                                     final String keyNamePattern,
                                     final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
                                     final S3UploadProperties uploadProperties,
-                                    final Path source) {
-        final String bucketName = createBucketName(bucketNamePattern, meta);
-        final String key = createKey(keyNamePattern, meta);
+                                    final Path source,
+                                    final TimeBasis timeBasis) {
+        final String bucketName = createBucketName(bucketNamePattern, meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
         return s3ClientHelper.upload(
                 bucketName,
@@ -429,11 +485,12 @@ public class S3Manager {
      * @return The repose containing the byte range.
      */
     public ResponseInputStream<GetObjectResponse> getObject(final Meta meta,
-                                                            final Range<Long> byteRange) {
+                                                            final Range<Long> byteRange,
+                                                            final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(byteRange);
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta, timeBasis);
+        final String key = createKey(getKeyNamePattern(), meta, timeBasis);
         return s3ClientHelper.getObjectByteRange(bucketName, key, byteRange);
     }
 
@@ -454,8 +511,9 @@ public class S3Manager {
      */
     public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
                                                                final String childStreamType,
-                                                               final Range<Long> byteRange) {
-        return getByteRange(meta, childStreamType, getKeyNamePattern(), byteRange);
+                                                               final Range<Long> byteRange,
+                                                               final TimeBasis timeBasis) {
+        return getByteRange(meta, childStreamType, getKeyNamePattern(), byteRange, timeBasis);
     }
 
     /**
@@ -469,33 +527,37 @@ public class S3Manager {
     public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
                                                                final String childStreamType,
                                                                final String keyNamePattern,
-                                                               final Range<Long> byteRange) {
+                                                               final Range<Long> byteRange,
+                                                               final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(byteRange);
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(keyNamePattern, meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
         return s3ClientHelper.getObjectByteRange(bucketName, key, byteRange);
     }
 
     public long getFileSize(final Meta meta,
-                            final String childStreamType) {
-        return getFileSize(meta, childStreamType, getKeyNamePattern());
+                            final String childStreamType,
+                            final TimeBasis timeBasis) {
+        return getFileSize(meta, childStreamType, getKeyNamePattern(), timeBasis);
     }
 
     public long getFileSize(final Meta meta,
                             final String childStreamType,
-                            final String keyNamePattern) {
+                            final String keyNamePattern,
+                            final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(keyNamePattern, meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
         return s3ClientHelper.getFileSize(bucketName, key);
     }
 
     public S3ObjectInfo getObjectInfo(final Meta meta,
-                                      final String keyNamePattern) {
+                                      final String keyNamePattern,
+                                      final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(keyNamePattern, meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
         return s3ClientHelper.getObjectInfo(bucketName, key);
 
 //        final HeadObjectRequest request = HeadObjectRequest.builder()
@@ -612,8 +674,28 @@ public class S3Manager {
     }
 
     public GetObjectResponse download(final Meta meta,
-                                      final Path dest) {
-        return download(meta, null, null, getKeyNamePattern(), dest, true);
+                                      final Path dest,
+                                      final TimeBasis timeBasis) {
+        return download(meta,
+                null,
+                null,
+                getKeyNamePattern(),
+                dest,
+                true,
+                timeBasis);
+    }
+
+    public GetObjectResponse download(final Meta meta,
+                                      final String childStreamType,
+                                      final String bucketName,
+                                      final String key,
+                                      final Path dest,
+                                      final boolean allowAsync) {
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(dest);
+        NullSafe.requireNonBlankString(bucketName);
+        NullSafe.requireNonBlankString(key);
+        return s3ClientHelper.download(bucketName, key, dest, allowAsync);
     }
 
     public GetObjectResponse download(final Meta meta,
@@ -621,33 +703,37 @@ public class S3Manager {
                                       final String bucketNamePattern,
                                       final String keyNamePattern,
                                       final Path dest,
-                                      final boolean allowAsync) {
+                                      final boolean allowAsync,
+                                      final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(dest);
-        final String bucketName = createBucketName(bucketNamePattern, meta);
-        final String key = createKey(keyNamePattern, meta);
+        final String bucketName = createBucketName(bucketNamePattern, meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
 
         return s3ClientHelper.download(bucketName, key, dest, allowAsync);
     }
 
     public List<String> listKeys(final Meta meta,
                                  final String childStreamType,
-                                 final String keyNamePattern) {
+                                 final String keyNamePattern,
+                                 final TimeBasis timeBasis) {
 
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(keyNamePattern, meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
         return s3ClientHelper.listKeys(bucketName, key);
     }
 
-    public DeleteObjectResponse delete(final Meta meta) {
-        return delete(meta, getBucketNamePattern(), getKeyNamePattern());
+    public DeleteObjectResponse delete(final Meta meta,
+                                       final TimeBasis timeBasis) {
+        return delete(meta, getBucketNamePattern(), getKeyNamePattern(), timeBasis);
     }
 
     public DeleteObjectResponse delete(final Meta meta,
                                        final String bucketNamePattern,
-                                       final String keyNamePattern) {
-        final String bucketName = createBucketName(bucketNamePattern, meta);
-        final String key = createKey(keyNamePattern, meta);
+                                       final String keyNamePattern,
+                                       final TimeBasis timeBasis) {
+        final String bucketName = createBucketName(bucketNamePattern, meta, timeBasis);
+        final String key = createKey(keyNamePattern, meta, timeBasis);
         return s3ClientHelper.delete(bucketName, key);
     }
 
@@ -659,29 +745,28 @@ public class S3Manager {
                 META_ID_TAG_KEY, Long.toString(meta.getId()));
     }
 
-    private String applyTemplate(final String templateStr, final SimpleMeta meta) {
-        return applyTemplate(templateStr, meta, null);
+    private String applyTemplate(final String templateStr,
+                                 final SimpleMeta meta,
+                                 final TimeBasis timeBasis) {
+        return applyTemplate(templateStr, meta, null, timeBasis);
     }
 
     private String applyTemplate(final String templateStr,
                                  final SimpleMeta meta,
-                                 final AtomicLong sequenceNumber) {
+                                 final AtomicLong sequenceNumber,
+                                 final TimeBasis timeBasis) {
         final Template template = templateCache.getTemplate(templateStr);
         ExecutorBuilder executorBuilder = template.buildExecutor();
 
-        // TODO now() is only appropriate for s3 appender, not for stream store, which needs to use
-        //  meta create time for deterministic file names
-
-        // Use now() for time replacements. When one of: rolling, agg splitting and record splitting is used,
-        // the time vars can distinguish multiple files coming from the same stream
         executorBuilder = executorBuilder
-                .addStandardTimeReplacements()
                 .addUuidReplacement(false)
                 .addLazyReplacement(FEED_VAR, meta::getFeedName)
                 .addLazyReplacement(TYPE_VAR, meta::getTypeName)
                 .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
                 .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
-                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()));
+                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
+                .addStandardTimeReplacements(() ->
+                        getTimeForVariableReplacement(timeBasis, meta));
 
         if (contextVariableResolver != null) {
             contextVariableResolver.addContextReplacements(executorBuilder);
@@ -693,8 +778,24 @@ public class S3Manager {
         }
         final String output = executorBuilder.execute();
 
-        LOGGER.debug("applyTemplate() - template: '{}', output: '{}", template, output);
+        LOGGER.debug("applyTemplate() - template: '{}', timeBasis: {}, output: '{}", template, timeBasis, output);
         return output;
+    }
+
+    @NonNull
+    private ZonedDateTime getTimeForVariableReplacement(final TimeBasis timeBasis,
+                                                        final SimpleMeta meta) {
+        final ZonedDateTime time = switch (timeBasis) {
+            case CURRENT_TIME -> ZonedDateTime.now();
+            case META_CREATION_TIME -> ZonedDateTime.ofInstant(
+                    Instant.ofEpochMilli(Objects.requireNonNull(meta).getCreateMs()),
+                    ZoneOffset.UTC);
+            case null -> ZonedDateTime.now();
+        };
+
+        LOGGER.debug("getTimeForVariableReplacement() - timeBasis: {}, meta: {}, time: {}",
+                timeBasis, meta, time);
+        return time;
     }
 
 //    /**

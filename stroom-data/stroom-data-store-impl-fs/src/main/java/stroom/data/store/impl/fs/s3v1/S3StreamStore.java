@@ -46,6 +46,7 @@ import stroom.util.shared.string.CIKey;
 import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
+import stroom.util.time.TimeBasis;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -76,6 +77,7 @@ import java.util.function.Supplier;
 public class S3StreamStore extends AbstractS3StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3StreamStore.class);
+    static final TimeBasis TIME_BASIS = TimeBasis.META_CREATION_TIME;
 
     private static final int MAX_CACHED_ITEMS = 10;
     private static final CIKey FEED_VAR = CIKey.internStaticKey("feed");
@@ -252,7 +254,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
         Objects.requireNonNull(dataVolume);
         Objects.requireNonNull(simpleMeta);
         final S3Manager s3Manager = createS3Manager(dataVolume);
-        final S3Location s3Location = s3Manager.deriveS3Location(simpleMeta);
+        final S3Location s3Location = s3Manager.deriveS3Location(simpleMeta, TIME_BASIS);
         LOGGER.debug("deriveS3Location() - dataVolume: {}, simpleMeta: {}, s3Location: {}",
                 dataVolume, simpleMeta, s3Location);
         return s3Location;
@@ -341,7 +343,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
 
             // Upload the zip to S3.
             final S3Manager s3Manager = createS3Manager(dataVolume);
-            s3Location = s3Manager.deriveS3Location(meta);
+            s3Location = s3Manager.deriveS3Location(meta, TIME_BASIS);
             LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}, s3Location: {}",
                     tempDir, NullSafe.get(meta, Meta::getId), attributeMap, s3Location));
             s3Manager.upload(
