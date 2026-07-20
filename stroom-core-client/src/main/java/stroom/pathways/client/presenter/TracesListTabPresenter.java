@@ -86,6 +86,10 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                     .create(TRACES_RESOURCE)
                     .method(res -> res.findTrace(request))
                     .onSuccess(traceOverviewWidget::setTrace)
+                    // Belt-and-braces: orphan-only traces are now served by the success path, so a
+                    // failure here is genuinely unexpected — clear the detail rather than leaving a
+                    // stale trace displayed.
+                    .onFailure(error -> traceOverviewWidget.setTrace(null))
                     .taskMonitorFactory(listPresenter.getView())
                     .exec();
         }));

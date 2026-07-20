@@ -57,14 +57,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for {@code TraceDb.archiveOldData}.
  *
- * <p>Archiving is activity-gated (B) and ages spans by their own insert time (A):
+ * <p>Archiving is age-gated on the root's own end time and ages spans by their own insert time:
  * <ul>
- *   <li>A trace is archived only once it has gone <em>quiet</em> (latest span insert
- *       time older than the cutoff); an active trace's root is retained, even if its
- *       root started long ago.</li>
- *   <li>A quiet root is bucketed by the root's <em>start</em> time (the query axis) and
- *       its root span rides with it; non-root spans bucket by their own insert time, so a
- *       multi-window trace fragments across dated buckets.</li>
+ *   <li>A trace's root is archived once its own end time is older than the cutoff (aged),
+ *       regardless of ongoing activity — so a leaky / never-ending trace is bounded rather than
+ *       kept live forever. A root whose own end is recent is retained.</li>
+ *   <li>An aged root is bucketed by the root's <em>start</em> time (the query axis) and its
+ *       root span rides with it; non-root spans bucket by their own insert time, so a recent
+ *       child of an aged root is left behind as an orphan and swept on a later cycle.</li>
  *   <li>Each archive holds only its own bucket's roots — no cross-bucket duplication —
  *       verified by querying the archive's rebuilt sort index.</li>
  *   <li>Orphan spans (no root anywhere) are swept by insert time so the live shard stays
@@ -94,14 +94,13 @@ class TestArchiveOldData {
     // -----------------------------------------------------------------------
 
     /**
-     * A QUIET trace (no activity since the cutoff — its latest span insert time is old)
-     * is archived, and its root is bucketed by the root's <em>start</em> time (the query
-     * axis), independent of when the span was inserted. Here start = 2024-01-10 but insert
-     * = 2024-01-20 (both before the cutoff, so the trace is quiet): it archives to the
-     * 2024-01-10 (start) bucket, not the 2024-01-20 (insert) bucket.
+     * An AGED trace (its root's own end time is older than the cutoff) is archived, and its
+     * root is bucketed by the root's <em>start</em> time (the query axis), independent of when
+     * the span was inserted. Here start/end = 2024-01-10 (aged) but insert = 2024-01-20: it
+     * archives to the 2024-01-10 (start) bucket, not the 2024-01-20 (insert) bucket.
      */
     @Test
-    void quietTrace_rootArchivedToStartBucket(@TempDir final Path tempDir) throws IOException {
+    void agedTrace_rootArchivedToStartBucket(@TempDir final Path tempDir) throws IOException {
         final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
         final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
         final PlanBDoc doc = buildDoc();
@@ -138,33 +137,36 @@ class TestArchiveOldData {
     }
 
     /**
-     * An ACTIVE trace (recent activity — its latest span insert time is after the cutoff)
-     * is retained even if its root <em>started</em> long ago. This is the B behaviour that
-     * keeps a long-running / never-ending trace's root live rather than aging it out by its
-     * fixed start time. Here start = 2024-01-15 (old) but insert = AFTER_CUTOFF (recent).
+     * A root whose own end time is old is archived even if its span was RECEIVED recently
+     * (insert time after the cutoff). Eligibility keys on the root's own end
+     * ({@code rootEndTime}), not on receipt/activity, so a late-arriving span for an
+     * already-aged root cannot keep the trace live. Here end = 2024-01-15 (aged) but insert =
+     * AFTER_CUTOFF (recent): the root is archived to its 2024-01-15 (start/end) bucket.
      */
     @Test
-    void activeTrace_isRetained_evenIfRootStartOld(@TempDir final Path tempDir) throws IOException {
+    void agedRoot_archivedEvenIfReceivedRecently(@TempDir final Path tempDir) throws IOException {
         final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
         final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
         final PlanBDoc doc = buildDoc();
 
-        final Instant oldStart = Instant.parse("2024-01-15T12:00:00.000Z");
+        final Instant oldEnd = Instant.parse("2024-01-15T12:00:00.000Z");
         final SpanKey rootKey = rootKey(TRACE_A);
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
             db.write(writer ->
-                    db.insert(writer, new SpanKV(rootKey, span(oldStart, AFTER_CUTOFF))));
+                    db.insert(writer, new SpanKV(rootKey, span(oldEnd, AFTER_CUTOFF))));
         }
 
+        final long archived;
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            final long archived = db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
-            assertThat(archived).isEqualTo(0);
+            archived = db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
         }
+        assertThat(archived).isGreaterThanOrEqualTo(1);
 
-        assertThat(listSubDirs(archiveBaseDir)).isEmpty();
+        assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())
+                .containsExactly("2024-01-15");
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
-            assertThat(db.get(rootKey)).isNotNull();
+            assertThat(db.get(rootKey)).as("aged root archived out of live shard").isNull();
         }
     }
 
@@ -267,17 +269,19 @@ class TestArchiveOldData {
     }
 
     /**
-     * B + A together: a still-ACTIVE trace (a recent child keeps its last-activity after the
-     * cutoff) keeps its root live, while its OLD spans are archived out — so the live
-     * footprint stays bounded without losing the still-updating trace.
+     * When a root's own end time is aged it is archived even while the trace still receives
+     * children: the root and its old spans are archived (the root to its start-time bucket, the
+     * old child to its insert-time bucket), and a child received after the cutoff is left behind
+     * in the live shard as a parentless orphan (swept later by insert time). This is what bounds
+     * a leaky / never-ending trace.
      */
     @Test
-    void activeTrace_rootRetainedWhileOldSpansArchivedOut(@TempDir final Path tempDir) throws IOException {
+    void agedRoot_archivedWithOldSpans_recentChildOrphaned(@TempDir final Path tempDir) throws IOException {
         final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
         final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
         final PlanBDoc doc = buildDoc();
 
-        final Instant rootTime = Instant.parse("2024-01-05T09:00:00.000Z");
+        final Instant rootTime = Instant.parse("2024-01-05T09:00:00.000Z");       // root end aged
         final Instant oldChildInsert = Instant.parse("2024-01-15T09:00:00.000Z"); // before CUTOFF
         final SpanKey rootKey = rootKey(TRACE_A);
         final SpanKey oldChild = spanKey(TRACE_A, ROOT_SPAN, "2222222222222222");
@@ -295,16 +299,16 @@ class TestArchiveOldData {
             db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
         }
 
-        // Root + recent child retained live (trace still active); old child archived out.
+        // Aged root + its root span archived; old child archived; recent child left as an orphan.
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
-            assertThat(db.get(rootKey)).as("root retained").isNotNull();
-            assertThat(db.get(newChild)).as("recent child retained").isNotNull();
-            assertThat(db.get(oldChild)).as("old child archived out").isNull();
-            assertThat(traceIds(db)).containsExactly(TRACE_A);
+            assertThat(db.get(rootKey)).as("aged root archived").isNull();
+            assertThat(db.get(oldChild)).as("old child archived").isNull();
+            assertThat(db.get(newChild)).as("recent child retained as orphan").isNotNull();
+            assertThat(traceIds(db)).as("no queryable root remains").isEmpty();
         }
-        // Old child archived to its own insert-time bucket.
+        // Root rides to its start-time bucket (2024-01-05); the old child to its insert bucket.
         assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())
-                .containsExactly("2024-01-15");
+                .containsExactly("2024-01-05", "2024-01-15");
     }
 
     // -----------------------------------------------------------------------

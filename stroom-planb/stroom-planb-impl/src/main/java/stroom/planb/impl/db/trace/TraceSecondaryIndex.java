@@ -56,8 +56,12 @@ public enum TraceSecondaryIndex {
             Comparator.comparing(TraceRoot::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()))),
 
     DURATION(TraceRootField.DURATION, "trace-roots-duration",
-            (root, traceId) -> durationKey(root.getStartTime(), root.getEndTime(), traceId),
+            (root, traceId) -> durationKey(root.getStartTime(), root.getRootEndTime(), traceId),
             Comparator.comparingLong(TraceSecondaryIndex::durationNanos)),
+
+    TOTAL_DURATION(TraceRootField.TOTAL_DURATION, "trace-roots-total-duration",
+            (root, traceId) -> durationKey(root.getStartTime(), root.getEndTime(), traceId),
+            Comparator.comparingLong(TraceSecondaryIndex::totalDurationNanos)),
 
     OPERATION(TraceRootField.OPERATION, "trace-roots-operation",
             (root, traceId) -> operationKey(root.getName(), traceId),
@@ -144,10 +148,11 @@ public enum TraceSecondaryIndex {
         return key;
     }
 
-    /** Key: (durationNanos[8] ∥ traceId[16]) = 24 bytes. */
-    private static byte[] durationKey(final NanoTime start, final NanoTime end, final byte[] traceId) {
+    // Key: durationNanos[8] ∥ traceId[16]. Duration is the root span's own duration
+    // (rootEndTime - startTime), not endTime — matches the UI Duration, not inflated by trailing spans.
+    private static byte[] durationKey(final NanoTime start, final NanoTime rootEnd, final byte[] traceId) {
         final byte[] key = new byte[Long.BYTES + TRACE_ID_BYTES];
-        ByteBuffer.wrap(key).putLong(durationNanos(start, end)).put(traceId);
+        ByteBuffer.wrap(key).putLong(durationNanos(start, rootEnd)).put(traceId);
         return key;
     }
 
@@ -175,15 +180,27 @@ public enum TraceSecondaryIndex {
         return key;
     }
 
-    private static long durationNanos(final NanoTime start, final NanoTime end) {
-        if (start == null || end == null) {
+    private static long durationNanos(final NanoTime start, final NanoTime rootEnd) {
+        // Null when there is no root duration (e.g. an orphan-only trace) -> sort as zero duration.
+        if (start == null || rootEnd == null) {
             return 0L;
         }
-        return (end.getSeconds() - start.getSeconds()) * 1_000_000_000L
-                + (end.getNanos() - start.getNanos());
+        final long nanos = (rootEnd.getSeconds() - start.getSeconds()) * 1_000_000_000L
+                + (rootEnd.getNanos() - start.getNanos());
+        // Clamp to zero. An orphan-only trace has no root end: it is null on the freshly-built root
+        // (index write) but persisted/read back as ZERO (index delete), which would otherwise read
+        // as a negative duration — making the write-time and delete-time keys disagree and stranding
+        // stale duration-index entries (duplicate rows when sorting by duration). A real root always
+        // ends at/after its start, so this only ever clamps the orphan sentinel.
+        return Math.max(0L, nanos);
     }
 
     private static long durationNanos(final TraceRoot root) {
+        return durationNanos(root.getStartTime(), root.getRootEndTime());
+    }
+
+    // Total activity span: start to the last span's end (endTime - startTime).
+    private static long totalDurationNanos(final TraceRoot root) {
         return durationNanos(root.getStartTime(), root.getEndTime());
     }
 }

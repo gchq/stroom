@@ -63,17 +63,27 @@ public class TraceRoot {
      */
     @JsonProperty
     private final NanoTime rootEndTime;
+    /**
+     * True when this row represents an "orphan-only" trace: a traceId with spans but no root span
+     * (the root aged out under retention/archival, or never arrived). Such a row is synthesized
+     * from per-trace stats rather than from a root span; the UI flags it and its detail view
+     * renders a rootless span forest.
+     */
+    @JsonProperty
+    private final boolean orphan;
 
     public TraceRoot(final Trace trace) {
+        final Span root = trace.root();
         this.traceId = trace.getTraceId();
-        this.name = trace.root().getName();
-        this.startTime = trace.root().start();
-        this.endTime = trace.root().end();
+        this.name = root == null ? "" : root.getName();
+        this.startTime = root == null ? null : root.start();
+        this.endTime = root == null ? null : root.end();
         this.services = services(trace);
-        this.depth = depth(trace);
+        this.depth = root == null ? 0 : depth(trace);
         this.totalSpans = totalSpans(trace);
         this.lastActivityMs = 0L;
-        this.rootEndTime = trace.root().end();
+        this.rootEndTime = root == null ? null : root.end();
+        this.orphan = root == null;
     }
 
     private static int services(final Trace trace) {
@@ -123,7 +133,8 @@ public class TraceRoot {
                      @JsonProperty("depth") final int depth,
                      @JsonProperty("totalSpans") final int totalSpans,
                      @JsonProperty("lastActivityMs") final long lastActivityMs,
-                     @JsonProperty("rootEndTime") final NanoTime rootEndTime) {
+                     @JsonProperty("rootEndTime") final NanoTime rootEndTime,
+                     @JsonProperty("orphan") final boolean orphan) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
@@ -133,6 +144,7 @@ public class TraceRoot {
         this.totalSpans = totalSpans;
         this.lastActivityMs = lastActivityMs;
         this.rootEndTime = rootEndTime;
+        this.orphan = orphan;
     }
 
     public String getTraceId() {
@@ -171,6 +183,10 @@ public class TraceRoot {
         return rootEndTime;
     }
 
+    public boolean isOrphan() {
+        return orphan;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -188,13 +204,14 @@ public class TraceRoot {
                Objects.equals(name, traceRoot.name) &&
                Objects.equals(startTime, traceRoot.startTime) &&
                Objects.equals(endTime, traceRoot.endTime) &&
-               Objects.equals(rootEndTime, traceRoot.rootEndTime);
+               Objects.equals(rootEndTime, traceRoot.rootEndTime) &&
+               orphan == traceRoot.orphan;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans,
-                lastActivityMs, rootEndTime);
+                lastActivityMs, rootEndTime, orphan);
     }
 
     public static Builder builder() {
@@ -216,6 +233,7 @@ public class TraceRoot {
         private int totalSpans;
         private long lastActivityMs;
         private NanoTime rootEndTime;
+        private boolean orphan;
 
         private Builder() {
         }
@@ -230,6 +248,7 @@ public class TraceRoot {
             this.totalSpans = traceRoot.totalSpans;
             this.lastActivityMs = traceRoot.lastActivityMs;
             this.rootEndTime = traceRoot.rootEndTime;
+            this.orphan = traceRoot.orphan;
         }
 
         public Builder traceId(final String traceId) {
@@ -277,6 +296,11 @@ public class TraceRoot {
             return self();
         }
 
+        public Builder orphan(final boolean orphan) {
+            this.orphan = orphan;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -293,7 +317,8 @@ public class TraceRoot {
                     depth,
                     totalSpans,
                     lastActivityMs,
-                    rootEndTime
+                    rootEndTime,
+                    orphan
             );
         }
     }

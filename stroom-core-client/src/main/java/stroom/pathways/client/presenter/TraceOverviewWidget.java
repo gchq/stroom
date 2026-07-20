@@ -38,6 +38,8 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -360,10 +362,33 @@ public class TraceOverviewWidget extends Composite {
         final String style = computeGridStyle(0, extents.totalDuration.getNanos());
         hb.div(div -> {
             final AtomicInteger row = new AtomicInteger();
-            appendSpan(div, trace.root(), row);
+            forestRoots().forEach(span -> appendSpan(div, span, row));
         }, Attribute.className("timeline-bar"),
                 Attribute.id("timelineBar"),
                 Attribute.style("height: 40px;" + style));
+    }
+
+    // Top-level spans to render as waterfall roots: the single root for a normal trace, or — for an
+    // orphan-only trace (no root) — every span whose parent is absent from this trace. Callers recurse
+    // via Trace.children(span).
+    private List<Span> forestRoots() {
+        if (trace == null) {
+            return List.of();
+        }
+        final Span root = trace.root();
+        if (root != null) {
+            return List.of(root);
+        }
+        final List<Span> roots = new ArrayList<>();
+        trace.getParentSpanIdMap().values().forEach(spans -> spans.forEach(span -> {
+            final String parentSpanId = span.getParentSpanId();
+            if (parentSpanId == null || parentSpanId.isEmpty() || !spanById.containsKey(parentSpanId)) {
+                roots.add(span);
+            }
+        }));
+        // Deterministic order (the map iteration order is not stable) — earliest span first.
+        roots.sort(Comparator.comparing(Span::start, Comparator.nullsLast(Comparator.naturalOrder())));
+        return roots;
     }
 
     private void appendSpan(final HtmlBuilder hb,
@@ -542,7 +567,7 @@ public class TraceOverviewWidget extends Composite {
 
     private void appendOperationList(final HtmlBuilder hb) {
 
-        hb.div(div -> appendOperationItem(div, trace.root(), extents, 0),
+        hb.div(div -> forestRoots().forEach(span -> appendOperationItem(div, span, extents, 0)),
                 Attribute.className("operation-list"),
                 Attribute.id("operationList"));
     }

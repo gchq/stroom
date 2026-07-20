@@ -27,6 +27,7 @@ import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.TracesStore;
+import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConfig;
@@ -72,9 +73,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -297,10 +302,29 @@ public class TracesStoreImpl implements TracesStore {
             }
         }
 
-        // Sort the merged set using the same comparator as the per-shard secondary index.
-        allTraceRoots.sort(buildMergeComparator(criteria));
+        // Dedupe by traceId across live + archive shards. A trace whose root has aged out to an
+        // archive appears twice — as the archived real-root row AND as the live synthesized orphan
+        // row. Keep one row per traceId, preferring the real root (see preferred(...)). Done on the
+        // full collected set (not post-pagination) because the two rows carry different start times
+        // and so sort to different, non-adjacent positions.
+        final Map<String, TraceRoot> byTraceId = new LinkedHashMap<>();
+        for (final TraceRoot root : allTraceRoots) {
+            byTraceId.merge(root.getTraceId(), root, TracesStoreImpl::preferred);
+        }
+        final List<TraceRoot> deduped = new ArrayList<>(byTraceId.values());
 
-        // Apply the caller's offset/length over the full merged set.
+        // Correct the summed total for duplicates removed within the fetched window. Collisions
+        // beyond the window can't be observed, so mark the count approximate when any were removed.
+        final int duplicatesRemoved = allTraceRoots.size() - deduped.size();
+        if (duplicatesRemoved > 0) {
+            total = Math.max(deduped.size(), total - duplicatesRemoved);
+            exact = false;
+        }
+
+        // Sort the deduped set using the same comparator as the per-shard secondary index.
+        deduped.sort(buildMergeComparator(criteria));
+
+        // Apply the caller's offset/length over the full deduped set.
         final int offset = criteria.getPageRequest() != null
                 ? criteria.getPageRequest().getOffset()
                 : 0;
@@ -309,10 +333,10 @@ public class TracesStoreImpl implements TracesStore {
                 : Integer.MAX_VALUE;
 
         final List<TraceRoot> paginatedList;
-        if (offset >= allTraceRoots.size()) {
+        if (offset >= deduped.size()) {
             paginatedList = Collections.emptyList();
         } else {
-            paginatedList = allTraceRoots.subList(offset, Math.min(offset + length, allTraceRoots.size()));
+            paginatedList = deduped.subList(offset, Math.min(offset + length, deduped.size()));
         }
 
         final stroom.util.shared.PageResponse pageResponse = new stroom.util.shared.PageResponse(
@@ -322,6 +346,16 @@ public class TracesStoreImpl implements TracesStore {
                 exact
         );
         return new TracesResultPage(paginatedList, pageResponse);
+    }
+
+    // De-dup precedence for a traceId seen in >1 shard (archived real-root row + live orphan row):
+    // keep the real root over an orphan, else the most recently active. Order-independent, so safe
+    // as a Map#merge remapping function.
+    private static TraceRoot preferred(final TraceRoot a, final TraceRoot b) {
+        if (a.isOrphan() != b.isOrphan()) {
+            return a.isOrphan() ? b : a; // prefer the non-orphan (real root)
+        }
+        return a.getLastActivityMs() >= b.getLastActivityMs() ? a : b;
     }
 
     /**
@@ -410,8 +444,7 @@ public class TracesStoreImpl implements TracesStore {
     public Trace getLocalTrace(final GetTraceRequest request) {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
 
-        // 1. Live shard first. Use findTrace (returns empty rather than throwing)
-        //    so we can fall back to archives when the trace has been purged.
+        // 1. Live shard. Use findTrace (returns empty rather than throwing).
         final Optional<Trace> live = shardManager.get(
                 request.getDataSourceRef().getName(), request.getTraceId(), reader -> {
                     if (reader instanceof final TraceDb traceDb) {
@@ -419,13 +452,21 @@ public class TracesStoreImpl implements TracesStore {
                     }
                     throw new IllegalStateException("Unexpected value: " + reader);
                 });
-        if (live.isPresent()) {
+
+        // Fast path: a live trace that still has its root span is fully present — a present root
+        // means it was not archived (archival removes the root with the trace). No archive needed.
+        if (live.isPresent() && live.get().root() != null) {
             return live.get();
         }
 
-        // 2. Archive fallback. Archives are labelled by trace start time, so if the
-        //    caller supplied the start time we open only the matching bucket; otherwise
-        //    we scan every archive bucket for this trace's shard.
+        // 2. Otherwise the trace may be split across storage: its root archived while late spans
+        //    stayed live (rootless live fragment), or fully archived. Union the spans from the live
+        //    shard AND every relevant archive bucket so the detail view shows the whole trace rather
+        //    than a fragment. Archives are labelled by trace start time; if the caller supplied the
+        //    start time we open only the matching bucket, otherwise we scan the trace's shard.
+        final List<Trace> sources = new ArrayList<>();
+        live.ifPresent(sources::add);
+
         final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
         if (doc != null && doc.getSharedPath() != null && doc.getShardCount() > 0) {
             final int shardIndex = ShardKeyRouter.computeShardIndex(
@@ -437,14 +478,43 @@ public class TracesStoreImpl implements TracesStore {
             final List<ArchiveShardRef> refs =
                     archiveShardLocator.findRelevantShards(doc, shardIndex, fromMs, toMs);
             for (final ArchiveShardRef ref : refs) {
-                final Trace trace = getTraceFromArchive(ref, traceIdBytes, doc);
-                if (trace != null) {
-                    return trace;
+                final Trace archived = getTraceFromArchive(ref, traceIdBytes, doc);
+                if (archived != null) {
+                    sources.add(archived);
                 }
             }
         }
 
+        final Trace merged = mergeTraces(request.getTraceId(), sources);
+        if (merged != null) {
+            return merged;
+        }
+
         throw new NotFoundException("No spans found for trace " + request.getTraceId());
+    }
+
+    // Merges the spans of several partial Traces for the same traceId (live fragment + archive
+    // buckets) into one, de-duplicating by spanId. Each source's parentSpanIdMap keying is preserved,
+    // so the root resolves normally if its span is present. Returns null if there are no spans anywhere.
+    private Trace mergeTraces(final String traceId, final List<Trace> sources) {
+        final Map<String, List<Span>> merged = new HashMap<>();
+        final Set<String> seenSpanIds = new HashSet<>();
+        for (final Trace source : sources) {
+            if (source == null || source.getParentSpanIdMap() == null) {
+                continue;
+            }
+            for (final Map.Entry<String, List<Span>> entry : source.getParentSpanIdMap().entrySet()) {
+                for (final Span span : entry.getValue()) {
+                    if (seenSpanIds.add(span.getSpanId())) {
+                        merged.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(span);
+                    }
+                }
+            }
+        }
+        if (merged.isEmpty()) {
+            return null;
+        }
+        return Trace.builder().traceId(traceId).parentSpanIdMap(merged).build();
     }
 
     /**

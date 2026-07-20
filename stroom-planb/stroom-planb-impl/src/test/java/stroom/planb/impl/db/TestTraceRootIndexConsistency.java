@@ -245,9 +245,9 @@ class TestTraceRootIndexConsistency {
         }
     }
 
-    /** Retention keeps the root of an active trace and drops the root of a quiet one. */
+    /** Retention keeps a root until its own end time is older than the cutoff, then drops it. */
     @Test
-    void retentionKeepsActiveRootDropsQuietRoot(@TempDir final Path dir) throws IOException {
+    void retentionDropsRootOnceItsOwnEndAges(@TempDir final Path dir) throws IOException {
         final PlanBDoc doc = doc();
         final Instant t = Instant.parse("2026-07-10T09:00:00.000Z");
         final Path target = Files.createDirectory(dir.resolve("target"));
@@ -259,13 +259,48 @@ class TestTraceRootIndexConsistency {
             }, doc));
             db.mergeComplete();
 
-            // Active: cutoff before the trace's last activity → root retained.
+            // Cutoff before the root's own end → root retained.
             db.deleteOldData(t.minusSeconds(60), false);
-            assertThat(traceIds(db)).as("active root retained").containsExactly(TRACE);
+            assertThat(traceIds(db)).as("root retained while its end is recent").containsExactly(TRACE);
 
-            // Quiet: cutoff after the trace's last activity → root (and its root span) dropped.
+            // Cutoff after the root's own end → root (and its root span) dropped.
             db.deleteOldData(t.plusSeconds(60), false);
-            assertThat(traceIds(db)).as("quiet root dropped").isEmpty();
+            assertThat(traceIds(db)).as("aged root dropped").isEmpty();
+        }
+    }
+
+    /**
+     * The age gate (root's own end) vs the old quiet gate: a root whose own end is old is
+     * dropped by retention even though the trace is still receiving spans (recent activity),
+     * and the late child is left behind as a parentless orphan.
+     */
+    @Test
+    void retentionDropsAgedRootDespiteRecentActivity(@TempDir final Path dir) throws IOException {
+        final PlanBDoc doc = doc();
+        final Instant rootT = Instant.parse("2026-07-10T09:00:00.000Z");   // root ends here (aged)
+        final Instant childT = Instant.parse("2026-07-10T11:00:00.000Z");  // later activity
+        final Path target = Files.createDirectory(dir.resolve("target"));
+
+        try (final TraceDb db = TraceDb.create(target, BB, BBF, doc, false)) {
+            db.merge(buildBatch(dir, "r1", (d, w) -> {
+                d.insert(w, new SpanKV(key(ROOT, ""), span("run", rootT)));
+                d.insert(w, new SpanKV(key(CHILD, ROOT), span("child", rootT)));
+            }, doc));
+            db.mergeComplete();
+
+            // A later child keeps the trace active, but the root's own end stays at rootT.
+            db.merge(buildBatch(dir, "r2", (d, w) ->
+                    d.insert(w, new SpanKV(key(GRAND, CHILD), span("late", childT))), doc));
+            db.mergeComplete();
+            assertThat(storedRoot(db).getLastActivityMs())
+                    .as("trace is still active").isEqualTo(childT.toEpochMilli());
+
+            // Cutoff between the root end and the late child → root dropped despite the recent
+            // activity (the gate keys on the root's own end), late child left as an orphan.
+            db.deleteOldData(rootT.plusSeconds(3600), false); // 10:00
+            assertThat(traceIds(db)).as("aged root dropped despite activity").isEmpty();
+            assertThat(db.get(key(ROOT, ""))).as("aged root span deleted").isNull();
+            assertThat(db.get(key(GRAND, CHILD))).as("late child retained as orphan").isNotNull();
         }
     }
 

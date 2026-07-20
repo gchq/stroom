@@ -51,6 +51,7 @@ public class TraceRootValueSerde {
             output.writeInt(traceRoot.getTotalSpans());
             output.writeLong(traceRoot.getLastActivityMs());
             writeNanoTime(output, traceRoot.getRootEndTime());
+            output.writeBoolean(traceRoot.isOrphan());
             final ByteBuffer byteBuffer = output.getByteBuffer();
             byteBuffer.flip();
             consumer.accept(byteBuffer);
@@ -69,7 +70,13 @@ public class TraceRootValueSerde {
             final int depth = input.readInt();
             final int totalSpans = input.readInt();
             final long lastActivityMs = input.readLong();
-            final NanoTime rootEndTime = readNanoTime(input);
+            // Trailing fields were appended over time (this serde is unversioned). Tolerate legacy
+            // shorter values so older shards still read: base / base+rootEndTime /
+            // base+rootEndTime+orphan. A NanoTime is long(8)+int(4)=12 bytes; a boolean is 1 byte.
+            final NanoTime rootEndTime = (input.limit() - input.position()) >= 12
+                    ? readNanoTime(input)
+                    : null;
+            final boolean orphan = (input.limit() - input.position()) >= 1 && input.readBoolean();
             return new TraceRoot(
                     HexStringUtil.encode(traceId),
                     name,
@@ -79,7 +86,8 @@ public class TraceRootValueSerde {
                     depth,
                     totalSpans,
                     lastActivityMs,
-                    rootEndTime);
+                    rootEndTime,
+                    orphan);
         }
     }
 

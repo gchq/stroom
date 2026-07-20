@@ -26,7 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.TracesResource;
-import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
@@ -112,10 +111,10 @@ public class TracesListPresenter
         addIdColumn();
         addTraceStartColumn();
         addDurationColumn();
+        addTotalActivityColumn();
         addServicesColumn();
         addDepthColumn();
         addTotalSpansColumn();
-        addLastActivityColumn();
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
@@ -128,19 +127,32 @@ public class TracesListPresenter
     }
 
     /**
-     * Renders the operation name, prefixed with a warning icon (and hover tooltip) when the trace
-     * has trailing leaked activity — signalling that its Duration is inflated by spans emitted long
-     * after the root span finished. See {@link #hasTrailingLeak(TraceRoot)}.
+     * Renders the operation name, prefixed with a warning icon (and hover tooltip):
+     * <ul>
+     *   <li>an <b>error</b> icon + "No root span found" placeholder when the trace has no root span
+     *       (orphan-only — its root aged out or never arrived); see {@link TraceRoot#isOrphan()};</li>
+     *   <li>otherwise a <b>warning</b> icon when the trace has trailing leaked activity
+     *       ({@link #hasTrailingLeak(TraceRoot)}).</li>
+     * </ul>
      */
     private SafeHtml buildOperationCell(final TraceRoot trace) {
-        final String name = trace == null
+        final boolean orphan = trace != null && trace.isOrphan();
+        final String rawName = trace == null
                 ? ""
                 : trace.getName();
+        final String name = orphan && (rawName == null || rawName.isEmpty())
+                ? "No root span found"
+                : rawName;
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString(
                 "<div style=\"display:flex;align-items:center;gap:4px;\">"));
-        if (hasTrailingLeak(trace)) {
-            sb.append(SvgImageUtil.toSafeHtml(leakTooltip(trace), SvgImage.WARNING));
+        if (orphan) {
+            sb.append(SvgImageUtil.toSafeHtml(
+                    "No root span found for this trace ID (its root has aged out "
+                    + "or never arrived)", SvgImage.ERROR, "svgIcon"));
+        } else if (hasTrailingLeak(trace)) {
+            sb.append(SvgImageUtil.toSafeHtml("Trailing spans — activity continued after the root span ended",
+                    SvgImage.WARNING, "svgIcon"));
         }
         sb.append(SafeHtmlUtil.getSafeHtml(name));
         sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString("</div>"));
@@ -173,13 +185,6 @@ public class TracesListPresenter
                && gapNanos > LEAK_MULTIPLIER * rootDurationNanos;
     }
 
-    private String leakTooltip(final TraceRoot trace) {
-        final NanoDuration gap = trace.getEndTime().diff(trace.getRootEndTime());
-        return "Duration inflated by trailing leaked spans — the root span ended "
-               + DurationUtil.formatDuration(gap)
-               + " before the last span in this trace";
-    }
-
     private void addIdColumn() {
         final Function<TraceRoot, String> valueExtractor = trace -> NullSafe.get(trace, TraceRoot::getTraceId);
         addTextColumn("Trace Id", 300, valueExtractor);
@@ -193,19 +198,48 @@ public class TracesListPresenter
 
     private void addDurationColumn() {
         final Function<TraceRoot, String> valueExtractor = trace -> {
+            // The root span's OWN duration (rootEndTime - startTime), not endTime (the max end
+            // across all spans, which trailing leaked activity inflates). Blank when there is no
+            // root duration to show — e.g. an orphan-only trace, whose rootEndTime is unset (ZERO)
+            // and so reads as before the start time.
+            final NanoTime start = trace.getStartTime();
+            final NanoTime rootEnd = trace.getRootEndTime();
+            if (start == null || rootEnd == null || rootEnd.isLessThan(start)) {
+                return "";
+            }
+            return DurationUtil.formatDuration(rootEnd.diff(start));
+        };
+        final Column<TraceRoot, String> column = DataGridUtil
+                .textColumnBuilder(valueExtractor)
+                .withSorting("Root Duration")
+                .build();
+        dataGrid.addResizableColumn(column,
+                "Root Duration",
+                100);
+    }
+
+    // Total activity span: start to the last span's end (endTime - startTime), vs addDurationColumn()
+    // which shows the root's own duration; the gap is trailing activity after the root finished.
+    // Sorted server-side via the trace-roots-total-duration index (label must match TOTAL_DURATION).
+    private void addTotalActivityColumn() {
+        final Function<TraceRoot, String> valueExtractor = trace -> {
+            // Blank for an orphan (no root span) — matches the blank Root Duration for these rows.
+            if (trace == null || trace.isOrphan()) {
+                return "";
+            }
             final NanoTime start = trace.getStartTime();
             final NanoTime end = trace.getEndTime();
-            if (start == null || end == null) {
+            if (start == null || end == null || end.isLessThan(start)) {
                 return "";
             }
             return DurationUtil.formatDuration(end.diff(start));
         };
         final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
-                .withSorting("Duration")
+                .withSorting("Trace Duration")
                 .build();
         dataGrid.addResizableColumn(column,
-                "Duration",
+                "Trace Duration",
                 100);
     }
 
@@ -225,24 +259,6 @@ public class TracesListPresenter
         final Function<TraceRoot, String> valueExtractor = trace ->
                 NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getTotalSpans));
         addTextColumn("Total Spans", 100, valueExtractor);
-    }
-
-    /**
-     * When a trace last received a span. Surfaces still-active long-running traces,
-     * whose fixed start time otherwise sinks them down the start-time-sorted list.
-     * Not server-sortable yet (no secondary index) — informative only.
-     */
-    private void addLastActivityColumn() {
-        final Function<TraceRoot, String> valueExtractor = trace -> {
-            if (trace == null || trace.getLastActivityMs() <= 0L) {
-                return "";
-            }
-            return dateTimeFormatter.format(trace.getLastActivityMs());
-        };
-        final Column<TraceRoot, String> column = DataGridUtil
-                .textColumnBuilder(valueExtractor)
-                .build();
-        dataGrid.addResizableColumn(column, "Last Activity", 200);
     }
 
     private void addTextColumn(final String name,

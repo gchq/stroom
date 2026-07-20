@@ -701,9 +701,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 final byte[] traceIdBytes = HexStringUtil.decode(hex);
                 // Bounded, streaming recompute over the fully-merged span set — exact
                 // totalSpans/services and (safety-valve aside) exact depth, plus the
-                // latest insert time as lastActivityMs (so retention/archival keep an
-                // active trace's root), without materialising the whole trace. Empty ⇒ no
-                // root span present (orphan children only) ⇒ no queryable root, so skip.
+                // latest insert time as lastActivityMs (informational only — shown in the UI
+                // "Last Activity" column; retention/archival now age by the root's own end
+                // time, not activity), without materialising the whole trace. Empty ⇒ no
+                // root span present (a traceId whose only spans are orphans) ⇒ no queryable
+                // root, so skip.
                 final Optional<TraceRoot> optRebuilt =
                         buildRootFromStats(writeTxn, traceIdBytes);
                 if (optRebuilt.isEmpty()) {
@@ -809,10 +811,23 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         };
     }
 
+    // Age axis for archive/delete decisions: the root span's own end (getRootEndTime), falling back to
+    // start time for a legacy root (or a ZERO/invalid end). Gating on the root's own end — not the
+    // trace's max end, which trailing spans inflate — bounds leaky/never-ending traces; later spans
+    // then arrive as parentless orphans and are swept by insert time.
+    private static NanoTime archivalAgeAxis(final TraceRoot root) {
+        final NanoTime start = root.getStartTime();
+        final NanoTime rootEnd = root.getRootEndTime();
+        if (rootEnd != null && (start == null || !rootEnd.isLessThan(start))) {
+            return rootEnd;
+        }
+        return start;
+    }
+
     /**
-     * Archives whole traces whose <em>root-span start time</em> is older than
-     * {@code archiveBefore} into dated LMDB environments under
-     * {@code archiveBaseDir}, then deletes them from the live environment.
+     * Archives whole traces whose <em>root span ended</em> before {@code archiveBefore} (see
+     * {@link #archivalAgeAxis}) into dated LMDB environments under {@code archiveBaseDir}
+     * (bucketed by the root's start time), then deletes them from the live environment.
      *
      * <p><b>Why start time, not merge/insert time.</b> Queries filter traces on
      * the root's start time, and {@link stroom.planb.impl.data.ArchiveShardLocator}
@@ -832,13 +847,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * archive behave exactly as against the live shard — with no cross-bucket
      * duplication of roots.
      *
-     * <p><b>Orphan spans.</b> Spans whose traceId has no root anywhere in this
-     * shard (e.g. the root was lost) can never form a queryable trace and are
-     * swept separately: those older than {@code archiveBefore} by insert time are
-     * archived into a bucket labelled by their insert time and then deleted. This
-     * keeps the live shard bounded even when no retention policy is configured.
-     * Orphan spans produce no trace-root index entry and are reachable only by a
-     * direct {@code getTrace(traceId)} lookup.
+     * <p><b>Orphan spans.</b> A span whose traceId has no root span in this shard — the root
+     * never arrived, or (with age-based gating) it was archived/deleted while the child
+     * remained, leaving a traceId whose only remaining spans are orphans (its root has been
+     * removed). Such spans can never form a queryable trace and are swept separately: those
+     * older than {@code archiveBefore} by insert time are archived into a bucket labelled by
+     * their insert time and then deleted, keeping the live shard bounded even when no retention
+     * policy is configured. They produce no trace-root index entry; note that
+     * {@code getTrace(traceId)} cannot currently assemble such a trace as it requires a root.
      *
      * <p>Three passes:
      * <ol>
@@ -855,9 +871,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                final ArchivalGranularity granularity,
                                final Path archiveBaseDir) {
         final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(archiveBefore);
-        final long cutoffMs = archiveBefore.toEpochMilli();
 
-        // traceIdHex -> bucket label, for QUIET roots being archived (by start time).
+        // traceIdHex -> bucket label, for AGED roots being archived (bucketed by start time).
         final Map<String, String> archivedRootLabels = new HashMap<>();
         // traceIdHex -> decoded root, used to rebuild the archive's sort indexes.
         final Map<String, TraceRoot> archivedRoots = new HashMap<>();
@@ -885,12 +900,17 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 final String hex = HexStringUtil.encode(traceIdBytes);
 
                 final TraceRoot root = traceRootValueSerde.read(val.duplicate());
-                // Archive a root only once its trace has gone QUIET (no activity since the
-                // cutoff); active roots stay live. Bucket by the root's START time — the
-                // axis queries filter on — and its root span rides along (see
-                // spanBucketLabel).
+                // Archive a real root once its own end time is older than the cutoff (aged),
+                // regardless of ongoing activity — so a leaky/never-ending trace is bounded
+                // rather than kept live forever. Bucket by the root's START time — the axis
+                // queries filter on — and its root span rides along (see spanBucketLabel).
+                // Orphan roots (synthesized, no root span) are NOT archived here: their non-root
+                // spans still archive by insert time (below), and the synthetic root itself is
+                // cleaned by retention's quiet gate so the orphan trace stays visible meanwhile.
                 final NanoTime startTime = root.getStartTime();
-                if (startTime != null && root.getLastActivityMs() < cutoffMs) {
+                final NanoTime ageAxis = archivalAgeAxis(root);
+                if (!root.isOrphan()
+                        && startTime != null && ageAxis != null && ageAxis.isBefore(nanoTimeBefore)) {
                     final String label = ArchivalGranularityUtil.label(
                             granularity, NanoTimeUtil.toInstant(startTime));
                     archivedRootLabels.put(hex, label);
@@ -997,7 +1017,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             env.read(readTxn -> {
                 // Spans. Delete exactly those archived in pass 2 — the SAME predicate
                 // (spanBucketLabel != null): non-root spans older than the cutoff, and the
-                // root spans of quiet roots. Retained spans have their lookups recorded so
+                // root spans of aged roots. Retained spans have their lookups recorded so
                 // deleteUnused keeps them.
                 LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
                     final boolean archived = spanBucketLabel(
@@ -1042,6 +1062,23 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     });
                 }
 
+                // Reap synthesized orphan roots whose spans were just archived away. Archival runs
+                // frequently and (unlike a real root) leaves the orphan root behind, so without this
+                // an orphan root outlives its spans and lingers as an empty "ghost" row. An orphan
+                // root should exist only while the trace still has a live span — check the WRITE txn
+                // so the span deletions above are visible.
+                LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                    final TraceRoot value = traceRootValueSerde.read(val.duplicate());
+                    if (value.isOrphan()) {
+                        final byte[] traceIdBytes = new byte[key.remaining()];
+                        key.duplicate().get(traceIdBytes);
+                        if (!hasAnySpan(writer.getWriteTxn(), traceIdBytes)) {
+                            deleteOrphanRoot(readTxn, writer, key, traceIdBytes, value, count);
+                            writer.tryCommit();
+                        }
+                    }
+                });
+
                 writer.commit();
                 return null;
             });
@@ -1063,12 +1100,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * the live shard. Two rules, matching the retention model:
      * <ul>
      *   <li><b>Root span</b> — rides with its root entry: it takes the root's archive
-     *       label (the root's <em>start</em>-time bucket) when the trace is quiet, and
-     *       {@code null} (retained) while the trace is still active. This keeps an active
-     *       trace's root queryable regardless of when the root span was received.</li>
+     *       label (the root's <em>start</em>-time bucket) when the root is aged (its own end
+     *       older than the cutoff), and {@code null} (retained) while the root is younger.</li>
      *   <li><b>Non-root span</b> — ages by its own <em>insert</em> (receipt) time: its
-     *       insert-time bucket when older than the cutoff, else {@code null} (retained).
-     *       This bounds the live shard even while the root is retained.</li>
+     *       insert-time bucket when older than the cutoff, else {@code null} (retained). So a
+     *       recent child of an aged root is left behind as an orphan and swept on a later
+     *       cycle by insert time.</li>
      * </ul>
      * Reads only the insert time (no UID lookup). Shared by pass 1b (label discovery),
      * pass 2 (streaming write) and pass 3 (delete) so bucketing is defined in one place.
@@ -1084,7 +1121,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         if (isRootKey(key)) {
             final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
             key.duplicate().get(traceIdBytes);
-            // Quiet root -> its start bucket; active root -> null (retained).
+            // Aged root (root end before cutoff) -> its start bucket; younger root -> null
+            // (retained). archivedRootLabels holds only the roots selected for archival.
             return archivedRootLabels.get(HexStringUtil.encode(traceIdBytes));
         }
         final NanoTime insertTime = spanValueSerde.readInsertTime(val.duplicate());
@@ -1096,7 +1134,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     /**
      * Deletes the retained root span(s) of a trace (prefix {@code traceId ∥ 0*8}) from the
-     * live span DBI — used when a trace goes quiet and its root entry is removed. Increments
+     * live span DBI — used when a root ages out and its root entry is removed. Increments
      * {@code changeCount} per deleted span.
      */
     private void deleteRootSpansOf(final Txn<ByteBuffer> readTxn,
@@ -1110,6 +1148,21 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 changeCount.increment();
             });
         });
+    }
+
+    // Removes a synthesized orphan root entirely: trace-roots entry, secondary indexes and per-trace
+    // stats (an orphan has no root span and no merge-time entry). Called by retention and archival
+    // once an orphan trace's last live span has gone, so the root can't outlive its spans.
+    private void deleteOrphanRoot(final Txn<ByteBuffer> readTxn,
+                                  final LmdbWriter writer,
+                                  final ByteBuffer key,
+                                  final byte[] traceIdBytes,
+                                  final TraceRoot value,
+                                  final Count count) {
+        traceRootsDbi.delete(writer.getWriteTxn(), key);
+        deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, value);
+        deleteStatsOf(readTxn, writer, traceIdBytes);
+        count.increment();
     }
 
     /**
@@ -1206,10 +1259,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             // avoid "Unable to find value for UID" errors when the UID lookup
             // table is incomplete (e.g. after a cross-node shard sync).
             LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                // Root spans are governed by activity (with their root entry, below), not
-                // by insert time — so an active trace whose root span was inserted long ago
-                // (e.g. a pump root that ended at startup) keeps a queryable root. Retain
-                // and record its lookups; it is removed only when the trace goes quiet.
+                // Root spans are governed by the root entry's age decision (below), not by
+                // their own insert time — so the root span rides with its root: retained
+                // while the root is retained, and removed together with it once the root's
+                // own end time is older than the cutoff. Retain and record its lookups here.
                 if (isRootKey(key)) {
                     keyRecorder.recordUsed(writer, key);
                     valueRecorder.recordUsed(writer, val);
@@ -1232,24 +1285,35 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
             final long deleteBeforeMs = NanoTimeUtil.toInstant(deleteBefore).toEpochMilli();
 
-            // Delete trace roots for traces that have gone QUIET (no activity since the
-            // retention cutoff) and their secondary sort index entries. Gating on
-            // last-activity rather than the root's start time keeps a still-active
-            // long-running trace's root live and current, instead of aging it out by its
-            // (fixed, possibly very old) start time. Its old spans still age out above.
+            // Delete trace roots that have aged out, plus their secondary sort index entries.
+            //  - Real root: aged by the root span's OWN end time (not the trace's max end, which
+            //    trailing leaked spans inflate) — this bounds a leaky/never-ending trace rather
+            //    than keeping its root live forever; late spans that then arrive become orphans.
+            //  - Orphan root (synthesized, no root span): there is no root end to age by, so it is
+            //    removed once the trace goes quiet (lastActivityMs < cutoff). That co-expires with
+            //    the insert-time span sweep above and clears the lingering trace-stats.
             LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                 final TraceRoot value = traceRootValueSerde.read(val.duplicate());
-                if (value.getLastActivityMs() < deleteBeforeMs) {
-                    final byte[] traceIdBytes = new byte[key.remaining()];
-                    key.duplicate().get(traceIdBytes);
-                    // Trace has gone quiet: remove the root entry + its sort indexes, and
-                    // the root span(s) that were retained above (non-root spans have already
-                    // aged out by insert time).
-                    traceRootsDbi.delete(writer.getWriteTxn(), key);
-                    deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, value);
-                    deleteRootSpansOf(readTxn, writer, traceIdBytes, changeCount);
-                    deleteStatsOf(readTxn, writer, traceIdBytes);
-                    changeCount.increment();
+                final byte[] traceIdBytes = new byte[key.remaining()];
+                key.duplicate().get(traceIdBytes);
+                if (value.isOrphan()) {
+                    // A synthesized orphan root should exist only while the trace still has a live
+                    // span. Reap it once its last span has been swept (by the insert-time span loop
+                    // above), rather than on a separate quiet timer — otherwise it lingers as an
+                    // empty "ghost" row. Check the WRITE txn so this pass's span deletions are seen.
+                    if (!hasAnySpan(writer.getWriteTxn(), traceIdBytes)) {
+                        deleteOrphanRoot(readTxn, writer, key, traceIdBytes, value, changeCount);
+                    }
+                } else {
+                    final NanoTime ageAxis = archivalAgeAxis(value);
+                    if (ageAxis != null && ageAxis.isBefore(deleteBefore)) {
+                        // Remove the root entry + its sort indexes, its root span(s), and stats.
+                        traceRootsDbi.delete(writer.getWriteTxn(), key);
+                        deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, value);
+                        deleteRootSpansOf(readTxn, writer, traceIdBytes, changeCount);
+                        deleteStatsOf(readTxn, writer, traceIdBytes);
+                        changeCount.increment();
+                    }
                 }
                 writer.tryCommit();
             });
@@ -1577,7 +1641,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 findSpans(readTxn, traceId, traceBuilder::addSpan);
                 return null;
             });
-            if (!traceBuilder.hasSpans() || !traceBuilder.hasRoot()) {
+            // Return the trace even when it has no root span (orphan-only: root aged out or never
+            // arrived) so the UI can render the available spans with a warning. Only a trace with
+            // no spans at all is absent.
+            if (!traceBuilder.hasSpans()) {
                 return Optional.empty();
             }
             return Optional.of(traceBuilder.build());
@@ -1776,7 +1843,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * Builds the stored {@link TraceRoot} from the per-trace incremental stats
      * ({@link #recordNewSpan}) plus the root span — <b>O(1)</b>, no per-span rescan (this is what
      * removes the merge-cycle cost that scaled with a growing trace). Returns empty if the trace
-     * has no root span (orphan children only), matching the previous skip guard.
+     * has no root span (a traceId whose only spans are orphans), matching the previous skip guard.
      *
      * <ul>
      *   <li>{@code totalSpans} / {@code services} — read from the cumulative counters;</li>
@@ -1790,7 +1857,30 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                                    final byte[] traceIdBytes) {
         final Optional<Span> optRoot = rootSpan(txn, traceIdBytes);
         if (optRoot.isEmpty()) {
-            return Optional.empty();
+            // No root span. If the trace still has a live (orphan) span — its root aged out under
+            // retention/archival, or never arrived — synthesize a flagged orphan TraceRoot from
+            // the per-trace stats so it stays listed (with a warning) and viewable as a rootless
+            // trace. Gate on an ACTUAL live span, not the cumulative stats.spanCount() (which
+            // counts aged-out spans), to avoid ghost rows once every span has gone.
+            if (!hasAnySpan(txn, traceIdBytes)) {
+                return Optional.empty();
+            }
+            final TraceStats orphanStats = readStats(txn, traceIdBytes);
+            final NanoTime orphanEnd = orphanStats.maxEnd() != null
+                    ? orphanStats.maxEnd()
+                    : NanoTime.ZERO;
+            return Optional.of(TraceRoot.builder()
+                    .traceId(HexStringUtil.encode(traceIdBytes))
+                    .name("")                       // no root operation name
+                    .startTime(orphanEnd)           // no root start; use the max span end as the
+                    .endTime(orphanEnd)             // single timestamp (duration 0)
+                    .services(orphanStats.serviceCount())
+                    .depth(0)
+                    .totalSpans((int) orphanStats.spanCount())
+                    .lastActivityMs(orphanStats.lastActivityMs())
+                    .rootEndTime(null)
+                    .orphan(true)
+                    .build());
         }
         final Span root = optRoot.get();
         TraceStats stats = readStats(txn, traceIdBytes);
@@ -1831,6 +1921,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 // background thread emitting spans under the trace long after the root finished).
                 .rootEndTime(root.end())
                 .build());
+    }
+
+    // Cheap prefix existence check: does the span DBI hold >=1 span for this traceId? Gates orphan-root
+    // synthesis/cleanup on a genuinely-live span, not the cumulative stats count (which counts aged-out spans).
+    private boolean hasAnySpan(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        final boolean[] found = {false};
+        byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, dbi, keyRange)) {
+                found[0] = stream.findFirst().isPresent();
+            }
+        });
+        return found[0];
     }
 
     private TraceStats readStats(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
