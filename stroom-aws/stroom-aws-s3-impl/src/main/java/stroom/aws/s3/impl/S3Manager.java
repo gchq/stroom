@@ -42,6 +42,7 @@ import stroom.util.time.TimeBasis;
 import org.jspecify.annotations.NonNull;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
@@ -50,6 +51,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -735,6 +737,16 @@ public class S3Manager {
         final String bucketName = createBucketName(bucketNamePattern, meta, timeBasis);
         final String key = createKey(keyNamePattern, meta, timeBasis);
         return s3ClientHelper.delete(bucketName, key);
+    }
+
+    public DeleteObjectResponse delete(final S3Location s3Location) {
+        Objects.requireNonNull(s3Location);
+        return s3ClientHelper.delete(s3Location.getBucketName(), s3Location.getKey());
+    }
+
+    public List<DeleteObjectsResponse> delete(final Collection<S3Location> s3Locations) {
+        Objects.requireNonNull(s3Locations);
+        return s3ClientHelper.delete(s3Locations);
     }
 
     private Map<String, String> createS3TagsFromMeta(final Meta meta) {

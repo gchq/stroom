@@ -61,4 +61,8 @@ public record S3LocationDataVolume(DataVolume dataVolume,
     public FsVolumeType getVolumeType() {
         return dataVolume.getVolumeType();
     }
+
+    public boolean isEmpty() {
+        return NullSafe.isEmptyCollection(s3Locations);
+    }
 }

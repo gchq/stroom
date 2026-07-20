@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.data.store.impl.fs.StreamStore.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.s3v2.ZstdDictionaryTaskDao;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.MetaService;
@@ -43,7 +42,6 @@ import stroom.util.time.TimeUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -266,7 +264,7 @@ public class PhysicalDeleteExecutor {
 
         Set<SimpleMeta> failedMetasSet = null;
         try {
-            final Map<Path, Path> dirToVolPathMap = new ConcurrentHashMap<>(); // dir => volumePath
+//            final Map<Path, Path> dirToVolPathMap = new ConcurrentHashMap<>(); // dir => volumePath
             final Set<PhysicalDeleteOutcome> physicalDeleteOutcomes = ConcurrentHashMap.newKeySet();
 
             // Delete all the files associated with simpleMetas
@@ -286,17 +284,23 @@ public class PhysicalDeleteExecutor {
                     throw new InterruptedException();
                 }
 
-                final Set<Long> successfulMetaIdSet = physicalDeleteOutcomes.stream()
+                final Map<FsVolumeType, List<PhysicalDeleteOutcome>> successfulOutcomes = physicalDeleteOutcomes
+                        .stream()
                         .filter(PhysicalDeleteOutcome::wasSuccessful)
+                        .collect(Collectors.groupingBy(
+                                outcome -> outcome.dataVolume().getVolumeType()));
+
+                final Set<Long> successfulMetaIdSet = successfulOutcomes.values()
+                        .stream()
+                        .flatMap(List::stream)
                         .map(PhysicalDeleteOutcome::simpleMeta)
                         .map(SimpleMeta::getId)
                         .collect(Collectors.toSet());
-//                final Set<Long> successfulMetaIdSet = new HashSet<>(successfulMetaIdDeleteQueue.size());
-//                successfulMetaIdDeleteQueue.drainTo(successfulMetaIdSet);
                 final int successCount = successfulMetaIdSet.size();
 
                 failedMetasSet = simpleMetas.stream()
-                        .filter(simpleMeta -> !successfulMetaIdSet.contains(simpleMeta.getId()))
+                        .filter(simpleMeta ->
+                                !successfulMetaIdSet.contains(simpleMeta.getId()))
                         .collect(Collectors.toSet());
 
                 deleteVolumes(progress, successfulMetaIdSet, successCount);
@@ -553,7 +557,7 @@ public class PhysicalDeleteExecutor {
                 "getStreamStore() - fsVolumeType: {}, streamStore: {}",
                 fsVolumeType, LogUtil.typedValue(streamStore)));
         if (streamStore == null) {
-            throw new IllegalArgumentException("No StreamStore for " + fsVolumeType);
+            throw new IllegalArgumentException("No StreamStore implementation for " + fsVolumeType);
         }
         return streamStore;
     }

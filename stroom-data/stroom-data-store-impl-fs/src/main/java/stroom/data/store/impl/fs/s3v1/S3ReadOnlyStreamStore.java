@@ -25,7 +25,9 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.AbstractS3StreamStore;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.DataVolumeService;
+import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.shared.Meta;
@@ -38,7 +40,6 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -48,16 +49,19 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ReadOnlyStreamStore.class);
 
     // Delegates everything that is a read only to this
-    final S3StreamStore streamStore;
-    final DataVolumeService dataVolumeService;
+    private final S3StreamStore streamStore;
+    private final DataVolumeService dataVolumeService;
+    private final FsMetaS3LocationDao fsMetaS3LocationDao;
 
     @Inject
     public S3ReadOnlyStreamStore(final S3StreamStore streamStore,
                                  final DataVolumeService dataVolumeService,
-                                 final TemplateCache templateCache) {
+                                 final TemplateCache templateCache,
+                                 final FsMetaS3LocationDao fsMetaS3LocationDao) {
         super(templateCache);
         this.streamStore = streamStore;
         this.dataVolumeService = dataVolumeService;
+        this.fsMetaS3LocationDao = fsMetaS3LocationDao;
     }
 
     @Override
@@ -67,30 +71,35 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
                 meta, dataVolume));
     }
 
-    @Override
-    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
-        throw new UnsupportedOperationException(LogUtil.message(
-                "physicallyDelete not supported on a read-only stream store, dataVolumes: {}",
-                LogUtil.getSample(dataVolumes, 10)));
-    }
+//    @Override
+//    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
+//        LOGGER.debug(() -> LogUtil.message(
+//                "physicallyDelete() - No-op - dataVolumes: {}, dataVolume: {}, progress: {}",
+//                LogUtil.getSample(dataVolumes, 10)));
+//    }
 
     @Override
     public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
                                                   final DataVolume dataVolume,
                                                   final Progress progress) {
-        throw new UnsupportedOperationException(LogUtil.message(
-                "physicallyDelete not supported on a read-only stream store, simpleMeta: {}, dataVolume: {}",
-                simpleMeta, dataVolume));
+        Objects.requireNonNull(simpleMeta);
+        LOGGER.debug("physicallyDelete() - No-op - simpleMeta: {}, dataVolume: {}, progress: {}",
+                simpleMeta, dataVolume, progress);
+
+        // S3 is not under our control, so we don't touch the files on there.
+
+        // We do need to remove the S3 location records in the DB though
+        fsMetaS3LocationDao.delete(List.of(simpleMeta.getId()));
+
+        return new ReadOnlyS3PhysicalDeleteOutcome(true, dataVolume, simpleMeta);
     }
 
     @Override
     public void clean(final List<PhysicalDeleteOutcome> ignoredPhysicalDeleteOutcomes,
                       final Instant deleteThreshold,
                       final Progress progress) {
-        throw new UnsupportedOperationException(LogUtil.message(
-                "clean is not supported on a read-only stream store, ignoredPhysicalDeleteOutcomes: {}, " +
-                "deleteThreshold: {}, progress: {}",
-                ignoredPhysicalDeleteOutcomes, deleteThreshold, progress));
+        LOGGER.debug("clean() - No-op - ignoredPhysicalDeleteOutcomes: {}, deleteThreshold: {}, progress: {}",
+                ignoredPhysicalDeleteOutcomes, deleteThreshold, progress);
     }
 
     @Override
@@ -121,5 +130,16 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
     @Override
     public FsVolumeType getVolumeType() {
         return FsVolumeType.S3_V1_READ_ONLY;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record ReadOnlyS3PhysicalDeleteOutcome(
+            boolean wasSuccessful,
+            DataVolume dataVolume,
+            SimpleMeta simpleMeta) implements PhysicalDeleteOutcome {
+
     }
 }

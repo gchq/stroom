@@ -28,7 +28,10 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.AbstractS3StreamStore;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.DataVolumeService;
+import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
+import stroom.data.store.impl.fs.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.ValidationResult;
@@ -51,6 +54,7 @@ import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -61,7 +65,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -92,6 +95,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
     private final TemplateCache templateCache;
     private final S3ManagerFactory s3ManagerFactory;
     private final DataVolumeService dataVolumeService;
+    private final FsMetaS3LocationDao fsMetaS3LocationDao;
     private final Path tempDir;
 
     @Inject
@@ -99,12 +103,14 @@ public class S3StreamStore extends AbstractS3StreamStore {
                   final MetaService metaService,
                   final DataVolumeService dataVolumeService,
                   final S3ManagerFactory s3ManagerFactory,
-                  final TemplateCache templateCache) {
+                  final TemplateCache templateCache,
+                  final FsMetaS3LocationDao fsMetaS3LocationDao) {
         super(templateCache);
         this.metaService = metaService;
         this.dataVolumeService = dataVolumeService;
         this.s3ManagerFactory = s3ManagerFactory;
         this.templateCache = templateCache;
+        this.fsMetaS3LocationDao = fsMetaS3LocationDao;
 
         try {
             // TODO should this be in the temp dir?  It could be very big.
@@ -116,11 +122,11 @@ public class S3StreamStore extends AbstractS3StreamStore {
         }
     }
 
-    @Override
-    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
-    }
+//    @Override
+//    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
+//        // TODO
+//        throw new UnsupportedOperationException("TODO");
+//    }
 
     @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
@@ -237,11 +243,33 @@ public class S3StreamStore extends AbstractS3StreamStore {
     public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
                                                   final DataVolume dataVolume,
                                                   final Progress progress) {
-//        final String s3Path = getS3Path(dataVolume, simpleMeta);
-//        final S3Manager s3Manager = createS3Manager(dataVolume);
-//        s3Manager.delete(m)
+        Objects.requireNonNull(simpleMeta);
+        Objects.requireNonNull(dataVolume);
+        LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}", simpleMeta, dataVolume);
+        // Remove the files on S3 first.
+        final S3LocationDataVolume s3LocationDataVolume = dataVolumeService.findS3Locations(simpleMeta.getId());
+        boolean success = true;
+        final List<S3Location> deletedLocations = new ArrayList<>();
+        if (s3LocationDataVolume != null && !s3LocationDataVolume.isEmpty()) {
+            final S3Manager s3Manager = createS3Manager(s3LocationDataVolume.dataVolume());
+            for (final S3Location s3Location : s3LocationDataVolume.s3Locations()) {
+                try {
+                    final DeleteObjectResponse deleteObjectResponse = s3Manager.delete(s3Location);
+                    deletedLocations.add(s3Location);
+                } catch (final Exception e) {
+                    success = false;
+                    break;
+                }
+            }
+        } else {
+            LOGGER.debug("physicallyDelete() - Nothing to delete");
+        }
 
-        throw new UnsupportedOperationException("TODO");
+        // Now remove the S3 location records in the DB.
+        if (!deletedLocations.isEmpty()) {
+            fsMetaS3LocationDao.delete(simpleMeta.getId(), deletedLocations);
+        }
+        return new S3PhysicalDeleteOutcome(success, dataVolume, simpleMeta, deletedLocations);
     }
 
     @Override
@@ -527,5 +555,17 @@ public class S3StreamStore extends AbstractS3StreamStore {
                    ", s3Location=" + s3Location +
                    '}';
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record S3PhysicalDeleteOutcome(
+            boolean wasSuccessful,
+            DataVolume dataVolume,
+            SimpleMeta simpleMeta,
+            List<S3Location> s3Locations) implements PhysicalDeleteOutcome {
+
     }
 }

@@ -20,13 +20,17 @@ import stroom.aws.s3.client.S3MetaFieldsMapper;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.aws.s3.shared.S3Location;
 import stroom.cache.api.TemplateCache;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.AbstractS3StreamStore;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
+import stroom.data.store.impl.fs.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.ValidationResult;
@@ -52,7 +56,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -70,14 +73,16 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
     //  Change to store all keys in the fs_meta_s3_location table so we don't rely on brittle
     //  templated bucket names and can discover what files we have without the cost of hitting
     //  S3.
-    //  Also consider if we want to allow child targets to live in different buckets to their parents.
+
+    // TODO Consider if we want to allow child targets to live in different buckets to their parents.
+
+    // TODO Add region/bucket/key to the zstd_dictionary table so we have an explicit location for the dictionary
+
+    // TODO Add region/bucket/key of the dict to the s3 meta data for each file using the dict
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStreamStore.class);
 
     static final TimeBasis TIME_BASIS = TimeBasis.META_CREATION_TIME;
-
-//    public static final String KEY_NAME_TEMPLATE_BASE =
-//    "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
 
     private static final int MAX_CACHED_ITEMS = 10;
 
@@ -85,15 +90,16 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
     private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
-    //    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
-    //    private final S3ClientPool s3ClientPool;
     private final ZstdSeekTableCache zstdSeekTableCache;
     private final HeapBufferPool heapBufferPool;
     private final S3ManagerFactory s3ManagerFactory;
     private final ZstdDictionaryService zstdDictionaryService;
     private final ExecutorProvider executorProvider;
+    private final FsMetaS3LocationDao fsMetaS3LocationDao;
+    private final ZstdDictionaryDao zstdDictionaryDao;
+    private final ZstdDictionaryTaskDao zstdDictionaryTaskDao;
     private final Path tempDir;
 
     @Inject
@@ -101,27 +107,29 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
             final TemplateCache templateCache,
             final TempDirProvider tempDirProvider,
             final MetaService metaService,
-//                final S3MetaFieldsMapper s3MetaFieldsMapper,
             final S3StreamTypeExtensions s3StreamTypeExtensions,
             final S3MetaFieldsMapper s3MetaFieldsMapper,
-//                final S3ClientPool s3ClientPool,
             final ZstdSeekTableCache zstdSeekTableCache,
             final HeapBufferPool heapBufferPool,
             final S3ManagerFactory s3ManagerFactory,
             final ZstdDictionaryService zstdDictionaryService,
-            final ExecutorProvider executorProvider) {
+            final ExecutorProvider executorProvider,
+            final FsMetaS3LocationDao fsMetaS3LocationDao,
+            final ZstdDictionaryDao zstdDictionaryDao,
+            final ZstdDictionaryTaskDao zstdDictionaryTaskDao) {
         super(templateCache);
         this.templateCache = templateCache;
         this.metaService = metaService;
-//        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
-//        this.s3ClientPool = s3ClientPool;
         this.zstdSeekTableCache = zstdSeekTableCache;
         this.heapBufferPool = heapBufferPool;
         this.s3ManagerFactory = s3ManagerFactory;
         this.zstdDictionaryService = zstdDictionaryService;
         this.executorProvider = executorProvider;
+        this.fsMetaS3LocationDao = fsMetaS3LocationDao;
+        this.zstdDictionaryDao = zstdDictionaryDao;
+        this.zstdDictionaryTaskDao = zstdDictionaryTaskDao;
 
         try {
             tempDir = tempDirProvider.get().resolve("s3v2_cache");
@@ -192,16 +200,43 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
     }
 
     @Override
-    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
-    }
-
-    @Override
     public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
                                                   final DataVolume dataVolume,
                                                   final Progress progress) {
-        return null;
+        Objects.requireNonNull(simpleMeta);
+        Objects.requireNonNull(dataVolume);
+        LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}", simpleMeta, dataVolume);
+        final long metaId = simpleMeta.getId();
+
+        // TODO Need to read all the file locations from fsMetaS3LocationDao
+
+
+        final S3LocationDataVolume s3LocationDataVolume = fsMetaS3LocationDao.getS3LocationDataVolume(
+                simpleMeta.getId());
+        final Set<S3Location> s3Locations = NullSafe.set(NullSafe.get(
+                s3LocationDataVolume,
+                S3LocationDataVolume::s3Locations));
+
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+
+        // Delete all the files on S3 for this meta
+        s3Manager.delete(s3Locations);
+
+        // Delete the s3 locations for this meta.
+        fsMetaS3LocationDao.delete(List.of(metaId));
+
+        // Delete any dictionary tasks for this meta.
+        zstdDictionaryTaskDao.deleteByMetaIds(List.of(metaId));
+
+        // TODO how do we know when a dict is no longer in use, maybe we need to add the dict uuid
+        //  to the fs_meta_s3_location table as a nullable column. Probably need a separate cleanup
+        //  job for them.
+
+        return new S3PhysicalDeleteOutcome(
+                true,
+                dataVolume,
+                simpleMeta,
+                s3Locations);
     }
 
     @Override
@@ -405,5 +440,17 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
         public int hashCode() {
             return Objects.hash(metaId, path);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record S3PhysicalDeleteOutcome(
+            boolean wasSuccessful,
+            DataVolume dataVolume,
+            SimpleMeta simpleMeta,
+            Set<S3Location> s3Locations) implements PhysicalDeleteOutcome {
+
     }
 }

@@ -17,29 +17,14 @@
 package stroom.data.store.impl.fs;
 
 
-import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.meta.shared.SimpleMeta;
 
-import org.jspecify.annotations.Nullable;
+public interface PhysicalDeleteOutcome {
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+    boolean wasSuccessful();
 
-public interface FsMetaS3LocationDao {
+    DataVolume dataVolume();
 
-    S3LocationDataVolume create(final long metaId,
-                                final FsVolume fsVolume, final Set<S3Location> s3Locations);
-
-
-    @Nullable
-    S3LocationDataVolume getS3LocationDataVolume(final long metaId);
-
-    @Nullable
-    Set<S3Location> getS3LocationDataVolume(final DataVolume dataVolume);
-
-    int delete(final Collection<Long> metaIds);
-
-    int delete(final Long metaId, final List<S3Location> s3Locations);
+    SimpleMeta simpleMeta();
 }

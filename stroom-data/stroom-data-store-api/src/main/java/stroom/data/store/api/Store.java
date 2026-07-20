@@ -21,8 +21,6 @@ import stroom.meta.api.MetaProperties;
 
 import org.jspecify.annotations.NullMarked;
 
-import java.util.Collection;
-
 /**
  * <p>
  * API to the data store.
@@ -72,10 +70,10 @@ public interface Store {
      */
     void logicallyDeleteTarget(Target target);
 
-    /**
-     * Physically delete all data associated with the passed meta IDs.
-     */
-    void physicallyDelete(final Collection<Long> metaIds);
+//    /**
+//     * Physically delete all data associated with the passed meta IDs.
+//     */
+//    void physicallyDelete(final Collection<Long> metaIds);
 
     /**
      * <p>

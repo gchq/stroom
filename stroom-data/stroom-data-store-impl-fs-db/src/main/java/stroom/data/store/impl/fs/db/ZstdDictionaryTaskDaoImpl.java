@@ -105,17 +105,23 @@ public class ZstdDictionaryTaskDaoImpl implements ZstdDictionaryTaskDao {
 
     @Override
     public int deleteByMetaIds(final Collection<Long> metaIds) {
+        LOGGER.debug(() -> LogUtil.message("deleteByMetaIds() - metaIds count: {}", NullSafe.size(metaIds)));
         final int count;
         if (NullSafe.hasItems(metaIds)) {
-            LOGGER.debug(() -> LogUtil.message("deleteByMetaIds() - metaIds count: {}", metaIds.size()));
+            try {
+                count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                        context.deleteFrom(ZSTD_DICTIONARY_TASK)
+                                .where(ZSTD_DICTIONARY_TASK.META_ID.in(metaIds))
+                                .execute());
 
-            count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
-                    context.deleteFrom(ZSTD_DICTIONARY_TASK)
-                            .where(ZSTD_DICTIONARY_TASK.META_ID.in(metaIds))
-                            .execute());
-
-            LOGGER.debug(() -> LogUtil.message("deleteByMetaIds() - metaIds count: {}, count: {}",
-                    metaIds.size(), count));
+                LOGGER.debug(() -> LogUtil.message("deleteByMetaIds() - metaIds count: {}, count: {}",
+                        metaIds.size(), count));
+            } catch (final Exception e) {
+                final String msg = LogUtil.message("Error deleting {} metaIds {}",
+                        metaIds.size(), LogUtil.getSample(metaIds, 10), e);
+                LOGGER.error(msg, e);
+                throw new RuntimeException(msg, e);
+            }
         } else {
             count = 0;
         }

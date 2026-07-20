@@ -21,6 +21,7 @@ import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.S3LocationDataVolume;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogger;
@@ -29,9 +30,11 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import org.jooq.Query;
 import org.jooq.Record5;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -129,12 +132,53 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
 
     @Override
     public int delete(final Collection<Long> metaIds) {
-        final int count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                .delete(FS_META_S3_LOCATION)
-                .where(FS_META_S3_LOCATION.META_ID.in(metaIds))
-                .execute());
-        LOGGER.debug(() -> LogUtil.message("delete () - metaIds: {}, count: {}",
-                LogUtil.getSample(metaIds, 10), count));
+        LOGGER.error(() -> LogUtil.message("delete() - Deleting {} metaIds {}",
+                metaIds.size(), LogUtil.getSample(metaIds, 10)));
+        if (NullSafe.hasItems(metaIds)) {
+            try {
+                final int count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .delete(FS_META_S3_LOCATION)
+                        .where(FS_META_S3_LOCATION.META_ID.in(metaIds))
+                        .execute());
+                LOGGER.debug(() -> LogUtil.message("delete () - metaIds: {}, count: {}",
+                        LogUtil.getSample(metaIds, 10), count));
+                return count;
+            } catch (final Exception e) {
+                final String msg = LogUtil.message("Error deleting {} metaIds {}",
+                        metaIds.size(), LogUtil.getSample(metaIds, 10));
+                LOGGER.error(msg, e);
+                throw new RuntimeException(msg, e);
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public int delete(final Long metaId, final List<S3Location> s3Locations) {
+        final int count;
+        if (NullSafe.hasItems(s3Locations)) {
+            count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
+                final List<Query> queries = s3Locations.stream()
+                        .map(s3Location -> (Query) context
+                                .delete(FsMetaS3Location.FS_META_S3_LOCATION)
+                                .where(FsMetaS3Location.FS_META_S3_LOCATION.META_ID
+                                        .eq(metaId)
+                                        .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_REGION
+                                                .eq(s3Location.getRegionName()))
+                                        .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_BUCKET
+                                                .eq(s3Location.getBucketName()))
+                                        .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_KEY
+                                                .eq(s3Location.getKey()))))
+                        .toList();
+                final int[] counts = context.batch(queries)
+                        .execute();
+                return Arrays.stream(counts).sum();
+            });
+        } else {
+            count = 0;
+        }
+        LOGGER.debug("delete () - metaId: {}, count: {}", metaId, count);
         return count;
     }
 

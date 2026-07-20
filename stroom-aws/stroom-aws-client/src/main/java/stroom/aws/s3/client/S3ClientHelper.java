@@ -17,6 +17,7 @@
 package stroom.aws.s3.client;
 
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.aws.s3.shared.S3Location;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -30,8 +31,11 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -39,6 +43,7 @@ import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest.Builder;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
@@ -58,6 +63,8 @@ import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -229,7 +236,7 @@ public class S3ClientHelper {
         final CreateBucketRequest request = CreateBucketRequest.builder()
                 .bucket(bucketName)
                 .build();
-        logRequest("Creating bucket: ", bucketName, null, request);
+        logRequest("Creating bucket: ", bucketName, (String) null, request);
 
         final CreateBucketResponse response;
         if (s3ClientConfig.isAsync()) {
@@ -250,7 +257,7 @@ public class S3ClientHelper {
             }
         }
 
-        logResponse("Created bucket: ", bucketName, null, response);
+        logResponse("Created bucket: ", bucketName, (String) null, response);
     }
 
     public ResponseInputStream<GetObjectResponse> getObject(final String bucketName,
@@ -500,6 +507,63 @@ public class S3ClientHelper {
         return response;
     }
 
+    public List<DeleteObjectsResponse> delete(final Collection<S3Location> s3Locations) {
+        Objects.requireNonNull(s3Locations);
+
+        final List<DeleteObjectsResponse> responses;
+
+        if (!s3Locations.isEmpty()) {
+            responses = new ArrayList<>();
+            final Map<String, List<S3Location>> locationsByBucket = s3Locations.stream()
+                    .collect(Collectors.groupingBy(S3Location::getBucketName));
+
+            locationsByBucket.forEach((bucketName, bucketLocations) -> {
+                final List<ObjectIdentifier> objectIdentifiers = bucketLocations.stream()
+                        .map(s3Location -> ObjectIdentifier.builder()
+                                .key(s3Location.getKey())
+                                .build())
+                        .toList();
+
+                final Delete deleteBatch = Delete.builder()
+                        .objects(objectIdentifiers)
+                        .build();
+
+                final DeleteObjectsRequest request = DeleteObjectsRequest.builder()
+                        .bucket(bucketName)
+                        .delete(deleteBatch)
+                        .build();
+
+                logRequest("Deleting: ", bucketName, objectIdentifiers, request);
+
+                final DeleteObjectsResponse response;
+                if (s3ClientConfig.isAsync()) {
+                    try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+                        response = pooledClient.getClient()
+                                .deleteObjects(request)
+                                .join();
+                    } catch (final S3Exception e) {
+                        LOGGER.error("Error deleting: bucketName={}, objectIdentifiers={}",
+                                bucketName, objectIdentifiers, e);
+                        throw e;
+                    }
+                } else {
+                    try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+                        response = pooledClient.getClient().deleteObjects(request);
+                    } catch (final S3Exception e) {
+                        LOGGER.error("Error deleting: bucketName={}, objectIdentifiers={}",
+                                bucketName, objectIdentifiers, e);
+                        throw e;
+                    }
+                }
+                responses.add(response);
+                logResponse("Deleted: ", bucketName, objectIdentifiers, response);
+            });
+        } else {
+            responses = List.of();
+        }
+        return responses;
+    }
+
     /**
      * Tags are case-sensitive
      */
@@ -567,6 +631,21 @@ public class S3ClientHelper {
 
     private void logRequest(final String message,
                             final String bucketName,
+                            final Collection<ObjectIdentifier> objectIdentifiers,
+                            final S3Request request) {
+        if (LOGGER.isDebugEnabled()) {
+            final String objectIdentifiersStr = NullSafe.stream(objectIdentifiers)
+                    .map(ObjectIdentifier::key)
+                    .map(key -> "'" + key + "'")
+                    .collect(Collectors.joining(", "));
+            LOGGER.debug("{} bucketName={}, objectIdentifiers={}", message, bucketName, objectIdentifiersStr);
+            LOGGER.trace("{} bucketName={}, objectIdentifiers={}, request={}",
+                    message, bucketName, objectIdentifiers, request);
+        }
+    }
+
+    private void logRequest(final String message,
+                            final String bucketName,
                             final String key,
                             final Range<Long> range,
                             final S3Request request) {
@@ -580,6 +659,21 @@ public class S3ClientHelper {
                              final S3Response response) {
         LOGGER.debug(() -> message + getDebugIdentity(bucketName, key));
         LOGGER.trace(() -> message + getDebugIdentity(bucketName, key) + ", response=" + response);
+    }
+
+    private void logResponse(final String message,
+                             final String bucketName,
+                             final Collection<ObjectIdentifier> objectIdentifiers,
+                             final S3Response response) {
+        if (LOGGER.isDebugEnabled()) {
+            final String objectIdentifiersStr = NullSafe.stream(objectIdentifiers)
+                    .map(ObjectIdentifier::key)
+                    .map(key -> "'" + key + "'")
+                    .collect(Collectors.joining(", "));
+            LOGGER.debug("{} bucketName={}, objectIdentifiers={}", message, bucketName, objectIdentifiersStr);
+            LOGGER.trace("{} bucketName={}, objectIdentifiers={}, response={}",
+                    message, bucketName, objectIdentifiers, response);
+        }
     }
 
     private void debug(final String message,
@@ -639,7 +733,7 @@ public class S3ClientHelper {
 
     private String getDebugIdentity(final String bucketName,
                                     final String key) {
-        return "region=" +
+        return " region=" +
                s3ClientConfig.getRegion() +
                ", bucketName=" +
                bucketName +

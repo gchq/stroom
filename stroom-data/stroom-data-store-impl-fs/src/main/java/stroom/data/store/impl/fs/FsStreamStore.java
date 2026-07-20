@@ -47,7 +47,6 @@ import org.jspecify.annotations.NonNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
@@ -207,11 +206,11 @@ class FsStreamStore implements StreamStore {
         return fsTarget;
     }
 
-    @Override
-    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
-        // TODO Refactor code from PhysicalDeleteExecutor
-        throw new UnsupportedOperationException("TODO");
-    }
+//    @Override
+//    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
+//        // TODO Refactor code from PhysicalDeleteExecutor
+//        throw new UnsupportedOperationException("TODO");
+//    }
 
     @Override
     public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,

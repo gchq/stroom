@@ -29,7 +29,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -44,7 +43,7 @@ public interface StreamStore {
      */
     Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException;
 
-    void physicallyDelete(final Collection<DataVolume> dataVolumes);
+//    void physicallyDelete(final Collection<DataVolume> dataVolumes);
 
     /**
      * Physically delete streams.
@@ -91,17 +90,4 @@ public interface StreamStore {
      * @return
      */
     ValidationResult validateVolume(final FsVolume fsVolume);
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface PhysicalDeleteOutcome {
-
-        boolean wasSuccessful();
-
-        DataVolume dataVolume();
-
-        SimpleMeta simpleMeta();
-    }
 }

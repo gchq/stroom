@@ -44,13 +44,10 @@ import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This is the front door for all stream store implementations. It delegates down to
@@ -181,19 +178,19 @@ public class StoreImpl implements Store, AttributeMapFactory {
         }
     }
 
-    @Override
-    public void physicallyDelete(final Collection<Long> metaIds) {
-        LOGGER.debug(() -> LogUtil.message("physicallyDelete() - metaIds ({}) sample: {}",
-                metaIds.size(),
-                LogUtil.getSample(metaIds, 20)));
-        final List<DataVolume> allDataVolumes = dataVolumeService.findDataVolumes(metaIds);
-        final Map<FsVolumeType, List<DataVolume>> dataVolumesByType = allDataVolumes.stream()
-                .collect(Collectors.groupingBy(DataVolume::getVolumeType));
-        dataVolumesByType.forEach((fsVolumeType, dataVolumes) -> {
-            final StreamStore streamStore = getStreamStore(fsVolumeType);
-            streamStore.physicallyDelete(dataVolumes);
-        });
-    }
+//    @Override
+//    public void physicallyDelete(final Collection<Long> metaIds) {
+//        LOGGER.debug(() -> LogUtil.message("physicallyDelete() - metaIds ({}) sample: {}",
+//                metaIds.size(),
+//                LogUtil.getSample(metaIds, 20)));
+//        final List<DataVolume> allDataVolumes = dataVolumeService.findDataVolumes(metaIds);
+//        final Map<FsVolumeType, List<DataVolume>> dataVolumesByType = allDataVolumes.stream()
+//                .collect(Collectors.groupingBy(DataVolume::getVolumeType));
+//        dataVolumesByType.forEach((fsVolumeType, dataVolumes) -> {
+//            final StreamStore streamStore = getStreamStore(fsVolumeType);
+//            streamStore.physicallyDelete(dataVolumes);
+//        });
+//    }
 
     @Override
     public Map<String, String> getAttributes(final long metaId) {
