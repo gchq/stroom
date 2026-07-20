@@ -19,6 +19,7 @@ package stroom.aws.s3.shared;
 import stroom.docref.HasDisplayValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -63,15 +64,15 @@ public final class S3Location implements HasDisplayValue {
         }
     }
 
-    public String regionName() {
+    public String getRegionName() {
         return regionName;
     }
 
-    public String bucketName() {
+    public String getBucketName() {
         return bucketName;
     }
 
-    public String key() {
+    public String getKey() {
         return key;
     }
 
@@ -99,6 +100,7 @@ public final class S3Location implements HasDisplayValue {
                "key=" + key + ']';
     }
 
+    @JsonIgnore
     @Override
     public String getDisplayValue() {
         return "S3://" + bucketName + "/" + key;

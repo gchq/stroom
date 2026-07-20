@@ -134,8 +134,8 @@ public class DataVolumeService {
             final String bucketName = s3ClientConfig.getBucketName();
             final String region = s3ClientConfig.getRegion();
             s3Locations.forEach(s3Location -> {
-                if (!Objects.equals(s3Location.regionName(), region)
-                    || !Objects.equals(s3Location.bucketName(), bucketName)) {
+                if (!Objects.equals(s3Location.getRegionName(), region)
+                    || !Objects.equals(s3Location.getBucketName(), bucketName)) {
                     throw new IllegalArgumentException(LogUtil.message(
                             "s3Location {} doesn't match region {} and bucketName {}",
                             s3Location, region, bucketName));

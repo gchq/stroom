@@ -223,7 +223,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
                             s3ClientConfig.getBucketName(), e.getMessage()));
                 }
 
-                validationResult = validationResult.errorIf(LogUtil.message(
+                validationResult = validationResult.errorIfNot(LogUtil.message(
                                 "Bucket name '{}' must be a valid static template - {}",
                                 s3ClientConfig.getBucketName()),
                         template::isStatic);
@@ -231,10 +231,10 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
                 validationResult = ValidationResult.error("Bucket name must be provided");
             }
 
-            validationResult = validationResult.errorIf(LogUtil.message(
+            validationResult = validationResult.errorIfNot(LogUtil.message(
                             "Key name pattern is not supported for volume type {}. Please remove the key name pattern.",
                             volume.getVolumeType().getDisplayValue()),
-                    () -> s3ClientConfig.getKeyPattern() != null);
+                    () -> NullSafe.isBlankString(s3ClientConfig.getKeyPattern()));
         }
         return validationResult;
     }

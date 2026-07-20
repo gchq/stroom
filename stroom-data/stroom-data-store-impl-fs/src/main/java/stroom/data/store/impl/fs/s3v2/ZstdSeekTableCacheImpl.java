@@ -225,7 +225,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
     }
 
     private long getFileSize(final S3Manager s3Manager,
-                             final FileKey fileKey, final Meta meta,
+                             final FileKey fileKey,
+                             final Meta meta,
                              final String childStreamType) {
         Long fileSize = null;
         // Attribute will only be present for the main stream, not the child ones.

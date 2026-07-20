@@ -154,15 +154,15 @@ public class S3EventNotificationService {
         Objects.requireNonNull(attributeMap);
 
         final Optional<S3ClientConfig> optS3ClientConfig = s3ClientConfigService.getS3ClientConfig(
-                s3Location.regionName(),
-                s3Location.bucketName());
+                s3Location.getRegionName(),
+                s3Location.getBucketName());
 
         optS3ClientConfig.ifPresentOrElse(
                 s3ClientConfig -> {
                     final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
                     final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
-                            s3Location.bucketName(),
-                            s3Location.key());
+                            s3Location.getBucketName(),
+                            s3Location.getKey());
 
                     // Map any known keys back to their original form as some of our keys may not fit the
                     // key restrictions.
@@ -176,7 +176,7 @@ public class S3EventNotificationService {
                 },
                 () -> LOGGER.warn("No S3 client config found matching region '{}' and bucket '{}'. " +
                                   "Unable to fetch S3 metadata for key '{}'",
-                        s3Location.regionName(), s3Location.bucketName(), s3Location.key()));
+                        s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey()));
     }
 
     private void poll(final ClientState clientState) {

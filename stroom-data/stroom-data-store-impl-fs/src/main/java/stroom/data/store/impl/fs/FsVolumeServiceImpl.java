@@ -109,6 +109,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final PathCreator pathCreator;
     private final TemplateCache templateCache;
+    // Use the impl as we are using methods not exposed on the public interface
     private final StoreImpl storeImpl;
     // Hold a cache of the current picture of available volumes, with their used/free/total/etc. stats.
     // Allows for fast volume selection without having to hit the db each time.
@@ -168,7 +169,8 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 if (fsVolume.getPath() != null && fsVolume.getByteLimit() == null) {
                     //set an arbitrary default limit size of 250MB on each volume to prevent the
                     //filesystem from running out of space, assuming they have 500MB free of course.
-                    getDefaultVolumeLimit(volPath).ifPresent(builder::byteLimit);
+                    getDefaultVolumeLimit(volPath)
+                            .ifPresent(builder::byteLimit);
                 }
                 builder.status(FsVolume.VolumeUseStatus.ACTIVE);
 

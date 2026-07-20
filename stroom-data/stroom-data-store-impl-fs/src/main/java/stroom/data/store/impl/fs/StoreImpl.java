@@ -119,7 +119,7 @@ public class StoreImpl implements Store, AttributeMapFactory {
         final FsVolume volume = volumeService.getS3Volume(s3Location)
                 .orElseThrow(() -> new DataException(LogUtil.message(
                         "No S3 volume found with region '{}' and bucket: '{}'",
-                        s3Location.regionName(), s3Location.bucketName())));
+                        s3Location.getRegionName(), s3Location.getBucketName())));
 
         // Create in UNLOCKED state as the stream's data already exists
         final Meta meta = metaService.create(metaProperties, Status.UNLOCKED);
@@ -230,7 +230,7 @@ public class StoreImpl implements Store, AttributeMapFactory {
         }
     }
 
-    StreamStore getStreamStore(final FsVolumeType fsVolumeType) {
+    public StreamStore getStreamStore(final FsVolumeType fsVolumeType) {
         Objects.requireNonNull(fsVolumeType, "FsVolumeType must not be null");
         final StreamStore streamStore = streamStoreMap.get(fsVolumeType);
         LOGGER.debug(() -> LogUtil.message(

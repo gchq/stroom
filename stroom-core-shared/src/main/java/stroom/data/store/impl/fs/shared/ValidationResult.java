@@ -62,8 +62,9 @@ public class ValidationResult {
 
     /**
      * If this is OK, calls test and returns a new {@link ValidationResult} based on the outcome of test.
+     * If test returns false, a new {@link ValidationResult} with the specified message and severity is returned.
      */
-    public ValidationResult errorIf(final String message, final BooleanSupplier test) {
+    public ValidationResult errorIfNot(final String message, final BooleanSupplier test) {
         return validate(Severity.ERROR, message, test);
     }
 

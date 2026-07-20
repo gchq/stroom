@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.shared;
+package stroom.proxy.app.handler;
 
 
-import java.util.Optional;
+import jakarta.inject.Singleton;
 
-public interface S3ClientConfigService {
+@Singleton
+public class MockForwardS3DestinationFactory implements ForwardS3DestinationFactory {
 
-    Optional<S3ClientConfig> getS3ClientConfig(final String regionName,
-                                               final String bucketName);
+    private final MockForwardS3Destination mockForwardS3Destination;
 
-    default Optional<S3ClientConfig> getS3ClientConfig(final S3Location s3Location) {
-        return getS3ClientConfig(s3Location.getRegionName(), s3Location.getBucketName());
+    public MockForwardS3DestinationFactory() {
+        this.mockForwardS3Destination = new MockForwardS3Destination();
+    }
+
+    @Override
+    public ForwardDestination create(final ForwardS3Config forwardS3Config) {
+        return mockForwardS3Destination;
+    }
+
+    public MockForwardS3Destination getMockForwardS3Destination() {
+        return mockForwardS3Destination;
     }
 }

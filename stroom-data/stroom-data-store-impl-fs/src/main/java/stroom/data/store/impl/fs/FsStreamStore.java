@@ -300,9 +300,9 @@ class FsStreamStore implements StreamStore {
         Objects.requireNonNull(volume);
         ValidationResult validationResult = ValidationResult.ok();
 
-        validationResult = validationResult.errorIf(
+        validationResult = validationResult.errorIfNot(
                 "S3 Configuration is not supported for this volume type",
-                () -> NullSafe.isNonBlankString(volume.getS3ClientConfigData()));
+                () -> NullSafe.isBlankString(volume.getS3ClientConfigData()));
 
         if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
             validationResult = ValidationResult.error("You must provide a path for the volume.");

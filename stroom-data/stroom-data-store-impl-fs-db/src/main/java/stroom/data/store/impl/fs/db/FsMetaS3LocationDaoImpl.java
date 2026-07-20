@@ -78,9 +78,9 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
                 for (final S3Location s3Location : s3LocationList) {
                     insert = insert.values(
                             metaId,
-                            s3Location.regionName(),
-                            s3Location.bucketName(),
-                            s3Location.key());
+                            s3Location.getRegionName(),
+                            s3Location.getBucketName(),
+                            s3Location.getKey());
                 }
 
                 insert.execute();

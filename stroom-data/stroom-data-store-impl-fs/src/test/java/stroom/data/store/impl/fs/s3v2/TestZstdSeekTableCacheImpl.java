@@ -25,9 +25,11 @@ import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Range;
+import stroom.util.time.TimeBasis;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -79,7 +81,10 @@ class TestZstdSeekTableCacheImpl {
 
         Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
                 .thenReturn("my/key");
-        Mockito.when(mockS3Manager.getFileSize(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(mockS3Manager.getFileSize(Mockito.any(Meta.class),
+                        Mockito.any(String.class),
+                        Mockito.any(String.class),
+                        Mockito.any(TimeBasis.class)))
                 .thenReturn((long) compressedData.length);
         Mockito.when(mockDataVolume.getVolumeId())
                 .thenReturn(123);
@@ -99,7 +104,12 @@ class TestZstdSeekTableCacheImpl {
 
                             return mockResponseInputStream;
                         }).when(mockS3Manager)
-                .getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
+                .getByteRange(
+                        Mockito.any(Meta.class),
+                        Mockito.anyString(),
+                        Mockito.anyString(),
+                        ArgumentMatchers.<Range<Long>>any(),
+                        Mockito.any(TimeBasis.class));
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(
                         mockS3Manager,
@@ -137,25 +147,36 @@ class TestZstdSeekTableCacheImpl {
 
         Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
                 .thenReturn("my/key");
-        Mockito.when(mockS3Manager.getFileSize(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(mockS3Manager.getFileSize(
+                        Mockito.any(Meta.class),
+                        Mockito.any(String.class),
+                        Mockito.any(String.class),
+                        Mockito.any(TimeBasis.class)))
                 .thenReturn((long) compressedData.length);
         Mockito.when(mockDataVolume.getVolumeId())
                 .thenReturn(123);
 
         final AtomicInteger fetchCount = new AtomicInteger(0);
 
-        Mockito.doAnswer(invocation -> {
-            fetchCount.incrementAndGet();
-            final Range<Long> range = invocation.getArgument(3, Range.class);
-            LOGGER.debug("range: {}", range);
-            final int from = Math.toIntExact(range.getFrom());
-            final int to = Math.toIntExact(range.getTo());
+        Mockito.doAnswer(
+                        invocation -> {
+                            fetchCount.incrementAndGet();
+                            final Range<Long> range = invocation.getArgument(3, Range.class);
+                            LOGGER.debug("range: {}", range);
+                            final int from = Math.toIntExact(range.getFrom());
+                            final int to = Math.toIntExact(range.getTo());
 
-            Mockito.when(mockResponseInputStream.readAllBytes())
-                    .thenReturn(Arrays.copyOfRange(compressedData, from, to));
+                            Mockito.when(mockResponseInputStream.readAllBytes())
+                                    .thenReturn(Arrays.copyOfRange(compressedData, from, to));
 
-            return mockResponseInputStream;
-        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
+                            return mockResponseInputStream;
+                        })
+                .when(mockS3Manager)
+                .getByteRange(Mockito.any(Meta.class),
+                        Mockito.anyString(),
+                        Mockito.anyString(),
+                        ArgumentMatchers.<Range<Long>>any(),
+                        Mockito.any(TimeBasis.class));
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(
                         mockS3Manager,
@@ -182,7 +203,14 @@ class TestZstdSeekTableCacheImpl {
         meta.setId(123_456L);
         meta.setTypeName(StreamTypeNames.RAW_EVENTS);
 
-        Mockito.when(mockS3Manager.getFileSize(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
+                .thenReturn("my/key");
+
+        Mockito.when(mockS3Manager.getFileSize(
+                        Mockito.any(Meta.class),
+                        Mockito.any(String.class),
+                        Mockito.any(String.class),
+                        Mockito.any(TimeBasis.class)))
                 .thenThrow(NoSuchKeyException.builder()
                         .message("Key not found")
                         .build());
@@ -218,18 +246,26 @@ class TestZstdSeekTableCacheImpl {
 
         Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
                 .thenReturn("my/key");
-        Mockito.doAnswer(invocation -> {
-            fetchCount.incrementAndGet();
-            final Range<Long> range = invocation.getArgument(3, Range.class);
-            LOGGER.debug("range: {}", range);
-            final int from = Math.toIntExact(range.getFrom());
-            final int to = Math.toIntExact(range.getTo());
+        Mockito.doAnswer(
+                        invocation -> {
+                            fetchCount.incrementAndGet();
+                            final Range<Long> range = invocation.getArgument(3, Range.class);
+                            LOGGER.debug("range: {}", range);
+                            final int from = Math.toIntExact(range.getFrom());
+                            final int to = Math.toIntExact(range.getTo());
 
-            Mockito.when(mockResponseInputStream.readAllBytes())
-                    .thenReturn(Arrays.copyOfRange(compressedData, from, to));
+                            Mockito.when(mockResponseInputStream.readAllBytes())
+                                    .thenReturn(Arrays.copyOfRange(compressedData, from, to));
 
-            return mockResponseInputStream;
-        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
+                            return mockResponseInputStream;
+                        })
+                .when(mockS3Manager)
+                .getByteRange(
+                        Mockito.any(Meta.class),
+                        Mockito.anyString(),
+                        Mockito.anyString(),
+                        ArgumentMatchers.<Range<Long>>any(),
+                        Mockito.any(TimeBasis.class));
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(
                         mockS3Manager,
@@ -261,10 +297,12 @@ class TestZstdSeekTableCacheImpl {
         Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
                 .thenReturn("my/key");
 
-        Mockito.when(mockS3Manager.getByteRange(Mockito.any(Meta.class),
+        Mockito.when(mockS3Manager.getByteRange(
+                        Mockito.any(Meta.class),
                         Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+                        Mockito.anyString(),
+                        ArgumentMatchers.<Range<Long>>any(),
+                        Mockito.any(TimeBasis.class)))
                 .thenThrow(NoSuchKeyException.builder()
                         .message("key not found")
                         .build());

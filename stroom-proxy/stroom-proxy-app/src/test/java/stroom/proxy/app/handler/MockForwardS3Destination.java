@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.handler;
 
+
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -30,9 +31,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MockForwardFileDestination implements ForwardFileDestination {
+public class MockForwardS3Destination implements ForwardS3Destination {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockForwardFileDestination.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockForwardS3Destination.class);
 
     private final Path storeDir;
     private final List<Path> addedPaths = new ArrayList<>();
@@ -40,7 +41,7 @@ public class MockForwardFileDestination implements ForwardFileDestination {
     private final AtomicLong writeId = new AtomicLong();
     private volatile CountDownLatch countDownLatch;
 
-    public MockForwardFileDestination() {
+    public MockForwardS3Destination() {
         try {
             this.storeDir = Files.createTempDirectory("test");
             LOGGER.info("Creating {} with storeDir {}", this.getClass().getSimpleName(), storeDir);
@@ -53,9 +54,8 @@ public class MockForwardFileDestination implements ForwardFileDestination {
         }
     }
 
-    public MockForwardFileDestination(final Path storeDir) {
+    public MockForwardS3Destination(final Path storeDir) {
         this.storeDir = storeDir;
-
         // Initialise the store id.
         final long maxId = DirUtil.getMaxDirId(storeDir);
         writeId.set(maxId);
@@ -82,16 +82,6 @@ public class MockForwardFileDestination implements ForwardFileDestination {
         }
     }
 
-    @Override
-    public String getName() {
-        return "Mock File Destination";
-    }
-
-    @Override
-    public String getDestinationDescription() {
-        return "Mock File Destination";
-    }
-
     private void move(final Path source, final Path target) throws IOException {
         try {
             Files.move(source,
@@ -103,6 +93,16 @@ public class MockForwardFileDestination implements ForwardFileDestination {
                     target,
                     StandardCopyOption.ATOMIC_MOVE);
         }
+    }
+
+    @Override
+    public String getName() {
+        return "mock-s3-destination";
+    }
+
+    @Override
+    public String getDestinationDescription() {
+        return "mock-s3-destination";
     }
 
     public Path getStoreDir() {

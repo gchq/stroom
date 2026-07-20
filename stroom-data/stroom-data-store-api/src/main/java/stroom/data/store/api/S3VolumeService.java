@@ -34,6 +34,6 @@ public interface S3VolumeService {
 
     @NullMarked
     default Optional<FsVolume> getS3Volume(final stroom.aws.s3.shared.S3Location s3Location) {
-        return getS3Volume(s3Location.regionName(), s3Location.bucketName());
+        return getS3Volume(s3Location.getRegionName(), s3Location.getBucketName());
     }
 }

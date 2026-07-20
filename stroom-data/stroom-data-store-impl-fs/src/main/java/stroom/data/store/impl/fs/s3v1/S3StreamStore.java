@@ -171,8 +171,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
                         s3Manager.download(
                                 meta,
                                 null,
-                                effectiveS3Location.bucketName(),
-                                effectiveS3Location.key(),
+                                effectiveS3Location.getBucketName(),
+                                effectiveS3Location.getKey(),
                                 zipFile,
                                 true);
 
@@ -347,8 +347,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
             LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}, s3Location: {}",
                     tempDir, NullSafe.get(meta, Meta::getId), attributeMap, s3Location));
             s3Manager.upload(
-                    s3Location.bucketName(),
-                    s3Location.key(),
+                    s3Location.getBucketName(),
+                    s3Location.getKey(),
                     meta,
                     attributeMap,
                     null,
