@@ -53,7 +53,7 @@ main() {
   echo -en "${BLUE}"
   echo -e '{'
   echo -e '  "region" : "us-east-1",'
-  echo -e '  "endpointOverride" : "127.0.0.1:9000",'
+  echo -e '  "endpointOverride" : "http://127.0.0.1:9000",'
   echo -e '  "numRetries" : 10,'
   echo -e '  "async" : false,'
   echo -e '  "multipart" : true,'

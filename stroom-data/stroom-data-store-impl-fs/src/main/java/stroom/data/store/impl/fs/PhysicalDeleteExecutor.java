@@ -305,8 +305,6 @@ public class PhysicalDeleteExecutor {
 
                 deleteVolumes(progress, successfulMetaIdSet, successCount);
 
-                deleteDictionaryTasks(progress, successfulMetaIdSet, successCount);
-
                 deleteMetaRecords(progress, successfulMetaIdSet, successCount);
             } else {
                 LOGGER.debug("{} - Aborting as failure threshold breached", TASK_NAME);
@@ -368,19 +366,6 @@ public class PhysicalDeleteExecutor {
         progress.addVolumeDeletionDuration(volDeleteTimer);
         LOGGER.debug(() -> LogUtil.message(
                 "{} - Deleted {} data volume records for {} meta IDs in {}",
-                TASK_NAME, volCount, successfulMetaIdSet.size(), volDeleteTimer.get()));
-    }
-
-    private void deleteDictionaryTasks(final Progress progress,
-                                       final Set<Long> successfulMetaIdSet,
-                                       final int successCount) {
-        // Delete zstd dictionary tasks.
-        info(() -> LogUtil.message("Deleting Zstd dictionary tasks for {} meta IDs", successCount));
-        final DurationTimer volDeleteTimer = DurationTimer.start();
-        final int volCount = zstdDictionaryTaskDao.deleteByMetaIds(successfulMetaIdSet);
-        progress.addVolumeDeletionDuration(volDeleteTimer);
-        LOGGER.debug(() -> LogUtil.message(
-                "{} - Deleted {} zstd dictionary task records for {} meta IDs in {}",
                 TASK_NAME, volCount, successfulMetaIdSet.size(), volDeleteTimer.get()));
     }
 
@@ -472,49 +457,7 @@ public class PhysicalDeleteExecutor {
                                         progress);
                                 physicalDeleteOutcomes.add(outcome);
                                 isSuccessful = outcome.wasSuccessful();
-
-//                                switch (volumeType) {
-//                                    case STANDARD -> {
-//                                        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
-//                                        final Path file = fileSystemStreamPathHelper.getRootPath(
-//                                                volumePath,
-//                                                simpleMeta,
-//                                                simpleMeta.getTypeName());
-//                                        final Path dir = file.getParent();
-//                                        String baseName = file.getFileName().toString();
-//                                        baseName = baseName.substring(0, baseName.indexOf("."));
-//
-//                                        if (Files.isDirectory(dir)) {
-//                                            isSuccessful = fsFileDeleter.deleteFilesByBaseName(
-//                                                    simpleMeta.getId(), dir, baseName, progress::addFileDeletes);
-//
-//                                            dirToVolPathMap.put(dir, volumePath);
-//                                        } else {
-//                                            isSuccessful = true;
-//                                            LOGGER.warn(() -> LogUtil.message(
-//                                                    "{} - Directory '{}' does not exist for meta {}",
-//                                                    TASK_NAME, FileUtil.getCanonicalPath(dir), simpleMeta));
-//                                        }
-//                                    }
-//                                    case S3_V1 -> {
-//                                        // FIXME: Add something.
-//                                        warnAboutUnsupportedType(volumeType);
-//                                        isSuccessful = false;
-//                                    }
-//                                    case S3_V2 -> {
-//                                        // FIXME: Add something.
-//                                        warnAboutUnsupportedType(volumeType);
-//                                        isSuccessful = false;
-//                                    }
-//                                    default -> {
-//                                        warnAboutUnsupportedType(volumeType);
-//                                        isSuccessful = false;
-//                                    }
-//                                }
                             }
-//                            if (isSuccessful) {
-//                                successfulMetaIdDeleteQueue.add(simpleMeta.getId());
-//                            }
                             progress.recordMetaFileDeleteSuccess(isSuccessful);
                         }
                     } catch (final InterruptedException e) {

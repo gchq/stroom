@@ -268,7 +268,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                         .copy()
                         .enabled(false)
                         .scheduleBounds(new ScheduleBounds(effectiveExecutionTime.toEpochMilli(),
-                                                           effectiveExecutionTime.toEpochMilli()))
+                                effectiveExecutionTime.toEpochMilli()))
                         .build()
                 );
             }
@@ -429,7 +429,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
     }
 
     public void executeNow(final ExecutionSchedule executionSchedule,
-                              final ScheduledExecutable<T> scheduledExecutable) {
+                           final ScheduledExecutable<T> scheduledExecutable) {
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         final Runnable runnable = () -> {
             try {
@@ -449,7 +449,6 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
         workQueue.exec(runnable);
         workQueue.join();
     }
-
 
     /**
      * Determines whether a schedule should execute and performs execution if required.
