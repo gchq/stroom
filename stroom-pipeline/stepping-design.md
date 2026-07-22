@@ -36,10 +36,11 @@ The packages mirror the layers, so the structure is visible before you read any 
 stroom.pipeline.stepping/
   fingerprint/  what makes a chunk key      ElementFingerprinter, ElementFingerprints
   store/        bytes on disk               StepDataStore, ElementSegmentFile, StepDataStoreManager,
-                                            StepDataStoreException, SteppingConfig
+                                            StepDataStoreException, SteppingConfig,
+                                            CapturedElementData, CapturedData,
+                                            CapturedElementDataSerializer, CapturedElementDataMapper
   capture/      the write side              StreamCaptureDriver, StreamSweep, SteppingController,
-                                            ElementMonitor, ElementData, StepData, Recorder,
-                                            RecordDetector, SteppingFilter
+                                            ElementMonitor, Recorder, RecordDetector, SteppingFilter
   read/         the read side               SessionStepResolver, StoreStepResolver,
                                             PersistedFilterEvaluator, StagePlanner
   session/      what a user is stepping     SteppingSession, SteppingSessionRegistry
@@ -496,14 +497,17 @@ its input, i.e. the same replay-from-stored-upstream as below.
 
 ### Build order
 
-**1. Change the stored representation first.** SAX events are *not* stored as SAX events today: they are
-buffered into a Saxon TinyTree, re-serialised to XML text, then JSON-escaped (see §Storage format below).
-Fine for *displaying* IO — all it was ever asked to do — but as the substrate for *re-execution* it is
+**1. Change the stored representation first. — DONE.** Previously SAX events were *not* stored as events:
+they were buffered into a Saxon TinyTree, re-serialised to XML text, then JSON-escaped (see §Storage format
+below). Fine for *displaying* IO — all it was ever asked to do — but as the substrate for *re-execution* it is
 infoset-equivalent, not faithful (error locators point into the re-serialised string, namespace-declaration
-placement shifts), and it costs a serialise on write plus a re-parse on read at every stage boundary. Persist
-a faithful, cheap-to-replay event stream instead (a binary SAX event list, or Saxon's own tree
-serialisation), keyed exactly as now. The same string currently feeds the UI panes, so the stored form and
-the display form must diverge — keep text for display, add the event stream for execution.
+placement shifts), and it costs a serialise on write plus a re-parse on read at every stage boundary. XML
+elements now persist a faithful, cheap-to-replay binary SAX event list (`xml.event.SaxEventWriter`/
+`SaxEventReader`/`EventListSerializer`), keyed exactly as before; text elements still store text. The store
+holds this element-specific form as {@code CapturedElementData}; the UI panes are derived on read
+(`store.CapturedElementDataMapper`), rendering stored events back through the Saxon tree path so display text
+stays byte-identical to the old text store. XPath filters now run directly over the stored events
+(`filter.PersistedXPathFilterMatcher`) with no XML re-parse.
 
 **2. Solve state preservation before splitting anything.** This is a hard prerequisite, not a nicety, and
 there is **no state-free intermediate** — not even "re-run the whole tail from record 0". Re-running the tail
@@ -534,6 +538,28 @@ meets an element that is neither a known state-capturing variant nor provably st
 to a full re-run**, never guess. Same lesson as the XPath-filter gate: never silently ship wrong values, and
 coverage can then grow incrementally instead of needing a complete enumeration up front.
 
+*Source location is a special case of shared/scoped state, and worth calling out because two different
+coordinate spaces get conflated.* There is the **source-parse location** (line/col in the raw source bytes,
+computed live by `LocationHolder` from the parser `Locator`) and the **captured-IO location** (positions
+within the stored SAX-events document — a synthetic space unrelated to the source). Re-deriving location from
+replayed events reports the latter, which for source highlighting is not merely lossy but misleading, as it
+points into a document the user never saw.
+
+- **Chosen for the first cut: record-level source location.** `LocationHolder` already computes a per-record
+  `SourceLocation` (a `TextRange`/`DataRange` spanning the record in the source), so it is a clean per-record
+  scope snapshot. This *adds* fidelity over today's served path, where `assemble()` builds `SourceLocation`
+  from only `(metaId, part, record)` with no highlight. Accept that precise **per-element** source line/col
+  (what `stroom:line-from`/`col-from` report at element granularity) is lost under replay and degrades to
+  record-level — it is a live-parse property stored nowhere per element. Same graceful-degradation shape as
+  the `EventId` case: exact when freshly swept, rough when replayed after an edit; note it in the UI/docs.
+- **Alternative, if per-element source location is ever needed: capture position per SAX event.** Store each
+  event's source line/col in the encoded stream, and on replay drive a synthetic `Locator` that reports the
+  current event's stored position before firing it, so a downstream element sees the original source
+  positions. Faithful, but a larger change: it enlarges the stored form and, because accurate positions are a
+  parse-time property (the live locator has moved on by the time events are buffered and re-fired by the
+  split), leans on capturing them where they are still live rather than snapshotting at the recorder. Not for
+  the first cut; documented so the choice is deliberate.
+
 **3. Split the processing.** With a faithful representation and state captured, feed the changed element +
 downstream from the stored upstream stream and re-run only them. `PipelineFactory.link()`/`getChildElements()`
 are already generic over a start element (only the `"Source"` lookup is hard-wired, so
@@ -556,9 +582,9 @@ downstream stage at record N *without* processing 0..N-1 (the "instant refresh a
 is a further step that leans hardest on the per-record state snapshots; treat it as a later goal, proven out
 behind a shadow-diff (run full re-run and replay, diff every record) before it is trusted.
 
-### Storage format today (what step 1 changes)
+### Storage format (before and after step 1)
 
-Per element, per record:
+Per element, per record. **Before step 1**, XML stages were stored as re-serialised, JSON-escaped text:
 
 ```
 SAX events
@@ -568,10 +594,27 @@ SAX events
   -> String -> SharedElementData -> StepDataStore.putRecord: JsonUtil.writeValueAsBytes (JSON-escaped)
 ```
 
+**After step 1** (current), `TinyTreeBufferFilter` also tees the live callbacks into a `SimpleEventListBuilder`,
+so an XML element captures a faithful `EventList` alongside the TinyTree. `ElementMonitor` stores the element-
+specific form — SAX events for XML stages, text for the rest — as `CapturedElementData`:
+
+```
+SAX events
+  -> SAXEventRecorder extends TinyTreeBufferFilter   (capture/... , filter/SAXEventRecorder)
+       TeeContentHandler -> ReceivingContentHandler (TinyBuilder)  AND  SimpleEventListBuilder (EventList)
+  -> ElementMonitor: CapturedData.saxEvents(EventListSerializer.toBytes(eventList))   (binary SAX opcodes)
+  -> CapturedElementData -> StepDataStore.putRecord: CapturedElementDataSerializer    (binary framing)
+```
+
+On read, `CapturedElementDataMapper.toShared` renders each side to the wire `SharedElementData`: SAX events go
+back through `EventListUtils.buildNodeInfo` -> `getXML(NodeInfo)` (the same Saxon path as before, so display
+text is byte-identical); text sides pass through unchanged.
+
 Only XML stages go through `SAXEventRecorder`; `ReaderRecorder` (reader/text input) and `OutputRecorder`
-(writer output) are already plain text. Comments/CDATA are already lost before this point — the filter chain
-is `ContentHandler`-only, no `LexicalHandler` anywhere — so that is not a replay regression, but the locator
-and namespace-placement drift are.
+(writer output) are plain text and are stored as text. Comments/CDATA are lost before this point — the filter
+chain is `ContentHandler`-only, no `LexicalHandler` anywhere — so that is not a replay regression, but the
+locator and namespace-placement drift of the old text form were (step 1 removes them for the event-backed
+sides).
 
 `StagePlanner` (in `read/`) is the reuse/reprocess decision logic for this direction, and is why it has no
 production callers yet.

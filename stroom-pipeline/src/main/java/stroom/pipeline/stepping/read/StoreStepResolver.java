@@ -24,6 +24,8 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.store.CapturedElementData;
+import stroom.pipeline.stepping.store.CapturedElementDataMapper;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
@@ -156,7 +158,9 @@ public class StoreStepResolver {
                 continue;
             }
             anyApplied = true;
-            final SharedElementData data = readElement(store, loc, entry.getKey(), fingerprints);
+            // Filter against the stored (captured) form, not the rendered wire form: XPath filters build
+            // their tree from the events directly, with no re-parse.
+            final CapturedElementData data = readCaptured(store, loc, entry.getKey(), fingerprints);
             if (data != null && filterEvaluator.matches(
                     data, settings, loc.getMetaId(), loc.getRecordIndex())) {
                 return true;
@@ -263,6 +267,16 @@ public class StoreStepResolver {
                                           final StepLocation loc,
                                           final String elementId,
                                           final ElementFingerprints fingerprints) {
+        // The store holds the element-specific captured form (SAX events or text); render it to the wire
+        // form (text on both sides). This is where a stored XML element's events become display text, via
+        // the Saxon tree path, so it stays byte-identical to the pre-events store.
+        return CapturedElementDataMapper.toShared(readCaptured(store, loc, elementId, fingerprints));
+    }
+
+    private CapturedElementData readCaptured(final StepDataStore store,
+                                             final StepLocation loc,
+                                             final String elementId,
+                                             final ElementFingerprints fingerprints) {
         final String fingerprint = fingerprints.getCumulativeFingerprint(elementId);
         if (fingerprint == null) {
             return null;

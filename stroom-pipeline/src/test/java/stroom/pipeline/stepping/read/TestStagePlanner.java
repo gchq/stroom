@@ -16,11 +16,12 @@
 
 package stroom.pipeline.stepping.read;
 
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.StagePlanner.PlannerElement;
 import stroom.pipeline.stepping.read.StagePlanner.StagePlan;
+import stroom.pipeline.stepping.store.CapturedData;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.shared.ElementId;
@@ -52,8 +53,8 @@ class TestStagePlanner {
                 Map.of("parser", parserFp, "xslt", xsltFp, "writer", writerFp));
     }
 
-    private SharedElementData ed() {
-        return new SharedElementData(null, "out", null, false, false, true);
+    private CapturedElementData ed() {
+        return new CapturedElementData(null, CapturedData.text("out"), false, false, true, null);
     }
 
     /**

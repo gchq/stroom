@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping.store;
 
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.util.shared.ElementId;
 
@@ -46,8 +45,9 @@ class TestStepDataStore {
         return new StepDataStore(tempDir.resolve(Long.toString(META_ID)), config);
     }
 
-    private SharedElementData data(final String input, final String output) {
-        return new SharedElementData(input, output, null, false, false, output != null && !output.isBlank());
+    private CapturedElementData data(final String input, final String output) {
+        return new CapturedElementData(CapturedData.text(input), CapturedData.text(output),
+                false, false, output != null && !output.isBlank(), null);
     }
 
     private StepLocation loc(final long part, final long record) {
@@ -67,15 +67,15 @@ class TestStepDataStore {
         assertThat(store.getPartCount()).isEqualTo(1);
 
         // Read out of order to prove random access.
-        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(SharedElementData::getOutput).contains("outC");
-        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(SharedElementData::getInput).contains("inA");
-        assertThat(store.getElementData(loc(0, 3), E1, FP_A)).map(SharedElementData::getOutput).contains("outD");
+        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(CapturedElementData::outputText).contains("outC");
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(CapturedElementData::inputText).contains("inA");
+        assertThat(store.getElementData(loc(0, 3), E1, FP_A)).map(CapturedElementData::outputText).contains("outD");
 
-        final Optional<SharedElementData> rec1 = store.getElementData(loc(0, 1), E1, FP_A);
+        final Optional<CapturedElementData> rec1 = store.getElementData(loc(0, 1), E1, FP_A);
         assertThat(rec1).isPresent();
-        assertThat(rec1.get().getInput()).isEqualTo("inB");
-        assertThat(rec1.get().getOutput()).isEqualTo("outB");
-        assertThat(rec1.get().isHasOutput()).isTrue();
+        assertThat(rec1.get().inputText()).isEqualTo("inB");
+        assertThat(rec1.get().outputText()).isEqualTo("outB");
+        assertThat(rec1.get().hasOutput()).isTrue();
     }
 
     @Test
@@ -84,14 +84,14 @@ class TestStepDataStore {
         store.putElementData(loc(0, 0), E1, FP_A, data("in", null));
         store.putElementData(loc(0, 1), E1, FP_A, data(null, "  "));
 
-        final SharedElementData r0 = store.getElementData(loc(0, 0), E1, FP_A).orElseThrow();
-        assertThat(r0.getInput()).isEqualTo("in");
-        assertThat(r0.getOutput()).isNull();
-        assertThat(r0.isHasOutput()).isFalse();
+        final CapturedElementData r0 = store.getElementData(loc(0, 0), E1, FP_A).orElseThrow();
+        assertThat(r0.inputText()).isEqualTo("in");
+        assertThat(r0.outputText()).isNull();
+        assertThat(r0.hasOutput()).isFalse();
 
-        final SharedElementData r1 = store.getElementData(loc(0, 1), E1, FP_A).orElseThrow();
-        assertThat(r1.getInput()).isNull();
-        assertThat(r1.isHasOutput()).isFalse();
+        final CapturedElementData r1 = store.getElementData(loc(0, 1), E1, FP_A).orElseThrow();
+        assertThat(r1.inputText()).isNull();
+        assertThat(r1.hasOutput()).isFalse();
     }
 
     @Test
@@ -102,8 +102,8 @@ class TestStepDataStore {
             store.putElementData(loc(0, r), E2, FP_A, data("e2in" + r, "e2out" + r));
         }
 
-        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(SharedElementData::getOutput).contains("e1out2");
-        assertThat(store.getElementData(loc(0, 2), E2, FP_A)).map(SharedElementData::getInput).contains("e2in2");
+        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(CapturedElementData::outputText).contains("e1out2");
+        assertThat(store.getElementData(loc(0, 2), E2, FP_A)).map(CapturedElementData::inputText).contains("e2in2");
         assertThat(store.getRecordCount(0)).isEqualTo(3);
     }
 
@@ -137,7 +137,7 @@ class TestStepDataStore {
         assertThat(store.getRecordCount(0)).isEqualTo(2);
         assertThat(store.getRecordCount(1)).isEqualTo(1);
         assertThat(store.getPartCount()).isEqualTo(2);
-        assertThat(store.getElementData(loc(1, 0), E1, FP_A)).map(SharedElementData::getOutput).contains("c");
+        assertThat(store.getElementData(loc(1, 0), E1, FP_A)).map(CapturedElementData::outputText).contains("c");
     }
 
     @Test
@@ -204,7 +204,7 @@ class TestStepDataStore {
                 .hasMessageContaining("in order");
 
         // The already-written record is intact and the rejected one is absent.
-        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(SharedElementData::getOutput).contains("a");
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(CapturedElementData::outputText).contains("a");
         assertThat(store.getElementData(loc(0, 2), E1, FP_A)).isEmpty();
     }
 
@@ -217,8 +217,8 @@ class TestStepDataStore {
                     new StepDataStore.ElementRecord(E2, FP_B, data("e2in" + r, "e2out" + r))));
         }
         assertThat(store.getRecordCount(0)).isEqualTo(3);
-        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(SharedElementData::getOutput).contains("e1out2");
-        assertThat(store.getElementData(loc(0, 2), E2, FP_B)).map(SharedElementData::getInput).contains("e2in2");
+        assertThat(store.getElementData(loc(0, 2), E1, FP_A)).map(CapturedElementData::outputText).contains("e1out2");
+        assertThat(store.getElementData(loc(0, 2), E2, FP_B)).map(CapturedElementData::inputText).contains("e2in2");
     }
 
     @Test
@@ -249,8 +249,8 @@ class TestStepDataStore {
         assertThat(store.getFirstRecordIndex(0)).isEqualTo(1);
         assertThat(store.getLastRecordIndex(0)).isEqualTo(3);
         assertThat(store.getRecordCount(0)).isEqualTo(3);
-        assertThat(store.getElementData(loc(0, 1), E1, FP_A)).map(SharedElementData::getOutput).contains("r1");
-        assertThat(store.getElementData(loc(0, 3), E1, FP_A)).map(SharedElementData::getOutput).contains("r3");
+        assertThat(store.getElementData(loc(0, 1), E1, FP_A)).map(CapturedElementData::outputText).contains("r1");
+        assertThat(store.getElementData(loc(0, 3), E1, FP_A)).map(CapturedElementData::outputText).contains("r3");
         // Indices outside the captured range read back empty.
         assertThat(store.getElementData(loc(0, 0), E1, FP_A)).isEmpty();
         assertThat(store.getElementData(loc(0, 4), E1, FP_A)).isEmpty();
@@ -265,7 +265,7 @@ class TestStepDataStore {
 
         // A 0/negative retain limit must not delete the data just written.
         assertThat(store.hasElement(E1, FP_A)).isTrue();
-        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(SharedElementData::getOutput).contains("out");
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).map(CapturedElementData::outputText).contains("out");
     }
 
     @Test
@@ -276,7 +276,7 @@ class TestStepDataStore {
         store.putElementData(loc(0, 0), dotted, FP_A, data("in", "out"));
 
         // Data round-trips and the dir name is the encoded form, not a literal ".." that would escape.
-        assertThat(store.getElementData(loc(0, 0), dotted, FP_A)).map(SharedElementData::getInput).contains("in");
+        assertThat(store.getElementData(loc(0, 0), dotted, FP_A)).map(CapturedElementData::inputText).contains("in");
         assertThat(Files.exists(store.getStreamDir().resolve("0").resolve("%2E%2E").resolve(FP_A + ".dat")))
                 .isTrue();
     }

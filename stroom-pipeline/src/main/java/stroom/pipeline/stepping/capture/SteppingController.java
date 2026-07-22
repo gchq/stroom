@@ -206,9 +206,10 @@ public class SteppingController {
             // to store its IO under and nothing could ever read it back.
             final String fingerprint = fingerprints.getCumulativeFingerprint(monitor.getElementId().getId());
             if (fingerprint != null) {
-                final ElementData elementData = monitor.getElementData(errorReceiver, highlight);
                 records.add(new StepDataStore.ElementRecord(
-                        monitor.getElementId(), fingerprint, elementData.convertToShared()));
+                        monitor.getElementId(),
+                        fingerprint,
+                        monitor.getCapturedElementData(errorReceiver, highlight)));
             }
         }
         // Commit the whole record atomically, then signal that it is available.

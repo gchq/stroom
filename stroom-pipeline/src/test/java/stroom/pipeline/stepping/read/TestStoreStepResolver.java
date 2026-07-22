@@ -16,13 +16,14 @@
 
 package stroom.pipeline.stepping.read;
 
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.StoreStepResolver.ResolvedStep;
+import stroom.pipeline.stepping.store.CapturedData;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.shared.ElementId;
@@ -49,8 +50,8 @@ class TestStoreStepResolver {
             Map.of(E1, "o1", E2, "o2"),
             Map.of(E1, "fp1", E2, "fp2"));
 
-    private SharedElementData ed(final String output, final boolean hasOutput) {
-        return new SharedElementData(null, output, null, false, false, hasOutput);
+    private CapturedElementData ed(final String output, final boolean hasOutput) {
+        return new CapturedElementData(null, CapturedData.text(output), false, false, hasOutput, null);
     }
 
     /**

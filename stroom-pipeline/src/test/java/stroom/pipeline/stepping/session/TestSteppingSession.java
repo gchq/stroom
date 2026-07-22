@@ -25,6 +25,8 @@ import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.SessionStepResolver;
 import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
 import stroom.pipeline.stepping.read.StoreStepResolver;
+import stroom.pipeline.stepping.store.CapturedData;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreException;
 import stroom.pipeline.stepping.store.SteppingConfig;
@@ -51,8 +53,8 @@ class TestSteppingSession {
 
     private final SessionStepResolver resolver = new SessionStepResolver(new StoreStepResolver());
 
-    private SharedElementData ed(final String output) {
-        return new SharedElementData(null, output, null, false, false, true);
+    private CapturedElementData ed(final String output) {
+        return new CapturedElementData(null, CapturedData.text(output), false, false, true, null);
     }
 
     /**

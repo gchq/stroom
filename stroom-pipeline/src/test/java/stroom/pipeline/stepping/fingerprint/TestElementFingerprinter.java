@@ -17,13 +17,14 @@
 package stroom.pipeline.stepping.fingerprint;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.stepping.store.CapturedData;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.shared.ElementId;
@@ -174,14 +175,14 @@ class TestElementFingerprinter {
         // Capture the writer's IO under config A's fingerprint.
         final String fpA = fingerprint(baseChain().build(), Collections.emptyMap())
                 .getCumulativeFingerprint(WRITER);
-        store.putElementData(loc, writerId, fpA, new SharedElementData("in", "outputForA", null, false, false, true));
+        store.putElementData(loc, writerId, fpA, new CapturedElementData(CapturedData.text("in"), CapturedData.text("outputForA"), false, false, true, null));
 
         // Edit the xslt -> the writer's cumulative fingerprint changes; capture new IO under it.
         final String fpB = fingerprint(baseChain().addProperty(
                         new PipelineProperty(XSLT, "xslt", new PipelinePropertyValue("XSLT_B"))).build(),
                 Collections.emptyMap()).getCumulativeFingerprint(WRITER);
         assertThat(fpB).isNotEqualTo(fpA);
-        store.putElementData(loc, writerId, fpB, new SharedElementData("in", "outputForB", null, false, false, true));
+        store.putElementData(loc, writerId, fpB, new CapturedElementData(CapturedData.text("in"), CapturedData.text("outputForB"), false, false, true, null));
 
         // Revert to config A: the recomputed fingerprint matches fpA and the original IO is still present.
         final String fpReverted = fingerprint(baseChain().build(), Collections.emptyMap())
@@ -189,7 +190,7 @@ class TestElementFingerprinter {
         assertThat(fpReverted).isEqualTo(fpA);
         assertThat(store.hasElement(writerId, fpReverted)).isTrue();
         assertThat(store.getElementData(loc, writerId, fpReverted))
-                .map(SharedElementData::getOutput)
+                .map(CapturedElementData::outputText)
                 .contains("outputForA");
     }
 

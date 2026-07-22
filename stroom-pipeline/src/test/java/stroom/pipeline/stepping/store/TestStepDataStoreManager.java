@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping.store;
 
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ElementId;
@@ -41,8 +40,9 @@ class TestStepDataStoreManager {
         return new StepDataStoreManager(tempDirProvider, new SteppingConfig());
     }
 
-    private SharedElementData data(final String value) {
-        return new SharedElementData(value, value, null, false, false, true);
+    private CapturedElementData data(final String value) {
+        return new CapturedElementData(CapturedData.text(value), CapturedData.text(value),
+                false, false, true, null);
     }
 
     @Test
@@ -106,7 +106,7 @@ class TestStepDataStoreManager {
         // The live session's data is still readable.
         assertThat(manager.getOrCreateStore("live", 100L)
                 .getElementData(new StepLocation(100L, 0, 0), E1, "fp"))
-                .map(SharedElementData::getOutput).contains("a");
+                .map(CapturedElementData::outputText).contains("a");
     }
 
     @Test
@@ -131,9 +131,9 @@ class TestStepDataStoreManager {
 
         assertThat(manager.getOrCreateStore("sessionA", 1L)
                 .getElementData(new StepLocation(1L, 0, 0), E1, "fp"))
-                .map(SharedElementData::getOutput).contains("a");
+                .map(CapturedElementData::outputText).contains("a");
         assertThat(manager.getOrCreateStore("sessionB", 1L)
                 .getElementData(new StepLocation(1L, 0, 0), E1, "fp"))
-                .map(SharedElementData::getOutput).contains("b");
+                .map(CapturedElementData::outputText).contains("b");
     }
 }

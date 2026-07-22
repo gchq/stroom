@@ -16,12 +16,10 @@
 
 package stroom.pipeline.stepping.store;
 
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
 import stroom.util.io.FileUtil;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -94,9 +92,9 @@ public class StepDataStore {
     public synchronized void putElementData(final StepLocation location,
                                             final ElementId elementId,
                                             final String fingerprint,
-                                            final SharedElementData data) {
+                                            final CapturedElementData data) {
         checkNotDeleted();
-        final byte[] bytes = JsonUtil.writeValueAsBytes(data, false);
+        final byte[] bytes = CapturedElementDataSerializer.toBytes(data);
         if (bytes == null) {
             throw new StepDataStoreException(LogUtil.message(
                     "Unable to serialise element data for {} at {}", elementId, location));
@@ -176,7 +174,7 @@ public class StepDataStore {
                 continue;
             }
 
-            final byte[] bytes = JsonUtil.writeValueAsBytes(element.data(), false);
+            final byte[] bytes = CapturedElementDataSerializer.toBytes(element.data());
             if (bytes == null) {
                 throw new StepDataStoreException(LogUtil.message(
                         "Unable to serialise element data for {} at {}", element.elementId(), location));
@@ -233,7 +231,7 @@ public class StepDataStore {
      * Read back one element's IO for one record, or empty if not present (element/fingerprint unknown or
      * record not yet written).
      */
-    public synchronized Optional<SharedElementData> getElementData(final StepLocation location,
+    public synchronized Optional<CapturedElementData> getElementData(final StepLocation location,
                                                                    final ElementId elementId,
                                                                    final String fingerprint) {
         checkNotDeleted();
@@ -243,7 +241,7 @@ public class StepDataStore {
         }
         final byte[] bytes = file.read(location.getRecordIndex());
         touchFingerprint(elementId, fingerprint);
-        return Optional.ofNullable(JsonUtil.readValue(bytes, SharedElementData.class));
+        return Optional.ofNullable(CapturedElementDataSerializer.fromBytes(bytes));
     }
 
     /**
@@ -413,7 +411,7 @@ public class StepDataStore {
     /**
      * One element's IO for a record, for an atomic {@link #putRecord} write.
      */
-    public record ElementRecord(ElementId elementId, String fingerprint, SharedElementData data) {
+    public record ElementRecord(ElementId elementId, String fingerprint, CapturedElementData data) {
     }
 
     private record PreparedWrite(FileKey key, ElementId elementId, String fingerprint, byte[] bytes) {

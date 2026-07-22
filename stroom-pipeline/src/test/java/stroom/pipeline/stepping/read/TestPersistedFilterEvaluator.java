@@ -16,8 +16,18 @@
 
 package stroom.pipeline.stepping.read;
 
-import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.stepping.store.CapturedData;
+import stroom.pipeline.stepping.store.CapturedElementData;
+import stroom.pipeline.xml.event.EventListSerializer;
+import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
+
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+
+import java.io.StringReader;
+import javax.xml.parsers.SAXParserFactory;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
@@ -37,15 +47,16 @@ class TestPersistedFilterEvaluator {
 
     private final PersistedFilterEvaluator evaluator = new PersistedFilterEvaluator();
 
-    private SharedElementData data(final boolean hasOutput, final Severity maxSeverity) {
+    private CapturedElementData data(final boolean hasOutput, final Severity maxSeverity) {
         Indicators indicators = null;
         if (maxSeverity != null) {
             indicators = new Indicators(new HashMap<>(Map.of(maxSeverity, 1)), new HashSet<>(), new ArrayList<>());
         }
-        return new SharedElementData(null, hasOutput ? "out" : null, indicators, false, false, hasOutput);
+        return new CapturedElementData(null, hasOutput ? CapturedData.text("out") : null,
+                false, false, hasOutput, indicators);
     }
 
-    private boolean matches(final SharedElementData data, final SteppingFilterSettings settings) {
+    private boolean matches(final CapturedElementData data, final SteppingFilterSettings settings) {
         return evaluator.matches(data, settings, 1L, 0L);
     }
 
@@ -86,8 +97,23 @@ class TestPersistedFilterEvaluator {
         assertThat(matches(data(true, null), null)).isFalse();
     }
 
-    private SharedElementData xmlOutput(final String xml) {
-        return new SharedElementData(null, xml, null, false, false, true);
+    private CapturedElementData xmlOutput(final String xml) {
+        return new CapturedElementData(null, CapturedData.saxEvents(saxEventBytes(xml)),
+                false, false, true, null);
+    }
+
+    private static byte[] saxEventBytes(final String xml) {
+        try {
+            final SimpleEventListBuilder builder = new SimpleEventListBuilder();
+            final SAXParserFactory factory = SAXParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            final XMLReader reader = factory.newSAXParser().getXMLReader();
+            reader.setContentHandler((ContentHandler) builder);
+            reader.parse(new InputSource(new StringReader(xml)));
+            return EventListSerializer.toBytes(builder.getEventList());
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private SteppingFilterSettings xpath(final String path, final XPathFilter.MatchType matchType, final String value) {
@@ -102,7 +128,7 @@ class TestPersistedFilterEvaluator {
 
     @Test
     void testXPathExists() {
-        final SharedElementData data = xmlOutput(EVENTS_XML);
+        final CapturedElementData data = xmlOutput(EVENTS_XML);
         assertThat(matches(data, xpath("/Events/Event", XPathFilter.MatchType.EXISTS, null))).isTrue();
         assertThat(matches(data, xpath("/Events/Missing", XPathFilter.MatchType.EXISTS, null))).isFalse();
         // NOTE: mirrors live SAXEventRecorder.filterMatches - match types are only evaluated against a
@@ -112,7 +138,7 @@ class TestPersistedFilterEvaluator {
 
     @Test
     void testXPathEqualsAndContains() {
-        final SharedElementData data = xmlOutput(EVENTS_XML);
+        final CapturedElementData data = xmlOutput(EVENTS_XML);
         assertThat(matches(data, xpath("/Events/Event/Id", XPathFilter.MatchType.EQUALS, "hello world"))).isTrue();
         assertThat(matches(data, xpath("/Events/Event/Id", XPathFilter.MatchType.EQUALS, "nope"))).isFalse();
         assertThat(matches(data, xpath("/Events/Event/Id", XPathFilter.MatchType.CONTAINS, "world"))).isTrue();
@@ -127,7 +153,7 @@ class TestPersistedFilterEvaluator {
 
     @Test
     void testEarlierMatchShortCircuitsBeforeXPath() {
-        // A severity/output hit must return before the (unimplemented) XPath branch is reached.
+        // A severity/output hit must short-circuit and return before the XPath branch is evaluated.
         final SteppingFilterSettings severityAndXpath = new SteppingFilterSettings(
                 Severity.ERROR, null, List.of(new XPathFilter()));
         assertThat(matches(data(false, Severity.ERROR), severityAndXpath)).isTrue();

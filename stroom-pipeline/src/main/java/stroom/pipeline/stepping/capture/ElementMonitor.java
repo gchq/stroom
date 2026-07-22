@@ -20,7 +20,11 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.filter.SAXEventRecorder;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.stepping.store.CapturedData;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.writer.XMLWriter;
+import stroom.pipeline.xml.event.EventList;
+import stroom.pipeline.xml.event.EventListSerializer;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
@@ -76,51 +80,71 @@ public class ElementMonitor {
         }
     }
 
-    public ElementData getElementData(final LoggingErrorReceiver loggingErrorReceiver,
-                                      final TextRange textRange) {
-        final ElementData elementData = new ElementData(elementId, elementType);
+    /**
+     * Capture this element's IO for the current record in the store's element-specific form: an XML
+     * element's SAX output as replayable events, a reader/writer's as text. The {@code formatInput}/
+     * {@code formatOutput}/{@code hasOutput} flags are computed exactly as the wire form always has.
+     */
+    public CapturedElementData getCapturedElementData(final LoggingErrorReceiver loggingErrorReceiver,
+                                                      final TextRange textRange) {
+        CapturedData input = null;
+        CapturedData output = null;
+        boolean formatInput = false;
+        boolean formatOutput = false;
+        boolean hasOutput = false;
+        Indicators indicators = null;
 
         if (inputRecorder != null) {
             try {
-                final Object data = inputRecorder.getData(textRange);
-                elementData.setInput(data);
-                elementData.setFormatInput(!(data == null || data instanceof String));
+                if (inputRecorder instanceof final SAXEventRecorder saxEventRecorder) {
+                    input = saxEvents(saxEventRecorder);
+                    // Structured (SAX) input is "formatted"; matches the old !(data instanceof String).
+                    formatInput = input != null;
+                } else {
+                    final Object data = inputRecorder.getData(textRange);
+                    input = data == null ? null : CapturedData.text(data.toString());
+                }
             } catch (final Exception e) {
-                elementData.setInput(null);
-                elementData.setFormatInput(false);
+                input = null;
+                formatInput = false;
                 logError(loggingErrorReceiver, textRange, "input", e);
             }
         }
 
         if (outputRecorder != null) {
             try {
-                final Object data = outputRecorder.getData(textRange);
-                elementData.setOutput(data);
-                elementData.setFormatOutput(!(data == null || data instanceof String) || element instanceof XMLWriter);
-                // For SAX elements match the live skip-to-output rule (maxElementDepth > 1); otherwise
-                // fall back to whether any non-blank output was produced.
                 if (outputRecorder instanceof final SAXEventRecorder saxEventRecorder) {
-                    elementData.setHasOutput(saxEventRecorder.hasContent());
+                    output = saxEvents(saxEventRecorder);
+                    formatOutput = output != null || element instanceof XMLWriter;
+                    // Match the live skip-to-output rule (maxElementDepth > 1).
+                    hasOutput = saxEventRecorder.hasContent();
                 } else {
-                    elementData.setHasOutput(data != null && !data.toString().isBlank());
+                    final Object data = outputRecorder.getData(textRange);
+                    output = data == null ? null : CapturedData.text(data.toString());
+                    formatOutput = element instanceof XMLWriter;
+                    hasOutput = data != null && !data.toString().isBlank();
                 }
             } catch (final Exception e) {
-                elementData.setOutput(null);
-                elementData.setFormatOutput(false);
-                elementData.setHasOutput(false);
+                output = null;
+                formatOutput = false;
+                hasOutput = false;
                 logError(loggingErrorReceiver, textRange, "output", e);
             }
         }
 
         if (loggingErrorReceiver != null) {
-            // Get indicators.
-            final Indicators indicators = loggingErrorReceiver.getIndicators(elementId);
-            if (indicators != null && indicators.getMaxSeverity() != null) {
-                elementData.setIndicators(new Indicators(indicators));
+            final Indicators found = loggingErrorReceiver.getIndicators(elementId);
+            if (found != null && found.getMaxSeverity() != null) {
+                indicators = new Indicators(found);
             }
         }
 
-        return elementData;
+        return new CapturedElementData(input, output, formatInput, formatOutput, hasOutput, indicators);
+    }
+
+    private static CapturedData saxEvents(final SAXEventRecorder recorder) {
+        final EventList events = recorder.getEventList();
+        return events == null ? null : CapturedData.saxEvents(EventListSerializer.toBytes(events));
     }
 
     private void logError(final LoggingErrorReceiver loggingErrorReceiver,

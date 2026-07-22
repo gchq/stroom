@@ -16,27 +16,22 @@
 
 package stroom.pipeline.filter;
 
-import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.factory.Processor;
-import stroom.pipeline.factory.ProcessorFactory;
-import stroom.pipeline.factory.SimpleProcessorFactory;
-import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.xml.event.SaxEventReader;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import org.xml.sax.SAXException;
+
 import java.util.List;
 
 /**
- * Applies stepping XPath filters to a persisted element output XML string, by re-parsing the XML into a
+ * Applies stepping XPath filters to a persisted element output by firing its stored SAX events into a
  * {@link SAXEventRecorder} (which rebuilds the Saxon tree and namespace context exactly as live stepping
- * does) and reusing the recorder's XPath match logic. The match is evaluated while the parsed document is
- * still buffered, i.e. before {@code endProcessing} tears the tree down.
+ * does) and reusing the recorder's XPath match logic. Firing the events avoids re-parsing XML text: the
+ * store already holds the events, so there is no serialise-then-parse round trip. The match is evaluated
+ * while the document is still buffered, i.e. before {@code endProcessing} tears the tree down.
  * <p>
  * Lives in the {@code filter} package so it can reuse {@code SAXEventRecorder}'s XPath machinery. Unique
  * ({@code UNIQUE}) filters accumulate their seen values on the supplied {@link XPathFilter} instances, so
@@ -50,40 +45,31 @@ public final class PersistedXPathFilterMatcher {
     }
 
     /**
-     * @return true if any of the given XPath filters matches the given output XML.
+     * @return true if any of the given XPath filters matches the element's persisted output events.
      */
-    public static boolean matches(final String outputXml,
+    public static boolean matches(final byte[] outputEvents,
                                   final List<XPathFilter> filters,
                                   final long metaId,
                                   final long recordIndex) {
-        if (outputXml == null || outputXml.isBlank() || filters == null || filters.isEmpty()) {
+        if (outputEvents == null || outputEvents.length == 0 || filters == null || filters.isEmpty()) {
             return false;
         }
 
         final SAXEventRecorder recorder = new SAXEventRecorder(null, null);
-        final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
-        final XMLParser parser = new XMLParser(errorReceiverProxy, new LocationFactoryProxy());
-        parser.setTarget(recorder);
-        parser.setInputStream(
-                new ByteArrayInputStream(outputXml.getBytes(StandardCharsets.UTF_8)), null);
-
-        final ProcessorFactory processorFactory = new SimpleProcessorFactory(errorReceiverProxy);
-        final Processor processor = processorFactory.create(parser.createProcessors());
-
         try {
-            parser.startProcessing();
-            parser.startStream();
+            recorder.startProcessing();
+            recorder.startStream();
             try {
-                processor.process();
+                // Fire the stored events straight into the recorder - it rebuilds the tree and namespace
+                // context as a parse would, without re-parsing XML text.
+                SaxEventReader.replay(outputEvents, recorder);
                 // Evaluate while the document is still buffered (endProcessing below resets the tree).
                 return recorder.matchesXPathFilters(filters, metaId, recordIndex);
             } finally {
-                parser.endStream();
-                parser.endProcessing();
+                recorder.endStream();
+                recorder.endProcessing();
             }
-        } catch (final RuntimeException e) {
-            // Persisted output that isn't standalone well-formed XML (a fragment, non-XML, etc.) simply
-            // can't match an XPath filter - treat as a non-match rather than aborting the whole step scan.
+        } catch (final SAXException | RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to evaluate XPath filter over persisted output: {}",
                     e.getMessage()), e);
             return false;
