@@ -23,7 +23,12 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceOverview;
+import stroom.pathways.shared.TraceSpanPage;
+import stroom.pathways.shared.TraceSpanRow;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.TracesStore;
@@ -31,7 +36,6 @@ import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.trace.TraceDb;
@@ -46,7 +50,6 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
-import stroom.util.io.FileUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -67,10 +70,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -97,8 +98,6 @@ public class TracesStoreImpl implements TracesStore {
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
     private final SecurityContext securityContext;
     private final Executor executor;
-    private final stroom.bytebuffer.impl6.ByteBuffers byteBuffers;
-    private final stroom.bytebuffer.impl6.ByteBufferFactory byteBufferFactory;
     private final ArchiveShardLocator archiveShardLocator;
 
     @Inject
@@ -111,8 +110,6 @@ public class TracesStoreImpl implements TracesStore {
                            final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
                            final SecurityContext securityContext,
                            final ExecutorProvider executorProvider,
-                           final stroom.bytebuffer.impl6.ByteBuffers byteBuffers,
-                           final stroom.bytebuffer.impl6.ByteBufferFactory byteBufferFactory,
                            final ArchiveShardLocator archiveShardLocator) {
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
@@ -123,8 +120,6 @@ public class TracesStoreImpl implements TracesStore {
         this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.securityContext = securityContext;
         this.executor = executorProvider.get();
-        this.byteBuffers = byteBuffers;
-        this.byteBufferFactory = byteBufferFactory;
         this.archiveShardLocator = archiveShardLocator;
     }
 
@@ -247,7 +242,7 @@ public class TracesStoreImpl implements TracesStore {
                         futures.add(CompletableFuture.supplyAsync(() -> {
                             try {
                                 return securityContext.asUserResult(userIdentity,
-                                        () -> queryArchive(ref, shardCriteria, doc));
+                                        () -> queryArchive(ref, shardIndex, shardCriteria, doc));
                             } catch (final Exception e) {
                                 LOGGER.error("Error querying archive shard " + ref.dateLabel() +
                                         " for doc " + doc.getName(), e);
@@ -478,7 +473,7 @@ public class TracesStoreImpl implements TracesStore {
             final List<ArchiveShardRef> refs =
                     archiveShardLocator.findRelevantShards(doc, shardIndex, fromMs, toMs);
             for (final ArchiveShardRef ref : refs) {
-                final Trace archived = getTraceFromArchive(ref, traceIdBytes, doc);
+                final Trace archived = getTraceFromArchive(ref, shardIndex, traceIdBytes, doc);
                 if (archived != null) {
                     sources.add(archived);
                 }
@@ -491,6 +486,240 @@ public class TracesStoreImpl implements TracesStore {
         }
 
         throw new NotFoundException("No spans found for trace " + request.getTraceId());
+    }
+
+    @Override
+    public TraceSpanPage getSpans(final GetSpansRequest request) {
+        final DocRef docRef = request.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+        if (doc == null) {
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
+        }
+        if (!shardManager.isSnapshotNode()) {
+            return getLocalSpans(request);
+        }
+        return queryStorageNode(TracesRemoteQueryResource.GET_SPANS_PATH, request, TraceSpanPage.class);
+    }
+
+    // Serves a bounded, tree-order window of a trace's spans. A trace whose root is in the LIVE shard is
+    // served wholly from live with random (offset) access via checkpoints. If the root is NOT live it
+    // has been archived (with the bulk of the trace) while trailing spans remain live — page it as a
+    // MERGED live+archive tree with a sequential cursor (archives have no checkpoints, and children of an
+    // archived node can be in either store, so the child streams must be merged).
+    public TraceSpanPage getLocalSpans(final GetSpansRequest request) {
+        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
+        final String docName = request.getDataSourceRef().getName();
+
+        final boolean liveHasRoot = Boolean.TRUE.equals(shardManager.get(docName, request.getTraceId(),
+                reader -> {
+                    if (reader instanceof final TraceDb traceDb) {
+                        return traceDb.rootSpan(traceIdBytes).isPresent();
+                    }
+                    throw new IllegalStateException("Unexpected value: " + reader);
+                }));
+
+        if (liveHasRoot) {
+            final TraceDb.SpanPage page = shardManager.get(docName, request.getTraceId(), reader -> {
+                if (reader instanceof final TraceDb traceDb) {
+                    return traceDb.getSpanPageAtOffset(
+                            traceIdBytes, request.getOffset(), request.getLimit());
+                }
+                throw new IllegalStateException("Unexpected value: " + reader);
+            });
+            return toSpanPage(page, false); // offset/random mode — no cursor
+        }
+
+        // Split/archived: merge the live shard with the relevant archive bucket(s).
+        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+        final long fromMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MIN_VALUE;
+        final long toMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MAX_VALUE;
+        final List<ArchiveShardRef> refs = relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs);
+        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+        final List<byte[]> cursorPath = decodeCursor(request.getCursor());
+
+        return shardManager.get(docName, request.getTraceId(), liveReader -> {
+            if (!(liveReader instanceof final TraceDb liveDb)) {
+                throw new IllegalStateException("Unexpected value: " + liveReader);
+            }
+            return liveDb.read(liveTxn -> {
+                final List<TraceDb.ChildCursor> cursors = new ArrayList<>();
+                cursors.add(new TraceDb.SingleStoreChildCursor(liveDb, liveTxn, traceIdBytes));
+                return openArchivesAndPage(doc, shardIndex, refs, 0, traceIdBytes, cursors,
+                        cursorPath, request.getLimit());
+            });
+        });
+    }
+
+    // Recursively nests the getArchive callbacks (each holds the archive shard's read lock + a read txn)
+    // to hold live + every relevant archive bucket open at once, then runs the merged pre-order DFS page.
+    private TraceSpanPage openArchivesAndPage(final PlanBDocument doc,
+                                              final int shardIndex,
+                                              final List<ArchiveShardRef> refs,
+                                              final int i,
+                                              final byte[] traceIdBytes,
+                                              final List<TraceDb.ChildCursor> cursors,
+                                              final List<byte[]> cursorPath,
+                                              final int limit) {
+        if (i >= refs.size()) {
+            final TraceDb.SpanPage page = TraceDb.getSpanPage(
+                    new TraceDb.MergedChildCursor(cursors), cursorPath, limit);
+            return toSpanPage(page, true); // sequential — carry the resume cursor
+        }
+        return shardManager.getArchive(doc, shardIndex, refs.get(i), archiveReader -> {
+            if (!(archiveReader instanceof final TraceDb archiveDb)) {
+                throw new IllegalStateException("Unexpected value: " + archiveReader);
+            }
+            return archiveDb.read(archiveTxn -> {
+                cursors.add(new TraceDb.SingleStoreChildCursor(archiveDb, archiveTxn, traceIdBytes));
+                return openArchivesAndPage(doc, shardIndex, refs, i + 1, traceIdBytes, cursors,
+                        cursorPath, limit);
+            });
+        });
+    }
+
+    private TraceSpanPage toSpanPage(final TraceDb.SpanPage page, final boolean sequential) {
+        final List<TraceSpanRow> rows = new ArrayList<>();
+        boolean more = false;
+        List<byte[]> next = null;
+        if (page != null) {
+            if (page.rows() != null) {
+                for (final TraceDb.SpanRow row : page.rows()) {
+                    rows.add(new TraceSpanRow(row.span(), row.depth()));
+                }
+            }
+            more = page.more();
+            next = page.nextCursor();
+        }
+        // Only the merged/sequential path exposes a cursor; the offset/random path leaves it null so the
+        // client keeps its scrollbar-drag behaviour.
+        final String nextCursor = (sequential && more) ? encodeCursor(next) : null;
+        return new TraceSpanPage(rows, more, nextCursor);
+    }
+
+    private int archiveShardIndex(final PlanBDocument doc, final String traceId) {
+        if (doc == null || doc.getSharedPath() == null || doc.getShardCount() <= 0) {
+            return -1;
+        }
+        return ShardKeyRouter.computeShardIndex(traceId, doc.getShardCount());
+    }
+
+    private List<ArchiveShardRef> relevantArchiveShards(final PlanBDocument doc,
+                                                        final String traceId,
+                                                        final long fromMs,
+                                                        final long toMs) {
+        final int shardIndex = archiveShardIndex(doc, traceId);
+        if (shardIndex < 0) {
+            return Collections.emptyList();
+        }
+        return archiveShardLocator.findRelevantShards(doc, shardIndex, fromMs, toMs);
+    }
+
+    private static String encodeCursor(final List<byte[]> path) {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        return Base64.getEncoder().encodeToString(TraceDb.encodePath(path));
+    }
+
+    private static List<byte[]> decodeCursor(final String cursor) {
+        if (cursor == null || cursor.isEmpty()) {
+            return null;
+        }
+        return TraceDb.decodePath(Base64.getDecoder().decode(cursor));
+    }
+
+    @Override
+    public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
+        final DocRef docRef = request.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+        if (doc == null) {
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
+        }
+        if (!shardManager.isSnapshotNode()) {
+            return getLocalTraceOverview(request);
+        }
+        return queryStorageNode(
+                TracesRemoteQueryResource.GET_TRACE_OVERVIEW_PATH, request, TraceOverview.class);
+    }
+
+    // Builds the downsampled whole-trace overview (one streaming pass per store, bounded memory).
+    // Extents are supplied by the caller from the already-known TraceRoot, so the axis is whole before
+    // any span is loaded. A split/archived trace (root not in the live shard) unions the live shard with
+    // the relevant archive bucket(s), deduped by spanId; a fully-live trace reads live only (no archive
+    // copy triggered).
+    public TraceOverview getLocalTraceOverview(final GetTraceOverviewRequest request) {
+        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
+        final String docName = request.getDataSourceRef().getName();
+
+        final Map<String, Span> bySpanId = new LinkedHashMap<>();
+        final List<Span> live = shardManager.get(docName, request.getTraceId(), reader -> {
+            if (reader instanceof final TraceDb traceDb) {
+                return traceDb.getOverviewSpans(
+                        traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars());
+            }
+            throw new IllegalStateException("Unexpected value: " + reader);
+        });
+        if (live != null) {
+            live.forEach(s -> bySpanId.putIfAbsent(s.getSpanId(), s));
+        }
+
+        final boolean liveHasRoot = Boolean.TRUE.equals(shardManager.get(docName, request.getTraceId(),
+                reader -> {
+                    if (reader instanceof final TraceDb traceDb) {
+                        return traceDb.rootSpan(traceIdBytes).isPresent();
+                    }
+                    throw new IllegalStateException("Unexpected value: " + reader);
+                }));
+        if (!liveHasRoot) {
+            final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+            final List<ArchiveShardRef> refs = relevantArchiveShards(
+                    doc, request.getTraceId(), request.getFromMs(), request.getToMs());
+            final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+            for (final ArchiveShardRef ref : refs) {
+                final List<Span> archived = shardManager.getArchive(doc, shardIndex, ref, reader -> {
+                    if (reader instanceof final TraceDb traceDb) {
+                        return traceDb.getOverviewSpans(
+                                traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars());
+                    }
+                    throw new IllegalStateException("Unexpected value: " + reader);
+                });
+                if (archived != null) {
+                    archived.forEach(s -> bySpanId.putIfAbsent(s.getSpanId(), s));
+                }
+            }
+        }
+        return new TraceOverview(new ArrayList<>(bySpanId.values()));
+    }
+
+    // Proxies a query to the first configured Plan B storage node (used by a snapshot node, which
+    // holds no data of its own). Mirrors the remote-call handling of findTrace/findTraces.
+    private <T> T queryStorageNode(final String path,
+                                   final Object request,
+                                   final Class<T> responseType) {
+        final List<String> nodes = NullSafe.list(configProvider.get().getNodeList());
+        if (nodes.isEmpty()) {
+            throw new RuntimeException("No Plan B storage nodes are configured");
+        }
+        final String nodeName = nodes.getFirst();
+        final String url = NodeCallUtil
+                .getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
+                + ResourcePaths.buildAuthenticatedApiPath(TracesRemoteQueryResource.BASE_PATH, path);
+        try {
+            final WebTarget webTarget = webTargetFactoryProvider.get().create(url);
+            final Response response = webTarget
+                    .request(MediaType.APPLICATION_JSON)
+                    .post(Entity.json(request));
+            if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                throw new NotFoundException(response);
+            } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                throw new WebApplicationException(response);
+            }
+            return response.readEntity(responseType);
+        } catch (final Throwable e) {
+            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+        }
     }
 
     // Merges the spans of several partial Traces for the same traceId (live fragment + archive
@@ -518,40 +747,26 @@ public class TracesStoreImpl implements TracesStore {
     }
 
     /**
-     * Copies an archive shard's {@code data.mdb} to a local temp dir, opens it
-     * read-only and returns the assembled {@link Trace} for {@code traceIdBytes},
-     * or {@code null} if the archive does not contain that trace. Cleans up the
-     * temp dir on exit.
+     * Returns the assembled {@link Trace} for {@code traceIdBytes} from an archive bucket, or
+     * {@code null} if the archive does not contain it. Reads via a cached, read-only, idle-evicted
+     * local copy of the bucket ({@link ShardManager#getArchive}) rather than copying the whole bucket
+     * to a temp dir per call.
      */
     private Trace getTraceFromArchive(final ArchiveShardRef ref,
+                                      final int shardIndex,
                                       final byte[] traceIdBytes,
                                       final PlanBDocument doc) {
-        final Path tempDir;
         try {
-            tempDir = Files.createTempDirectory("planb_arch_");
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create temp dir for archive shard " +
-                    ref.dateLabel() + ": " + e.getMessage());
-            return null;
-        }
-        try {
-            final Path srcData = ref.dir().resolve(PlanBConstants.DATA_FILE_NAME);
-            if (!Files.exists(srcData)) {
-                LOGGER.warn(() -> "Archive shard " + ref.dir() + " has no data.mdb — skipping");
-                return null;
-            }
-            Files.copy(srcData, tempDir.resolve(PlanBConstants.DATA_FILE_NAME));
-
-            try (final TraceDb archiveDb =
-                         TraceDb.create(tempDir, byteBuffers, byteBufferFactory, doc, true)) {
-                return archiveDb.findTrace(traceIdBytes).orElse(null);
-            }
+            return shardManager.getArchive(doc, shardIndex, ref, reader -> {
+                if (reader instanceof final TraceDb traceDb) {
+                    return traceDb.findTrace(traceIdBytes).orElse(null);
+                }
+                throw new IllegalStateException("Unexpected value: " + reader);
+            });
         } catch (final Exception e) {
             LOGGER.error(() -> "Error reading trace from archive shard " + ref.dateLabel() +
                     " for doc " + doc.getName() + ": " + e.getMessage(), e);
             return null;
-        } finally {
-            FileUtil.deleteDir(tempDir);
         }
     }
 
@@ -636,39 +851,24 @@ public class TracesStoreImpl implements TracesStore {
     }
 
     /**
-     * Copies the archive shard's {@code data.mdb} to a local temp directory,
-     * opens it as a read-only {@link TraceDb}, runs {@code findTraces()} and
-     * returns the result. Cleans up the temp directory on exit.
+     * Runs {@code findTraces()} against an archive bucket via a cached, read-only, idle-evicted local
+     * copy ({@link ShardManager#getArchive}) rather than copying the whole bucket to a temp dir per call.
      */
     private TracesResultPage queryArchive(final ArchiveShardRef ref,
+                                          final int shardIndex,
                                           final FindTraceCriteria criteria,
                                           final PlanBDocument doc) {
-        final Path tempDir;
         try {
-            tempDir = Files.createTempDirectory("planb_arch_");
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create temp dir for archive shard " +
-                    ref.dateLabel() + ": " + e.getMessage());
-            return null;
-        }
-        try {
-            final Path srcData = ref.dir().resolve(PlanBConstants.DATA_FILE_NAME);
-            if (!Files.exists(srcData)) {
-                LOGGER.warn(() -> "Archive shard " + ref.dir() + " has no data.mdb — skipping");
-                return null;
-            }
-            Files.copy(srcData, tempDir.resolve(PlanBConstants.DATA_FILE_NAME));
-
-            try (final TraceDb archiveDb =
-                         TraceDb.create(tempDir, byteBuffers, byteBufferFactory, doc, true)) {
-                return archiveDb.findTraces(criteria);
-            }
+            return shardManager.getArchive(doc, shardIndex, ref, reader -> {
+                if (reader instanceof final TraceDb traceDb) {
+                    return traceDb.findTraces(criteria);
+                }
+                throw new IllegalStateException("Unexpected value: " + reader);
+            });
         } catch (final Exception e) {
             LOGGER.error(() -> "Error querying archive shard " + ref.dateLabel() +
                     " for doc " + doc.getName() + ": " + e.getMessage(), e);
             return null;
-        } finally {
-            FileUtil.deleteDir(tempDir);
         }
     }
 }

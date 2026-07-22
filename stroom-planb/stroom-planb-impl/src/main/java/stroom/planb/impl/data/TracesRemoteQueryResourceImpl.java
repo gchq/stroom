@@ -19,7 +19,11 @@ package stroom.planb.impl.data;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceOverview;
+import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Trace;
 
@@ -47,5 +51,17 @@ public class TracesRemoteQueryResourceImpl implements TracesRemoteQueryResource 
     @Override
     public Trace getTrace(final GetTraceRequest request) {
         return tracesQueryServiceProvider.get().getLocalTrace(request);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public TraceSpanPage getSpans(final GetSpansRequest request) {
+        return tracesQueryServiceProvider.get().getLocalSpans(request);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
+        return tracesQueryServiceProvider.get().getLocalTraceOverview(request);
     }
 }

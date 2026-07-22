@@ -18,11 +18,14 @@ package stroom.pathways.client.presenter;
 
 import stroom.data.grid.client.DefaultResources;
 import stroom.data.grid.client.Glass;
+import stroom.pathways.shared.TraceSpanPage;
+import stroom.pathways.shared.TraceSpanRow;
 import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
+import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.util.shared.StringUtil;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -34,7 +37,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 
@@ -46,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class TraceOverviewWidget extends Composite {
 
@@ -67,6 +73,41 @@ public class TraceOverviewWidget extends Composite {
     private NanoDuration windowEnd = NanoDuration.ZERO;
     private boolean resizingPanel;
     private int spanInfoWidth = 340;
+
+    // ---- Large-trace (virtualized) mode ----------------------------------------------------------
+    // A trace too large to load whole (hundreds of thousands of spans) is shown from a TraceRoot
+    // (extents + total count) plus a downsampled overview, with the detail waterfall windowed: only
+    // the visible band of tree-order rows is fetched (SpanWindowFetcher) and rendered. The scroll
+    // container is sized to the full span count so the scrollbar can be dragged to any position.
+    private static final int ROW_HEIGHT_PX = 30;   // fixed row height used to size/position the band
+    private static final int WINDOW_ROWS = 400;    // rows fetched per request
+    private static final int VIEWPORT_BUFFER = 100; // reload when within this many rows of a loaded edge
+
+    private boolean largeMode;
+    private TraceRoot largeRoot;
+    private List<Span> overviewSpans = new ArrayList<>();
+    private final List<TraceSpanRow> loadedRows = new ArrayList<>();
+    private int loadedOffset;
+    private int totalSpans;
+    private SpanWindowFetcher fetcher;
+    private boolean fetching;
+    private int pendingOffset = -1;
+    private EventListener scrollListener;
+    // Split/archived traces have no DFS checkpoints, so they page sequentially by opaque cursor (load-more
+    // on scroll) rather than by random offset. Detected from the first page's nextCursor; once set, rows
+    // are appended (never cleared) and the cursor advances until it comes back null (no more rows).
+    private boolean sequentialMode;
+    private String nextCursor;
+
+    /**
+     * Fetches a bounded, tree-order window of spans. For random/offset paging pass {@code cursor == null}
+     * and the window {@code [offset, offset + limit)}; for sequential paging pass the opaque resume
+     * {@code cursor} (offset ignored).
+     */
+    public interface SpanWindowFetcher {
+
+        void fetch(int offset, String cursor, int limit, Consumer<TraceSpanPage> onLoaded);
+    }
 
     public TraceOverviewWidget(final DefaultResources resources) {
         initWidget(panel);
@@ -260,6 +301,10 @@ public class TraceOverviewWidget extends Composite {
 //    }
 
     public void setTrace(final Trace trace) {
+        this.largeMode = false;
+        this.largeRoot = null;
+        this.fetcher = null;
+        this.loadedRows.clear();
         this.trace = trace;
         this.selectedSpan = null;
         spanById.clear();
@@ -273,12 +318,54 @@ public class TraceOverviewWidget extends Composite {
         refresh();
     }
 
+    // Enters virtualized large-trace mode: extents/total from the TraceRoot (so the axis is whole
+    // immediately), the timeline strip from the downsampled overview spans, and the detail waterfall
+    // windowed via the fetcher. Requires a real root (extents present); orphan/rootless traces use the
+    // whole-trace setTrace path instead.
+    public void setLargeTrace(final TraceRoot root,
+                              final List<Span> overviewSpans,
+                              final SpanWindowFetcher fetcher) {
+        this.largeMode = true;
+        this.trace = null;
+        this.largeRoot = root;
+        this.fetcher = fetcher;
+        this.overviewSpans = overviewSpans != null ? overviewSpans : new ArrayList<>();
+        this.totalSpans = Math.max(0, root.getTotalSpans());
+        this.selectedSpan = null;
+        spanById.clear();
+        this.overviewSpans.forEach(span -> spanById.put(span.getSpanId(), span));
+        this.extents = computeExtentsFromRoot(root);
+        windowStart = NanoDuration.ZERO;
+        windowEnd = extents.totalDuration;
+        loadedRows.clear();
+        loadedOffset = 0;
+        pendingOffset = -1;
+        fetching = false;
+        sequentialMode = false;
+        nextCursor = null;
+        refresh();
+        loadWindow(0);
+    }
+
+    private Extents computeExtentsFromRoot(final TraceRoot root) {
+        final NanoTime min = root.getStartTime();
+        final NanoTime max = root.getEndTime();
+        if (min == null || max == null) {
+            return new Extents(NanoTime.ZERO, NanoTime.ZERO, NanoDuration.ZERO, 100);
+        }
+        final NanoDuration totalDuration = min.diff(max);
+        final double increments = totalDuration.getNanos() == 0
+                ? 100D
+                : 100D / totalDuration.getNanos();
+        return new Extents(min, max, totalDuration, increments);
+    }
+
     private void refresh() {
         // Capture the operation list scroll position; setHTML() below rebuilds the
         // whole DOM and would otherwise reset it to the top on every span click/resize.
         final int operationScrollTop = getOperationListScrollTop();
         final HtmlBuilder hb = new HtmlBuilder();
-        if (trace != null) {
+        if ((largeMode && largeRoot != null) || trace != null) {
             hb.div(div -> {
                 appendTimelineHeader(div);
                 appendTimelineControls(div);
@@ -295,6 +382,9 @@ public class TraceOverviewWidget extends Composite {
         }
         panel.setHTML(hb.toSafeHtml());
         setOperationListScrollTop(operationScrollTop);
+        if (largeMode) {
+            attachScrollHandler();
+        }
     }
 
     private int getOperationListScrollTop() {
@@ -362,7 +452,12 @@ public class TraceOverviewWidget extends Composite {
         final String style = computeGridStyle(0, extents.totalDuration.getNanos());
         hb.div(div -> {
             final AtomicInteger row = new AtomicInteger();
-            forestRoots().forEach(span -> appendSpan(div, span, row));
+            if (largeMode) {
+                // Downsampled representative spans — no tree to walk.
+                overviewSpans.forEach(span -> appendSpanBar(div, span, row));
+            } else {
+                forestRoots().forEach(span -> appendSpan(div, span, row));
+            }
         }, Attribute.className("timeline-bar"),
                 Attribute.id("timelineBar"),
                 Attribute.style("height: 40px;" + style));
@@ -394,6 +489,13 @@ public class TraceOverviewWidget extends Composite {
     private void appendSpan(final HtmlBuilder hb,
                             final Span span,
                             final AtomicInteger row) {
+        appendSpanBar(hb, span, row);
+        trace.children(span).forEach(child -> appendSpan(hb, child, row));
+    }
+
+    private void appendSpanBar(final HtmlBuilder hb,
+                               final Span span,
+                               final AtomicInteger row) {
         final double leftPct = span.start().diff(extents.min).getNanos() * extents.increments;
         final double widthPct = span.duration().getNanos() * extents.increments;
         final int topPx = 2 + (3 * row.getAndIncrement());
@@ -406,8 +508,6 @@ public class TraceOverviewWidget extends Composite {
                         "left: " + leftPct + "%; width: " + widthPct +
                         "%; background-color: rgb(255, 140, 66); top: " + topPx +
                         "px; height: 2px; opacity: 0.9; position: absolute; border-radius: 1px; min-width: 1px;"));
-
-        trace.children(span).forEach(child -> appendSpan(hb, child, row));
     }
 
     private void appendTimeSlider(final HtmlBuilder hb) {
@@ -566,10 +666,42 @@ public class TraceOverviewWidget extends Composite {
 
 
     private void appendOperationList(final HtmlBuilder hb) {
+        if (largeMode) {
+            hb.div(this::appendVirtualBand,
+                    Attribute.className("operation-list"),
+                    Attribute.id("operationList"));
+        } else {
+            hb.div(div -> forestRoots().forEach(span -> appendOperationItem(div, span, extents, 0)),
+                    Attribute.className("operation-list"),
+                    Attribute.id("operationList"));
+        }
+    }
 
-        hb.div(div -> forestRoots().forEach(span -> appendOperationItem(div, span, extents, 0)),
-                Attribute.className("operation-list"),
-                Attribute.id("operationList"));
+    // The virtualized detail band: a positioned container sized to the full span count (so the
+    // scrollbar spans the whole trace and can be dragged anywhere), holding only the currently-loaded
+    // window of rows, each absolutely positioned at its true tree-order index.
+    private void appendVirtualBand(final HtmlBuilder hb) {
+        hb.div(band -> {
+            for (int i = 0; i < loadedRows.size(); i++) {
+                final TraceSpanRow r = loadedRows.get(i);
+                appendVirtualRow(band, r.getSpan(), r.getDepth(), (loadedOffset + i) * ROW_HEIGHT_PX);
+            }
+        }, Attribute.className("operation-band"),
+                Attribute.style("position: relative; height: " +
+                                ((long) totalSpans * ROW_HEIGHT_PX) + "px;"));
+    }
+
+    private void appendVirtualRow(final HtmlBuilder hb,
+                                  final Span span,
+                                  final int depth,
+                                  final int topPx) {
+        hb.div(div -> {
+            appendOperationContent(div, span, depth);
+            appendWaterfall(div, span);
+        }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
+                new Attribute("data-span-id", span.getSpanId()),
+                Attribute.style("position: absolute; left: 0; right: 0; top: " + topPx +
+                                "px; height: " + ROW_HEIGHT_PX + "px;"));
     }
 
     private void appendOperationItem(final HtmlBuilder hb,
@@ -578,55 +710,8 @@ public class TraceOverviewWidget extends Composite {
                                      final int depth) {
 
         hb.div(div -> {
-            div.div(c -> {
-//                c.span("▼", Attribute.className("expand-icon"));
-//                c.span(span.getName(), Attribute.className("service-name"));
-                // Indent computed from depth so nesting works at any depth (there is no
-                // fixed set of indent-N CSS classes to run out of). The name is truncated
-                // with an ellipsis by CSS, so expose the full name as a hover tooltip.
-                c.span(span.getName(),
-                        Attribute.className("operation-name"),
-                        Attribute.title(span.getName()),
-                        Attribute.style("padding-left: " + (depth * 30) + "px;"));
-            }, Attribute.className("operation-content"));
-            div.div(c -> {
-                final NanoDuration windowSize = windowEnd.subtract(windowStart);
-                NanoDuration offsetStart = span.start().diff(extents.min);
-                NanoDuration offsetEnd = span.end().diff(extents.min);
-                offsetStart = offsetStart.subtract(windowStart);
-                offsetEnd = offsetEnd.subtract(windowStart);
-
-                if (offsetStart.isLessThan(NanoDuration.ZERO)) {
-                    offsetStart = NanoDuration.ZERO;
-                }
-                if (offsetEnd.isLessThan(NanoDuration.ZERO)) {
-                    offsetEnd = NanoDuration.ZERO;
-                } else if (offsetEnd.isGreaterThan(windowSize)) {
-                    offsetEnd = windowSize;
-                }
-
-//                GWT.log("name=" + span.getName() + ", offsetstart = " + offsetStart + ", offsetend = " + offsetEnd);
-
-                final NanoDuration duration = offsetEnd.subtract(offsetStart);
-                if (duration.isGreaterThan(NanoDuration.ZERO)) {
-                    final double increment = 100D / windowSize.getNanos();
-
-//                    final NanoDuration start = offsetStart.subtract(windowStart);
-                    double leftPct = offsetStart.getNanos() * increment;
-                    double widthPct = offsetEnd.subtract(offsetStart).getNanos() * increment;
-
-                    leftPct = Math.max(Math.min(leftPct, 100), 0);
-                    widthPct = Math.max(Math.min(widthPct, 100), 0);
-
-                    c.div("",
-                            Attribute.className("span-bar span-http"),
-                            Attribute.style("left: " + leftPct + "%; width: " + widthPct + "%;"));
-                    c.span(span.duration().toString(),
-                            Attribute.className("duration"),
-                            Attribute.style("left: " + (leftPct + widthPct) + "%;"));
-                }
-            }, Attribute.className("waterfall-container"));
-
+            appendOperationContent(div, span, depth);
+            appendWaterfall(div, span);
         }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
                 new Attribute("data-span-id", span.getSpanId()));
 
@@ -716,6 +801,187 @@ public class TraceOverviewWidget extends Composite {
 //    </div>
     }
 
+    // Indent computed from depth so nesting works at any depth (there is no fixed set of indent-N
+    // CSS classes to run out of). The name is truncated with an ellipsis by CSS, so expose the full
+    // name as a hover tooltip.
+    private void appendOperationContent(final HtmlBuilder hb, final Span span, final int depth) {
+        hb.div(c -> c.span(span.getName(),
+                        Attribute.className("operation-name"),
+                        Attribute.title(span.getName()),
+                        Attribute.style("padding-left: " + (depth * 30) + "px;")),
+                Attribute.className("operation-content"));
+    }
+
+    private void appendWaterfall(final HtmlBuilder hb, final Span span) {
+        hb.div(c -> {
+            final NanoDuration windowSize = windowEnd.subtract(windowStart);
+            NanoDuration offsetStart = span.start().diff(extents.min);
+            NanoDuration offsetEnd = span.end().diff(extents.min);
+            offsetStart = offsetStart.subtract(windowStart);
+            offsetEnd = offsetEnd.subtract(windowStart);
+
+            if (offsetStart.isLessThan(NanoDuration.ZERO)) {
+                offsetStart = NanoDuration.ZERO;
+            }
+            if (offsetEnd.isLessThan(NanoDuration.ZERO)) {
+                offsetEnd = NanoDuration.ZERO;
+            } else if (offsetEnd.isGreaterThan(windowSize)) {
+                offsetEnd = windowSize;
+            }
+
+            final NanoDuration duration = offsetEnd.subtract(offsetStart);
+            if (duration.isGreaterThan(NanoDuration.ZERO)) {
+                final double increment = 100D / windowSize.getNanos();
+                double leftPct = offsetStart.getNanos() * increment;
+                double widthPct = offsetEnd.subtract(offsetStart).getNanos() * increment;
+
+                leftPct = Math.max(Math.min(leftPct, 100), 0);
+                widthPct = Math.max(Math.min(widthPct, 100), 0);
+
+                c.div("",
+                        Attribute.className("span-bar span-http"),
+                        Attribute.style("left: " + leftPct + "%; width: " + widthPct + "%;"));
+                c.span(span.duration().toString(),
+                        Attribute.className("duration"),
+                        Attribute.style("left: " + (leftPct + widthPct) + "%;"));
+            }
+        }, Attribute.className("waterfall-container"));
+    }
+
+    // ---- Virtualized waterfall scroll handling ---------------------------------------------------
+
+    // (Re)binds a native scroll listener to the operation-list element. panel.setHTML() rebuilds the
+    // DOM (and drops the old listener) on every full refresh, so this is called after each one; band
+    // updates during scrolling patch only the band's inner HTML, leaving this element (and listener)
+    // intact.
+    private void attachScrollHandler() {
+        final Element list = ElementUtil.findChild(panel.getElement(), "operation-list");
+        if (list == null) {
+            return;
+        }
+        if (scrollListener == null) {
+            scrollListener = event -> {
+                if (Event.ONSCROLL == event.getTypeInt()) {
+                    onOperationScroll();
+                }
+            };
+        }
+        final com.google.gwt.user.client.Element userList = list.cast();
+        Event.sinkEvents(userList, Event.ONSCROLL);
+        DOM.setEventListener(userList, scrollListener);
+    }
+
+    // On scroll, load a fresh window when the visible band nears either loaded edge.
+    private void onOperationScroll() {
+        final Element list = ElementUtil.findChild(panel.getElement(), "operation-list");
+        if (list == null || fetcher == null) {
+            return;
+        }
+        final int firstVisible = list.getScrollTop() / ROW_HEIGHT_PX;
+        final int lastVisible = (list.getScrollTop() + list.getClientHeight()) / ROW_HEIGHT_PX;
+        if (sequentialMode) {
+            // Sequential mode keeps every loaded row from the top (loadedOffset == 0); fetch the next
+            // page by cursor when the viewport nears the last loaded row and more remain.
+            final boolean nearBottom = nextCursor != null && lastVisible > loadedRows.size() - VIEWPORT_BUFFER;
+            if (nearBottom) {
+                loadNextSequential();
+            }
+            return;
+        }
+        final int loadedEnd = loadedOffset + loadedRows.size();
+        final boolean nearTop = loadedOffset > 0 && firstVisible < loadedOffset + VIEWPORT_BUFFER;
+        final boolean nearBottom = loadedEnd < totalSpans && lastVisible > loadedEnd - VIEWPORT_BUFFER;
+        if (nearTop || nearBottom) {
+            loadWindow(firstVisible - VIEWPORT_BUFFER);
+        }
+    }
+
+    private void loadWindow(final int desiredStart) {
+        if (fetcher == null) {
+            return;
+        }
+        int start = Math.max(0, desiredStart);
+        final int maxStart = Math.max(0, totalSpans - WINDOW_ROWS);
+        if (start > maxStart) {
+            start = maxStart;
+        }
+        final int fStart = start;
+        // Coalesce identical in-flight requests (a burst of scroll events asking for the same window).
+        if (fetching && fStart == pendingOffset) {
+            return;
+        }
+        fetching = true;
+        pendingOffset = fStart;
+        fetcher.fetch(fStart, null, WINDOW_ROWS, page -> {
+            fetching = false;
+            if (!largeMode) {
+                return; // switched trace/mode while the request was in flight
+            }
+            // A non-null cursor means this is a split/archived trace served sequentially — switch modes
+            // and treat this response as the first appended page.
+            if (page != null && page.getNextCursor() != null) {
+                enterSequentialMode(page);
+                return;
+            }
+            loadedOffset = fStart;
+            loadedRows.clear();
+            if (page != null && page.getRows() != null) {
+                loadedRows.addAll(page.getRows());
+                page.getRows().forEach(r -> spanById.put(r.getSpan().getSpanId(), r.getSpan()));
+            }
+            renderBand();
+        });
+    }
+
+    private void enterSequentialMode(final TraceSpanPage page) {
+        sequentialMode = true;
+        loadedOffset = 0;
+        loadedRows.clear();
+        if (page.getRows() != null) {
+            loadedRows.addAll(page.getRows());
+            page.getRows().forEach(r -> spanById.put(r.getSpan().getSpanId(), r.getSpan()));
+        }
+        nextCursor = page.getNextCursor();
+        renderBand();
+    }
+
+    // Appends the next sequential page using the stored cursor. Rows already loaded are kept; the band is
+    // still sized to totalSpans, so the scrollbar reflects the whole trace even though only the loaded
+    // prefix is rendered (drag-past-loaded doesn't jump — Option A: sequential load-more only).
+    private void loadNextSequential() {
+        if (fetcher == null || nextCursor == null || fetching) {
+            return;
+        }
+        fetching = true;
+        fetcher.fetch(0, nextCursor, WINDOW_ROWS, page -> {
+            fetching = false;
+            if (!largeMode || !sequentialMode) {
+                return;
+            }
+            if (page != null && page.getRows() != null) {
+                loadedRows.addAll(page.getRows());
+                page.getRows().forEach(r -> spanById.put(r.getSpan().getSpanId(), r.getSpan()));
+            }
+            nextCursor = page != null ? page.getNextCursor() : null;
+            renderBand();
+        });
+    }
+
+    // Re-renders only the loaded rows into the existing band element, so the scroll position and the
+    // operation-list scroll listener are untouched. Falls back to a full refresh if the band is gone.
+    private void renderBand() {
+        final Element band = ElementUtil.findChild(panel.getElement(), "operation-band");
+        if (band == null) {
+            refresh();
+            return;
+        }
+        final HtmlBuilder hb = new HtmlBuilder();
+        for (int i = 0; i < loadedRows.size(); i++) {
+            final TraceSpanRow r = loadedRows.get(i);
+            appendVirtualRow(hb, r.getSpan(), r.getDepth(), (loadedOffset + i) * ROW_HEIGHT_PX);
+        }
+        band.setInnerSafeHtml(hb.toSafeHtml());
+    }
 
     private boolean isSelected(final Span span) {
         return selectedSpan != null && selectedSpan.getSpanId().equals(span.getSpanId());

@@ -17,8 +17,13 @@
 package stroom.pathways.impl;
 
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TracePersistence;
+import stroom.pathways.shared.TraceSpanPage;
+import stroom.pathways.shared.TraceSpanRow;
 import stroom.pathways.shared.TraceWriter;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
@@ -26,11 +31,14 @@ import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -89,6 +97,75 @@ public class TracePersistenceMemory implements TracePersistence {
             return null;
         }
         return traceBuilder.build();
+    }
+
+    @Override
+    public TraceSpanPage getSpans(final GetSpansRequest request) {
+        final TraceBuilder traceBuilder = traces.traceMap.get(request.getTraceId());
+        final Trace trace = traceBuilder == null ? null : traceBuilder.build();
+        final List<TraceSpanRow> all = flattenPreorder(trace);
+        final int from = Math.min(Math.max(0, request.getOffset()), all.size());
+        final int to = request.getLimit() <= 0
+                ? from
+                : Math.min(from + request.getLimit(), all.size());
+        return new TraceSpanPage(new ArrayList<>(all.subList(from, to)), to < all.size(), null);
+    }
+
+    @Override
+    public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
+        final TraceBuilder traceBuilder = traces.traceMap.get(request.getTraceId());
+        final List<Span> spans = new ArrayList<>();
+        if (traceBuilder != null) {
+            traceBuilder.build().getParentSpanIdMap().values().forEach(spans::addAll);
+        }
+        return new TraceOverview(spans);
+    }
+
+    // Flattens a trace to pre-order (tree) order, tagging each span with its depth. Roots are spans
+    // whose parent is not itself a span in the trace; a visited set guards against malformed cycles.
+    private static List<TraceSpanRow> flattenPreorder(final Trace trace) {
+        final List<TraceSpanRow> rows = new ArrayList<>();
+        if (trace == null || trace.getParentSpanIdMap() == null) {
+            return rows;
+        }
+        final Map<String, List<Span>> byParent = trace.getParentSpanIdMap();
+        final Set<String> spanIds = new HashSet<>();
+        byParent.values().forEach(list -> list.forEach(s -> spanIds.add(s.getSpanId())));
+
+        final List<Span> roots = new ArrayList<>();
+        for (final List<Span> list : byParent.values()) {
+            for (final Span span : list) {
+                if (span.getParentSpanId() == null || !spanIds.contains(span.getParentSpanId())) {
+                    roots.add(span);
+                }
+            }
+        }
+        roots.sort(Comparator.comparing(Span::start, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        final Set<String> visited = new HashSet<>();
+        for (final Span root : roots) {
+            appendSubtree(root, 0, byParent, rows, visited);
+        }
+        return rows;
+    }
+
+    private static void appendSubtree(final Span span,
+                                      final int depth,
+                                      final Map<String, List<Span>> byParent,
+                                      final List<TraceSpanRow> rows,
+                                      final Set<String> visited) {
+        if (!visited.add(span.getSpanId())) {
+            return;
+        }
+        rows.add(new TraceSpanRow(span, depth));
+        final List<Span> children = byParent.get(span.getSpanId());
+        if (children != null) {
+            final List<Span> sorted = new ArrayList<>(children);
+            sorted.sort(Comparator.comparing(Span::start, Comparator.nullsLast(Comparator.naturalOrder())));
+            for (final Span child : sorted) {
+                appendSubtree(child, depth + 1, byParent, rows, visited);
+            }
+        }
     }
 
     private static class Traces {

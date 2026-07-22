@@ -134,10 +134,23 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private static final int TRACE_ID_BYTES = 16;
 
     /** Span-key layout (see {@link stroom.planb.impl.serde.trace.SpanKeySerde}):
-     * {@code traceId[16] ∥ parentSpanId[8] ∥ spanId[8]}. A span's children share the
-     * prefix {@code traceId ∥ thisSpanId}; the root's parentSpanId is all-zero. */
+     * {@code traceId[16] ∥ parentSpanId[8] ∥ startTime[8] ∥ spanId[8]}. A span's children share the
+     * prefix {@code traceId ∥ thisSpanId}; within that prefix they sort by {@code startTime ∥ spanId}
+     * (the "locator"), i.e. start-time order. The root's parentSpanId is all-zero. */
     private static final int SPAN_ID_BYTES = 8;
+    private static final int START_TIME_BYTES = 8;
+    // A child's position within its parent: startTime[8] ∥ spanId[8]. The DFS cursor path is a list of
+    // these, so a sibling scan can resume "after" a given child in start-time order.
+    private static final int LOCATOR_BYTES = START_TIME_BYTES + SPAN_ID_BYTES;
     private static final byte[] NO_PARENT_SPAN_ID = new byte[SPAN_ID_BYTES];
+    // All-0xFF locator — the inclusive upper bound of a parent's child key range.
+    private static final byte[] LOCATOR_MAX = ffBytes(LOCATOR_BYTES);
+
+    private static byte[] ffBytes(final int n) {
+        final byte[] b = new byte[n];
+        Arrays.fill(b, (byte) 0xFF);
+        return b;
+    }
 
     /**
      * Trace span-count at or below which {@link #buildRootFromStats} recomputes depth every merge
@@ -145,6 +158,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * span count doubles — keeping the DFS off the hot path for the huge, ever-growing traces.
      */
     private static final long DEPTH_EXACT_SPAN_THRESHOLD = 10_000L;
+
+    // Tree-order (DFS) random access for very large traces: snapshot a resume-cursor every
+    // CHECKPOINT_INTERVAL rows, but only for traces larger than CHECKPOINT_MIN_SPANS (smaller traces
+    // load whole). Keeps checkpoint storage to ~totalSpans / CHECKPOINT_INTERVAL entries per trace.
+    private static final int CHECKPOINT_INTERVAL = 1_000;
+    private static final long CHECKPOINT_MIN_SPANS = 10_000L;
 
     /**
      * Returns a fresh zero-byte direct {@link ByteBuffer} for use as an empty
@@ -214,6 +233,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * {@code serviceCount} in {@link TraceStats} is exact.
      */
     private final Dbi<ByteBuffer> traceServiceNamesDbi;
+    private final Dbi<ByteBuffer> traceDfsCheckpointsDbi;
     private final TraceStatsSerde traceStatsSerde;
 
     /**
@@ -255,6 +275,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         traceRootsMergeTimeDbi = env.openDbi("trace-roots-merge-time", DbiFlags.MDB_CREATE);
         traceStatsDbi = env.openDbi("trace-stats", DbiFlags.MDB_CREATE);
         traceServiceNamesDbi = env.openDbi("trace-service-names", DbiFlags.MDB_CREATE);
+        traceDfsCheckpointsDbi = env.openDbi("trace-dfs-checkpoints", DbiFlags.MDB_CREATE);
 
         // Open one DBI per secondary sort index, keyed by the index definition.
         final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> indexDbis =
@@ -1180,6 +1201,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             LmdbIterable.iterate(readTxn, traceServiceNamesDbi, keyRange,
                     (key, val) -> traceServiceNamesDbi.delete(writer.getWriteTxn(), key));
         });
+        // Per-trace DFS checkpoints are derived data too — drop them when the trace is removed.
+        byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuf).build();
+            LmdbIterable.iterate(readTxn, traceDfsCheckpointsDbi, keyRange,
+                    (key, val) -> traceDfsCheckpointsDbi.delete(writer.getWriteTxn(), key));
+        });
     }
 
     /**
@@ -1776,9 +1803,444 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private static byte[] readSpanId(final ByteBuffer key) {
         final byte[] spanId = new byte[SPAN_ID_BYTES];
         final ByteBuffer k = key.duplicate();
-        k.position(k.position() + TRACE_ID_BYTES + SPAN_ID_BYTES);
+        k.position(k.position() + TRACE_ID_BYTES + SPAN_ID_BYTES + START_TIME_BYTES);
         k.get(spanId);
         return spanId;
+    }
+
+    // The child's 16-byte locator (startTime ∥ spanId) — the key bytes after traceId ∥ parentSpanId,
+    // read without disturbing the buffer. This is the child's position within its parent's
+    // start-time-ordered child range, and what the DFS cursor stores per level.
+    private static byte[] readLocator(final ByteBuffer key) {
+        final byte[] locator = new byte[LOCATOR_BYTES];
+        final ByteBuffer k = key.duplicate();
+        k.position(k.position() + TRACE_ID_BYTES + SPAN_ID_BYTES);
+        k.get(locator);
+        return locator;
+    }
+
+    // The spanId (last 8 bytes) of a 16-byte locator.
+    private static byte[] spanIdOf(final byte[] locator) {
+        final byte[] spanId = new byte[SPAN_ID_BYTES];
+        System.arraycopy(locator, START_TIME_BYTES, spanId, 0, SPAN_ID_BYTES);
+        return spanId;
+    }
+
+    // ------------------------------------------------------------------------
+    // Paged tree-order (pre-order DFS) reads for very large traces.
+    //
+    // Rows are streamed straight off the span index in depth-first tree order, one page at a time,
+    // resumable via a cursor (the ancestor spanId path from the root to the last-emitted node).
+    // Peak memory is O(depth + page), never O(total spans), so a 700k-span trace is viewable a
+    // window at a time. Random access is provided by resuming from a nearby checkpoint cursor.
+    // ------------------------------------------------------------------------
+
+    /** One row of a paged tree-order read: a span and its depth (root = 1). */
+    public record SpanRow(Span span, int depth) {
+    }
+
+    /**
+     * A page of tree-order rows plus the cursor to resume after the last row ({@code nextCursor} =
+     * the DFS path as a list of 8-byte spanIds) and whether more rows may follow.
+     */
+    public record SpanPage(List<SpanRow> rows, List<byte[]> nextCursor, boolean more) {
+    }
+
+    /** Runs {@code fn} in a read txn on this store's env — lets a caller hold a txn per store. */
+    public <R> R read(final Function<Txn<ByteBuffer>, R> fn) {
+        return env.read(fn);
+    }
+
+    /** A child found by a {@link ChildCursor}: the span plus its 16-byte locator (startTime ∥ spanId). */
+    public record ChildSpan(Span span, byte[] locator) {
+    }
+
+    /**
+     * Supplies a node's children in start-time (locator) order for the pre-order DFS. A single-store
+     * cursor wraps one {@link TraceDb} + read txn; a merged cursor unions several stores so a trace
+     * split across the live shard and archive bucket(s) walks as one tree.
+     */
+    public interface ChildCursor {
+
+        // First child of parentSpanId whose locator is strictly greater than afterLocator (or the very
+        // first child when null), skipping any spanId in excludeSpanIdHexes (cycle guard). null = none.
+        ChildSpan firstChildAfter(byte[] parentSpanId, byte[] afterLocator, Set<String> excludeSpanIdHexes);
+    }
+
+    /** A {@link ChildCursor} over one store, bound to a read txn. */
+    public static final class SingleStoreChildCursor implements ChildCursor {
+
+        private final TraceDb db;
+        private final Txn<ByteBuffer> txn;
+        private final byte[] traceIdBytes;
+
+        public SingleStoreChildCursor(final TraceDb db,
+                                      final Txn<ByteBuffer> txn,
+                                      final byte[] traceIdBytes) {
+            this.db = db;
+            this.txn = txn;
+            this.traceIdBytes = traceIdBytes;
+        }
+
+        @Override
+        public ChildSpan firstChildAfter(final byte[] parentSpanId,
+                                         final byte[] afterLocator,
+                                         final Set<String> excludeSpanIdHexes) {
+            return db.firstChildAfter(txn, traceIdBytes, parentSpanId, afterLocator, excludeSpanIdHexes);
+        }
+    }
+
+    /**
+     * A {@link ChildCursor} that unions several stores (live shard + archive bucket(s)): returns the
+     * child with the smallest locator across all delegates, so siblings from different stores interleave
+     * in start-time order. Duplicate spans (identical locator — only during transient archival overlap)
+     * collapse to one.
+     */
+    public static final class MergedChildCursor implements ChildCursor {
+
+        private final List<ChildCursor> delegates;
+
+        public MergedChildCursor(final List<ChildCursor> delegates) {
+            this.delegates = delegates;
+        }
+
+        @Override
+        public ChildSpan firstChildAfter(final byte[] parentSpanId,
+                                         final byte[] afterLocator,
+                                         final Set<String> excludeSpanIdHexes) {
+            ChildSpan best = null;
+            for (final ChildCursor delegate : delegates) {
+                final ChildSpan hit =
+                        delegate.firstChildAfter(parentSpanId, afterLocator, excludeSpanIdHexes);
+                if (hit != null
+                        && (best == null || Arrays.compareUnsigned(hit.locator(), best.locator()) < 0)) {
+                    best = hit;
+                }
+            }
+            return best;
+        }
+    }
+
+    /**
+     * Up to {@code limit} spans in pre-order (tree) order from {@code cursor}, resuming after
+     * {@code cursorPath} (null/empty = start at the root). O(depth + limit).
+     */
+    public static SpanPage getSpanPage(final ChildCursor cursor,
+                                       final List<byte[]> cursorPath,
+                                       final int limit) {
+        final List<byte[]> path = new ArrayList<>();
+        if (cursorPath != null) {
+            path.addAll(cursorPath);
+        }
+        final List<SpanRow> rows = new ArrayList<>(Math.max(0, limit));
+        for (int i = 0; i < limit; i++) {
+            final Optional<Span> next = advancePreorder(cursor, path);
+            if (next.isEmpty()) {
+                return new SpanPage(rows, new ArrayList<>(path), false);
+            }
+            // depth 0 = root, matching the non-virtualized waterfall's indentation (path
+            // includes the current node, so its size is the 1-based depth).
+            rows.add(new SpanRow(next.get(), path.size() - 1));
+        }
+        return new SpanPage(rows, new ArrayList<>(path), true);
+    }
+
+    /**
+     * Single-store convenience: {@code limit} spans in pre-order order from this store, in its own read
+     * txn. Resumes after {@code cursorPath} (null/empty = start at the root).
+     */
+    public SpanPage getSpanPage(final byte[] traceIdBytes,
+                                final List<byte[]> cursorPath,
+                                final int limit) {
+        return env.read(readTxn ->
+                getSpanPage(new SingleStoreChildCursor(this, readTxn, traceIdBytes), cursorPath, limit));
+    }
+
+    // Advances 'path' in place to the next node in pre-order DFS and returns its span, or empty when
+    // exhausted. 'path' is the chain of 16-byte locators (startTime ∥ spanId) from the root to the
+    // current node (empty = before the root). Children come from 'cursor' (single store or merged).
+    // Malformed cycles are skipped via the ancestor set.
+    private static Optional<Span> advancePreorder(final ChildCursor cursor, final List<byte[]> path) {
+        final Set<String> ancestors = new HashSet<>();
+        for (final byte[] loc : path) {
+            ancestors.add(HexStringUtil.encode(spanIdOf(loc)));
+        }
+
+        // Start: first root span (child of the all-zero parent).
+        if (path.isEmpty()) {
+            final ChildSpan root = cursor.firstChildAfter(NO_PARENT_SPAN_ID, null, ancestors);
+            if (root == null) {
+                return Optional.empty();
+            }
+            path.add(root.locator());
+            return Optional.of(root.span());
+        }
+
+        // 1. Descend into the first child of the current (last) node.
+        final byte[] last = path.get(path.size() - 1);
+        final ChildSpan child = cursor.firstChildAfter(spanIdOf(last), null, ancestors);
+        if (child != null) {
+            path.add(child.locator());
+            return Optional.of(child.span());
+        }
+
+        // 2. No child — walk up to the nearest ancestor that has a next sibling.
+        for (int j = path.size() - 1; j >= 0; j--) {
+            final byte[] parent = j == 0
+                    ? NO_PARENT_SPAN_ID
+                    : spanIdOf(path.get(j - 1));
+            final Set<String> upperAncestors = new HashSet<>();
+            for (int k = 0; k < j; k++) {
+                upperAncestors.add(HexStringUtil.encode(spanIdOf(path.get(k))));
+            }
+            final ChildSpan sibling = cursor.firstChildAfter(parent, path.get(j), upperAncestors);
+            if (sibling != null) {
+                while (path.size() > j) {
+                    path.remove(path.size() - 1);
+                }
+                path.add(sibling.locator());
+                return Optional.of(sibling.span());
+            }
+        }
+        return Optional.empty();
+    }
+
+    // First child of 'parentSpanIdBytes' whose locator (startTime ∥ spanId) is strictly greater than
+    // 'afterLocator' (or the very first child when null), skipping any child already in
+    // 'excludeSpanIdHexes' (cycle guard). A start-bounded range scan → O(log n) seek, so wide (flat)
+    // levels resume cheaply, and children are visited in start-time order. Returns null if none.
+    public ChildSpan firstChildAfter(final Txn<ByteBuffer> txn,
+                                     final byte[] traceIdBytes,
+                                     final byte[] parentSpanIdBytes,
+                                     final byte[] afterLocator,
+                                     final Set<String> excludeSpanIdHexes) {
+        final byte[] lo = childRangeKey(traceIdBytes, parentSpanIdBytes,
+                afterLocator == null ? new byte[LOCATOR_BYTES] : afterLocator);
+        final boolean startInclusive = afterLocator == null;
+        final byte[] hi = childRangeKey(traceIdBytes, parentSpanIdBytes, LOCATOR_MAX);
+        final ChildSpan[] holder = new ChildSpan[1];
+        byteBuffers.useBytes(lo, loBuf -> {
+            byteBuffers.useBytes(hi, hiBuf -> {
+                final LmdbKeyRange range = LmdbKeyRange.builder()
+                        .start(loBuf, startInclusive)
+                        .stop(hiBuf, true)
+                        .build();
+                try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, dbi, range)) {
+                    stream.filter(entry ->
+                                    !excludeSpanIdHexes.contains(
+                                            HexStringUtil.encode(readSpanId(entry.getKey()))))
+                            .findFirst()
+                            .ifPresent(entry -> {
+                                final byte[] locator = readLocator(entry.getKey());
+                                final SpanKey spanKey = keySerde.read(txn, entry.getKey());
+                                final SpanValue spanValue = valueSerde.read(txn, entry.getVal());
+                                holder[0] = new ChildSpan(createSpan(spanKey, spanValue), locator);
+                            });
+                }
+            });
+        });
+        return holder[0];
+    }
+
+    private static byte[] childRangeKey(final byte[] traceIdBytes,
+                                        final byte[] parentSpanIdBytes,
+                                        final byte[] locatorSuffix) {
+        final byte[] key = new byte[TRACE_ID_BYTES + SPAN_ID_BYTES + LOCATOR_BYTES];
+        System.arraycopy(traceIdBytes, 0, key, 0, TRACE_ID_BYTES);
+        System.arraycopy(parentSpanIdBytes, 0, key, TRACE_ID_BYTES, SPAN_ID_BYTES);
+        System.arraycopy(locatorSuffix, 0, key, TRACE_ID_BYTES + SPAN_ID_BYTES, LOCATOR_BYTES);
+        return key;
+    }
+
+    /**
+     * Random-access tree-order page: rows {@code [offset, offset+limit)} in pre-order DFS. Resumes
+     * from the nearest checkpoint at or before {@code offset} and walks at most CHECKPOINT_INTERVAL
+     * rows to reach it, so a scrollbar drag anywhere is O(CHECKPOINT_INTERVAL + limit). Falls back to
+     * walking from the start when no checkpoints exist (small / not-yet-checkpointed traces). Own read
+     * txn.
+     */
+    public SpanPage getSpanPageAtOffset(final byte[] traceIdBytes,
+                                        final int offset,
+                                        final int limit) {
+        return env.read(readTxn -> {
+            final ChildCursor cursor = new SingleStoreChildCursor(this, readTxn, traceIdBytes);
+            final int checkpointOffset = (offset / CHECKPOINT_INTERVAL) * CHECKPOINT_INTERVAL;
+            final List<byte[]> checkpoint = readCheckpoint(readTxn, traceIdBytes, checkpointOffset);
+            final List<byte[]> path = new ArrayList<>();
+            final int skip;
+            if (checkpoint == null) {
+                skip = offset;                 // no checkpoint — walk from the start
+            } else {
+                path.addAll(checkpoint);
+                skip = offset - checkpointOffset;
+            }
+            for (int i = 0; i < skip; i++) {
+                if (advancePreorder(cursor, path).isEmpty()) {
+                    return new SpanPage(new ArrayList<>(), new ArrayList<>(path), false);
+                }
+            }
+            final List<SpanRow> rows = new ArrayList<>(Math.max(0, limit));
+            for (int i = 0; i < limit; i++) {
+                final Optional<Span> next = advancePreorder(cursor, path);
+                if (next.isEmpty()) {
+                    return new SpanPage(rows, new ArrayList<>(path), false);
+                }
+                // depth 0 = root, matching the non-virtualized waterfall's indentation (path
+                // includes the current node, so its size is the 1-based depth).
+                rows.add(new SpanRow(next.get(), path.size() - 1));
+            }
+            return new SpanPage(rows, new ArrayList<>(path), true);
+        });
+    }
+
+    /**
+     * A downsampled overview for a very large trace: at most {@code maxBars} representative spans
+     * across the [{@code fromMs}, {@code toMs}] extent — the longest-duration span in each of
+     * {@code maxBars} equal time buckets. One streaming pass over the trace's spans (bounded memory),
+     * so the whole-trace shape can be shown without returning every span. Own read txn.
+     */
+    public List<Span> getOverviewSpans(final byte[] traceIdBytes,
+                                       final long fromMs,
+                                       final long toMs,
+                                       final int maxBars) {
+        final int bars = Math.max(1, maxBars);
+        return env.read(txn -> {
+            final long spanMs = Math.max(1L, toMs - fromMs);
+            final Span[] best = new Span[bars];
+            final long[] bestDur = new long[bars];
+            byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
+                final LmdbKeyRange range = LmdbKeyRange.builder().prefix(prefixBuf).build();
+                LmdbIterable.iterate(txn, dbi, range, (key, val) -> {
+                    final SpanKey spanKey = keySerde.read(txn, key);
+                    final SpanValue spanValue = valueSerde.read(txn, val);
+                    final Span span = createSpan(spanKey, spanValue);
+                    final long startMs = span.start() == null
+                            ? fromMs
+                            : span.start().toEpochMillis();
+                    int bucket = (int) (((startMs - fromMs) * bars) / spanMs);
+                    if (bucket < 0) {
+                        bucket = 0;
+                    } else if (bucket >= bars) {
+                        bucket = bars - 1;
+                    }
+                    final long dur = span.duration() == null
+                            ? 0L
+                            : span.duration().getNanos();
+                    if (best[bucket] == null || dur > bestDur[bucket]) {
+                        best[bucket] = span;
+                        bestDur[bucket] = dur;
+                    }
+                });
+            });
+            final List<Span> out = new ArrayList<>();
+            for (final Span span : best) {
+                if (span != null) {
+                    out.add(span);
+                }
+            }
+            return out;
+        });
+    }
+
+    // Rebuilds the sparse DFS checkpoints for a trace (prefix-clear + re-snapshot) and returns the
+    // trace depth (longest simple path) from the same walk. A resume-cursor is stored every
+    // CHECKPOINT_INTERVAL rows; offset 0 is never stored (an empty cursor = start).
+    private int rebuildCheckpointsAndDepth(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        deleteCheckpointsOf(txn, traceIdBytes);
+        final ChildCursor cursor = new SingleStoreChildCursor(this, txn, traceIdBytes);
+        final List<byte[]> path = new ArrayList<>();
+        int emitted = 0;
+        int maxDepth = 0;
+        while (advancePreorder(cursor, path).isPresent()) {
+            emitted++;
+            if (path.size() > maxDepth) {
+                maxDepth = path.size();
+            }
+            if (emitted % CHECKPOINT_INTERVAL == 0) {
+                storeCheckpoint(txn, traceIdBytes, emitted, path);
+            }
+        }
+        return maxDepth;
+    }
+
+    private void storeCheckpoint(final Txn<ByteBuffer> txn,
+                                 final byte[] traceIdBytes,
+                                 final int offset,
+                                 final List<byte[]> path) {
+        final byte[] key = checkpointKey(traceIdBytes, offset);
+        final byte[] val = encodePath(path);
+        byteBuffers.useBytes(key, keyBuf -> {
+            byteBuffers.useBytes(val, valBuf -> {
+                traceDfsCheckpointsDbi.put(txn, keyBuf, valBuf);
+            });
+        });
+    }
+
+    // Returns the stored cursor path at exactly 'offset', or null if none (incl. offset <= 0).
+    private List<byte[]> readCheckpoint(final Txn<ByteBuffer> txn,
+                                        final byte[] traceIdBytes,
+                                        final int offset) {
+        if (offset <= 0) {
+            return null;
+        }
+        final List<byte[]> result = new ArrayList<>();
+        final boolean[] found = {false};
+        byteBuffers.useBytes(checkpointKey(traceIdBytes, offset), keyBuf -> {
+            final ByteBuffer value = traceDfsCheckpointsDbi.get(txn, keyBuf);
+            if (value != null) {
+                found[0] = true;
+                final byte[] bytes = new byte[value.remaining()];
+                value.duplicate().get(bytes);
+                result.addAll(decodePath(bytes));
+            }
+        });
+        return found[0] ? result : null;
+    }
+
+    private void deleteCheckpointsOf(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        final List<byte[]> keys = new ArrayList<>();
+        byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
+            final LmdbKeyRange range = LmdbKeyRange.builder().prefix(prefixBuf).build();
+            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, traceDfsCheckpointsDbi, range)) {
+                stream.forEach(entry -> {
+                    final byte[] k = new byte[entry.getKey().remaining()];
+                    entry.getKey().duplicate().get(k);
+                    keys.add(k);
+                });
+            }
+        });
+        for (final byte[] k : keys) {
+            byteBuffers.useBytes(k, keyBuf -> {
+                traceDfsCheckpointsDbi.delete(txn, keyBuf);
+            });
+        }
+    }
+
+    private static byte[] checkpointKey(final byte[] traceIdBytes, final int offset) {
+        final byte[] key = new byte[TRACE_ID_BYTES + Integer.BYTES];
+        System.arraycopy(traceIdBytes, 0, key, 0, TRACE_ID_BYTES);
+        ByteBuffer.wrap(key).putInt(TRACE_ID_BYTES, offset); // big-endian offset suffix
+        return key;
+    }
+
+    public static byte[] encodePath(final List<byte[]> path) {
+        final byte[] out = new byte[path.size() * LOCATOR_BYTES];
+        int p = 0;
+        for (final byte[] locator : path) {
+            System.arraycopy(locator, 0, out, p, LOCATOR_BYTES);
+            p += LOCATOR_BYTES;
+        }
+        return out;
+    }
+
+    public static List<byte[]> decodePath(final byte[] bytes) {
+        final List<byte[]> path = new ArrayList<>();
+        for (int i = 0; i + LOCATOR_BYTES <= bytes.length; i += LOCATOR_BYTES) {
+            final byte[] locator = new byte[LOCATOR_BYTES];
+            System.arraycopy(bytes, i, locator, 0, LOCATOR_BYTES);
+            path.add(locator);
+        }
+        return path;
     }
 
     /**
@@ -1893,12 +2355,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         if (depth == 0
                 || stats.spanCount() <= DEPTH_EXACT_SPAN_THRESHOLD
                 || stats.spanCount() >= 2L * Math.max(1L, stats.spanCountAtLastDepth())) {
-            // Bounded DFS over child prefix scans; the path-visited guard in descend() skips
-            // back-edges so a malformed cyclic trace still terminates.
-            final int[] maxLevel = {0};
-            descend(txn, traceIdBytes, HexStringUtil.decode(root.getSpanId()), 1, maxLevel,
-                    new HashSet<>());
-            depth = maxLevel[0];
+            if (stats.spanCount() > CHECKPOINT_MIN_SPANS) {
+                // Large trace: one pre-order walk both computes depth (longest simple path) and
+                // rebuilds the sparse DFS checkpoints for random-access paging — same gated cadence
+                // as the depth recompute, so no extra hot-path cost.
+                depth = rebuildCheckpointsAndDepth(txn, traceIdBytes);
+            } else {
+                // Small trace (loads whole; no checkpoints): bounded DFS for depth only. The
+                // path-visited guard in descend() skips back-edges so a cyclic trace terminates.
+                final int[] maxLevel = {0};
+                descend(txn, traceIdBytes, HexStringUtil.decode(root.getSpanId()), 1, maxLevel,
+                        new HashSet<>());
+                depth = maxLevel[0];
+            }
             stats = new TraceStats(stats.spanCount(), stats.serviceCount(), stats.maxEnd(),
                     stats.lastActivityMs(), depth, stats.spanCount());
             writeStats(txn, traceIdBytes, stats);

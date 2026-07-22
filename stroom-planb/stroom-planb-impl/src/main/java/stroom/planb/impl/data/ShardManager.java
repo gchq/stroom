@@ -24,6 +24,7 @@ import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.data.SnapshotShard.DbFactory;
@@ -31,6 +32,7 @@ import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.fs.ArchiveStoreShard;
 import stroom.planb.impl.fs.SharedFileStoreShard;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.PlanBDoc;
@@ -49,16 +51,21 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Singleton
 public class ShardManager {
@@ -76,6 +83,8 @@ public class ShardManager {
     private final PlanBDocStore planBDocStore;
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
+    // Cached read-only local copies of shared-store archive buckets, keyed uuid_<idx>_<dateLabel>.
+    private final Map<String, Shard> archiveShardMap = new ConcurrentHashMap<>();
     private final NodeInfo nodeInfo;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
@@ -109,6 +118,10 @@ public class ShardManager {
 
         // Delete any existing snapshots that might have been left behind from the last use of Stroom.
         FileUtil.deleteDir(statePaths.getSnapshotDir());
+
+        // Reap any shared-file-store shard generation dirs left behind by a previous run (nothing is
+        // serving yet, so all are orphans); they are re-synced from the shared store on next access.
+        sweepOrphanGenerationDirs(true);
     }
 
     public boolean isSnapshotNode() {
@@ -220,7 +233,15 @@ public class ShardManager {
     }
 
     public void cleanup() {
-        shardMap.forEach((uuid, shard) -> {
+        cleanupMap(shardMap);
+        cleanupMap(archiveShardMap);
+
+        // Reap generation dirs left by crashes / deferred deletes (no live owner).
+        sweepOrphanGenerationDirs(false);
+    }
+
+    private void cleanupMap(final Map<String, Shard> map) {
+        map.forEach((key, shard) -> {
             try {
                 boolean docDeleted;
 
@@ -234,22 +255,99 @@ public class ShardManager {
                 }
 
                 if (docDeleted) {
-                    // Doc deleted — could be StoreShard whose delete() may fail if readers
+                    // Doc deleted — could be a StoreShard whose delete() may fail if readers
                     // are active. Keep in map for retry on next cycle if delete fails.
                     if (shard.delete()) {
-                        shardMap.remove(uuid);
+                        map.remove(key);
                     }
                 } else if (shard.isIdle()) {
-                    // Idle eviction — only SnapshotShard reaches here (StoreShard.isIdle()
-                    // always returns false). Remove from map first to prevent a zombie shard
-                    // window where a concurrent reader gets a deleted shard from computeIfAbsent.
-                    shardMap.remove(uuid);
-                    shard.delete();
+                    // Idle eviction (SnapshotShard, SharedFileStoreShard, ArchiveStoreShard). Remove THIS
+                    // exact instance first so the next get() creates a fresh one — for a shard using a
+                    // generation dir that means a new dir, so the closing and new envs never share a
+                    // lock.mdb (no robust-mutex SIGSEGV). evict() waits for in-flight readers then closes
+                    // + deletes the local copy; a reader that grabbed this instance mid-eviction
+                    // re-resolves a fresh one via the ShardClosedException retry in get().
+                    if (map.remove(key, shard)) {
+                        shard.evict();
+                    }
                 }
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
         });
+    }
+
+    /**
+     * Deletes local shared-file-store shard generation dirs under {@code shards/<uuid>_<idx>/} that no
+     * live {@link shardMap} instance owns — crash / failed-delete orphans. Safe because those copies
+     * are always re-syncable from the shared store. Never touches flat {@code shards/<uuid>} dirs
+     * (RestStoreShard) whose local copy is the authoritative data. On {@code startup} everything
+     * non-live is reaped (nothing is serving yet); otherwise only dirs older than
+     * {@code minTimeToKeepStoreShardEnv}, so a just-created instance not yet visible in the map is not
+     * swept out from under a concurrent {@code get()}.
+     */
+    private void sweepOrphanGenerationDirs(final boolean startup) {
+        // Live shards (shards/) and cached archive buckets (archive_cache/) both use the
+        // <identity>/<generation> layout, so the same sweep handles both roots.
+        sweepGenerationDirs(statePaths.getShardDir(), collectLiveGenerationDirs(shardMap), startup);
+        sweepGenerationDirs(statePaths.getLocalArchiveDir(), collectLiveGenerationDirs(archiveShardMap),
+                startup);
+    }
+
+    private static Set<Path> collectLiveGenerationDirs(final Map<String, Shard> map) {
+        final Set<Path> live = new HashSet<>();
+        for (final Shard shard : map.values()) {
+            if (shard instanceof final AbstractStoreShard storeShard) {
+                live.add(storeShard.getShardDir().toAbsolutePath().normalize());
+            }
+        }
+        return live;
+    }
+
+    private void sweepGenerationDirs(final Path root, final Set<Path> live, final boolean startup) {
+        if (!Files.exists(root)) {
+            return;
+        }
+
+        // Age guard only matters for the periodic sweep (avoid racing a just-created instance not yet
+        // visible in the map); at startup nothing is serving so everything non-live is reaped.
+        final Instant cutoff = startup
+                ? null
+                : Instant.now().minus(configProvider.get().getMinTimeToKeepStoreShardEnv().getDuration());
+
+        try (final Stream<Path> identityDirs = Files.list(root)) {
+            identityDirs.filter(Files::isDirectory).forEach(identityDir -> {
+                // Flat data.mdb directly under the identity dir => RestStoreShard (authoritative) — skip.
+                if (Files.exists(identityDir.resolve(PlanBConstants.DATA_FILE_NAME))) {
+                    return;
+                }
+                try (final Stream<Path> genDirs = Files.list(identityDir)) {
+                    genDirs.filter(Files::isDirectory).forEach(genDir -> {
+                        if (live.contains(genDir.toAbsolutePath().normalize())) {
+                            return;
+                        }
+                        if (!startup && !isOlderThan(genDir, cutoff)) {
+                            return;
+                        }
+                        LOGGER.info(() -> "Sweeping orphaned local shard generation dir: " + genDir);
+                        FileUtil.deleteDir(genDir);
+                    });
+                } catch (final IOException e) {
+                    LOGGER.error(() -> "Error sweeping generation dirs under " + identityDir
+                            + ": " + e.getMessage(), e);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(() -> "Error sweeping local shard dir " + root + ": " + e.getMessage(), e);
+        }
+    }
+
+    private static boolean isOlderThan(final Path dir, final Instant cutoff) {
+        try {
+            return Files.getLastModifiedTime(dir).toInstant().isBefore(cutoff);
+        } catch (final IOException e) {
+            return false; // unknown age — don't sweep
+        }
     }
 
     public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
@@ -277,7 +375,7 @@ public class ShardManager {
         try {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
-        } catch (final SnapshotShard.ShardClosedException e) {
+        } catch (final ShardClosedException e) {
             // The shard was evicted by cleanup between our lookup and use.
             // Retry once — computeIfAbsent will create a fresh shard.
             LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
@@ -307,7 +405,7 @@ public class ShardManager {
         try {
             final Shard shard = getShardForMapNameAndShard(mapName, shardIndex);
             return shard.get(function);
-        } catch (final SnapshotShard.ShardClosedException e) {
+        } catch (final ShardClosedException e) {
             LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName + "_" + shardIndex);
             final Shard shard = getShardForMapNameAndShard(mapName, shardIndex);
             return shard.get(function);
@@ -318,6 +416,34 @@ public class ShardManager {
         }
     }
 
+
+    /**
+     * Read from a cached, read-only local copy of an archive bucket (copied down + version-checked +
+     * idle-evicted), instead of copying the bucket to a temp dir per call. Keyed by
+     * {@code uuid_<shardIndex>_<dateLabel>}. Mirrors the live {@link #get} retry so a read racing an
+     * idle eviction re-resolves a fresh copy.
+     */
+    public <R> R getArchive(final PlanBDocument doc,
+                            final int shardIndex,
+                            final ArchiveShardRef ref,
+                            final Function<Db<?, ?>, R> function) {
+        try {
+            return getArchiveShard(doc, shardIndex, ref).get(function);
+        } catch (final ShardClosedException e) {
+            LOGGER.debug(() -> "Archive shard was evicted, retrying with fresh shard for: "
+                    + doc.getUuid() + "_" + shardIndex + "_" + ref.dateLabel());
+            return getArchiveShard(doc, shardIndex, ref).get(function);
+        }
+    }
+
+    private Shard getArchiveShard(final PlanBDocument doc,
+                                  final int shardIndex,
+                                  final ArchiveShardRef ref) {
+        final String cacheKey = doc.getUuid() + "_" + shardIndex + "_" + ref.dateLabel();
+        return archiveShardMap.computeIfAbsent(cacheKey, k ->
+                new ArchiveStoreShard(byteBuffers, byteBufferFactory, configProvider, statePaths,
+                        doc, shardIndex, ref));
+    }
 
     public Shard getShardForMapName(final String mapName) {
         return getShardForMapNameAndShard(mapName, -1);

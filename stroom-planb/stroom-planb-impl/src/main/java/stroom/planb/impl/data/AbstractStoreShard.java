@@ -71,6 +71,7 @@ public abstract class AbstractStoreShard implements Shard {
     protected final PlanBDocument doc;
     protected volatile Db<?, ?> db;
     protected volatile Instant lastWriteTime;
+    protected volatile Instant lastAccessTime;
 
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,
@@ -111,14 +112,34 @@ public abstract class AbstractStoreShard implements Shard {
                        final PlanBDocument doc,
                        final int shardIndex,
                        final Path shardBaseDir) {
+        this(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex, shardBaseDir, null);
+    }
+
+    /**
+     * As above, but places the shard in a per-instance {@code generation} subdir
+     * ({@code <base>/<uuid>_<idx>/<generation>}) when {@code generation != null}. Used by
+     * {@link stroom.planb.impl.fs.SharedFileStoreShard} read instances so that an idle-evicted
+     * (closing) instance and its replacement never share a {@code lock.mdb} directory — avoiding the
+     * robust-mutex SIGSEGV hazard above without any create/evict serialisation.
+     */
+    protected AbstractStoreShard(final ByteBuffers byteBuffers,
+                       final ByteBufferFactory byteBufferFactory,
+                       final Provider<PlanBConfig> configProvider,
+                       final StatePaths statePaths,
+                       final PlanBDocument doc,
+                       final int shardIndex,
+                       final Path shardBaseDir,
+                       final String generation) {
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
         this.doc = doc;
         this.shardIndex = shardIndex;
         lastWriteTime = Instant.now();
+        lastAccessTime = Instant.now();
         final String dirSuffix = shardIndex >= 0 ? doc.getUuid() + "_" + shardIndex : doc.getUuid();
-        this.shardDir = shardBaseDir.resolve(dirSuffix);
+        final Path identityDir = shardBaseDir.resolve(dirSuffix);
+        this.shardDir = generation != null ? identityDir.resolve(generation) : identityDir;
 
         // Just open the DB.
         try {
@@ -127,6 +148,42 @@ public abstract class AbstractStoreShard implements Shard {
             throw new UncheckedIOException(e);
         }
         open();
+    }
+
+    /**
+     * Constructor taking a fully-resolved local {@code shardDir} that optionally defers opening. Used by
+     * read-only subclasses (e.g. {@link stroom.planb.impl.fs.ArchiveStoreShard}) whose dir identity is
+     * not the {@code uuid_idx} form and which must copy {@code data.mdb} in before opening (a read-only
+     * LMDB env cannot open an absent {@code data.mdb}). When {@code openNow} is false the caller opens.
+     */
+    protected AbstractStoreShard(final ByteBuffers byteBuffers,
+                       final ByteBufferFactory byteBufferFactory,
+                       final Provider<PlanBConfig> configProvider,
+                       final PlanBDocument doc,
+                       final int shardIndex,
+                       final Path resolvedShardDir,
+                       final boolean openNow) {
+        this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
+        this.configProvider = configProvider;
+        this.doc = doc;
+        this.shardIndex = shardIndex;
+        lastWriteTime = Instant.now();
+        lastAccessTime = Instant.now();
+        this.shardDir = resolvedShardDir;
+        try {
+            Files.createDirectories(shardDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        if (openNow) {
+            open();
+        }
+    }
+
+    /** Whether the LMDB env should be opened read-only. Overridden by read-only shards. */
+    protected boolean isReadOnly() {
+        return false;
     }
 
     @Override
@@ -361,14 +418,46 @@ public abstract class AbstractStoreShard implements Shard {
             readLock.lockInterruptibly();
             try {
                 if (db == null) {
-                    throw new RuntimeException("Database is closed");
+                    // Closed by an idle eviction between lookup and use — ShardManager retries.
+                    throw new ShardClosedException();
                 }
+                lastAccessTime = Instant.now();
                 return function.apply(db);
             } finally {
                 readLock.unlock();
             }
         } catch (final InterruptedException e2) {
             throw UncheckedInterruptedException.create(e2);
+        }
+    }
+
+    /**
+     * Idle reclamation of the local copy: waits for in-flight readers (via {@code exclusiveReadLock}),
+     * closes the env and deletes the local shard dir. Safe to block here because a replacement instance
+     * uses a fresh generation dir (see the generation ctor) so there is no same-{@code lock.mdb}
+     * overlap. The shared/remote store remains the source of truth, so the copy is recreated on next
+     * access. Subclasses whose local dir IS the authoritative data (e.g. RestStoreShard) never reach
+     * here because their {@link #isIdle()} stays false.
+     */
+    @Override
+    public void evict() {
+        try {
+            writeLock.lockInterruptibly();
+            try {
+                exclusiveReadLock.lockInterruptibly();
+                try {
+                    LOGGER.info(() -> "Evicting idle local shard for: " + doc.asDocRef()
+                            + " (shardIndex: " + shardIndex + ")");
+                    close();
+                    FileUtil.deleteDir(shardDir);
+                } finally {
+                    exclusiveReadLock.unlock();
+                }
+            } finally {
+                writeLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -380,7 +469,7 @@ public abstract class AbstractStoreShard implements Shard {
         if (db == null) {
             if (Files.exists(shardDir)) {
                 LOGGER.info(() -> "Opening local shard for '" + doc.asDocRef() + "' (shardIndex: " + shardIndex + ")");
-                db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory, false);
+                db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory, isReadOnly());
             } else {
                 final String message = "Local Plan B shard directory not found for '" + doc.asDocRef() + "'";
                 LOGGER.error(() -> message);
@@ -426,8 +515,9 @@ public abstract class AbstractStoreShard implements Shard {
             readLock.lockInterruptibly();
             try {
                 if (db == null) {
-                    throw new RuntimeException("Database is closed");
+                    throw new ShardClosedException();
                 }
+                lastAccessTime = Instant.now();
                 return db.getInfoString();
             } finally {
                 readLock.unlock();

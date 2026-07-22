@@ -78,4 +78,14 @@ public interface Shard {
      * @return true if the shard is idle and can be safely evicted from the shard map.
      */
     boolean isIdle();
+
+    /**
+     * Reclaim this shard's local resources because it is idle (the shared/remote store remains the
+     * source of truth and it will be recreated on next access). Unlike {@link #delete()}, which is for
+     * a deleted doc and may decline (return false) if readers are active, this waits for in-flight
+     * readers and always completes. Default delegates to {@link #delete()}.
+     */
+    default void evict() {
+        delete();
+    }
 }

@@ -45,6 +45,8 @@ public class StatePaths {
     private final Path shardDir;
     // Local snapshots allow for faster lookups.
     private final Path snapshotDir;
+    // Local read-only cached copies of shared-store archive buckets.
+    private final Path localArchiveDir;
 
     @Inject
     public StatePaths(final Provider<PlanBConfig> configProvider,
@@ -61,6 +63,7 @@ public class StatePaths {
         mergingDir = rootDir.resolve(PlanBConstants.MERGING_DIR_NAME);
         shardDir = rootDir.resolve(PlanBConstants.SHARDS_DIR_NAME);
         snapshotDir = rootDir.resolve(PlanBConstants.SNAPSHOTS_DIR_NAME);
+        localArchiveDir = rootDir.resolve(PlanBConstants.ARCHIVE_CACHE_DIR_NAME);
     }
 
     public Path getRootDir() {
@@ -93,5 +96,9 @@ public class StatePaths {
 
     public Path getSnapshotDir() {
         return snapshotDir;
+    }
+
+    public Path getLocalArchiveDir() {
+        return localArchiveDir;
     }
 }

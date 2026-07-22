@@ -17,7 +17,11 @@
 package stroom.planb.impl.data;
 
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceOverview;
+import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.util.shared.ResourcePaths;
@@ -43,6 +47,8 @@ public interface TracesRemoteQueryResource extends RestResource {
     String BASE_PATH = "/traces" + ResourcePaths.V1;
     String GET_TRACES_PATH = "/getTraces";
     String GET_TRACE_PATH = "/getTrace";
+    String GET_SPANS_PATH = "/getSpans";
+    String GET_TRACE_OVERVIEW_PATH = "/getTraceOverview";
 
     @POST
     @Path(GET_TRACES_PATH)
@@ -57,4 +63,18 @@ public interface TracesRemoteQueryResource extends RestResource {
             summary = "Gets trace from a remote Plan B store.",
             operationId = "tracesGetTrace")
     Trace getTrace(GetTraceRequest request);
+
+    @POST
+    @Path(GET_SPANS_PATH)
+    @Operation(
+            summary = "Gets a tree-order page of a trace's spans from a remote Plan B store.",
+            operationId = "tracesGetSpans")
+    TraceSpanPage getSpans(GetSpansRequest request);
+
+    @POST
+    @Path(GET_TRACE_OVERVIEW_PATH)
+    @Operation(
+            summary = "Gets a downsampled overview of a large trace from a remote Plan B store.",
+            operationId = "tracesGetTraceOverview")
+    TraceOverview getTraceOverview(GetTraceOverviewRequest request);
 }

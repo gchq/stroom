@@ -426,17 +426,6 @@ class SnapshotShard implements Shard {
         }
     }
 
-    /**
-     * Thrown when an operation is attempted on a shard that has been closed/deleted.
-     * Package-private so that {@link ShardManager} can catch and retry with a fresh shard.
-     */
-    static class ShardClosedException extends RuntimeException {
-
-        ShardClosedException() {
-            super("Shard has been closed");
-        }
-    }
-
     @Override
     public PlanBDocument getDoc() {
         return doc;

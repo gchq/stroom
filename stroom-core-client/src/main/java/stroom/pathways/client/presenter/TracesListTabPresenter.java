@@ -21,6 +21,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResource;
@@ -42,6 +44,12 @@ import com.gwtplatform.mvp.client.View;
 public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> {
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
+
+    // Traces with at least this many spans are shown via the bounded, virtualized detail path rather
+    // than loaded whole; below it the whole trace is fetched and rendered as before.
+    private static final int LARGE_TRACE_THRESHOLD = 10_000;
+    // Representative bars in the downsampled overview strip of a large trace.
+    private static final int OVERVIEW_MAX_BARS = 300;
 
     private final TracesListPresenter listPresenter;
     private final TraceOverviewWidget traceOverviewWidget;
@@ -72,27 +80,83 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         }));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(e -> {
             final TraceRoot traceRoot = listPresenter.getSelectionModel().getSelected();
-            // Pass the root start time so the server can locate the archive bucket
-            // (labelled by start time) if this trace has been purged from the live shard.
-            final Long startTimeMs = traceRoot.getStartTime() != null
-                    ? traceRoot.getStartTime().toEpochMillis()
-                    : null;
-            final GetTraceRequest request = new GetTraceRequest(
-                    dataSourceRef,
-                    traceRoot.getTraceId(),
-                    SimpleDuration.ZERO,
-                    startTimeMs);
-            restFactory
-                    .create(TRACES_RESOURCE)
-                    .method(res -> res.findTrace(request))
-                    .onSuccess(traceOverviewWidget::setTrace)
-                    // Belt-and-braces: orphan-only traces are now served by the success path, so a
-                    // failure here is genuinely unexpected — clear the detail rather than leaving a
-                    // stale trace displayed.
-                    .onFailure(error -> traceOverviewWidget.setTrace(null))
-                    .taskMonitorFactory(listPresenter.getView())
-                    .exec();
+            if (traceRoot == null) {
+                return;
+            }
+            if (isLargeTrace(traceRoot)) {
+                loadLargeTrace(traceRoot);
+            } else {
+                loadFullTrace(traceRoot);
+            }
         }));
+    }
+
+    // Any trace with enough spans is served via the bounded, virtualized path, regardless of orphan
+    // status — a huge rootless/orphan or archived trace must NOT take the whole-trace loadFullTrace
+    // path, which materialises every span and OOMs. Extents (start/end) are required for the timeline
+    // axis; a huge trace lacking them falls back to loadFullTrace.
+    private boolean isLargeTrace(final TraceRoot traceRoot) {
+        return traceRoot.getTotalSpans() >= LARGE_TRACE_THRESHOLD
+               && traceRoot.getStartTime() != null
+               && traceRoot.getEndTime() != null;
+    }
+
+    private void loadFullTrace(final TraceRoot traceRoot) {
+        // Pass the root start time so the server can locate the archive bucket
+        // (labelled by start time) if this trace has been purged from the live shard.
+        final Long startTimeMs = traceRoot.getStartTime() != null
+                ? traceRoot.getStartTime().toEpochMillis()
+                : null;
+        final GetTraceRequest request = new GetTraceRequest(
+                dataSourceRef,
+                traceRoot.getTraceId(),
+                SimpleDuration.ZERO,
+                startTimeMs);
+        restFactory
+                .create(TRACES_RESOURCE)
+                .method(res -> res.findTrace(request))
+                .onSuccess(traceOverviewWidget::setTrace)
+                // Belt-and-braces: orphan-only traces are now served by the success path, so a
+                // failure here is genuinely unexpected — clear the detail rather than leaving a
+                // stale trace displayed.
+                .onFailure(error -> traceOverviewWidget.setTrace(null))
+                .taskMonitorFactory(listPresenter.getView())
+                .exec();
+    }
+
+    // Loads the downsampled overview once (axis is already whole from the TraceRoot extents), then
+    // hands the widget a fetcher that pages tree-order spans on demand as the user scrolls.
+    private void loadLargeTrace(final TraceRoot traceRoot) {
+        final String traceId = traceRoot.getTraceId();
+        final long fromMs = traceRoot.getStartTime().toEpochMillis();
+        final long toMs = traceRoot.getEndTime().toEpochMillis();
+        // Root start time locates the archive bucket for a split trace (root/bulk archived, trailing
+        // spans live) so the server can page the merged live+archive tree.
+        final Long startTimeMs = traceRoot.getStartTime() != null
+                ? traceRoot.getStartTime().toEpochMillis()
+                : null;
+        final GetTraceOverviewRequest overviewRequest = new GetTraceOverviewRequest(
+                dataSourceRef, traceId, fromMs, toMs, OVERVIEW_MAX_BARS);
+        restFactory
+                .create(TRACES_RESOURCE)
+                .method(res -> res.getTraceOverview(overviewRequest))
+                .onSuccess(overview -> {
+                    final TraceOverviewWidget.SpanWindowFetcher fetcher = (offset, cursor, limit, onLoaded) -> {
+                        final GetSpansRequest spansRequest = new GetSpansRequest(
+                                dataSourceRef, traceId, offset, limit, startTimeMs, cursor);
+                        restFactory
+                                .create(TRACES_RESOURCE)
+                                .method(res -> res.getSpans(spansRequest))
+                                .onSuccess(onLoaded)
+                                .onFailure(error -> onLoaded.accept(null))
+                                .taskMonitorFactory(listPresenter.getView())
+                                .exec();
+                    };
+                    traceOverviewWidget.setLargeTrace(traceRoot, overview.getSpans(), fetcher);
+                })
+                .onFailure(error -> traceOverviewWidget.setTrace(null))
+                .taskMonitorFactory(listPresenter.getView())
+                .exec();
     }
 
     @Override

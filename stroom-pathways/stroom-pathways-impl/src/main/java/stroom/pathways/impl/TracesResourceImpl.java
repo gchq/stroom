@@ -18,7 +18,11 @@ package stroom.pathways.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceOverview;
+import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -46,5 +50,15 @@ public class TracesResourceImpl implements TracesResource {
     @Override
     public Trace findTrace(final GetTraceRequest request) {
         return tracesStoreProvider.get().getTrace(request);
+    }
+
+    @Override
+    public TraceSpanPage getSpans(final GetSpansRequest request) {
+        return tracesStoreProvider.get().getSpans(request);
+    }
+
+    @Override
+    public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
+        return tracesStoreProvider.get().getTraceOverview(request);
     }
 }

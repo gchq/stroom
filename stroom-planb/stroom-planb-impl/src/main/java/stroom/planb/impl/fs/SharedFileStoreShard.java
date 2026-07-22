@@ -44,7 +44,9 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class SharedFileStoreShard extends AbstractStoreShard {
@@ -60,8 +62,27 @@ public class SharedFileStoreShard extends AbstractStoreShard {
                                 final StatePaths statePaths,
                                 final PlanBDocument doc,
                                 final int shardIndex) {
-        super(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex);
+        // Read instances live in a per-instance generation subdir (shards/<uuid>_<idx>/<generation>)
+        // so an idle-evicted (closing) instance and its replacement never share a lock.mdb dir.
+        super(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
+                statePaths.getShardDir(), newGeneration());
         syncFromSharedStoreIfRequired();
+    }
+
+    private static String newGeneration() {
+        return System.currentTimeMillis() + "_" + UUID.randomUUID();
+    }
+
+    /**
+     * Idle when neither read nor write has touched this shard within
+     * {@code minTimeToKeepStoreShardEnv}. The local copy is then evicted (deleted) by
+     * {@link stroom.planb.impl.data.ShardManager} and re-synced from the shared store on next access.
+     */
+    @Override
+    public boolean isIdle() {
+        final Duration timeout = configProvider.get().getMinTimeToKeepStoreShardEnv().getDuration();
+        final Instant idleSince = lastAccessTime.isAfter(lastWriteTime) ? lastAccessTime : lastWriteTime;
+        return idleSince.plus(timeout).isBefore(Instant.now());
     }
 
     public SharedFileStoreShard(final ByteBuffers byteBuffers,

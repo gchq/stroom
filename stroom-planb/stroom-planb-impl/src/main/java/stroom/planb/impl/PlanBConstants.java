@@ -25,6 +25,9 @@ public final class PlanBConstants {
     public static final String MERGING_DIR_NAME = "merging";
     public static final String SHARDS_DIR_NAME = "shards";
     public static final String SNAPSHOTS_DIR_NAME = "snapshots";
+    // Local cache of read-only copies of shared-store archive buckets (distinct from the shared-store
+    // ARCHIVE_DIR_NAME tree). Layout: archive_cache/<uuid>_<idx>_<dateLabel>/<generation>/.
+    public static final String ARCHIVE_CACHE_DIR_NAME = "archive_cache";
     public static final String PROCESSING_DIR_NAME = "processing";
     public static final String TRASH_DIR_NAME = "trash";
 

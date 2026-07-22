@@ -121,6 +121,10 @@ public class TestTraceDb {
                 .traceId("d18ea88869434c083a361644267ecf32")
                 .parentSpanId("")
                 .spanId("e0a94d9f5cd3a306")
+                // The span key now includes start time (siblings sort chronologically), so a point
+                // get must supply the stored span's start time — that of e0a94d9f5cd3a306 in the
+                // TEST_TRACES test data.
+                .startTimeUnixNano("1747388819043137843")
                 .build();
     }
 
@@ -224,7 +228,7 @@ public class TestTraceDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(166);
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(19);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(20);
         }
 
         // Try deletion.
@@ -239,7 +243,7 @@ public class TestTraceDb {
                 true)) {
             assertThat(db.count()).isEqualTo(0);
             System.err.println(db.getInfoString());
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(19);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(20);
         }
 
         // Try compaction.
@@ -254,7 +258,7 @@ public class TestTraceDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(0);
-            assertThat(db.getInfo().env().stat().entries).isEqualTo(19);
+            assertThat(db.getInfo().env().stat().entries).isEqualTo(20);
         }
     }
 

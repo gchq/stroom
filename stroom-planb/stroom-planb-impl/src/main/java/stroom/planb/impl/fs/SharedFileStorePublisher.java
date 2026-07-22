@@ -178,6 +178,12 @@ public class SharedFileStorePublisher {
             // Write the completion sentinel before making the directory visible.
             Files.writeString(sharedTempDir.resolve(PlanBConstants.COMPLETE_FILE_NAME), "");
 
+            // Bump a version marker on every push (fresh write and mergeIntoExisting alike). Nothing
+            // reads it yet; it is groundwork so a future local archive-bucket cache can detect that a
+            // bucket changed (a growing trace keeps merging into the same date bucket) exactly the way
+            // SharedFileStoreShard version-checks live shards. pushDir already whitelists this file.
+            Files.writeString(sharedTempDir.resolve(PlanBConstants.VERSION_FILE_NAME), uid);
+
             // Atomic rename-swap: live -> old, temp -> live, delete old.
             pushDir(sharedTempDir, archiveShardDir);
         } finally {
