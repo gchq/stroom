@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping.read;
 
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
@@ -26,13 +27,16 @@ import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.SteppingConfig;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.OutputState;
+import stroom.util.shared.TextRange;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -88,6 +92,34 @@ class TestStoreStepResolver {
 
     private StepLocation loc(final long part, final long record) {
         return new StepLocation(META, part, record);
+    }
+
+    @Test
+    void testResolveSurfacesStoredSourceHighlight(@TempDir final Path tempDir) {
+        // Build a store via putRecord WITH a per-record source-location snapshot (the resolver-facing helpers
+        // above use putElementData, which stores no snapshot, so the served location has no highlight).
+        final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
+        for (int r = 0; r < 3; r++) {
+            final SourceLocation sl = SourceLocation.builder(META)
+                    .withPartIndex(0L)
+                    .withRecordIndex((long) r)
+                    .withHighlight(new TextRange(new DefaultLocation(10 + r, 1), new DefaultLocation(10 + r, 40)))
+                    .build();
+            store.putRecord(new StepLocation(META, 0, r),
+                    List.of(new StepDataStore.ElementRecord(new ElementId(E1), "fp1", ed("e1r" + r, true))),
+                    sl);
+        }
+
+        final ResolvedStep step = resolver.resolve(store, META, fingerprints, req(StepType.FIRST, null, null))
+                .orElseThrow();
+        final SourceLocation served = step.stepData().getSourceLocation();
+
+        // The served (part, record) coordinates come from the resolved step; the highlight is the one captured
+        // for that record - previously dropped by assemble().
+        assertThat(served.getPartIndex()).isZero();
+        assertThat(served.getRecordIndex()).isZero();
+        assertThat(served.getFirstHighlight().getLocationFrom().getLineNo()).isEqualTo(10);
+        assertThat(served.getFirstHighlight().getLocationTo().getColNo()).isEqualTo(40);
     }
 
     @Test

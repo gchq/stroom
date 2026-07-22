@@ -38,7 +38,8 @@ stroom.pipeline.stepping/
   store/        bytes on disk               StepDataStore, ElementSegmentFile, StepDataStoreManager,
                                             StepDataStoreException, SteppingConfig,
                                             CapturedElementData, CapturedData,
-                                            CapturedElementDataSerializer, CapturedElementDataMapper
+                                            CapturedElementDataSerializer, CapturedElementDataMapper,
+                                            SourceLocationSerializer
   capture/      the write side              StreamCaptureDriver, StreamSweep, SteppingController,
                                             ElementMonitor, Recorder, RecordDetector, SteppingFilter
   read/         the read side               SessionStepResolver, StoreStepResolver,
@@ -509,56 +510,71 @@ holds this element-specific form as {@code CapturedElementData}; the UI panes ar
 stays byte-identical to the old text store. XPath filters now run directly over the stored events
 (`filter.PersistedXPathFilterMatcher`) with no XML re-parse.
 
-**2. Solve state preservation before splitting anything.** This is a hard prerequisite, not a nicety, and
-there is **no state-free intermediate** — not even "re-run the whole tail from record 0". Re-running the tail
-rebuilds *tail-local* accumulation, but it cannot reproduce state that an **upstream** element deposited into
-a shared scope and a downstream element reads, because upstream is the thing you are deliberately not
-re-running. Realistic event pipelines always have this: `LocationHolder` is populated by the `SplitFilter`
-(high, just below the parser) and read downstream by `stroom:record-no`, `line-from`/`col-from`,
-`stroom:source` and the step-highlight; `stroom:put` upstream feeds `stroom:get` downstream via a
-`TaskScopeMap`. Split below those without capturing their state and the downstream output is silently wrong.
+**2. Capture the state that survives the cut, before splitting anything.** The destination is async
+per-element execution, where an edited stage (and its successors) is torn down and restarted against the
+stored upstream stream — potentially *mid-stream*, at record N, without re-processing 0..N-1. In that world
+there is **no state-free intermediate**: a stage restarted at record N needs its accumulated state as of
+record N-1, and state an **upstream** (not-restarted) element deposited into a shared scope is unreachable
+because upstream is the thing you are deliberately not re-running. So state is captured per record, now,
+alongside the IO — this is the same "store more than IO text" change as step 1, so the store format carries
+IO-as-events and state together.
 
-State comes in two kinds, and they hit the store differently:
+Scope is deliberately narrow. Stepping is an introspection tool with understood limitations, and the
+destination is async-per-event where cross-event shared state is at risk anyway. We capture only the state
+whose *correctness users actually rely on* — **source location and counters** — and explicitly drop the rest
+rather than pay to preserve it. Two kinds, captured differently:
 
-- **Element-local accumulation** — `IdEnrichmentFilter.count`, `RecordCountFilter`, `MergeFilter`'s stack.
-  Owned by one element, a deterministic function of the records it has seen. Captured per element, keyed like
-  IO (element fingerprint + record).
-- **Shared / scoped state** — `LocationHolder`, the `stroom:put`/`get` `TaskScopeMap`. Not owned by any one
-  element; one element writes it and another reads it across the cut. Captured as a **per-stream, per-record
-  scope snapshot**, not a per-element chunk — the put-upstream/get-downstream case is the proof that no
-  element you could swap owns that map.
+- **Element-local counters** — `IdEnrichmentFilter.count` (the `EventId` source) and `RecordCountFilter`/
+  `RecordCount`. Owned by one element, a deterministic function of the records it has seen. Captured per
+  element via a stepping-specific **state-capturing element variant**, keyed like IO (element fingerprint +
+  record). This is what lets the *counter-owning element itself* restart mid-stream. (Note `EventId` is also
+  written into the event stream as an attribute, so a *downstream* reader of `@EventId` already gets it from
+  captured IO — the stored counter serves the different case of restarting the owning element.)
+- **Shared source location** — `LocationHolder`'s per-record `SourceLocation`. Populated by the `SplitFilter`
+  (just below the parser) from the SAX `Locator` and read downstream by `stroom:record-no`, `line-from`/
+  `col-from`, `stroom:source` and the step-highlight. Not owned by any one element, so captured as a
+  **per-stream, per-record scope snapshot** (a holder snapshot at `endRecord`), not a per-element chunk.
 
-The mechanism is stepping-specific state-capturing variants of the standard stateful elements, plus scope
-snapshots for the shared holders, both stored in the state store alongside the IO. Because this is the same
-"store more than IO text" change as step 1, design the new store format to carry IO-as-events and state
-together.
+**Dropped, on purpose:** `stroom:put`/`get` cross-record state. In stepping, `put`/`get` are scoped to the
+**current record** — `get` sees only same-record `put`s — via a stepping `TaskScopeMap` variant (or a
+per-record clear). Cross-record shared maps are not a stepping feature. `MergeFilter`-style
+accumulate-to-`endProcessing` aggregation is likewise best-effort: it has no per-record meaning and is not
+restartable mid-stream.
 
-**Fail closed.** The set of stateful elements and shared holders is open-ended and will grow. If the splitter
-meets an element that is neither a known state-capturing variant nor provably stateless, it must **fall back
-to a full re-run**, never guess. Same lesson as the XPath-filter gate: never silently ship wrong values, and
-coverage can then grow incrementally instead of needing a complete enumeration up front.
+**Never fall back to a full re-run.** This reverses an earlier stance. A silent fallback to full reprocessing
+is the worst outcome, because it lets a user *unwittingly* re-introduce O(N²) stepping just by adding a
+pipeline element or XSLT function that touches unrecognised state. We would rather **reduce the scope of what
+is faithful** — accept that some introspection is rough or unavailable — than ever pay the full-scan cost
+behind the user's back. Coverage of state kinds grows incrementally; an uncovered one degrades gracefully, it
+does not trigger a re-run.
 
-*Source location is a special case of shared/scoped state, and worth calling out because two different
-coordinate spaces get conflated.* There is the **source-parse location** (line/col in the raw source bytes,
-computed live by `LocationHolder` from the parser `Locator`) and the **captured-IO location** (positions
-within the stored SAX-events document — a synthetic space unrelated to the source). Re-deriving location from
-replayed events reports the latter, which for source highlighting is not merely lossy but misleading, as it
-points into a document the user never saw.
+*Source location deserves a note, because two coordinate spaces get conflated.* There is the
+**source-parse location** (line/col in the raw source bytes, computed live by `LocationHolder` from the parser
+`Locator`) and the **captured-IO location** (positions within the stored SAX-events document — a synthetic
+space unrelated to the source). Re-deriving location from replayed events reports the latter, which for source
+highlighting is not merely lossy but misleading, as it points into a document the user never saw. Hence the
+snapshot:
 
-- **Chosen for the first cut: record-level source location.** `LocationHolder` already computes a per-record
+- **Record-level source location. — DONE (Phase A).** `LocationHolder` already computes a per-record
   `SourceLocation` (a `TextRange`/`DataRange` spanning the record in the source), so it is a clean per-record
-  scope snapshot. This *adds* fidelity over today's served path, where `assemble()` builds `SourceLocation`
-  from only `(metaId, part, record)` with no highlight. Accept that precise **per-element** source line/col
-  (what `stroom:line-from`/`col-from` report at element granularity) is lost under replay and degrades to
-  record-level — it is a live-parse property stored nowhere per element. Same graceful-degradation shape as
-  the `EventId` case: exact when freshly swept, rough when replayed after an edit; note it in the UI/docs.
+  scope snapshot. `SteppingController.endRecord` already holds `locationHolder.getCurrentLocation()`, so it
+  snapshots that whole `SourceLocation` into the store as part of the atomic `putRecord` commit; on read,
+  `StoreStepResolver.assemble()` enriches the served location with the stored highlight/`DataRange` while
+  keeping the resolved step's own `(metaId, part, record)` coordinates. This *adds* fidelity over the previous
+  served path, which built `SourceLocation` from only `(metaId, part, record)` with no highlight — a win even
+  before the split exists. The snapshot lives in a per-part, un-fingerprinted state file (`store/`:
+  `__state__.dat` via `SourceLocationSerializer`), reused across downstream edits because source location is an
+  upstream property; the trade-off is that editing the *parse/split framing itself* can leave a stale highlight
+  until the session is recreated (best-effort, per the philosophy above). Accept that precise **per-element**
+  source line/col (what `stroom:line-from`/`col-from` report at element granularity) degrades to record-level
+  under replay — it is a live-parse property stored nowhere per element.
 - **Alternative, if per-element source location is ever needed: capture position per SAX event.** Store each
   event's source line/col in the encoded stream, and on replay drive a synthetic `Locator` that reports the
   current event's stored position before firing it, so a downstream element sees the original source
   positions. Faithful, but a larger change: it enlarges the stored form and, because accurate positions are a
   parse-time property (the live locator has moved on by the time events are buffered and re-fired by the
   split), leans on capturing them where they are still live rather than snapshotting at the recorder. Not for
-  the first cut; documented so the choice is deliberate.
+  now; documented so the choice is deliberate.
 
 **3. Split the processing.** With a faithful representation and state captured, feed the changed element +
 downstream from the stored upstream stream and re-run only them. `PipelineFactory.link()`/`getChildElements()`

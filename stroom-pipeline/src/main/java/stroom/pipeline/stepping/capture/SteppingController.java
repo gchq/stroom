@@ -19,6 +19,7 @@ package stroom.pipeline.stepping.capture;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.state.LocationHolder;
@@ -177,15 +178,20 @@ public class SteppingController {
 
         LOGGER.debug("endRecord() stream index {} record index {}", currentStreamIndex, currentRecordIndex);
 
-        // Figure out what the highlighted portion of the input stream should be.
+        // Figure out what the highlighted portion of the input stream should be. The full per-record source
+        // location (highlight + DataRange) is snapshotted into the store so a step served from the store
+        // carries the source highlight, which the served path historically dropped.
+        final SourceLocation sourceLocation = locationHolder != null
+                ? locationHolder.getCurrentLocation()
+                : null;
         TextRange highlight = DEFAULT_TEXT_RANGE;
-        if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
-            highlight = NullSafe.get(locationHolder.getCurrentLocation().getFirstHighlight(),
+        if (sourceLocation != null) {
+            highlight = NullSafe.get(sourceLocation.getFirstHighlight(),
                     DataRange::getAsTextRange,
                     opt -> opt.orElse(null));
         }
 
-        captureRecord(progressLocation, highlight);
+        captureRecord(progressLocation, highlight, sourceLocation);
         clearAllFilters(highlight);
 
         // Never terminate. A capture runs to the end of the stream, and the requested step - including
@@ -198,7 +204,9 @@ public class SteppingController {
      * fingerprint - the key that makes the IO reusable until that element, or something upstream of it,
      * changes.
      */
-    private void captureRecord(final StepLocation location, final TextRange highlight) {
+    private void captureRecord(final StepLocation location,
+                               final TextRange highlight,
+                               final SourceLocation sourceLocation) {
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
         final List<StepDataStore.ElementRecord> records = new ArrayList<>();
         for (final ElementMonitor monitor : monitors) {
@@ -212,8 +220,9 @@ public class SteppingController {
                         monitor.getCapturedElementData(errorReceiver, highlight)));
             }
         }
-        // Commit the whole record atomically, then signal that it is available.
-        stepDataStore.putRecord(location, records);
+        // Commit the whole record - element IO plus the source-location snapshot - atomically, then signal
+        // that it is available.
+        stepDataStore.putRecord(location, records, sourceLocation);
         if (recordListener != null) {
             recordListener.accept(location);
         }

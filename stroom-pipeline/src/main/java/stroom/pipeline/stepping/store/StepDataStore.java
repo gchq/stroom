@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping.store;
 
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
@@ -64,6 +65,9 @@ public class StepDataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StepDataStore.class);
 
+    // Reserved name for the per-part shared-scope state file (see getOrCreateStateFile).
+    private static final String STATE_FILE_NAME = "__state__.dat";
+
     private final Path streamDir;
     private final SteppingConfig config;
 
@@ -76,6 +80,10 @@ public class StepDataStore {
     private final Map<Long, Long> partMaxRecordIndex = new HashMap<>();
     // Per-element LRU of retained fingerprints (access-ordered; eldest first) for version eviction.
     private final Map<String, LinkedHashMap<String, Boolean>> elementFingerprintLru = new HashMap<>();
+    // Per-part shared-scope state file: currently the per-record source-location snapshot. Keyed by part
+    // only - unlike element IO it carries no fingerprint, because source location is an upstream property
+    // that does not change when a downstream element is edited, so it is reused across edits.
+    private final Map<Long, ElementSegmentFile> partStateFiles = new HashMap<>();
 
     private long totalBytes;
     private boolean deleted;
@@ -147,6 +155,20 @@ public class StepDataStore {
      * uses this so that a record only becomes visible/navigable once every element for it is committed.
      */
     public synchronized void putRecord(final StepLocation location, final List<ElementRecord> elements) {
+        putRecord(location, elements, null);
+    }
+
+    /**
+     * Atomically persist all of a record's per-element IO plus its shared-scope state snapshot (the
+     * per-record {@link SourceLocation}). Everything is serialised and validated (size/byte caps, contiguous
+     * ordering) BEFORE anything is written, so a rejected record leaves the store untouched. The source
+     * location snapshot is written to a per-part state file that carries no fingerprint (source location is
+     * an upstream property, unchanged by a downstream edit); on a re-sweep after an edit its records are
+     * already present and are skipped, exactly as the unchanged element files are.
+     */
+    public synchronized void putRecord(final StepLocation location,
+                                       final List<ElementRecord> elements,
+                                       final SourceLocation sourceLocation) {
         checkNotDeleted();
         if (elements == null || elements.isEmpty()) {
             return;
@@ -196,6 +218,25 @@ public class StepDataStore {
             }
             prepared.add(new PreparedWrite(key, element.elementId(), element.fingerprint(), bytes));
         }
+
+        // Prepare the shared-scope state snapshot (source location) for this record. It is always framed - an
+        // absent snapshot still occupies a segment - so the state file stays index-aligned with the record
+        // stream. Skipped when the record is already present, i.e. on a re-sweep after an edit.
+        byte[] stateBytes = null;
+        final ElementSegmentFile existingState = partStateFiles.get(location.getPartIndex());
+        if (existingState == null || !existingState.contains(recordIndex)) {
+            if (existingState != null && existingState.recordCount() > 0) {
+                final long expected = existingState.nextRecordIndex();
+                if (recordIndex != expected) {
+                    throw new StepDataStoreException(LogUtil.message(
+                            "Record state must be appended in order for part {}; expected index {} but got {}",
+                            location.getPartIndex(), expected, recordIndex));
+                }
+            }
+            stateBytes = SourceLocationSerializer.toBytes(sourceLocation);
+            batchBytes += stateBytes.length;
+        }
+
         if (totalBytes + batchBytes > config.getMaxBytesPerStream()) {
             throw new StepDataStoreException(LogUtil.message(
                     "Stepping store for this stream would exceed the {} byte limit; narrow your selection",
@@ -212,6 +253,9 @@ public class StepDataStore {
                     ? file
                     : getOrCreateFile(location.getPartIndex(), write.elementId(), write.fingerprint()));
         }
+        final ElementSegmentFile stateFile = stateBytes == null
+                ? null
+                : (existingState != null ? existingState : getOrCreateStateFile(location.getPartIndex()));
 
         // Commit all elements now that everything has validated and every file is open. An append can still
         // fail on IO; that leaves earlier elements of this record written, but the record is never made
@@ -222,6 +266,10 @@ public class StepDataStore {
             targetFiles.get(i).append(recordIndex, write.bytes());
             totalBytes += write.bytes().length;
             touchFingerprint(write.elementId(), write.fingerprint());
+        }
+        if (stateFile != null) {
+            stateFile.append(recordIndex, stateBytes);
+            totalBytes += stateBytes.length;
         }
         partMinRecordIndex.merge(location.getPartIndex(), recordIndex, Math::min);
         partMaxRecordIndex.merge(location.getPartIndex(), recordIndex, Math::max);
@@ -242,6 +290,21 @@ public class StepDataStore {
         final byte[] bytes = file.read(location.getRecordIndex());
         touchFingerprint(elementId, fingerprint);
         return Optional.ofNullable(CapturedElementDataSerializer.fromBytes(bytes));
+    }
+
+    /**
+     * Read back the shared-scope source-location snapshot for one record, or empty if none is available
+     * (part unknown, record not yet written, or the record was captured without a location). This is the
+     * per-record highlight/{@code DataRange} that {@link SourceLocation} carries; the served step's
+     * {@code (metaId, part, record)} coordinates come from the step location, not from here.
+     */
+    public synchronized Optional<SourceLocation> getSourceLocation(final StepLocation location) {
+        checkNotDeleted();
+        final ElementSegmentFile file = partStateFiles.get(location.getPartIndex());
+        if (file == null || !file.contains(location.getRecordIndex())) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(SourceLocationSerializer.fromBytes(file.read(location.getRecordIndex())));
     }
 
     /**
@@ -317,7 +380,11 @@ public class StepDataStore {
         for (final ElementSegmentFile file : openFiles.values()) {
             file.closeQuietly();
         }
+        for (final ElementSegmentFile file : partStateFiles.values()) {
+            file.closeQuietly();
+        }
         openFiles.clear();
+        partStateFiles.clear();
         partMinRecordIndex.clear();
         partMaxRecordIndex.clear();
         elementFingerprintLru.clear();
@@ -345,6 +412,23 @@ public class StepDataStore {
             } catch (final IOException e) {
                 throw new StepDataStoreException(LogUtil.message(
                         "Unable to open stepping store file {}", FileUtil.getCanonicalPath(dataFile)), e);
+            }
+        });
+    }
+
+    private ElementSegmentFile getOrCreateStateFile(final long partIndex) {
+        return partStateFiles.computeIfAbsent(partIndex, k -> {
+            // A file (not a directory) named with a '.': element entries at this level are directories named
+            // encode(elementId), and encode() always escapes '.', so this name cannot collide with one.
+            final Path dataFile = streamDir
+                    .resolve(Long.toString(partIndex))
+                    .resolve(STATE_FILE_NAME);
+            try {
+                FileUtil.mkdirs(dataFile.getParent());
+                return new ElementSegmentFile(dataFile);
+            } catch (final IOException e) {
+                throw new StepDataStoreException(LogUtil.message(
+                        "Unable to open stepping store state file {}", FileUtil.getCanonicalPath(dataFile)), e);
             }
         });
     }

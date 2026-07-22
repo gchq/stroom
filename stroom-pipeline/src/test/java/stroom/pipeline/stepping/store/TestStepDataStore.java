@@ -16,8 +16,11 @@
 
 package stroom.pipeline.stepping.store;
 
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.TextRange;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -52,6 +55,82 @@ class TestStepDataStore {
 
     private StepLocation loc(final long part, final long record) {
         return new StepLocation(META_ID, part, record);
+    }
+
+    private SourceLocation sourceLocation(final long record, final int lineFrom) {
+        return SourceLocation.builder(META_ID)
+                .withPartIndex(0L)
+                .withRecordIndex(record)
+                .withHighlight(new TextRange(new DefaultLocation(lineFrom, 1), new DefaultLocation(lineFrom, 40)))
+                .build();
+    }
+
+    private StepDataStore.ElementRecord rec(final ElementId elementId, final String fingerprint, final String out) {
+        return new StepDataStore.ElementRecord(elementId, fingerprint, data("in", out));
+    }
+
+    @Test
+    void testSourceLocationSnapshotRoundTripAndRandomAccess(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 3; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "out" + r)), sourceLocation(r, 10 + r));
+        }
+
+        // Random access: each record's snapshot round-trips with its own highlight.
+        assertThat(store.getSourceLocation(loc(0, 2)).orElseThrow()
+                .getFirstHighlight().getLocationFrom().getLineNo()).isEqualTo(12);
+        assertThat(store.getSourceLocation(loc(0, 0)).orElseThrow()
+                .getFirstHighlight().getLocationFrom().getLineNo()).isEqualTo(10);
+        // A record not yet written has no snapshot.
+        assertThat(store.getSourceLocation(loc(0, 5))).isEmpty();
+    }
+
+    @Test
+    void testNullSourceLocationSnapshotReadsBackEmptyButRecordExists(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putRecord(loc(0, 0), List.of(rec(E1, FP_A, "out")), null);
+
+        // The element IO is present, but the record carried no source-location snapshot.
+        assertThat(store.getElementData(loc(0, 0), E1, FP_A)).isPresent();
+        assertThat(store.getSourceLocation(loc(0, 0))).isEmpty();
+    }
+
+    @Test
+    void testSourceLocationSnapshotSkippedAndPreservedOnResweep(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 2; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "out" + r)), sourceLocation(r, 10 + r));
+        }
+
+        // Re-sweep after a downstream edit: E1 is unchanged (FP_A already present -> skipped) and a
+        // downstream element gets a new fingerprint. The unfingerprinted source-location snapshot for each
+        // record is already present, so it must be skipped (not trip the in-order check) and NOT overwritten.
+        assertThatCode(() -> {
+            for (int r = 0; r < 2; r++) {
+                store.putRecord(loc(0, r),
+                        List.of(rec(E1, FP_A, "out" + r), rec(E2, FP_B, "e2out" + r)),
+                        sourceLocation(r, 999)); // a different location; must be ignored (already present)
+            }
+        }).doesNotThrowAnyException();
+
+        // The original snapshot survives the re-sweep untouched.
+        assertThat(store.getSourceLocation(loc(0, 1)).orElseThrow()
+                .getFirstHighlight().getLocationFrom().getLineNo()).isEqualTo(11);
+        // The re-swept downstream element is readable.
+        assertThat(store.getElementData(loc(0, 1), E2, FP_B)).map(CapturedElementData::outputText)
+                .contains("e2out1");
+    }
+
+    @Test
+    void testSourceLocationSnapshotDeletedWithStore(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putRecord(loc(0, 0), List.of(rec(E1, FP_A, "out")), sourceLocation(0, 10));
+        assertThat(store.getSourceLocation(loc(0, 0))).isPresent();
+
+        store.deleteAll();
+
+        assertThatThrownBy(() -> store.getSourceLocation(loc(0, 0)))
+                .isInstanceOf(StepDataStoreException.class);
     }
 
     @Test

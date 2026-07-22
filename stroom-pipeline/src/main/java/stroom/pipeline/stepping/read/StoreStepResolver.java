@@ -256,9 +256,16 @@ public class StoreStepResolver {
                 map.put(elementId, data);
             }
         }
+        // Enrich the served location with the per-record highlight/DataRange snapshotted at capture. The
+        // authoritative (metaId, part, record) coordinates stay those of the resolved step; only the source
+        // ranges come from the store. A record captured without a snapshot degrades to no highlight, exactly
+        // as the served path behaved before the snapshot was persisted.
+        final SourceLocation stored = store.getSourceLocation(loc).orElse(null);
         final SourceLocation sourceLocation = SourceLocation.builder(metaId)
                 .withPartIndex(loc.getPartIndex())
                 .withRecordIndex(loc.getRecordIndex())
+                .withDataRange(stored != null ? stored.getDataRange() : null)
+                .withHighlight(stored != null ? stored.getHighlights() : null)
                 .build();
         return new SharedStepData(sourceLocation, map);
     }
