@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.shared.GetSpansRequest;
-import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResource;
@@ -45,11 +44,9 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
 
-    // Traces with at least this many spans are shown via the bounded, virtualized detail path rather
-    // than loaded whole; below it the whole trace is fetched and rendered as before.
+    // Traces with at least this many spans are shown via the bounded, paged detail path rather than
+    // loaded whole; below it the whole trace is fetched and rendered as before.
     private static final int LARGE_TRACE_THRESHOLD = 10_000;
-    // Representative bars in the downsampled overview strip of a large trace.
-    private static final int OVERVIEW_MAX_BARS = 300;
 
     private final TracesListPresenter listPresenter;
     private final TraceOverviewWidget traceOverviewWidget;
@@ -120,43 +117,34 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                 // failure here is genuinely unexpected — clear the detail rather than leaving a
                 // stale trace displayed.
                 .onFailure(error -> traceOverviewWidget.setTrace(null))
-                .taskMonitorFactory(listPresenter.getView())
+                // Spin the span-detail widget's own refresh button, not the traces list's.
+                .taskMonitorFactory(traceOverviewWidget)
                 .exec();
     }
 
-    // Loads the downsampled overview once (axis is already whole from the TraceRoot extents), then
-    // hands the widget a fetcher that pages tree-order spans on demand as the user scrolls.
+    // Hands the widget a fetcher that pages tree-order spans on demand as the user navigates the pager.
+    // The timeline axis is derived per page from the returned spans, so no whole-trace overview is
+    // fetched.
     private void loadLargeTrace(final TraceRoot traceRoot) {
         final String traceId = traceRoot.getTraceId();
-        final long fromMs = traceRoot.getStartTime().toEpochMillis();
-        final long toMs = traceRoot.getEndTime().toEpochMillis();
         // Root start time locates the archive bucket for a split trace (root/bulk archived, trailing
         // spans live) so the server can page the merged live+archive tree.
         final Long startTimeMs = traceRoot.getStartTime() != null
                 ? traceRoot.getStartTime().toEpochMillis()
                 : null;
-        final GetTraceOverviewRequest overviewRequest = new GetTraceOverviewRequest(
-                dataSourceRef, traceId, fromMs, toMs, OVERVIEW_MAX_BARS);
-        restFactory
-                .create(TRACES_RESOURCE)
-                .method(res -> res.getTraceOverview(overviewRequest))
-                .onSuccess(overview -> {
-                    final TraceOverviewWidget.SpanWindowFetcher fetcher = (offset, cursor, limit, onLoaded) -> {
-                        final GetSpansRequest spansRequest = new GetSpansRequest(
-                                dataSourceRef, traceId, offset, limit, startTimeMs, cursor);
-                        restFactory
-                                .create(TRACES_RESOURCE)
-                                .method(res -> res.getSpans(spansRequest))
-                                .onSuccess(onLoaded)
-                                .onFailure(error -> onLoaded.accept(null))
-                                .taskMonitorFactory(listPresenter.getView())
-                                .exec();
-                    };
-                    traceOverviewWidget.setLargeTrace(traceRoot, overview.getSpans(), fetcher);
-                })
-                .onFailure(error -> traceOverviewWidget.setTrace(null))
-                .taskMonitorFactory(listPresenter.getView())
-                .exec();
+        final TraceOverviewWidget.SpanWindowFetcher fetcher = (offset, cursor, limit, onLoaded) -> {
+            final GetSpansRequest spansRequest = new GetSpansRequest(
+                    dataSourceRef, traceId, offset, limit, startTimeMs, cursor);
+            restFactory
+                    .create(TRACES_RESOURCE)
+                    .method(res -> res.getSpans(spansRequest))
+                    .onSuccess(onLoaded)
+                    .onFailure(error -> onLoaded.accept(null))
+                    // Spin the span-list pager's own refresh button, not the traces list's.
+                    .taskMonitorFactory(traceOverviewWidget)
+                    .exec();
+        };
+        traceOverviewWidget.setLargeTrace(traceRoot, fetcher);
     }
 
     @Override

@@ -1956,6 +1956,65 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 getSpanPage(new SingleStoreChildCursor(this, readTxn, traceIdBytes), cursorPath, limit));
     }
 
+    /**
+     * Sparse pre-order DFS checkpoints for a {@link ChildCursor}: {@code checkpoints.get(k)} is the DFS
+     * path (list of 16-byte locators) at offset {@code (k + 1) * CHECKPOINT_INTERVAL}, and {@code total}
+     * is the exact pre-order row count. The in-memory equivalent of the {@code trace-dfs-checkpoints}
+     * DBI, used to give a merged (live + archive) traversal — which has no on-disk checkpoints — cheap
+     * random-access offset seeks. Built once by {@link #buildCheckpoints} and cached by the caller.
+     */
+    public record CheckpointIndex(List<List<byte[]>> checkpoints, int total) {
+
+    }
+
+    /**
+     * Walks the whole pre-order traversal of {@code cursor} once, snapshotting the DFS path every
+     * {@link #CHECKPOINT_INTERVAL} rows. O(n) — the caller should cache the result.
+     */
+    public static CheckpointIndex buildCheckpoints(final ChildCursor cursor) {
+        final List<List<byte[]>> checkpoints = new ArrayList<>();
+        final List<byte[]> path = new ArrayList<>();
+        int emitted = 0;
+        while (advancePreorder(cursor, path).isPresent()) {
+            emitted++;
+            if (emitted % CHECKPOINT_INTERVAL == 0) {
+                checkpoints.add(new ArrayList<>(path));
+            }
+        }
+        return new CheckpointIndex(checkpoints, emitted);
+    }
+
+    /**
+     * Random-access page from {@code cursor} using a prebuilt {@link CheckpointIndex}: seeds the DFS from
+     * the nearest checkpoint at or before {@code offset}, then walks the remainder. {@code offset} is
+     * clamped to the start of the last page, so an over-estimated last-page offset still returns the true
+     * last page. O(CHECKPOINT_INTERVAL + limit).
+     */
+    public static SpanPage getSpanPageAtOffset(final ChildCursor cursor,
+                                               final CheckpointIndex index,
+                                               final int offset,
+                                               final int limit) {
+        final int lastPageStart = index.total() <= 0 || limit <= 0
+                ? 0
+                : ((index.total() - 1) / limit) * limit;
+        final int clamped = Math.max(0, Math.min(offset, lastPageStart));
+        final int checkpointOffset = (clamped / CHECKPOINT_INTERVAL) * CHECKPOINT_INTERVAL;
+        final List<byte[]> path = new ArrayList<>();
+        if (checkpointOffset > 0) {
+            final int idx = checkpointOffset / CHECKPOINT_INTERVAL - 1;
+            if (idx < index.checkpoints().size()) {
+                path.addAll(index.checkpoints().get(idx));
+            }
+        }
+        final int skip = path.isEmpty() ? clamped : clamped - checkpointOffset;
+        for (int i = 0; i < skip; i++) {
+            if (advancePreorder(cursor, path).isEmpty()) {
+                return new SpanPage(new ArrayList<>(), new ArrayList<>(path), false);
+            }
+        }
+        return getSpanPage(cursor, path, limit);
+    }
+
     // Advances 'path' in place to the next node in pre-order DFS and returns its span, or empty when
     // exhausted. 'path' is the chain of 16-byte locators (startTime ∥ spanId) from the root to the
     // current node (empty = before the root). Children come from 'cursor' (single store or merged).

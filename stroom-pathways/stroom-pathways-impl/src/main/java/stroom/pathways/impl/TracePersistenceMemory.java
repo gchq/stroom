@@ -108,7 +108,7 @@ public class TracePersistenceMemory implements TracePersistence {
         final int to = request.getLimit() <= 0
                 ? from
                 : Math.min(from + request.getLimit(), all.size());
-        return new TraceSpanPage(new ArrayList<>(all.subList(from, to)), to < all.size(), null);
+        return new TraceSpanPage(new ArrayList<>(all.subList(from, to)), to < all.size(), null, all.size());
     }
 
     @Override

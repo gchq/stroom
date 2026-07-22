@@ -45,14 +45,23 @@ public class TraceSpanPage {
      */
     @JsonProperty
     private final String nextCursor;
+    /**
+     * The exact total span count of the trace, known only once the server has built the merged
+     * checkpoint index (i.e. after a random-access/offset request for a split trace). {@code null} when
+     * unknown — the client then keeps the (possibly over-counted) {@code TraceRoot.getTotalSpans()}.
+     */
+    @JsonProperty
+    private final Integer totalSpans;
 
     @JsonCreator
     public TraceSpanPage(@JsonProperty("rows") final List<TraceSpanRow> rows,
                          @JsonProperty("more") final boolean more,
-                         @JsonProperty("nextCursor") final String nextCursor) {
+                         @JsonProperty("nextCursor") final String nextCursor,
+                         @JsonProperty("totalSpans") final Integer totalSpans) {
         this.rows = rows;
         this.more = more;
         this.nextCursor = nextCursor;
+        this.totalSpans = totalSpans;
     }
 
     public List<TraceSpanRow> getRows() {
@@ -67,6 +76,10 @@ public class TraceSpanPage {
         return nextCursor;
     }
 
+    public Integer getTotalSpans() {
+        return totalSpans;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -78,12 +91,13 @@ public class TraceSpanPage {
         final TraceSpanPage that = (TraceSpanPage) o;
         return more == that.more
                && Objects.equals(rows, that.rows)
-               && Objects.equals(nextCursor, that.nextCursor);
+               && Objects.equals(nextCursor, that.nextCursor)
+               && Objects.equals(totalSpans, that.totalSpans);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rows, more, nextCursor);
+        return Objects.hash(rows, more, nextCursor, totalSpans);
     }
 
     @Override
@@ -92,6 +106,7 @@ public class TraceSpanPage {
                "rows=" + (rows == null ? 0 : rows.size()) +
                ", more=" + more +
                ", nextCursor='" + nextCursor + '\'' +
+               ", totalSpans=" + totalSpans +
                '}';
     }
 }

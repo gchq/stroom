@@ -36,6 +36,7 @@ import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.trace.TraceDb;
@@ -70,6 +71,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -99,6 +103,7 @@ public class TracesStoreImpl implements TracesStore {
     private final SecurityContext securityContext;
     private final Executor executor;
     private final ArchiveShardLocator archiveShardLocator;
+    private final MergedCheckpointCache mergedCheckpointCache;
 
     @Inject
     public TracesStoreImpl(final PlanBDocCache planBDocCache,
@@ -110,7 +115,8 @@ public class TracesStoreImpl implements TracesStore {
                            final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
                            final SecurityContext securityContext,
                            final ExecutorProvider executorProvider,
-                           final ArchiveShardLocator archiveShardLocator) {
+                           final ArchiveShardLocator archiveShardLocator,
+                           final MergedCheckpointCache mergedCheckpointCache) {
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.shardManager = shardManager;
@@ -121,6 +127,7 @@ public class TracesStoreImpl implements TracesStore {
         this.securityContext = securityContext;
         this.executor = executorProvider.get();
         this.archiveShardLocator = archiveShardLocator;
+        this.mergedCheckpointCache = mergedCheckpointCache;
     }
 
     @Override
@@ -527,7 +534,8 @@ public class TracesStoreImpl implements TracesStore {
                 }
                 throw new IllegalStateException("Unexpected value: " + reader);
             });
-            return toSpanPage(page, false); // offset/random mode — no cursor
+            // Offset/random via the live checkpoints; the TraceRoot total is exact, so no total is sent.
+            return toSpanPage(page, false, null);
         }
 
         // Split/archived: merge the live shard with the relevant archive bucket(s).
@@ -537,6 +545,7 @@ public class TracesStoreImpl implements TracesStore {
         final List<ArchiveShardRef> refs = relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs);
         final int shardIndex = archiveShardIndex(doc, request.getTraceId());
         final List<byte[]> cursorPath = decodeCursor(request.getCursor());
+        final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), refs);
 
         return shardManager.get(docName, request.getTraceId(), liveReader -> {
             if (!(liveReader instanceof final TraceDb liveDb)) {
@@ -546,13 +555,15 @@ public class TracesStoreImpl implements TracesStore {
                 final List<TraceDb.ChildCursor> cursors = new ArrayList<>();
                 cursors.add(new TraceDb.SingleStoreChildCursor(liveDb, liveTxn, traceIdBytes));
                 return openArchivesAndPage(doc, shardIndex, refs, 0, traceIdBytes, cursors,
-                        cursorPath, request.getLimit());
+                        cursorPath, request.getOffset(), request.getLimit(), cacheKey);
             });
         });
     }
 
     // Recursively nests the getArchive callbacks (each holds the archive shard's read lock + a read txn)
-    // to hold live + every relevant archive bucket open at once, then runs the merged pre-order DFS page.
+    // to hold live + every relevant archive bucket open at once, then serves the page from the merged
+    // pre-order DFS: by opaque cursor when one was supplied (cheap sequential next/prev), by offset via a
+    // cached merged checkpoint index when a jump/last is requested (built once, O(n)), else from the root.
     private TraceSpanPage openArchivesAndPage(final PlanBDocument doc,
                                               final int shardIndex,
                                               final List<ArchiveShardRef> refs,
@@ -560,11 +571,31 @@ public class TracesStoreImpl implements TracesStore {
                                               final byte[] traceIdBytes,
                                               final List<TraceDb.ChildCursor> cursors,
                                               final List<byte[]> cursorPath,
-                                              final int limit) {
+                                              final int offset,
+                                              final int limit,
+                                              final String cacheKey) {
         if (i >= refs.size()) {
-            final TraceDb.SpanPage page = TraceDb.getSpanPage(
-                    new TraceDb.MergedChildCursor(cursors), cursorPath, limit);
-            return toSpanPage(page, true); // sequential — carry the resume cursor
+            final TraceDb.MergedChildCursor merged = new TraceDb.MergedChildCursor(cursors);
+            final TraceDb.SpanPage page;
+            final Integer total;
+            if (cursorPath != null) {
+                // Sequential resume — cheap, no checkpoints needed.
+                page = TraceDb.getSpanPage(merged, cursorPath, limit);
+                final TraceDb.CheckpointIndex cached = mergedCheckpointCache.getIfPresent(cacheKey);
+                total = cached != null ? cached.total() : null;
+            } else if (offset > 0) {
+                // Random-access jump/last — seek via the merged checkpoint index (built + cached once).
+                final TraceDb.CheckpointIndex index =
+                        mergedCheckpointCache.getOrBuild(cacheKey, () -> TraceDb.buildCheckpoints(merged));
+                page = TraceDb.getSpanPageAtOffset(merged, index, offset, limit);
+                total = index.total();
+            } else {
+                // First page (offset 0, no cursor) — walk from the root; don't force a build.
+                page = TraceDb.getSpanPage(merged, null, limit);
+                final TraceDb.CheckpointIndex cached = mergedCheckpointCache.getIfPresent(cacheKey);
+                total = cached != null ? cached.total() : null;
+            }
+            return toSpanPage(page, true, total);
         }
         return shardManager.getArchive(doc, shardIndex, refs.get(i), archiveReader -> {
             if (!(archiveReader instanceof final TraceDb archiveDb)) {
@@ -573,12 +604,14 @@ public class TracesStoreImpl implements TracesStore {
             return archiveDb.read(archiveTxn -> {
                 cursors.add(new TraceDb.SingleStoreChildCursor(archiveDb, archiveTxn, traceIdBytes));
                 return openArchivesAndPage(doc, shardIndex, refs, i + 1, traceIdBytes, cursors,
-                        cursorPath, limit);
+                        cursorPath, offset, limit, cacheKey);
             });
         });
     }
 
-    private TraceSpanPage toSpanPage(final TraceDb.SpanPage page, final boolean sequential) {
+    private TraceSpanPage toSpanPage(final TraceDb.SpanPage page,
+                                     final boolean sequential,
+                                     final Integer totalSpans) {
         final List<TraceSpanRow> rows = new ArrayList<>();
         boolean more = false;
         List<byte[]> next = null;
@@ -591,10 +624,47 @@ public class TracesStoreImpl implements TracesStore {
             more = page.more();
             next = page.nextCursor();
         }
-        // Only the merged/sequential path exposes a cursor; the offset/random path leaves it null so the
-        // client keeps its scrollbar-drag behaviour.
+        // The merged (split) path always exposes a resume cursor so next/prev stay cheap after any page;
+        // the live offset path leaves it null (the client uses offsets there).
         final String nextCursor = (sequential && more) ? encodeCursor(next) : null;
-        return new TraceSpanPage(rows, more, nextCursor);
+        return new TraceSpanPage(rows, more, nextCursor, totalSpans);
+    }
+
+    // Cache key for a split trace's merged checkpoint index: identifies the trace and the versions of
+    // every contributing store (live shard + archive buckets), so the entry self-invalidates when any of
+    // them changes.
+    private String checkpointCacheKey(final PlanBDocument doc,
+                                      final int shardIndex,
+                                      final String traceId,
+                                      final List<ArchiveShardRef> refs) {
+        final StringBuilder sb = new StringBuilder()
+                .append(doc == null ? "" : doc.getUuid()).append('_')
+                .append(shardIndex).append('_')
+                .append(traceId).append("|live=")
+                .append(liveShardVersion(doc, shardIndex));
+        for (final ArchiveShardRef ref : refs) {
+            sb.append(";arch=").append(ref.dateLabel()).append('=').append(readVersion(ref.dir()));
+        }
+        return sb.toString();
+    }
+
+    private String liveShardVersion(final PlanBDocument doc, final int shardIndex) {
+        if (doc == null || doc.getSharedPath() == null || shardIndex < 0) {
+            return "";
+        }
+        return readVersion(Path.of(doc.getSharedPath())
+                .resolve(PlanBConstants.SHARDS_DIR_NAME)
+                .resolve(doc.getUuid())
+                .resolve(String.format("%04d", shardIndex)));
+    }
+
+    private static String readVersion(final Path dir) {
+        final Path versionFile = dir.resolve(PlanBConstants.VERSION_FILE_NAME);
+        try {
+            return Files.exists(versionFile) ? Files.readString(versionFile).trim() : "";
+        } catch (final IOException e) {
+            return "";
+        }
     }
 
     private int archiveShardIndex(final PlanBDocument doc, final String traceId) {
