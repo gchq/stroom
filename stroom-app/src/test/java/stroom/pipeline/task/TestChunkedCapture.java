@@ -19,6 +19,7 @@ package stroom.pipeline.task;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
@@ -28,11 +29,10 @@ import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.stepping.StepResultResolver;
-import stroom.pipeline.stepping.StepResultResolver.ResolvedStep;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.stepping.SteppingService.SteppingCaptureResult;
-import stroom.meta.shared.FindMetaCriteria;
+import stroom.pipeline.stepping.read.StoreStepResolver;
+import stroom.pipeline.stepping.read.StoreStepResolver.ResolvedStep;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -47,10 +47,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Validates Phase 2 capture end-to-end against the proven legacy stepping path: capturing a whole
- * stream then resolving a record from the store must reproduce exactly what the legacy per-step
- * {@code step()} returns for that same record (input, output and indicators per element). This is a
- * stronger, self-contained check than diffing the golden files, and reuses the same real sample feeds.
+ * Checks capture against serving: capturing a whole stream up front and then resolving a record from the
+ * store must produce, for that same record, exactly what {@code SteppingService.step()} returns - input,
+ * output and indicators, per element - over real sample feeds.
+ * <p>
+ * <b>Both sides are served from the store</b>, so this does not hold the engine to an independent
+ * implementation - the golden {@code ~STEPPING~} corpus in {@link TestFullTranslationTaskAndStepping} is
+ * what does that. What this checks is that the two ways in agree: the synchronous whole-stream
+ * {@code capture()} and the lazily-swept session must produce the same IO for the same record, across
+ * several feed types including a reader/text pipeline with no XML parser.
  */
 class TestChunkedCapture extends TranslationTest {
 
@@ -63,7 +68,7 @@ class TestChunkedCapture extends TranslationTest {
     @Inject
     private DocFinder docFinder;
 
-    private final StepResultResolver resolver = new StepResultResolver();
+    private final StoreStepResolver resolver = new StoreStepResolver();
 
     @BeforeEach
     void setup() {
@@ -81,26 +86,26 @@ class TestChunkedCapture extends TranslationTest {
 
     @Test
     void testXmlEvents() {
-        captureMatchesLegacy("XML-EVENTS");
+        captureMatchesStepService("XML-EVENTS");
     }
 
     @Test
     void testDataSplitterEvents() {
-        captureMatchesLegacy("DATA_SPLITTER-EVENTS");
+        captureMatchesStepService("DATA_SPLITTER-EVENTS");
     }
 
     @Test
     void testJsonEvents() {
-        captureMatchesLegacy("JSON-EVENTS");
+        captureMatchesStepService("JSON-EVENTS");
     }
 
     @Test
     void testRawStreamingEvents() {
         // Reader/text pipeline (no XML parser) - exercises the reader record detector.
-        captureMatchesLegacy("RAW_STREAMING-EVENTS");
+        captureMatchesStepService("RAW_STREAMING-EVENTS");
     }
 
-    private void captureMatchesLegacy(final String feedName) {
+    private void captureMatchesStepService(final String feedName) {
         // Load the feed's raw source data.
         testTranslationTask(feedName, false, false);
 
@@ -119,19 +124,19 @@ class TestChunkedCapture extends TranslationTest {
                 .timeout(Long.MAX_VALUE)
                 .build();
 
-        // Legacy: step to the first record to discover the first stream.
+        // Step to the first record to discover which stream the selection starts in.
         final SteppingResult first = steppingService.step(baseRequest.copy().stepType(StepType.FIRST).build());
-        assertThat(first.isFoundRecord()).as("legacy FIRST found a record for " + feedName).isTrue();
+        assertThat(first.isFoundRecord()).as("FIRST found a record for " + feedName).isTrue();
         final long metaId = first.getFoundLocation().getMetaId();
 
         // Capture that whole stream in one pass.
         final SteppingCaptureResult capture = steppingService.capture(baseRequest, metaId);
         try {
             int compared = 0;
-            SteppingResult legacy = first;
-            // Walk every record the legacy stepper visits within this stream and compare to the capture.
-            while (legacy.isFoundRecord() && legacy.getFoundLocation().getMetaId() == metaId) {
-                final StepLocation loc = legacy.getFoundLocation();
+            SteppingResult stepped = first;
+            // Walk every record step() visits within this stream and compare it to the capture.
+            while (stepped.isFoundRecord() && stepped.getFoundLocation().getMetaId() == metaId) {
+                final StepLocation loc = stepped.getFoundLocation();
 
                 final PipelineStepRequest refresh = baseRequest.copy()
                         .stepType(StepType.REFRESH)
@@ -141,10 +146,10 @@ class TestChunkedCapture extends TranslationTest {
                         capture.store(), metaId, capture.fingerprints(), refresh);
                 assertThat(resolved).as("captured record present at " + loc).isPresent();
 
-                assertElementIoMatches(feedName, loc, legacy.getStepData(), resolved.get().stepData());
+                assertElementIoMatches(feedName, loc, stepped.getStepData(), resolved.get().stepData());
                 compared++;
 
-                legacy = steppingService.step(baseRequest.copy()
+                stepped = steppingService.step(baseRequest.copy()
                         .stepType(StepType.FORWARD)
                         .stepLocation(loc)
                         .build());
@@ -157,20 +162,20 @@ class TestChunkedCapture extends TranslationTest {
 
     private void assertElementIoMatches(final String feedName,
                                         final StepLocation loc,
-                                        final SharedStepData legacy,
+                                        final SharedStepData stepped,
                                         final SharedStepData captured) {
-        for (final String elementId : legacy.getElementMap().keySet()) {
-            final SharedElementData legacyData = legacy.getElementData(elementId);
+        for (final String elementId : stepped.getElementMap().keySet()) {
+            final SharedElementData steppedData = stepped.getElementData(elementId);
             final SharedElementData capturedData = captured.getElementMap().get(elementId);
             assertThat(capturedData)
                     .as("element %s captured at %s for %s", elementId, loc, feedName)
                     .isNotNull();
             assertThat(capturedData.getOutput())
                     .as("output for element %s at %s for %s", elementId, loc, feedName)
-                    .isEqualTo(legacyData.getOutput());
+                    .isEqualTo(steppedData.getOutput());
             assertThat(capturedData.getInput())
                     .as("input for element %s at %s for %s", elementId, loc, feedName)
-                    .isEqualTo(legacyData.getInput());
+                    .isEqualTo(steppedData.getInput());
         }
     }
 }

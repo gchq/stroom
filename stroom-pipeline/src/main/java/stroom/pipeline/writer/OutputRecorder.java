@@ -17,7 +17,7 @@
 package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
-import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.capture.Recorder;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.TextRange;

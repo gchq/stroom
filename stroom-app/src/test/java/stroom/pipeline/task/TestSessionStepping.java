@@ -29,10 +29,12 @@ import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.stepping.StepResultResolver;
-import stroom.pipeline.stepping.StepResultResolver.SessionStepResult;
 import stroom.pipeline.stepping.SteppingService;
-import stroom.pipeline.stepping.SteppingSession;
+import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.read.SessionStepResolver;
+import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
+import stroom.pipeline.stepping.read.StoreStepResolver;
+import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -46,10 +48,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Validates the Phase 3 async + cross-stream path end-to-end: a durable {@link SteppingSession} that
- * sweeps streams lazily and asynchronously must, when driven through {@link StepResultResolver#resolveSession},
- * reproduce exactly what the legacy per-step {@code step()} returns as it walks FORWARD across every stream
- * of a multi-stream feed (and for LAST across streams).
+ * Validates the async + cross-stream path end-to-end: a durable {@link SteppingSession} that sweeps streams
+ * lazily and asynchronously must, when driven through {@link SessionStepResolver#resolve}, agree with
+ * {@code SteppingService.step()} as it walks FORWARD across every stream of a multi-stream feed, and for
+ * LAST across streams.
  */
 class TestSessionStepping extends TranslationTest {
 
@@ -63,7 +65,7 @@ class TestSessionStepping extends TranslationTest {
     @Inject
     private DocFinder docFinder;
 
-    private final StepResultResolver resolver = new StepResultResolver();
+    private final SessionStepResolver resolver = new SessionStepResolver(new StoreStepResolver());
 
     @BeforeEach
     void setup() {
@@ -81,15 +83,25 @@ class TestSessionStepping extends TranslationTest {
 
     @Test
     void testXmlEvents() {
-        sessionMatchesLegacy("XML-EVENTS");
+        resolveAgreesWithStepService("XML-EVENTS");
     }
 
     @Test
     void testRawStreamingEvents() {
-        sessionMatchesLegacy("RAW_STREAMING-EVENTS");
+        resolveAgreesWithStepService("RAW_STREAMING-EVENTS");
     }
 
-    private void sessionMatchesLegacy(final String feedName) {
+    /**
+     * Walk a whole multi-stream feed and check that resolving directly against a session agrees with the
+     * service's own step() at every record, including across stream boundaries.
+     * <p>
+     * <b>Both sides are served from the session</b>, so this does not hold the engine to an independent
+     * implementation - the golden {@code ~STEPPING~} corpus in {@link TestFullTranslationTaskAndStepping}
+     * is what does that. What this earns its keep for is cross-stream navigation: walking FORWARD off the
+     * end of one stream into the next, and LAST across a whole multi-stream selection, which the scripted
+     * golden sequences exercise far less directly.
+     */
+    private void resolveAgreesWithStepService(final String feedName) {
         testTranslationTask(feedName, false, false);
 
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, feedName).getFirst();
@@ -107,52 +119,53 @@ class TestSessionStepping extends TranslationTest {
                 .timeout(Long.MAX_VALUE)
                 .build();
 
+        final ElementFingerprints fingerprints = steppingService.computeFingerprints(baseRequest);
         final SteppingSession session = steppingService.createSession(baseRequest);
         try {
-            // Walk the whole feed forward via legacy step() and, at every record, check the async session
-            // resolve (REFRESH at the same location, and FORWARD to the next) agrees.
-            SteppingResult legacy = steppingService.step(baseRequest.copy().stepType(StepType.FIRST).build());
-            assertThat(legacy.isFoundRecord()).as("legacy FIRST for " + feedName).isTrue();
+            // Walk the whole feed forward via step() and, at every record, check the session resolve
+            // (REFRESH at the same location, and FORWARD to the next) agrees.
+            SteppingResult stepped = steppingService.step(baseRequest.copy().stepType(StepType.FIRST).build());
+            assertThat(stepped.isFoundRecord()).as("FIRST for " + feedName).isTrue();
 
             int compared = 0;
             boolean crossedStreams = false;
-            long firstMetaId = legacy.getFoundLocation().getMetaId();
+            long firstMetaId = stepped.getFoundLocation().getMetaId();
 
-            while (legacy.isFoundRecord()) {
-                final StepLocation loc = legacy.getFoundLocation();
+            while (stepped.isFoundRecord()) {
+                final StepLocation loc = stepped.getFoundLocation();
                 if (loc.getMetaId() != firstMetaId) {
                     crossedStreams = true;
                 }
 
-                final SessionStepResult refreshed = resolver.resolveSession(
-                        session, baseRequest.copy().stepType(StepType.REFRESH).stepLocation(loc).build(), TIMEOUT_MS);
+                final SessionStepResult refreshed = resolver.resolve(
+                        session, baseRequest.copy().stepType(StepType.REFRESH).stepLocation(loc).build(), fingerprints, TIMEOUT_MS);
                 assertThat(refreshed.foundRecord()).as("session has record at " + loc).isTrue();
                 assertThat(refreshed.foundLocation()).isEqualTo(loc);
-                assertElementIoMatches(feedName, loc, legacy.getStepData(), refreshed.stepData());
+                assertElementIoMatches(feedName, loc, stepped.getStepData(), refreshed.stepData());
                 compared++;
 
-                final SteppingResult nextLegacy = steppingService.step(
+                final SteppingResult nextStepped = steppingService.step(
                         baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build());
-                if (nextLegacy.isFoundRecord()) {
-                    final SessionStepResult sessionForward = resolver.resolveSession(
-                            session, baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build(), TIMEOUT_MS);
+                if (nextStepped.isFoundRecord()) {
+                    final SessionStepResult sessionForward = resolver.resolve(
+                            session, baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build(), fingerprints, TIMEOUT_MS);
                     assertThat(sessionForward.foundLocation())
                             .as("session FORWARD from " + loc + " for " + feedName)
-                            .isEqualTo(nextLegacy.getFoundLocation());
+                            .isEqualTo(nextStepped.getFoundLocation());
                 }
-                legacy = nextLegacy;
+                stepped = nextStepped;
             }
 
             assertThat(compared).as("compared records for " + feedName).isGreaterThan(0);
             assertThat(crossedStreams).as("feed " + feedName + " should span multiple streams").isTrue();
 
             // LAST across streams must agree too.
-            final SteppingResult legacyLast = steppingService.step(baseRequest.copy().stepType(StepType.LAST).build());
-            final SessionStepResult sessionLast = resolver.resolveSession(
-                    session, baseRequest.copy().stepType(StepType.LAST).build(), TIMEOUT_MS);
+            final SteppingResult steppedLast = steppingService.step(baseRequest.copy().stepType(StepType.LAST).build());
+            final SessionStepResult sessionLast = resolver.resolve(
+                    session, baseRequest.copy().stepType(StepType.LAST).build(), fingerprints, TIMEOUT_MS);
             assertThat(sessionLast.foundLocation())
                     .as("session LAST for " + feedName)
-                    .isEqualTo(legacyLast.getFoundLocation());
+                    .isEqualTo(steppedLast.getFoundLocation());
         } finally {
             session.close();
         }
@@ -160,18 +173,18 @@ class TestSessionStepping extends TranslationTest {
 
     private void assertElementIoMatches(final String feedName,
                                         final StepLocation loc,
-                                        final SharedStepData legacy,
+                                        final SharedStepData stepped,
                                         final SharedStepData session) {
-        for (final String elementId : legacy.getElementMap().keySet()) {
-            final SharedElementData legacyData = legacy.getElementData(elementId);
+        for (final String elementId : stepped.getElementMap().keySet()) {
+            final SharedElementData steppedData = stepped.getElementData(elementId);
             final SharedElementData sessionData = session.getElementMap().get(elementId);
             assertThat(sessionData).as("element %s at %s for %s", elementId, loc, feedName).isNotNull();
             assertThat(sessionData.getOutput())
                     .as("output for element %s at %s for %s", elementId, loc, feedName)
-                    .isEqualTo(legacyData.getOutput());
+                    .isEqualTo(steppedData.getOutput());
             assertThat(sessionData.getInput())
                     .as("input for element %s at %s for %s", elementId, loc, feedName)
-                    .isEqualTo(legacyData.getInput());
+                    .isEqualTo(steppedData.getInput());
         }
     }
 }

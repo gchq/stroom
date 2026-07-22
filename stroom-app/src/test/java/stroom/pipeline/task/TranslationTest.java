@@ -673,6 +673,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             requestBuilder.stepType(direction);
             final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
+            // Carry the session id across steps exactly as the UI does. Without this every step would open
+            // a fresh session and re-sweep the stream, so the scripted sequences below would still pass but
+            // would never exercise serving a step from data an earlier step captured - which is the whole
+            // point of the engine they are the acceptance gate for.
+            requestBuilder.sessionUuid(stepResponse.getSessionUuid());
+
             if (stepResponse.getGeneralErrors() != null && !stepResponse.getGeneralErrors().isEmpty()) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
             }

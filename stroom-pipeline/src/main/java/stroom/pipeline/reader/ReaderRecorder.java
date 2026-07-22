@@ -27,7 +27,7 @@ import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.parser.CombinedParser.Mode;
 import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
-import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.capture.Recorder;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ElementId;

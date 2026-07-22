@@ -16,8 +16,8 @@
 
 package stroom.pipeline.filter;
 
-import stroom.pipeline.stepping.RecordDetector;
-import stroom.pipeline.stepping.SteppingController;
+import stroom.pipeline.stepping.capture.RecordDetector;
+import stroom.pipeline.stepping.capture.SteppingController;
 
 import org.xml.sax.SAXException;
 

@@ -40,10 +40,10 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.source.SourceElement;
-import stroom.pipeline.stepping.ElementMonitor;
-import stroom.pipeline.stepping.Recorder;
-import stroom.pipeline.stepping.SteppingController;
-import stroom.pipeline.stepping.SteppingFilter;
+import stroom.pipeline.stepping.capture.ElementMonitor;
+import stroom.pipeline.stepping.capture.Recorder;
+import stroom.pipeline.stepping.capture.SteppingController;
+import stroom.pipeline.stepping.capture.SteppingFilter;
 import stroom.pipeline.writer.OutputRecorder;
 import stroom.task.api.Terminator;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -570,11 +570,10 @@ public class PipelineFactory {
                 // single records.
                 final SplitFilter splitFilter = elementFactory.getElementInstance(SplitFilter.class);
                 splitFilter.setSplitDepth(controllerSplitDepth);
-                // In capture mode every record is captured individually (step-size grouping becomes a
-                // query concern); the legacy per-step path keeps honouring the request's step size.
-                splitFilter.setSplitCount(controller.isCaptureMode()
-                        ? 1
-                        : controller.getRequest().getStepSize());
+                // Always one record per split: a stepping pipeline exists to capture every record of the
+                // stream individually, and which of them answers a given step - including any step-size
+                // grouping - is decided later, when the store is read back.
+                splitFilter.setSplitCount(1);
                 parser.setTarget(splitFilter);
 
                 // Create SAX event recorder.

@@ -16,8 +16,8 @@
 
 package stroom.pipeline.reader;
 
-import stroom.pipeline.stepping.RecordDetector;
-import stroom.pipeline.stepping.SteppingController;
+import stroom.pipeline.stepping.capture.RecordDetector;
+import stroom.pipeline.stepping.capture.SteppingController;
 
 import java.io.InputStream;
 

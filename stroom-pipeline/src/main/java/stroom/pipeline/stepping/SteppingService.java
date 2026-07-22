@@ -16,30 +16,23 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.Status;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.factory.Element;
-import stroom.pipeline.factory.ElementFactory;
-import stroom.pipeline.factory.ElementRegistry;
-import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
-import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.stepping.FindElementDocRequest;
-import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.stepping.StepResultResolver.SessionStepResult;
+import stroom.pipeline.stepping.capture.StreamCaptureDriver;
+import stroom.pipeline.stepping.capture.StreamSweep;
+import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
+import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.read.SessionStepResolver;
+import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
+import stroom.pipeline.stepping.session.SteppingSession;
+import stroom.pipeline.stepping.session.SteppingSessionRegistry;
+import stroom.pipeline.stepping.store.StepDataStore;
+import stroom.pipeline.stepping.store.StepDataStoreManager;
+import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
@@ -51,23 +44,29 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
+/**
+ * The way in to stepping: the client's poll lands here.
+ * <p>
+ * This orchestrates, it does not implement. A step is: check the permission, compute the fingerprints for
+ * the code the client just sent, resolve the stream selection <b>as the requesting user</b>, get the
+ * session, resolve the step against it, map the answer onto the wire. Each of those belongs to something
+ * else - {@link SteppingSessionRegistry} keys and reaps sessions, {@link SessionStepResolver} does the
+ * waiting and stream-crossing, {@link SteppingResultMapper} builds the result.
+ * <p>
+ * It also owns the one thing that must not move: launching a {@link StreamSweep}. Every path out of a
+ * launched sweep has to signal it, because readers block on it - see {@link #launchSweep}.
+ */
 @Singleton
 public class SteppingService {
 
@@ -76,63 +75,54 @@ public class SteppingService {
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stepping");
 
     private final TaskContextFactory taskContextFactory;
-    private final Provider<SteppingRequestHandler> steppingRequestHandlerProvider;
+    private final Provider<StreamCaptureDriver> streamCaptureDriverProvider;
     private final ExecutorProvider executorProvider;
     private final MetaService metaService;
-    private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
-    private final PipelineScopeRunnable pipelineScopeRunnable;
-    private final ElementRegistryFactory pipelineElementRegistryFactory;
-    private final ElementFactory elementFactory;
-    // The durable stepping sessions, keyed by (user, session id). A session is NOT removed when a step
-    // completes - it lives until terminate, idle reap, or close, and that is what makes subsequent steps
-    // cheap.
-    private final Map<Key, SteppingSession> currentSessions = new ConcurrentHashMap<>();
     private final TaskManager taskManager;
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
     private final SteppingConfig steppingConfig;
-    private final StepResultResolver stepResultResolver;
+    private final SessionStepResolver sessionStepResolver;
+    private final SteppingSessionRegistry sessionRegistry;
+    private final SteppingResultMapper resultMapper = new SteppingResultMapper();
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
-                           final Provider<SteppingRequestHandler> steppingRequestHandlerProvider,
+                           final Provider<StreamCaptureDriver> streamCaptureDriverProvider,
                            final ExecutorProvider executorProvider,
                            final MetaService metaService,
-                           final PipelineStore pipelineStore,
                            final SecurityContext securityContext,
-                           final PipelineScopeRunnable pipelineScopeRunnable,
-                           final ElementRegistryFactory pipelineElementRegistryFactory,
-                           final ElementFactory elementFactory,
                            final TaskManager taskManager,
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final ElementFingerprinter elementFingerprinter,
                            final SteppingConfig steppingConfig,
-                           final StepResultResolver stepResultResolver) {
+                           final SessionStepResolver sessionStepResolver,
+                           final SteppingSessionRegistry sessionRegistry) {
         this.taskContextFactory = taskContextFactory;
-        this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
+        this.streamCaptureDriverProvider = streamCaptureDriverProvider;
         this.executorProvider = executorProvider;
         this.metaService = metaService;
-        this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
-        this.pipelineScopeRunnable = pipelineScopeRunnable;
-        this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
-        this.elementFactory = elementFactory;
         this.taskManager = taskManager;
         this.stepDataStoreManager = stepDataStoreManager;
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
         this.steppingConfig = steppingConfig;
-        this.stepResultResolver = stepResultResolver;
+        this.sessionStepResolver = sessionStepResolver;
+        this.sessionRegistry = sessionRegistry;
     }
 
     /**
-     * Phase 2 capture: process a whole stream in capture mode into a fresh {@link StepDataStore} and
-     * return the store plus the fingerprints that key the captured IO. Synchronous. The caller owns the
-     * returned session and should call {@link #deleteCaptureSession} when done. (The live step() path is
-     * not yet cut over to this - that is the Phase 4 durable-session work.)
+     * Capture a whole stream into a fresh {@link StepDataStore} and return the store plus the fingerprints
+     * that key the captured IO, blocking until it is complete. The caller owns the returned session and
+     * must call {@link #deleteCaptureSession} when done.
+     * <p>
+     * Stepping itself does not use this - {@link #step} sweeps lazily via a {@link SteppingSession}, so a
+     * user never waits for a whole stream. This is the synchronous door in, for tests and for callers that
+     * genuinely want the entire stream captured up front.
      */
     public SteppingCaptureResult capture(final PipelineStepRequest request, final long metaId) {
         final String sessionId = UUID.randomUUID().toString();
@@ -141,7 +131,7 @@ public class SteppingService {
             final StreamSweep sweep = launchSweep(sessionId, request, metaId, fingerprints);
             // Synchronous variant: wait for the whole stream to be captured. A timed-out wait must not be
             // mistaken for a complete capture - the sweep is still writing to the store we would return.
-            if (!sweep.awaitComplete(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
+            if (!sweep.awaitFullyCaptured(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
                 final TaskContext taskContext = sweep.getTaskContext();
                 sweep.requestTerminate();
                 if (taskContext != null) {
@@ -174,17 +164,17 @@ public class SteppingService {
         try {
             CompletableFuture
                     .runAsync(taskContextFactory.context("Stepping capture", taskContext ->
-                            steppingRequestHandlerProvider.get().execCapture(
+                            streamCaptureDriverProvider.get().capture(
                                     taskContext, request, metaId, sweep, fingerprints)), executor)
                     // A reader blocks on this sweep until it signals, so every way the task can end must
-                    // signal. execCapture handles its own failures, but anything it cannot catch (an Error,
+                    // signal. The driver handles its own failures, but anything it cannot catch (an Error,
                     // or a failure constructing the handler/task context) would otherwise leave the sweep
                     // neither complete nor errored, hanging every reader until its deadline - forever, for
                     // an unbounded await. This is the backstop for those paths.
                     .whenComplete((unused, t) -> {
                         if (t != null) {
                             sweep.markError(t);
-                        } else if (!sweep.isComplete()) {
+                        } else if (!sweep.isFullyCaptured()) {
                             sweep.markError(new RuntimeException(
                                     "Stepping capture of stream " + metaId + " ended without completing"));
                         }
@@ -211,24 +201,20 @@ public class SteppingService {
     }
 
     /**
-     * Create a durable stepping session for a request: computes the fingerprints once and resolves the
-     * ordered candidate stream id list. Streams are swept lazily as steps target them. Call
+     * Create a durable stepping session for a request's stream selection. Streams are swept lazily as steps
+     * target them, each under whatever configuration that step is served with. Call
      * {@link SteppingSession#close()} when finished.
      */
     public SteppingSession createSession(final PipelineStepRequest request) {
         return securityContext.secureResult(AppPermission.STEPPING_PERMISSION, () ->
-                createSession(request, computeFingerprints(request), getStreamIdList(request.getCriteria())));
+                createSession(getStreamIdList(request.getCriteria())));
     }
 
-    private SteppingSession createSession(final PipelineStepRequest request,
-                                          final ElementFingerprints fingerprints,
-                                          final List<Long> streamIds) {
+    private SteppingSession createSession(final List<Long> streamIds) {
         final String sessionId = UUID.randomUUID().toString();
         return new SteppingSession(
                 sessionId,
                 streamIds,
-                request,
-                fingerprints,
                 (metaId, sweepRequest, sweepFingerprints) ->
                         launchSweep(sessionId, sweepRequest, metaId, sweepFingerprints),
                 this::closeSession,
@@ -278,220 +264,31 @@ public class SteppingService {
             final ElementFingerprints fingerprints = computeFingerprints(request);
             final List<Long> streamIds = getStreamIdList(request.getCriteria());
 
-            final SteppingSession session = getOrCreateSession(userIdentity, request, fingerprints, streamIds);
-            // Point the session at this step's code. If an element was edited its fingerprint (and its
-            // downstream) changed, so this step is served under new keys while the untouched elements are
-            // still read from what was already captured.
-            session.refresh(request, fingerprints);
+            final SteppingSession session = sessionRegistry.getOrCreate(
+                    userIdentity,
+                    request.getSessionUuid(),
+                    streamIds,
+                    () -> createSession(streamIds));
 
-            final SessionStepResult sessionResult = stepResultResolver.resolveSession(
-                    session, request, request.getTimeout() == null ? 0L : request.getTimeout());
+            // The fingerprints are what this step is served under. If an element was edited they have
+            // changed, so it is served under new keys while the untouched elements are still read from what
+            // was already captured.
+            final SessionStepResult sessionResult = sessionStepResolver.resolve(
+                    session, request, fingerprints, request.getTimeout() == null ? 0L : request.getTimeout());
 
-            reapIdleSessions();
+            sessionRegistry.reapIdle();
 
-            return toSteppingResult(request, session, sessionResult);
+            return resultMapper.toResult(request, session, sessionResult);
         });
-    }
-
-    private SteppingSession getOrCreateSession(final UserIdentity userIdentity,
-                                               final PipelineStepRequest request,
-                                               final ElementFingerprints fingerprints,
-                                               final List<Long> streamIds) {
-        final String requestedId = request.getSessionUuid();
-        if (requestedId != null) {
-            final SteppingSession existing = currentSessions.get(new Key(userIdentity, requestedId));
-            // A session is scoped to the stream selection it was created with; if the selection changed
-            // underneath us its stream list and captured data no longer answer this request.
-            if (existing != null && !existing.isClosed() && existing.matchesSelection(streamIds)) {
-                return existing;
-            }
-            if (existing != null) {
-                removeSession(new Key(userIdentity, requestedId));
-            }
-            // Otherwise fall through and start a fresh session. The client is told the new id in the
-            // response and adopts it, so a reaped or stale session self-heals into a re-sweep rather than
-            // failing the step.
-            LOGGER.debug(() -> "Replacing stale stepping session: " + requestedId);
-        }
-
-        final SteppingSession session = createSession(request, fingerprints, streamIds);
-        currentSessions.put(new Key(userIdentity, session.getSessionId()), session);
-        return session;
-    }
-
-    /**
-     * Map the session's answer onto the wire result. {@code complete} means "this step query resolved" - the
-     * client polls while a sweep is still working towards the requested record.
-     */
-    private SteppingResult toSteppingResult(final PipelineStepRequest request,
-                                            final SteppingSession session,
-                                            final SessionStepResult result) {
-        final Set<String> generalErrors = result.generalError() == null
-                ? Collections.emptySet()
-                : Set.of(result.generalError());
-        final Integer streamOffset = result.foundLocation() == null
-                ? null
-                : session.getStreamIdList().indexOf(result.foundLocation().getMetaId());
-
-        return new SteppingResult(
-                session.getSessionId(),
-                request.getStepFilterMap(),
-                result.progressLocation(),
-                result.foundLocation(),
-                result.stepData(),
-                streamOffset,
-                result.foundRecord(),
-                generalErrors,
-                result.segmentedData(),
-                result.complete());
-    }
-
-    private void reapIdleSessions() {
-        final Instant oldest = Instant.now().minus(steppingConfig.getMaxSessionIdleTime().getDuration());
-        currentSessions.forEach((key, session) -> {
-            if (session.getLastAccessTime().isBefore(oldest)) {
-                LOGGER.debug(() -> "Reaping idle stepping session: " + key);
-                removeSession(key);
-            }
-        });
-    }
-
-    private void removeSession(final Key key) {
-        final SteppingSession session = currentSessions.remove(key);
-        if (session != null) {
-            session.close();
-        }
     }
 
     public Boolean terminateStepping(final PipelineStepRequest request) {
         LOGGER.trace(() -> "terminateStepping() - " + request);
 
         if (request.getSessionUuid() != null) {
-            LOGGER.debug(() -> "Terminate stepping: " + request.getSessionUuid());
-            final UserIdentity userIdentity = securityContext.getUserIdentity();
-            final Key key = new Key(userIdentity, request.getSessionUuid());
-            if (currentSessions.containsKey(key)) {
-                removeSession(key);
-                return true;
-            }
+            return sessionRegistry.terminate(securityContext.getUserIdentity(), request.getSessionUuid());
         }
         return false;
-    }
-
-    public DocRef getPipelineForStepping(final GetPipelineForMetaRequest request) {
-        DocRef docRef = null;
-
-        // First try and get the pipeline from the selected child stream.
-        Meta childMeta = getMeta(request.getChildMetaId());
-        if (childMeta != null) {
-            docRef = getPipeline(childMeta);
-        }
-
-        if (docRef == null) {
-            // If we didn't get a pipeline docRef from a child stream then try and
-            // find a child stream to get one from.
-            childMeta = getFirstChildMeta(request.getMetaId());
-            if (childMeta != null) {
-                docRef = getPipeline(childMeta);
-            }
-        }
-
-        return docRef;
-    }
-
-    private Meta getMeta(final Long id) {
-        if (id == null) {
-            return null;
-        } else {
-            return securityContext.asProcessingUserResult(() -> {
-                final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
-                final List<Meta> streamList = metaService.find(criteria).getValues();
-                return NullSafe.first(streamList);
-            });
-        }
-    }
-
-    private Meta getFirstChildMeta(final Long id) {
-        if (id == null) {
-            return null;
-        } else {
-            return securityContext.asProcessingUserResult(() -> {
-                final FindMetaCriteria criteria =
-                        new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
-                return metaService.find(criteria).getFirst();
-            });
-        }
-    }
-
-    private DocRef getPipeline(final Meta meta) {
-        DocRef docRef = null;
-
-        // So we have got the stream so try and get the first pipeline that was
-        // used to produce children for this stream.
-        final String pipelineUuid = meta.getPipelineUuid();
-        if (pipelineUuid != null) {
-            try {
-                // Ensure the current user is allowed to load this pipeline.
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE,
-                        pipelineUuid));
-                docRef = DocRefUtil.create(pipelineDoc);
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
-        }
-
-        return docRef;
-    }
-
-    public DocRef findElementDoc(final FindElementDocRequest request) {
-        return pipelineScopeRunnable.scopeResult(() -> {
-            final PipelineElement pipelineElement = request.getPipelineElement();
-            final List<PipelineProperty> properties = request.getProperties();
-            final String elementType = pipelineElement.getType();
-
-            final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
-            LOGGER.debug("create() - loading element {}", pipelineElement);
-
-            final Class<Element> elementClass = pipelineElementRegistry.getElementClass(elementType);
-
-            if (elementClass == null) {
-                throw new PipelineFactoryException("Unable to load elementClass for type " + elementType);
-            }
-
-            final Element elementInstance = elementFactory.getElementInstance(elementClass);
-            if (elementInstance == null) {
-                throw new PipelineFactoryException("Unable to load elementInstance for class " + elementClass);
-            }
-
-            // Set the properties on this instance.
-            for (final PipelineProperty property : properties) {
-                PipelineFactory.setProperty(
-                        pipelineElementRegistry,
-                        pipelineElement.getId(),
-                        elementType,
-                        elementInstance,
-                        property.getName(),
-                        property.getValue(),
-                        null);
-            }
-
-            if (elementInstance instanceof final SupportsCodeInjection supportsCodeInjection) {
-                return supportsCodeInjection.findDoc(
-                        request.getFeedName(),
-                        request.getPipelineName(),
-                        LOGGER::debug);
-            }
-
-            throw new PipelineFactoryException("Element does not support code injection " + elementClass);
-        });
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public record Key(UserIdentity userIdentity, String uuid) {
-
     }
 
 
@@ -500,7 +297,7 @@ public class SteppingService {
 
     /**
      * The result of a {@link #capture} call: the session id owning the persisted data, the store, and the
-     * fingerprints needed to read element chunks back (e.g. via {@code StepResultResolver}).
+     * fingerprints needed to read element chunks back (e.g. via {@code StoreStepResolver}).
      */
     public record SteppingCaptureResult(String sessionId, StepDataStore store, ElementFingerprints fingerprints) {
 
