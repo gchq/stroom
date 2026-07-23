@@ -753,6 +753,72 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
+    /**
+     * Refresh archived roots' {@code totalSpans} from the per-trace span counter for the traces the
+     * just-completed archival merge touched. The counter is seeded to the exact count when a bucket is
+     * created ({@link #archiveOldData}) and maintained by {@code recordNewSpan} during each re-merge, so a
+     * bucket created under this code keeps an exact Total Spans as it grows across cycles — the stored root
+     * value would otherwise go stale (frozen at first archival).
+     *
+     * <p>Forward-only: buckets created before this maintenance were never seeded, so their counter reflects
+     * only spans merged in since; such traces are not retroactively corrected. Also counts only THIS
+     * bucket, so a trace spanning multiple date buckets is under-counted by its other buckets (rare — a
+     * trace longer than the archival granularity).
+     */
+    public void refreshArchivedRootSpanCounts() {
+        if (pendingRootRebuilds.isEmpty()) {
+            return;
+        }
+        final List<String> hexes = new ArrayList<>(pendingRootRebuilds);
+        pendingRootRebuilds.clear();
+        env.write(writer -> {
+            final Txn<ByteBuffer> txn = writer.getWriteTxn();
+            for (final String hex : hexes) {
+                final byte[] tid = HexStringUtil.decode(hex);
+                setRootTotalSpans(txn, tid, (int) readStats(txn, tid).spanCount());
+                writer.tryCommit();
+            }
+            return null;
+        });
+    }
+
+    // Key-only prefix count of the span DBI for a traceId (no value reads).
+    private long countSpansForTrace(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        final long[] count = {0L};
+        byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, dbi, keyRange)) {
+                count[0] = stream.count();
+            }
+        });
+        return count[0];
+    }
+
+    // Overwrite only the spanCount of a trace's stats (keeping other fields), so recordNewSpan increments
+    // from an accurate base on the next archival merge.
+    private void seedStatsSpanCount(final Txn<ByteBuffer> txn, final byte[] traceIdBytes, final long count) {
+        final TraceStats s = readStats(txn, traceIdBytes);
+        writeStats(txn, traceIdBytes, new TraceStats(
+                count, s.serviceCount(), s.maxEnd(), s.lastActivityMs(), s.depth(), count));
+    }
+
+    // Rewrite a (non-orphan) root's totalSpans and its secondary indexes. No-op if absent/orphan/unchanged.
+    private void setRootTotalSpans(final Txn<ByteBuffer> txn, final byte[] traceIdBytes, final int total) {
+        final TraceRootKey key = new TraceRootKey(traceIdBytes);
+        traceRootKeySerde.write(key, keyBuf -> {
+            final ByteBuffer existing = traceRootsDbi.get(txn, keyBuf);
+            if (existing != null) {
+                final TraceRoot root = traceRootValueSerde.read(existing.duplicate());
+                if (!root.isOrphan() && root.getTotalSpans() != total) {
+                    deleteSecondaryIndexes(txn, traceIdBytes, root);
+                    final TraceRoot updated = root.copy().totalSpans(total).build();
+                    traceRootValueSerde.write(updated, valBuf -> traceRootsDbi.put(txn, keyBuf, valBuf));
+                    writeSecondaryIndexes(txn, traceIdBytes, updated);
+                }
+            }
+        });
+    }
+
     @Override
     public SpanValue get(final SpanKey key) {
         return env.read(readTxn -> keySerde.toBufferForGet(readTxn, key, optionalKeyByteBuffer ->
@@ -1016,6 +1082,21 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         });
                         return null;
                     });
+
+                    // Seed each archived root's exact per-bucket span count: the root value was copied
+                    // verbatim with the live cumulative count, which goes stale as later cycles merge
+                    // more spans into this bucket. Setting it (and the stats counter) to the actual
+                    // count now lets the trace list report a true Total Spans and lets later merges
+                    // increment from an accurate base.
+                    if (rootHexes != null) {
+                        for (final String hex : rootHexes) {
+                            final byte[] tid = archivedRootRawKV.get(hex)[0];
+                            final long count = archiveDb.countSpansForTrace(
+                                    archiveWriter.getWriteTxn(), tid);
+                            archiveDb.seedStatsSpanCount(archiveWriter.getWriteTxn(), tid, count);
+                            archiveDb.setRootTotalSpans(archiveWriter.getWriteTxn(), tid, (int) count);
+                        }
+                    }
                     return null;
                 });
                 // Clone the UID / hash lookup tables so the archive decodes span
@@ -1596,21 +1677,51 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * even though {@link #matchesTimeRange} would pass them; null start times are abnormal.
      */
     private long countTracesInTimeRange(final Txn<ByteBuffer> readTxn, final TimeFilter timeFilter) {
+        final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
+        try (final Stream<LmdbEntry> stream =
+                LmdbStream.stream(readTxn, startTimeDbi, startTimeKeyRange(timeFilter))) {
+            // Not SIZED, so count() actually traverses the range (key-only, no value reads).
+            return stream.count();
+        }
+    }
+
+    /**
+     * Distinct trace-IDs (hex) whose start time falls within {@code timeFilter}, from a key-only walk of
+     * the {@link TraceSecondaryIndex#START_TIME} index (the traceId is the key suffix, so no value is read
+     * and no {@link TraceRoot} is deserialised). Used to compute an exact distinct trace count across the
+     * live shard + archive buckets, where summing per-store totals would double-count split traces.
+     */
+    public Set<String> windowTraceIds(final TimeFilter timeFilter) {
+        return env.read(readTxn -> {
+            final Set<String> ids = new HashSet<>();
+            final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
+            try (final Stream<LmdbEntry> stream =
+                    LmdbStream.stream(readTxn, startTimeDbi, startTimeKeyRange(timeFilter))) {
+                stream.forEach(entry -> {
+                    final ByteBuffer keyBuf = entry.getKey().duplicate();
+                    final byte[] traceId = new byte[TRACE_ID_BYTES];
+                    keyBuf.position(keyBuf.limit() - TRACE_ID_BYTES);
+                    keyBuf.get(traceId);
+                    ids.add(HexStringUtil.encode(traceId));
+                });
+            }
+            return ids;
+        });
+    }
+
+    // Contiguous START_TIME index range covering exactly the [from, to] millisecond window (see
+    // countTracesInTimeRange for the key layout / bound rationale).
+    private LmdbKeyRange startTimeKeyRange(final TimeFilter timeFilter) {
         final long from = timeFilter.getFrom();
         final long to = timeFilter.getTo();
         final ByteBuffer start = startTimeBound(
                 from / 1_000L, (int) ((from % 1_000L) * 1_000_000L), (byte) 0x00);
         final ByteBuffer stop = startTimeBound(
                 to / 1_000L, (int) ((to % 1_000L) * 1_000_000L + 999_999L), (byte) 0xFF);
-        final LmdbKeyRange keyRange = LmdbKeyRange.builder()
+        return LmdbKeyRange.builder()
                 .start(start, true)
                 .stop(stop, true)
                 .build();
-        final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
-        try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, startTimeDbi, keyRange)) {
-            // Not SIZED, so count() actually traverses the range (key-only, no value reads).
-            return stream.count();
-        }
     }
 
     /**

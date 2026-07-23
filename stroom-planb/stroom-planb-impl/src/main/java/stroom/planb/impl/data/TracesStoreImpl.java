@@ -239,6 +239,9 @@ public class TracesStoreImpl implements TracesStore {
             }
 
             // --- Archive shard fan-out ---
+            // Distinct archive bucket time-labels overlapping the window, used to decide whether an exact
+            // distinct-trace count is cheap enough (see MAX_EXACT_COUNT_BUCKETS).
+            final Set<String> archiveLabels = new HashSet<>();
             if (timeFilter != null) {
                 for (int i = 0; i < doc.getShardCount(); i++) {
                     final int shardIndex = i;
@@ -246,6 +249,7 @@ public class TracesStoreImpl implements TracesStore {
                             doc, shardIndex,
                             timeFilter.getFrom(), timeFilter.getTo());
                     for (final ArchiveShardRef ref : archiveRefs) {
+                        archiveLabels.add(ref.dateLabel());
                         futures.add(CompletableFuture.supplyAsync(() -> {
                             try {
                                 return securityContext.asUserResult(userIdentity,
@@ -261,7 +265,21 @@ public class TracesStoreImpl implements TracesStore {
             }
 
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            return mergeAndPaginate(futures, criteria);
+            final TracesResultPage merged = mergeAndPaginate(futures, criteria);
+
+            // The summed/deduped total above is only approximate when a split trace is double-counted
+            // across live + archive. When the window overlaps few enough archive buckets, replace it with
+            // an exact distinct-trace count (union of traceIds across the stores).
+            if (timeFilter != null
+                    && !archiveLabels.isEmpty()
+                    && archiveLabels.size() <= MAX_EXACT_COUNT_BUCKETS) {
+                final long exactTotal = countDistinctTraces(doc, timeFilter, userIdentity);
+                final stroom.util.shared.PageResponse pr = merged.getPageResponse();
+                return new TracesResultPage(merged.getValues(),
+                        new stroom.util.shared.PageResponse(
+                                pr.getOffset(), pr.getLength(), exactTotal, true));
+            }
+            return merged;
         } else {
             return shardManager.get(criteria.getDataSourceRef().getName(), reader -> {
                 if (reader instanceof final TraceDb traceDb) {
@@ -270,6 +288,55 @@ public class TracesStoreImpl implements TracesStore {
                 throw new IllegalStateException("Unexpected value: " + reader);
             });
         }
+    }
+
+    // Exact distinct-trace counting only runs when the window overlaps at most this many archive buckets
+    // (~one archival-granularity period straddles two buckets); a wider window keeps the approximate "?".
+    private static final int MAX_EXACT_COUNT_BUCKETS = 2;
+
+    // Exact count of distinct traces with a start time in the window, unioning traceIds across every live
+    // shard + relevant archive bucket (key-only START_TIME scans). Dedupes split traces (archived real
+    // root + live orphan) that the per-store summed total double-counts.
+    private long countDistinctTraces(final PlanBDocument doc,
+                                     final TimeFilter timeFilter,
+                                     final UserIdentity userIdentity) {
+        final List<CompletableFuture<Set<String>>> futures = new ArrayList<>();
+        for (int i = 0; i < doc.getShardCount(); i++) {
+            final int shardIndex = i;
+            futures.add(CompletableFuture.supplyAsync(() ->
+                    securityContext.asUserResult(userIdentity, () ->
+                            shardManager.get(doc.getName(), shardIndex, reader -> {
+                                if (reader instanceof final TraceDb traceDb) {
+                                    return traceDb.windowTraceIds(timeFilter);
+                                }
+                                throw new IllegalStateException("Unexpected value: " + reader);
+                            })), executor));
+            for (final ArchiveShardRef ref : archiveShardLocator.findRelevantShards(
+                    doc, shardIndex, timeFilter.getFrom(), timeFilter.getTo())) {
+                futures.add(CompletableFuture.supplyAsync(() ->
+                        securityContext.asUserResult(userIdentity, () ->
+                                shardManager.getArchive(doc, shardIndex, ref, reader -> {
+                                    if (reader instanceof final TraceDb traceDb) {
+                                        return traceDb.windowTraceIds(timeFilter);
+                                    }
+                                    throw new IllegalStateException("Unexpected value: " + reader);
+                                })), executor));
+            }
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        final Set<String> distinct = new HashSet<>();
+        for (final CompletableFuture<Set<String>> future : futures) {
+            try {
+                final Set<String> ids = future.get();
+                if (ids != null) {
+                    distinct.addAll(ids);
+                }
+            } catch (final Exception e) {
+                LOGGER.error("Failed to collect window traceIds for doc " + doc.getName(), e);
+            }
+        }
+        return distinct.size();
     }
 
     /**
@@ -353,9 +420,18 @@ public class TracesStoreImpl implements TracesStore {
     // De-dup precedence for a traceId seen in >1 shard (archived real-root row + live orphan row):
     // keep the real root over an orphan, else the most recently active. Order-independent, so safe
     // as a Map#merge remapping function.
+    //
+    // A split trace's archived spans (in the real-root row) and its trailing live spans (in the orphan
+    // row) are disjoint sets, so the true Total Spans is their SUM. Keep the real root's identity but add
+    // the orphan's span count, otherwise the trailing live spans would be dropped from the reported total.
     private static TraceRoot preferred(final TraceRoot a, final TraceRoot b) {
         if (a.isOrphan() != b.isOrphan()) {
-            return a.isOrphan() ? b : a; // prefer the non-orphan (real root)
+            final TraceRoot real = a.isOrphan() ? b : a;
+            final TraceRoot orphan = a.isOrphan() ? a : b;
+            final int combined = real.getTotalSpans() + orphan.getTotalSpans();
+            return combined == real.getTotalSpans()
+                    ? real
+                    : real.copy().totalSpans(combined).build();
         }
         return a.getLastActivityMs() >= b.getLastActivityMs() ? a : b;
     }
