@@ -555,15 +555,14 @@
 /* Operation-name indentation is applied inline (padding-left = depth * 30px) by
  * TraceOverviewWidget.appendOperationItem, so it works at any nesting depth. */
 
-/* ---- TracesViewImpl ---- */
+/* ---- Traces toolbar ---- */
 
-.TracesViewImpl-toolbar {
+/* Wrapper contributed to the doc tab's save-toolbar row (via HasToolbar); flex-grow fills the
+   width right of the save buttons and pushes the TimeRangeSelector to the right edge. */
+.traces-toolbar {
     display: flex;
+    flex-grow: 1;
+    justify-content: flex-end;
     align-items: center;
-    padding: 2px 5px;
-    border-bottom: 1px solid var(--header__border-color);
-}
-
-.TracesViewImpl-label {
-    flex: 1;
+    padding: 0 5px;
 }

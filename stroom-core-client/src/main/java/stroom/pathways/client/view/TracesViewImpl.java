@@ -17,14 +17,9 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
-import stroom.query.api.TimeRange;
-import stroom.query.client.view.TimeRangeSelector;
 
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,24 +31,15 @@ public class TracesViewImpl
         implements TracesView {
 
     @UiField
-    Label label;
-    @UiField
     SimplePanel topWidget;
     @UiField
     SimplePanel bottomWidget;
-    @UiField
-    TimeRangeSelector timeRangeSelector;
 
     private final Widget widget;
 
     @Inject
     public TracesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    public void setLabel(final String label) {
-        this.label.setText(label);
     }
 
     @Override
@@ -64,21 +50,6 @@ public class TracesViewImpl
     @Override
     public void setBottomWidget(final Widget widget) {
         this.bottomWidget.setWidget(widget);
-    }
-
-    @Override
-    public void setTimeRange(final TimeRange timeRange) {
-        timeRangeSelector.setValue(timeRange);
-    }
-
-    @Override
-    public TimeRange getTimeRange() {
-        return timeRangeSelector.getValue();
-    }
-
-    @Override
-    public HandlerRegistration addTimeRangeValueChangeHandler(final ValueChangeHandler<TimeRange> handler) {
-        return timeRangeSelector.addValueChangeHandler(handler);
     }
 
     @Override

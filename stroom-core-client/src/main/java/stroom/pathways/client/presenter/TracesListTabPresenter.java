@@ -20,6 +20,7 @@ import stroom.data.grid.client.DefaultResources;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.entity.client.presenter.HasToolbar;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceRequest;
@@ -28,19 +29,20 @@ import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.shared.PlanBDoc;
-import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
+import stroom.query.client.view.TimeRangeSelector;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> {
+import java.util.List;
+
+public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> implements HasToolbar {
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
 
@@ -51,6 +53,10 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     private final TracesListPresenter listPresenter;
     private final TraceOverviewWidget traceOverviewWidget;
     private final RestFactory restFactory;
+    // The time-range selector lives on the doc tab's save-toolbar row (contributed via HasToolbar),
+    // right-aligned by the .traces-toolbar wrapper, rather than in a dedicated band above the grid.
+    private final TimeRangeSelector timeRangeSelector = new TimeRangeSelector();
+    private final FlowPanel toolbar = new FlowPanel();
     private DocRef dataSourceRef;
 
     @Inject
@@ -64,14 +70,22 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         this.restFactory = restFactory;
         traceOverviewWidget = new TraceOverviewWidget(resources);
 
+        toolbar.addStyleName("traces-toolbar");
+        toolbar.add(timeRangeSelector);
+
         view.setTopWidget(listPresenter.getView());
         view.setBottomWidget(traceOverviewWidget);
     }
 
     @Override
+    public List<Widget> getToolbars() {
+        return List.of(toolbar);
+    }
+
+    @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(getView().addTimeRangeValueChangeHandler(e -> {
+        registerHandler(timeRangeSelector.addValueChangeHandler(e -> {
             listPresenter.setTimeRange(e.getValue());
             listPresenter.refresh();
         }));
@@ -153,7 +167,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         if (docRef != null) {
             setDataSourceRef(docRef);
             // Default the time range selector to Today on first open.
-            getView().setTimeRange(TimeRanges.TODAY);
+            timeRangeSelector.setValue(TimeRanges.TODAY);
             listPresenter.setTimeRange(TimeRanges.TODAY);
             refresh();
         }
@@ -183,16 +197,8 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
 
     public interface TracesView extends View {
 
-        void setLabel(String label);
-
         void setTopWidget(View view);
 
         void setBottomWidget(Widget view);
-
-        void setTimeRange(TimeRange timeRange);
-
-        TimeRange getTimeRange();
-
-        HandlerRegistration addTimeRangeValueChangeHandler(ValueChangeHandler<TimeRange> handler);
     }
 }
