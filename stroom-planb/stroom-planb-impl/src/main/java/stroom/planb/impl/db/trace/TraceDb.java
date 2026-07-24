@@ -1946,8 +1946,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // window at a time. Random access is provided by resuming from a nearby checkpoint cursor.
     // ------------------------------------------------------------------------
 
-    /** One row of a paged tree-order read: a span and its depth (root = 1). */
-    public record SpanRow(Span span, int depth) {
+    /** One row of a paged tree-order read: a span, its depth (0 = root), and whether it has any children
+     * (drives the client's expander). */
+    public record SpanRow(Span span, int depth, boolean hasChildren) {
+    }
+
+    /**
+     * Decides whether the DFS descends into a span's children. Used to honour per-span expand/collapse: a
+     * closed span is still emitted, but its subtree is skipped. {@link #ALL} = fully expanded (descend
+     * everywhere), the default that reproduces an unfiltered pre-order walk.
+     */
+    @FunctionalInterface
+    public interface SpanOpenTest {
+
+        SpanOpenTest ALL = (spanId, depth) -> true;
+
+        boolean isOpen(byte[] spanId, int depth);
     }
 
     /**
@@ -2038,22 +2052,30 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      */
     public static SpanPage getSpanPage(final ChildCursor cursor,
                                        final List<byte[]> cursorPath,
-                                       final int limit) {
+                                       final int limit,
+                                       final SpanOpenTest openTest) {
         final List<byte[]> path = new ArrayList<>();
         if (cursorPath != null) {
             path.addAll(cursorPath);
         }
         final List<SpanRow> rows = new ArrayList<>(Math.max(0, limit));
         for (int i = 0; i < limit; i++) {
-            final Optional<Span> next = advancePreorder(cursor, path);
+            final Optional<Span> next = advancePreorder(cursor, path, openTest);
             if (next.isEmpty()) {
                 return new SpanPage(rows, new ArrayList<>(path), false);
             }
             // depth 0 = root, matching the non-virtualized waterfall's indentation (path
             // includes the current node, so its size is the 1-based depth).
-            rows.add(new SpanRow(next.get(), path.size() - 1));
+            rows.add(new SpanRow(next.get(), path.size() - 1, cursorHasChildren(cursor, path)));
         }
         return new SpanPage(rows, new ArrayList<>(path), true);
+    }
+
+    // Whether the node at the end of 'path' has any child span (drives the client's expander). One
+    // start-bounded seek — O(log n).
+    private static boolean cursorHasChildren(final ChildCursor cursor, final List<byte[]> path) {
+        final byte[] last = path.get(path.size() - 1);
+        return cursor.firstChildAfter(spanIdOf(last), null, Set.of()) != null;
     }
 
     /**
@@ -2063,8 +2085,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     public SpanPage getSpanPage(final byte[] traceIdBytes,
                                 final List<byte[]> cursorPath,
                                 final int limit) {
-        return env.read(readTxn ->
-                getSpanPage(new SingleStoreChildCursor(this, readTxn, traceIdBytes), cursorPath, limit));
+        return env.read(readTxn -> getSpanPage(
+                new SingleStoreChildCursor(this, readTxn, traceIdBytes), cursorPath, limit, SpanOpenTest.ALL));
     }
 
     /**
@@ -2082,11 +2104,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * Walks the whole pre-order traversal of {@code cursor} once, snapshotting the DFS path every
      * {@link #CHECKPOINT_INTERVAL} rows. O(n) — the caller should cache the result.
      */
-    public static CheckpointIndex buildCheckpoints(final ChildCursor cursor) {
+    public static CheckpointIndex buildCheckpoints(final ChildCursor cursor, final SpanOpenTest openTest) {
         final List<List<byte[]>> checkpoints = new ArrayList<>();
         final List<byte[]> path = new ArrayList<>();
         int emitted = 0;
-        while (advancePreorder(cursor, path).isPresent()) {
+        while (advancePreorder(cursor, path, openTest).isPresent()) {
             emitted++;
             if (emitted % CHECKPOINT_INTERVAL == 0) {
                 checkpoints.add(new ArrayList<>(path));
@@ -2104,7 +2126,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     public static SpanPage getSpanPageAtOffset(final ChildCursor cursor,
                                                final CheckpointIndex index,
                                                final int offset,
-                                               final int limit) {
+                                               final int limit,
+                                               final SpanOpenTest openTest) {
         final int lastPageStart = index.total() <= 0 || limit <= 0
                 ? 0
                 : ((index.total() - 1) / limit) * limit;
@@ -2119,18 +2142,20 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
         final int skip = path.isEmpty() ? clamped : clamped - checkpointOffset;
         for (int i = 0; i < skip; i++) {
-            if (advancePreorder(cursor, path).isEmpty()) {
+            if (advancePreorder(cursor, path, openTest).isEmpty()) {
                 return new SpanPage(new ArrayList<>(), new ArrayList<>(path), false);
             }
         }
-        return getSpanPage(cursor, path, limit);
+        return getSpanPage(cursor, path, limit, openTest);
     }
 
     // Advances 'path' in place to the next node in pre-order DFS and returns its span, or empty when
     // exhausted. 'path' is the chain of 16-byte locators (startTime ∥ spanId) from the root to the
     // current node (empty = before the root). Children come from 'cursor' (single store or merged).
     // Malformed cycles are skipped via the ancestor set.
-    private static Optional<Span> advancePreorder(final ChildCursor cursor, final List<byte[]> path) {
+    private static Optional<Span> advancePreorder(final ChildCursor cursor,
+                                                  final List<byte[]> path,
+                                                  final SpanOpenTest openTest) {
         final Set<String> ancestors = new HashSet<>();
         for (final byte[] loc : path) {
             ancestors.add(HexStringUtil.encode(spanIdOf(loc)));
@@ -2146,12 +2171,15 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             return Optional.of(root.span());
         }
 
-        // 1. Descend into the first child of the current (last) node.
+        // 1. Descend into the first child of the current (last) node — but only if it is expanded.
+        // A collapsed node was still emitted; we just skip its subtree (its children are hidden).
         final byte[] last = path.get(path.size() - 1);
-        final ChildSpan child = cursor.firstChildAfter(spanIdOf(last), null, ancestors);
-        if (child != null) {
-            path.add(child.locator());
-            return Optional.of(child.span());
+        if (openTest.isOpen(spanIdOf(last), path.size() - 1)) {
+            final ChildSpan child = cursor.firstChildAfter(spanIdOf(last), null, ancestors);
+            if (child != null) {
+                path.add(child.locator());
+                return Optional.of(child.span());
+            }
         }
 
         // 2. No child — walk up to the nearest ancestor that has a next sibling.
@@ -2245,19 +2273,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 skip = offset - checkpointOffset;
             }
             for (int i = 0; i < skip; i++) {
-                if (advancePreorder(cursor, path).isEmpty()) {
+                if (advancePreorder(cursor, path, SpanOpenTest.ALL).isEmpty()) {
                     return new SpanPage(new ArrayList<>(), new ArrayList<>(path), false);
                 }
             }
             final List<SpanRow> rows = new ArrayList<>(Math.max(0, limit));
             for (int i = 0; i < limit; i++) {
-                final Optional<Span> next = advancePreorder(cursor, path);
+                final Optional<Span> next = advancePreorder(cursor, path, SpanOpenTest.ALL);
                 if (next.isEmpty()) {
                     return new SpanPage(rows, new ArrayList<>(path), false);
                 }
                 // depth 0 = root, matching the non-virtualized waterfall's indentation (path
                 // includes the current node, so its size is the 1-based depth).
-                rows.add(new SpanRow(next.get(), path.size() - 1));
+                rows.add(new SpanRow(next.get(), path.size() - 1, cursorHasChildren(cursor, path)));
             }
             return new SpanPage(rows, new ArrayList<>(path), true);
         });
@@ -2321,7 +2349,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         final List<byte[]> path = new ArrayList<>();
         int emitted = 0;
         int maxDepth = 0;
-        while (advancePreorder(cursor, path).isPresent()) {
+        while (advancePreorder(cursor, path, SpanOpenTest.ALL).isPresent()) {
             emitted++;
             if (path.size() > maxDepth) {
                 maxDepth = path.size();

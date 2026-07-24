@@ -45,6 +45,7 @@ import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.TimeFilter;
 import stroom.query.api.TimeRange;
 import stroom.query.common.v2.DateExpressionParser;
@@ -87,6 +88,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @Singleton
 public class TracesStoreImpl implements TracesStore {
@@ -594,6 +596,15 @@ public class TracesStoreImpl implements TracesStore {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
         final String docName = request.getDataSourceRef().getName();
 
+        // Expand/collapse: the client sends a GroupSelection only when the view actually prunes something
+        // (a collapsed span or a reduced expand-level); null ⇒ fully expanded ⇒ the unfiltered walk, which
+        // keeps the fast on-disk-checkpoint path. The "group key" is the span's spanId (hex).
+        final GroupSelection groupSelection = request.getGroupSelection();
+        final boolean pruned = groupSelection != null;
+        final TraceDb.SpanOpenTest openTest = groupSelection == null
+                ? TraceDb.SpanOpenTest.ALL
+                : (spanId, depth) -> groupSelection.isGroupOpen(HexStringUtil.encode(spanId), depth);
+
         final boolean liveHasRoot = Boolean.TRUE.equals(shardManager.get(docName, request.getTraceId(),
                 reader -> {
                     if (reader instanceof final TraceDb traceDb) {
@@ -602,7 +613,9 @@ public class TracesStoreImpl implements TracesStore {
                     throw new IllegalStateException("Unexpected value: " + reader);
                 }));
 
-        if (liveHasRoot) {
+        if (liveHasRoot && !pruned) {
+            // Fully-expanded, live-rooted: offset/random via the on-disk checkpoints; the TraceRoot total is
+            // exact, so no total is sent.
             final TraceDb.SpanPage page = shardManager.get(docName, request.getTraceId(), reader -> {
                 if (reader instanceof final TraceDb traceDb) {
                     return traceDb.getSpanPageAtOffset(
@@ -610,8 +623,31 @@ public class TracesStoreImpl implements TracesStore {
                 }
                 throw new IllegalStateException("Unexpected value: " + reader);
             });
-            // Offset/random via the live checkpoints; the TraceRoot total is exact, so no total is sent.
             return toSpanPage(page, false, null);
+        }
+
+        if (liveHasRoot) {
+            // Live-rooted but pruned: the on-disk checkpoints are for the UNFILTERED tree, so build a
+            // filtered in-memory checkpoint index (cached by trace + live version + selection) and page by
+            // offset. Total comes from the filtered index so the pager count reflects the collapsed view.
+            final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+            final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+            final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), List.of())
+                    + groupSelectionKey(groupSelection);
+            return shardManager.get(docName, request.getTraceId(), reader -> {
+                if (!(reader instanceof final TraceDb traceDb)) {
+                    throw new IllegalStateException("Unexpected value: " + reader);
+                }
+                return traceDb.read(txn -> {
+                    final TraceDb.ChildCursor cursor =
+                            new TraceDb.SingleStoreChildCursor(traceDb, txn, traceIdBytes);
+                    final TraceDb.CheckpointIndex index = mergedCheckpointCache.getOrBuild(
+                            cacheKey, () -> TraceDb.buildCheckpoints(cursor, openTest));
+                    final TraceDb.SpanPage page = TraceDb.getSpanPageAtOffset(
+                            cursor, index, request.getOffset(), request.getLimit(), openTest);
+                    return toSpanPage(page, false, index.total());
+                });
+            });
         }
 
         // Split/archived: merge the live shard with the relevant archive bucket(s).
@@ -621,7 +657,8 @@ public class TracesStoreImpl implements TracesStore {
         final List<ArchiveShardRef> refs = relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs);
         final int shardIndex = archiveShardIndex(doc, request.getTraceId());
         final List<byte[]> cursorPath = decodeCursor(request.getCursor());
-        final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), refs);
+        final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), refs)
+                + groupSelectionKey(groupSelection);
 
         return shardManager.get(docName, request.getTraceId(), liveReader -> {
             if (!(liveReader instanceof final TraceDb liveDb)) {
@@ -631,9 +668,21 @@ public class TracesStoreImpl implements TracesStore {
                 final List<TraceDb.ChildCursor> cursors = new ArrayList<>();
                 cursors.add(new TraceDb.SingleStoreChildCursor(liveDb, liveTxn, traceIdBytes));
                 return openArchivesAndPage(doc, shardIndex, refs, 0, traceIdBytes, cursors,
-                        cursorPath, request.getOffset(), request.getLimit(), cacheKey);
+                        cursorPath, request.getOffset(), request.getLimit(), cacheKey, openTest);
             });
         });
+    }
+
+    // Deterministic cache-key suffix for a GroupSelection (empty when fully expanded / null). Sorted so it
+    // is stable regardless of set iteration order.
+    private static String groupSelectionKey(final GroupSelection groupSelection) {
+        if (groupSelection == null) {
+            return "";
+        }
+        final String open = groupSelection.getOpenGroups().stream().sorted().collect(Collectors.joining(","));
+        final String closed = groupSelection.getClosedGroups().stream().sorted()
+                .collect(Collectors.joining(","));
+        return "|gs=" + groupSelection.getExpandedDepth() + ";o=" + open + ";c=" + closed;
     }
 
     // Recursively nests the getArchive callbacks (each holds the archive shard's read lock + a read txn)
@@ -649,25 +698,26 @@ public class TracesStoreImpl implements TracesStore {
                                               final List<byte[]> cursorPath,
                                               final int offset,
                                               final int limit,
-                                              final String cacheKey) {
+                                              final String cacheKey,
+                                              final TraceDb.SpanOpenTest openTest) {
         if (i >= refs.size()) {
             final TraceDb.MergedChildCursor merged = new TraceDb.MergedChildCursor(cursors);
             final TraceDb.SpanPage page;
             final Integer total;
             if (cursorPath != null) {
                 // Sequential resume — cheap, no checkpoints needed.
-                page = TraceDb.getSpanPage(merged, cursorPath, limit);
+                page = TraceDb.getSpanPage(merged, cursorPath, limit, openTest);
                 final TraceDb.CheckpointIndex cached = mergedCheckpointCache.getIfPresent(cacheKey);
                 total = cached != null ? cached.total() : null;
             } else if (offset > 0) {
                 // Random-access jump/last — seek via the merged checkpoint index (built + cached once).
-                final TraceDb.CheckpointIndex index =
-                        mergedCheckpointCache.getOrBuild(cacheKey, () -> TraceDb.buildCheckpoints(merged));
-                page = TraceDb.getSpanPageAtOffset(merged, index, offset, limit);
+                final TraceDb.CheckpointIndex index = mergedCheckpointCache.getOrBuild(
+                        cacheKey, () -> TraceDb.buildCheckpoints(merged, openTest));
+                page = TraceDb.getSpanPageAtOffset(merged, index, offset, limit, openTest);
                 total = index.total();
             } else {
                 // First page (offset 0, no cursor) — walk from the root; don't force a build.
-                page = TraceDb.getSpanPage(merged, null, limit);
+                page = TraceDb.getSpanPage(merged, null, limit, openTest);
                 final TraceDb.CheckpointIndex cached = mergedCheckpointCache.getIfPresent(cacheKey);
                 total = cached != null ? cached.total() : null;
             }
@@ -680,7 +730,7 @@ public class TracesStoreImpl implements TracesStore {
             return archiveDb.read(archiveTxn -> {
                 cursors.add(new TraceDb.SingleStoreChildCursor(archiveDb, archiveTxn, traceIdBytes));
                 return openArchivesAndPage(doc, shardIndex, refs, i + 1, traceIdBytes, cursors,
-                        cursorPath, offset, limit, cacheKey);
+                        cursorPath, offset, limit, cacheKey, openTest);
             });
         });
     }
@@ -694,7 +744,7 @@ public class TracesStoreImpl implements TracesStore {
         if (page != null) {
             if (page.rows() != null) {
                 for (final TraceDb.SpanRow row : page.rows()) {
-                    rows.add(new TraceSpanRow(row.span(), row.depth()));
+                    rows.add(new TraceSpanRow(row.span(), row.depth(), row.hasChildren()));
                 }
             }
             more = page.more();

@@ -80,22 +80,22 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
             if (traceRoot == null) {
                 return;
             }
-            if (isLargeTrace(traceRoot)) {
-                loadLargeTrace(traceRoot);
-            } else {
+            // Every span list is paged via the bounded getSpans path, regardless of size. The one
+            // exception is a SMALL rootless trace: the paged path can't yet traverse a rootless fragment
+            // (separately parked), so we load it whole — safe at that size, and it fits in one page anyway.
+            if (isSmallRootless(traceRoot)) {
                 loadFullTrace(traceRoot);
+            } else {
+                loadLargeTrace(traceRoot);
             }
         }));
     }
 
-    // Any trace with enough spans is served via the bounded, virtualized path, regardless of orphan
-    // status — a huge rootless/orphan or archived trace must NOT take the whole-trace loadFullTrace
-    // path, which materialises every span and OOMs. Extents (start/end) are required for the timeline
-    // axis; a huge trace lacking them falls back to loadFullTrace.
-    private boolean isLargeTrace(final TraceRoot traceRoot) {
-        return traceRoot.getTotalSpans() >= LARGE_TRACE_THRESHOLD
-               && traceRoot.getStartTime() != null
-               && traceRoot.getEndTime() != null;
+    // A small, rootless trace: served whole because the paged (getSpans) tree walk needs a root and can't
+    // traverse a rootless fragment yet. Large rootless traces still take the paged path (loading them whole
+    // would OOM) — they show empty until the parked rootless traversal is implemented.
+    private boolean isSmallRootless(final TraceRoot traceRoot) {
+        return traceRoot.isOrphan() && traceRoot.getTotalSpans() < LARGE_TRACE_THRESHOLD;
     }
 
     private void loadFullTrace(final TraceRoot traceRoot) {
@@ -132,9 +132,10 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         final Long startTimeMs = traceRoot.getStartTime() != null
                 ? traceRoot.getStartTime().toEpochMillis()
                 : null;
-        final TraceOverviewWidget.SpanWindowFetcher fetcher = (offset, cursor, limit, onLoaded) -> {
+        final TraceOverviewWidget.SpanWindowFetcher fetcher =
+                (offset, cursor, limit, groupSelection, onLoaded) -> {
             final GetSpansRequest spansRequest = new GetSpansRequest(
-                    dataSourceRef, traceId, offset, limit, startTimeMs, cursor);
+                    dataSourceRef, traceId, offset, limit, startTimeMs, cursor, groupSelection);
             restFactory
                     .create(TRACES_RESOURCE)
                     .method(res -> res.getSpans(spansRequest))

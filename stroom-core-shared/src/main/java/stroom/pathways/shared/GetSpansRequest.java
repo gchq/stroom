@@ -17,6 +17,7 @@
 package stroom.pathways.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.GroupSelection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -58,6 +59,14 @@ public class GetSpansRequest {
      */
     @JsonProperty
     private final String cursor;
+    /**
+     * Which spans are expanded/collapsed in the waterfall. The server walks the trace tree in pre-order but
+     * only descends into a span's children when that span is open (see {@link GroupSelection#isGroupOpen}),
+     * so a collapsed span's subtree is excluded from the returned window. {@code null} ⇒ fully expanded (the
+     * whole tree), preserving pre-expand/collapse behaviour. The "group key" is the span's spanId.
+     */
+    @JsonProperty
+    private final GroupSelection groupSelection;
 
     @JsonCreator
     public GetSpansRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
@@ -65,13 +74,15 @@ public class GetSpansRequest {
                            @JsonProperty("offset") final int offset,
                            @JsonProperty("limit") final int limit,
                            @JsonProperty("startTimeMs") final Long startTimeMs,
-                           @JsonProperty("cursor") final String cursor) {
+                           @JsonProperty("cursor") final String cursor,
+                           @JsonProperty("groupSelection") final GroupSelection groupSelection) {
         this.dataSourceRef = dataSourceRef;
         this.traceId = traceId;
         this.offset = offset;
         this.limit = limit;
         this.startTimeMs = startTimeMs;
         this.cursor = cursor;
+        this.groupSelection = groupSelection;
     }
 
     public DocRef getDataSourceRef() {
@@ -98,6 +109,10 @@ public class GetSpansRequest {
         return cursor;
     }
 
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -112,12 +127,13 @@ public class GetSpansRequest {
                Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(traceId, that.traceId) &&
                Objects.equals(startTimeMs, that.startTimeMs) &&
-               Objects.equals(cursor, that.cursor);
+               Objects.equals(cursor, that.cursor) &&
+               Objects.equals(groupSelection, that.groupSelection);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSourceRef, traceId, offset, limit, startTimeMs, cursor);
+        return Objects.hash(dataSourceRef, traceId, offset, limit, startTimeMs, cursor, groupSelection);
     }
 
     @Override
@@ -129,6 +145,7 @@ public class GetSpansRequest {
                ", limit=" + limit +
                ", startTimeMs=" + startTimeMs +
                ", cursor='" + cursor + '\'' +
+               ", groupSelection=" + groupSelection +
                '}';
     }
 }

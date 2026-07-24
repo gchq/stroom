@@ -157,8 +157,8 @@ public class TracePersistenceMemory implements TracePersistence {
         if (!visited.add(span.getSpanId())) {
             return;
         }
-        rows.add(new TraceSpanRow(span, depth));
         final List<Span> children = byParent.get(span.getSpanId());
+        rows.add(new TraceSpanRow(span, depth, children != null && !children.isEmpty()));
         if (children != null) {
             final List<Span> sorted = new ArrayList<>(children);
             sorted.sort(Comparator.comparing(Span::start, Comparator.nullsLast(Comparator.naturalOrder())));

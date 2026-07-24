@@ -38,12 +38,21 @@ public class TraceSpanRow {
     private final Span span;
     @JsonProperty
     private final int depth;
+    /**
+     * Whether this span has any child spans in the store. Drives the expander cell: {@code true} shows an
+     * expand/collapse control, {@code false} a leaf marker. (In paged mode the client can't infer this from
+     * the flat row window, so the server supplies it.)
+     */
+    @JsonProperty
+    private final boolean hasChildren;
 
     @JsonCreator
     public TraceSpanRow(@JsonProperty("span") final Span span,
-                        @JsonProperty("depth") final int depth) {
+                        @JsonProperty("depth") final int depth,
+                        @JsonProperty("hasChildren") final boolean hasChildren) {
         this.span = span;
         this.depth = depth;
+        this.hasChildren = hasChildren;
     }
 
     public Span getSpan() {
@@ -52,6 +61,10 @@ public class TraceSpanRow {
 
     public int getDepth() {
         return depth;
+    }
+
+    public boolean isHasChildren() {
+        return hasChildren;
     }
 
     @Override
@@ -63,12 +76,12 @@ public class TraceSpanRow {
             return false;
         }
         final TraceSpanRow that = (TraceSpanRow) o;
-        return depth == that.depth && Objects.equals(span, that.span);
+        return depth == that.depth && hasChildren == that.hasChildren && Objects.equals(span, that.span);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(span, depth);
+        return Objects.hash(span, depth, hasChildren);
     }
 
     @Override
@@ -76,6 +89,7 @@ public class TraceSpanRow {
         return "TraceSpanRow{" +
                "span=" + span +
                ", depth=" + depth +
+               ", hasChildren=" + hasChildren +
                '}';
     }
 }

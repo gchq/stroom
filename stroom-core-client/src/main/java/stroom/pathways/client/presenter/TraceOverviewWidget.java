@@ -16,6 +16,8 @@
 
 package stroom.pathways.client.presenter;
 
+import stroom.dashboard.client.table.TableCollapseButton;
+import stroom.dashboard.client.table.TableExpandButton;
 import stroom.data.grid.client.DefaultResources;
 import stroom.data.grid.client.Glass;
 import stroom.data.pager.client.Pager;
@@ -27,6 +29,8 @@ import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
+import stroom.query.api.GroupSelection;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
@@ -36,6 +40,7 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -43,6 +48,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
@@ -90,7 +96,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // current page's spans. Every request carries the target offset AND the resume cursor if we know one:
     // the server pages by cursor when present (cheap sequential next/prev) and by offset otherwise (live
     // checkpoints, or a merged checkpoint index for split traces), so first/prev/next/last/jump all work.
-    private static final int SPANS_PER_PAGE = 100;
+    private static final int SPANS_PER_PAGE = 1000;
     // The overview strip: each span is one row. When the whole result set fits at the fixed row stride
     // they're stacked at that stride (a single span is one thin bar); when it doesn't, the rows are
     // vertically compressed to fill the strip so none are clipped.
@@ -120,14 +126,29 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // In-flight span-fetch count driving this widget's own pager refresh spinner (see createTaskMonitor).
     private int taskCount;
 
+    // ---- Expand/collapse -------------------------------------------------------------------------
+    // Which spans are expanded/collapsed, keyed by spanId (the "group key"), mirroring dashboard table
+    // grouping. null == fully expanded (the whole tree); a non-null selection prunes. In large mode the
+    // server does the pruning (the request carries this); in whole-trace mode we prune client-side while
+    // rendering. maxDepth caps the expand-level buttons.
+    private GroupSelection groupSelection;
+    private int maxDepth;
+    private final TableExpandButton expandButton = TableExpandButton.create();
+    private final TableCollapseButton collapseButton = TableCollapseButton.create();
+
     /**
      * Fetches a bounded, tree-order window of spans. For random/offset paging pass {@code cursor == null}
      * and the window {@code [offset, offset + limit)}; for sequential paging pass the opaque resume
-     * {@code cursor} (offset ignored).
+     * {@code cursor} (offset ignored). {@code groupSelection} carries the expand/collapse state (null =
+     * fully expanded).
      */
     public interface SpanWindowFetcher {
 
-        void fetch(int offset, String cursor, int limit, Consumer<TraceSpanPage> onLoaded);
+        void fetch(int offset,
+                   String cursor,
+                   int limit,
+                   GroupSelection groupSelection,
+                   Consumer<TraceSpanPage> onLoaded);
     }
 
     public TraceOverviewWidget(final DefaultResources resources) {
@@ -138,8 +159,23 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         pagerBar.addStyleName("trace-pager-bar");
         pagerBar.setVisible(false);
         pager.setDisplay(pagerRows);
+        // Expand/collapse-level buttons on the LEFT, the pager on the RIGHT (CSS space-between).
+        final FlowPanel expandControls = new FlowPanel();
+        expandControls.addStyleName("trace-expand-controls");
+        expandControls.add(expandButton);
+        expandControls.add(collapseButton);
+        pagerBar.add(expandControls);
         pagerBar.add(pager);
         root.add(pagerBar);
+
+        expandButton.addClickHandler(e -> {
+            groupSelection = expandButton.expand(effectiveSelection(), maxDepth);
+            onSelectionChanged();
+        });
+        collapseButton.addClickHandler(e -> {
+            groupSelection = collapseButton.collapse(effectiveSelection());
+            onSelectionChanged();
+        });
 
         // Lets the CSS lay the widget out as a fixed timeline/header above a
         // vertically-scrollable operation list (see .trace-overview in pathways.css).
@@ -193,14 +229,23 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                 resizingPanel = true;
 
             } else {
-                // Clicked a span row/bar — open the Span Info panel for that span.
-                final Element row = ElementUtil.findParent(
-                        element, el -> el.hasAttribute("data-span-id"), 15);
-                if (row != null) {
-                    final Span span = spanById.get(row.getAttribute("data-span-id"));
-                    if (span != null) {
-                        selectedSpan = span;
-                        refresh();
+                // An expander click toggles that span's open/closed state (checked before the generic
+                // span-row click so it doesn't also open the Span Info panel).
+                final Element expander = ElementUtil.findParent(
+                        element, el -> el.hasAttribute("data-expander-span-id"), 15);
+                if (expander != null) {
+                    toggleSpan(expander.getAttribute("data-expander-span-id"),
+                            parseDepth(expander.getAttribute("data-expander-depth")));
+                } else {
+                    // Clicked a span row/bar — open the Span Info panel for that span.
+                    final Element row = ElementUtil.findParent(
+                            element, el -> el.hasAttribute("data-span-id"), 15);
+                    if (row != null) {
+                        final Span span = spanById.get(row.getAttribute("data-span-id"));
+                        if (span != null) {
+                            selectedSpan = span;
+                            refresh();
+                        }
                     }
                 }
             }
@@ -355,6 +400,9 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         this.extents = computeExtents();
         windowStart = NanoDuration.ZERO;
         windowEnd = extents.totalDuration;
+        // Fully expanded by default (null selection); the expand/collapse controls prune from here.
+        this.groupSelection = null;
+        this.maxDepth = computeMaxDepth();
         // Normal (whole) trace: a single page covering every span, so the pager is shown but its nav
         // buttons are all disabled (start == 0, and the visible range already spans the whole count).
         final int spanCount = spanById.size();
@@ -378,6 +426,10 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         this.totalSpans = Math.max(0, root.getTotalSpans());
         this.selectedSpan = null;
         spanById.clear();
+        // Fully expanded by default (null selection → server returns the whole tree). The deepest 0-based
+        // depth is root.getDepth() - 1; that caps the expand-level buttons.
+        this.groupSelection = null;
+        this.maxDepth = Math.max(0, root.getDepth() - 1);
         this.extents = computeExtentsFromRoot(root);
         windowStart = NanoDuration.ZERO;
         windowEnd = extents.totalDuration;
@@ -408,6 +460,79 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         return new Extents(min, max, totalDuration, increments);
     }
 
+    // ---- Expand/collapse helpers -----------------------------------------------------------------
+
+    // A concrete selection for rendering/button state; null (fully expanded) becomes an all-open selection.
+    private GroupSelection effectiveSelection() {
+        return groupSelection != null
+                ? groupSelection
+                : GroupSelection.builder().expandedDepth(maxDepth).build();
+    }
+
+    // Whether a span is expanded (its children shown). A null selection means everything is open.
+    private boolean isOpen(final String spanId, final int depth) {
+        return groupSelection == null || groupSelection.isGroupOpen(spanId, depth);
+    }
+
+    private void toggleSpan(final String spanId, final int depth) {
+        if (spanId == null) {
+            return;
+        }
+        final GroupSelection selection = effectiveSelection();
+        if (selection.isGroupOpen(spanId, depth)) {
+            selection.close(spanId);
+        } else {
+            selection.open(spanId);
+        }
+        groupSelection = selection;
+        onSelectionChanged();
+    }
+
+    private void onSelectionChanged() {
+        if (largeMode) {
+            // The visible row set (and offsets) changes with the selection → refetch from the first page.
+            pageCursors.clear();
+            goToPage(0);
+        } else {
+            refresh();
+        }
+        updateExpandButtons();
+    }
+
+    private void updateExpandButtons() {
+        final GroupSelection selection = effectiveSelection();
+        expandButton.update(selection, maxDepth);
+        collapseButton.update(selection, maxDepth);
+    }
+
+    private static int parseDepth(final String value) {
+        if (value == null || value.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (final NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    // Deepest 0-based depth in the whole-trace forest (for the expand-level button cap).
+    private int computeMaxDepth() {
+        if (trace == null) {
+            return 0;
+        }
+        final int[] max = {0};
+        forestRoots().forEach(root -> accMaxDepth(root, 0, max));
+        return max[0];
+    }
+
+    private void accMaxDepth(final Span span, final int depth, final int[] max) {
+        if (depth > max[0]) {
+            max[0] = depth;
+        }
+        trace.children(span).forEach(child -> accMaxDepth(child, depth + 1, max));
+    }
+
     private void refresh() {
         // Capture the operation list scroll position; setHTML() below rebuilds the
         // whole DOM and would otherwise reset it to the top on every span click/resize.
@@ -416,6 +541,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         final boolean hasContent = (largeMode && largeRoot != null) || trace != null;
         // The pager is shown only when a trace is displayed (disabled for normal/whole traces).
         pagerBar.setVisible(hasContent);
+        updateExpandButtons();
         if (hasContent) {
             hb.div(div -> {
                 appendTimelineHeader(div);
@@ -743,8 +869,10 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
 
     private void appendOperationList(final HtmlBuilder hb) {
         if (largeMode) {
-            // One page of already-flattened tree-order rows (depth carried per row).
-            hb.div(div -> pageRows.forEach(r -> appendPagedRow(div, r.getSpan(), r.getDepth())),
+            // One page of already-flattened tree-order rows (depth carried per row). The server has already
+            // pruned collapsed subtrees, so we just render the rows and their expanders.
+            hb.div(div -> pageRows.forEach(r ->
+                            appendPagedRow(div, r.getSpan(), r.getDepth(), r.isHasChildren())),
                     Attribute.className("operation-list"),
                     Attribute.id("operationList"));
         } else {
@@ -754,9 +882,10 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         }
     }
 
-    private void appendPagedRow(final HtmlBuilder hb, final Span span, final int depth) {
+    private void appendPagedRow(final HtmlBuilder hb, final Span span, final int depth,
+                                final boolean hasChildren) {
         hb.div(div -> {
-            appendOperationContent(div, span, depth);
+            appendOperationContent(div, span, depth, hasChildren);
             appendWaterfall(div, span);
         }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
                 new Attribute("data-span-id", span.getSpanId()));
@@ -766,18 +895,19 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                                      final Span span,
                                      final Extents extents,
                                      final int depth) {
+        final List<Span> children = trace.children(span);
+        final boolean hasChildren = !children.isEmpty();
 
         hb.div(div -> {
-            appendOperationContent(div, span, depth);
+            appendOperationContent(div, span, depth, hasChildren);
             appendWaterfall(div, span);
         }, Attribute.className(isSelected(span) ? "operation-item selected" : "operation-item"),
                 new Attribute("data-span-id", span.getSpanId()));
 
-        final List<Span> children = trace.children(span);
-        if (!children.isEmpty()) {
-            hb.div(div -> {
-                children.forEach(child -> appendOperationItem(div, child, extents, depth + 1));
-            }, Attribute.className("children"));
+        // Client-side prune: only descend into a span's children when it is expanded.
+        if (hasChildren && isOpen(span.getSpanId(), depth)) {
+            hb.div(div -> children.forEach(child -> appendOperationItem(div, child, extents, depth + 1)),
+                    Attribute.className("children"));
         }
 
 
@@ -862,12 +992,33 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // Indent computed from depth so nesting works at any depth (there is no fixed set of indent-N
     // CSS classes to run out of). The name is truncated with an ellipsis by CSS, so expose the full
     // name as a hover tooltip.
-    private void appendOperationContent(final HtmlBuilder hb, final Span span, final int depth) {
-        hb.div(c -> c.span(span.getName(),
-                        Attribute.className("operation-name"),
-                        Attribute.title(span.getName()),
-                        Attribute.style("padding-left: " + (depth * 30) + "px;")),
-                Attribute.className("operation-content"));
+    private void appendOperationContent(final HtmlBuilder hb, final Span span, final int depth,
+                                        final boolean hasChildren) {
+        // Indent the whole content row (expander + name) by depth so they stay aligned.
+        hb.div(c -> {
+            appendExpander(c, span, depth, hasChildren);
+            c.span(span.getName(),
+                    Attribute.className("operation-name"),
+                    Attribute.title(span.getName()));
+        }, Attribute.className("operation-content"),
+                Attribute.style("padding-left: " + (depth * 30) + "px;"));
+    }
+
+    // The expander cell: a clickable +/- for a span with children (▾ open, ▸ collapsed), or a leaf spacer
+    // so names line up. Clicking it toggles the span (see the mouse-down handler + data-expander-* attrs).
+    private void appendExpander(final HtmlBuilder hb, final Span span, final int depth,
+                                final boolean hasChildren) {
+        if (!hasChildren) {
+            hb.span("", Attribute.className("expand-icon expand-leaf"));
+            return;
+        }
+        // The same ARROW_DOWN / ARROW_RIGHT SVGs used by the query/dashboard tables and the navigator.
+        final SafeHtml icon = SvgImageUtil.toSafeHtml(
+                isOpen(span.getSpanId(), depth) ? SvgImage.ARROW_DOWN : SvgImage.ARROW_RIGHT);
+        hb.span(s -> s.append(icon),
+                Attribute.className("expand-icon"),
+                new Attribute("data-expander-span-id", span.getSpanId()),
+                new Attribute("data-expander-depth", String.valueOf(depth)));
     }
 
     private void appendWaterfall(final HtmlBuilder hb, final Span span) {
@@ -939,7 +1090,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         fetching = true;
         final int offset = targetIndex * SPANS_PER_PAGE;
         final String cursor = targetIndex == 0 ? null : pageCursors.get(targetIndex);
-        fetcher.fetch(offset, cursor, SPANS_PER_PAGE, page -> {
+        fetcher.fetch(offset, cursor, SPANS_PER_PAGE, groupSelection, page -> {
             fetching = false;
             if (!largeMode) {
                 return; // switched trace/mode while the request was in flight
