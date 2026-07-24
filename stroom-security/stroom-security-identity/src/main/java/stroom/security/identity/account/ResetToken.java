@@ -1,0 +1,31 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.security.identity.account;
+
+/**
+ * The outstanding password reset token held against an account: the hash of the emailed link's secret and
+ * when that link expires. The two are a single unit, read and written together.
+ *
+ * @param hash     the SHA-256 hash of the emailed link's secret.
+ * @param expiryMs when the link expires, as epoch millis.
+ */
+public record ResetToken(String hash, long expiryMs) {
+
+    public boolean isExpired(final long nowMs) {
+        return nowMs > expiryMs;
+    }
+}

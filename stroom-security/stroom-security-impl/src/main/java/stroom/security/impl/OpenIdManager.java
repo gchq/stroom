@@ -20,6 +20,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AuthenticationState;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.Pkce;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -103,6 +104,13 @@ class OpenIdManager {
 
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.NONCE, state.getNonce());
+
+        // PKCE (RFC 7636): send the S256 challenge for this flow's verifier. Sent to every IDP; providers
+        // that require PKCE (and OAuth 2.1) need it, and those that do not simply ignore it.
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder,
+                OpenId.CODE_CHALLENGE, Pkce.createS256Challenge(state.getCodeVerifier()));
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder,
+                OpenId.CODE_CHALLENGE_METHOD, OpenId.CODE_CHALLENGE_METHOD__S256);
 
         // Determine if we want to force login regardless of IDP auth state.
         if (state.isPrompt()) {

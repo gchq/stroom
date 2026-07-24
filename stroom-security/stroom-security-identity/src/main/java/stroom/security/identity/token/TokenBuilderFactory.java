@@ -49,11 +49,10 @@ public class TokenBuilderFactory {
         LOGGER.debug("Creating token builder with issuer {}", issuer);
         final TokenBuilder tokenBuilder = new TokenBuilder();
         final IdentityConfig identityConfig = configProvider.get();
-        // The algorithm assumes that the default algorithm set in the config had that value when the
-        // default open id creds were generated.
+        // This assumes the configured algorithm matches the one the active signing key was generated for.
         tokenBuilder
                 .issuer(issuer)
-                .privateVerificationKey(publicJsonWebKeyProvider.getFirst())
+                .privateVerificationKey(publicJsonWebKeyProvider.getActiveKey())
                 .algorithm(identityConfig.getTokenConfig().getAlgorithm());
         return tokenBuilder;
     }

@@ -35,6 +35,9 @@ import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.Ema
 import stroom.security.identity.client.presenter.LoginPresenter;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginProxy;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
+import stroom.security.identity.client.presenter.ResetPasswordPresenter;
+import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordProxy;
+import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.client.view.AccountsViewImpl;
 import stroom.security.identity.client.view.AuthenticationErrorViewImpl;
 import stroom.security.identity.client.view.ChangePasswordViewImpl;
@@ -42,6 +45,7 @@ import stroom.security.identity.client.view.CurrentPasswordViewImpl;
 import stroom.security.identity.client.view.EditAccountViewImpl;
 import stroom.security.identity.client.view.EmailResetPasswordViewImpl;
 import stroom.security.identity.client.view.LoginViewImpl;
+import stroom.security.identity.client.view.ResetPasswordViewImpl;
 
 public class ChangePasswordModule extends PluginModule {
 
@@ -64,6 +68,10 @@ public class ChangePasswordModule extends PluginModule {
         bindPresenterWidget(ChangePasswordPresenter.class,
                 ChangePasswordView.class,
                 ChangePasswordViewImpl.class);
+        bindPresenter(ResetPasswordPresenter.class,
+                ResetPasswordView.class,
+                ResetPasswordViewImpl.class,
+                ResetPasswordProxy.class);
         bindPresenterWidget(EmailResetPasswordPresenter.class,
                 EmailResetPasswordView.class,
                 EmailResetPasswordViewImpl.class);

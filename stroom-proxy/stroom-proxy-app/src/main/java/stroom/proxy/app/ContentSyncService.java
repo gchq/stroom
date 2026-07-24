@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
@@ -40,12 +39,9 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * No longer used. Leaving it here in case we need to implement something similar
@@ -56,32 +52,20 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentSyncService.class);
 
-    private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<ContentSyncConfig> contentSyncConfigProvider;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final Set<ImportExportActionHandler> importExportActionHandlers;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
-    private final Map<String, ImportExportActionHandler> typeToHandlerMap;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
     //    @Inject
-    public ContentSyncService(final Provider<ProxyConfig> proxyConfigProvider,
-                              final Provider<ContentSyncConfig> contentSyncConfigProvider,
-                              final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                              final Set<ImportExportActionHandler> importExportActionHandlers,
+    public ContentSyncService(final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final JerseyClientFactory jerseyClientFactory,
                               final UserIdentityFactory userIdentityFactory) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
-        this.importExportActionHandlers = importExportActionHandlers;
         this.jerseyClientFactory = jerseyClientFactory;
-        this.proxyConfigProvider = proxyConfigProvider;
         this.userIdentityFactory = userIdentityFactory;
         contentSyncConfigProvider.get().validateConfiguration();
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.typeToHandlerMap = importExportActionHandlers.stream()
-                .collect(Collectors.toMap(ImportExportActionHandler::getType, Function.identity()));
     }
 
     @Override

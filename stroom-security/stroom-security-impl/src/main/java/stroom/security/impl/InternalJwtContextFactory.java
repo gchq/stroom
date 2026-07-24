@@ -18,7 +18,7 @@ package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
-import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.logging.LambdaLogger;
@@ -39,6 +39,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
+import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
@@ -50,21 +51,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-class InternalJwtContextFactory implements JwtContextFactory {
+public class InternalJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InternalJwtContextFactory.class);
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final OpenIdClientFactory openIdClientDetailsFactory;
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
 
     @Inject
-    InternalJwtContextFactory(final OpenIdClientFactory openIdClientDetailsFactory,
-                              final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
+    InternalJwtContextFactory(final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
                               final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
-        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
         this.openIdConfigurationProvider = openIdConfigurationProvider;
     }
@@ -99,10 +97,31 @@ class InternalJwtContextFactory implements JwtContextFactory {
         final Optional<String> optionalJws = getJwtFromHeader(request);
         return optionalJws
                 .flatMap(this::getJwtContext)
+                .filter(this::isAccessToken)
                 .or(() -> {
-                    LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+                    LOGGER.debug(() -> "No usable access token found in headers in request to "
+                                       + request.getRequestURI());
                     return Optional.empty();
                 });
+    }
+
+    /**
+     * Only an access token may authenticate a request. Per RFC 9068 an access token carries the JOSE
+     * {@code typ} header {@code at+jwt}; id, refresh and reset tokens do not, so they are rejected from
+     * the bearer path here even though their signature is valid.
+     */
+    private boolean isAccessToken(final JwtContext jwtContext) {
+        final List<JsonWebStructure> joseObjects = jwtContext.getJoseObjects();
+        final String type = joseObjects.isEmpty()
+                ? null
+                : joseObjects.getLast().getHeaders().getStringHeaderValue("typ");
+        if (!OpenId.TOKEN_TYPE__ACCESS.equals(type)) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Rejecting a token presented as a bearer credential that is not an access token "
+                    + "(typ '{}', expected '{}')", type, OpenId.TOKEN_TYPE__ACCESS));
+            return false;
+        }
+        return true;
     }
 
     private Optional<String> getJwtFromHeader(final HttpServletRequest request) {
@@ -137,7 +156,7 @@ class InternalJwtContextFactory implements JwtContextFactory {
                         uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
             }
 
-            optionalJwtContext = Optional.ofNullable(jwtContext);
+            optionalJwtContext = Optional.of(jwtContext);
 
         } catch (final RuntimeException | InvalidJwtException e) {
             // You will likely come in here when trying to decode an external IDP jws using the internal IDP
@@ -190,7 +209,6 @@ class InternalJwtContextFactory implements JwtContextFactory {
                         new AlgorithmConstraints(
                                 ConstraintType.PERMIT, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
-//                .setExpectedIssuer(InternalIdpConfigurationProvider.INTERNAL_ISSUER);
                 .setExpectedIssuers(true, validIssuers);
 
         final Set<String> allowedAudiences = openIdConfiguration.getAllowedAudiences();

@@ -16,22 +16,16 @@
 
 package stroom.security.identity.token;
 
-import stroom.security.openid.api.AbstractOpenIdConfig;
-import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jose4j.jwk.PublicJsonWebKey;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -41,37 +35,38 @@ public class JwkCache implements PublicJsonWebKeyProvider {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwkCache.class);
 
     private static final String KEY = "key";
-    private final LoadingCache<String, List<PublicJsonWebKey>> cache;
+    private final LoadingCache<String, Keys> cache;
 
     @Inject
-    JwkCache(final JwkDao jwkDao,
-             final DefaultOpenIdCredentials defaultOpenIdCredentials,
-             final JsonWebKeyFactory jsonWebKeyFactory,
-             final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
-
+    JwkCache(final JwkDao jwkDao) {
         cache = Caffeine.newBuilder()
                 .maximumSize(100)
                 .refreshAfterWrite(1, TimeUnit.MINUTES)
                 .build(k -> {
-                    // Bypass the DB when we are using test default creds, i.e. in a test/demo
-                    // environment. Not for prod use.
-                    if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())) {
-                        LOGGER.debug("Using default public json web key");
-                        return Collections.singletonList(
-                                jsonWebKeyFactory.fromJson(defaultOpenIdCredentials.getPublicKeyJson()));
-                    } else {
-                        return jwkDao.readJwk();
-                    }
+                    // Ask for the active key first, so that on an empty table its lazy create runs
+                    // before listPublishable() looks, and only one key is made.
+                    final PublicJsonWebKey active = jwkDao.getActiveKey();
+                    return new Keys(active, jwkDao.listPublishable());
                 });
     }
 
+    /**
+     * The publishable keys, for the JWKS endpoint and for verification.
+     */
     @Override
     public List<PublicJsonWebKey> list() {
-        return cache.get(KEY);
+        return cache.get(KEY).publishable();
     }
 
+    /**
+     * The key to sign with. Deliberately not {@code list().get(0)}; that could be a retired key.
+     */
     @Override
-    public PublicJsonWebKey getFirst() {
-        return list().get(0);
+    public PublicJsonWebKey getActiveKey() {
+        return cache.get(KEY).active();
+    }
+
+    private record Keys(PublicJsonWebKey active, List<PublicJsonWebKey> publishable) {
+
     }
 }

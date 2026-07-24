@@ -56,6 +56,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -640,6 +641,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return referenceLoaders.stream()
                     .map(referenceLoader -> {
                         final DocRef feedDocRef = getFeedDocRef(referenceLoader);
+                        final DocRef loaderPipeline = referenceLoader.getLoaderPipeline();
+
+                        requireUsePermissionIfPresent(securityContext, loaderPipeline);
 
                         // TODO validate the stream type name
                         final String streamType = Objects.requireNonNullElse(
@@ -647,11 +651,24 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 StreamTypeNames.REFERENCE);
 
                         return new PipelineReference(
-                                referenceLoader.getLoaderPipeline(),
+                                loaderPipeline,
                                 feedDocRef,
                                 streamType);
                     })
                     .collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * The loader pipeline in a lookup request is client-supplied, so the caller must have USE permission on
+     * it before a lookup executes it. A null pipeline is left for downstream validation to reject.
+     */
+    static void requireUsePermissionIfPresent(final SecurityContext securityContext,
+                                              final DocRef loaderPipeline) {
+        if (loaderPipeline != null
+            && !securityContext.hasDocumentPermission(loaderPipeline, DocumentPermission.USE)) {
+            throw new PermissionException(securityContext.getUserRef(), LogUtil.message(
+                    "You do not have USE permission on reference loader pipeline {}", loaderPipeline));
         }
     }
 

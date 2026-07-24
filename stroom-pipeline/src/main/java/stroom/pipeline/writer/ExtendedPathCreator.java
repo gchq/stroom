@@ -22,6 +22,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
@@ -62,11 +63,13 @@ public class ExtendedPathCreator extends SimplePathCreator {
         // These providers are all for @PipelineScoped things, so we can only use them
         // if we have an active pipeline scope
         if (pipelineScopeRunnable.isScopeActive()) {
+            // Names become a single path segment, so strip anything that could escape it (e.g. '/', '\', '..').
             if (feedHolder != null && feedHolder.get().getFeedName() != null) {
-                path = replace(path, "feed", () -> feedHolder.get().getFeedName());
+                path = replace(path, "feed", () -> PathSegmentUtil.cleanSegment(feedHolder.get().getFeedName()));
             }
             if (pipelineHolder != null && pipelineHolder.get().getPipeline() != null) {
-                path = replace(path, "pipeline", () -> pipelineHolder.get().getPipeline().getName());
+                path = replace(path, "pipeline",
+                        () -> PathSegmentUtil.cleanSegment(pipelineHolder.get().getPipeline().getName()));
             }
             if (metaHolder != null && metaHolder.get().getMeta() != null) {
                 path = replace(path, "sourceId", () -> metaHolder.get().getMeta().getId(), 0);
@@ -81,13 +84,14 @@ public class ExtendedPathCreator extends SimplePathCreator {
                 path = replace(path, "streamNo", () -> String.valueOf(metaHolder.get().getPartNo()));
             }
             if (searchIdHolder != null && searchIdHolder.get().getSearchId() != null) {
-                path = replace(path, "searchId", () -> searchIdHolder.get().getSearchId());
+                path = replace(path, "searchId",
+                        () -> PathSegmentUtil.cleanSegment(searchIdHolder.get().getSearchId()));
             }
         }
 
         // Non @PipelineScoped things go here
         if (nodeInfo != null) {
-            path = replace(path, "node", () -> nodeInfo.get().getThisNodeName());
+            path = replace(path, "node", () -> PathSegmentUtil.cleanSegment(nodeInfo.get().getThisNodeName()));
         }
 
         return path;

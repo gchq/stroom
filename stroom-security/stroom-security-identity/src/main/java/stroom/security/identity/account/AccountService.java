@@ -31,7 +31,18 @@ public interface AccountService {
 
     ResultPage<Account> search(FindAccountRequest request);
 
-    Account create(CreateAccountRequest request);
+    /**
+     * @param enforcePasswordPolicy When {@code false} the configured password length/strength policy is
+     *                              not applied. Used only for the boot-time default admin account, which is
+     *                              a deliberate known-weak default that is force-changed on first login;
+     *                              enforcing the policy there would break {@code autoCreateAdminAccountOnBoot}
+     *                              whenever a non-trivial policy is configured.
+     */
+    Account create(CreateAccountRequest request, boolean enforcePasswordPolicy);
+
+    default Account create(final CreateAccountRequest request) {
+        return create(request, true);
+    }
 
     Optional<Account> read(int accountId);
 

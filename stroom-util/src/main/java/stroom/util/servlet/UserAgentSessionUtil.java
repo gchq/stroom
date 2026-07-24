@@ -30,14 +30,15 @@ public final class UserAgentSessionUtil {
 
     private static final String USER_AGENT_HEADER_KEY = "user-agent";
 
+    /**
+     * The User-Agent comes from a request header and is stored in the session, so cap its length to
+     * bound what a single session can hold. Real user agents are well under this.
+     */
+    private static final int MAX_USER_AGENT_LENGTH = 512;
+
     private UserAgentSessionUtil() {
         // Utility class.
     }
-
-//    public static void setUserAgentInSession(final HttpServletRequest request) {
-//        final HttpSession session = request.getSession(false);
-//        setUserAgentInSession(request, session);
-//    }
 
     /**
      * If there is a session, it sets the value of the {@code user-agent} header (if present)
@@ -55,13 +56,17 @@ public final class UserAgentSessionUtil {
     public static void setUserAgentInSession(final HttpServletRequest request,
                                              final HttpSession session) {
         if (session != null) {
-            final String userAgent = request.getHeader(USER_AGENT_HEADER_KEY);
+            String userAgent = request.getHeader(USER_AGENT_HEADER_KEY);
             if (userAgent != null) {
+                if (userAgent.length() > MAX_USER_AGENT_LENGTH) {
+                    userAgent = userAgent.substring(0, MAX_USER_AGENT_LENGTH);
+                }
+                final String storedUserAgent = userAgent;
                 LOGGER.debug(() -> LogUtil.message("setUserAgentInSession() - Setting {} '{}' in session {}",
                         USER_AGENT_HEADER_KEY,
-                        userAgent,
+                        storedUserAgent,
                         NullSafe.get(session, HttpSession::getId)));
-                session.setAttribute(USER_AGENT_HEADER_KEY, userAgent);
+                session.setAttribute(USER_AGENT_HEADER_KEY, storedUserAgent);
             }
         } else {
             LOGGER.debug("setUserAgentInSession() - No session");

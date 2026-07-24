@@ -18,7 +18,6 @@ package stroom.util.web;
 
 import stroom.util.io.StreamUtil;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -31,37 +30,47 @@ import java.util.Enumeration;
 public final class DebugServletUtil {
 
     public static void doPost(final HttpServletRequest req,
-                              final HttpServletResponse resp) throws ServletException, IOException {
+                              final HttpServletResponse resp) throws IOException {
         final StringBuilder debugResponse = new StringBuilder();
 
-        debugResponse.append("\n");
-        debugResponse.append("HTTP Header\n");
-        debugResponse.append("===========\n");
+        debugResponse
+                .append("\n")
+                .append("HTTP Header\n")
+                .append("===========\n");
 
-        @SuppressWarnings("unchecked") final Enumeration<String> headers = req.getHeaderNames();
+        final Enumeration<String> headers = req.getHeaderNames();
 
         while (headers.hasMoreElements()) {
             final String headerKey = headers.nextElement();
             final String headerValue = req.getHeader(headerKey);
-            debugResponse.append("[" + headerKey + "]=[" + headerValue + "]\n");
+            debugResponse
+                    .append("[")
+                    .append(headerKey)
+                    .append("]=[")
+                    .append(headerValue)
+                    .append("]\n");
         }
 
-        debugResponse.append("\n");
-        debugResponse.append("HTTP Header\n");
-        debugResponse.append("===========\n");
-        debugResponse.append("contentLength=" + req.getContentLength());
-
-        debugResponse.append("\n");
-
-        debugResponse.append("HTTP Payload\n");
-        debugResponse.append("============\n");
         final String payload = StreamUtil.streamToString(req.getInputStream());
-        debugResponse.append(payload + "\n");
 
-        debugResponse.append("\n");
+        debugResponse
+                .append("\n")
+                .append("HTTP Header\n")
+                .append("===========\n")
+                .append("contentLength=")
+                .append(req.getContentLength())
+                .append("\n")
+                .append("HTTP Payload\n")
+                .append("============\n")
+                .append(payload)
+                .append("\n")
+                .append("\n");
 
+        // The response echoes attacker-controlled request headers and body. Serve it as non-sniffable plain
+        // text so a reflected value (e.g. '<script>...') can never be interpreted as HTML by a browser.
+        resp.setContentType("text/plain; charset=utf-8");
+        resp.setHeader("X-Content-Type-Options", "nosniff");
         resp.getWriter().write(debugResponse.toString());
         resp.setStatus(HttpServletResponse.SC_OK);
     }
-
 }

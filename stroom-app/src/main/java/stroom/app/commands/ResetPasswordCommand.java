@@ -18,8 +18,8 @@ package stroom.app.commands;
 
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.AccountDao;
+import stroom.security.identity.shared.Account;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
@@ -57,18 +57,13 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
             USERNAME_ARG_NAME,
             PASSWORD_ARG_NAME);
 
-    private final Path configFile;
-
     @Inject
     private AccountDao accountDao;
-    @Inject
-    private SecurityContext securityContext;
     @Inject
     private StroomEventLoggingService stroomEventLoggingService;
 
     public ResetPasswordCommand(final Path configFile) {
         super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
-        this.configFile = configFile;
     }
 
     @Override
@@ -111,6 +106,17 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
         LOGGER.debug("Resetting password for account {}", username);
 
         injector.injectMembers(this);
+
+        // Refuse to reset a disabled account. resetPassword() clears the disabled/inactive/locked flags as
+        // well as setting the password, so resetting a deliberately disabled account would silently
+        // re-enable it. Require an administrator to enable it explicitly first.
+        final Account account = accountDao.get(username)
+                .orElseThrow(() -> new RuntimeException("No account exists for user " + username));
+        if (!account.isEnabled()) {
+            throw new RuntimeException("The account for user " + username + " is disabled. Enable it first "
+                                       + "(e.g. with the 'manage_users' command) before resetting its "
+                                       + "password, so the reset does not silently re-enable it.");
+        }
 
         accountDao.resetPassword(username, newPassword);
 

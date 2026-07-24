@@ -1260,9 +1260,9 @@ paths:
       summary: Update a dictionary doc
       tags:
       - API Key
-  /auth/flow/v1/noauth/callback:
+  /auth/flow/v1/signin-oidc:
     get:
-      operationId: authFlowCallback
+      operationId: authFlowSignInOidc
       parameters:
       - in: query
         name: code
@@ -1277,10 +1277,10 @@ paths:
           content:
             text/html: {}
           description: default response
-      summary: OIDC callback endpoint for the SPA authentication flow
+      summary: OIDC sign-in callback (redirect_uri) for the SPA authentication flow
       tags:
       - Auth Flow
-  /auth/flow/v1/noauth/status:
+  /auth/flow/v1/status:
     get:
       operationId: authFlowStatus
       parameters:
@@ -1298,7 +1298,7 @@ paths:
       summary: Check authentication status for the SPA
       tags:
       - Auth Flow
-  /authentication/v1/noauth/changePassword:
+  /authentication/v1/changePassword:
     post:
       operationId: changePassword
       requestBody:
@@ -1318,7 +1318,7 @@ paths:
       summary: Change a user's password.
       tags:
       - Authentication
-  /authentication/v1/noauth/confirmPassword:
+  /authentication/v1/confirmPassword:
     post:
       operationId: confirmPassword
       requestBody:
@@ -1338,7 +1338,7 @@ paths:
       summary: Confirm an authenticated user's current password.
       tags:
       - Authentication
-  /authentication/v1/noauth/fetchPasswordPolicy:
+  /authentication/v1/fetchPasswordPolicy:
     get:
       operationId: fetchPasswordPolicy
       responses:
@@ -1351,7 +1351,7 @@ paths:
       summary: Get the password policy
       tags:
       - Authentication
-  /authentication/v1/noauth/login:
+  /authentication/v1/login:
     post:
       operationId: login
       requestBody:
@@ -1371,7 +1371,7 @@ paths:
       summary: Handle a login request made using username and password credentials.
       tags:
       - Authentication
-  /authentication/v1/noauth/logout:
+  /authentication/v1/logout:
     get:
       operationId: logout
       parameters:
@@ -1390,7 +1390,7 @@ paths:
       summary: Log a user out of their session
       tags:
       - Authentication
-  /authentication/v1/noauth/reset:
+  /authentication/v1/reset:
     post:
       operationId: resetEmail
       requestBody:
@@ -1410,7 +1410,28 @@ paths:
       summary: Reset a user account using an email address.
       tags:
       - Authentication
-  /authproxy/v1/noauth/fetchClientCredsToken:
+  /authentication/v1/resetPassword:
+    post:
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+        description: resetPasswordRequest
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangePasswordResponse"
+          description: default response
+      summary: Set a new password using the token emailed to a user who has forgotten
+        theirs.
+      tags:
+      - Authentication
+  /authproxy/v1/fetchClientCredsToken:
     post:
       operationId: fetchClientCredsToken
       requestBody:
@@ -5328,7 +5349,7 @@ paths:
       summary: Sets the priority of a node
       tags:
       - Nodes
-  /oauth2/v1/noauth/.well-known/openid-configuration:
+  /oauth2/v1/.well-known/openid-configuration:
     get:
       operationId: openIdConfiguration
       responses:
@@ -5342,7 +5363,7 @@ paths:
       tags:
       - API Keys
       - Authentication
-  /oauth2/v1/noauth/auth:
+  /oauth2/v1/auth:
     get:
       operationId: openIdAuth
       parameters:
@@ -5378,6 +5399,14 @@ paths:
         name: prompt
         schema:
           type: string
+      - in: query
+        name: code_challenge
+        schema:
+          type: string
+      - in: query
+        name: code_challenge_method
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -5386,7 +5415,7 @@ paths:
       summary: Submit an OpenId AuthenticationRequest.
       tags:
       - Authentication
-  /oauth2/v1/noauth/certs:
+  /oauth2/v1/certs:
     get:
       operationId: openIdCerts
       responses:
@@ -5407,7 +5436,7 @@ paths:
       tags:
       - API Keys
       - Authentication
-  /oauth2/v1/noauth/token:
+  /oauth2/v1/token:
     post:
       operationId: openIdToken
       responses:
@@ -7619,6 +7648,47 @@ paths:
                 $ref: "#/components/schemas/UrlResponse"
           description: default response
       summary: Logout of Stroom session
+      tags:
+      - Sessions
+  /session/v1/terminate:
+    post:
+      operationId: terminateUserSessions
+      parameters:
+      - in: query
+        name: subjectId
+        schema:
+          type: string
+      - in: query
+        name: exceptSessionId
+        schema:
+          type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Terminate a user's sessions on a node (cluster fan-out; requires Manage
+        Users)
+      tags:
+      - Sessions
+  /session/v1/terminateOther:
+    post:
+      operationId: terminateOtherSessions
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Sign out of all of the current user's other sessions across the cluster
       tags:
       - Sessions
   /sessionInfo/v1:
@@ -15198,8 +15268,6 @@ components:
           format: int32
           maximum: 5
           minimum: 0
-        passwordComplexityRegex:
-          type: string
         passwordPolicyMessage:
           type: string
       required:
@@ -18018,6 +18086,15 @@ components:
           - WARN
           - ERROR
           - FATAL
+    ResetPasswordRequest:
+      type: object
+      properties:
+        confirmNewPassword:
+          type: string
+        newPassword:
+          type: string
+        token:
+          type: string
     ResourceGeneration:
       type: object
       properties:

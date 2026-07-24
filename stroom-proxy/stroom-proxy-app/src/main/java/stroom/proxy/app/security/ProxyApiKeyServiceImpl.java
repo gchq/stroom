@@ -266,13 +266,15 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
             final Optional<VerifiedApiKey> optVerifiedApiKey = verifiedApiKeysFromFile.getVerifiedApiKeys().stream()
                     .filter(verifiedApiKey -> {
                         // Have to compare them using the same hashing algo used in the file
-                        final HashAlgorithm hashAlgorithm = verifiedApiKey.getHashAlgorithm();
-                        final HashFunction hashFunction = hashFunctionFactory.getHashFunction(hashAlgorithm);
-                        final String hashedApiKey = hashFunction.hash(request.getApiKey());
-
-                        final boolean areEqual = Objects.equals(hashedApiKey, verifiedApiKey.getHashedApiKey())
-                                                 && ApiKeyGenerator.prefixesMatch(request.getApiKey(),
-                                verifiedApiKey.getPrefix());
+                        final HashFunction hashFunction = hashFunctionFactory.getHashFunction(
+                                verifiedApiKey.getHashAlgorithm());
+                        final boolean areEqual = localEntryMatches(
+                                request.getApiKey(),
+                                request.getRequiredAppPermissions(),
+                                verifiedApiKey.getHashedApiKey(),
+                                verifiedApiKey.getPrefix(),
+                                verifiedApiKey.getRequiredAppPermissions(),
+                                hashFunction);
                         LOGGER.debug("verifyLocally() - comparing (areEqual: {}):\n  {}\n  {}",
                                 areEqual, verifiedApiKey, request);
                         return areEqual;
@@ -286,6 +288,24 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         } else {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Whether a persisted verification may satisfy a request. The key must match (same hash and prefix) and
+     * the required permission set must match too: a persisted entry only proves the owner was verified against
+     * the exact permission set it was created for, so it must not be reused to satisfy a different (e.g.
+     * broader) permission requirement. This is the same identity a persisted entry has in {@link #updateFile}
+     * and in {@code VerifiedApiKey.equals}.
+     */
+    static boolean localEntryMatches(final String requestApiKey,
+                                     final AppPermissionSet requestRequiredAppPermissions,
+                                     final String entryHashedApiKey,
+                                     final String entryPrefix,
+                                     final AppPermissionSet entryRequiredAppPermissions,
+                                     final HashFunction hashFunction) {
+        return Objects.equals(hashFunction.hash(requestApiKey), entryHashedApiKey)
+               && ApiKeyGenerator.prefixesMatch(requestApiKey, entryPrefix)
+               && Objects.equals(requestRequiredAppPermissions, entryRequiredAppPermissions);
     }
 
     private VerifiedApiKey createVerifiedApiKey(final VerifyApiKeyRequest request,

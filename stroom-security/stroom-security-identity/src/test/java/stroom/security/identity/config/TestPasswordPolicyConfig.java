@@ -41,7 +41,6 @@ class TestPasswordPolicyConfig {
                 false,
                 null,
                 null,
-                null,
                 "foo");
         TestUtil.testSerialisation(passwordPolicyConfig, PasswordPolicyConfig.class);
     }
@@ -50,7 +49,6 @@ class TestPasswordPolicyConfig {
     void testDefaults() {
         final PasswordPolicyConfig passwordPolicyConfig1 = new PasswordPolicyConfig();
         final PasswordPolicyConfig passwordPolicyConfig2 = new PasswordPolicyConfig(
-                null,
                 null,
                 null,
                 null,

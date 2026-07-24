@@ -43,6 +43,12 @@ public interface ResourcePaths {
     String SIGN_IN_PATH = "/signIn";
 
     /**
+     * Used as the path for the internal IdP page that lets a user who has forgotten their password set
+     * a new one using the token that was emailed to them.
+     */
+    String RESET_PASSWORD_PATH = "/resetPassword";
+
+    /**
      * Used as the root path for all REST resources
      */
     String API_ROOT_PATH = "/api";
@@ -74,9 +80,21 @@ public interface ResourcePaths {
     String V2 = "/v2";
     String V3 = "/v3";
 
+    /**
+     * Base path for the SPA (BFF) authentication flow REST resource.
+     */
+    String AUTH_FLOW_PATH = "/auth/flow" + V1;
+
+    /**
+     * Path part for the OIDC sign-in callback endpoint (the {@code redirect_uri} the IDP redirects back to
+     * after authentication). Named to match the widely used Duende / ASP.NET BFF convention.
+     */
+    String SIGN_IN_OIDC_PATH = "/signin-oidc";
+
     String UI_SERVLET_NAME = "UI";
     String STROOM_SERVLET_NAME = "StroomServlet";
     String SIGN_IN_SERVLET_NAME = "SignInServlet";
+    String RESET_PASSWORD_SERVLET_NAME = "ResetPasswordServlet";
     String SESSION_LIST_SERVLET_NAME = "SessionListServlet";
 
 
@@ -132,6 +150,18 @@ public interface ResourcePaths {
                 .addPathPart(API_ROOT_PATH)
                 .addPathParts(parts)
                 .build();
+    }
+
+    /**
+     * The full authenticated-api path of the OIDC sign-in callback,
+     * e.g. {@code /api/auth/flow/v1/signin-oidc}.
+     * <p>
+     * This is the single {@code redirect_uri} the internal IdP accepts, so both the auth flow resource
+     * (which sends it to the IdP) and the IdP itself (which exact-matches it) build it from here, keeping
+     * the two exactly in step.
+     */
+    static String buildSignInOidcCallbackPath() {
+        return buildAuthenticatedApiPath(AUTH_FLOW_PATH, SIGN_IN_OIDC_PATH);
     }
 
     static String buildPath(final String... parts) {

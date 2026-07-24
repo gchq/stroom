@@ -44,6 +44,16 @@ class TestStringUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStringUtil.class);
 
+    @Test
+    void escapeHtml() {
+        Assertions.assertThat(StringUtil.escapeHtml(null)).isEqualTo("");
+        Assertions.assertThat(StringUtil.escapeHtml("")).isEqualTo("");
+        Assertions.assertThat(StringUtil.escapeHtml("plain text 123")).isEqualTo("plain text 123");
+        Assertions.assertThat(StringUtil.escapeHtml("<script>alert('x')</script>"))
+                .isEqualTo("&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;");
+        Assertions.assertThat(StringUtil.escapeHtml("a & b \"c\"")).isEqualTo("a &amp; b &quot;c&quot;");
+    }
+
     @TestFactory
     Stream<DynamicTest> splitToLines_noTrim() {
         return TestUtil.buildDynamicTestStream()

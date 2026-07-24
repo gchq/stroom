@@ -44,7 +44,7 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
         return ProxyConfig.builder()
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
-                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                                .withIdentityProviderType(IdpType.NO_IDP))
                         .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())

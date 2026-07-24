@@ -18,9 +18,9 @@ package stroom.security.identity.db;
 
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.AccountDao;
+import stroom.security.identity.account.ResetToken;
 import stroom.security.identity.authenticate.CredentialValidationResult;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
@@ -30,10 +30,9 @@ import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.util.ResultPageFactory;
+import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.CompareUtil;
-import stroom.util.shared.CompareUtil.FieldComparators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -52,12 +51,10 @@ import org.jooq.impl.DSL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static stroom.security.identity.db.jooq.tables.Account.ACCOUNT;
@@ -105,33 +102,6 @@ class AccountDaoImpl implements AccountDao {
         return account;
     };
 
-    private static final BiFunction<Account, AccountRecord, AccountRecord> ACCOUNT_TO_RECORD_MAPPER =
-            (account, record) -> {
-                record.setId(account.getId());
-                record.setVersion(account.getVersion());
-                record.setCreateTimeMs(account.getCreateTimeMs());
-                record.setUpdateTimeMs(account.getUpdateTimeMs());
-                record.setCreateUser(account.getCreateUser());
-                record.setUpdateUser(account.getUpdateUser());
-                record.setUserId(account.getUserId());
-                record.setEmail(account.getEmail());
-                record.setFirstName(account.getFirstName());
-                record.setLastName(account.getLastName());
-                record.setComments(account.getComments());
-                record.setLoginCount(account.getLoginCount());
-                record.setLoginFailures(account.getLoginFailures());
-                record.setLastLoginMs(account.getLastLoginMs());
-                record.setReactivatedMs(account.getReactivatedMs());
-                record.setForcePasswordChange(account.isForcePasswordChange());
-                record.setNeverExpires(account.isNeverExpires());
-                record.setEnabled(account.isEnabled());
-                record.setInactive(account.isInactive());
-                record.setLocked(account.isLocked());
-                record.setProcessingAccount(account.isProcessingAccount());
-
-                return record;
-            };
-
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
             Map.entry("id", ACCOUNT.ID),
             Map.entry("version", ACCOUNT.VERSION),
@@ -156,20 +126,8 @@ class AccountDaoImpl implements AccountDao {
             Map.entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
             Map.entry(AccountFields.FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
-    private static final FieldComparators<Account> FIELD_COMPARATORS = FieldComparators.builder(Account.class)
-            .addStringComparator(AccountFields.FIELD_NAME_USER_ID, Account::getUserId)
-            .addStringComparator(AccountFields.FIELD_NAME_FIRST_NAME, Account::getFirstName)
-            .addStringComparator(AccountFields.FIELD_NAME_LAST_NAME, Account::getLastName)
-            .addStringComparator(AccountFields.FIELD_NAME_EMAIL, Account::getEmail)
-            .addStringComparator(AccountFields.FIELD_NAME_STATUS, Account::getStatus)
-            .addCaseLessComparator(AccountFields.FIELD_NAME_LAST_LOGIN_MS, Account::getLastLoginMs) // nullable
-            .addLongComparator(AccountFields.FIELD_NAME_LOGIN_FAILURES, Account::getLoginFailures) // not null
-            .addStringComparator(AccountFields.FIELD_NAME_COMMENTS, Account::getComments)
-            .build();
-
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
-    private final GenericDao<AccountRecord, Account, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
 
     @Inject
@@ -178,12 +136,6 @@ class AccountDaoImpl implements AccountDao {
                           final ExpressionMapperFactory expressionMapperFactory) {
         this.identityConfigProvider = identityConfigProvider;
         this.identityDbConnProvider = identityDbConnProvider;
-        genericDao = new GenericDao<>(
-                identityDbConnProvider,
-                ACCOUNT,
-                ACCOUNT.ID,
-                ACCOUNT_TO_RECORD_MAPPER,
-                RECORD_TO_ACCOUNT_MAPPER);
 
         expressionMapper = expressionMapperFactory.create()
                 .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
@@ -204,8 +156,7 @@ class AccountDaoImpl implements AccountDao {
                         .orderBy(orderByUserIdField)
                         .fetch())
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply);
-        return ResultPageFactory.createUnboundedList(list, (accounts, pageResponse) ->
-                new AccountResultPage(accounts, pageResponse));
+        return ResultPageFactory.createUnboundedList(list, AccountResultPage::new);
     }
 
     @Override
@@ -236,35 +187,51 @@ class AccountDaoImpl implements AccountDao {
         });
     }
 
-    private Optional<Comparator<Account>> buildComparator(final FindAccountRequest request) {
-        if (NullSafe.hasItems(request, FindAccountRequest::getSortList)) {
-            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, request));
-        } else {
-            return Optional.empty();
-        }
-    }
-
     @Override
     public Account create(final Account account, final String password) {
-        return create(account, password, false);
-    }
+        // Everything written is listed here, so that what a new account starts out as is something you
+        // can read rather than infer. Deliberately absent, and so left as the column defaults:
+        //   id                        assigned by the database
+        //   password_last_changed_ms  null until the password is first changed, which
+        //                             getPasswordLastChangedMs reads as 'never, so use the create time'
+        //   reset_token_hash          no password reset has been asked for yet
+        //   reset_token_expiry_ms     ditto
+        //   reset_email_requested_ms  ditto
+        final Integer id;
+        try {
+            id = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                    .insertInto(ACCOUNT)
+                    .set(ACCOUNT.VERSION, 1)
+                    .set(ACCOUNT.CREATE_TIME_MS, account.getCreateTimeMs())
+                    .set(ACCOUNT.CREATE_USER, account.getCreateUser())
+                    .set(ACCOUNT.UPDATE_TIME_MS, account.getUpdateTimeMs())
+                    .set(ACCOUNT.UPDATE_USER, account.getUpdateUser())
+                    .set(ACCOUNT.USER_ID, account.getUserId())
+                    .set(ACCOUNT.EMAIL, account.getEmail())
+                    .set(ACCOUNT.PASSWORD_HASH, hashPassword(password))
+                    .set(ACCOUNT.FIRST_NAME, account.getFirstName())
+                    .set(ACCOUNT.LAST_NAME, account.getLastName())
+                    .set(ACCOUNT.COMMENTS, account.getComments())
+                    .set(ACCOUNT.LOGIN_COUNT, account.getLoginCount())
+                    .set(ACCOUNT.LOGIN_FAILURES, account.getLoginFailures())
+                    .set(ACCOUNT.LAST_LOGIN_MS, account.getLastLoginMs())
+                    .set(ACCOUNT.REACTIVATED_MS, account.getReactivatedMs())
+                    .set(ACCOUNT.FORCE_PASSWORD_CHANGE, account.isForcePasswordChange())
+                    .set(ACCOUNT.NEVER_EXPIRES, account.isNeverExpires())
+                    .set(ACCOUNT.ENABLED, account.isEnabled())
+                    .set(ACCOUNT.INACTIVE, account.isInactive())
+                    .set(ACCOUNT.LOCKED, account.isLocked())
+                    .set(ACCOUNT.PROCESSING_ACCOUNT, account.isProcessingAccount())
+                    .returning(ACCOUNT.ID)
+                    .fetchOne(ACCOUNT.ID));
+        } catch (final RuntimeException e) {
+            throw describeIfDuplicate(account, e);
+        }
 
-    @Override
-    public Account tryCreate(final Account account, final String password) {
-        return create(account, password, true);
-    }
-
-    private Account create(final Account account,
-                           final String password,
-                           final boolean ignoreDuplicate) {
-        final String passwordHash = hashPassword(password);
-        final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
-                account, ACCOUNT.newRecord());
-        record.setPasswordHash(passwordHash);
-        final AccountRecord accountRecord = ignoreDuplicate
-                ? JooqUtil.tryCreate(identityDbConnProvider, record, ACCOUNT.USER_ID)
-                : JooqUtil.create(identityDbConnProvider, record);
-        return RECORD_TO_ACCOUNT_MAPPER.apply(accountRecord);
+        // Read back rather than echoing what we were given, so the caller sees what was actually stored.
+        return get(id).orElseThrow(() ->
+                new RuntimeException("Account " + account.getUserId() + " could not be read back after "
+                                     + "being created"));
     }
 
     @Override
@@ -273,12 +240,33 @@ class AccountDaoImpl implements AccountDao {
         JooqUtil.context(identityDbConnProvider, context -> context
                 .update(ACCOUNT)
                 .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
                 .set(ACCOUNT.REACTIVATED_MS, (Long) null)
                 .set(ACCOUNT.LOGIN_COUNT,
                         ACCOUNT.LOGIN_COUNT.plus(1))
                 .set(ACCOUNT.LAST_LOGIN_MS, System.currentTimeMillis())
                 .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
+    }
+
+    @Override
+    public void reactivateAccount(final String userId) {
+        // Only the inactive flag is cleared. We deliberately leave LOCKED, ENABLED and the password
+        // alone as reactivation is not a substitute for unlocking or re-enabling an account.
+        // REACTIVATED_MS is set for the same reason that AccountServiceImpl.update sets it when an
+        // administrator makes an account active, i.e. to stop the Account Maintenance job immediately
+        // deactivating the account again in the window before the caller records a successful login
+        // and LAST_LOGIN_MS takes over that job.
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.INACTIVE, false)
+                .set(ACCOUNT.REACTIVATED_MS, System.currentTimeMillis())
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .execute());
+
+        if (count == 0) {
+            throw new NoSuchUserException("Cannot reactivate this account because this user does not exist!");
+        }
     }
 
     @Override
@@ -289,6 +277,21 @@ class AccountDaoImpl implements AccountDao {
                     false, true, false, false, false, false);
         }
 
+        // Clear a failure lock whose window has passed, so the account is usable again on this attempt.
+        // An admin lock has a NULL expiry and is never cleared here; a lock is only ever released once its
+        // stamped expiry is reached. Cluster-safe, since the row is the shared state, and a no-op when
+        // auto-unlock is disabled because no expiry is ever stamped.
+        JooqUtil.context(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.LOCKED, false)
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .and(ACCOUNT.LOCKED.isTrue())
+                .and(ACCOUNT.LOCKED_UNTIL_MS.isNotNull())
+                .and(ACCOUNT.LOCKED_UNTIL_MS.le(System.currentTimeMillis()))
+                .execute());
+
         // Is this is a login by the default local 'admin' account, then that should have already been created
         // by AdminAccountBootstrap
         final Optional<AccountRecord> optRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
@@ -297,7 +300,10 @@ class AccountDaoImpl implements AccountDao {
                 .fetchOptional());
 
         if (optRecord.isEmpty()) {
-            LOGGER.debug("Request to log in with invalid user id: " + userId);
+            LOGGER.debug("Request to log in with invalid user id: {}", userId);
+            // Spend the same time a real bcrypt verify would, so the credential check takes the same time
+            // whether or not the account exists.
+            PasswordHashUtil.fakeCheck(password);
             return new CredentialValidationResult(
                     false,
                     true,
@@ -323,27 +329,45 @@ class AccountDaoImpl implements AccountDao {
         boolean locked = false;
 
         final IdentityConfig identityConfig = identityConfigProvider.get();
-        if (identityConfig.getFailedLoginLockThreshold() != null) {
-            JooqUtil.context(identityDbConnProvider, context -> context
-                    .update(ACCOUNT)
-//                    .set(DSL.row(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
-//                            DSL.row(DSL.select(ACCOUNT.LOGIN_FAILURES.plus(1),
-//                                    DSL.field(ACCOUNT.LOGIN_FAILURES.plus(2)
-//                                    .ge(config.getFailedLoginLockThreshold())).fr).plus(1))
-//                    .set(ACCOUNT.LOCKED,
-//                            context.select(DSL.count())
-//                                    .from(ACCOUNT)
-//                                    .where(ACCOUNT.EMAIL.eq(email)
-//                                    .and(ACCOUNT.LOGIN_FAILURES.plus(1).ge(config.getFailedLoginLockThreshold()))
-//                          ))
-
-                    .set(ACCOUNT.LOGIN_FAILURES,
-                            ACCOUNT.LOGIN_FAILURES.plus(1))
-                    .set(ACCOUNT.LOCKED,
-                            DSL.field(ACCOUNT.LOGIN_FAILURES
-                                    .ge(identityConfig.getFailedLoginLockThreshold())))
-                    .where(ACCOUNT.USER_ID.eq(userId))
-                    .execute());
+        final Integer threshold = identityConfig.getFailedLoginLockThreshold();
+        if (threshold != null) {
+            final long lockDurationMs = identityConfig.getFailedLoginLockDuration().toMillis();
+            if (lockDurationMs > 0) {
+                final long lockedUntil = System.currentTimeMillis() + lockDurationMs;
+                JooqUtil.context(identityDbConnProvider, context -> context
+                        .update(ACCOUNT)
+                        // Stamp the expiry FIRST so it reads the pre-update LOCKED / LOGIN_FAILURES
+                        // (MySQL evaluates SET left to right). Only a failure that newly locks an account
+                        // that was not already locked gets an expiry; an admin lock (NULL expiry) or an
+                        // existing failure lock keeps its value, so admin locks stay permanent and a lock
+                        // is not extended by continued attempts.
+                        .set(ACCOUNT.LOCKED_UNTIL_MS,
+                                DSL.when(ACCOUNT.LOCKED.isFalse()
+                                                .and(ACCOUNT.LOGIN_FAILURES.plus(1).ge(threshold)),
+                                        DSL.val(lockedUntil))
+                                        .otherwise(ACCOUNT.LOCKED_UNTIL_MS))
+                        .set(ACCOUNT.LOGIN_FAILURES,
+                                ACCOUNT.LOGIN_FAILURES.plus(1))
+                        .set(ACCOUNT.LOCKED,
+                                DSL.field(ACCOUNT.LOCKED.isTrue()
+                                        .or(ACCOUNT.LOGIN_FAILURES.ge(threshold))))
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .execute());
+            } else {
+                // Auto-unlock disabled (zero duration): the lock is permanent, no expiry is stamped.
+                // A failed login may only add a lock, never clear one, so an existing lock (e.g. one set
+                // by an administrator) is preserved. MySQL evaluates SET left to right, so LOGIN_FAILURES
+                // here is the just-incremented value while LOCKED is its pre-update value.
+                JooqUtil.context(identityDbConnProvider, context -> context
+                        .update(ACCOUNT)
+                        .set(ACCOUNT.LOGIN_FAILURES,
+                                ACCOUNT.LOGIN_FAILURES.plus(1))
+                        .set(ACCOUNT.LOCKED,
+                                DSL.field(ACCOUNT.LOCKED.isTrue()
+                                        .or(ACCOUNT.LOGIN_FAILURES.ge(threshold))))
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .execute());
+            }
 
             // Query the field back to find out if we locked.
             locked = JooqUtil.contextResult(identityDbConnProvider, context -> context
@@ -362,28 +386,6 @@ class AccountDaoImpl implements AccountDao {
                     .execute());
         }
 
-
-//
-//        boolean locked = false;
-//        if (config.getFailedLoginLockThreshold() != null) {
-//            // Set the locked field if we have exceeded threshold.
-//            JooqUtil.context(authDbConnProvider, context -> context
-//                    .update(ACCOUNT)
-//                    .set(ACCOUNT.LOCKED, true)
-//                    .where(ACCOUNT.EMAIL.eq(email))
-//                    .and(ACCOUNT.LOGIN_FAILURES.greaterOrEqual(config.getFailedLoginLockThreshold()))
-//                    .execute());
-//
-//            // Query the field back to find out if we locked.
-//            locked = JooqUtil.contextResult(authDbConnProvider, context -> context
-//                    .select(ACCOUNT.LOCKED)
-//                    .from(ACCOUNT)
-//                    .where(ACCOUNT.EMAIL.eq(email))
-//                    .fetchOptional()
-//                    .map(Record1::value1)
-//                    .orElse(false));
-//        }
-
         if (locked) {
             LOGGER.debug("Account {} has had too many failed access attempts and is locked", userId);
         }
@@ -401,53 +403,95 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public Optional<Integer> getId(final String userId) {
-        return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                        .select(ACCOUNT.ID)
-                        .from(ACCOUNT)
-                        .where(ACCOUNT.USER_ID.eq(userId))
-                        .fetchOptional())
-                .map(r -> r.getValue(ACCOUNT.ID));
+    public Optional<Account> getByEmail(final String email) {
+        if (Strings.isNullOrEmpty(email)) {
+            return Optional.empty();
+        }
+
+        final List<Account> accounts = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                        .selectFrom(ACCOUNT)
+                        .where(ACCOUNT.EMAIL.eq(email))
+                        .fetch())
+                .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+
+        if (accounts.size() > 1) {
+            // A unique index makes this impossible, but refuse to guess rather than reset an arbitrary
+            // one of them if that index is ever missing.
+            LOGGER.error("Found {} accounts with the email address {}. Email addresses must be unique.",
+                    accounts.size(), email);
+            return Optional.empty();
+        }
+
+        return accounts.stream().findFirst();
     }
+
 
     @Override
     public void update(final Account account) {
-        genericDao.update(account);
+        // Matching on the version and bumping it in the same statement is what makes this safe against a
+        // concurrent edit: an update made from a stale copy of the account matches no rows and is
+        // refused, rather than quietly overwriting whatever someone else did.
+        //
+        // The password and the password reset state are deliberately not listed, so they survive an
+        // update; they are only ever written by the methods that own them.
+        final int count;
+        try {
+            count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                    .update(ACCOUNT)
+                    .set(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1))
+                    .set(ACCOUNT.CREATE_TIME_MS, account.getCreateTimeMs())
+                    .set(ACCOUNT.CREATE_USER, account.getCreateUser())
+                    .set(ACCOUNT.UPDATE_TIME_MS, account.getUpdateTimeMs())
+                    .set(ACCOUNT.UPDATE_USER, account.getUpdateUser())
+                    .set(ACCOUNT.USER_ID, account.getUserId())
+                    .set(ACCOUNT.EMAIL, account.getEmail())
+                    .set(ACCOUNT.FIRST_NAME, account.getFirstName())
+                    .set(ACCOUNT.LAST_NAME, account.getLastName())
+                    .set(ACCOUNT.COMMENTS, account.getComments())
+                    .set(ACCOUNT.LOGIN_COUNT, account.getLoginCount())
+                    .set(ACCOUNT.LOGIN_FAILURES, account.getLoginFailures())
+                    .set(ACCOUNT.LAST_LOGIN_MS, account.getLastLoginMs())
+                    .set(ACCOUNT.REACTIVATED_MS, account.getReactivatedMs())
+                    .set(ACCOUNT.FORCE_PASSWORD_CHANGE, account.isForcePasswordChange())
+                    .set(ACCOUNT.NEVER_EXPIRES, account.isNeverExpires())
+                    .set(ACCOUNT.ENABLED, account.isEnabled())
+                    .set(ACCOUNT.INACTIVE, account.isInactive())
+                    .set(ACCOUNT.LOCKED, account.isLocked())
+                    // An administrator's edit normalises the lock to a manual one: a lock set here is
+                    // permanent (NULL expiry) and an unlock clears any expiry. This keeps the invariant
+                    // that only failure locks carry an expiry, so the auto-unlock never releases a lock
+                    // an administrator set.
+                    .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
+                    .set(ACCOUNT.PROCESSING_ACCOUNT, account.isProcessingAccount())
+                    .where(ACCOUNT.ID.eq(account.getId()))
+                    .and(ACCOUNT.VERSION.eq(account.getVersion()))
+                    .execute());
+        } catch (final RuntimeException e) {
+            throw describeIfDuplicate(account, e);
+        }
 
-//        AccountRecord usersRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
-//                .selectFrom(ACCOUNT)
-//                .where(ACCOUNT.EMAIL.eq(account.getEmail())).fetchSingle());
-//
-//        UserMapper.mapToRecord(account, usersRecord);
-//
-//        JooqUtil.contextResult(authDbConnProvider, context -> context
-//                .update(ACCOUNT)
-//                .set(usersRecord)
-//                .where(ACCOUNT.ID.eq(account.getId())}.execute());
+        if (count == 0) {
+            throw new DataChangedException("This account has been changed by someone else since it was "
+                                           + "read, so it has not been updated. Read it again and reapply "
+                                           + "the change.");
+        }
     }
 
     @Override
     public void delete(final int id) {
-        genericDao.delete(id);
-
-//        JooqUtil.context(authDbConnProvider, context -> context
-//                .deleteFrom(ACCOUNT)
-//                .where(ACCOUNT.ID.eq(id)).execute());
+        JooqUtil.context(identityDbConnProvider, context -> context
+                .deleteFrom(ACCOUNT)
+                .where(ACCOUNT.ID.eq(id))
+                .execute());
     }
 
     @Override
     public Optional<Account> get(final int id) {
-        return genericDao.fetch(id);
-
-//        Optional<AccountRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
-//                .selectFrom(ACCOUNT)
-//                .where(ACCOUNT.ID.eq(id)).fetchOptional());
-//
-//        return userQuery.map(record -> {
-//            final Account account = new Account();
-//            UserMapper.mapFromRecord(record, account);
-//            return account;
-//        });
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
+                        .selectFrom(ACCOUNT)
+                        .where(ACCOUNT.ID.eq(id))
+                        .fetchOptional())
+                .map(RECORD_TO_ACCOUNT_MAPPER);
     }
 
 
@@ -461,6 +505,9 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
                         System.currentTimeMillis())
                 .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                // Any password change invalidates an outstanding reset link.
+                .set(ACCOUNT.RESET_TOKEN_HASH, (String) null)
+                .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, (Long) null)
                 .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
 
@@ -480,9 +527,13 @@ class AccountDaoImpl implements AccountDao {
                         System.currentTimeMillis())
                 .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
                 .set(ACCOUNT.LOCKED, false)
+                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
                 .set(ACCOUNT.INACTIVE, false)
                 .set(ACCOUNT.ENABLED, true)
                 .set(ACCOUNT.LOGIN_FAILURES, 0)
+                // Any password change invalidates an outstanding reset link.
+                .set(ACCOUNT.RESET_TOKEN_HASH, (String) null)
+                .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, (Long) null)
                 .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
 
@@ -492,7 +543,103 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public Boolean needsPasswordChange(final String userId,
+    public boolean unlockAndSetPassword(final String userId,
+                                        final String newPassword,
+                                        final String expectedTokenHash) {
+        if (Strings.isNullOrEmpty(expectedTokenHash)) {
+            return false;
+        }
+
+        final String newPasswordHash = PasswordHashUtil.hash(newPassword);
+
+        // INACTIVE is deliberately not cleared here, unlike resetPassword. Proving control of the
+        // account's email address is enough to clear a lock caused by failed logins, but an inactive
+        // account may only be made active again by an actual successful authentication.
+        //
+        // Matching on the token hash as well as the user makes this the point at which a reset link is
+        // consumed. Two requests using the same link cannot both succeed because the first clears the
+        // hash, so the second matches no rows.
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
+                .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
+                        System.currentTimeMillis())
+                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                .set(ACCOUNT.LOCKED, false)
+                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.RESET_TOKEN_HASH, (String) null)
+                .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, (Long) null)
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .and(ACCOUNT.RESET_TOKEN_HASH.eq(expectedTokenHash))
+                .execute());
+
+        return count > 0;
+    }
+
+    @Override
+    public Optional<Long> getPasswordLastChangedMs(final String userId) {
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
+                        .select(ACCOUNT.PASSWORD_LAST_CHANGED_MS, ACCOUNT.CREATE_TIME_MS)
+                        .from(ACCOUNT)
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .fetchOptional())
+                // A password that has never been changed has no changed time, so fall back to the
+                // account create time in the same way that needsPasswordChange does.
+                .map(record -> Objects.requireNonNullElse(
+                        record.get(ACCOUNT.PASSWORD_LAST_CHANGED_MS),
+                        record.get(ACCOUNT.CREATE_TIME_MS)));
+    }
+
+    @Override
+    public boolean tryRecordResetEmailRequest(final String userId,
+                                              final long requestTimeMs,
+                                              final long earliestPreviousRequestMs) {
+        // One conditional update rather than a read then a write, so that concurrent requests, including
+        // ones on other nodes, cannot all decide they are allowed.
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.RESET_EMAIL_REQUESTED_MS, requestTimeMs)
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .and(ACCOUNT.RESET_EMAIL_REQUESTED_MS.isNull()
+                        .or(ACCOUNT.RESET_EMAIL_REQUESTED_MS.le(earliestPreviousRequestMs)))
+                .execute());
+
+        return count > 0;
+    }
+
+    @Override
+    public void setPasswordResetToken(final String userId, final ResetToken resetToken) {
+        final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
+                .update(ACCOUNT)
+                .set(ACCOUNT.RESET_TOKEN_HASH, resetToken.hash())
+                .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, resetToken.expiryMs())
+                .where(ACCOUNT.USER_ID.eq(userId))
+                .execute());
+
+        if (count == 0) {
+            throw new NoSuchUserException("Cannot issue a reset token because this user does not exist!");
+        }
+    }
+
+    @Override
+    public Optional<ResetToken> getPasswordResetToken(final String userId) {
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
+                        .select(ACCOUNT.RESET_TOKEN_HASH, ACCOUNT.RESET_TOKEN_EXPIRY_MS)
+                        .from(ACCOUNT)
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .fetchOptional())
+                // No hash means no link is outstanding, even if the account row exists.
+                .filter(record -> record.get(ACCOUNT.RESET_TOKEN_HASH) != null)
+                .map(record -> new ResetToken(
+                        record.get(ACCOUNT.RESET_TOKEN_HASH),
+                        // A hash is only ever written together with an expiry; treat a missing one as
+                        // already expired so it fails closed.
+                        Objects.requireNonNullElse(record.get(ACCOUNT.RESET_TOKEN_EXPIRY_MS), 0L)));
+    }
+
+    @Override
+    public boolean needsPasswordChange(final String userId,
                                        final Duration mandatoryPasswordChangeDuration,
                                        final boolean forcePasswordChangeOnFirstLogin) {
         Objects.requireNonNull(userId, "userId must not be null");
@@ -580,12 +727,41 @@ class AccountDaoImpl implements AccountDao {
                 .execute());
     }
 
-    private Condition createCondition(final FindAccountRequest request) {
-        final Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
-//        if (request.getQuickFilter() != null) {
-//            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
-//        }
-        return condition;
+    /**
+     * Callers are expected to check for a clash before writing, but two of them can pass that check at
+     * the same time and only one will get the row. The unique indexes are what actually decide, so turn
+     * what they throw into the same message the caller would have given, rather than letting a raw
+     * 'Duplicate entry ... for key ...' reach a user.
+     * <p>
+     * Which index was hit is worked out by looking, rather than by reading the database's message, which
+     * is not ours to depend on.
+     * </p>
+     *
+     * @return The exception to throw, which is the original if it was not a duplicate key.
+     */
+    private RuntimeException describeIfDuplicate(final Account account, final RuntimeException e) {
+        if (!JooqUtil.isDuplicateKeyException(e)) {
+            return e;
+        }
+
+        // An account being updated is allowed to keep its own user id and email address.
+        if (!Strings.isNullOrEmpty(account.getEmail())
+            && isUsedByAnotherAccount(getByEmail(account.getEmail()), account)) {
+            return new RuntimeException(
+                    "The email address '" + account.getEmail() + "' is already used by another account", e);
+        }
+        if (isUsedByAnotherAccount(get(account.getUserId()), account)) {
+            return new RuntimeException(
+                    "The user id '" + account.getUserId() + "' is already used by another account", e);
+        }
+
+        return e;
+    }
+
+    private boolean isUsedByAnotherAccount(final Optional<Account> optExisting, final Account account) {
+        return optExisting
+                .filter(existing -> !Objects.equals(existing.getId(), account.getId()))
+                .isPresent();
     }
 
     private String hashPassword(final String password) {

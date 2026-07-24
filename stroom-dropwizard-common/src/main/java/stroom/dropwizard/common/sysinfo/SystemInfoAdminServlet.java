@@ -26,6 +26,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsAdminServlet;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Unauthenticated;
+import stroom.util.string.StringUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.HasSystemInfo.NamedParamCombination;
 import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
@@ -110,6 +111,7 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
                                   final Set<String> providerNames) throws IOException {
 
         if (NullSafe.hasItems(providerNames)) {
+            resp.setContentType("text/html; charset=utf-8");
             final Writer writer = resp.getWriter();
             writeHtmlHeader(writer);
             writer.write("<h1>System Info Providers</h1>");
@@ -117,8 +119,9 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
             writeNewLine(writer);
             for (final String provider : providerNames.stream().sorted().toList()) {
                 writer.write("<li><a href=\"./sysinfo?provider="
-                             + provider + "&pretty=true\">"
-                             + provider + "</a></li>");
+                             + StringUtil.escapeHtml(URLEncoder.encode(provider, StandardCharsets.UTF_8))
+                             + "&pretty=true\">"
+                             + StringUtil.escapeHtml(provider) + "</a></li>");
                 writeNewLine(writer);
 
                 final List<ParamInfo> paramInfoList = NullSafe.list(getParamInfo(provider));
@@ -129,11 +132,11 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
                     writeNewLine(writer);
                     for (final ParamInfo paramInfo : paramInfoList) {
                         writer.write("<li>");
-                        writer.write("<code>" + paramInfo.getName() + "</code> (");
+                        writer.write("<code>" + StringUtil.escapeHtml(paramInfo.getName()) + "</code> (");
                         writer.write((paramInfo.isMandatory()
                                 ? "Mandatory"
                                 : "Optional"));
-                        writer.write(") - " + paramInfo.getDescription());
+                        writer.write(") - " + StringUtil.escapeHtml(paramInfo.getDescription()));
                         writer.write("</li>");
                         writeNewLine(writer);
                     }
@@ -163,11 +166,12 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
                                            + "provider=" + provider
                                            + "&pretty=true"
                                            + "&" + paramStr;
+                        final String urlHtml = StringUtil.escapeHtml(url);
 
-                        writer.write("<li><a href=\"" + url + "\">"
-                                     + combinationName
+                        writer.write("<li><a href=\"" + urlHtml + "\">"
+                                     + StringUtil.escapeHtml(combinationName)
                                      + "</a> (<code>"
-                                     + url + "</code>)</li>");
+                                     + urlHtml + "</code>)</li>");
                         writeNewLine(writer);
                     }
                     writer.write("</ul>");
@@ -247,9 +251,11 @@ public class SystemInfoAdminServlet extends HttpServlet implements IsAdminServle
                               final HttpServletResponse resp,
                               final String error)
             throws IOException {
+        resp.setContentType("text/html; charset=utf-8");
         final PrintWriter writer = resp.getWriter();
         writeHtmlHeader(writer);
-        writer.write("ERROR: " + error);
+        // error may contain request-supplied values (e.g. the 'provider' parameter), so HTML-escape it.
+        writer.write("ERROR: " + StringUtil.escapeHtml(error));
         writeHtmlFooter(writer);
     }
 

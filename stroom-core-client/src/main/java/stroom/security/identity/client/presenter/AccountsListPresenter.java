@@ -257,7 +257,7 @@ public class AccountsListPresenter
                         .withSorting(AccountFields.FIELD_NAME_LOGIN_FAILURES)
                         .build(),
                 DataGridUtil.headingBuilder("Sign In Failures")
-                        .withToolTip("The number of login failures since the last successful login.")
+                        .withToolTip("The number of sign in failures since the last successful sign in.")
                         .build(),
                 130);
 

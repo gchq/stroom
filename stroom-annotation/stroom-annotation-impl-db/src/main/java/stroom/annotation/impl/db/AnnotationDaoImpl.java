@@ -26,7 +26,6 @@ import stroom.annotation.impl.db.AnnotationEventLinkCache.AnnotationEventLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.AbstractAnnotationChange;
 import stroom.annotation.shared.AddAnnotationTable;
 import stroom.annotation.shared.AddTag;
@@ -1216,74 +1215,55 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 SimpleDuration::getTimeUnit,
                 TimeUnit::getPrimitiveValue);
 
-        final AnnotationRecord annotationRec = new AnnotationRecord();
-        annotationRec.setUuid(UUID.randomUUID().toString());
-        annotationRec.setVersion(INITIAL_VERSION);
-        annotationRec.setCreateTimeMs(nowMs);
-        annotationRec.setCreateUser(currentUserName);
-        annotationRec.setUpdateTimeMs(nowMs);
-        annotationRec.setUpdateUser(currentUserName);
-        annotationRec.setTitle(request.getTitle());
-        annotationRec.setSubject(request.getSubject());
-        annotationRec.setAssignedToUuid(NullSafe.get(request.getAssignTo(), UserRef::getUuid));
-        annotationRec.setRetentionTime(retentionTime);
-        annotationRec.setRetentionUnit(retentionTimeUnit);
-        annotationRec.setRetainUntilMs(retainUntilTimeMs);
+        final String uuid = UUID.randomUUID().toString();
+        final String assignedToUuid = NullSafe.get(request.getAssignTo(), UserRef::getUuid);
 
-        LOGGER.debug("create() - annotationRec: {}", annotationRec);
-
-        // Insert the annotation and update annotationRec with the ID
-        JooqUtil.create(context, annotationRec);
-        final long id = Objects.requireNonNull(annotationRec.getId());
+        final Long id = context
+                .insertInto(ANNOTATION,
+                        ANNOTATION.UUID,
+                        ANNOTATION.VERSION,
+                        ANNOTATION.CREATE_TIME_MS,
+                        ANNOTATION.CREATE_USER,
+                        ANNOTATION.UPDATE_TIME_MS,
+                        ANNOTATION.UPDATE_USER,
+                        ANNOTATION.TITLE,
+                        ANNOTATION.SUBJECT,
+                        ANNOTATION.ASSIGNED_TO_UUID,
+                        ANNOTATION.RETENTION_TIME,
+                        ANNOTATION.RETENTION_UNIT,
+                        ANNOTATION.RETAIN_UNTIL_MS)
+                .values(uuid,
+                        INITIAL_VERSION,
+                        nowMs,
+                        currentUserName,
+                        nowMs,
+                        currentUserName,
+                        request.getTitle(),
+                        request.getSubject(),
+                        assignedToUuid,
+                        retentionTime,
+                        retentionTimeUnit,
+                        retainUntilTimeMs)
+                .returning(ANNOTATION.ID)
+                .fetchOne(ANNOTATION.ID);
+        Objects.requireNonNull(id, "Null DB id");
 
         final Annotation annotation = Annotation.builder()
                 .id(id)
-                .uuid(annotationRec.getUuid())
-                .name(annotationRec.getTitle())
-                .version(String.valueOf(annotationRec.getVersion()))
-                .createTimeMs(annotationRec.getCreateTimeMs())
-                .createUser(annotationRec.getCreateUser())
-                .updateTimeMs(annotationRec.getUpdateTimeMs())
-                .updateUser(annotationRec.getUpdateUser())
-                .subject(annotationRec.getSubject())
+                .uuid(uuid)
+                .name(request.getTitle())
+                .version(String.valueOf(INITIAL_VERSION))
+                .createTimeMs(nowMs)
+                .createUser(currentUserName)
+                .updateTimeMs(nowMs)
+                .updateUser(currentUserName)
+                .subject(request.getSubject())
                 .assignedTo(request.getAssignTo())
-                .description(annotationRec.getDescription())
                 .retentionPeriod(retentionPeriod)
                 .retainUntilTimeMs(retainUntilTimeMs)
                 .build();
         LOGGER.debug("create() - Returning annotation {}: {}", id, annotation);
         return annotation;
-//
-//        final Optional<Long> optional = context
-//                .insertInto(ANNOTATION,
-//                        ANNOTATION.UUID,
-//                        ANNOTATION.VERSION,
-//                        ANNOTATION.CREATE_USER,
-//                        ANNOTATION.CREATE_TIME_MS,
-//                        ANNOTATION.UPDATE_USER,
-//                        ANNOTATION.UPDATE_TIME_MS,
-//                        ANNOTATION.TITLE,
-//                        ANNOTATION.SUBJECT,
-//                        ANNOTATION.ASSIGNED_TO_UUID,
-//                        ANNOTATION.RETENTION_TIME,
-//                        ANNOTATION.RETENTION_UNIT,
-//                        ANNOTATION.RETAIN_UNTIL_MS)
-//                .values(
-//                        uuid,
-//                        INITIAL_VERSION,
-//                        annotationRec.createUser,
-//                        annotationRec.timeMs,
-//                        annotationRec.createUser,
-//                        annotationRec.timeMs,
-//                        annotationRec.title,
-//                        annotationRec.subject,
-//                        assignedToUserUuid,
-//                        annotationRec.getRetentionTime(),
-//                        annotationRec.getRetentionTimeUnit(),
-//                        annotationRec.retainUntilTimeMs)
-//                .returning(ANNOTATION.ID)
-//                .fetchOptional()
-//                .map(AnnotationRecord::getId);
     }
 
     private void linkEvents(final String userUuid,

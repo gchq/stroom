@@ -144,20 +144,6 @@ public class OauthClientRecord extends UpdatableRecordImpl<OauthClientRecord> {
         return (String) get(8);
     }
 
-    /**
-     * Setter for <code>stroom.oauth_client.uri_pattern</code>.
-     */
-    public void setUriPattern(String value) {
-        set(9, value);
-    }
-
-    /**
-     * Getter for <code>stroom.oauth_client.uri_pattern</code>.
-     */
-    public String getUriPattern() {
-        return (String) get(9);
-    }
-
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -181,7 +167,7 @@ public class OauthClientRecord extends UpdatableRecordImpl<OauthClientRecord> {
     /**
      * Create a detached, initialised OauthClientRecord
      */
-    public OauthClientRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String clientId, String clientSecret, String uriPattern) {
+    public OauthClientRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String clientId, String clientSecret) {
         super(OauthClient.OAUTH_CLIENT);
 
         setId(id);
@@ -193,7 +179,6 @@ public class OauthClientRecord extends UpdatableRecordImpl<OauthClientRecord> {
         setName(name);
         setClientId(clientId);
         setClientSecret(clientSecret);
-        setUriPattern(uriPattern);
         resetChangedOnNotNull();
     }
 }

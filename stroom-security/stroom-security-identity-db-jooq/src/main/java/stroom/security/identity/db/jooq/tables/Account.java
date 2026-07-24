@@ -167,6 +167,26 @@ public class Account extends TableImpl<AccountRecord> {
      */
     public final TableField<AccountRecord, Boolean> PROCESSING_ACCOUNT = createField(DSL.name("processing_account"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.account.reset_token_hash</code>.
+     */
+    public final TableField<AccountRecord, String> RESET_TOKEN_HASH = createField(DSL.name("reset_token_hash"), SQLDataType.VARCHAR(64), this, "");
+
+    /**
+     * The column <code>stroom.account.reset_token_expiry_ms</code>.
+     */
+    public final TableField<AccountRecord, Long> RESET_TOKEN_EXPIRY_MS = createField(DSL.name("reset_token_expiry_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.account.reset_email_requested_ms</code>.
+     */
+    public final TableField<AccountRecord, Long> RESET_EMAIL_REQUESTED_MS = createField(DSL.name("reset_email_requested_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.account.locked_until_ms</code>.
+     */
+    public final TableField<AccountRecord, Long> LOCKED_UNTIL_MS = createField(DSL.name("locked_until_ms"), SQLDataType.BIGINT, this, "");
+
     private Account(Name alias, Table<AccountRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -213,7 +233,7 @@ public class Account extends TableImpl<AccountRecord> {
 
     @Override
     public List<UniqueKey<AccountRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_ACCOUNT_USER_ID);
+        return Arrays.asList(Keys.KEY_ACCOUNT_USER_ID, Keys.KEY_ACCOUNT_ACCOUNT_EMAIL_IDX);
     }
 
     @Override

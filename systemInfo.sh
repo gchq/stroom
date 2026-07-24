@@ -350,12 +350,11 @@ main() {
     fi
     api_token="${TOKEN}"
   else
-    # Hard coded token that works with the hard coded default open id creds
-    # for use in dev only. Expires on 2030-08-18T13:53:50.000Z
-    if [[ "${is_silent}" = false ]]; then
-      echo -e "${GREEN}Using hard coded token, export ${BLUE}\${TOKEN}${GREEN} to override.${NC}"
-    fi
-    local api_token='eyJhbGciOiJSUzI1NiIsImtpZCI6ImYzNzQyZTBlLWQ2ZTQtNDZlYS04MmM0LTBmZGE0MjE5ZTk5MiJ9.eyJleHAiOjIzMDIxMDc3NzksInN1YiI6ImRlZmF1bHQtdGVzdC1vbmx5LWFwaS1rZXktdXNlciIsImlzcyI6ImRlZmF1bHQtdGVzdC1vbmx5LWlzc3VlciIsImF1ZCI6IkJ5VXVYUEVVQndxVmZBbTladHI5SzEyTmhxV3lNRnoxVG1YU2xXeVAuY2xpZW50LWlkLmFwcHMuc3Ryb29tLWlkcCJ9.pvP3ojlYnbjpRdvuRcj7R9gbTgb-pirCDwGwPTWrDa4MTb30IS0DRNi6wdBL6K4FQJVwOwkRsc3xBIhF2cRAxLgZ1qWr7Zeh0bGB25y1womshnDvFQQFsl6vM-taxSRXrZ2b8by7KbDu9-PitxIaLssD9ZDe9hoi5vZlWlVUe6CI3EfUCQGcyqbVPrkwPpWg_tQa6Mvx7UxUf_GslYt6YVibF8FVelM5ISVZEZRM8GRUTeoKZGSySiFR18CzUn7XsRpffEtmwpo8JuEoOprvgPk-n8y6nQfZnPCdr45bthTi4tzARPTCLaK0XUiiAP58_LfaeldjMhSdYnefgT3gXg'
+    # There is no built-in token. Export ${TOKEN} with an API key (or, if the insecure test credential
+    # is enabled in your dev environment, the STROOM_INSECURE_TEST_CREDENTIAL value) and re-run.
+    echo -e "${GREEN}No token supplied. Export ${BLUE}\${TOKEN}${GREEN} (an API key, or your" \
+      "STROOM_INSECURE_TEST_CREDENTIAL value) and re-run.${NC}" >&2
+    exit 1
   fi
 
   local default_port="8080"

@@ -48,10 +48,12 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
+    implementation libs.zxcvbn
 
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-security:stroom-security-identity')
+    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
     testImplementation libs.wiremock
     testImplementation libs.dropwizard.testing

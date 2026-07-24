@@ -341,6 +341,7 @@ public class ConfigMapper {
     private void updateXmlSecureProcessing() {
         final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
         SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
+        SAXParserSettings.setExternalEntitiesDisabled(parserConfig.isDisableExternalEntities());
     }
 
     private synchronized AbstractConfig rebuildObjectInstance(

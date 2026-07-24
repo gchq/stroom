@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -96,6 +97,24 @@ public interface StroomCache<K, V> {
      * @return The new value associated with the specified key, or null if none.
      */
     V compute(K key, BiFunction<K, V, V> remappingFunction);
+
+    /**
+     * Atomically removes the entry for {@code key} and returns its previous value, if any. The read and
+     * removal happen as a single atomic operation (via {@link #compute(Object, BiFunction)}), so two
+     * concurrent callers cannot both retrieve the same value - useful for single-use entries such as
+     * authorization codes, nonces or one-time tokens.
+     *
+     * @param key The key to remove.
+     * @return The value that was removed, or empty if there was none.
+     */
+    default Optional<V> getAndRemove(final K key) {
+        final AtomicReference<V> removed = new AtomicReference<>();
+        compute(key, (k, existing) -> {
+            removed.set(existing);
+            return null;
+        });
+        return Optional.ofNullable(removed.get());
+    }
 
     /**
      * Returns true if key exists in the cache. Any load function present on the cache

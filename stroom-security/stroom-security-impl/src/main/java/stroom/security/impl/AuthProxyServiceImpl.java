@@ -16,30 +16,21 @@
 
 package stroom.security.impl;
 
-import stroom.security.api.HasJwt;
-import stroom.security.api.UserIdentity;
-import stroom.security.api.UserIdentityFactory;
 import stroom.security.common.impl.ClientCredentials;
 import stroom.security.common.impl.OpenIdTokenRequestHelper;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
-import stroom.util.authentication.DefaultOpenIdCredentials;
-import stroom.util.authentication.HasRefreshable;
-import stroom.util.authentication.Refreshable;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Objects;
 
 public class AuthProxyServiceImpl implements AuthProxyService {
@@ -47,19 +38,13 @@ public class AuthProxyServiceImpl implements AuthProxyService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthProxyServiceImpl.class);
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final JerseyClientFactory jerseyClientFactory;
-    private final UserIdentityFactory userIdentityFactory;
 
     @Inject
     public AuthProxyServiceImpl(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
-                                final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                                final JerseyClientFactory jerseyClientFactory,
-                                final UserIdentityFactory userIdentityFactory) {
+                                final JerseyClientFactory jerseyClientFactory) {
         this.openIdConfigurationProvider = openIdConfigurationProvider;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jerseyClientFactory = jerseyClientFactory;
-        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -71,10 +56,15 @@ public class AuthProxyServiceImpl implements AuthProxyService {
 
         final String token = switch (idpType) {
             case EXTERNAL_IDP -> fetchTokenFromExternalIdp(clientCredentials, openIdConfiguration);
-            case INTERNAL_IDP -> fetchTokenFromInternalIdp(clientCredentials, openIdConfiguration);
+            // This endpoint brokers a client-credentials token request to a separate identity provider. When
+            // Stroom is its own identity provider there is no separate provider to broker to, and no scoped
+            // service account to mint a token for, so the request is not supported here. Programmatic callers
+            // authenticate to an internal-IdP Stroom with an API key instead.
+            case INTERNAL_IDP -> throw new IllegalArgumentException(
+                    "Fetching a client-credentials token is not supported when identityProviderType is "
+                    + IdpType.INTERNAL_IDP + ". Authenticate with an API key instead.");
             case NO_IDP -> throw new IllegalArgumentException(
-                    "Stroom is not configured to use an identity provide");
-            case TEST_CREDENTIALS -> defaultOpenIdCredentials.getApiKey();
+                    "Stroom is not configured to use an identity provider");
         };
 
         LOGGER.debug(() -> LogUtil.message("Fetched access token for clientId '{}' (idpType {})",
@@ -108,54 +98,4 @@ public class AuthProxyServiceImpl implements AuthProxyService {
         }
     }
 
-    private String fetchTokenFromInternalIdp(final ClientCredentials clientCredentials,
-                                             final OpenIdConfiguration openIdConfiguration) {
-        validateClientCredentials(clientCredentials, openIdConfiguration);
-
-        final UserIdentity userIdentity = userIdentityFactory.getServiceUserIdentity();
-        return extractToken(userIdentity);
-    }
-
-    private void validateClientCredentials(final ClientCredentials clientCredentials,
-                                           final OpenIdConfiguration openIdConfiguration) {
-        Objects.requireNonNull(clientCredentials);
-        if (!Objects.equals(clientCredentials.getClientId(), openIdConfiguration.getClientId())
-            || !Objects.equals(clientCredentials.getClientSecret(), openIdConfiguration.getClientSecret())) {
-            throw new IllegalArgumentException(LogUtil.message(
-                    "When identityProviderType is {}, the provided clientId and clientSecret must match " +
-                    "those in Stroom's config", IdpType.INTERNAL_IDP));
-        }
-    }
-
-    private String extractToken(final UserIdentity serviceUserIdentity) {
-
-        if (serviceUserIdentity instanceof final HasJwt hasJwt) {
-            final String jwt = hasJwt.getJwt();
-            Objects.requireNonNull(jwt, "JWT is missing");
-
-            Instant expiry = null;
-            Duration expiryDuration = null;
-
-            if (serviceUserIdentity instanceof final HasRefreshable hasRefreshable) {
-                final Refreshable refreshable = hasRefreshable.getRefreshable();
-
-                expiry = NullSafe.get(refreshable,
-                        Refreshable::getExpireTimeEpochMs,
-                        Instant::ofEpochMilli);
-                expiryDuration = NullSafe.get(expiry,
-                        expiry2 -> Duration.between(Instant.now(), expiry2));
-            }
-
-            LOGGER.debug("Access token successfully obtained. Expire time: {}, expires in: {}",
-                    Objects.requireNonNullElse(expiry, "?"),
-                    Objects.requireNonNullElse(expiryDuration, "?"));
-
-            return jwt;
-        } else if (serviceUserIdentity == null) {
-            throw new RuntimeException("Null service user identity");
-        } else {
-            throw new RuntimeException(LogUtil.message(
-                    "User identity type {} does not have a token.", serviceUserIdentity.getClass().getSimpleName()));
-        }
-    }
 }

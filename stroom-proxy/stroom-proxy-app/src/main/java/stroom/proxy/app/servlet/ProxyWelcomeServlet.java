@@ -21,6 +21,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -52,6 +53,7 @@ public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
         final BuildInfo buildInfo = buildInfoProvider.get();
+        response.setContentType("text/html; charset=utf-8");
         final Writer writer = response.getWriter();
         writer.write("<html>\n" +
                      "<head>\n" +
@@ -63,13 +65,14 @@ public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
                      "</head>\n" +
                      "<body>\n" +
                      "<h1>Stroom Proxy " +
-                     buildInfo.getBuildVersion() +
+                     StringUtil.escapeHtml(buildInfo.getBuildVersion()) +
                      " built on " +
-                     DateUtil.createNormalDateTimeString(buildInfo.getBuildTime()) +
+                     StringUtil.escapeHtml(DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())) +
                      "</h1>\n" +
                      "\n" +
                      "<p>Send data to " +
-                     getDataFeedURL(request) +
+                     // Derived from the request URL (includes the Host header), so HTML-escape it.
+                     StringUtil.escapeHtml(getDataFeedURL(request)) +
                      "</p>\n" +
                      "\n" +
                      "</body>\n" +

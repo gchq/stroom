@@ -41,6 +41,7 @@ import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.net.SsrfGuard;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.http.HttpAuthConfig;
@@ -67,6 +68,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.RequestConfig;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -127,8 +129,13 @@ public class AiServiceImpl implements AiService {
             final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
             try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
                 final String url = getUrl(modelDoc, "models");
+                // Reject cloud-metadata/wildcard targets to prevent SSRF.
+                SsrfGuard.rejectMetadataAndWildcard(url);
 
                 final HttpGet httpGet = new HttpGet(url);
+                // Do not follow redirects - a redirect could otherwise reach a blocked address after the
+                // check above, since this client's redirect behaviour is request-supplied.
+                httpGet.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build());
                 httpGet.addHeader("Content-Type", "application/audit");
 
                 // Provide an API key
@@ -220,7 +227,9 @@ public class AiServiceImpl implements AiService {
         modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
@@ -251,7 +260,9 @@ public class AiServiceImpl implements AiService {
         }
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
@@ -275,7 +286,9 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
@@ -291,7 +304,9 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 

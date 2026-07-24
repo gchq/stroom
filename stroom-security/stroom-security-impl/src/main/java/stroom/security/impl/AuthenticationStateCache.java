@@ -18,7 +18,9 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
+import stroom.config.common.UriFactory;
 import stroom.security.common.impl.AuthenticationState;
+import stroom.security.openid.api.Pkce;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -37,28 +39,37 @@ public class AuthenticationStateCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthenticationStateCache.class);
 
     private final StroomCache<String, AuthenticationState> cache;
+    private final UriFactory uriFactory;
 
     @Inject
     public AuthenticationStateCache(final Provider<AuthenticationConfig> configProvider,
-                                    final CacheManager cacheManager) {
+                                    final CacheManager cacheManager,
+                                    final UriFactory uriFactory) {
+        this.uriFactory = uriFactory;
         cache = cacheManager.create("Authentication State Cache",
                 () -> configProvider.get().getAuthenticationStateCache());
     }
 
     /**
-     * A 'state' is a single use, cryptographically random string,
-     * and it's use here is to prevent replay attacks.
+     * Create state for the logout flow. The redirect here is the application's public root, used as the
+     * {@code post_logout_redirect_uri} the IdP returns the user to after sign out. The sign-in flow uses
+     * {@link #create(String, String, boolean)}, whose redirect is the OIDC sign-in callback.
      * <p>
-     * State is used in the authentication flow - the hash is included in the original AuthenticationRequest
-     * that Stroom makes to the Authentication Service. When Stroom is subsequently called the state is provided in the
-     * URL to allow verification that the return request was expected.
+     * A 'state' is a single-use, cryptographically random string used to prevent replay attacks: its value
+     * is included in the request to the IdP and checked when the IdP calls back.
      */
     public AuthenticationState create(final String url,
                                       final boolean prompt) {
         final String stateId = createRandomString(20);
         final String nonce = createRandomString(20);
+        final String codeVerifier = Pkce.createCodeVerifier();
 
-        final AuthenticationState state = new AuthenticationState(stateId, url, nonce, prompt);
+        // The public root is the post-logout landing page (post_logout_redirect_uri), not an authorization
+        // redirect_uri.
+        final String redirectUri = uriFactory.publicUri("/").toString();
+
+        final AuthenticationState state = new AuthenticationState(
+                stateId, url, redirectUri, nonce, prompt, codeVerifier);
         LOGGER.debug(() -> LogUtil.message("Creating {}", state));
 
         cache.put(stateId, state);
@@ -66,27 +77,28 @@ public class AuthenticationStateCache {
     }
 
     /**
-     * Create an authentication state where the OIDC redirect_uri is a specific
-     * callback endpoint rather than the initiating URI.
+     * Create state for the SPA/BFF flow, where the OIDC redirect_uri is a dedicated callback endpoint
+     * distinct from the initiating URI the user is returned to after authenticating.
      */
     public AuthenticationState create(final String initiatingUrl,
                                       final String callbackUri,
                                       final boolean prompt) {
         final String stateId = createRandomString(20);
         final String nonce = createRandomString(20);
+        // A fresh PKCE code verifier per flow; its S256 challenge goes on the authorization request.
+        final String codeVerifier = Pkce.createCodeVerifier();
+
         final AuthenticationState state = new AuthenticationState(
-                stateId, initiatingUrl, callbackUri, nonce, prompt);
+                stateId, initiatingUrl, callbackUri, nonce, prompt, codeVerifier);
         LOGGER.debug(() -> LogUtil.message("Creating {}", state));
+
         cache.put(stateId, state);
         return state;
     }
 
     public Optional<AuthenticationState> getAndRemove(final String stateId) {
-        final Optional<AuthenticationState> optional = cache.getIfPresent(stateId);
-        if (optional.isPresent()) {
-            cache.invalidate(stateId);
-        }
-        return optional;
+        // Atomic get-and-remove, so two concurrent consumptions of the same state cannot both retrieve it.
+        return cache.getAndRemove(stateId);
     }
 
     private String createRandomString(final int length) {

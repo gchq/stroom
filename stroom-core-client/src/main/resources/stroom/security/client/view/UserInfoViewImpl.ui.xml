@@ -60,7 +60,7 @@
         <form:FormGroup ui:field="enabledFormGroup"
                         identity="userInfoIsEnabled"
                         label="Enabled"
-                        helpText="If not enabled, the user will not be able to login.">
+                        helpText="If not enabled, the user will not be able to sign in.">
             <tickbox:CustomCheckBox ui:field="isEnabledTickBox"/>
         </form:FormGroup>
 

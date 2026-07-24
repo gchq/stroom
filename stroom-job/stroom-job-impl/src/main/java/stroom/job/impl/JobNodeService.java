@@ -175,126 +175,6 @@ class JobNodeService {
                 });
     }
 
-//    public stroom.util.shared.SharedMap<JobNode, JobNodeInfo> exec(final JobNodeInfoClusterTask task) {
-//        return securityContext.secureResult(() -> {
-//            final SharedMap<JobNode, JobNodeInfo> result = new SharedMap<>();
-//            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
-//            if (trackers != null) {
-//                final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
-//                if (trackerList != null) {
-//                    for (final JobNodeTracker tracker : trackerList) {
-//                        final JobNode jobNode = tracker.getJobNode();
-//                        final int currentTaskCount = tracker.getCurrentTaskCount();
-//
-//                        Long scheduleReferenceTime = null;
-//                        final Scheduler scheduler = trackers.getScheduler(jobNode);
-//                        if (scheduler != null) {
-//                            scheduleReferenceTime = scheduler.getScheduleReferenceTime();
-//                        }
-//
-//                        final JobNodeInfo info = new JobNodeInfo(currentTaskCount, scheduleReferenceTime,
-//                                tracker.getLastExecutedTime());
-//                        result.put(jobNode, info);
-//                    }
-//                }
-//            }
-//
-//            return result;
-//        });
-//    }
-//
-//    BaseResultList<JobNodeRow> findStatus(final FindJobNodeCriteria findJobNodeCriteria) {
-//        return securityContext.secureResult(() -> {
-//            // Add the root node.
-//            final List<JobNodeRow> values = new ArrayList<>();
-//
-//            if (findJobNodeCriteria == null) {
-//                return BaseResultList.createUnboundedList(values);
-//            }
-//
-//            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-//            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
-//
-//            final List<JobNode> jobNodes = find(findJobNodeCriteria);
-//
-//            // Sort job nodes by node name.
-//            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
-//
-//            // Create the JobNodeRow value
-//            for (final JobNode jobNode : jobNodes) {
-//                JobNodeInfo jobNodeInfo = null;
-//
-//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response =
-//                collector.getResponse(jobNode.getNodeName());
-//
-//                if (response == null) {
-//                    LOGGER.debug("No response for: {}", jobNode);
-//                } else if (response.getError() != null) {
-//                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
-//                    LOGGER.debug(response.getError().getMessage(), response.getError());
-//                } else {
-//                    final Map<JobNode, JobNodeInfo> map = response.getResult();
-//                    if (map == null) {
-//                        LOGGER.warn("No data for: {}", jobNode);
-//                    } else {
-//                        jobNodeInfo = map.get(jobNode);
-//                    }
-//                }
-//
-//                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
-//                values.add(jobNodeRow);
-//            }
-//
-//            return BaseResultList.createUnboundedList(values);
-//        });
-//    }
-//
-//    BaseResultList<JobNode> list(final String jobName, final String nodeName) {
-//        return securityContext.secureResult(() -> {
-//            // Add the root node.
-//            final List<JobNode> values = new ArrayList<>();
-//
-//            if (findJobNodeCriteria == null) {
-//                return BaseResultList.createUnboundedList(values);
-//            }
-//
-//            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-//            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
-//
-//            final List<JobNode> jobNodes = find(findJobNodeCriteria);
-//
-//            // Sort job nodes by node name.
-//            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
-//
-//            // Create the JobNodeRow value
-//            for (final JobNode jobNode : jobNodes) {
-//                JobNodeInfo jobNodeInfo = null;
-//
-//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response =
-//                collector.getResponse(jobNode.getNodeName());
-//
-//                if (response == null) {
-//                    LOGGER.debug("No response for: {}", jobNode);
-//                } else if (response.getError() != null) {
-//                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
-//                    LOGGER.debug(response.getError().getMessage(), response.getError());
-//                } else {
-//                    final Map<JobNode, JobNodeInfo> map = response.getResult();
-//                    if (map == null) {
-//                        LOGGER.warn("No data for: {}", jobNode);
-//                    } else {
-//                        jobNodeInfo = map.get(jobNode);
-//                    }
-//                }
-//
-//                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
-//                values.add(jobNodeRow);
-//            }
-//
-//            return BaseResultList.createUnboundedList(values);
-//        });
-//    }
-
     private void ensureSchedule(final JobNode jobNode) {
         ensureSchedule(jobNode.getJobType(), jobNode.getSchedule());
     }
@@ -320,10 +200,13 @@ class JobNodeService {
     }
 
     void executeJob(final JobNode jobNode) {
-        LOGGER.info("Marking job '{}' on node '{}' for immediate execution",
-                jobNode.getJobName(), jobNode.getNodeName());
+        // Forcing immediate execution is a job-management action, gated like the other job-node mutators.
+        securityContext.secure(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
+            LOGGER.info("Marking job '{}' on node '{}' for immediate execution",
+                    jobNode.getJobName(), jobNode.getNodeName());
 
-        jobNodeTrackerCache.getTrackers()
-                .triggerImmediateExecution(jobNode);
+            jobNodeTrackerCache.getTrackers()
+                    .triggerImmediateExecution(jobNode);
+        });
     }
 }

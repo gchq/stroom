@@ -21,15 +21,27 @@ import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class TokenConfig extends AbstractConfig implements IsStroomConfig {
+
+    /**
+     * Added to the longest token lifetime to give the retention of a retired signing key, covering
+     * the 30s allowed clock skew plus processing time with room to spare. Erring long is safe, a key
+     * is merely kept a little longer; erring short would drop still-valid tokens.
+     */
+    private static final Duration RETENTION_MARGIN = Duration.ofHours(1);
 
     @NotNull
     @JsonProperty
@@ -57,6 +69,14 @@ public class TokenConfig extends AbstractConfig implements IsStroomConfig {
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("How often the internal identity provider replaces its signing key. " +
+            "A retired key stays published, so it can still verify tokens it signed, for as long as " +
+            "the longest token lifetime; keeping this at or above that lifetime means only two or three " +
+            "keys are ever published at once, whereas a much shorter interval accumulates keys.")
+    private final StroomDuration jwkRotationInterval;
+
+    @NotNull
+    @JsonProperty
     @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
     private final String jwsIssuer;
 
@@ -73,6 +93,7 @@ public class TokenConfig extends AbstractConfig implements IsStroomConfig {
         idTokenExpiration = StroomDuration.ofMinutes(60);
         emailResetTokenExpiration = StroomDuration.ofMinutes(10);
         defaultApiKeyExpiration = StroomDuration.ofDays(365);
+        jwkRotationInterval = StroomDuration.ofDays(30);
         jwsIssuer = "stroom";
         algorithm = "RS256";
     }
@@ -85,6 +106,7 @@ public class TokenConfig extends AbstractConfig implements IsStroomConfig {
             @JsonProperty("idTokenExpiration") final StroomDuration idTokenExpiration,
             @JsonProperty("emailResetTokenExpiration") final StroomDuration emailResetTokenExpiration,
             @JsonProperty("defaultApiKeyExpiration") final StroomDuration defaultApiKeyExpiration,
+            @JsonProperty("jwkRotationInterval") final StroomDuration jwkRotationInterval,
             @JsonProperty("jwsIssuer") final String jwsIssuer,
             @JsonProperty("algorithm") final String algorithm) {
         this.refreshTokenExpiration = refreshTokenExpiration;
@@ -92,6 +114,7 @@ public class TokenConfig extends AbstractConfig implements IsStroomConfig {
         this.idTokenExpiration = idTokenExpiration;
         this.emailResetTokenExpiration = emailResetTokenExpiration;
         this.defaultApiKeyExpiration = defaultApiKeyExpiration;
+        this.jwkRotationInterval = jwkRotationInterval;
         this.jwsIssuer = jwsIssuer;
         this.algorithm = algorithm;
     }
@@ -114,6 +137,31 @@ public class TokenConfig extends AbstractConfig implements IsStroomConfig {
 
     public StroomDuration getDefaultApiKeyExpiration() {
         return defaultApiKeyExpiration;
+    }
+
+    public StroomDuration getJwkRotationInterval() {
+        return jwkRotationInterval;
+    }
+
+    /**
+     * How long a retired signing key must stay published: the longest lifetime of any token it
+     * could have signed, plus a margin for clock skew and processing.
+     * <p>
+     * Deliberately derived rather than configurable. Setting it below the longest token lifetime
+     * would make tokens stop verifying before they expire, so there is no safe value for an operator
+     * to choose. Note {@code defaultApiKeyExpiration} is excluded: API keys are opaque database
+     * values, not JWTs signed by this key, so its 365 day default does not apply here.
+     * </p>
+     */
+    @JsonIgnore
+    public Duration getJwkRetention() {
+        final Duration longestTokenLifetime = Collections.max(List.of(
+                        refreshTokenExpiration,
+                        accessTokenExpiration,
+                        idTokenExpiration,
+                        emailResetTokenExpiration))
+                .getDuration();
+        return longestTokenLifetime.plus(RETENTION_MARGIN);
     }
 
     public String getJwsIssuer() {

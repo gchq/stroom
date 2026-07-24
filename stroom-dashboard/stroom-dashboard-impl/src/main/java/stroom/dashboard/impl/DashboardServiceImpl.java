@@ -78,6 +78,7 @@ import stroom.query.language.functions.Values;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -91,6 +92,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -213,6 +215,16 @@ class DashboardServiceImpl implements DashboardService {
             try {
                 if (request == null) {
                     throw new EntityServiceException("Query is empty");
+                }
+
+                // The query targets a request-supplied data source, so require USE permission on it before
+                // exporting the query - parity with the search execution, which requires USE to query it.
+                final DocRef dataSourceRef = NullSafe.get(
+                        request, DashboardSearchRequest::getSearch, Search::getDataSourceRef);
+                if (dataSourceRef != null
+                    && !securityContext.hasDocumentPermission(dataSourceRef, DocumentPermission.USE)) {
+                    throw new PermissionException(securityContext.getUserRef(),
+                            "You do not have USE permission on data source " + dataSourceRef);
                 }
 
                 final DashboardSearchRequest.Builder builder = request.copy();

@@ -31,6 +31,7 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<AccountRecord> KEY_ACCOUNT_ACCOUNT_EMAIL_IDX = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("KEY_account_account_email_idx"), new TableField[] { Account.ACCOUNT.EMAIL }, true);
     public static final UniqueKey<AccountRecord> KEY_ACCOUNT_PRIMARY = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("KEY_account_PRIMARY"), new TableField[] { Account.ACCOUNT.ID }, true);
     public static final UniqueKey<AccountRecord> KEY_ACCOUNT_USER_ID = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("KEY_account_user_id"), new TableField[] { Account.ACCOUNT.USER_ID }, true);
     public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_PRIMARY = Internal.createUniqueKey(JsonWebKey.JSON_WEB_KEY, DSL.name("KEY_json_web_key_PRIMARY"), new TableField[] { JsonWebKey.JSON_WEB_KEY.ID }, true);

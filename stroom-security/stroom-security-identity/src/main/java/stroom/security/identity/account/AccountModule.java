@@ -33,8 +33,12 @@ public final class AccountModule extends AbstractModule {
 
         bind(AccountService.class).to(AccountServiceImpl.class);
 
+        // The inter-node processing/service user is a cluster-internal credential, so it is minted with
+        // the internal key in external-IdP mode too (not just internal-IdP mode). This means inter-node
+        // auth does not depend on provisioning a service account in the external IdP.
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
-                .addBinding(IdpType.INTERNAL_IDP, InternalServiceUserFactory.class);
+                .addBinding(IdpType.INTERNAL_IDP, InternalServiceUserFactory.class)
+                .addBinding(IdpType.EXTERNAL_IDP, InternalServiceUserFactory.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AccountResourceImpl.class);

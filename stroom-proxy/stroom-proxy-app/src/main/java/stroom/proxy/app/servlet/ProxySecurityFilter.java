@@ -16,13 +16,10 @@
 
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.event.EventResource;
-import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -63,26 +60,17 @@ public class ProxySecurityFilter implements Filter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityFilter.class);
 
-    private final Provider<FeedStatusConfig> feedStatusConfigProvider;
-    private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<CommonSecurityContext> securityContextProvider;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserIdentityFactory userIdentityFactory;
     private final AuthenticationBypassChecker authenticationBypassChecker;
 
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final Provider<FeedStatusConfig> feedStatusConfigProvider,
-                               final Provider<ProxyConfig> proxyConfigProvider,
-                               final Provider<CommonSecurityContext> securityContextProvider,
-                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
+    public ProxySecurityFilter(final Provider<CommonSecurityContext> securityContextProvider,
                                final UserIdentityFactory userIdentityFactory,
                                final AuthenticationBypassChecker authenticationBypassChecker) {
-        this.feedStatusConfigProvider = feedStatusConfigProvider;
-        this.proxyConfigProvider = proxyConfigProvider;
         this.securityContextProvider = securityContextProvider;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userIdentityFactory = userIdentityFactory;
         this.authenticationBypassChecker = authenticationBypassChecker;
     }
@@ -180,37 +168,6 @@ public class ProxySecurityFilter implements Filter {
         }
     }
 
-//    private String getConfiguredApiKey(final String requestUri) {
-//        // TODO it could be argued that we should have a single API key to use for all of these resources.
-//        final String apiKey;
-//        final ProxyConfig proxyConfig = proxyConfigProvider.get();
-//        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
-//            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-//            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
-//                LOGGER.info("Authenticating using default API key. For production use, set up an API key in Stroom!");
-//                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-//            } else {
-//                apiKey = feedStatusConfig.getApiKey();
-//            }
-//        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH
-//        + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
-//            final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
-//            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
-//                LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-//                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-//            } else {
-//                apiKey = contentSyncConfig.getApiKey();
-//            }
-//        } else {
-//            throw new RuntimeException(LogUtil.message(
-//                    "Unable to determine which config to get API key from for requestURI {}", requestUri));
-//        }
-//        if (apiKey == null || apiKey.isEmpty()) {
-//            throw new RuntimeException(LogUtil.message(
-//                    "API key is empty, requestURI {}", requestUri));
-//        }
-//        return apiKey;
-//    }
 
     private boolean ignoreUri(final String uri) {
         return pattern != null && pattern.matcher(uri).matches();

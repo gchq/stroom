@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexShard;
 import stroom.util.io.PathCreator;
+import stroom.util.io.PathSegmentUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -39,8 +40,8 @@ public class IndexShardUtil {
             }
 
             path = path.resolve("index");
-            path = path.resolve(indexShard.getIndexUuid());
-            path = path.resolve(indexShard.getPartition());
+            path = path.resolve(PathSegmentUtil.requireSafeSegment(indexShard.getIndexUuid()));
+            path = path.resolve(PathSegmentUtil.requireSafeSegment(indexShard.getPartition()));
             path = path.resolve(String.valueOf(indexShard.getId()));
 
             return path;

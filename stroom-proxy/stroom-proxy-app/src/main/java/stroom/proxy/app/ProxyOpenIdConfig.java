@@ -55,12 +55,14 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
             @JsonProperty("allowedAudiences") final Set<String> allowedAudiences,
             @JsonProperty("audienceClaimRequired") final Boolean audienceClaimRequired,
+            @JsonProperty("validateAudience") final Boolean validateAudience,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
-            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern,
+            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -76,12 +78,14 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 clientCredentialsScopes,
                 allowedAudiences,
                 audienceClaimRequired,
+                validateAudience,
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
                 fullNameClaimTemplate,
                 expectedSignerPrefixes,
-                publicKeyUriPattern);
+                publicKeyUriPattern,
+                requiredAccessTokenType);
     }
 
     @JsonIgnore
@@ -96,8 +100,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
     @JsonProperty
     @JsonPropertyDescription("The type of Open ID Connect identity provider that stroom/proxy" +
                              "will use for authentication. Valid values are: " +
-                             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito, " +
-                             "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only and " +
+                             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito and " +
                              "NO_IDP - No IDP is used. API keys are set in config for feed status checks. " +
                              "Changing this property will require a restart of the application.")
     @Override
@@ -123,17 +126,19 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getLogoutEndpoint(),
                 getLogoutRedirectParamName(),
                 isFormTokenRequest(),
-                getClientSecret(),
                 getClientId(),
+                getClientSecret(),
                 getRequestScopes(),
                 getClientCredentialsScopes(),
                 getAllowedAudiences(),
                 isAudienceClaimRequired(),
+                isValidateAudience(),
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
                 getFullNameClaimTemplate(),
                 getExpectedSignerPrefixes(),
-                getPublicKeyUriPattern());
+                getPublicKeyUriPattern(),
+                getRequiredAccessTokenType());
     }
 }

@@ -162,7 +162,11 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
-        return securityContext.secureResult(() -> indexVolumeDao.find(criteria));
+        // Enumerating index volumes (server paths, capacity, usage, state) is a volume-management read, gated
+        // like create/update/delete.
+        return securityContext.secureResult(
+                AppPermission.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeDao.find(criteria));
     }
 
     @Override
@@ -347,7 +351,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public IndexVolume read(final int id) {
-        return securityContext.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
+        return securityContext.secureResult(
+                AppPermission.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeDao.fetch(id).orElse(null));
     }
 
     @Override

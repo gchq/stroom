@@ -18,7 +18,6 @@ package stroom.security.identity.config;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,7 +41,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
     public static final StroomDuration DEFAULT_UNUSED_ACCOUNT_DEACTIVATION_THRESHOLD = StroomDuration.ofDays(90);
     public static final StroomDuration DEFAULT_MANDATORY_PASSWORD_CHANGE_DURATION = StroomDuration.ofDays(90);
     public static final boolean DEFAULT_FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN = true;
-    public static final String DEFAULT_PASSWORD_COMPLEXITY_REGEX = ".*";
     public static final int DEFAULT_MINIMUM_PASSWORD_STRENGTH = 3;
     public static final int DEFAULT_MINIMUM_PASSWORD_LENGTH = 8;
 
@@ -74,12 +72,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
     @JsonPropertyDescription("If true, on first login the user will be forced to change their password.")
     private final boolean forcePasswordChangeOnFirstLogin;
 
-    @ValidRegex
-    @JsonProperty
-    @JsonPropertyDescription("A regex pattern that new passwords must match")
-    // The default is to let everything through
-    private final String passwordComplexityRegex;
-
     @Min(0)
     @Max(5)
     @NotNull
@@ -103,7 +95,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
         unusedAccountDeactivationThreshold = DEFAULT_UNUSED_ACCOUNT_DEACTIVATION_THRESHOLD;
         mandatoryPasswordChangeDuration = DEFAULT_MANDATORY_PASSWORD_CHANGE_DURATION;
         forcePasswordChangeOnFirstLogin = DEFAULT_FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN;
-        passwordComplexityRegex = DEFAULT_PASSWORD_COMPLEXITY_REGEX;
         minimumPasswordStrength = DEFAULT_MINIMUM_PASSWORD_STRENGTH;
         minimumPasswordLength = DEFAULT_MINIMUM_PASSWORD_LENGTH;
         passwordPolicyMessage = buildDefaultPolicyMessage(minimumPasswordLength);
@@ -117,7 +108,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
             @JsonProperty("unusedAccountDeactivationThreshold") final StroomDuration unusedAccountDeactivationThreshold,
             @JsonProperty("mandatoryPasswordChangeDuration") final StroomDuration mandatoryPasswordChangeDuration,
             @JsonProperty("forcePasswordChangeOnFirstLogin") final Boolean forcePasswordChangeOnFirstLogin,
-            @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
             @JsonProperty("minimumPasswordStrength") final Integer minimumPasswordStrength,
             @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
             @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
@@ -137,9 +127,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
         this.forcePasswordChangeOnFirstLogin = Objects.requireNonNullElse(
                 forcePasswordChangeOnFirstLogin,
                 DEFAULT_FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN);
-        this.passwordComplexityRegex = Objects.requireNonNullElse(
-                passwordComplexityRegex,
-                DEFAULT_PASSWORD_COMPLEXITY_REGEX);
         this.minimumPasswordStrength = Objects.requireNonNullElse(
                 minimumPasswordStrength,
                 DEFAULT_MINIMUM_PASSWORD_STRENGTH);
@@ -171,10 +158,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
         return forcePasswordChangeOnFirstLogin;
     }
 
-    public String getPasswordComplexityRegex() {
-        return passwordComplexityRegex;
-    }
-
     public Integer getMinimumPasswordStrength() {
         return minimumPasswordStrength;
     }
@@ -202,7 +185,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
                ", unusedAccountDeactivationThreshold=" + unusedAccountDeactivationThreshold +
                ", mandatoryPasswordChangeDuration=" + mandatoryPasswordChangeDuration +
                ", forcePasswordChangeOnFirstLogin=" + forcePasswordChangeOnFirstLogin +
-               ", passwordComplexityRegex='" + passwordComplexityRegex + '\'' +
                ", minimumPasswordStrength=" + minimumPasswordStrength +
                ", minimumPasswordLength=" + minimumPasswordLength +
                ", passwordPolicyMessage='" + passwordPolicyMessage + '\'' +
@@ -223,7 +205,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
                && Objects.equals(neverUsedAccountDeactivationThreshold, that.neverUsedAccountDeactivationThreshold)
                && Objects.equals(unusedAccountDeactivationThreshold, that.unusedAccountDeactivationThreshold)
                && Objects.equals(mandatoryPasswordChangeDuration, that.mandatoryPasswordChangeDuration)
-               && Objects.equals(passwordComplexityRegex, that.passwordComplexityRegex)
                && Objects.equals(minimumPasswordStrength, that.minimumPasswordStrength)
                && Objects.equals(minimumPasswordLength, that.minimumPasswordLength)
                && Objects.equals(passwordPolicyMessage, that.passwordPolicyMessage);
@@ -237,7 +218,6 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
                 unusedAccountDeactivationThreshold,
                 mandatoryPasswordChangeDuration,
                 forcePasswordChangeOnFirstLogin,
-                passwordComplexityRegex,
                 minimumPasswordStrength,
                 minimumPasswordLength,
                 passwordPolicyMessage);

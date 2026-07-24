@@ -79,6 +79,11 @@ public interface OpenIdConfiguration {
     String getClientSecret();
 
     /**
+     * @see AbstractOpenIdConfig#getRequiredAccessTokenType()
+     */
+    String getRequiredAccessTokenType();
+
+    /**
      * @see AbstractOpenIdConfig#isFormTokenRequest()
      */
     boolean isFormTokenRequest();
@@ -97,6 +102,13 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#isAudienceClaimRequired()
      */
     boolean isAudienceClaimRequired();
+
+    /**
+     * @see AbstractOpenIdConfig#isValidateAudience()
+     */
+    default boolean isValidateAudience() {
+        return true;
+    }
 
     /**
      * @see AbstractOpenIdConfig#getAllowedAudiences()

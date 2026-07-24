@@ -16,9 +16,15 @@
 
 package stroom.security.identity.authenticate;
 
+import com.nulabinc.zxcvbn.Zxcvbn;
+
 import java.util.Objects;
 
 public class PasswordValidator {
+
+    // Zxcvbn loads its dictionaries once and measure() is stateless, so a single shared instance is safe
+    // and avoids reloading the dictionaries on every password check.
+    private static final Zxcvbn ZXCVBN = new Zxcvbn();
 
     public static void validateLength(final String newPassword,
                                       final int minimumLength) {
@@ -31,13 +37,20 @@ public class PasswordValidator {
         }
     }
 
-    public static void validateComplexity(final String newPassword,
-                                          final String complexityRegex) {
+    /**
+     * Enforce password strength on the server using zxcvbn (the same estimator the UI uses), so the
+     * advertised strength policy is actually applied and cannot be bypassed by calling the API directly.
+     * The score is 0 (weakest) to 4 (strongest); the password is rejected if it scores below the configured
+     * minimum. This replaces the old character-class complexity regex, which OWASP discourages in favour of
+     * an entropy-based estimate.
+     */
+    public static void validateStrength(final String newPassword,
+                                        final int minimumStrength) {
         if (newPassword == null) {
             throw new RuntimeException("Password is null");
         }
-        if (!newPassword.matches(complexityRegex)) {
-            throw new RuntimeException("Password does not meet the minimum complexity requirements");
+        if (ZXCVBN.measure(newPassword).getScore() < minimumStrength) {
+            throw new RuntimeException("Password does not meet the minimum strength requirement");
         }
     }
 

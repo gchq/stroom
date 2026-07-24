@@ -27,6 +27,7 @@ import stroom.util.concurrent.Guard.TryAgainException;
 import stroom.util.concurrent.StripedGuard;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -319,7 +320,7 @@ class SnapshotShard implements Shard {
                 // Get the snapshot dir.
                 dbDir = statePaths
                         .getSnapshotDir()
-                        .resolve(doc.getUuid())
+                        .resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()))
                         .resolve(DateUtil.createFileDateTimeString(createTime));
 
                 // Create dir.

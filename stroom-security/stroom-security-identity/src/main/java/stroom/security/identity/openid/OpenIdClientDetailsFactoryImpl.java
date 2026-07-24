@@ -21,7 +21,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -46,7 +45,6 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
     private static final char[] ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGJKLMNPRSTUVWXYZ0123456789"
             .toCharArray();
 
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     // We have to use AbstractOpenIdConfig instead of OpenIdConfiguration, so we get
     // the one that is backed by stroom's config.yml rather than the one that is derived
     // from the config.yml + the IDP's config endpoint (i.e. relies on this class).
@@ -56,9 +54,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
 
     @Inject
     public OpenIdClientDetailsFactoryImpl(final OpenIdClientDao openIdClientDao,
-                                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                           final Provider<AbstractOpenIdConfig> openIdConfigurationProvider) {
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdClientDao = openIdClientDao;
     }
@@ -91,9 +87,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
                 final IdpType idpType = openIdConfiguration.getIdentityProviderType();
 
-                if (IdpType.TEST_CREDENTIALS.equals(idpType)) {
-                    client = createDefaultOAuthClient();
-                } else if (IdpType.INTERNAL_IDP.equals(idpType)) {
+                if (IdpType.INTERNAL_IDP.equals(idpType)) {
                     // We are first thread on this node, but other nodes may beat us to it so,
                     // check the DB
                     client = createOAuth2Client(clientName, openIdConfiguration);
@@ -135,14 +129,6 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                         new NullPointerException("Unable to get or create internal client details"));
     }
 
-    private OpenIdClient createDefaultOAuthClient() {
-        return new OpenIdClient(
-                defaultOpenIdCredentials.getOauth2ClientName(),
-                defaultOpenIdCredentials.getOauth2ClientId(),
-                defaultOpenIdCredentials.getOauth2ClientSecret(),
-                defaultOpenIdCredentials.getOauth2ClientUriPattern());
-    }
-
     private static OpenIdClient createOAuth2ClientCredentials(final String name,
                                                               final OpenIdConfiguration openIdConfiguration) {
         // If we have them in config then use them, else fall back to randomised creds
@@ -154,15 +140,14 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 () -> createRandomCode(CLIENT_SECRET_SUFFIX));
 
         LOGGER.debug("");
-        return new OpenIdClient(name, clientId, clientSecret, ".*");
+        return new OpenIdClient(name, clientId, clientSecret);
     }
 
     static OpenIdClient createRandomisedOAuth2Client(final String name) {
         return new OpenIdClient(
                 name,
                 createRandomCode(CLIENT_ID_SUFFIX),
-                createRandomCode(CLIENT_SECRET_SUFFIX),
-                ".*");
+                createRandomCode(CLIENT_SECRET_SUFFIX));
     }
 
     public static String createRandomCode(final String suffix) {

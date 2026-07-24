@@ -332,6 +332,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getRequiredAccessTokenType() {
+        return localOpenIdConfigProvider.get().getRequiredAccessTokenType();
+    }
+
+    @Override
     public String getClientSecret() {
         return localOpenIdConfigProvider.get().getClientSecret();
     }
@@ -359,6 +364,11 @@ public class ExternalIdpConfigurationProvider
     @Override
     public boolean isAudienceClaimRequired() {
         return localOpenIdConfigProvider.get().isAudienceClaimRequired();
+    }
+
+    @Override
+    public boolean isValidateAudience() {
+        return localOpenIdConfigProvider.get().isValidateAudience();
     }
 
     @Override

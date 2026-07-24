@@ -41,6 +41,7 @@ public abstract class AbstractOpenIdConfig
         implements OpenIdConfiguration {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
+    public static final String PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE = "requiredAccessTokenType";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
     public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
     public static final String PROP_NAME_IDP_TYPE = "identityProviderType";
@@ -52,7 +53,7 @@ public abstract class AbstractOpenIdConfig
     public static final String DEFAULT_CLAIM_PREFERRED_USERNAME = OpenId.CLAIM__PREFERRED_USERNAME;
     public static final boolean DEFAULT_FORM_TOKEN_REQUEST = true;
     public static final boolean DEFAULT_VALIDATE_AUDIENCE = true;
-    public static final boolean DEFAULT_AUDIENCE_CLAIM_REQUIRED = false;
+    public static final boolean DEFAULT_AUDIENCE_CLAIM_REQUIRED = true;
     public static final String DEFAULT_FULL_NAME_CLAIM_TEMPLATE = "${name}";
     public static final String DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE =
             "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}";
@@ -146,9 +147,18 @@ public abstract class AbstractOpenIdConfig
     private final Set<String> allowedAudiences;
 
     /**
-     * If true the token will fail validation if the audience claim is not present and allowedAudiences is not empty.
+     * If true (the default) an inbound token fails validation when it does not carry an audience claim. Set
+     * to false only for external identity providers that omit the audience claim on their access tokens.
      */
     private final boolean audienceClaimRequired;
+
+    /**
+     * If true (the default) the audience claim of an inbound token is validated against allowedAudiences,
+     * falling back to the configured clientId when allowedAudiences is empty. Set to false to disable
+     * audience validation entirely (not recommended - a token minted for another application at the same
+     * external identity provider could then be replayed against stroom).
+     */
+    private final boolean validateAudience;
 
     private final Set<String> validIssuers;
 
@@ -170,6 +180,11 @@ public abstract class AbstractOpenIdConfig
 
     private final String publicKeyUriPattern;
 
+    /**
+     * The JOSE {@code typ} header value a token must carry to be accepted as a bearer access token on the API.
+     */
+    private final String requiredAccessTokenType;
+
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
@@ -186,12 +201,14 @@ public abstract class AbstractOpenIdConfig
         clientCredentialsScopes = DEFAULT_CLIENT_CREDENTIALS_SCOPES;
         allowedAudiences = Collections.emptySet();
         audienceClaimRequired = DEFAULT_AUDIENCE_CLAIM_REQUIRED;
+        validateAudience = DEFAULT_VALIDATE_AUDIENCE;
         validIssuers = Collections.emptySet();
         uniqueIdentityClaim = DEFAULT_CLAIM_SUBJECT;
         userDisplayNameClaim = DEFAULT_CLAIM_PREFERRED_USERNAME;
         fullNameClaimTemplate = DEFAULT_FULL_NAME_CLAIM_TEMPLATE;
         expectedSignerPrefixes = Collections.emptySet();
         publicKeyUriPattern = DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE;
+        requiredAccessTokenType = null;
     }
 
     @JsonIgnore
@@ -214,12 +231,14 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
             @JsonProperty("allowedAudiences") final Set<String> allowedAudiences,
             @JsonProperty("audienceClaimRequired") final Boolean audienceClaimRequired,
+            @JsonProperty("validateAudience") final Boolean validateAudience,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
-            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern,
+            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType) {
 
         this.identityProviderType = Objects.requireNonNullElseGet(identityProviderType, this::getDefaultIdpType);
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -238,6 +257,7 @@ public abstract class AbstractOpenIdConfig
                 clientCredentialsScopes, DEFAULT_CLIENT_CREDENTIALS_SCOPES);
         this.allowedAudiences = CollectionUtil.cleanItems(allowedAudiences, String::trim);
         this.audienceClaimRequired = Objects.requireNonNullElse(audienceClaimRequired, DEFAULT_AUDIENCE_CLAIM_REQUIRED);
+        this.validateAudience = Objects.requireNonNullElse(validateAudience, DEFAULT_VALIDATE_AUDIENCE);
         this.validIssuers = NullSafe.set(validIssuers);
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
@@ -245,6 +265,7 @@ public abstract class AbstractOpenIdConfig
                 fullNameClaimTemplate, DEFAULT_FULL_NAME_CLAIM_TEMPLATE);
         this.expectedSignerPrefixes = NullSafe.set(expectedSignerPrefixes);
         this.publicKeyUriPattern = publicKeyUriPattern;
+        this.requiredAccessTokenType = requiredAccessTokenType;
     }
 
     /**
@@ -256,8 +277,7 @@ public abstract class AbstractOpenIdConfig
                              "will use for authentication. Valid values are: " +
                              "INTERNAL_IDP - Stroom's own built in IDP (not valid for stroom-proxy)," +
                              "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be " +
-                             "used as stroom-proxy's external IDP) and" +
-                             "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only. " +
+                             "used as stroom-proxy's external IDP). " +
                              "Changing this property will require a restart of the application.")
     public IdpType getIdentityProviderType() {
         return identityProviderType;
@@ -337,6 +357,19 @@ public abstract class AbstractOpenIdConfig
     }
 
     @Override
+    @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE)
+    @JsonPropertyDescription("The JOSE 'typ' header value a token must carry to be accepted as a bearer " +
+                             "access token on the API, e.g. 'at+jwt' (RFC 9068) or 'Bearer' (Keycloak). " +
+                             "When set, a token of any other type - such as an id_token - is rejected on the " +
+                             "bearer path even if its signature is valid, preventing it from being replayed " +
+                             "as an access token. Leave unset (the default) to accept any type, for identity " +
+                             "providers that do not set a distinct type. Only applies to an external " +
+                             "identity provider.")
+    public String getRequiredAccessTokenType() {
+        return requiredAccessTokenType;
+    }
+
+    @Override
     @JsonProperty
     @JsonPropertyDescription("Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.")
     public boolean isFormTokenRequest() {
@@ -364,19 +397,34 @@ public abstract class AbstractOpenIdConfig
     @JsonProperty
     @JsonPropertyDescription("A set of audience claim values, one of which must appear in the audience " +
                              "claim in the token. " +
-                             "If empty, no validation will be performed on the audience claim." +
+                             "If empty, the audience claim is validated against the configured clientId instead " +
+                             "(unless validateAudience is false, in which case no audience validation is performed). " +
                              "If audienceClaimRequired is false and there is no audience claim in the token, " +
-                             "then allowedAudiences will be ignored.")
+                             "then the audience is not validated.")
     public Set<String> getAllowedAudiences() {
         return allowedAudiences;
     }
 
     @Override
     @JsonProperty
-    @JsonPropertyDescription("If true the token will fail validation if the audience claim is not present " +
-                             "and allowedAudiences is not empty.")
+    @JsonPropertyDescription("If true (the default) an inbound token fails validation when it does not " +
+                             "carry an audience (aud) claim. The audience, when present, is validated against " +
+                             "allowedAudiences, or the configured clientId when allowedAudiences is empty. Set " +
+                             "this to false only for external identity providers that omit the aud claim on " +
+                             "their access tokens.")
     public boolean isAudienceClaimRequired() {
         return audienceClaimRequired;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("If true (the default) the audience (aud) claim of an inbound token is validated " +
+                             "when using an external identity provider. It is checked against allowedAudiences, " +
+                             "or against the configured clientId when allowedAudiences is empty. Set to false to " +
+                             "disable audience validation entirely. This is not recommended as a token minted for " +
+                             "another application at the same identity provider could then be replayed against stroom.")
+    public boolean isValidateAudience() {
+        return validateAudience;
     }
 
     @Override
@@ -462,6 +510,21 @@ public abstract class AbstractOpenIdConfig
                || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "When " + PROP_NAME_IDP_TYPE + " is EXTERNAL_IDP and validateAudience is true "
+                                + "(the default), you must configure either allowedAudiences or clientId so "
+                                + "the audience claim can be validated. Set validateAudience to false only to "
+                                + "deliberately disable audience validation.")
+    public boolean isAudienceValidationConfigured() {
+        // Fail closed: don't let mandatory audience validation be silently no-op'd because there is nothing
+        // to validate against. Only relevant to the external verifier (the internal IdP sets its own).
+        return !IdpType.EXTERNAL_IDP.equals(identityProviderType)
+               || !validateAudience
+               || NullSafe.hasItems(allowedAudiences)
+               || NullSafe.isNonBlankString(clientId);
+    }
+
     @Override
     public String toString() {
         return "OpenIdConfig{" +
@@ -479,10 +542,12 @@ public abstract class AbstractOpenIdConfig
                ", requestScopes='" + requestScopes + '\'' +
                ", allowedAudiences=" + allowedAudiences +
                ", audienceClaimRequired=" + audienceClaimRequired +
+               ", validateAudience=" + validateAudience +
                ", uniqueIdentityClaim=" + uniqueIdentityClaim +
                ", userDisplayNameClaim=" + userDisplayNameClaim +
                ", fullNameClaimTemplate=" + fullNameClaimTemplate +
                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
+               ", requiredAccessTokenType='" + requiredAccessTokenType + '\'' +
                '}';
     }
 
@@ -497,6 +562,7 @@ public abstract class AbstractOpenIdConfig
         final AbstractOpenIdConfig that = (AbstractOpenIdConfig) o;
         return formTokenRequest == that.formTokenRequest &&
                audienceClaimRequired == that.audienceClaimRequired &&
+               validateAudience == that.validateAudience &&
                identityProviderType == that.identityProviderType &&
                Objects.equals(openIdConfigurationEndpoint, that.openIdConfigurationEndpoint) &&
                Objects.equals(issuer, that.issuer) &&
@@ -512,7 +578,8 @@ public abstract class AbstractOpenIdConfig
                Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim) &&
                Objects.equals(userDisplayNameClaim, that.userDisplayNameClaim) &&
                Objects.equals(fullNameClaimTemplate, that.fullNameClaimTemplate) &&
-               Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes);
+               Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes) &&
+               Objects.equals(requiredAccessTokenType, that.requiredAccessTokenType);
     }
 
     @Override
@@ -532,9 +599,11 @@ public abstract class AbstractOpenIdConfig
                 requestScopes,
                 allowedAudiences,
                 audienceClaimRequired,
+                validateAudience,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
                 fullNameClaimTemplate,
-                expectedSignerPrefixes);
+                expectedSignerPrefixes,
+                requiredAccessTokenType);
     }
 }

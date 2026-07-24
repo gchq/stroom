@@ -25,6 +25,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServlet;
@@ -108,10 +109,14 @@ public abstract class AppServlet extends HttpServlet {
      * If the user is not authenticated, the browser is redirected to the IdP.
      */
     private String getBootstrapScript(final String gwtScriptPath) {
+        // Build the status path from the same shared constant the resource is served under, so the
+        // bootstrap fetch can never drift from AuthFlowResource's @Path (e.g. the noauth removal).
+        final String statusPath = ResourcePaths.buildAuthenticatedApiPath(
+                ResourcePaths.AUTH_FLOW_PATH, "/status");
         return """
                 <script type="text/javascript">
                 (function() {
-                  fetch('/api/auth/flow/v1/noauth/status?redirect_uri='
+                  fetch('%s?redirect_uri='
                     + encodeURIComponent(window.location.href))
                     .then(function(resp) {
                       if (!resp.ok) throw new Error('Auth check failed: ' + resp.status);
@@ -133,7 +138,7 @@ public abstract class AppServlet extends HttpServlet {
                       console.error('Bootstrap auth check failed', err);
                     });
                 })();
-                </script>""".formatted(gwtScriptPath);
+                </script>""".formatted(statusPath, gwtScriptPath);
     }
 
 

@@ -128,8 +128,10 @@ proxyConfig:
     scheme: "http"
     port: 8080
     hostname: "localhost"
-    # This is the TEST_CREDS token
-    apiKey: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImYzNzQyZTBlLWQ2ZTQtNDZlYS04MmM0LTBmZGE0MjE5ZTk5MiJ9.eyJleHAiOjIzMDIxMDc3NzksInN1YiI6ImRlZmF1bHQtdGVzdC1vbmx5LWFwaS1rZXktdXNlciIsImlzcyI6ImRlZmF1bHQtdGVzdC1vbmx5LWlzc3VlciIsImF1ZCI6IkJ5VXVYUEVVQndxVmZBbTladHI5SzEyTmhxV3lNRnoxVG1YU2xXeVAuY2xpZW50LWlkLmFwcHMuc3Ryb29tLWlkcCJ9.pvP3ojlYnbjpRdvuRcj7R9gbTgb-pirCDwGwPTWrDa4MTb30IS0DRNi6wdBL6K4FQJVwOwkRsc3xBIhF2cRAxLgZ1qWr7Zeh0bGB25y1womshnDvFQQFsl6vM-taxSRXrZ2b8by7KbDu9-PitxIaLssD9ZDe9hoi5vZlWlVUe6CI3EfUCQGcyqbVPrkwPpWg_tQa6Mvx7UxUf_GslYt6YVibF8FVelM5ISVZEZRM8GRUTeoKZGSySiFR18CzUn7XsRpffEtmwpo8JuEoOprvgPk-n8y6nQfZnPCdr45bthTi4tzARPTCLaK0XUiiAP58_LfaeldjMhSdYnefgT3gXg"
+    # For local dev/CI this is the insecure test credential shared secret (set via the
+    # STROOM_INSECURE_TEST_CREDENTIAL environment variable, together with
+    # STROOM_ALLOW_INSECURE_TEST_CREDENTIALS=true). In production use a real Stroom API key instead.
+    apiKey: "${STROOM_INSECURE_TEST_CREDENTIAL:-}"
 
   # If you want to use a receipt policy then the RuleSet must exist
   # in Stroom and have the UUID as specified below in receiptPolicyUuid
@@ -181,4 +183,4 @@ proxyConfig:
   security:
     authentication:
       openId:
-        identityProviderType: "TEST_CREDENTIALS"
+        identityProviderType: "${IDP_TYPE:-NO_IDP}"

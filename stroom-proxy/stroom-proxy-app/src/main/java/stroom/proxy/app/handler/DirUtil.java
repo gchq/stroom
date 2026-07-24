@@ -18,6 +18,7 @@ package stroom.proxy.app.handler;
 
 import stroom.proxy.repo.FeedKey;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -34,9 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.IntPredicate;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -70,10 +69,7 @@ public class DirUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirUtil.class);
 
-    private static final Pattern SAFE_NAME_PATTERN = Pattern.compile("[^a-zA-Z0-9_-]");
-    private static final int MAX_DEPTH = calculateDepth(Long.MAX_VALUE); // 6
-    private static final IntPredicate LEN_ONE_PREDICATE = len -> len == 1;
-    private static final IntPredicate LEN_MULTIPLE_OF_THREE_PREDICATE = len -> len % 3 == 0;
+    private static final int MAX_DEPTH = calculateDepth(Long.MAX_VALUE);
 
     static final Comparator<DirId> DIR_ID_COMPARATOR_ASC = Comparator.comparingLong(DirId::num);
     static final Comparator<DirId> DIR_ID_COMPARATOR_DESC = DIR_ID_COMPARATOR_ASC.reversed();
@@ -663,9 +659,7 @@ public class DirUtil {
      * All other characters are replaced with {@code _}.
      */
     public static String makeSafeName(final String string) {
-        return NullSafe.get(string, str ->
-                SAFE_NAME_PATTERN.matcher(str)
-                        .replaceAll("_"));
+        return NullSafe.get(string, PathSegmentUtil::toLegacyMixedCaseName);
     }
 
     /**

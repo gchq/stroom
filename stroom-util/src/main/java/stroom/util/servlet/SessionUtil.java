@@ -122,6 +122,24 @@ public class SessionUtil {
     }
 
     /**
+     * Rotate the id of the request's session, if it has one, on a change of privilege such as
+     * authentication. The session object and all its attributes are preserved; only the id (and
+     * therefore the cookie) changes, so the identifier a request arrived with is not the one it keeps
+     * once authenticated. A no-op if there is no session.
+     *
+     * @return The new session id, or null if there was no session.
+     */
+    public static String changeSessionId(final HttpServletRequest request) {
+        if (request.getSession(false) == null) {
+            return null;
+        }
+        final String oldId = getSessionId(request);
+        final String newId = request.changeSessionId();
+        LOGGER.debug("changeSessionId() - rotated session id from {} to {}", oldId, newId);
+        return newId;
+    }
+
+    /**
      * Passes the {@link HttpSession} to sessionConsumer IF there is a session.
      * Does NOT create a new session.
      */

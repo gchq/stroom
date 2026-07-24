@@ -18,6 +18,7 @@ package stroom.security.identity.account;
 
 import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
+import stroom.security.openid.api.ClusterToken;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.PerishableItem;
 import stroom.util.authentication.RefreshableItem;
@@ -28,8 +29,8 @@ import java.util.function.Supplier;
 
 public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserIdentity, HasJwt {
 
-    // The subject of the processing user identity
-    public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+    // The subject of the processing user identity (canonical value shared with the cluster-token verifier).
+    public static final String INTERNAL_PROCESSING_USER = ClusterToken.PROCESSING_USER_SUBJECT;
 
     private final RefreshableItem<String> refreshableJws;
 

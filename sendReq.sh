@@ -65,10 +65,9 @@ if ! [ -x "$(command -v jq)" ]; then
 fi
 
 if [ "x" == "x${TOKEN}" ]; then
-    echo -e "${GREEN}Using hard coded token, to override, set it like " \
+    echo -e "${GREEN}No token supplied. Set it like " \
       "'${BLUE}export TOKEN=\".....\"${NC}' where ..... is the JWT token from " \
       "'Tools->API' Keys in stroom"
-    api_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2MzY0NDQ1NzcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YFcNS0W8-whP9F0ANSHoe8MNBUUs3VAhyqB06jF40bPEvdq_gAhQR8KVMdgYaYxK-NcQH3Pi062ve7cbwYJ2p1t6J-PRUyY7SwdMf4z-LgoOQXyyoaFBe5Jy100mXOzrEtlQ28DRtzes8X6A7NDzdtbghG5cpfjSqB29WgLWjHoqQiKYv_s_29xajkooUBQXOvKCDR8se3hA9SKwPoO-qyYHC0sZyvRJ9KgdXA6DkHJPuqjnYY-kjkeDOdI5ufTteTsAaQV0ot44XR2SF9yenD4Bzk7IyfN5H31Ly5Bh30S4E0dRiUghvnGeiD0mKB1zPEV_6ZDss6tOXdwQML4Wfw"
     exit 1
 else
   api_token="${TOKEN}"

@@ -45,12 +45,14 @@ import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionIdListener;
 import jakarta.servlet.http.HttpSessionListener;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -249,5 +251,98 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
                                         SessionListResponse::new,
                                         SessionDetails.class))
                                 .orElse(SessionListResponse.empty())).get());
+    }
+
+    @Override
+    public void evictUserSessions(final String userSubjectId, final String exceptSessionId) {
+        if (userSubjectId == null || userSubjectId.isBlank()) {
+            return;
+        }
+        // Fan out to every node, mirroring listSessions(). Authorisation is enforced per node in
+        // evictUserSessionsOnThisNode.
+        nodeService.findNodeNames(FindNodeCriteria.allEnabled())
+                .forEach(nodeName -> {
+                    try {
+                        evictUserSessionsOnNode(userSubjectId, exceptSessionId, nodeName);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("Error terminating sessions for user {} on node {}: {}. " +
+                                     "Enable DEBUG for stacktrace", userSubjectId, nodeName, e.getMessage());
+                        LOGGER.debug(() -> LogUtil.message(
+                                "Error terminating sessions for user {} on node {}", userSubjectId, nodeName), e);
+                    }
+                });
+    }
+
+    @Override
+    public int evictUserSessionsOnNode(final String userSubjectId,
+                                       final String exceptSessionId,
+                                       final String nodeName) {
+        Objects.requireNonNull(nodeName);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+            return evictUserSessionsOnThisNode(userSubjectId, exceptSessionId);
+        }
+        // A different node, so call it over REST.
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                           + ResourcePaths.buildAuthenticatedApiPath(
+                SessionResource.BASE_PATH, SessionResource.TERMINATE_PATH_PART);
+        try {
+            WebTarget webTarget = webTargetFactory.create(url);
+            webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
+            webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.SUBJECT_ID_PARAM, userSubjectId);
+            if (exceptSessionId != null) {
+                webTarget = UriBuilderUtil.addParam(
+                        webTarget, SessionResource.EXCEPT_SESSION_ID_PARAM, exceptSessionId);
+            }
+            try (final Response response = webTarget
+                    .request(MediaType.APPLICATION_JSON)
+                    // The endpoint @Consumes JSON and takes no body, so send an empty JSON entity - a
+                    // text/plain body would be rejected 415 by the remote node.
+                    .post(Entity.json(""))) {
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
+                return response.readEntity(Integer.class);
+            }
+        } catch (final Throwable e) {
+            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+        }
+    }
+
+    private int evictUserSessionsOnThisNode(final String userSubjectId, final String exceptSessionId) {
+        // A user may terminate their own sessions; terminating another user's requires MANAGE_USERS.
+        // Checked against the effective identity, which a remote node sees as the propagated run-as user.
+        final UserRef currentUser = securityContext.getUserRef();
+        final boolean terminatingOwnSessions = currentUser != null
+                && Objects.equals(currentUser.getSubjectId(), userSubjectId);
+        if (terminatingOwnSessions) {
+            return doEvictUserSessionsOnThisNode(userSubjectId, exceptSessionId);
+        }
+        return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
+                doEvictUserSessionsOnThisNode(userSubjectId, exceptSessionId));
+    }
+
+    private int doEvictUserSessionsOnThisNode(final String userSubjectId, final String exceptSessionId) {
+        final List<HttpSession> toEvict = sessionIdToSessionMap.values().stream()
+                .filter(session -> !Objects.equals(session.getId(), exceptSessionId))
+                .filter(session -> {
+                    final UserRef userRef = getUserRefFromSession(session);
+                    return userRef != null && Objects.equals(userRef.getSubjectId(), userSubjectId);
+                })
+                .toList();
+        int count = 0;
+        for (final HttpSession session : toEvict) {
+            try {
+                session.invalidate();
+                count++;
+            } catch (final IllegalStateException e) {
+                // Already invalidated concurrently - ignore.
+            }
+        }
+        final int evicted = count;
+        if (evicted > 0) {
+            LOGGER.info(() -> LogUtil.message(
+                    "Terminated {} session(s) for user {} on this node", evicted, userSubjectId));
+        }
+        return count;
     }
 }

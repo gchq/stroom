@@ -23,6 +23,7 @@ import stroom.security.client.CurrentUser;
 import stroom.security.client.DocumentPermissionsPlugin;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
+import stroom.security.client.SignOutOtherSessionsPlugin;
 import stroom.security.client.UserPlugin;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
@@ -94,6 +95,7 @@ public class SecurityModule extends PluginModule {
         bind(LoginManager.class).in(Singleton.class);
 
         bindPlugin(LogoutPlugin.class);
+        bindPlugin(SignOutOtherSessionsPlugin.class);
 
         // Users
         bindPlugin(AppPermissionsPlugin.class);

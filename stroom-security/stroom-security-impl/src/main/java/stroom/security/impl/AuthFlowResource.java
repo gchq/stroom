@@ -55,23 +55,23 @@ import java.io.IOException;
 @Produces(MediaType.APPLICATION_JSON)
 public interface AuthFlowResource extends RestResource {
 
-    String BASE_PATH = "/auth/flow" + ResourcePaths.V1;
-    String NOAUTH_PATH = BASE_PATH + ResourcePaths.NO_AUTH;
+    String BASE_PATH = ResourcePaths.AUTH_FLOW_PATH;
 
     @GET
-    @Path(ResourcePaths.NO_AUTH + "/status")
+    @Path("/status")
     @Operation(
             summary = "Check authentication status for the SPA",
             operationId = "authFlowStatus")
     AuthFlowResponse status(@QueryParam("redirect_uri") String postAuthRedirectUri,
-                            @Context @NotNull HttpServletRequest request);
+                            @Context @NotNull HttpServletRequest request,
+                            @Context @NotNull HttpServletResponse response);
 
     @GET
-    @Path(ResourcePaths.NO_AUTH + "/callback")
+    @Path(ResourcePaths.SIGN_IN_OIDC_PATH)
     @Produces(MediaType.TEXT_HTML)
     @Operation(
-            summary = "OIDC callback endpoint for the SPA authentication flow",
-            operationId = "authFlowCallback")
+            summary = "OIDC sign-in callback (redirect_uri) for the SPA authentication flow",
+            operationId = "authFlowSignInOidc")
     void callback(@QueryParam("code") String code,
                   @QueryParam("state") String state,
                   @Context @NotNull HttpServletRequest request,

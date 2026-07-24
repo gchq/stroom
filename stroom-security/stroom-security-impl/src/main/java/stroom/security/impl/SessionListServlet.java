@@ -29,6 +29,7 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserRef;
 
+import com.google.common.html.HtmlEscapers;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -92,7 +93,11 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     private void showSessionList(final HttpServletRequest request, final HttpServletResponse response)
             throws IOException {
-        response.setContentType("text/html");
+        response.setContentType("text/html; charset=UTF-8");
+        // This page renders values that originate from request headers, so alongside escaping its output
+        // it sets a strict CSP allowing only same-origin styling and no script. This replaces the
+        // app-wide policy for this response (ContentSecurityFilter sets that before the servlet runs).
+        response.setHeader("Content-Security-Policy", "default-src 'none'; style-src 'self'");
 
         response.getWriter().write("<html>" +
                                    "<head><link type=\"text/css\" href=\"/ui/css/SessionList.css\" rel=\"stylesheet\" /></head>" +
@@ -134,8 +139,10 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                             writeCell(writer, NullSafe.get(sessionDetails.getUserRef(), UserRef::getFullName));
                             writeCell(writer, subjectId);
                             writeCell(writer, sessionDetails.getNodeName());
-                            writeCell(writer, "<span class=\"agent\">"
-                                              + sessionDetails.getLastAccessedAgent() + "</span>");
+                            // The <span> is intentional markup; the agent value inside it is escaped.
+                            writer.write("<td><span class=\"agent\">");
+                            writer.write(escapeHtml(sessionDetails.getLastAccessedAgent()));
+                            writer.write("</span></td>");
 
                             writer.write("</tr>");
                         } catch (final IOException e) {
@@ -155,8 +162,16 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     private void writeCell(final Writer writer, final String value) throws IOException {
         writer.write("<td>");
-        writer.write(Objects.requireNonNullElse(value, "-"));
+        writer.write(escapeHtml(value));
         writer.write("</td>");
+    }
+
+    /**
+     * HTML-escape a value for safe insertion into element content, defaulting null to "-". Every
+     * user- or IdP-controlled value written to this page goes through here.
+     */
+    private static String escapeHtml(final String value) {
+        return HtmlEscapers.htmlEscaper().escape(Objects.requireNonNullElse(value, "-"));
     }
 
     /**

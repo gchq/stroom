@@ -152,9 +152,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account create(final CreateAccountRequest request) {
+    public Account create(final CreateAccountRequest request, final boolean enforcePasswordPolicy) {
         checkPermission();
-        validateCreateRequest(request);
+        validateCreateRequest(request, enforcePasswordPolicy);
         final Account account = buildAccountObject(request);
         final Account persistedAccount = accountDao.create(account, request.getPassword());
 
@@ -222,7 +222,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void update(final UpdateAccountRequest request, final int accountId) {
         checkPermission();
-        validateUpdateRequest(request);
+        validateUpdateRequest(request, accountId);
 
         final Account existingAccount = accountDao.get(accountId)
                 .orElseThrow(() -> new RuntimeException("Account with id = " + accountId + " not found"));
@@ -268,7 +268,7 @@ public class AccountServiceImpl implements AccountService {
         accountDao.delete(accountId);
     }
 
-    private void validateCreateRequest(final CreateAccountRequest request) {
+    private void validateCreateRequest(final CreateAccountRequest request, final boolean enforcePasswordPolicy) {
         if (request == null) {
             throw new RuntimeException("Null request");
         } else {
@@ -277,16 +277,38 @@ public class AccountServiceImpl implements AccountService {
             }
 
             if (request.getPassword() != null || request.getConfirmPassword() != null) {
-                PasswordValidator.validateLength(request.getPassword(),
-                        config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateComplexity(request.getPassword(),
-                        config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                if (enforcePasswordPolicy) {
+                    PasswordValidator.validateLength(request.getPassword(),
+                            config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                    PasswordValidator.validateStrength(request.getPassword(),
+                            config.getPasswordPolicyConfig().getMinimumPasswordStrength());
+                }
                 PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
             }
+
+            validateEmailIsNotInUse(request.getEmail(), null);
         }
     }
 
-    private void validateUpdateRequest(final UpdateAccountRequest request) {
+    /**
+     * Email addresses identify an account for 'forgot password', so they must be unique. The database
+     * enforces this, but a bare duplicate key error is not something to show an administrator. An account
+     * may have no email address at all, in which case there is nothing to clash with.
+     */
+    private void validateEmailIsNotInUse(final String email, final Integer accountIdBeingUpdated) {
+        if (Strings.isNullOrEmpty(email)) {
+            return;
+        }
+
+        accountDao.getByEmail(email)
+                .filter(existing -> !Objects.equals(existing.getId(), accountIdBeingUpdated))
+                .ifPresent(existing -> {
+                    throw new RuntimeException(
+                            "The email address '" + email + "' is already used by another account");
+                });
+    }
+
+    private void validateUpdateRequest(final UpdateAccountRequest request, final int accountId) {
         if (request == null) {
             throw new RuntimeException("Null request");
         } else {
@@ -297,10 +319,13 @@ public class AccountServiceImpl implements AccountService {
             if (request.getPassword() != null || request.getConfirmPassword() != null) {
                 PasswordValidator.validateLength(request.getPassword(),
                         config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateComplexity(request.getPassword(),
-                        config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateStrength(request.getPassword(),
+                        config.getPasswordPolicyConfig().getMinimumPasswordStrength());
                 PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
             }
+
+            // Exclude the account being updated, which is allowed to keep its own address.
+            validateEmailIsNotInUse(request.getAccount().getEmail(), accountId);
         }
     }
 

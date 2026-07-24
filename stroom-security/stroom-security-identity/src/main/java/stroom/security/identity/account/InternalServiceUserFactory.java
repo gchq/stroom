@@ -20,7 +20,8 @@ import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
-import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.ClusterToken;
+import stroom.security.openid.api.OpenId;
 import stroom.util.authentication.PerishableItem;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -30,8 +31,6 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Objects;
 
 @Singleton
@@ -44,13 +43,10 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
     private static final Duration REFRESH_BUFFER = Duration.ofMillis((long) (EXPIRY_DURATION.toMillis() * 0.15));
 
     private final TokenBuilderFactory tokenBuilderFactory;
-    private final OpenIdClientFactory openIdClientDetailsFactory;
 
     @Inject
-    public InternalServiceUserFactory(final TokenBuilderFactory tokenBuilderFactory,
-                                      final OpenIdClientFactory openIdClientDetailsFactory) {
+    public InternalServiceUserFactory(final TokenBuilderFactory tokenBuilderFactory) {
         this.tokenBuilderFactory = tokenBuilderFactory;
-        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     @Override
@@ -75,9 +71,7 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
     }
 
     private PerishableItem<String> createServiceUserToken() {
-        final Instant expiryTime = LocalDateTime.now()
-                .plus(EXPIRY_DURATION)
-                .toInstant(ZoneOffset.UTC);
+        final Instant expiryTime = Instant.now().plus(EXPIRY_DURATION);
 
         LOGGER.debug("Creating service user token with expiryTime: {} ({}), refresh buffer: {}",
                 expiryTime, EXPIRY_DURATION, REFRESH_BUFFER);
@@ -85,8 +79,16 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .builder()
                 .expirationTime(expiryTime)
-                .clientId(openIdClientDetailsFactory.getClient().getClientId())
-                .subject(InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER);
+                // The cluster token is a machine credential, independent of any OIDC client registration:
+                // a fixed internal issuer and audience, signed with the cluster's internal key (set by the
+                // builder factory). This works identically in every IdP mode and does not depend on an
+                // internal OIDC client existing (which it does not in external-IdP mode).
+                .issuer(ClusterToken.CLUSTER_ISSUER)
+                .clientId(ClusterToken.CLUSTER_AUDIENCE)
+                .subject(InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER)
+                // The inter-node processing-user token is a bearer credential, so it must be marked as
+                // an access token to pass the bearer check.
+                .type(OpenId.TOKEN_TYPE__ACCESS);
         final String token = tokenBuilder.build();
         return new PerishableItem<>(expiryTime, token);
     }

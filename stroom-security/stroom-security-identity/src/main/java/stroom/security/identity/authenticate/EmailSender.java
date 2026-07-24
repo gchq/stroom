@@ -21,6 +21,7 @@ import stroom.security.identity.config.EmailConfig;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.SmtpConfig;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResourcePaths;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
@@ -48,6 +49,18 @@ class EmailSender {
         this.authenticationConfig = authenticationConfig;
     }
 
+    /**
+     * The link a user follows to set a new password. Built from the path the reset page is actually
+     * served on, rather than from configuration, so that the two cannot disagree; the sign in page URL
+     * works the same way. Only the token is needed, as the account it is for is inside it.
+     */
+    private String buildResetUrl(final String resetToken) {
+        return uriFactory.publicUri(ResourcePaths.builder()
+                .addPathPart(ResourcePaths.RESET_PASSWORD_PATH)
+                .addQueryParam("token", resetToken)
+                .build()).toString();
+    }
+
     public void send(final String emailAddress,
                      final String firstName,
                      final String lastName, final String resetToken) {
@@ -60,9 +73,9 @@ class EmailSender {
         final String resetName = firstName == null
                 ? "[Name not available]"
                 : firstName + " " + lastName;
-        String resetUrl = String.format(emailConfig.getPasswordResetUrl(), emailAddress, resetToken);
-        resetUrl = uriFactory.publicUri(resetUrl).toString();
-        final String passwordResetEmailText = String.format(emailConfig.getPasswordResetText(), resetUrl);
+        final String passwordResetEmailText = String.format(
+                emailConfig.getPasswordResetText(),
+                buildResetUrl(resetToken));
 
         final Email email = EmailBuilder.startingBlank()
                 .from(emailConfig.getFromName(), emailConfig.getFromAddress())

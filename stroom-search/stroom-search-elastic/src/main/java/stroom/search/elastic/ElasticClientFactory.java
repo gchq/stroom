@@ -17,6 +17,7 @@
 package stroom.search.elastic;
 
 import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.util.net.SsrfGuard;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
@@ -61,6 +62,11 @@ public class ElasticClientFactory {
             final HttpHost host = hostFromUrl(url);
 
             if (host != null) {
+                // Reject cloud-metadata/wildcard targets to prevent SSRF. Private and loopback hosts are
+                // allowed, as an Elasticsearch cluster legitimately lives on an internal or (in dev) a
+                // loopback address.
+                SsrfGuard.rejectMetadataAndWildcard(url);
+
                 // Extract the host, port and scheme
                 httpHosts.add(host);
 

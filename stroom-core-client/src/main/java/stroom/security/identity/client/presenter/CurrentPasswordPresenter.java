@@ -17,6 +17,7 @@
 package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.CurrentUser;
@@ -24,11 +25,11 @@ import stroom.security.identity.client.presenter.CurrentPasswordPresenter.Curren
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.security.identity.shared.ConfirmPasswordRequest;
+import stroom.security.shared.SessionResource;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
@@ -44,6 +45,7 @@ import com.gwtplatform.mvp.client.View;
 public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordView> {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
+    private static final SessionResource SESSION_RESOURCE = GWT.create(SessionResource.class);
 
     private final RestFactory restFactory;
     private final CurrentUser currentUser;
@@ -101,7 +103,10 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                         final ChangePasswordPresenter changePasswordPresenter = changePasswordPresenterProvider.get();
                         changePasswordPresenter.show("Change Password", e -> {
                             if (e.isOk()) {
-                                if (getView().validate()) {
+                                // Validate the change-password dialog (new password + confirmation), not
+                                // the current-password view — so the dialog's feedback labels update and
+                                // e.reset() keeps it open on failure while OK stays enabled.
+                                if (changePasswordPresenter.validate()) {
                                     changePassword(e, changePasswordPresenter);
                                 } else {
                                     e.reset();
@@ -133,12 +138,32 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                 .method(res -> res.changePassword(request))
                 .onSuccess(r -> {
                     if (r.isChangeSucceeded()) {
-                        AlertEvent.fireInfo(this, "Password changed", event::hide);
+                        // A password change does not sign you out elsewhere by itself; offer it opt-in.
+                        event.hide();
+                        ConfirmEvent.fire(this,
+                                "Your password has been changed. Do you also want to sign out of all " +
+                                "your other sessions (on other browsers and devices)?",
+                                result -> {
+                                    if (result) {
+                                        terminateOtherSessions();
+                                    }
+                                });
                     } else {
                         AlertEvent.fireError(this, r.getMessage(), event::reset);
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void terminateOtherSessions() {
+        restFactory
+                .create(SESSION_RESOURCE)
+                .method(SessionResource::terminateOtherSessions)
+                .onSuccess(ok -> AlertEvent.fireInfo(this, "Signed out of your other sessions.", null))
+                .onFailure(restError -> AlertEvent.fireErrorFromException(
+                        this, restError.getException(), null))
                 .taskMonitorFactory(this)
                 .exec();
     }
