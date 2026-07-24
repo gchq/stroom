@@ -22,6 +22,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +51,14 @@ public class StreamSweep {
     private boolean fullyCaptured;
     private Throwable error;
     private StepLocation lastCapturedLocation;
+
+    // The per-part record range THIS sweep has captured, which is what a reader may navigate. It matters
+    // because a reprocess writes into a store that already holds the reused upstream at the full range: the
+    // store's range would let a reader reach a record before the reprocess has written its changed element,
+    // whereas this range advances only as this sweep captures. For a full sweep it equals the store's range
+    // (this sweep writes everything), so gating on it changes nothing there.
+    private final Map<Long, Long> partCapturedMin = new HashMap<>();
+    private final Map<Long, Long> partCapturedMax = new HashMap<>();
 
     // Set when the async capture task is launched, so the owning session can terminate it on close.
     private volatile TaskContext taskContext;
@@ -85,7 +94,35 @@ public class StreamSweep {
         try {
             version++;
             lastCapturedLocation = location;
+            final long part = location.getPartIndex();
+            final long record = location.getRecordIndex();
+            partCapturedMin.merge(part, record, Math::min);
+            partCapturedMax.merge(part, record, Math::max);
             changed.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @return the first (lowest) record index this sweep has captured for the part, or -1 if none yet.
+     */
+    public long getCapturedFirstRecordIndex(final long partIndex) {
+        lock.lock();
+        try {
+            return partCapturedMin.getOrDefault(partIndex, -1L);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @return the last (highest) record index this sweep has captured for the part, or -1 if none yet.
+     */
+    public long getCapturedLastRecordIndex(final long partIndex) {
+        lock.lock();
+        try {
+            return partCapturedMax.getOrDefault(partIndex, -1L);
         } finally {
             lock.unlock();
         }
@@ -127,6 +164,21 @@ public class StreamSweep {
         lock.lock();
         try {
             return fullyCaptured;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @return true only if this sweep captured the whole stream <b>without error</b>. {@link #markError} also
+     * sets {@code fullyCaptured} (so readers stop waiting), so {@link #isFullyCaptured()} alone does not mean
+     * the store holds the complete stream - a caller deciding whether the captured chunks can be reused (e.g.
+     * to reprocess from them) must use this.
+     */
+    public boolean isSuccessfullyCaptured() {
+        lock.lock();
+        try {
+            return fullyCaptured && error == null;
         } finally {
             lock.unlock();
         }

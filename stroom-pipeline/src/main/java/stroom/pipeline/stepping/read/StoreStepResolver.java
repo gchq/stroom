@@ -60,12 +60,40 @@ public class StoreStepResolver {
 
     /**
      * @return the resolved record location and assembled step data, or empty if no matching record exists
-     * in this stream.
+     * in this stream. Navigation is bounded by the store's own captured range.
      */
     public Optional<ResolvedStep> resolve(final StepDataStore store,
                                           final long metaId,
                                           final ElementFingerprints fingerprints,
                                           final PipelineStepRequest request) {
+        return resolve(store, metaId, fingerprints, request, new CapturedRange() {
+            @Override
+            public long first(final long partIndex) {
+                return store.getFirstRecordIndex(partIndex);
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return store.getLastRecordIndex(partIndex);
+            }
+        });
+    }
+
+    /**
+     * As {@link #resolve(StepDataStore, long, ElementFingerprints, PipelineStepRequest)}, but navigation is
+     * bounded by {@code range} rather than the store's full range. This matters for a reprocess: it writes the
+     * changed elements into a store that already holds the reused upstream at the full range, so the caller
+     * passes the reprocess sweep's own captured range and a record is only reachable once the reprocess has
+     * actually written it - never via the reused upstream alone. For a full sweep the two ranges coincide.
+     *
+     * @return the resolved record location and assembled step data, or empty if no matching record exists
+     * within {@code range}.
+     */
+    public Optional<ResolvedStep> resolve(final StepDataStore store,
+                                          final long metaId,
+                                          final ElementFingerprints fingerprints,
+                                          final PipelineStepRequest request,
+                                          final CapturedRange range) {
         final List<Long> parts = store.getPartIndices();
         if (parts.isEmpty()) {
             return Optional.empty();
@@ -78,30 +106,49 @@ public class StoreStepResolver {
         final StepLocation ref = (requestRef != null && requestRef.getMetaId() == metaId) ? requestRef : null;
 
         final Optional<StepLocation> target = switch (stepType) {
-            case FIRST -> scanForward(store, parts, metaId, firstRecord(store, parts, metaId), request, fingerprints);
-            case LAST -> scanBackward(store, parts, metaId, lastRecord(store, parts, metaId), request, fingerprints);
+            case FIRST -> scanForward(store, parts, metaId, firstRecord(parts, metaId, range), request,
+                    fingerprints, range);
+            case LAST -> scanBackward(store, parts, metaId, lastRecord(parts, metaId, range), request,
+                    fingerprints, range);
             case FORWARD -> {
                 final StepLocation start = ref == null
-                        ? firstRecord(store, parts, metaId)
-                        : next(store, parts, metaId, ref).orElse(null);
+                        ? firstRecord(parts, metaId, range)
+                        : next(parts, metaId, ref, range).orElse(null);
                 yield start == null
                         ? Optional.empty()
-                        : scanForward(store, parts, metaId, start, request, fingerprints);
+                        : scanForward(store, parts, metaId, start, request, fingerprints, range);
             }
             case BACKWARD -> {
                 final StepLocation start = ref == null
-                        ? lastRecord(store, parts, metaId)
-                        : prev(store, parts, metaId, ref).orElse(null);
+                        ? lastRecord(parts, metaId, range)
+                        : prev(parts, metaId, ref, range).orElse(null);
                 yield start == null
                         ? Optional.empty()
-                        : scanBackward(store, parts, metaId, start, request, fingerprints);
+                        : scanBackward(store, parts, metaId, start, request, fingerprints, range);
             }
-            case REFRESH -> (ref != null && exists(store, parts, ref))
+            case REFRESH -> (ref != null && exists(parts, ref, range))
                     ? Optional.of(new StepLocation(metaId, ref.getPartIndex(), ref.getRecordIndex()))
                     : Optional.empty();
         };
 
         return target.map(loc -> new ResolvedStep(loc, assemble(store, metaId, fingerprints, loc)));
+    }
+
+    /**
+     * The per-part record range a resolve may navigate within: usually the store's own range, but for a
+     * reprocess the sweep's captured range (see the {@code CapturedRange} overload of {@link #resolve}).
+     */
+    public interface CapturedRange {
+
+        /**
+         * @return the first captured record index for the part, or -1 if none.
+         */
+        long first(long partIndex);
+
+        /**
+         * @return the last captured record index for the part, or -1 if none.
+         */
+        long last(long partIndex);
     }
 
     // --- scanning -------------------------------------------------------------------------------
@@ -111,13 +158,14 @@ public class StoreStepResolver {
                                                final long metaId,
                                                final StepLocation start,
                                                final PipelineStepRequest request,
-                                               final ElementFingerprints fingerprints) {
+                                               final ElementFingerprints fingerprints,
+                                               final CapturedRange range) {
         StepLocation loc = start;
         while (loc != null) {
             if (matches(store, loc, request, fingerprints)) {
                 return Optional.of(loc);
             }
-            loc = next(store, parts, metaId, loc).orElse(null);
+            loc = next(parts, metaId, loc, range).orElse(null);
         }
         return Optional.empty();
     }
@@ -127,13 +175,14 @@ public class StoreStepResolver {
                                                 final long metaId,
                                                 final StepLocation start,
                                                 final PipelineStepRequest request,
-                                                final ElementFingerprints fingerprints) {
+                                                final ElementFingerprints fingerprints,
+                                                final CapturedRange range) {
         StepLocation loc = start;
         while (loc != null) {
             if (matches(store, loc, request, fingerprints)) {
                 return Optional.of(loc);
             }
-            loc = prev(store, parts, metaId, loc).orElse(null);
+            loc = prev(parts, metaId, loc, range).orElse(null);
         }
         return Optional.empty();
     }
@@ -172,75 +221,96 @@ public class StoreStepResolver {
 
     // --- navigation over (part, record) ---------------------------------------------------------
 
-    private StepLocation firstRecord(final StepDataStore store, final List<Long> parts, final long metaId) {
-        final long part = parts.get(0);
-        return new StepLocation(metaId, part, store.getFirstRecordIndex(part));
+    private StepLocation firstRecord(final List<Long> parts, final long metaId, final CapturedRange range) {
+        // The first part that has captured records; a part with none yet (first == -1) is skipped.
+        for (final long part : parts) {
+            final long first = range.first(part);
+            if (first >= 0) {
+                return new StepLocation(metaId, part, first);
+            }
+        }
+        return null;
     }
 
-    private StepLocation lastRecord(final StepDataStore store, final List<Long> parts, final long metaId) {
-        final long lastPart = parts.get(parts.size() - 1);
-        return new StepLocation(metaId, lastPart, store.getLastRecordIndex(lastPart));
+    private StepLocation lastRecord(final List<Long> parts, final long metaId, final CapturedRange range) {
+        for (int i = parts.size() - 1; i >= 0; i--) {
+            final long part = parts.get(i);
+            final long last = range.last(part);
+            if (last >= 0) {
+                return new StepLocation(metaId, part, last);
+            }
+        }
+        return null;
     }
 
     /**
-     * The neighbouring records of a location, or empty if the store cannot answer yet.
+     * The neighbouring records of a location, or empty if the captured range cannot answer yet.
      * <p>
-     * A sweep fills a part in record order, so the store holds a contiguous range and anything outside it is
+     * A sweep fills a part in record order, so the captured range is contiguous and anything outside it is
      * simply "not captured yet". Both directions must refuse to step onto such a record: empty makes
      * {@code resolveSession} wait for the sweep to get there (and only means "there is no such record", i.e.
      * cross into the neighbouring stream, once the sweep has completed and the range is final).
      */
-    private Optional<StepLocation> next(final StepDataStore store,
-                                        final List<Long> parts,
+    private Optional<StepLocation> next(final List<Long> parts,
                                         final long metaId,
-                                        final StepLocation loc) {
+                                        final StepLocation loc,
+                                        final CapturedRange range) {
         final long part = loc.getPartIndex();
         final long record = loc.getRecordIndex();
-        if (record < store.getLastRecordIndex(part)) {
+        final long last = range.last(part);
+        if (record < last) {
             return Optional.of(new StepLocation(metaId, part, record + 1));
         }
-        if (record > store.getLastRecordIndex(part)) {
-            // Ahead of the sweep - the next record may yet be captured in this part.
+        if (record > last) {
+            // Ahead of the sweep (or this part not captured yet) - the next record may yet be captured here.
             return Optional.empty();
         }
         final int idx = parts.indexOf(part);
         if (idx >= 0 && idx + 1 < parts.size()) {
             final long nextPart = parts.get(idx + 1);
-            return Optional.of(new StepLocation(metaId, nextPart, store.getFirstRecordIndex(nextPart)));
+            final long nextFirst = range.first(nextPart);
+            // The next part has not been captured yet; wait rather than step onto a not-yet-present record.
+            return nextFirst < 0 ? Optional.empty() : Optional.of(new StepLocation(metaId, nextPart, nextFirst));
         }
         return Optional.empty();
     }
 
-    private Optional<StepLocation> prev(final StepDataStore store,
-                                        final List<Long> parts,
+    private Optional<StepLocation> prev(final List<Long> parts,
                                         final long metaId,
-                                        final StepLocation loc) {
+                                        final StepLocation loc,
+                                        final CapturedRange range) {
         final long part = loc.getPartIndex();
         final long record = loc.getRecordIndex();
-        if (record > store.getFirstRecordIndex(part)) {
+        final long first = range.first(part);
+        final long last = range.last(part);
+        if (first >= 0 && record > first) {
             final long candidate = record - 1;
             // Stepping back from a reference the sweep has not reached yet would walk down over records
             // that are merely absent-so-far, treat each as a non-match, and land on the first record of the
             // part. Wait for the sweep instead.
-            return candidate <= store.getLastRecordIndex(part)
+            return candidate <= last
                     ? Optional.of(new StepLocation(metaId, part, candidate))
                     : Optional.empty();
         }
-        if (record > store.getLastRecordIndex(part)) {
+        if (record > last) {
             return Optional.empty();
         }
         final int idx = parts.indexOf(part);
         if (idx > 0) {
             final long prevPart = parts.get(idx - 1);
-            return Optional.of(new StepLocation(metaId, prevPart, store.getLastRecordIndex(prevPart)));
+            final long prevLast = range.last(prevPart);
+            return prevLast < 0 ? Optional.empty() : Optional.of(new StepLocation(metaId, prevPart, prevLast));
         }
         return Optional.empty();
     }
 
-    private boolean exists(final StepDataStore store, final List<Long> parts, final StepLocation loc) {
-        return parts.contains(loc.getPartIndex())
-                && loc.getRecordIndex() >= store.getFirstRecordIndex(loc.getPartIndex())
-                && loc.getRecordIndex() <= store.getLastRecordIndex(loc.getPartIndex());
+    private boolean exists(final List<Long> parts, final StepLocation loc, final CapturedRange range) {
+        final long part = loc.getPartIndex();
+        final long first = range.first(part);
+        return parts.contains(part)
+                && first >= 0
+                && loc.getRecordIndex() >= first
+                && loc.getRecordIndex() <= range.last(part);
     }
 
     // --- assembly -------------------------------------------------------------------------------

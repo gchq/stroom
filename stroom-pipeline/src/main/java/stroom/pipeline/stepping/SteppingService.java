@@ -20,14 +20,20 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.stepping.capture.ReprocessDriver;
 import stroom.pipeline.stepping.capture.StreamCaptureDriver;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.read.ReprocessPlanner;
+import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
 import stroom.pipeline.stepping.read.SessionStepResolver;
 import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
+import stroom.pipeline.stepping.read.SteppingGraphBuilder;
+import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.pipeline.stepping.session.SteppingSessionRegistry;
 import stroom.pipeline.stepping.store.StepDataStore;
@@ -51,6 +57,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -76,6 +83,7 @@ public class SteppingService {
 
     private final TaskContextFactory taskContextFactory;
     private final Provider<StreamCaptureDriver> streamCaptureDriverProvider;
+    private final Provider<ReprocessDriver> reprocessDriverProvider;
     private final ExecutorProvider executorProvider;
     private final MetaService metaService;
     private final SecurityContext securityContext;
@@ -87,10 +95,18 @@ public class SteppingService {
     private final SessionStepResolver sessionStepResolver;
     private final SteppingSessionRegistry sessionRegistry;
     private final SteppingResultMapper resultMapper = new SteppingResultMapper();
+    private final ReprocessPlanner reprocessPlanner = new ReprocessPlanner();
+    // How each stream fill was served: a reprocess of just the changed elements, or a full sweep from source.
+    // Observable so callers (and tests) can confirm an edit reused upstream rather than re-running it.
+    private final java.util.concurrent.atomic.AtomicLong reprocessLaunches =
+            new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicLong fullSweepLaunches =
+            new java.util.concurrent.atomic.AtomicLong();
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
                            final Provider<StreamCaptureDriver> streamCaptureDriverProvider,
+                           final Provider<ReprocessDriver> reprocessDriverProvider,
                            final ExecutorProvider executorProvider,
                            final MetaService metaService,
                            final SecurityContext securityContext,
@@ -103,6 +119,7 @@ public class SteppingService {
                            final SteppingSessionRegistry sessionRegistry) {
         this.taskContextFactory = taskContextFactory;
         this.streamCaptureDriverProvider = streamCaptureDriverProvider;
+        this.reprocessDriverProvider = reprocessDriverProvider;
         this.executorProvider = executorProvider;
         this.metaService = metaService;
         this.securityContext = securityContext;
@@ -145,6 +162,59 @@ public class SteppingService {
             return new SteppingCaptureResult(sessionId, sweep.getStore(), fingerprints);
         } catch (final RuntimeException e) {
             // Don't leak the store (open channels + temp dir) if capture failed part way through.
+            deleteCaptureSession(sessionId);
+            throw e;
+        }
+    }
+
+    /**
+     * Re-run {@code startElementId} and its downstream from {@code sourceStore}'s stored upstream output,
+     * capturing the reprocessed IO into a fresh store, and return it. Synchronous, like {@link #capture}:
+     * the caller owns the returned session and must {@link #deleteCaptureSession} it. This is the entry to
+     * the split - re-running only the edited stage rather than the whole pipeline - and is currently exercised
+     * by the reprocess de-risk test; {@link #step} does not use it yet.
+     */
+    public SteppingCaptureResult reprocess(final PipelineStepRequest request,
+                                           final long metaId,
+                                           final String startElementId,
+                                           final String feedElementId,
+                                           final StepDataStore sourceStore,
+                                           final ElementFingerprints fingerprints) {
+        final String sessionId = UUID.randomUUID().toString();
+        try {
+            final StepDataStore targetStore = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
+            final StreamSweep sweep = new StreamSweep(metaId, targetStore);
+            final Executor executor = executorProvider.get(THREAD_POOL);
+            try {
+                CompletableFuture
+                        .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
+                                reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
+                                        startElementId, feedElementId, sourceStore, sweep, fingerprints)), executor)
+                        .whenComplete((unused, t) -> {
+                            if (t != null) {
+                                sweep.markError(t);
+                            } else if (!sweep.isFullyCaptured()) {
+                                sweep.markError(new RuntimeException(
+                                        "Stepping reprocess of stream " + metaId + " ended without completing"));
+                            }
+                        });
+            } catch (final RuntimeException e) {
+                sweep.markError(e);
+            }
+
+            if (!sweep.awaitFullyCaptured(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
+                final TaskContext taskContext = sweep.getTaskContext();
+                sweep.requestTerminate();
+                if (taskContext != null) {
+                    taskManager.terminate(taskContext.getTaskId());
+                }
+                throw new RuntimeException("Timed out waiting for stepping reprocess of stream " + metaId);
+            }
+            if (sweep.getError() != null) {
+                throw new RuntimeException("Stepping reprocess failed", sweep.getError());
+            }
+            return new SteppingCaptureResult(sessionId, targetStore, fingerprints);
+        } catch (final RuntimeException e) {
             deleteCaptureSession(sessionId);
             throw e;
         }
@@ -215,11 +285,92 @@ public class SteppingService {
         return new SteppingSession(
                 sessionId,
                 streamIds,
-                (metaId, sweepRequest, sweepFingerprints) ->
-                        launchSweep(sessionId, sweepRequest, metaId, sweepFingerprints),
+                (metaId, sweepRequest, sweepFingerprints, priorCompleteCapture) ->
+                        launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorCompleteCapture),
                 this::closeSession,
                 this::terminateSweep,
                 steppingConfig.getMaxSweptStreamsPerSession());
+    }
+
+    /**
+     * Decide how to fill a stream's sweep: reprocess just the changed elements from stored upstream output
+     * when an edit allows it, otherwise sweep the whole stream from source.
+     * <p>
+     * Reprocess needs a prior fully-captured sweep (so the upstream chunks are complete) and a plan that is
+     * the clean single-edit case ({@link ReprocessPlanner}); everything else falls back to a full sweep, which
+     * is the normal once-per-stream capture and always correct.
+     */
+    private StreamSweep launchFor(final String sessionId,
+                                  final PipelineStepRequest request,
+                                  final long metaId,
+                                  final ElementFingerprints fingerprints,
+                                  final boolean priorCompleteCapture) {
+        if (priorCompleteCapture) {
+            final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
+            final Set<String> capturedElementIds = store.getCapturedElementIds();
+            if (!capturedElementIds.isEmpty()) {
+                final PipelineData pipelineData = pipelineDataHolderFactory
+                        .create(request.getPipelineDoc()).getMergedPipelineData();
+                final Graph graph = SteppingGraphBuilder.build(pipelineData, capturedElementIds);
+                final Decision decision =
+                        reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints);
+                if (!decision.fullSweep()) {
+                    reprocessLaunches.incrementAndGet();
+                    return launchReprocess(request, metaId, decision.startElementId(),
+                            decision.feedElementId(), store, fingerprints);
+                }
+            }
+        }
+        fullSweepLaunches.incrementAndGet();
+        return launchSweep(sessionId, request, metaId, fingerprints);
+    }
+
+    /**
+     * @return the number of stream fills served by reprocessing just the changed elements (edit reuse).
+     */
+    public long getReprocessLaunchCount() {
+        return reprocessLaunches.get();
+    }
+
+    /**
+     * @return the number of stream fills served by a full sweep from source.
+     */
+    public long getFullSweepLaunchCount() {
+        return fullSweepLaunches.get();
+    }
+
+    /**
+     * Launch an asynchronous reprocess of just the changed elements into the stream's existing store, feeding
+     * them {@code feedElementId}'s already-captured output. The reprocessed chunks land under their new
+     * fingerprints alongside the reused upstream ones, so a later step reads both from the one store. As with
+     * {@link #launchSweep}, every way the task can end signals the sweep.
+     */
+    private StreamSweep launchReprocess(final PipelineStepRequest request,
+                                        final long metaId,
+                                        final String startElementId,
+                                        final String feedElementId,
+                                        final StepDataStore store,
+                                        final ElementFingerprints fingerprints) {
+        // The reprocess reads the feed's output from, and writes the reprocessed chunks to, the same store.
+        final StreamSweep sweep = new StreamSweep(metaId, store);
+        final Executor executor = executorProvider.get(THREAD_POOL);
+        try {
+            CompletableFuture
+                    .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
+                            reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
+                                    startElementId, feedElementId, store, sweep, fingerprints)), executor)
+                    .whenComplete((unused, t) -> {
+                        if (t != null) {
+                            sweep.markError(t);
+                        } else if (!sweep.isFullyCaptured()) {
+                            sweep.markError(new RuntimeException(
+                                    "Stepping reprocess of stream " + metaId + " ended without completing"));
+                        }
+                    });
+        } catch (final RuntimeException e) {
+            sweep.markError(e);
+        }
+        return sweep;
     }
 
     private void closeSession(final SteppingSession session) {

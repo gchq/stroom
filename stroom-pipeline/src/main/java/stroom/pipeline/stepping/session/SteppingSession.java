@@ -121,7 +121,14 @@ public class SteppingSession {
                         "This stepping session has already swept the maximum of " + maxSweptStreams
                         + " streams; narrow your selection");
             }
-            final StreamSweep sweep = launcher.launch(metaId, request, fingerprints);
+            // True only if a prior sweep of this stream captured it in full WITHOUT error, so its upstream
+            // chunks are complete and the launcher may reprocess from them rather than re-sweep. An errored
+            // sweep is also "fully captured" (markError stops readers waiting) but its store is truncated, so
+            // it must NOT count here - reprocessing from it would silently serve a short stream. A still
+            // in-flight prior sweep was dropped by the removeIf above, so it does not count either.
+            final boolean priorCompleteCapture = sweeps.values().stream()
+                    .anyMatch(existing -> existing.getMetaId() == metaId && existing.isSuccessfullyCaptured());
+            final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorCompleteCapture);
             sweeps.put(key, sweep);
             return sweep;
         }
@@ -233,12 +240,19 @@ public class SteppingSession {
     }
 
     /**
-     * Launches (starts capturing) a stream's sweep. Supplied by the owner (e.g. {@code SteppingService}),
-     * bound to the session's current request and fingerprints, which change as the user edits code.
+     * Launches (starts filling) a stream's sweep. Supplied by the owner (e.g. {@code SteppingService}), bound
+     * to the session's current request and fingerprints, which change as the user edits code.
+     *
+     * @param priorCompleteCapture true if this stream already has a fully-captured sweep in this session, so
+     *                             its upstream chunks are complete and the launcher may reprocess just the
+     *                             changed elements from them instead of re-sweeping the whole stream.
      */
     @FunctionalInterface
     public interface SweepLauncher {
 
-        StreamSweep launch(long metaId, PipelineStepRequest request, ElementFingerprints fingerprints);
+        StreamSweep launch(long metaId,
+                           PipelineStepRequest request,
+                           ElementFingerprints fingerprints,
+                           boolean priorCompleteCapture);
     }
 }

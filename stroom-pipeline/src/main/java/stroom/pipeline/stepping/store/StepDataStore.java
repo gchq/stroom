@@ -33,10 +33,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * On-disk, content-addressed store of per-element stepping IO for a single stream (metaId).
@@ -344,6 +346,19 @@ public class StepDataStore {
      */
     public synchronized int getPartCount() {
         return partMinRecordIndex.size();
+    }
+
+    /**
+     * @return the distinct element ids that have any captured IO in this store (across parts and
+     * fingerprints). Empty before the first sweep; used to derive the steppable element set for reprocess
+     * planning without re-deriving it from element roles.
+     */
+    public synchronized Set<String> getCapturedElementIds() {
+        final Set<String> ids = new HashSet<>();
+        for (final FileKey key : openFiles.keySet()) {
+            ids.add(key.elementId().getId());
+        }
+        return ids;
     }
 
     /**

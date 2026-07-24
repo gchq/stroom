@@ -94,6 +94,54 @@ class TestStoreStepResolver {
         return new StepLocation(META, part, record);
     }
 
+    private StoreStepResolver.CapturedRange range(final long first, final long last) {
+        return new StoreStepResolver.CapturedRange() {
+            @Override
+            public long first(final long partIndex) {
+                return first;
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return last;
+            }
+        };
+    }
+
+    @Test
+    void testNavigationBoundedByCapturedRange(@TempDir final Path tempDir) {
+        // The store holds records 0..4, but the (reprocess) sweep has only captured 0..2 so far.
+        final StepDataStore store = singlePart(tempDir, 5);
+        final StoreStepResolver.CapturedRange range = range(0, 2);
+
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.FIRST, null, null), range)
+                .orElseThrow().foundLocation()).isEqualTo(loc(0, 0));
+        // LAST is the last CAPTURED record (2), not the store's last (4).
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.LAST, null, null), range)
+                .orElseThrow().foundLocation()).isEqualTo(loc(0, 2));
+        // FORWARD within the captured range advances.
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.FORWARD, loc(0, 1), null), range)
+                .orElseThrow().foundLocation()).isEqualTo(loc(0, 2));
+        // FORWARD from the frontier waits (empty) even though record 3 exists in the store.
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.FORWARD, loc(0, 2), null), range))
+                .isEmpty();
+        // REFRESH of a record beyond the frontier is not yet available.
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.REFRESH, loc(0, 3), null), range))
+                .isEmpty();
+    }
+
+    @Test
+    void testEmptyCapturedRangeResolvesNothing(@TempDir final Path tempDir) {
+        // Nothing captured by the sweep yet, though the store is full - every step waits.
+        final StepDataStore store = singlePart(tempDir, 5);
+        final StoreStepResolver.CapturedRange none = range(-1, -1);
+
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.FIRST, null, null), none)).isEmpty();
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.LAST, null, null), none)).isEmpty();
+        assertThat(resolver.resolve(store, META, fingerprints, req(StepType.FORWARD, loc(0, 0), null), none))
+                .isEmpty();
+    }
+
     @Test
     void testResolveSurfacesStoredSourceHighlight(@TempDir final Path tempDir) {
         // Build a store via putRecord WITH a per-record source-location snapshot (the resolver-facing helpers

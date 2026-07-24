@@ -40,10 +40,12 @@ stroom.pipeline.stepping/
                                             CapturedElementData, CapturedData,
                                             CapturedElementDataSerializer, CapturedElementDataMapper,
                                             SourceLocationSerializer
-  capture/      the write side              StreamCaptureDriver, StreamSweep, SteppingController,
-                                            ElementMonitor, Recorder, RecordDetector, SteppingFilter
+  capture/      the write side              StreamCaptureDriver, ReprocessDriver, StreamSweep,
+                                            SteppingController, ElementMonitor, Recorder, RecordDetector,
+                                            SteppingFilter
   read/         the read side               SessionStepResolver, StoreStepResolver,
-                                            PersistedFilterEvaluator, StagePlanner
+                                            PersistedFilterEvaluator, StagePlanner, ReprocessPlanner,
+                                            SteppingGraphBuilder
   session/      what a user is stepping     SteppingSession, SteppingSessionRegistry
   (root)        the way in                  SteppingService, SteppingResultMapper,
                                             SteppingResourceImpl, SteppingPipelineLookup,
@@ -567,7 +569,10 @@ snapshot:
   upstream property; the trade-off is that editing the *parse/split framing itself* can leave a stale highlight
   until the session is recreated (best-effort, per the philosophy above). Accept that precise **per-element**
   source line/col (what `stroom:line-from`/`col-from` report at element granularity) degrades to record-level
-  under replay — it is a live-parse property stored nowhere per element.
+  under replay — it is a live-parse property stored nowhere per element. The reprocess consumer of this snapshot
+  is built: `ReprocessDriver` feeds each record's stored `SourceLocation` into `LocationHolder.setReplayLocation`
+  before replaying it, so downstream location functions report the source-parse location again even though the
+  reprocess runs below the `SplitFilter` that normally populates the holder.
 - **Alternative, if per-element source location is ever needed: capture position per SAX event.** Store each
   event's source line/col in the encoded stream, and on replay drive a synthetic `Locator` that reports the
   current event's stored position before firing it, so a downstream element sees the original source
@@ -576,11 +581,32 @@ snapshot:
   split), leans on capturing them where they are still live rather than snapshotting at the recorder. Not for
   now; documented so the choice is deliberate.
 
-**3. Split the processing.** With a faithful representation and state captured, feed the changed element +
-downstream from the stored upstream stream and re-run only them. `PipelineFactory.link()`/`getChildElements()`
-are already generic over a start element (only the `"Source"` lookup is hard-wired, so
-`createFrom(pipelineData, startElementId, …)` is small); `PersistedXPathFilterMatcher` is the precedent for
-the driver shape; `XsltFilter` is per-document clean, so the edited element's own pane is correct.
+**3. Split the processing. — LIVE.** On an edit, `SteppingService.launchFor` asks `ReprocessPlanner` (fed by
+`SteppingGraphBuilder`, which derives the steppable graph from the store's captured elements plus the pipeline
+links) whether the change is the clean single-edit case; if so it runs `ReprocessDriver` into the session's
+existing store, reusing the upstream chunks, instead of a full sweep. Anything else — first sweep, a change at
+or above the record boundary, a fork, several independent edits — falls back to a full sweep, which is the
+normal once-per-stream capture, so reprocess is a pure optimisation, never a correctness dependency.
+
+`PipelineFactory.createFrom(pipelineData, terminator, controller, startElementId)` builds a stepping pipeline
+rooted at an interior element (reusing `link()`/`getChildElements()`, generic over a start element), forcing a
+`SAXRecordDetector` at the entry because an interior mutator gets none otherwise. `ReprocessDriver` (mirroring
+`StreamCaptureDriver`'s scope/holders, and `PersistedXPathFilterMatcher`'s fire-events-into-a-handler shape)
+reads each record's stored upstream output events (the feed element's output, under its own unchanged
+fingerprint) and replays them into that entry, capturing the reprocessed IO. It also feeds the per-record
+`SourceLocation` back into `LocationHolder` (`setReplayLocation`) so downstream location functions stay correct
+below the split. `XsltFilter` is per-document clean, so the edited element's own pane is correct.
+
+Because a reprocess writes into a store that already holds the reused upstream at the full record range, the
+resolver must not treat a record as ready just because the reused upstream is there: `SessionStepResolver`
+navigates within the reprocess *sweep's own* captured range (`StreamSweep.getCapturedFirst/LastRecordIndex`,
+passed to `StoreStepResolver` as a `CapturedRange`), so a step waits for the reprocess to write the changed
+element before landing on it. For a full sweep the sweep range equals the store range, so this changes nothing.
+
+Proven end-to-end: `TestReprocessFromStore` shows re-running the XSLT from its stored input — without re-running
+the parser above it — is byte-identical to the full sweep over a real feed; `TestLiveReprocessOnEdit` shows an
+edit routes to a reprocess and serves the reprocessed output correctly for an early-record (`REFRESH` record 0)
+step.
 
 ### Fingerprinting is unaffected
 

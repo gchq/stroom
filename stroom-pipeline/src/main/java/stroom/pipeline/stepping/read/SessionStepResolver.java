@@ -125,8 +125,23 @@ public class SessionStepResolver {
                 continue;
             }
 
+            // Navigate within THIS sweep's captured range, not the store's: a reprocess writes into a store
+            // that already holds the reused upstream at the full range, so gating on the store would let a
+            // step reach a record before the reprocess has written its changed element. For a full sweep the
+            // two coincide.
             final Optional<StoreStepResolver.ResolvedStep> resolved = storeStepResolver.resolve(
-                    sweep.getStore(), currentStream, fingerprints, streamRequest);
+                    sweep.getStore(), currentStream, fingerprints, streamRequest,
+                    new StoreStepResolver.CapturedRange() {
+                        @Override
+                        public long first(final long partIndex) {
+                            return sweep.getCapturedFirstRecordIndex(partIndex);
+                        }
+
+                        @Override
+                        public long last(final long partIndex) {
+                            return sweep.getCapturedLastRecordIndex(partIndex);
+                        }
+                    });
             if (resolved.isPresent()) {
                 final StepLocation found = resolved.get().foundLocation();
                 return SessionStepResult.resolved(

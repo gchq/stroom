@@ -98,14 +98,146 @@ public class PipelineFactory {
     public Pipeline create(final PipelineData pipelineData,
                            final Terminator terminator,
                            final SteppingController controller) {
+        // Instantiate and configure every element, and record the link graph.
+        final Map<String, Element> elementInstances = new HashMap<>();
+        final Map<Element, PipelineElementType> elementTypeMap = new HashMap<>();
+        final Map<String, Set<String>> linkSets = new HashMap<>();
+        buildElementInstances(pipelineData, terminator, controller, elementInstances, elementTypeMap, linkSets);
+
+        // Get the source element.
+        final SourceElement sourceElement = (SourceElement) elementInstances.get("Source");
+        if (sourceElement == null) {
+            throw new PipelineFactoryException("The pipeline has no source element");
+        }
+
+        // Get the split depth to use with the stepping controller.
+        int controllerSplitDepth = 1;
+        if (controller != null) {
+            controllerSplitDepth =
+                    getSplitDepth(elementInstances, elementTypeMap, linkSets, sourceElement.getElementId().getId());
+            controllerSplitDepth = Math.max(controllerSplitDepth, 1);
+        }
+
+        // Link the instances.
+        link(elementInstances,
+                elementTypeMap,
+                linkSets,
+                controller,
+                sourceElement,
+                sourceElement.getElementId(),
+                controllerSplitDepth);
+
+        // We need to create a root element that will be a target for the input
+        // stream.
+        TakesInput root = sourceElement;
+
+        // Perform the last bit of setup if we are stepping.
+        if (controller != null) {
+            // If we still haven't added a record detector then add one to the
+            // input.
+            if (controller.getRecordDetector() == null) {
+                final InputStreamRecordDetectorElement recordDetector = new InputStreamRecordDetectorElement();
+                controller.setRecordDetector(recordDetector);
+                recordDetector.addTarget(sourceElement);
+                root = recordDetector;
+            }
+
+            controller.getRecordDetector().setController(controller);
+        }
+
+        return new PipelineImpl(processorFactory, elementInstances, root, controller != null);
+    }
+
+    /**
+     * Build a stepping pipeline rooted at an <b>interior</b> element instead of at {@code Source}, for
+     * re-running an edited element and its downstream from stored upstream output (SAX events) rather than
+     * from the raw source. The element set is the whole pipeline (so pipeline references and config resolve
+     * identically), but only the start element and its descendants are wrapped with stepping
+     * recorders/monitors and linked; upstream elements are instantiated but left unlinked and idle.
+     * <p>
+     * The stored upstream output is a stream of per-record complete documents, and an interior XML element
+     * ({@code ROLE_MUTATOR}/{@code ROLE_VALIDATOR}) is not one of the roles for which {@code link} inserts a
+     * record detector, so a {@link SAXRecordDetector} is forced at the entry - upstream of the start
+     * element's input recorder, mirroring the normal topology where the detector sits just above the first
+     * mutator - so each {@code endDocument} still drives {@link SteppingController#endRecord}.
+     * <p>
+     * The returned {@link MidPipeline#entry()} is the {@link org.xml.sax.ContentHandler} the caller fires
+     * stored events into; element lifecycle ({@code startProcessing}/{@code startStream}/...) cascades from
+     * it through the linked targets.
+     */
+    public MidPipeline createFrom(final PipelineData pipelineData,
+                                  final Terminator terminator,
+                                  final SteppingController controller,
+                                  final String startElementId) {
+        if (controller == null) {
+            throw new PipelineFactoryException("createFrom is stepping-only; a controller is required");
+        }
+
+        final Map<String, Element> elementInstances = new HashMap<>();
+        final Map<Element, PipelineElementType> elementTypeMap = new HashMap<>();
+        final Map<String, Set<String>> linkSets = new HashMap<>();
+        buildElementInstances(pipelineData, terminator, controller, elementInstances, elementTypeMap, linkSets);
+
+        final Element startElement = elementInstances.get(startElementId);
+        if (startElement == null) {
+            throw new PipelineFactoryException("No such element to start from: " + startElementId);
+        }
+        final PipelineElementType startType = elementTypeMap.get(startElement);
+        final ElementId startId = startElement.getElementId();
+
+        // The record-boundary split depth is an upstream property, so derive it from Source exactly as
+        // create() does - it defines what a record is, which is unchanged by starting mid-pipeline.
+        final SourceElement sourceElement = (SourceElement) elementInstances.get("Source");
+        if (sourceElement == null) {
+            throw new PipelineFactoryException("The pipeline has no source element");
+        }
+        final int controllerSplitDepth = Math.max(1,
+                getSplitDepth(elementInstances, elementTypeMap, linkSets, sourceElement.getElementId().getId()));
+
+        // Wrap the start element with input/output recorders and a monitor, exactly as link() would for a
+        // child element, so its IO is captured under its (new) fingerprint.
+        Fragment fragment = new Fragment(startElement);
+        fragment = insertRecorder(startId, startType, fragment, true, controller, controllerSplitDepth);
+        fragment = insertRecorder(startId, startType, fragment, false, controller, controllerSplitDepth);
+        addMonitor(startId, startType, startElement, fragment, controller);
+
+        // Force the entry record detector (see javadoc). It forwards events to the start element's input
+        // recorder and, on each endDocument, drives the controller after the record has propagated.
+        final SAXRecordDetector recordDetector = elementFactory.getElementInstance(SAXRecordDetector.class);
+        controller.setRecordDetector(recordDetector);
+        recordDetector.setTarget((Target) fragment.getIn());
+        recordDetector.setController(controller);
+
+        // Link the start element's descendants (recorders/monitors/detectors inserted as usual).
+        link(elementInstances, elementTypeMap, linkSets, controller, fragment.getOut(), startId, controllerSplitDepth);
+
+        return new MidPipeline(recordDetector, elementInstances);
+    }
+
+    /**
+     * A pipeline built to run from an interior element: the entry {@link org.xml.sax.ContentHandler} (a
+     * {@link SAXRecordDetector}, also an {@link Element} for lifecycle) that stored upstream events are fired
+     * into, and the full element instance map.
+     */
+    public record MidPipeline(Element entry, Map<String, Element> elementInstances) {
+    }
+
+    /**
+     * Instantiate and configure every element in the pipeline and record its link graph, populating the
+     * supplied maps. Shared by {@link #create} (which then links from {@code Source}) and mid-pipeline
+     * construction (which links from an interior start element); the element set is identical either way -
+     * only what gets linked/wrapped differs.
+     */
+    private void buildElementInstances(final PipelineData pipelineData,
+                                       final Terminator terminator,
+                                       final SteppingController controller,
+                                       final Map<String, Element> elementInstances,
+                                       final Map<Element, PipelineElementType> elementTypeMap,
+                                       final Map<String, Set<String>> linkSets) {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
 
         // If we are stepping then we don't want to use the cache.
         // Create an instance of each element.
-        final Map<String, Element> elementInstances = new HashMap<>();
-        final Map<Element, PipelineElementType> elementTypeMap = new HashMap<>();
-        final Map<String, Set<String>> linkSets = new HashMap<>();
-
         for (final PipelineElement element : pipelineData.getAddedElements()) {
             LOGGER.debug("create() - loading element {}", element);
 
@@ -153,49 +285,6 @@ public class PipelineFactory {
                 }
             }
         }
-
-        // Get the source element.
-        final SourceElement sourceElement = (SourceElement) elementInstances.get("Source");
-        if (sourceElement == null) {
-            throw new PipelineFactoryException("The pipeline has no source element");
-        }
-
-        // Get the split depth to use with the stepping controller.
-        int controllerSplitDepth = 1;
-        if (controller != null) {
-            controllerSplitDepth =
-                    getSplitDepth(elementInstances, elementTypeMap, linkSets, sourceElement.getElementId().getId());
-            controllerSplitDepth = Math.max(controllerSplitDepth, 1);
-        }
-
-        // Link the instances.
-        link(elementInstances,
-                elementTypeMap,
-                linkSets,
-                controller,
-                sourceElement,
-                sourceElement.getElementId(),
-                controllerSplitDepth);
-
-        // We need to create a root element that will be a target for the input
-        // stream.
-        TakesInput root = sourceElement;
-
-        // Perform the last bit of setup if we are stepping.
-        if (controller != null) {
-            // If we still haven't added a record detector then add one to the
-            // input.
-            if (controller.getRecordDetector() == null) {
-                final InputStreamRecordDetectorElement recordDetector = new InputStreamRecordDetectorElement();
-                controller.setRecordDetector(recordDetector);
-                recordDetector.addTarget(sourceElement);
-                root = recordDetector;
-            }
-
-            controller.getRecordDetector().setController(controller);
-        }
-
-        return new PipelineImpl(processorFactory, elementInstances, root, controller != null);
     }
 
     /**

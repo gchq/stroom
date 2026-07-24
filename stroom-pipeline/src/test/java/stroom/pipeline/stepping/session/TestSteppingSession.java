@@ -62,11 +62,14 @@ class TestSteppingSession {
      */
     private StreamSweep sweptStream(final Path dir, final long metaId, final int records, final boolean complete) {
         final StepDataStore store = new StepDataStore(dir.resolve(String.valueOf(metaId)), new SteppingConfig());
-        for (int r = 0; r < records; r++) {
-            store.putRecord(new StepLocation(metaId, 0, r),
-                    List.of(new StepDataStore.ElementRecord(E1, FP, ed("m" + metaId + "r" + r))));
-        }
         final StreamSweep sweep = new StreamSweep(metaId, store);
+        for (int r = 0; r < records; r++) {
+            final StepLocation loc = new StepLocation(metaId, 0, r);
+            store.putRecord(loc, List.of(new StepDataStore.ElementRecord(E1, FP, ed("m" + metaId + "r" + r))));
+            // As the real capture does: signal the sweep after committing each record, so the sweep's captured
+            // range (which navigation is bounded by) tracks the store.
+            sweep.recordCaptured(loc);
+        }
         if (complete) {
             sweep.markFullyCaptured();
         }
@@ -76,7 +79,7 @@ class TestSteppingSession {
     private SteppingSession session(final List<Long> order,
                                     final Map<Long, StreamSweep> sweeps,
                                     final AtomicInteger launchCount) {
-        final SteppingSession.SweepLauncher launcher = (metaId, request, fp) -> {
+        final SteppingSession.SweepLauncher launcher = (metaId, request, fp, priorComplete) -> {
             launchCount.incrementAndGet();
             return sweeps.get(metaId);
         };
@@ -218,7 +221,7 @@ class TestSteppingSession {
         final SteppingSession session = new SteppingSession(
                 "s",
                 List.of(1L),
-                (metaId, request, fp) -> new StreamSweep(metaId, null),
+                (metaId, request, fp, priorComplete) -> new StreamSweep(metaId, null),
                 s -> closed.incrementAndGet(),
                 sweep -> {
                 },
@@ -255,7 +258,7 @@ class TestSteppingSession {
         final SteppingSession session = new SteppingSession(
                 "session",
                 List.of(10L, 20L, 30L),
-                (metaId, request, fp) -> {
+                (metaId, request, fp, priorComplete) -> {
                     launches.incrementAndGet();
                     return new StreamSweep(metaId, null);
                 },
@@ -345,10 +348,11 @@ class TestSteppingSession {
         // down over the not-yet-captured records, find each one absent, take that for "no match" and land on
         // the first record of the part. It must wait for the sweep instead.
         final StepDataStore store = new StepDataStore(dir.resolve("10"), new SteppingConfig());
-        store.putRecord(new StepLocation(10L, 0, 0),
-                List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r0"))));
+        final StepLocation record0 = new StepLocation(10L, 0, 0);
+        store.putRecord(record0, List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r0"))));
         // Record 0 is captured; the sweep is still running and has not reached records 1-9.
         final StreamSweep s10 = new StreamSweep(10L, store);
+        s10.recordCaptured(record0);
         final SteppingSession session = session(List.of(10L), Map.of(10L, s10), new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
