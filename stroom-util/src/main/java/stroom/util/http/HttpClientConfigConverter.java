@@ -165,6 +165,7 @@ public class HttpClientConfigConverter {
             out.setTrustStoreType(convert(in.getTrustStoreType(), String.class));
             out.setTrustStoreProvider(convert(in.getTrustStoreProvider(), String.class));
             out.setTrustSelfSignedCertificates(convert(in.isTrustSelfSignedCertificates(), boolean.class));
+            out.setVerifyHostname(convert(in.isVerifyHostname(), boolean.class));
             out.setSupportedCiphers(convertList(in.getSupportedCiphers(), String.class));
             out.setSupportedProtocols(convertList(in.getSupportedProtocols(), String.class));
             out.setCertAlias(convert(in.getCertAlias(), String.class));
@@ -185,6 +186,7 @@ public class HttpClientConfigConverter {
                         .trustStoreType(convert(in.getTrustStoreType(), String.class))
                         .trustStoreProvider(convert(in.getTrustStoreProvider(), String.class))
                         .trustSelfSignedCertificates(convert(in.isTrustSelfSignedCertificates(), boolean.class))
+                        .verifyHostname(convert(in.isVerifyHostname(), boolean.class))
                         .supportedCiphers(convertList(in.getSupportedCiphers(), String.class))
                         .supportedProtocols(convertList(in.getSupportedProtocols(), String.class))
                         .certAlias(convert(in.getCertAlias(), String.class))
