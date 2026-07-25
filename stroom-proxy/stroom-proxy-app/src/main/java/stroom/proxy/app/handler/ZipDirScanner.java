@@ -22,6 +22,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DirScannerConfig;
 import stroom.receive.common.ReceiptIdGenerator;
+import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -70,6 +71,7 @@ public class ZipDirScanner {
     private final PathCreator pathCreator;
     private final ZipReceiver zipReceiver;
     private final ReceiptIdGenerator receiptIdGenerator;
+    private final CommonSecurityContext securityContext;
     private final NestedNumberedDirProvider failureDirProvider;
     private final Path failureDir;
 
@@ -77,11 +79,13 @@ public class ZipDirScanner {
     public ZipDirScanner(final Provider<DirScannerConfig> dirScannerConfigProvider,
                          final PathCreator pathCreator,
                          final ZipReceiver zipReceiver,
-                         final ReceiptIdGenerator receiptIdGenerator) {
+                         final ReceiptIdGenerator receiptIdGenerator,
+                         final CommonSecurityContext securityContext) {
         this.dirScannerConfigProvider = dirScannerConfigProvider;
         this.pathCreator = pathCreator;
         this.zipReceiver = zipReceiver;
         this.receiptIdGenerator = receiptIdGenerator;
+        this.securityContext = securityContext;
 
         this.failureDir = pathCreator.toAppPath(dirScannerConfigProvider.get().getFailureDir());
         FileUtil.ensureDirExists(failureDir);
@@ -138,7 +142,9 @@ public class ZipDirScanner {
         try {
             final AttributeMap attributeMap = createAttributeMap(zipGroup);
 
-            zipReceiver.receive(zipFile, attributeMap);
+            // A file on disk has no authenticated sender, so no user is established for the
+            // receipt check to run as. Run as the processing user, as the datafeed path does.
+            securityContext.asProcessingUser(() -> zipReceiver.receive(zipFile, attributeMap));
             // receive will have cloned our zip, so as there were no problems, we can now delete it
             // and the other files in the group
             deleteZipGroup(zipGroup);
