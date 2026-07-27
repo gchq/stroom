@@ -4,10 +4,10 @@
 package stroom.docstore.impl.db.jooq.tables.records;
 
 
-import stroom.docstore.impl.db.jooq.tables.DocDependency;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
 
 
 /**

@@ -4,16 +4,16 @@
 package stroom.docstore.impl.db.jooq;
 
 
+import org.jooq.Index;
+import org.jooq.OrderField;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.docstore.impl.db.jooq.tables.DocAudit;
 import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
 import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
 import stroom.docstore.impl.db.jooq.tables.DocDependency;
-
-import org.jooq.Index;
-import org.jooq.OrderField;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**
