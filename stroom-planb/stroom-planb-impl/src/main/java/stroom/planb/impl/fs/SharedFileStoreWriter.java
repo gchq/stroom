@@ -62,9 +62,10 @@ public final class SharedFileStoreWriter {
                 throw new IOException("Source " + PlanBConstants.DATA_FILE_NAME + " not found in: " + localLmdbDir);
             }
 
-            // 3. Write completion marker (.complete) inside the temp directory first
-            final Path completeMarker = tmpTarget.resolve(PlanBConstants.COMPLETE_FILE_NAME);
-            Files.writeString(completeMarker, Instant.now().toString(), StandardCharsets.UTF_8);
+            // 3. Write the version marker (.version) inside the temp directory first; its presence after the
+            //    move marks the batch as fully written (content is not read for processing batches).
+            final Path versionMarker = tmpTarget.resolve(PlanBConstants.VERSION_FILE_NAME);
+            Files.writeString(versionMarker, Instant.now().toString(), StandardCharsets.UTF_8);
 
             // 4. Perform move (same parent directory = safe on NFS)
             try {

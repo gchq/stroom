@@ -41,7 +41,6 @@ public final class PlanBConstants {
 
     public static final String DATA_FILE_NAME = "data.mdb";
     public static final String LOCK_FILE_NAME = "lock.mdb";
-    public static final String COMPLETE_FILE_NAME = ".complete";
     public static final String MERGED_FILE_NAME = ".merged";
     public static final String VERSION_FILE_NAME = ".version";
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";

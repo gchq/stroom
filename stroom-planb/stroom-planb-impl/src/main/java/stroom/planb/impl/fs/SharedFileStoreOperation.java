@@ -43,4 +43,10 @@ public interface SharedFileStoreOperation {
      * back to the shared store).
      */
     boolean run(SharedFileStoreOperationContext ctx) throws IOException;
+
+    /**
+     * Relative run order within a merge cycle: operations run in ascending priority
+     * (lowest first). Each implementation must declare a distinct value.
+     */
+    int priority();
 }

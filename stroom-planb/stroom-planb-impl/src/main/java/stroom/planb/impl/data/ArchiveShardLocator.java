@@ -118,7 +118,9 @@ public class ArchiveShardLocator {
     }
 
     private static boolean isCompleteArchive(final Path dir) {
+        // A bucket is complete once its .version marker is present (written into the temp dir before the
+        // atomic swap), so a partially written bucket is never served.
         return Files.isDirectory(dir)
-                && Files.exists(dir.resolve(PlanBConstants.COMPLETE_FILE_NAME));
+                && Files.exists(dir.resolve(PlanBConstants.VERSION_FILE_NAME));
     }
 }

@@ -27,6 +27,8 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.util.time.StroomDuration;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,8 +55,15 @@ public class ArchiveOperation implements SharedFileStoreOperation {
 
     private final SharedFileStorePublisher publisher;
 
+    @Inject
     public ArchiveOperation(final SharedFileStorePublisher publisher) {
         this.publisher = publisher;
+    }
+
+    // Runs after retention (priority 100) within a merge cycle.
+    @Override
+    public int priority() {
+        return 200;
     }
 
     @Override

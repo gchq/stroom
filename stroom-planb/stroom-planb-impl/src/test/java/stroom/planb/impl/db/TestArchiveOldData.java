@@ -420,7 +420,7 @@ class TestArchiveOldData {
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(0))
                 .resolve(dayLabel);
-        assertThat(bucket.resolve(PlanBConstants.COMPLETE_FILE_NAME)).exists();
+        assertThat(bucket.resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
         try (final TraceDb archive = TraceDb.create(bucket, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             assertThat(traceIds(archive)).containsExactly(TRACE_A, TRACE_B);
         }

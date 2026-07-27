@@ -101,7 +101,7 @@ class TestStage1PipelineRouting {
         assertThat(sharedTarget).exists();
         assertThat(sharedTarget.resolve("data.mdb")).exists();
         assertThat(Files.readString(sharedTarget.resolve("data.mdb"))).isEqualTo("lmdb-data-content");
-        assertThat(sharedTarget.resolve(".complete")).exists();
+        assertThat(sharedTarget.resolve(".version")).exists();
 
         // Verify failure cleanup
         final Path invalidLocalDir = tempDir.resolve("non-existent");
@@ -176,12 +176,12 @@ class TestStage1PipelineRouting {
             assertThat(shardCount).isGreaterThan(0);
         }
 
-        // Under each shard folder, there should be a batch directory containing data.mdb and .complete
+        // Under each shard folder, there should be a batch directory containing data.mdb and .version
         try (var shardFolders = Files.walk(sharedProcessingDir, 3)) {
-            final boolean hasComplete = shardFolders
-                    .filter(p -> p.getFileName().toString().equals(".complete"))
+            final boolean hasVersion = shardFolders
+                    .filter(p -> p.getFileName().toString().equals(".version"))
                     .anyMatch(Files::exists);
-            assertThat(hasComplete).isTrue();
+            assertThat(hasVersion).isTrue();
         }
     }
 

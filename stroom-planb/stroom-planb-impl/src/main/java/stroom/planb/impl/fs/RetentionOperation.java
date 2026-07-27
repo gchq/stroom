@@ -54,6 +54,12 @@ public class RetentionOperation implements SharedFileStoreOperation {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RetentionOperation.class);
 
+    // Runs before archival (priority 200) within a merge cycle.
+    @Override
+    public int priority() {
+        return 100;
+    }
+
     // -----------------------------------------------------------------------
     // SharedFileStoreOperation -- pre-lock check
     // -----------------------------------------------------------------------

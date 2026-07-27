@@ -35,6 +35,7 @@ import jakarta.inject.Provider;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
@@ -158,9 +159,17 @@ public class ArchiveStoreShard extends AbstractStoreShard {
                 return;
             }
 
-            final String sharedVersion = Files.exists(sharedVersionFile)
-                    ? Files.readString(sharedVersionFile).trim()
-                    : "";
+            String sharedVersion = readVersionIfPresent(sharedVersionFile);
+            if (sharedVersion == null) {
+                // .version absent or vanished mid-read: either a legacy bucket without one, or a bucket
+                // being republished (its .version briefly gone during pushArchive's rename-swap). If we
+                // already have a local copy, keep serving it and re-check next interval; otherwise fall
+                // through and sync (the data copy below is guarded against the same transient absence).
+                if (db != null) {
+                    return;
+                }
+                sharedVersion = "";
+            }
             final String localVersion = Files.exists(localVersionFile)
                     ? Files.readString(localVersionFile).trim()
                     : "";
@@ -197,10 +206,30 @@ public class ArchiveStoreShard extends AbstractStoreShard {
             }
             FileUtil.deleteDir(syncTmpDir);
 
+        } catch (final NoSuchFileException e) {
+            // The bucket was republished mid-sync (a file briefly absent during pushArchive's
+            // rename-swap). Keep serving any current local copy; only surface a failure if we have no
+            // copy yet (the caller treats a failed archive read as a miss).
+            if (db == null) {
+                throw new UncheckedIOException(e);
+            }
+            LOGGER.debug(() -> "Archive bucket changed during sync, keeping current copy: "
+                    + archiveBucketDir);
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    // Reads the bucket version file, tolerating a concurrent republish: readers hold no cluster lock, so a
+    // pushArchive rename-swap can move/replace .version between checks; returns null if the file is absent or
+    // vanishes mid-read (treated as "no readable version right now").
+    private static String readVersionIfPresent(final Path versionFile) throws IOException {
+        try {
+            return Files.readString(versionFile).trim();
+        } catch (final NoSuchFileException e) {
+            return null;
         }
     }
 }

@@ -34,8 +34,11 @@ import stroom.planb.impl.db.PlanBStreamWriterFactory;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateRequest;
+import stroom.planb.impl.fs.ArchiveOperation;
+import stroom.planb.impl.fs.RetentionOperation;
 import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.fs.SharedFileStorePartDestination;
+import stroom.planb.impl.fs.SharedFileStorePublisher;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.impl.rest.RestPartDestination;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
@@ -226,16 +229,19 @@ class TestSharedFileStoreMerge {
                 () -> documentActionHandlers
         );
 
+        final SharedFileStorePublisher publisher =
+                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY);
         final SharedFileStoreMergeProcessor mergeProcessor = new SharedFileStoreMergeProcessor(
                 clusterLockService,
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
                 () -> planBConfig,
                 statePaths,
-                nodeInfo,
+                publisher,
                 securityContext,
                 taskContextFactory,
-                planBDocCache
+                planBDocCache,
+                Set.of(new RetentionOperation(), new ArchiveOperation(publisher))
         );
 
         // Run the merge
@@ -245,24 +251,23 @@ class TestSharedFileStoreMerge {
         Thread.sleep(1500);
 
         // 3. Verify files are copied back and cleaned up on shared store
-        // The processing folder should now be empty or deleted (each batch folder containing .complete should be gone)
+        // The processing folder should now be empty or deleted (each merged batch folder is removed)
         try (var batchDirs = Files.walk(sharedProcessingDir, 3)) {
-            final boolean hasComplete = batchDirs
-                    .filter(p -> p.getFileName().toString().equals(".complete"))
+            final boolean hasVersion = batchDirs
+                    .filter(p -> p.getFileName().toString().equals(".version"))
                     .anyMatch(Files::exists);
-            assertThat(hasComplete).isFalse();
+            assertThat(hasVersion).isFalse();
         }
 
         // The shards folder should now contain the main merged shards
         final Path sharedShardDir = sharedRootDir.resolve("shards").resolve(doc.getUuid());
         assertThat(sharedShardDir).exists();
 
-        // Both shard 0 and shard 1 should exist, have a .version and .complete file
+        // Both shard 0 and shard 1 should exist, with data.mdb and a .version marker
         for (int i = 0; i < 2; i++) {
             final Path shardIndexDir = sharedShardDir.resolve(String.format("%04d", i));
             assertThat(shardIndexDir.resolve("data.mdb")).exists();
             assertThat(shardIndexDir.resolve(".version")).exists();
-            assertThat(shardIndexDir.resolve(".complete")).exists();
         }
 
         // Verify query capability on the merged database

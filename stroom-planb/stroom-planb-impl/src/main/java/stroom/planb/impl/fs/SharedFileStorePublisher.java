@@ -28,6 +28,9 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -44,9 +47,9 @@ import java.util.stream.Stream;
  * <p>The publish sequence is:
  * <ol>
  *   <li>Copy the local shard files into a fresh {@code .tmp_} directory.</li>
- *   <li>Write a {@code .complete} sentinel confirming the copy is intact.</li>
+ *   <li>Write the {@code .version} marker into that directory so it swaps in atomically with the data;
+ *       a reader observing {@code .version} can therefore trust the shard is fully written.</li>
  *   <li>Atomic rename-swap: live to {@code .old_}, temp to live, delete old.</li>
- *   <li>Write the version marker as the last step so readers can trust the shard.</li>
  * </ol>
  *
  * <p>{@link #recoverOrphaned} undoes the partial state left by an interrupted
@@ -54,6 +57,7 @@ import java.util.stream.Stream;
  * opened, so that {@code syncFromSharedStoreIfRequired} sees a consistent
  * directory.
  */
+@Singleton
 public class SharedFileStorePublisher {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileStorePublisher.class);
@@ -62,6 +66,7 @@ public class SharedFileStorePublisher {
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
 
+    @Inject
     public SharedFileStorePublisher(final NodeInfo nodeInfo,
                                     final ByteBuffers byteBuffers,
                                     final ByteBufferFactory byteBufferFactory) {
@@ -110,16 +115,19 @@ public class SharedFileStorePublisher {
         copyIfExists(localShardDir.resolve(PlanBConstants.DATA_FILE_NAME),
                 sharedTempDir.resolve(PlanBConstants.DATA_FILE_NAME));
 
-        // Write the completion sentinel before making the directory visible.
-        Files.writeString(sharedTempDir.resolve(PlanBConstants.COMPLETE_FILE_NAME), "");
+        // Write the version marker INTO the temp dir so it swaps into the live shard atomically with
+        // data.mdb (as pushArchive does). Its presence then already implies a fully written shard, so
+        // there is no post-swap window in which the live shard exists without a .version for a lock-free
+        // reader to trip over, and no separate .complete sentinel is needed here (nothing reads it in
+        // the shards/ tree).
+        final String newVersion = Instant.now().toEpochMilli() + "_" + nodeInfo.getThisNodeName();
+        Files.writeString(sharedTempDir.resolve(PlanBConstants.VERSION_FILE_NAME), newVersion);
 
         // Atomic rename-swap: live -> old, temp -> live, delete old.
         pushDir(sharedTempDir, sharedShardDir);
 
-        // Version marker written last: a reader observing this file can trust
-        // the rest of the shard directory is fully written.
-        final String newVersion = Instant.now().toEpochMilli() + "_" + nodeInfo.getThisNodeName();
-        Files.writeString(sharedShardDir.resolve(PlanBConstants.VERSION_FILE_NAME), newVersion);
+        // Stamp the writer node's own local copy with the same version so it does not needlessly
+        // sync itself back down from the shared store on its next read.
         Files.writeString(localShardDir.resolve(PlanBConstants.VERSION_FILE_NAME), newVersion);
     }
 
@@ -153,7 +161,7 @@ public class SharedFileStorePublisher {
         try {
             final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
             final boolean mergeIntoExisting =
-                    Files.exists(archiveShardDir.resolve(PlanBConstants.COMPLETE_FILE_NAME))
+                    Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))
                             && Files.exists(existingData);
 
             if (mergeIntoExisting) {
@@ -172,7 +180,7 @@ public class SharedFileStorePublisher {
                         traceDb.refreshArchivedRootSpanCounts();
                     }
                 }
-                // Keep the archive layout as data.mdb + .complete only: drop the lock file
+                // Keep the archive layout as data.mdb + .version only: drop the lock file
                 // LMDB created during the merge (it is recreated on the next open).
                 Files.deleteIfExists(sharedTempDir.resolve(PlanBConstants.LOCK_FILE_NAME));
             } else {
@@ -181,13 +189,10 @@ public class SharedFileStorePublisher {
                         sharedTempDir.resolve(PlanBConstants.DATA_FILE_NAME));
             }
 
-            // Write the completion sentinel before making the directory visible.
-            Files.writeString(sharedTempDir.resolve(PlanBConstants.COMPLETE_FILE_NAME), "");
-
-            // Bump a version marker on every push (fresh write and mergeIntoExisting alike). Nothing
-            // reads it yet; it is groundwork so a future local archive-bucket cache can detect that a
-            // bucket changed (a growing trace keeps merging into the same date bucket) exactly the way
-            // SharedFileStoreShard version-checks live shards. pushDir already whitelists this file.
+            // Write the version marker into the temp dir before the swap: its presence marks the bucket as
+            // fully written (so ArchiveShardLocator only serves complete buckets) and its content bumps the
+            // generation on every push so ArchiveStoreShard re-syncs its local copy when a growing trace
+            // merges into this date bucket.
             Files.writeString(sharedTempDir.resolve(PlanBConstants.VERSION_FILE_NAME), uid);
 
             // Atomic rename-swap: live -> old, temp -> live, delete old.
@@ -288,7 +293,6 @@ public class SharedFileStorePublisher {
     private static boolean isSystemFile(final String name) {
         return name.equals(PlanBConstants.DATA_FILE_NAME)
                 || name.equals(PlanBConstants.LOCK_FILE_NAME)
-                || name.equals(PlanBConstants.COMPLETE_FILE_NAME)
                 || name.equals(PlanBConstants.VERSION_FILE_NAME);
     }
 }

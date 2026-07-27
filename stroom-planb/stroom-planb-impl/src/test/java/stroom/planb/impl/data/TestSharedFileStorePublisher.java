@@ -122,14 +122,6 @@ class TestSharedFileStorePublisher {
     }
 
     @Test
-    void push_writesCompleteSentinel() throws IOException {
-        final Path localDir = createLocalShardDir(true, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
-
-        assertThat(canonicalShardDir().resolve(PlanBConstants.COMPLETE_FILE_NAME)).exists();
-    }
-
-    @Test
     void push_writesVersionMarkerToSharedAndLocal() throws IOException {
         final Path localDir = createLocalShardDir(true, false);
         publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
@@ -173,7 +165,6 @@ class TestSharedFileStorePublisher {
         final Path existingSharedDir = canonicalShardDir();
         Files.createDirectories(existingSharedDir);
         Files.writeString(existingSharedDir.resolve(PlanBConstants.VERSION_FILE_NAME), "stale-version");
-        Files.writeString(existingSharedDir.resolve(PlanBConstants.COMPLETE_FILE_NAME), "stale");
 
         final Path localDir = createLocalShardDir(true, false);
         publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
@@ -189,12 +180,11 @@ class TestSharedFileStorePublisher {
     // -----------------------------------------------------------------------
 
     @Test
-    void push_noLocalDataMdb_stillWritesSentinels() throws IOException {
-        // Local dir exists but has no data.mdb — push should still complete.
+    void push_noLocalDataMdb_stillWritesVersion() throws IOException {
+        // Local dir exists but has no data.mdb — push should still complete and stamp a version.
         final Path localDir = createLocalShardDir(false, false);
         publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
 
-        assertThat(canonicalShardDir().resolve(PlanBConstants.COMPLETE_FILE_NAME)).exists();
         assertThat(canonicalShardDir().resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
     }
 
