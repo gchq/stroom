@@ -22,6 +22,11 @@ import java.util.Objects;
 
 final class PasswordHashUtil {
 
+    // A precomputed bcrypt hash, used to spend an equivalent amount of time when no account matches, so the
+    // credential check takes the same time whether or not the user id exists. Generated once at class load
+    // with the same cost factor as real hashes (the gensalt default), so it tracks that cost.
+    private static final String DUMMY_HASH = BCrypt.hashpw("timing-equaliser", BCrypt.gensalt());
+
     private PasswordHashUtil() {
     }
 
@@ -36,5 +41,14 @@ final class PasswordHashUtil {
         } else {
             return BCrypt.checkpw(password, passwordHash);
         }
+    }
+
+    /**
+     * Verify the password against a fixed dummy hash and discard the result, purely to spend the same time a
+     * real bcrypt verify would. Called when no account matches, so the credential check takes the same time
+     * whether or not the user id exists.
+     */
+    static void fakeCheck(final String password) {
+        checkPassword(password, DUMMY_HASH);
     }
 }

@@ -59,10 +59,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
     private final String passwordResetText;
 
     @NotNull
-    @JsonProperty
-    @JsonPropertyDescription("The URL to  perform a password reset that will be included in the text of a " +
-            "password reset emails")
-    private final String passwordResetUrl;
 
     @NotNull
     @JsonProperty
@@ -78,7 +74,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         passwordResetSubject = "Password reset for Stroom";
         passwordResetText = "A password reset has been requested for this email address. Please visit " +
                 "the following URL to reset your password: %s.";
-        passwordResetUrl = "/s/resetPassword/?user=%s&token=%s";
         // Defaults to false because this feature needs to be configured and actively turned on before it works.
         allowPasswordResets = DEFAULT_ALLOW_PASSWORD_RESETS;
     }
@@ -90,14 +85,12 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("fromName") final String fromName,
                        @JsonProperty("passwordResetSubject") final String passwordResetSubject,
                        @JsonProperty("passwordResetText") final String passwordResetText,
-                       @JsonProperty("passwordResetUrl") final String passwordResetUrl,
                        @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets) {
         this.smtpConfig = smtpConfig;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
         this.passwordResetSubject = passwordResetSubject;
         this.passwordResetText = passwordResetText;
-        this.passwordResetUrl = passwordResetUrl;
         this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, DEFAULT_ALLOW_PASSWORD_RESETS);
     }
 
@@ -122,10 +115,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         return fromName;
     }
 
-    public String getPasswordResetUrl() {
-        return passwordResetUrl;
-    }
-
     public boolean isAllowPasswordResets() {
         return allowPasswordResets;
     }
@@ -138,7 +127,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                 ", fromName='" + fromName + '\'' +
                 ", passwordResetSubject='" + passwordResetSubject + '\'' +
                 ", passwordResetText='" + passwordResetText + '\'' +
-                ", passwordResetUrl='" + passwordResetUrl + '\'' +
                 ", allowPasswordResets=" + allowPasswordResets +
                 '}';
     }

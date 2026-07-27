@@ -44,38 +44,27 @@ public class AuthenticationState {
     private final String redirectUri;
     private final String nonce;
     private final boolean prompt;
+    private final String codeVerifier;
 
     public AuthenticationState(final String id,
                                final String url,
+                               final String redirectUri,
                                final String nonce,
-                               final boolean prompt) {
+                               final boolean prompt,
+                               final String codeVerifier) {
         this.id = id;
         this.url = url;
         this.nonce = nonce;
         this.prompt = prompt;
+        this.codeVerifier = codeVerifier;
 
         // Make sure the initiating URI doesn't contain any reserved OIDC params.
         this.initiatingUri = createInitiatingUri(url);
-        // Create a simple redirect URI.
-        this.redirectUri = createRedirectUri(url);
-    }
-
-    /**
-     * Constructor for use when the OIDC redirect_uri (callback) is different
-     * from the initiating URI (the page the user was trying to reach).
-     * Used by the SPA auth flow where the callback is a dedicated API endpoint.
-     */
-    public AuthenticationState(final String id,
-                               final String initiatingUrl,
-                               final String callbackUri,
-                               final String nonce,
-                               final boolean prompt) {
-        this.id = id;
-        this.url = initiatingUrl;
-        this.nonce = nonce;
-        this.prompt = prompt;
-        this.initiatingUri = createInitiatingUri(initiatingUrl);
-        this.redirectUri = callbackUri;  // Use the explicit callback URI
+        // The redirect_uri sent to the IDP is a single fixed value (the application's public root),
+        // not derived from the initiating request. This keeps it exact-registerable at the IDP and,
+        // for the internal IDP, exactly matchable. The initiating URI above still carries the real
+        // destination to return the user to after authentication.
+        this.redirectUri = redirectUri;
     }
 
     /**
@@ -121,6 +110,17 @@ public class AuthenticationState {
     }
 
     /**
+     * The PKCE (RFC 7636) {@code code_verifier} for this flow. Its S256 challenge is sent on the
+     * authorization request and the verifier itself when the code is redeemed, proving the party
+     * redeeming the code is the one that began the flow.
+     *
+     * @return The code verifier string.
+     */
+    public String getCodeVerifier() {
+        return codeVerifier;
+    }
+
+    /**
      * Determine if the next auth call should force a prompt.
      *
      * @return True if the next auth call should force a prompt.
@@ -158,12 +158,6 @@ public class AuthenticationState {
         // parameters.
         RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
 
-        return uriBuilder.build().toString();
-    }
-
-    private static String createRedirectUri(final String url) {
-        final UriBuilder uriBuilder = UriBuilder.fromUri(url);
-        uriBuilder.replaceQuery("");
         return uriBuilder.build().toString();
     }
 }

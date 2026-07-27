@@ -29,9 +29,8 @@ import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ProxyId;
-import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.common.impl.InsecureTestCredentials;
 import stroom.security.openid.api.IdpType;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.date.DateUtil;
@@ -214,39 +213,22 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
-        warnAboutDefaultOpenIdCreds(configuration, injector);
+        warnAboutInsecureTestCredentials(injector);
 
         showInfo(configuration);
     }
 
-    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
-
-        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getProxyConfig(),
-                ProxyConfig::getProxySecurityConfig,
-                ProxySecurityConfig::getAuthenticationConfig,
-                ProxyAuthenticationConfig::getOpenIdConfig,
-                openIdConfig ->
-                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
-
-        if (areDefaultOpenIdCredsInUse) {
-            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
-                    DefaultOpenIdCredentials.class);
-            final String propPath = configuration.getProxyConfig()
-                    .getProxySecurityConfig()
-                    .getAuthenticationConfig()
-                    .getOpenIdConfig()
-                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
+    private void warnAboutInsecureTestCredentials(final Injector injector) {
+        final InsecureTestCredentials insecureTestCredentials = injector.getInstance(InsecureTestCredentials.class);
+        if (insecureTestCredentials.isEnabled()) {
             LOGGER.warn("" +
                         "\n  ---------------------------------------------------------------------------------------" +
                         "\n  " +
                         "\n                                        WARNING!" +
                         "\n  " +
-                        "\n   Using default and publicly available Open ID authentication credentials. " +
-                        "\n   These should only be used in test/demo environments. " +
-                        "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
-                        "The API key in use is:" +
-                        "\n" +
-                        "\n   " + defaultOpenIdCredentials.getApiKey() +
+                        "\n   The insecure test credential (" + InsecureTestCredentials.SECRET_PROP + ") is " +
+                        "\n   enabled. This is insecure and must only be used in test/demo environments. " +
+                        "\n   Unset " + InsecureTestCredentials.ALLOW_PROP + " in production environments." +
                         "\n  ---------------------------------------------------------------------------------------" +
                         "");
         }

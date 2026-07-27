@@ -23,6 +23,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -267,6 +268,9 @@ public class MergeProcessor {
     }
 
     private DirQueue getOrCreateDirQueue(final String docUuid) {
+        // docUuid is a directory name taken from data received from another node; it must not be able to
+        // escape the merging directory when resolved as a single path segment.
+        PathSegmentUtil.requireSafeSegment(docUuid);
         return mergeQueues.computeIfAbsent(docUuid, k -> {
             try {
                 final Path uuidDir = mergingDir.resolve(docUuid);

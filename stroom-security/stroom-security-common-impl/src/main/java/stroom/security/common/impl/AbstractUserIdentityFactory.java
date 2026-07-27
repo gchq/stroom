@@ -27,7 +27,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
 import stroom.util.authentication.Refreshable.RefreshMode;
@@ -65,7 +64,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     private final JwtContextFactory jwtContextFactory;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
@@ -84,7 +82,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     public AbstractUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                                        final Provider<OpenIdConfiguration> openIdConfigProvider,
-                                       final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                        final CertificateExtractor certificateExtractor,
                                        final ServiceUserFactory serviceUserFactory,
                                        final JerseyClientFactory jerseyClientFactory,
@@ -92,7 +89,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                        final RefreshManager refreshManager) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
         this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
@@ -212,13 +208,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             if (IdpType.NO_IDP.equals(idpType)) {
                 return Collections.emptyMap();
 
-            } else if (IdpType.TEST_CREDENTIALS.equals(idpType)
-                       && !serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity())) {
-                // The processing user is a bit special so even when using hard-coded default open id
-                // creds the proc user uses tokens created by the internal IDP.
-                LOGGER.debug("Using default token");
-                return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
-
             } else if (userIdentity instanceof final HasJwt hasJwt) {
                 LOGGER.debug(() -> LogUtil.message("Getting auth headers as {}, {}",
                         HasJwt.class.getSimpleName(),
@@ -270,6 +259,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 .withCode(code)
                 .withGrantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                 .withRedirectUri(state.getRedirectUri())
+                // PKCE: prove we are the party that began the flow by presenting the verifier.
+                .withCodeVerifier(state.getCodeVerifier())
                 .sendRequest(true);
 
         final Optional<UserIdentity> optUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())

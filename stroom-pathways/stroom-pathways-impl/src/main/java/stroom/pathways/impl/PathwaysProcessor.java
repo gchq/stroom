@@ -30,6 +30,7 @@ import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.ShardManager;
 import stroom.util.io.PathCreator;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -130,7 +131,8 @@ public class PathwaysProcessor {
     private PathwaysDb getPathwaysDb(final DocRef docRef) {
         return pathwaysDbMap.computeIfAbsent(docRef.getUuid(), k -> {
             try {
-                final Path processingPath = dbPath.resolve("pathways").resolve(docRef.getUuid());
+                final Path processingPath =
+                        dbPath.resolve("pathways").resolve(PathSegmentUtil.requireSafeSegment(docRef.getUuid()));
                 Files.createDirectories(processingPath);
                 return PathwaysDb.create(processingPath, byteBuffers, false);
             } catch (final IOException e) {

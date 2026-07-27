@@ -51,7 +51,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                 .pathConfig(createProxyPathConfig())
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
-                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                                .withIdentityProviderType(IdpType.NO_IDP))
                         .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")

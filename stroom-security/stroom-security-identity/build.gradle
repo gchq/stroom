@@ -41,10 +41,18 @@ dependencies {
     implementation libs.restygwt
     implementation libs.simple.java.mail
     implementation libs.swagger.annotations
+    implementation libs.zxcvbn
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
+    testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
+    testImplementation libs.dropwizard.testing
+    testImplementation libs.wiremock
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

@@ -55,12 +55,14 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
             @JsonProperty("allowedAudiences") final Set<String> allowedAudiences,
             @JsonProperty("audienceClaimRequired") final Boolean audienceClaimRequired,
+            @JsonProperty("validateAudience") final Boolean validateAudience,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
-            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern,
+            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -76,12 +78,14 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 clientCredentialsScopes,
                 allowedAudiences,
                 audienceClaimRequired,
+                validateAudience,
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
                 fullNameClaimTemplate,
                 expectedSignerPrefixes,
-                publicKeyUriPattern);
+                publicKeyUriPattern,
+                requiredAccessTokenType);
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
@@ -92,13 +96,12 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
 
     @SuppressWarnings("unused")
     @JsonIgnore
-    @ValidationMethod(message = "Invalid value for identityProviderType. Supported values are EXTERNAL_IDP, " +
-                                "INTERNAL_IDP and TEST_CREDENTIALS.")
+    @ValidationMethod(message = "Invalid value for identityProviderType. Supported values are EXTERNAL_IDP " +
+                                "and INTERNAL_IDP.")
     public boolean isIdentityProviderTypeValid() {
         final IdpType idpType = getIdentityProviderType();
         return IdpType.EXTERNAL_IDP.equals(idpType)
-               || IdpType.INTERNAL_IDP.equals(idpType)
-               || IdpType.TEST_CREDENTIALS.equals(idpType);
+               || IdpType.INTERNAL_IDP.equals(idpType);
     }
 
     public StroomOpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {
@@ -112,17 +115,19 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getLogoutEndpoint(),
                 getLogoutRedirectParamName(),
                 isFormTokenRequest(),
-                getClientSecret(),
                 getClientId(),
+                getClientSecret(),
                 getRequestScopes(),
                 getClientCredentialsScopes(),
                 getAllowedAudiences(),
                 isAudienceClaimRequired(),
+                isValidateAudience(),
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
                 getFullNameClaimTemplate(),
                 getExpectedSignerPrefixes(),
-                getPublicKeyUriPattern());
+                getPublicKeyUriPattern(),
+                getRequiredAccessTokenType());
     }
 }

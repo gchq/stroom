@@ -22,6 +22,7 @@ import stroom.data.store.impl.fs.FsTypePathDao;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.db.FsDataStoreDbConnProvider;
 import stroom.db.util.JooqUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -76,7 +77,7 @@ public class FsTypePathDaoImpl implements FsTypePathDao {
     }
 
     public void createPath(final String name) {
-        final String path = name.toUpperCase().replaceAll("[^A-Z0-9_-]", "_");
+        final String path = PathSegmentUtil.toLegacyUpperCaseName(name);
         if (!path.equals(name)) {
             LOGGER.debug(() -> LogUtil.message("A non standard type name was found when registering a file path '{}'",
                     name));

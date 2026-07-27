@@ -35,7 +35,7 @@ import jakarta.ws.rs.core.MediaType;
  * identity provider.
  * No authentication required as we are just proxying for unauthenticated endpoints on the IDP.
  */
-@Path("/authproxy/v1/noauth")
+@Path("/authproxy/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "AuthProxy")

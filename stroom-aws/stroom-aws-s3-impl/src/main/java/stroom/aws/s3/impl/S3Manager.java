@@ -113,7 +113,9 @@ public class S3Manager {
 
     private static final Pattern S3_NAME_PATTERN = Pattern.compile("[^a-z0-9]");
     private static final Pattern S3_BUCKET_NAME_PATTERN = Pattern.compile("[^0-9a-z.]");
-    private static final Pattern S3_KEY_NAME_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
+    // '-' is placed at the end of the class so it is a literal, not a range. The allowed "safe" special
+    // characters are: ! _ . * ' ( ) / and '-'.
+    private static final Pattern S3_KEY_NAME_PATTERN = Pattern.compile("[^0-9a-zA-Z!_.*'()/-]");
     private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
     private static final Pattern TRAILING_HYPHENS = Pattern.compile("-+$");
     private static final Pattern LEADING_SLASH = Pattern.compile("^/+");

@@ -227,10 +227,9 @@ proxyConfig:
   security:
     authentication:
       openId:
-        # (NO_IDP|EXTERNAL_IDP|TEST_CREDENTIALS), Only use TEST for test/demo installs
+        # (NO_IDP|EXTERNAL_IDP)
         # NO_IDP - No IDP is used. API keys are set in config for feed status checks.
         # EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito.
-        # TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only.
         identityProviderType: "{{ 'NO_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
   {% endif %}
 

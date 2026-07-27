@@ -17,8 +17,12 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
+import stroom.security.mock.MockSecurityContext;
+import stroom.util.shared.AuthenticationBypassChecker;
 
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +35,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -206,5 +214,55 @@ class TestSecurityFilter {
         when(request.getMethod()).thenReturn("POST");
         when(request.getHeader("X-CSRF")).thenReturn("0");
         assertThat(securityFilter.isCsrfValid(request)).isFalse();
+    }
+
+    // --- Origin check on the unauthenticated (bypass) path ---
+
+    @Test
+    void crossOriginUnauthenticatedPostIsRejected() throws Exception {
+        // A cross-site page driving a victim's browser to POST to an unauthenticated endpoint (e.g. login
+        // CSRF) always carries a foreign Origin, so it must be rejected before the request is processed.
+        setUpAllowedOrigins();
+        givenUnauthenticatedRequest("POST");
+        when(request.getHeader("Origin")).thenReturn("https://evil.example.com");
+
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final FilterChain chain = mock(FilterChain.class);
+        bypassFilter().doFilter(request, response, chain);
+
+        verify(response).setStatus(HttpServletResponse.SC_FORBIDDEN);
+        verify(chain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    void noOriginUnauthenticatedPostPassesThrough() throws Exception {
+        // A server-to-server / curl caller sends no Origin or Referer, so the check must let it through -
+        // it cannot be a cross-site browser attack.
+        givenUnauthenticatedRequest("POST");
+        when(request.getHeader("Origin")).thenReturn(null);
+        when(request.getHeader("Referer")).thenReturn(null);
+
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final FilterChain chain = mock(FilterChain.class);
+        bypassFilter().doFilter(request, response, chain);
+
+        verify(response, never()).setStatus(HttpServletResponse.SC_FORBIDDEN);
+        verify(chain).doFilter(request, response);
+    }
+
+    private SecurityFilter bypassFilter() {
+        final AuthenticationBypassChecker bypassChecker = mock(AuthenticationBypassChecker.class);
+        when(bypassChecker.isUnauthenticated(any(), any(), any())).thenReturn(true);
+        return new SecurityFilter(new MockSecurityContext(), null, bypassChecker, () -> uriFactory);
+    }
+
+    private void givenUnauthenticatedRequest(final String method) {
+        when(request.getMethod()).thenReturn(method);
+        when(request.getServletPath()).thenReturn("/api/authentication/v1/login");
+        lenient().when(request.getRequestURI()).thenReturn("/api/authentication/v1/login");
+        // getHttpServletMapping() null -> servletName null -> not treated as static content.
+        lenient().when(request.getHttpServletMapping()).thenReturn(null);
+        // Request logging (header/cookie debug) iterates these, so give it something non-null to walk.
+        lenient().when(request.getHeaderNames()).thenReturn(java.util.Collections.emptyEnumeration());
     }
 }

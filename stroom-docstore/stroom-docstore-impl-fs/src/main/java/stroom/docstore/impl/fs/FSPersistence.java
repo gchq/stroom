@@ -29,6 +29,7 @@ import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.PredicateUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
@@ -103,7 +104,7 @@ public class FSPersistence implements Persistence, Clearable {
             final ImportExportDocument importExportDocument = new ImportExportDocument();
 
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
-                    docRef.getUuid() + ".*")) {
+                    PathSegmentUtil.requireSafeSegment(docRef.getUuid()) + ".*")) {
                 stream.forEach(file -> {
                     try {
                         final String fileName = file.getFileName().toString();
@@ -165,7 +166,7 @@ public class FSPersistence implements Persistence, Clearable {
     public void delete(final DocRef docRef, final UserRef userRef) {
         lockFactory.lock(docRef.getUuid(), () -> {
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
-                    docRef.getUuid() + ".*")) {
+                    PathSegmentUtil.requireSafeSegment(docRef.getUuid()) + ".*")) {
                 stream.forEach(file -> {
                     try {
                         Files.delete(file);
@@ -323,11 +324,14 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     private Path getPath(final DocRef docRef, final String ext) {
-        return getPathForType(docRef.getType()).resolve(docRef.getUuid() + "." + ext);
+        // The uuid becomes a single path segment, so it must not be able to escape the type directory.
+        return getPathForType(docRef.getType()).resolve(PathSegmentUtil.requireSafeSegment(docRef.getUuid())
+                + "." + ext);
     }
 
     private Path getPathForType(final String type) {
-        final Path path = dir.resolve(type);
+        // The type becomes a single path segment directly under the store root.
+        final Path path = dir.resolve(PathSegmentUtil.requireSafeSegment(type));
         try {
             if (!Files.isDirectory(path)) {
                 Files.createDirectories(path);

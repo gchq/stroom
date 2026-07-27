@@ -113,11 +113,11 @@ appConfig:
     identity:
       autoCreateAdminAccountOnBoot: true
       passwordPolicy:
-        minimumPasswordStrength: 1
+        minimumPasswordStrength: 0
         minimumPasswordLength: 1
     authentication:
       openId:
-        identityProviderType: ${IDP_TYPE:-TEST_CREDENTIALS}
+        identityProviderType: ${IDP_TYPE:-INTERNAL_IDP}
 
   statistics:
     internal:

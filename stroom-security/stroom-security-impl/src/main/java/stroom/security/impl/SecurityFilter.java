@@ -25,6 +25,7 @@ import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.net.UrlUtils;
 import stroom.util.servlet.SessionUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
@@ -43,13 +44,11 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -144,6 +143,16 @@ class SecurityFilter implements Filter {
         } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
             LOGGER.debug("Running as proc user for unauthenticated resource, servletName: {}, " +
                          "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
+            // A state-changing unauthenticated request still gets an Origin check, so a cross-site page
+            // cannot drive a victim's browser into, for example, logging them into an attacker's account
+            // (login CSRF) or triggering reset emails. Only the Origin check applies here, not the X-CSRF
+            // header: server-to-server callers (an OIDC relying party at the token endpoint, stroom-proxy)
+            // send no Origin and so pass, whereas a cross-site browser always sends a foreign Origin and is
+            // rejected. Safe methods (GET/HEAD/OPTIONS) and requests with no Origin/Referer pass through.
+            if (!isOriginValid(request)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
             // Some paths don't need authentication. If that is the case then proceed as proc user.
             securityContext.asProcessingUser(() ->
                     process(request, response, chain));
@@ -218,7 +227,6 @@ class SecurityFilter implements Filter {
         }
     }
 
-
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void logUserIdentityToDebug(final Optional<UserIdentity> optUserIdentity,
                                         final String fullPath,
@@ -252,7 +260,10 @@ class SecurityFilter implements Filter {
         // Test for internal IdP sign in request.
         if (ResourcePaths.UI_SERVLET_NAME.equals(servletName)
             || ResourcePaths.SIGN_IN_SERVLET_NAME.equals(servletName)
-            || ResourcePaths.STROOM_SERVLET_NAME.equals(servletName)) {
+            || ResourcePaths.STROOM_SERVLET_NAME.equals(servletName)
+            // The password reset page is for users who cannot sign in, so like the sign in page it
+            // must be served without authenticating first.
+            || ResourcePaths.RESET_PASSWORD_SERVLET_NAME.equals(servletName)) {
             LOGGER.debug("Unauthenticated static content, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             return true;
@@ -320,7 +331,7 @@ class SecurityFilter implements Filter {
             return true;
         }
 
-        final String requestOrigin = normaliseOrigin(originHeader);
+        final String requestOrigin = UrlUtils.toOrigin(originHeader);
         final Set<String> allowedOrigins = getAllowedOrigins(request);
         if (requestOrigin != null && allowedOrigins.contains(requestOrigin)) {
             return true;
@@ -394,43 +405,14 @@ class SecurityFilter implements Filter {
         if (commaIndex != -1) {
             host = host.substring(0, commaIndex).trim();
         }
-        return normaliseOrigin(scheme + "://" + host);
+        return UrlUtils.toOrigin(scheme + "://" + host);
     }
 
     private void addOrigin(final Set<String> origins, final URI uri) {
-        final String origin = normaliseOrigin(uri);
+        final String origin = UrlUtils.toOrigin(uri);
         if (origin != null) {
             origins.add(origin);
         }
-    }
-
-    /**
-     * Normalise a URI to a canonical origin string {@code scheme://host:port}, resolving the
-     * default port for the scheme so that e.g. {@code https://example.com} and
-     * {@code https://example.com:443} compare equal. Returns null if the value can't be parsed
-     * or lacks a scheme/host (e.g. the literal {@code "null"} origin sent by sandboxed contexts).
-     */
-    private static String normaliseOrigin(final String value) {
-        try {
-            return normaliseOrigin(new URI(value));
-        } catch (final URISyntaxException e) {
-            LOGGER.debug(() -> LogUtil.message("Unable to parse origin '{}'", value));
-            return null;
-        }
-    }
-
-    private static String normaliseOrigin(final URI uri) {
-        if (uri == null || uri.getScheme() == null || uri.getHost() == null) {
-            return null;
-        }
-        final String scheme = uri.getScheme().toLowerCase();
-        int port = uri.getPort();
-        if (port == -1) {
-            port = "https".equals(scheme)
-                    ? 443
-                    : 80;
-        }
-        return scheme + "://" + uri.getHost().toLowerCase() + ":" + port;
     }
 
     private static boolean isBlankOrNullLiteral(final String value) {
@@ -452,16 +434,5 @@ class SecurityFilter implements Filter {
 
     @Override
     public void destroy() {
-    }
-
-    private Optional<HttpSession> ensureSessionIfCookiePresent(final HttpServletRequest request) {
-        if (SessionUtil.requestHasSessionCookie(request)) {
-            final HttpSession session = SessionUtil.getOrCreateSession(request, newSession ->
-                    LOGGER.debug(() -> LogUtil.message(
-                            "ensureSessionIfCookiePresent() - Created new session {}, request URL",
-                            SessionUtil.getSessionId(newSession), request.getRequestURI())));
-            return Optional.of(session);
-        }
-        return Optional.empty();
     }
 }

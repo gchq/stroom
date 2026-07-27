@@ -37,12 +37,6 @@ public enum IdpType {
     EXTERNAL_IDP(true),
 
     /**
-     * Use hard-coded credentials for testing/demo only
-     */
-    @JsonPropertyDescription("Use hard-coded credentials for testing/demo only")
-    TEST_CREDENTIALS(false),
-
-    /**
      * No Open ID Connect identity provider. This may be used for remote proxies with no OIDC
      * infrastructure that only talk to downstream proxies or stroom where stroom is using
      * an internal IDP.  Feed status checks can be done by setting apiKey in the feedStatus config.

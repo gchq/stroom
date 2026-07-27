@@ -16,7 +16,6 @@
 
 package stroom.security.identity.shared;
 
-import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,12 +34,6 @@ public class InternalIdpPasswordPolicyConfig {
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")
     private boolean allowPasswordResets;
-
-    @ValidRegex
-    @JsonProperty
-    @JsonPropertyDescription("A regex pattern that new passwords must match")
-    // The default is to let everything through
-    private final String passwordComplexityRegex;
 
     @Min(0)
     @Max(5)
@@ -62,13 +55,11 @@ public class InternalIdpPasswordPolicyConfig {
     @JsonCreator
     public InternalIdpPasswordPolicyConfig(
             @JsonProperty("allowPasswordResets") final boolean allowPasswordResets,
-            @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
             @JsonProperty("minimumPasswordStrength") final int minimumPasswordStrength,
             @JsonProperty("minimumPasswordLength") final int minimumPasswordLength,
             @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
 
         this.allowPasswordResets = allowPasswordResets;
-        this.passwordComplexityRegex = passwordComplexityRegex;
         this.minimumPasswordStrength = minimumPasswordStrength;
         this.minimumPasswordLength = minimumPasswordLength;
         this.passwordPolicyMessage = passwordPolicyMessage;
@@ -76,10 +67,6 @@ public class InternalIdpPasswordPolicyConfig {
 
     public boolean isAllowPasswordResets() {
         return allowPasswordResets;
-    }
-
-    public String getPasswordComplexityRegex() {
-        return passwordComplexityRegex;
     }
 
     public int getMinimumPasswordStrength() {

@@ -29,6 +29,7 @@ import stroom.security.identity.shared.ConfirmPasswordResponse;
 import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
 import stroom.security.identity.shared.LoginRequest;
 import stroom.security.identity.shared.LoginResponse;
+import stroom.security.identity.shared.ResetPasswordRequest;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.Unauthenticated;
 
@@ -46,12 +47,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URI;
 
 @Singleton
 @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -128,13 +131,25 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     @Override
     public Boolean logout(final String postLogoutRedirectUri) {
         LOGGER.debug("Received a logout request");
+        final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
+        final AuthenticationServiceImpl service = serviceProvider.get();
+
+        // CSRF: a cross-site page must not be able to force a logout, so reject cross-origin requests.
+        if (!service.isSameOrigin(request)) {
+            LOGGER.warn("Rejecting cross-origin logout request");
+            throw new ForbiddenException("Cross-origin logout request rejected");
+        }
+
+        // Validate the post-logout redirect against this origin so the endpoint cannot be used as an open
+        // redirect; anything absent or off-origin falls back to the application root.
+        final URI redirectUri = service.getValidatedPostLogoutRedirectUri(postLogoutRedirectUri);
+
         final AuthenticateEventAction.Builder<Void> eventBuilder = AuthenticateEventAction.builder()
                 .withLogonType(AuthenticateLogonType.INTERACTIVE)
                 .withAction(AuthenticateAction.LOGOFF);
 
         try {
-            final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
-            final String userId = serviceProvider.get().logout(request);
+            final String userId = service.logout(request);
             eventBuilder.withUser(User.builder().withId(userId).build())
                     .withAuthenticationEntity(User.builder()
                             .withId(userId)
@@ -153,8 +168,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
         }
 
         try {
-            final UriBuilder uriBuilder = UriBuilder.fromUri(postLogoutRedirectUri);
-            throw new RedirectionException(Status.TEMPORARY_REDIRECT, uriBuilder.build());
+            throw new RedirectionException(Status.TEMPORARY_REDIRECT, redirectUri);
         } finally {
             stroomEventLoggingServiceProvider.get().log(
                     "AuthenticationResourceImpl.Logout",
@@ -209,14 +223,12 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                     .build());
             throw e;
         } finally {
-            final String description;
-            if (userId == null) {
-                description = "An unauthenticated user is changing a user's password";
-            } else if (userId.equals(changePasswordRequest.getUserId())) {
-                description = "User is changing their own password";
-            } else {
-                description = "User is changing another user's password";
-            }
+            // This endpoint only ever changes the signed-in user's own password; the request body user id
+            // is recorded on the event but is not authoritative, so the description must not imply it can
+            // target another account.
+            final String description = userId == null
+                    ? "An unauthenticated user attempted to change a password"
+                    : "User is changing their own password";
             //Need to set the user id explictly as this method runs as INTERNAL_PROCESSING_USER
             final Event event = stroomEventLoggingServiceProvider.get().createEvent(
                     "AuthenticationResourceImpl.ChangePassword",
@@ -239,7 +251,7 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     @Unauthenticated
     @Timed
     @Override
-    public Boolean resetEmail(final String emailAddress) throws NoSuchUserException {
+    public Boolean resetEmail(final String emailAddress) {
         final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                 .withAuthenticationEntity(event.logging.User.builder()
                         .withEmailAddress(emailAddress)
@@ -247,11 +259,10 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                 .withAction(AuthenticateAction.RESET_PASSWORD);
 
         try {
-            final boolean resetEmailSent = serviceProvider.get().resetEmail(emailAddress);
-            if (resetEmailSent) {
-                return true;
-            }
-            throw new NotFoundException("User does not exist");
+            // Always reports success, even for an unknown email address, so that the response does not
+            // say which email addresses have accounts. See resetEmail for the timing side channel that
+            // this does not close.
+            return serviceProvider.get().resetEmail(emailAddress);
         } catch (final Throwable e) {
             eventBuilder.withOutcome(AuthenticateOutcome.builder()
                     .withSuccess(false)
@@ -273,12 +284,53 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     }
 
     @Unauthenticated
+    @Timed
+    @Override
+    public ChangePasswordResponse resetPassword(final ResetPasswordRequest resetPasswordRequest) {
+        // The user this is for is inside the signed token, so nothing useful can be logged about them
+        // until the service has verified it. The service logs the reset itself once it knows who it is
+        // for; this event records the attempt.
+        final AuthenticateEventAction.Builder<Void> eventBuilder = AuthenticateEventAction.builder()
+                .withAction(AuthenticateAction.RESET_PASSWORD);
+
+        try {
+            final ChangePasswordResponse response = serviceProvider.get()
+                    .resetPasswordUsingToken(resetPasswordRequest);
+
+            if (!response.isChangeSucceeded()) {
+                eventBuilder.withOutcome(AuthenticateOutcome.builder()
+                        .withSuccess(false)
+                        .withReason(AuthenticateOutcomeReason.OTHER)
+                        .withDescription(response.getMessage())
+                        .build());
+            }
+            return response;
+
+        } catch (final Throwable e) {
+            eventBuilder.withOutcome(AuthenticateOutcome.builder()
+                    .withSuccess(false)
+                    .withReason(AuthenticateOutcomeReason.OTHER)
+                    .withDescription(e.getMessage())
+                    .withData(Data.builder()
+                            .withName("Error")
+                            .withValue(e.getMessage())
+                            .build())
+                    .build());
+            throw e;
+        } finally {
+            stroomEventLoggingServiceProvider.get().log(
+                    "AuthenticationResourceImpl.resetPassword",
+                    "A user attempted to set a new password using an emailed password reset token.",
+                    eventBuilder.build());
+        }
+    }
+
+    @Unauthenticated
     @Override
     public InternalIdpPasswordPolicyConfig fetchPasswordPolicy() {
         final PasswordPolicyConfig passwordPolicyConfig = serviceProvider.get().getPasswordPolicy();
         return new InternalIdpPasswordPolicyConfig(
                 passwordPolicyConfig.isAllowPasswordResets(),
-                passwordPolicyConfig.getPasswordComplexityRegex(),
                 passwordPolicyConfig.getMinimumPasswordStrength(),
                 passwordPolicyConfig.getMinimumPasswordLength(),
                 passwordPolicyConfig.getPasswordPolicyMessage());

@@ -21,11 +21,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"severity", "location", "elementId", "message"})
 @JsonInclude(Include.NON_NULL)
+@Schema(allOf = Marker.class)
 public final class StoredError implements Marker, Comparable<StoredError> {
 
     public static final String MESSAGE_CAUSE_DELIMITER = " > ";

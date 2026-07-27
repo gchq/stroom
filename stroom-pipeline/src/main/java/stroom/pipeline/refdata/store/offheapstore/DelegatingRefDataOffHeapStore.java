@@ -39,6 +39,7 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv.Factory;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.PathCreator;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -87,8 +88,6 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     private static final String META_ID_TO_REF_STORE_CACHE_NAME = "Reference Data - Meta ID to Ref Store Cache";
     private static final String DELIMITER = "___";
     private static final Pattern DELIMITER_PATTERN = Pattern.compile(DELIMITER);
-    private static final Pattern FEED_NAME_CLEAN_PATTERN = Pattern.compile("[^A-Z0-9_-]");
-    private static final String FEED_NAME_CLEAN_REPLACEMENT = "_";
 
     static final String PARAM_NAME_FEED = "feed";
 
@@ -798,8 +797,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     private String feedNameToSubDirName(final String feedName) {
         Objects.requireNonNull(feedName);
-        final String cleanedFeedName = FEED_NAME_CLEAN_PATTERN.matcher(feedName.toUpperCase())
-                .replaceAll(FEED_NAME_CLEAN_REPLACEMENT);
+        final String cleanedFeedName = PathSegmentUtil.toLegacyUpperCaseName(feedName);
 
         final List<DocRef> feedDocRefs = docFinder.findByName(FeedDoc.TYPE, feedName, false);
         if (feedDocRefs.isEmpty()) {
