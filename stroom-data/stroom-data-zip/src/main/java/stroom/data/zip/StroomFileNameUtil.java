@@ -52,8 +52,12 @@ public final class StroomFileNameUtil {
 
     public static String getIdPath(final long id) {
         final String idString = StringIdUtil.idToString(id);
-        final String path = idToPathId(idString) + PATH_SEPARATOR + idString;
-        return clean(path);
+        // idString is zero-padded digits so needs no cleaning; just avoid a leading separator when there is
+        // no pathId prefix (ids < 1000).
+        final String pathId = idToPathId(idString);
+        return pathId.isEmpty()
+                ? idString
+                : pathId + PATH_SEPARATOR + idString;
     }
 
     public static String idToPathId(final String id) {
@@ -80,7 +84,14 @@ public final class StroomFileNameUtil {
         final String[] parts = path.split(PATH_SEPARATOR_STRING);
         for (final String part : parts) {
             if (part.length() > 0) {
-                sb.append(cleanPart(part));
+                String cleaned = cleanPart(part);
+                // '.'/'..' are pure-traversal segments (cleanPart's allow-list permits '.'); neutralise them so
+                // the cleaned path cannot escape upward once resolved, as substituted values (e.g. feed or
+                // stream type names) may be user-supplied.
+                if (".".equals(cleaned) || "..".equals(cleaned)) {
+                    cleaned = String.valueOf(INVALID_CHAR_REPLACEMENT);
+                }
+                sb.append(cleaned);
                 sb.append("/");
             }
         }
@@ -155,7 +166,7 @@ public final class StroomFileNameUtil {
             }
         }
 
-        // Clean the path.
+        // Clean the path (also neutralises '.'/'..' traversal parts from user-supplied substituted values).
         path = clean(path);
 
         // Append file extensions.

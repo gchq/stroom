@@ -16,10 +16,13 @@
 
 package stroom.security.identity.token;
 
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public final class TokenModule extends AbstractModule {
 
@@ -27,5 +30,20 @@ public final class TokenModule extends AbstractModule {
     protected void configure() {
         bind(JsonWebKeyFactory.class).to(JwkFactoryImpl.class);
         bind(PublicJsonWebKeyProvider.class).to(JwkCache.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(JwkRotation.class, jobBuilder -> jobBuilder
+                        .name("Identity Key Rotation")
+                        .description("Rotate the internal identity provider's token signing keys, "
+                                + "retiring and eventually deleting old ones.")
+                        .frequencySchedule("1d"));
+    }
+
+    private static class JwkRotation extends RunnableWrapper {
+
+        @Inject
+        JwkRotation(final JwkRotationTask jwkRotationTask) {
+            super(jwkRotationTask::exec);
+        }
     }
 }

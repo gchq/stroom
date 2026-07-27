@@ -17,15 +17,22 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.util.io.PathSegmentUtil;
 
 public final class ImportExportFileNameUtil {
+
     private ImportExportFileNameUtil() {
         // Utility class.
     }
 
     public static String createFilePrefix(final DocRef docRef) {
-        return  (docRef.getName() != null ? toSafeFileName(docRef.getName(), 100)  + "." : "")
-                + docRef.getType() + "." + docRef.getUuid();
+        // The type and uuid become part of a file name, so strip anything that could escape the segment.
+        return (docRef.getName() != null
+                ? toSafeFileName(docRef.getName(), 100) + "."
+                : "") +
+               PathSegmentUtil.cleanSegment(docRef.getType()) +
+               "." +
+               PathSegmentUtil.cleanSegment(docRef.getUuid());
     }
 
     public static String toSafeFileName(final String string, final int maxLength) {

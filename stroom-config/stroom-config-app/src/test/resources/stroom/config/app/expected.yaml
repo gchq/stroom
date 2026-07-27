@@ -701,6 +701,7 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      disableExternalEntities: true
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
@@ -1023,7 +1024,7 @@ appConfig:
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -1042,10 +1043,12 @@ appConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:
@@ -1116,6 +1119,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      allowLockedAccountPasswordReset: false
       autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
@@ -1142,13 +1146,13 @@ appConfig:
         passwordResetSubject: "Password reset for Stroom"
         passwordResetText: "A password reset has been requested for this email address.\
           \ Please visit the following URL to reset your password: %s."
-        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
         smtp:
           host: "localhost"
           password: null
           port: 2525
           transport: "plain"
           username: null
+      failedLoginLockDuration: "PT30M"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
@@ -1170,17 +1174,19 @@ appConfig:
         minimumPasswordLength: 8
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
-        passwordComplexityRegex: ".*"
         passwordPolicyMessage: "To conform with our Strong Password policy, you are\
           \ required to use a sufficiently strong password. Password must be more\
           \ than 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
+      passwordResetRequestCooldown: "PT1M"
+      reactivateInactiveAccountsOnLogin: false
       token:
         accessTokenExpiration: "PT1H"
         algorithm: "RS256"
         defaultApiKeyExpiration: "P365D"
         emailResetTokenExpiration: "PT10M"
         idTokenExpiration: "PT1H"
+        jwkRotationInterval: "P30D"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
     webContent:

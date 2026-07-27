@@ -21,6 +21,7 @@ import stroom.security.identity.db.jooq.tables.TokenType;
 import stroom.security.identity.token.KeyTypeDao;
 
 import jakarta.inject.Inject;
+import org.jooq.DSLContext;
 
 import java.util.Optional;
 
@@ -35,29 +36,34 @@ class KeyTypeDaoImpl implements KeyTypeDao {
 
     @Override
     public int getTypeId(final String type) {
-        final Optional<Integer> result = get(type);
+        return JooqUtil.contextResult(identityDbConnProvider, context -> getTypeId(context, type));
+    }
+
+    public int getTypeId(final DSLContext context, final String type) {
+        final Optional<Integer> result = get(context, type);
         if (result.isPresent()) {
             return result.get();
         }
 
-        create(type);
-        return get(type).orElse(-1);
+        create(context, type);
+        return get(context, type).orElse(-1);
     }
 
-    private void create(final String type) {
-        JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.context(identityDbConnProvider, context -> context
-                        .insertInto(TokenType.TOKEN_TYPE, TokenType.TOKEN_TYPE.TYPE)
-                        .values(type)
-                        .execute()));
+    private void create(final DSLContext context, final String type) {
+        context
+                .insertInto(TokenType.TOKEN_TYPE, TokenType.TOKEN_TYPE.TYPE)
+                .values(type)
+                .onDuplicateKeyUpdate()
+                .set(TokenType.TOKEN_TYPE.TYPE, type)
+                .execute();
     }
 
-    private Optional<Integer> get(final String type) {
-        return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                        .select(TokenType.TOKEN_TYPE.ID)
-                        .from(TokenType.TOKEN_TYPE)
-                        .where(TokenType.TOKEN_TYPE.TYPE.eq(type))
-                        .fetchOptional())
+    private Optional<Integer> get(final DSLContext context, final String type) {
+        return context
+                .select(TokenType.TOKEN_TYPE.ID)
+                .from(TokenType.TOKEN_TYPE)
+                .where(TokenType.TOKEN_TYPE.TYPE.eq(type))
+                .fetchOptional()
                 .map(r -> r.getValue(TokenType.TOKEN_TYPE.ID));
     }
 }

@@ -62,7 +62,11 @@ public class App implements EntryPoint {
 
         final String path = Window.Location.getPath();
         GWT.log("path: " + path + ", queryString: " + Window.Location.getQueryString());
-        if (path.startsWith("/signIn")) {
+        if (path.startsWith("/resetPassword")) {
+            // A user following a password reset link cannot sign in, so this page is served and revealed
+            // without authenticating, in the same way as the sign in page.
+            ginjector.getResetPasswordPresenter().get().forceReveal();
+        } else if (path.startsWith("/signIn")) {
             final String error = Location.getParameter("error");
             if ("login_required".equals(error)) {
                 ginjector.getLoginPresenter().get().forceReveal();

@@ -595,6 +595,28 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return read(new DocRef(type, uuid));
     }
 
+    /**
+     * The document to authorise a read against: an embedded document (one that declares a parent via
+     * {@link Embeddable#getEmbeddedIn()}, e.g. an XSLT or TextConverter embedded in a pipeline) is authorised
+     * by VIEW permission on its parent; every other document - including any non-embeddable type - is
+     * authorised by VIEW permission on its own {@link DocRef}.
+     *
+     * @return the {@link DocRef} that failed the VIEW check, or empty if the read is authorised.
+     */
+    static Optional<DocRef> findUnauthorisedReadDocRef(final SecurityContext securityContext,
+                                                       final Object doc,
+                                                       final DocRef docRef) {
+        final DocRef refToAuthorise;
+        if (doc instanceof final Embeddable embeddable && embeddable.getEmbeddedIn() != null) {
+            refToAuthorise = embeddable.getEmbeddedIn();
+        } else {
+            refToAuthorise = docRef;
+        }
+        return securityContext.hasDocumentPermission(refToAuthorise, DocumentPermission.VIEW)
+                ? Optional.empty()
+                : Optional.of(refToAuthorise);
+    }
+
     private D read(final DocRef docRef) {
         final String uuid = NullSafe.requireNonNull(docRef, DocRef::getUuid, () -> "UUID required");
         checkType(docRef);
@@ -603,20 +625,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         if (importExportDocument != null) {
             try {
                 final D doc = serialiser.read(importExportDocument);
-                if (doc instanceof final Embeddable embeddable) {
-                    final DocRef parentDocRef = embeddable.getEmbeddedIn();
-                    if (parentDocRef != null) {
-                        if (!securityContext.hasDocumentPermission(parentDocRef, DocumentPermission.VIEW)) {
-                            throwPermissionException(LogUtil.message("You are not authorised to read {}",
-                                    toDocRefDisplayString(parentDocRef)));
-                        }
-                    } else {
-                        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-                            throwPermissionException(LogUtil.message("You are not authorised to read {}",
-                                    toDocRefDisplayString(docRef)));
-                        }
-                    }
-                }
+                findUnauthorisedReadDocRef(securityContext, doc, docRef).ifPresent(unauthorisedRef ->
+                        throwPermissionException(LogUtil.message("You are not authorised to read {}",
+                                toDocRefDisplayString(unauthorisedRef))));
                 return doc;
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);

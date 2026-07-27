@@ -65,10 +65,47 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public FsVolume create(final FsVolume fileVolume) {
-        final FsVolumeRecord record = FS_VOLUME.newRecord();
-        volumeToRecord(fileVolume, record);
-        final FsVolumeRecord persistedRecord = JooqUtil.create(fsDataStoreDbConnProvider, record);
-        return recordToVolume(persistedRecord, fileVolume.getVolumeState());
+        byte[] data = null;
+        final String json = fileVolume.getS3ClientConfigData();
+        if (json != null && !json.isBlank()) {
+            // Check we can deserialise the json string.
+            JsonUtil.readValue(json, S3ClientConfig.class);
+            data = json.getBytes(StandardCharsets.UTF_8);
+        }
+        final byte[] finalData = data;
+        final FsVolumeType volumeType = Objects.requireNonNullElse(fileVolume.getVolumeType(), FsVolumeType.STANDARD);
+
+        final Integer id = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                .insertInto(FS_VOLUME)
+                .columns(FS_VOLUME.VERSION,
+                        FS_VOLUME.CREATE_TIME_MS,
+                        FS_VOLUME.CREATE_USER,
+                        FS_VOLUME.UPDATE_TIME_MS,
+                        FS_VOLUME.UPDATE_USER,
+                        FS_VOLUME.PATH,
+                        FS_VOLUME.STATUS,
+                        FS_VOLUME.BYTE_LIMIT,
+                        FS_VOLUME.FK_FS_VOLUME_STATE_ID,
+                        FS_VOLUME.VOLUME_TYPE,
+                        FS_VOLUME.FK_FS_VOLUME_GROUP_ID,
+                        FS_VOLUME.DATA)
+                .values(1,
+                        fileVolume.getCreateTimeMs(),
+                        fileVolume.getCreateUser(),
+                        fileVolume.getUpdateTimeMs(),
+                        fileVolume.getUpdateUser(),
+                        fileVolume.getPath(),
+                        fileVolume.getStatus().getPrimitiveValue(),
+                        fileVolume.getByteLimit(),
+                        fileVolume.getVolumeState().getId(),
+                        volumeType.getId(),
+                        fileVolume.getVolumeGroupId(),
+                        finalData)
+                .returning(FS_VOLUME.ID)
+                .fetchOne(FS_VOLUME.ID));
+        Objects.requireNonNull(id, "Null DB id");
+        // Re-fetch so we return what is actually in the DB.
+        return fetch(id);
     }
 
     @Override

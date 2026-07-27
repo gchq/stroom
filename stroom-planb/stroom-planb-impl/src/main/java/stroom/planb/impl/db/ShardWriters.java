@@ -43,6 +43,7 @@ import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -285,7 +286,7 @@ public class ShardWriters {
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {
             try {
-                final Path path = dir.resolve(doc.getUuid());
+                final Path path = dir.resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()));
                 Files.createDirectory(path);
                 return path;
             } catch (final IOException e) {

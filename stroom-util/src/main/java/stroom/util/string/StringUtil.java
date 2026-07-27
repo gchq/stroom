@@ -135,6 +135,30 @@ public class StringUtil {
         return stringBuilder.toString();
     }
 
+    /**
+     * Escapes the characters that are significant in HTML text and double-quoted attribute values so that a
+     * value written into an HTML page cannot be interpreted as markup. Returns an empty string for a null
+     * input.
+     */
+    public static String escapeHtml(final String value) {
+        if (value == null) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+            switch (c) {
+                case '&' -> sb.append("&amp;");
+                case '<' -> sb.append("&lt;");
+                case '>' -> sb.append("&gt;");
+                case '"' -> sb.append("&quot;");
+                case '\'' -> sb.append("&#x27;");
+                default -> sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     public static String ensureFullStop(final String str) {
         if (str == null) {
             return "";

@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -61,59 +62,6 @@ class SessionResourceImpl implements SessionResource {
         this.stroomUserIdentityFactoryProvider = stroomUserIdentityFactoryProvider;
         this.securityContextProvider = securityContextProvider;
     }
-
-//    @Override
-//    @AutoLogged(OperationType.UNLOGGED)
-//    public ValidateSessionResponse validateSession(final String postAuthRedirectUri) {
-//        final OpenIdManager openIdManager = openIdManagerProvider.get();
-//        final HttpServletRequest request = httpServletRequestProvider.get();
-//        Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
-//        userIdentity = openIdManager.getOrSetSessionUser(request, userIdentity);
-//        if (userIdentity.isPresent()) {
-//            return new ValidateSessionResponse(true, userIdentity.get().subjectId(), null);
-//        }
-//
-//        // If the session doesn't have a user ref then attempt login.
-//        try {
-//            LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
-//
-//            // We might have completed the back channel authentication now so see if we have a user session.
-//            userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
-//            return userIdentity
-//                    .map(identity ->
-//                            createValidResponse(identity.subjectId()))
-//                    .orElseGet(() -> createRedirectResponse(request, postAuthRedirectUri));
-//
-//        } catch (final RuntimeException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw e;
-//        }
-//    }
-//
-//    private ValidateSessionResponse createValidResponse(final String userId) {
-//        return new ValidateSessionResponse(true, userId, null);
-//    }
-//
-//    private ValidateSessionResponse createRedirectResponse(final HttpServletRequest request, final String url) {
-//        final OpenIdManager openIdManager = openIdManagerProvider.get();
-//        final String code = getParam(url, OpenId.CODE);
-//        final String stateId = getParam(url, OpenId.STATE);
-//        final String redirectUri = openIdManager.redirect(request, code, stateId, url);
-//        return new ValidateSessionResponse(false, null, redirectUri);
-//    }
-//
-//    private String getParam(final String url, final String param) {
-//        int start = url.indexOf(param + "=");
-//        if (start != -1) {
-//            start += param.length() + 1;
-//            final int end = url.indexOf("&", start);
-//            if (end != -1) {
-//                return URLDecoder.decode(url.substring(start, end), StandardCharsets.UTF_8);
-//            }
-//            return URLDecoder.decode(url.substring(start), StandardCharsets.UTF_8);
-//        }
-//        return null;
-//    }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -163,5 +111,31 @@ class SessionResourceImpl implements SessionResource {
         } else {
             return sessionListService.get().listSessions();
         }
+    }
+
+    @Override
+    @AutoLogged(OperationType.DELETE)
+    public Boolean terminateOtherSessions() {
+        final HttpServletRequest request = httpServletRequestProvider.get();
+        final HttpSession session = request.getSession(false);
+        final String currentSessionId = session != null
+                ? session.getId()
+                : null;
+        final UserRef currentUser = securityContextProvider.get().getUserRef();
+        if (currentUser == null) {
+            return false;
+        }
+        // Self-service: terminate the current user's OTHER sessions, sparing the one making this request.
+        LOGGER.info("terminateOtherSessions() - user: {}, keeping session: {}", currentUser, currentSessionId);
+        sessionListService.get().evictUserSessions(currentUser.getSubjectId(), currentSessionId);
+        return true;
+    }
+
+    @Override
+    @AutoLogged(OperationType.DELETE)
+    public Integer terminate(final String subjectId, final String exceptSessionId, final String nodeName) {
+        // Per-node worker for the fan-out. Authorisation (self vs MANAGE_USERS) is enforced in
+        // SessionListListener, not here, so the self-service run-as call is not rejected up front.
+        return sessionListService.get().evictUserSessionsOnNode(subjectId, exceptSessionId, nodeName);
     }
 }

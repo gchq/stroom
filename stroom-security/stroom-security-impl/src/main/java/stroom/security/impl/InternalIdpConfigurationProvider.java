@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -34,15 +35,10 @@ import java.util.Set;
 @Singleton
 public class InternalIdpConfigurationProvider implements IdpConfigurationProvider {
 
-    // TODO: 29/12/2022 According to the spec:
-    //  The issuer value returned MUST be identical to the Issuer URL that was directly used to
-    //  retrieve the configuration information.
-    //  https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
-    //  Thus it prob ought to be our public URI + '/oauth2/v1/noauth' however if only stroom is using
-    //  it then it probably doesn't matter.
-    static final String INTERNAL_ISSUER = "stroom";
+    // The OAuth base path. The issuer is the public URI of this path (see getConfigurationResponse), so
+    // that, per the OpenID discovery spec, the issuer is the base of the configuration URL.
     // These paths must tally up with those in stroom.security.identity.openid.OpenIdResource
-    private static final String OAUTH2_BASE_PATH = "/oauth2/v1/noauth";
+    private static final String OAUTH2_BASE_PATH = "/oauth2/v1";
     static final String INTERNAL_AUTH_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/auth");
     static final String INTERNAL_TOKEN_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
@@ -52,7 +48,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     // These paths must tally up with those in
     // stroom.security.identity.authenticate.AuthenticationResource
-    static final String AUTHENTICATION_BASE_PATH = "/authentication/v1/noauth";
+    static final String AUTHENTICATION_BASE_PATH = "/authentication/v1";
     static final String INTERNAL_LOGOUT_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             AUTHENTICATION_BASE_PATH, "/logout");
 
@@ -81,7 +77,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
             synchronized (this) {
                 if (isNewResponseRequired(configurationEndpoint)) {
                     openIdConfigurationResp = OpenIdConfigurationResponse.builder()
-                            .issuer(INTERNAL_ISSUER)
+                            // The issuer is the application's public OAuth base as an https URL, the same
+                            // shape Keycloak, Cognito and Google use, rather than a bare word. Token iss
+                            // and the relying party's issuer validation both derive from this value, so
+                            // they move together.
+                            .issuer(uriFactory.publicUri(OAUTH2_BASE_PATH).toString())
                             .authorizationEndpoint(uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString())
                             .tokenEndpoint(uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString())
                             .jwksUri(uriFactory.nodeUri(INTERNAL_JWKS_URI).toString())
@@ -116,6 +116,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     }
 
     @Override
+    public String getRequiredAccessTokenType() {
+        return localOpenIdConfigProvider.get().getRequiredAccessTokenType();
+    }
+
+    @Override
     public String getClientSecret() {
         return openIdClientDetailsFactory.getClient().getClientSecret();
     }
@@ -142,12 +147,20 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public Set<String> getAllowedAudiences() {
-        return localOpenIdConfigProvider.get().getAllowedAudiences();
+        // The internal provider mints every token with aud = its own client id (like a Keycloak resource
+        // server configured with an Included Client Audience of itself), so that is the audience a bearer
+        // must carry. Any operator-configured audiences are also honoured.
+        final Set<String> allowedAudiences = new HashSet<>(
+                localOpenIdConfigProvider.get().getAllowedAudiences());
+        allowedAudiences.add(getClientId());
+        return allowedAudiences;
     }
 
     @Override
     public boolean isAudienceClaimRequired() {
-        return localOpenIdConfigProvider.get().isAudienceClaimRequired();
+        // The internal provider always sets aud, so it can be required, as RFC 9068 and OAuth 2.1 expect
+        // of a resource server.
+        return true;
     }
 
     @Override

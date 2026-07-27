@@ -44,7 +44,11 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/session" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
+    String TERMINATE_PATH_PART = "/terminate";
+    String TERMINATE_OTHER_PATH_PART = "/terminateOther";
     String NODE_NAME_PARAM = "nodeName";
+    String SUBJECT_ID_PARAM = "subjectId";
+    String EXCEPT_SESSION_ID_PARAM = "exceptSessionId";
 
     @POST
     @Path("logout")
@@ -59,4 +63,20 @@ public interface SessionResource extends RestResource, DirectRestService {
             summary = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
             operationId = "listSessions")
     SessionListResponse list(@QueryParam(NODE_NAME_PARAM) String nodeName);
+
+    @POST
+    @Path(TERMINATE_OTHER_PATH_PART)
+    @Operation(
+            summary = "Sign out of all of the current user's other sessions across the cluster",
+            operationId = "terminateOtherSessions")
+    Boolean terminateOtherSessions();
+
+    @POST
+    @Path(TERMINATE_PATH_PART)
+    @Operation(
+            summary = "Terminate a user's sessions on a node (cluster fan-out; requires Manage Users)",
+            operationId = "terminateUserSessions")
+    Integer terminate(@QueryParam(SUBJECT_ID_PARAM) String subjectId,
+                      @QueryParam(EXCEPT_SESSION_ID_PARAM) String exceptSessionId,
+                      @QueryParam(NODE_NAME_PARAM) String nodeName);
 }

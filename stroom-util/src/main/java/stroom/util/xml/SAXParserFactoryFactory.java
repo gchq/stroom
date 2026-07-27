@@ -82,11 +82,33 @@ public final class SAXParserFactoryFactory {
         return factory;
     }
 
+    // OWASP-recommended features for preventing XML external entity (XXE) attacks on Xerces. Public so the
+    // XML fragment parser (a different module) can re-enable the ones it legitimately needs on its own reader.
+    public static final String FEATURE_DISALLOW_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
+    public static final String FEATURE_EXTERNAL_GENERAL_ENTITIES =
+            "http://xml.org/sax/features/external-general-entities";
+    public static final String FEATURE_EXTERNAL_PARAMETER_ENTITIES =
+            "http://xml.org/sax/features/external-parameter-entities";
+    public static final String FEATURE_LOAD_EXTERNAL_DTD =
+            "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+
     private static void secureProcessing(final SAXParserFactory factory) {
         try {
             factory.setFeature(
                     XMLConstants.FEATURE_SECURE_PROCESSING,
                     SAXParserSettings.isSecureProcessingEnabled());
+
+            // Prevent XXE (file disclosure, SSRF, entity-expansion DoS) by disallowing DOCTYPE declarations and
+            // the resolution of external general/parameter entities and external DTDs. Secure by default, but
+            // configurable via ParserConfig in case a pipeline legitimately needs these. The internal XML
+            // fragment parser re-enables what it needs on its own reader (it is the only parser that uses a
+            // DOCTYPE, to inject the fragment as an entity).
+            if (SAXParserSettings.isExternalEntitiesDisabled()) {
+                setFeatureQuietly(factory, FEATURE_DISALLOW_DOCTYPE, true);
+                setFeatureQuietly(factory, FEATURE_EXTERNAL_GENERAL_ENTITIES, false);
+                setFeatureQuietly(factory, FEATURE_EXTERNAL_PARAMETER_ENTITIES, false);
+                setFeatureQuietly(factory, FEATURE_LOAD_EXTERNAL_DTD, false);
+            }
 
 
 //            System.setProperty(XalanConstants.SP_TOTAL_ENTITY_SIZE_LIMIT, "50000010");
@@ -146,6 +168,16 @@ public final class SAXParserFactoryFactory {
 
         } catch (final ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
             LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    private static void setFeatureQuietly(final SAXParserFactory factory,
+                                          final String feature,
+                                          final boolean value) {
+        try {
+            factory.setFeature(feature, value);
+        } catch (final ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+            LOGGER.warn("Unable to set SAX feature '{}' to {}: {}", feature, value, e.getMessage());
         }
     }
 }

@@ -31,6 +31,7 @@ import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SnapshotSettings;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -92,8 +93,8 @@ class StoreShard implements Shard {
         this.configProvider = configProvider;
         this.doc = doc;
         lastWriteTime = Instant.now();
-        this.shardDir = statePaths.getShardDir().resolve(doc.getUuid());
-        this.snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        this.shardDir = statePaths.getShardDir().resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()));
+        this.snapshotDir = statePaths.getSnapshotDir().resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()));
 
         // Just open the DB.
         try {

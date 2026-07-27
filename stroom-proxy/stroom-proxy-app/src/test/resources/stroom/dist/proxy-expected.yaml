@@ -170,7 +170,7 @@ proxyConfig:
       authenticationRequired: true
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -189,10 +189,12 @@ proxyConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
   sqsConnectors:
   - awsProfileName: null
     awsRegionName: null

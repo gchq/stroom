@@ -39,12 +39,23 @@ public class TokenBuilder {
 
     private String subject;
     private String nonce;
-    private String state;
     private PublicJsonWebKey publicJsonWebKey;
     private String clientId;
+    private String type;
+    private Long authTime;
+    private String scope;
 
     public TokenBuilder subject(final String subject) {
         this.subject = subject;
+        return this;
+    }
+
+    /**
+     * The JOSE {@code typ} header value. Set {@link OpenId#TOKEN_TYPE__ACCESS} to mark the token as an
+     * access token that may authenticate requests; leave unset for tokens (id, refresh) that may not.
+     */
+    public TokenBuilder type(final String type) {
+        this.type = type;
         return this;
     }
 
@@ -68,8 +79,20 @@ public class TokenBuilder {
         return this;
     }
 
-    public TokenBuilder state(final String state) {
-        this.state = state;
+    /**
+     * The time the end-user authenticated, as seconds since the epoch, see {@link OpenId#CLAIM__AUTH_TIME}.
+     * An id token claim.
+     */
+    public TokenBuilder authTime(final Long authTime) {
+        this.authTime = authTime;
+        return this;
+    }
+
+    /**
+     * The scope granted to an access token, see {@link OpenId#SCOPE}.
+     */
+    public TokenBuilder scope(final String scope) {
+        this.scope = scope;
         return this;
     }
 
@@ -95,11 +118,26 @@ public class TokenBuilder {
         claims.setSubject(subject);
         claims.setIssuer(issuer);
         claims.setAudience(clientId);
+        // A unique id per token, giving each token a distinct identity for logging, correlation and
+        // future refresh token reuse detection.
+        claims.setGeneratedJwtId();
+        if (clientId != null) {
+            // The authorized party - the client the token was issued to. Providers such as Keycloak
+            // set this on both id and access tokens.
+            claims.setClaim(OpenId.CLAIM__AUTHORIZED_PARTY, clientId);
+        }
+        if (OpenId.TOKEN_TYPE__ACCESS.equals(type) && clientId != null) {
+            // RFC 9068 identifies the client of an access token with the client_id claim.
+            claims.setClaim(OpenId.CLIENT_ID, clientId);
+        }
         if (nonce != null) {
             claims.setClaim(OpenId.NONCE, nonce);
         }
-        if (state != null) {
-            claims.setClaim(OpenId.STATE, state);
+        if (authTime != null) {
+            claims.setClaim(OpenId.CLAIM__AUTH_TIME, authTime);
+        }
+        if (scope != null) {
+            claims.setClaim(OpenId.SCOPE, scope);
         }
 
         final JsonWebSignature jws = new JsonWebSignature();
@@ -107,6 +145,9 @@ public class TokenBuilder {
         jws.setAlgorithmHeaderValue(this.algorithm);
         jws.setKey(this.publicJsonWebKey.getPrivateKey());
         jws.setDoKeyValidation(true);
+        if (type != null) {
+            jws.setHeader("typ", type);
+        }
 
         // TODO need to pass this in as it may not be the default one
         if (publicJsonWebKey.getKeyId() != null && !publicJsonWebKey.getKeyId().isEmpty()) {

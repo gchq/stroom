@@ -48,9 +48,9 @@ public class LogoutPlugin extends Plugin {
                 new IconMenuItem.Builder()
                         .priority(40)
                         .icon(SvgImage.LOGOUT)
-                        .text("Logout")
+                        .text("Sign Out")
                         .command(() ->
-                                ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", result -> {
+                                ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to sign out?", result -> {
                                     if (result) {
                                         RequestLogoutEvent.fire(LogoutPlugin.this);
                                     }

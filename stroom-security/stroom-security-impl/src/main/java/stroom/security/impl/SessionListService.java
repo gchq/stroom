@@ -16,9 +16,10 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.UserSessionEvictor;
 import stroom.security.shared.SessionListResponse;
 
-public interface SessionListService {
+public interface SessionListService extends UserSessionEvictor {
 
     /**
      * List all sessions on the specified node
@@ -29,4 +30,12 @@ public interface SessionListService {
      * List all sessions on all nodes
      */
     SessionListResponse listSessions();
+
+    /**
+     * Terminate the given user's sessions on the specified node only (the per-node step of the cluster
+     * fan-out performed by {@link #evictUserSessions(String, String)}).
+     *
+     * @return the number of sessions terminated on that node.
+     */
+    int evictUserSessionsOnNode(String userSubjectId, String exceptSessionId, String nodeName);
 }

@@ -340,6 +340,62 @@ public class AccountRecord extends UpdatableRecordImpl<AccountRecord> {
         return (Boolean) get(22);
     }
 
+    /**
+     * Setter for <code>stroom.account.reset_token_hash</code>.
+     */
+    public void setResetTokenHash(String value) {
+        set(23, value);
+    }
+
+    /**
+     * Getter for <code>stroom.account.reset_token_hash</code>.
+     */
+    public String getResetTokenHash() {
+        return (String) get(23);
+    }
+
+    /**
+     * Setter for <code>stroom.account.reset_token_expiry_ms</code>.
+     */
+    public void setResetTokenExpiryMs(Long value) {
+        set(24, value);
+    }
+
+    /**
+     * Getter for <code>stroom.account.reset_token_expiry_ms</code>.
+     */
+    public Long getResetTokenExpiryMs() {
+        return (Long) get(24);
+    }
+
+    /**
+     * Setter for <code>stroom.account.reset_email_requested_ms</code>.
+     */
+    public void setResetEmailRequestedMs(Long value) {
+        set(25, value);
+    }
+
+    /**
+     * Getter for <code>stroom.account.reset_email_requested_ms</code>.
+     */
+    public Long getResetEmailRequestedMs() {
+        return (Long) get(25);
+    }
+
+    /**
+     * Setter for <code>stroom.account.locked_until_ms</code>.
+     */
+    public void setLockedUntilMs(Long value) {
+        set(26, value);
+    }
+
+    /**
+     * Getter for <code>stroom.account.locked_until_ms</code>.
+     */
+    public Long getLockedUntilMs() {
+        return (Long) get(26);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -363,7 +419,7 @@ public class AccountRecord extends UpdatableRecordImpl<AccountRecord> {
     /**
      * Create a detached, initialised AccountRecord
      */
-    public AccountRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userId, String email, String passwordHash, Long passwordLastChangedMs, String firstName, String lastName, String comments, Integer loginCount, Integer loginFailures, Long lastLoginMs, Long reactivatedMs, Boolean forcePasswordChange, Boolean neverExpires, Boolean enabled, Boolean inactive, Boolean locked, Boolean processingAccount) {
+    public AccountRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userId, String email, String passwordHash, Long passwordLastChangedMs, String firstName, String lastName, String comments, Integer loginCount, Integer loginFailures, Long lastLoginMs, Long reactivatedMs, Boolean forcePasswordChange, Boolean neverExpires, Boolean enabled, Boolean inactive, Boolean locked, Boolean processingAccount, String resetTokenHash, Long resetTokenExpiryMs, Long resetEmailRequestedMs, Long lockedUntilMs) {
         super(Account.ACCOUNT);
 
         setId(id);
@@ -389,6 +445,10 @@ public class AccountRecord extends UpdatableRecordImpl<AccountRecord> {
         setInactive(inactive);
         setLocked(locked);
         setProcessingAccount(processingAccount);
+        setResetTokenHash(resetTokenHash);
+        setResetTokenExpiryMs(resetTokenExpiryMs);
+        setResetEmailRequestedMs(resetEmailRequestedMs);
+        setLockedUntilMs(lockedUntilMs);
         resetChangedOnNotNull();
     }
 }

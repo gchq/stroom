@@ -97,11 +97,6 @@ public class OauthClient extends TableImpl<OauthClientRecord> {
      */
     public final TableField<OauthClientRecord, String> CLIENT_SECRET = createField(DSL.name("client_secret"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
-    /**
-     * The column <code>stroom.oauth_client.uri_pattern</code>.
-     */
-    public final TableField<OauthClientRecord, String> URI_PATTERN = createField(DSL.name("uri_pattern"), SQLDataType.CLOB, this, "");
-
     private OauthClient(Name alias, Table<OauthClientRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
