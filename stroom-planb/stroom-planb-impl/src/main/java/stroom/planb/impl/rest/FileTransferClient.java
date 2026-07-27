@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.rest;
 
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 
 import java.nio.file.Path;
 import java.time.Instant;

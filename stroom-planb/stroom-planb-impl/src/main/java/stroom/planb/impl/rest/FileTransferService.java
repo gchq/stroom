@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.rest;
 
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 
 import java.io.IOException;
 import java.io.InputStream;

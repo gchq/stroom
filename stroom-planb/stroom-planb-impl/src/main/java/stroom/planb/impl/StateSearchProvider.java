@@ -20,7 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
-import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocument;
 import stroom.query.api.ExpressionUtil;

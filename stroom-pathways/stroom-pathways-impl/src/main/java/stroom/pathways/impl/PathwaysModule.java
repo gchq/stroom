@@ -22,7 +22,7 @@ import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesStore;
 import stroom.planb.impl.PlanBDocumentTypes;
-import stroom.planb.impl.data.TracesStoreImpl;
+import stroom.planb.impl.data.query.TracesStoreImpl;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;

@@ -18,7 +18,7 @@ package stroom.planb.impl.rest;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

@@ -16,6 +16,8 @@
 
 package stroom.planb.impl.data;
 
+import stroom.planb.impl.data.queue.SequentialFile;
+import stroom.planb.impl.data.queue.SequentialFileStore;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileDescriptor;
 import stroom.planb.impl.rest.FileHashUtil;

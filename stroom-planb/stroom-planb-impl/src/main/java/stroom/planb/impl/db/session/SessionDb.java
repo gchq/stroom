@@ -23,7 +23,7 @@ import stroom.lmdb.stream.LmdbEntry;
 import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.KV;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.Db;

@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.serde.temporalrangestate;
 
-import stroom.planb.impl.data.TemporalRangeState.Key;
+import stroom.planb.impl.data.value.TemporalRangeState.Key;
 import stroom.planb.impl.serde.KeySerde;
 
 import java.nio.ByteBuffer;

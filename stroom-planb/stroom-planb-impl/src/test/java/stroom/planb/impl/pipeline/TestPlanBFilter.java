@@ -21,7 +21,7 @@ import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.data.SpanKV;
+import stroom.planb.impl.data.value.SpanKV;
 import stroom.planb.impl.db.PlanBStreamWriter;
 import stroom.planb.impl.db.PlanBStreamWriterFactory;
 import stroom.planb.impl.serde.trace.SpanKey;

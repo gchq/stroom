@@ -27,6 +27,8 @@ import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.db.BatchDestination;
 import stroom.planb.impl.db.DefaultBatchDestination;
 import stroom.planb.impl.db.PlanBStreamWriter;

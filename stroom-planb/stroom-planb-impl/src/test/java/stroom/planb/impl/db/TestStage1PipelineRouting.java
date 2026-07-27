@@ -22,7 +22,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.fs.SharedFileStoreCleaner;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.impl.fs.SharedFileStorePartDestination;

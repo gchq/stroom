@@ -17,6 +17,12 @@
 package stroom.planb.impl.data;
 
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.planb.impl.data.queue.Dir;
+import stroom.planb.impl.data.queue.DirQueue;
+import stroom.planb.impl.data.queue.SequentialFile;
+import stroom.planb.impl.data.queue.SequentialFileStore;
+import stroom.planb.impl.data.shard.Shard;
+import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileDescriptor;
 import stroom.planb.impl.rest.FileInfo;

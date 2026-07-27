@@ -25,7 +25,7 @@ import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.PathwayResultPage;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.Pathway;
-import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;

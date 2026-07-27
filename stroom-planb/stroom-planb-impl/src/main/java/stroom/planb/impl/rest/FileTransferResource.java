@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.rest;
 
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

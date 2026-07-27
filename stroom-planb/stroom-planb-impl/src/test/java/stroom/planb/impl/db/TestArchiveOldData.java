@@ -23,7 +23,7 @@ import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.data.SpanKV;
+import stroom.planb.impl.data.value.SpanKV;
 import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.fs.SharedFileStorePublisher;

@@ -17,8 +17,8 @@
 package stroom.planb.impl.pipeline;
 
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.data.GetRequest;
-import stroom.planb.impl.data.PlanBQueryService;
+import stroom.planb.impl.data.query.PlanBQueryService;
+import stroom.planb.impl.data.value.GetRequest;
 import stroom.planb.shared.PlanBDocument;
 import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.Val;

@@ -20,7 +20,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.InstantRange;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.db.StateKeyTestUtil.ValueFunction;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.session.SessionFields;

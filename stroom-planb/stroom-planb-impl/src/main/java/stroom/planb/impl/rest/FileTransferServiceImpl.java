@@ -16,8 +16,8 @@
 
 package stroom.planb.impl.rest;
 
-import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PermissionException;
 

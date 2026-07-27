@@ -18,7 +18,7 @@ package stroom.planb.impl.rest;
 
 import stroom.docref.DocRef;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 import stroom.planb.shared.PlanBDoc;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;

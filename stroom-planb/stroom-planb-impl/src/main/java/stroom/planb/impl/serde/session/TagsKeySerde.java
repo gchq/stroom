@@ -19,7 +19,7 @@ package stroom.planb.impl.serde.session;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;

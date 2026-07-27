@@ -26,7 +26,7 @@ import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.planb.impl.data.TracesStoreImpl;
+import stroom.planb.impl.data.query.TracesStoreImpl;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;

@@ -21,7 +21,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.data.AbstractStoreShard;
+import stroom.planb.impl.data.shard.AbstractStoreShard;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.ArchivalSettings;

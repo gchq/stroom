@@ -17,7 +17,7 @@
 package stroom.planb.impl.fs;
 
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.data.ArchivalGranularityUtil;
+import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.ArchivalSettings;

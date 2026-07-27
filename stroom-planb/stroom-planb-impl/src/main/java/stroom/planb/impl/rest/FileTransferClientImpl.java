@@ -22,7 +22,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.data.SnapshotRequest;
+import stroom.planb.impl.data.shard.SnapshotRequest;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.jersey.WebTargetFactory;

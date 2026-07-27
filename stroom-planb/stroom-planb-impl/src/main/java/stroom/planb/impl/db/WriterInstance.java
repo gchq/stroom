@@ -16,13 +16,13 @@
 
 package stroom.planb.impl.db;
 
-import stroom.planb.impl.data.RangeState;
-import stroom.planb.impl.data.Session;
-import stroom.planb.impl.data.SpanKV;
-import stroom.planb.impl.data.State;
-import stroom.planb.impl.data.TemporalRangeState;
-import stroom.planb.impl.data.TemporalState;
-import stroom.planb.impl.data.TemporalValue;
+import stroom.planb.impl.data.value.RangeState;
+import stroom.planb.impl.data.value.Session;
+import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.data.value.State;
+import stroom.planb.impl.data.value.TemporalRangeState;
+import stroom.planb.impl.data.value.TemporalState;
+import stroom.planb.impl.data.value.TemporalValue;
 import stroom.planb.impl.db.histogram.HistogramDb;
 import stroom.planb.impl.db.metric.MetricDb;
 import stroom.planb.impl.db.rangestate.RangeStateDb;

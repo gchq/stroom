@@ -17,7 +17,7 @@
 package stroom.planb.impl.rest;
 
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.SequentialFileStore;
+import stroom.planb.impl.data.queue.SequentialFileStore;
 import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;

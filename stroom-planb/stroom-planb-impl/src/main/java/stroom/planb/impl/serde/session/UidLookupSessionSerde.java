@@ -17,7 +17,7 @@
 package stroom.planb.impl.serde.session;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.KeyLength;
 import stroom.planb.impl.db.PlanBEnv;

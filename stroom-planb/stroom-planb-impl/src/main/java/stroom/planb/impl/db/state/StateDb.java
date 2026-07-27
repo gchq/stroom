@@ -19,7 +19,7 @@ package stroom.planb.impl.db.state;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
-import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
