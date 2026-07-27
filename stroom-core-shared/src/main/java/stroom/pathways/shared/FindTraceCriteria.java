@@ -23,6 +23,7 @@ import stroom.query.api.datasource.FieldFields;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,6 +44,15 @@ public class FindTraceCriteria extends BaseCriteria {
             new CriteriaFieldSort(FieldFields.NAME, false, true);
     public static final List<CriteriaFieldSort> DEFAULT_SORT_LIST =
             Collections.singletonList(DEFAULT_SORT);
+
+    // Quick-filter fields: bare terms fuzzy-match either (default fields are OR'd); also usable as
+    // 'operation:' / 'traceId:' qualifiers. Operation = TraceRoot.name, Trace Id = TraceRoot.traceId.
+    public static final FilterFieldDefinition FIELD_DEF_OPERATION =
+            FilterFieldDefinition.defaultField("Operation");
+    public static final FilterFieldDefinition FIELD_DEF_TRACE_ID =
+            FilterFieldDefinition.defaultField("Trace Id", "traceId");
+    public static final List<FilterFieldDefinition> FIELD_DEFINITIONS =
+            List.of(FIELD_DEF_OPERATION, FIELD_DEF_TRACE_ID);
 
     @JsonProperty
     private final DocRef dataSourceRef;

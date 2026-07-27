@@ -32,12 +32,16 @@ import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.TimeRange;
 import stroom.svg.shared.SvgImage;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DurationUtil;
 import stroom.util.client.NumberUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -55,7 +59,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TracesListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<QuickFilterPageView>
+        implements QuickFilterUiHandlers {
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
 
@@ -69,6 +74,7 @@ public class TracesListPresenter
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
+    private final PagerView pagerView;
     private final MyDataGrid<TraceRoot> dataGrid;
     private final MultiSelectionModelImpl<TraceRoot> selectionModel;
     private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
@@ -80,17 +86,38 @@ public class TracesListPresenter
 
     @Inject
     public TracesListPresenter(final EventBus eventBus,
-                               final PagerView view,
+                               final QuickFilterPageView view,
+                               final PagerView pagerView,
                                final RestFactory restFactory,
-                               final DateTimeFormatter dateTimeFormatter) {
+                               final DateTimeFormatter dateTimeFormatter,
+                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.pagerView = pagerView;
 
         dataGrid = new MyDataGrid<>(this);
-        view.setDataWidget(dataGrid);
+        pagerView.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         addColumns();
+
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Traces Quick Filter",
+                        FindTraceCriteria.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
+
+        view.setDataView(pagerView);
+        view.setUiHandlers(this);
+    }
+
+    @Override
+    public void onFilterChange(final String text) {
+        setFilter(text);
+        refresh();
     }
 
     @Override
@@ -318,7 +345,7 @@ public class TracesListPresenter
                                 .method(res -> res.findTraces(criteria))
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
-                                .taskMonitorFactory(getView())
+                                .taskMonitorFactory(pagerView)
                                 .exec();
                     }
                 }

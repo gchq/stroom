@@ -52,6 +52,10 @@ import stroom.query.api.GroupSelection;
 import stroom.query.api.TimeFilter;
 import stroom.query.api.TimeRange;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -91,12 +95,21 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
 public class TracesStoreImpl implements TracesStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TracesStoreImpl.class);
+
+    // Quick-filter field mappers: bare terms fuzzy-match either (OR'd); 'operation:'/'traceId:' qualify.
+    private static final ValueFunctionFactoriesImpl<TraceRoot> FILTER_VALUE_FUNCTIONS =
+            new ValueFunctionFactoriesImpl<TraceRoot>()
+                    .put(FindTraceCriteria.FIELD_DEF_OPERATION, TraceRoot::getName)
+                    .put(FindTraceCriteria.FIELD_DEF_TRACE_ID, TraceRoot::getTraceId);
+    private static final FieldProvider FILTER_FIELD_PROVIDER =
+            new FieldProviderImpl(FindTraceCriteria.FIELD_DEFINITIONS);
 
     private final PlanBDocCache planBDocCache;
     private final Provider<PlanBConfig> configProvider;
@@ -109,6 +122,7 @@ public class TracesStoreImpl implements TracesStore {
     private final Executor executor;
     private final ArchiveShardLocator archiveShardLocator;
     private final MergedCheckpointCache mergedCheckpointCache;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     public TracesStoreImpl(final PlanBDocCache planBDocCache,
@@ -121,7 +135,8 @@ public class TracesStoreImpl implements TracesStore {
                            final SecurityContext securityContext,
                            final ExecutorProvider executorProvider,
                            final ArchiveShardLocator archiveShardLocator,
-                           final MergedCheckpointCache mergedCheckpointCache) {
+                           final MergedCheckpointCache mergedCheckpointCache,
+                           final ExpressionPredicateFactory expressionPredicateFactory) {
         this.planBDocCache = planBDocCache;
         this.configProvider = configProvider;
         this.shardManager = shardManager;
@@ -133,6 +148,17 @@ public class TracesStoreImpl implements TracesStore {
         this.executor = executorProvider.get();
         this.archiveShardLocator = archiveShardLocator;
         this.mergedCheckpointCache = mergedCheckpointCache;
+        this.expressionPredicateFactory = expressionPredicateFactory;
+    }
+
+    // Builds the quick-filter predicate for a TraceRoot from the criteria's filter string, or null when
+    // the filter is blank (so the query can use its O(1)/key-only count fast paths).
+    private Predicate<TraceRoot> buildFilterPredicate(final String filter) {
+        if (NullSafe.isBlankString(filter)) {
+            return null;
+        }
+        return expressionPredicateFactory.create(
+                filter, FILTER_FIELD_PROVIDER, FILTER_VALUE_FUNCTIONS, DateTimeSettings.builder().build());
     }
 
     @Override
@@ -196,6 +222,8 @@ public class TracesStoreImpl implements TracesStore {
             throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
         }
 
+        final Predicate<TraceRoot> filterPredicate = buildFilterPredicate(criteria.getFilter());
+
         if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
             final UserIdentity userIdentity = securityContext.getUserIdentity();
             final List<CompletableFuture<TracesResultPage>> futures = new ArrayList<>();
@@ -232,7 +260,7 @@ public class TracesStoreImpl implements TracesStore {
                         return securityContext.asUserResult(userIdentity, () ->
                                 shardManager.get(doc.getName(), shardIndex, reader -> {
                                     if (reader instanceof final TraceDb traceDb) {
-                                        return traceDb.findTraces(shardCriteria);
+                                        return traceDb.findTraces(shardCriteria, filterPredicate);
                                     }
                                     throw new IllegalStateException("Unexpected value: " + reader);
                                 }));
@@ -258,7 +286,7 @@ public class TracesStoreImpl implements TracesStore {
                         futures.add(CompletableFuture.supplyAsync(() -> {
                             try {
                                 return securityContext.asUserResult(userIdentity,
-                                        () -> queryArchive(ref, shardIndex, shardCriteria, doc));
+                                        () -> queryArchive(ref, shardIndex, shardCriteria, doc, filterPredicate));
                             } catch (final Exception e) {
                                 LOGGER.error("Error querying archive shard " + ref.dateLabel() +
                                         " for doc " + doc.getName(), e);
@@ -276,8 +304,11 @@ public class TracesStoreImpl implements TracesStore {
             // across live + archive. When the window overlaps few enough archive buckets, replace it with
             // an exact distinct-trace count (union of traceIds across the stores).
             if (timeFilter != null
+                    && NullSafe.isBlankString(criteria.getFilter())
                     && !archiveLabels.isEmpty()
                     && archiveLabels.size() <= MAX_EXACT_COUNT_BUCKETS) {
+                // With a quick filter active the exact distinct-count path (windowTraceIds) is key-only and
+                // can't apply the filter, so fall back to the summed filter-aware per-shard totals instead.
                 final long exactTotal = countDistinctTraces(doc, timeFilter, userIdentity);
                 final stroom.util.shared.PageResponse pr = merged.getPageResponse();
                 return new TracesResultPage(merged.getValues(),
@@ -288,7 +319,7 @@ public class TracesStoreImpl implements TracesStore {
         } else {
             return shardManager.get(criteria.getDataSourceRef().getName(), reader -> {
                 if (reader instanceof final TraceDb traceDb) {
-                    return traceDb.findTraces(criteria);
+                    return traceDb.findTraces(criteria, filterPredicate);
                 }
                 throw new IllegalStateException("Unexpected value: " + reader);
             });
@@ -1056,11 +1087,12 @@ public class TracesStoreImpl implements TracesStore {
     private TracesResultPage queryArchive(final ArchiveShardRef ref,
                                           final int shardIndex,
                                           final FindTraceCriteria criteria,
-                                          final PlanBDocument doc) {
+                                          final PlanBDocument doc,
+                                          final Predicate<TraceRoot> filterPredicate) {
         try {
             return shardManager.getArchive(doc, shardIndex, ref, reader -> {
                 if (reader instanceof final TraceDb traceDb) {
-                    return traceDb.findTraces(criteria);
+                    return traceDb.findTraces(criteria, filterPredicate);
                 }
                 throw new IllegalStateException("Unexpected value: " + reader);
             });

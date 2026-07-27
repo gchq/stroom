@@ -106,6 +106,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1462,6 +1463,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * </ol>
      */
     public TracesResultPage findTraces(final FindTraceCriteria criteria) {
+        return findTraces(criteria, null);
+    }
+
+    /**
+     * As {@link #findTraces(FindTraceCriteria)} but additionally applies {@code filterPredicate} (the
+     * quick-filter match on the {@link TraceRoot}) when non-null. When a filter is present the total count
+     * is computed by testing candidates rather than via the O(1)/key-only fast paths.
+     */
+    public TracesResultPage findTraces(final FindTraceCriteria criteria,
+                                       final Predicate<TraceRoot> filterPredicate) {
         final List<TraceRoot> list = new ArrayList<>();
         final PageResponse.Builder builder = PageResponse.builder();
 
@@ -1491,7 +1502,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         if (criteria.getPageRequest().getOffset() <= pos &&
                             criteria.getPageRequest().getLength() > list.size() &&
                             tracePredicate.test(trace) &&
-                            matchesTimeRange(root, criteria)) {
+                            matchesTimeRange(root, criteria) &&
+                            (filterPredicate == null || filterPredicate.test(root))) {
                             list.add(root);
                         }
                     } catch (final RuntimeException e) {
@@ -1525,7 +1537,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         index != null ? index : TraceSecondaryIndex.START_TIME);
             }
 
-            return findTracesByIndex(criteria, indexDbi, desc);
+            return findTracesByIndex(criteria, indexDbi, desc, filterPredicate);
         }
 
         return new TracesResultPage(list, builder.build());
@@ -1576,7 +1588,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      */
     private TracesResultPage findTracesByIndex(final FindTraceCriteria criteria,
                                                final Dbi<ByteBuffer> indexDbi,
-                                               final boolean desc) {
+                                               final boolean desc,
+                                               final Predicate<TraceRoot> filterPredicate) {
         final List<TraceRoot> list = new ArrayList<>();
         final int offset = criteria.getPageRequest().getOffset();
         final int length = criteria.getPageRequest().getLength();
@@ -1587,58 +1600,57 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 ? null
                 : DateExpressionParser.getTimeFilter(
                         criteria.getTimeRange(), DateTimeSettings.builder().build());
+        final boolean hasFilter = filterPredicate != null;
+        // Per-row match combining the (optional) time range and the (optional) quick filter.
+        final Predicate<TraceRoot> rowMatch = root ->
+                (timeFilter == null || matchesTimeRange(root, criteria))
+                && (!hasFilter || filterPredicate.test(root));
 
         // Use single-element arrays to capture totals from inside the lambda,
         // since the lambda requires effectively-final variables.
         final long[] totalRef = {0L};
 
         env.read(readTxn -> {
-            if (timeFilter == null) {
+            // ---- total ----
+            if (timeFilter == null && !hasFilter) {
                 // O(1): LMDB stat gives exact entry count without scanning all entries.
                 totalRef[0] = traceRootsDbi.stat(readTxn).entries;
-            } else {
-                // Time range active: the unfiltered stat count would mislead the grid. Count
-                // the matching entries exactly via a key-only walk of the chronologically
-                // ordered START_TIME index (no TraceRoot deserialisation) — see
-                // countTracesInTimeRange.
+            } else if (!hasFilter) {
+                // Time range only: exact count via a key-only walk of the chronologically
+                // ordered START_TIME index (no TraceRoot deserialisation) — see countTracesInTimeRange.
                 totalRef[0] = countTracesInTimeRange(readTxn, timeFilter);
+            } else {
+                // Quick filter active: no key-only shortcut — deserialise and test each candidate.
+                // (Worst case a full-index scan when a filter is set with no time range.)
+                try (final Stream<LmdbEntry> countStream =
+                             LmdbStream.stream(readTxn, indexDbi, LmdbKeyRange.all())) {
+                    totalRef[0] = countStream
+                            .map(entry -> safeLookupTraceRoot(readTxn, entry))
+                            .filter(Objects::nonNull)
+                            .filter(rowMatch)
+                            .count();
+                }
             }
 
+            // ---- page ----
             final LmdbKeyRange keyRange = desc ? LmdbKeyRange.allReverse() : LmdbKeyRange.all();
             try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, indexDbi, keyRange)) {
-                if (criteria.getTimeRange() == null) {
-                    // No time range: classic O(offset+length) raw index scan.
-                    stream
-                            .skip(offset)
-                            .limit(length)
-                            .forEach(entry -> {
-                                try {
-                                    final TraceRoot root = lookupTraceRoot(readTxn, entry);
-                                    if (root != null) {
-                                        list.add(root);
-                                    }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.debug("Error reading trace from sort index: {}",
-                                            e.getMessage(), e);
-                                }
-                            });
+                if (timeFilter == null && !hasFilter) {
+                    // Fast path: raw index skip/limit, deserialising only the page.
+                    stream.skip(offset).limit(length).forEach(entry -> {
+                        final TraceRoot root = safeLookupTraceRoot(readTxn, entry);
+                        if (root != null) {
+                            list.add(root);
+                        }
+                    });
                 } else {
-                    // Time range active: filter BEFORE skip/limit so that descending
-                    // queries correctly skip entries outside the window (e.g. desc sort
-                    // by start-time + time range 1-2 h ago must not consume the newest
-                    // N raw entries and then return zero results).
+                    // Filter/time-range active: deserialise and test each entry BEFORE skip/limit so
+                    // descending queries skip non-matching entries correctly; still lazy — the stream
+                    // stops once the page is full.
                     stream
-                            .map(entry -> {
-                                try {
-                                    return lookupTraceRoot(readTxn, entry);
-                                } catch (final RuntimeException e) {
-                                    LOGGER.debug("Error reading trace from sort index: {}",
-                                            e.getMessage(), e);
-                                    return null;
-                                }
-                            })
+                            .map(entry -> safeLookupTraceRoot(readTxn, entry))
                             .filter(Objects::nonNull)
-                            .filter(root -> matchesTimeRange(root, criteria))
+                            .filter(rowMatch)
                             .skip(offset)
                             .limit(length)
                             .forEach(list::add);
@@ -1647,10 +1659,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             return null;
         });
 
-        // totalRef now holds an exact total in both cases: the O(1) LMDB stat count when no
-        // time range is active, or the exact count of entries matching the time window
-        // (via countTracesInTimeRange). Either way the total is exact, so the pager shows the
-        // true count rather than "?".
         return new TracesResultPage(list,
                 PageResponse.builder()
                         .offset(offset)
@@ -1658,6 +1666,15 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         .total(totalRef[0])
                         .exact(true)
                         .build());
+    }
+
+    private TraceRoot safeLookupTraceRoot(final Txn<ByteBuffer> readTxn, final LmdbEntry entry) {
+        try {
+            return lookupTraceRoot(readTxn, entry);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Error reading trace from sort index: {}", e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
