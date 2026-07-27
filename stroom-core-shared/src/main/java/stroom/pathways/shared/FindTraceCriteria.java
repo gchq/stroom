@@ -50,7 +50,7 @@ public class FindTraceCriteria extends BaseCriteria {
     public static final FilterFieldDefinition FIELD_DEF_OPERATION =
             FilterFieldDefinition.defaultField("Operation");
     public static final FilterFieldDefinition FIELD_DEF_TRACE_ID =
-            FilterFieldDefinition.defaultField("Trace Id", "traceId");
+            FilterFieldDefinition.defaultField("Trace Id", "traceid");
     public static final List<FilterFieldDefinition> FIELD_DEFINITIONS =
             List.of(FIELD_DEF_OPERATION, FIELD_DEF_TRACE_ID);
 
