@@ -22,7 +22,6 @@ import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
-import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -174,11 +173,7 @@ public class SharedFileStorePublisher {
                 try (final Db<?, ?> db = PlanBDb.open(
                         doc, sharedTempDir, byteBuffers, byteBufferFactory, false)) {
                     db.merge(archiveShard.localDir());
-                    // Refresh archived roots' totalSpans so the trace list reports a true count as the
-                    // bucket grows across merge cycles (see TraceDb.refreshArchivedRootSpanCounts).
-                    if (db instanceof final TraceDb traceDb) {
-                        traceDb.refreshArchivedRootSpanCounts();
-                    }
+                    db.archiveMergeComplete();
                 }
                 // Keep the archive layout as data.mdb + .version only: drop the lock file
                 // LMDB created during the merge (it is recreated on the next open).

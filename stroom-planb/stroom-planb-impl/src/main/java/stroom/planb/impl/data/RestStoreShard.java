@@ -103,6 +103,11 @@ public class RestStoreShard extends AbstractStoreShard implements SnapshotCapabl
     }
 
     @Override
+    protected void afterMutation() {
+        createSnapshot();
+    }
+
+    @Override
     public void createSnapshot() {
         // Check if a new snapshot is required and create one if it is.
         if (isNewSnapshotRequired()) {

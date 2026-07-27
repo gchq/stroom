@@ -217,6 +217,10 @@ public abstract class AbstractStoreShard implements Shard {
         }
     }
 
+    /** Called after a successful mutation while holding the write lock; subclasses may override. */
+    protected void afterMutation() {
+    }
+
     @Override
     public void merge(final Path sourceDir) {
         try {
@@ -224,9 +228,7 @@ public abstract class AbstractStoreShard implements Shard {
             try {
                 db.merge(sourceDir);
                 lastWriteTime = Instant.now();
-                if (this instanceof final SnapshotCapable snapshotCapable) {
-                    snapshotCapable.createSnapshot();
-                }
+                afterMutation();
             } finally {
                 writeLock.unlock();
             }
@@ -280,10 +282,7 @@ public abstract class AbstractStoreShard implements Shard {
         }
 
         if (result > 0) {
-            // Create a new snapshot periodically.
-            if (this instanceof final SnapshotCapable snapshotCapable) {
-                snapshotCapable.createSnapshot();
-            }
+            afterMutation();
         }
 
         return result;
@@ -322,10 +321,7 @@ public abstract class AbstractStoreShard implements Shard {
         }
 
         if (result > 0) {
-            // Create a new snapshot periodically.
-            if (this instanceof final SnapshotCapable snapshotCapable) {
-                snapshotCapable.createSnapshot();
-            }
+            afterMutation();
         }
 
         return result;

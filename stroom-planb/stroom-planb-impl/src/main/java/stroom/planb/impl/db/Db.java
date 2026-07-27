@@ -48,6 +48,13 @@ public interface Db<K, V> extends AutoCloseable {
     default void mergeComplete() {
     }
 
+    /**
+     * Called after merging a batch into an archive bucket, so a store can finalise any derived
+     * state (e.g. recompute aggregate counts). Default: nothing to do.
+     */
+    default void archiveMergeComplete() {
+    }
+
     long deleteOldData(Instant deleteBefore,
                        boolean useStateTime);
 

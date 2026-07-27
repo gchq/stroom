@@ -765,7 +765,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * bucket, so a trace spanning multiple date buckets is under-counted by its other buckets (rare — a
      * trace longer than the archival granularity).
      */
-    public void refreshArchivedRootSpanCounts() {
+    @Override
+    public void archiveMergeComplete() {
         if (pendingRootRebuilds.isEmpty()) {
             return;
         }

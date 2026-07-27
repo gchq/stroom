@@ -91,8 +91,6 @@ public class SharedFileStoreMergeProcessor {
         this.taskContextFactory = taskContextFactory;
         this.mergeExecutor = createMergeExecutor(configProvider.get().getShardMergeThreadCount());
         this.publisher = publisher;
-        // Sort by declared priority so operations run in a deterministic order (retention before archive);
-        // a Guice-injected Set has no guaranteed iteration order.
         this.operations = operations.stream()
                 .sorted(Comparator.comparingInt(SharedFileStoreOperation::priority))
                 .toList();
