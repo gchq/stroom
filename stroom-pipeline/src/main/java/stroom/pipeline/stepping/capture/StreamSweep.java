@@ -22,43 +22,23 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * The asynchronous capture of a single stream: it owns the stream's {@link StepDataStore} and a progress
- * signal that lets a reader wait until more records have been captured or the sweep finishes.
+ * The asynchronous capture of a single stream: it owns the stream's {@link StepDataStore}, the
+ * {@link CaptureWatermark} that says how far the capture has got, and the task handle its session uses to
+ * terminate it. It also remembers the per-stream facts a step result needs that belong to no single record.
  * <p>
- * The capture thread commits each record atomically via {@link StepDataStore#putRecord} and then calls
- * {@link #recordCaptured}; a record therefore only becomes visible in the store once it is fully written,
- * so a reader never sees a torn record. Readers use {@link #getVersion()} + {@link #awaitChangeSince} to
- * block until progress is made (a version bump), the sweep completes, or a timeout elapses - the version
- * captured before reading the store avoids a lost wake-up if a record lands between the read and the wait.
+ * Progress and terminal state live in the watermark - see {@link CaptureWatermark} for the rule that every way
+ * a producer can stop must wake its waiters. The methods here delegate, so callers that only care about
+ * progress can hold the watermark instead of the whole sweep.
  */
 public class StreamSweep {
 
     private final long metaId;
     private final StepDataStore store;
-
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition changed = lock.newCondition();
-
-    private long version;
-    private boolean fullyCaptured;
-    private Throwable error;
-    private StepLocation lastCapturedLocation;
-
-    // The per-part record range THIS sweep has captured, which is what a reader may navigate. It matters
-    // because a reprocess writes into a store that already holds the reused upstream at the full range: the
-    // store's range would let a reader reach a record before the reprocess has written its changed element,
-    // whereas this range advances only as this sweep captures. For a full sweep it equals the store's range
-    // (this sweep writes everything), so gating on it changes nothing there.
-    private final Map<Long, Long> partCapturedMin = new HashMap<>();
-    private final Map<Long, Long> partCapturedMax = new HashMap<>();
+    private final CaptureWatermark watermark = new CaptureWatermark();
 
     // Set when the async capture task is launched, so the owning session can terminate it on close.
     private volatile TaskContext taskContext;
@@ -87,148 +67,76 @@ public class StreamSweep {
     }
 
     /**
+     * @return how far this sweep has got. A consumer that follows this sweep's progress needs only this, not
+     * the sweep itself.
+     */
+    public CaptureWatermark getWatermark() {
+        return watermark;
+    }
+
+    /**
      * Signal that a record has been fully committed to the store (advances the progress version).
      */
     public void recordCaptured(final StepLocation location) {
-        lock.lock();
-        try {
-            version++;
-            lastCapturedLocation = location;
-            final long part = location.getPartIndex();
-            final long record = location.getRecordIndex();
-            partCapturedMin.merge(part, record, Math::min);
-            partCapturedMax.merge(part, record, Math::max);
-            changed.signalAll();
-        } finally {
-            lock.unlock();
-        }
+        watermark.recordCaptured(location);
     }
 
     /**
      * @return the first (lowest) record index this sweep has captured for the part, or -1 if none yet.
      */
     public long getCapturedFirstRecordIndex(final long partIndex) {
-        lock.lock();
-        try {
-            return partCapturedMin.getOrDefault(partIndex, -1L);
-        } finally {
-            lock.unlock();
-        }
+        return watermark.getCapturedFirstRecordIndex(partIndex);
     }
 
     /**
      * @return the last (highest) record index this sweep has captured for the part, or -1 if none yet.
      */
     public long getCapturedLastRecordIndex(final long partIndex) {
-        lock.lock();
-        try {
-            return partCapturedMax.getOrDefault(partIndex, -1L);
-        } finally {
-            lock.unlock();
-        }
+        return watermark.getCapturedLastRecordIndex(partIndex);
     }
 
     public void markFullyCaptured() {
-        lock.lock();
-        try {
-            fullyCaptured = true;
-            changed.signalAll();
-        } finally {
-            lock.unlock();
-        }
+        watermark.markFullyCaptured();
     }
 
     public void markError(final Throwable t) {
-        lock.lock();
-        try {
-            if (error == null) {
-                error = t;
-            }
-            fullyCaptured = true;
-            changed.signalAll();
-        } finally {
-            lock.unlock();
-        }
+        watermark.markError(t);
     }
 
     public long getVersion() {
-        lock.lock();
-        try {
-            return version;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.getVersion();
     }
 
     public boolean isFullyCaptured() {
-        lock.lock();
-        try {
-            return fullyCaptured;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.isFullyCaptured();
     }
 
     /**
-     * @return true only if this sweep captured the whole stream <b>without error</b>. {@link #markError} also
-     * sets {@code fullyCaptured} (so readers stop waiting), so {@link #isFullyCaptured()} alone does not mean
-     * the store holds the complete stream - a caller deciding whether the captured chunks can be reused (e.g.
-     * to reprocess from them) must use this.
+     * @return true only if this sweep captured the whole stream <b>without error</b>. See
+     * {@link CaptureWatermark#isSuccessfullyCaptured()} - a caller deciding whether the captured chunks can be
+     * reused (e.g. to reprocess from them) must use this rather than {@link #isFullyCaptured()}.
      */
     public boolean isSuccessfullyCaptured() {
-        lock.lock();
-        try {
-            return fullyCaptured && error == null;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.isSuccessfullyCaptured();
     }
 
     public Throwable getError() {
-        lock.lock();
-        try {
-            return error;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.getError();
     }
 
     public StepLocation getLastCapturedLocation() {
-        lock.lock();
-        try {
-            return lastCapturedLocation;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.getLastCapturedLocation();
     }
 
     /**
-     * Wait until progress is made past {@code knownVersion}, the sweep completes, or the timeout elapses.
+     * Wait until progress is made past {@code knownVersion}, the sweep stops, or the timeout elapses.
      *
      * @param knownVersion the version observed before reading the store.
-     * @param timeoutMs     the maximum time to wait.
+     * @param timeoutMs    the maximum time to wait.
      * @return true if progress/completion occurred, false if the timeout elapsed or the wait was interrupted.
      */
     public boolean awaitChangeSince(final long knownVersion, final long timeoutMs) {
-        lock.lock();
-        try {
-            long remainingNanos = TimeUnit.MILLISECONDS.toNanos(Math.max(0, timeoutMs));
-            while (version == knownVersion && !fullyCaptured) {
-                if (remainingNanos <= 0) {
-                    return false;
-                }
-                remainingNanos = changed.awaitNanos(remainingNanos);
-            }
-            return true;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            // No progress was observed. Reporting progress here would send the caller round its resolve loop
-            // again, where the still-set interrupt flag makes the next await throw immediately - spinning a
-            // full store re-scan until its deadline. Consistent with awaitFullyCaptured, which returns the flag.
-            return false;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.awaitChangeSince(knownVersion, timeoutMs);
     }
 
     /**
@@ -237,22 +145,7 @@ public class StreamSweep {
      * @return true if the capture finished, false on timeout.
      */
     public boolean awaitFullyCaptured(final long timeoutMs) {
-        lock.lock();
-        try {
-            long remainingNanos = TimeUnit.MILLISECONDS.toNanos(Math.max(0, timeoutMs));
-            while (!fullyCaptured) {
-                if (remainingNanos <= 0) {
-                    return false;
-                }
-                remainingNanos = changed.awaitNanos(remainingNanos);
-            }
-            return true;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return fullyCaptured;
-        } finally {
-            lock.unlock();
-        }
+        return watermark.awaitFullyCaptured(timeoutMs);
     }
 
     void setTaskContext(final TaskContext taskContext) {

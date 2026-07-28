@@ -169,6 +169,23 @@ public class PipelineFactory {
                                   final Terminator terminator,
                                   final SteppingController controller,
                                   final String startElementId) {
+        return createFrom(pipelineData, terminator, controller, startElementId,
+                MidPipelineScope.ELEMENT_AND_DESCENDANTS);
+    }
+
+    /**
+     * As {@link #createFrom(PipelineData, Terminator, SteppingController, String)}, but with control over how
+     * much of the pipeline below the start element is linked and run.
+     *
+     * @param scope {@link MidPipelineScope#ELEMENT_AND_DESCENDANTS} to run the start element and everything
+     *              below it as one chain, or {@link MidPipelineScope#ELEMENT_ONLY} to run just the start
+     *              element.
+     */
+    public MidPipeline createFrom(final PipelineData pipelineData,
+                                  final Terminator terminator,
+                                  final SteppingController controller,
+                                  final String startElementId,
+                                  final MidPipelineScope scope) {
         if (controller == null) {
             throw new PipelineFactoryException("createFrom is stepping-only; a controller is required");
         }
@@ -208,10 +225,32 @@ public class PipelineFactory {
         recordDetector.setTarget((Target) fragment.getIn());
         recordDetector.setController(controller);
 
-        // Link the start element's descendants (recorders/monitors/detectors inserted as usual).
-        link(elementInstances, elementTypeMap, linkSets, controller, fragment.getOut(), startId, controllerSplitDepth);
+        // Link the start element's descendants (recorders/monitors/detectors inserted as usual). Skipped
+        // entirely for ELEMENT_ONLY: the start element's target is already its own output recorder (inserted
+        // above), so with nothing linked beyond it the element runs, its IO is captured, and its output simply
+        // stops there - which is what lets each element be run, and restarted, on its own.
+        if (scope == MidPipelineScope.ELEMENT_AND_DESCENDANTS) {
+            link(elementInstances, elementTypeMap, linkSets, controller, fragment.getOut(), startId,
+                    controllerSplitDepth);
+        }
 
         return new MidPipeline(recordDetector, elementInstances);
+    }
+
+    /**
+     * How much of the pipeline below the start element a {@link #createFrom} build runs.
+     */
+    public enum MidPipelineScope {
+        /**
+         * The start element and every element below it, linked and run as one chain - the shape used when an
+         * edit is reprocessed as a single unit.
+         */
+        ELEMENT_AND_DESCENDANTS,
+        /**
+         * Only the start element. Its output is captured but goes no further; anything below it is a separate
+         * build that consumes this element's captured records from the store.
+         */
+        ELEMENT_ONLY
     }
 
     /**

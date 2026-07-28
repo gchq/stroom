@@ -160,17 +160,25 @@ public class StepDataStore {
         putRecord(location, elements, null);
     }
 
-    /**
-     * Atomically persist all of a record's per-element IO plus its shared-scope state snapshot (the
-     * per-record {@link SourceLocation}). Everything is serialised and validated (size/byte caps, contiguous
-     * ordering) BEFORE anything is written, so a rejected record leaves the store untouched. The source
-     * location snapshot is written to a per-part state file that carries no fingerprint (source location is
-     * an upstream property, unchanged by a downstream edit); on a re-sweep after an edit its records are
-     * already present and are skipped, exactly as the unchanged element files are.
-     */
     public synchronized void putRecord(final StepLocation location,
                                        final List<ElementRecord> elements,
                                        final SourceLocation sourceLocation) {
+        putRecord(location, elements, sourceLocation, null);
+    }
+
+    /**
+     * Atomically persist all of a record's per-element IO plus its shared-scope state snapshot (the
+     * per-record {@link SourceLocation} and {@code stroom:put} map - see {@link RecordScopeState}).
+     * Everything is serialised and validated (size/byte caps, contiguous ordering) BEFORE anything is
+     * written, so a rejected record leaves the store untouched. The snapshot is written to a per-part state
+     * file that carries no fingerprint, because shared scope state is a property of the run rather than of
+     * one element's config; on a re-sweep after an edit its records are already present and are skipped,
+     * exactly as the unchanged element files are.
+     */
+    public synchronized void putRecord(final StepLocation location,
+                                       final List<ElementRecord> elements,
+                                       final SourceLocation sourceLocation,
+                                       final Map<String, String> scopeMap) {
         checkNotDeleted();
         if (elements == null || elements.isEmpty()) {
             return;
@@ -221,9 +229,11 @@ public class StepDataStore {
             prepared.add(new PreparedWrite(key, element.elementId(), element.fingerprint(), bytes));
         }
 
-        // Prepare the shared-scope state snapshot (source location) for this record. It is always framed - an
-        // absent snapshot still occupies a segment - so the state file stays index-aligned with the record
-        // stream. Skipped when the record is already present, i.e. on a re-sweep after an edit.
+        // Prepare the shared-scope state snapshot (source location + stroom:put map) for this record. It is
+        // always framed - an absent snapshot still occupies a segment - so the state file stays index-aligned
+        // with the record stream. Skipped when the record is already present, i.e. on a re-sweep after an
+        // edit; the retained snapshot is the one the full sweep took, which is what a reprocess needs since
+        // it is the state as produced by the elements it is not re-running.
         byte[] stateBytes = null;
         final ElementSegmentFile existingState = partStateFiles.get(location.getPartIndex());
         if (existingState == null || !existingState.contains(recordIndex)) {
@@ -235,7 +245,7 @@ public class StepDataStore {
                             location.getPartIndex(), expected, recordIndex));
                 }
             }
-            stateBytes = SourceLocationSerializer.toBytes(sourceLocation);
+            stateBytes = RecordScopeStateSerializer.toBytes(new RecordScopeState(sourceLocation, scopeMap));
             batchBytes += stateBytes.length;
         }
 
@@ -301,12 +311,31 @@ public class StepDataStore {
      * {@code (metaId, part, record)} coordinates come from the step location, not from here.
      */
     public synchronized Optional<SourceLocation> getSourceLocation(final StepLocation location) {
+        return getRecordScopeState(location).map(RecordScopeState::sourceLocation);
+    }
+
+    /**
+     * Read back the {@code stroom:put} map as it stood at the end of one record, or an empty map if the
+     * record is unknown or put nothing. A reprocess restores this before replaying the record so that a
+     * {@code stroom:get} below the edit still sees what the elements above it put.
+     */
+    public synchronized Map<String, String> getScopeMap(final StepLocation location) {
+        return getRecordScopeState(location)
+                .map(RecordScopeState::scopeMap)
+                .orElse(Map.of());
+    }
+
+    /**
+     * Read back the whole shared-scope snapshot for one record, or empty if none is available (part unknown,
+     * or the record has not been written yet).
+     */
+    public synchronized Optional<RecordScopeState> getRecordScopeState(final StepLocation location) {
         checkNotDeleted();
         final ElementSegmentFile file = partStateFiles.get(location.getPartIndex());
         if (file == null || !file.contains(location.getRecordIndex())) {
             return Optional.empty();
         }
-        return Optional.ofNullable(SourceLocationSerializer.fromBytes(file.read(location.getRecordIndex())));
+        return Optional.ofNullable(RecordScopeStateSerializer.fromBytes(file.read(location.getRecordIndex())));
     }
 
     /**

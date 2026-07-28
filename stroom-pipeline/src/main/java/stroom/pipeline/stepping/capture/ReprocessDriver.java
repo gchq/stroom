@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping.capture;
 
+import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docstore.shared.DocRefUtil;
@@ -31,6 +32,7 @@ import stroom.pipeline.factory.PipelineDataHolder;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.factory.PipelineFactory.MidPipeline;
+import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
@@ -48,6 +50,7 @@ import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.xml.event.SaxEventReader;
+import stroom.pipeline.xsltfunctions.TaskScopeMap;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
@@ -57,6 +60,8 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
+
+import java.io.IOException;
 
 /**
  * Re-runs an edited element and its downstream from <b>stored upstream output</b> (SAX events) rather than
@@ -91,6 +96,7 @@ public class ReprocessDriver {
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final PipelineContext pipelineContext;
     private final SecurityContext securityContext;
+    private final TaskScopeMap taskScopeMap;
 
     private TaskContext taskContext;
     private LoggingErrorReceiver loggingErrorReceiver;
@@ -110,7 +116,8 @@ public class ReprocessDriver {
                     final ErrorReceiverProxy errorReceiverProxy,
                     final PipelineDataHolderFactory pipelineDataHolderFactory,
                     final PipelineContext pipelineContext,
-                    final SecurityContext securityContext) {
+                    final SecurityContext securityContext,
+                    final TaskScopeMap taskScopeMap) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
@@ -126,6 +133,7 @@ public class ReprocessDriver {
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.pipelineContext = pipelineContext;
         this.securityContext = securityContext;
+        this.taskScopeMap = taskScopeMap;
     }
 
     /**
@@ -143,7 +151,8 @@ public class ReprocessDriver {
                           final String feedElementId,
                           final StepDataStore sourceStore,
                           final StreamSweep targetSweep,
-                          final ElementFingerprints fingerprints) {
+                          final ElementFingerprints fingerprints,
+                          final MidPipelineScope scope) {
         this.taskContext = taskContext;
         targetSweep.setTaskContext(taskContext);
         if (targetSweep.isTerminateRequested()) {
@@ -166,7 +175,7 @@ public class ReprocessDriver {
 
                         try {
                             reprocessStream(request, metaId, startElementId, feedElementId, sourceStore,
-                                    fingerprints);
+                                    fingerprints, scope);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
                             targetSweep.markError(e);
@@ -194,46 +203,70 @@ public class ReprocessDriver {
                                  final String startElementId,
                                  final String feedElementId,
                                  final StepDataStore sourceStore,
-                                 final ElementFingerprints fingerprints) {
-        // Open the source only for its metadata (feed name) - the record data is read from the store.
-        final Meta meta;
-        final String feedName;
-        try (final Source source = streamStore.openSource(metaId)) {
-            if (source == null) {
-                throw ProcessException.create("Stream " + metaId + " is no longer available");
-            }
-            meta = source.getMeta();
-            feedName = meta.getFeedName();
+                                 final ElementFingerprints fingerprints,
+                                 final MidPipelineScope scope) {
+        final Source source;
+        try {
+            source = streamStore.openSource(metaId);
         } catch (final Exception e) {
             throw ProcessException.wrap(e);
         }
+        if (source == null) {
+            throw ProcessException.create("Stream " + metaId + " is no longer available");
+        }
 
-        controller.setStreamInfo("id=" + metaId + ", feed=" + feedName);
-        metaHolder.setMeta(meta);
-        metaHolder.setChildDataType(request.getChildStreamType());
+        // The source stays open for the whole reprocess. Record data comes from the store, but the pipeline
+        // still reads the stream itself for everything that is not per-record, all of it reached through
+        // metaHolder.getInputStreamProvider(): stream metadata (stroom:meta, stroom:meta-keys, via
+        // StreamMetaDataProvider) and context reference data (a stroom:lookup against the stream's own
+        // context child stream, via ReferenceData). Both degrade SILENTLY when the provider is absent - an
+        // empty attribute map, or context data that is simply never loaded - so a reprocess without this
+        // would serve quietly wrong output after an edit, which is exactly what a step is trusted to show.
+        try (source) {
+            final Meta meta = source.getMeta();
+            final String feedName = meta.getFeedName();
 
-        final MidPipeline midPipeline = buildMidPipeline(request, feedName, startElementId);
-        final Element entryElement = midPipeline.entry();
-        final ContentHandler entryHandler = (ContentHandler) entryElement;
-        final ElementId feedId = new ElementId(feedElementId);
-        // Read the feed's OUTPUT (= the start element's input) under the feed's own, unchanged fingerprint.
-        final String feedFingerprint = fingerprints.getCumulativeFingerprint(feedElementId);
+            controller.setStreamInfo("id=" + metaId + ", feed=" + feedName);
+            metaHolder.setMeta(meta);
+            metaHolder.setChildDataType(request.getChildStreamType());
 
-        final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
-        locationFactory.setLocationFactory(streamLocationFactory);
+            final MidPipeline midPipeline = buildMidPipeline(request, feedName, startElementId, scope);
+            final Element entryElement = midPipeline.entry();
+            final ContentHandler entryHandler = (ContentHandler) entryElement;
+            final ElementId feedId = new ElementId(feedElementId);
+            // Read the feed's OUTPUT (= the start element's input) under the feed's own, unchanged fingerprint.
+            final String feedFingerprint = fingerprints.getCumulativeFingerprint(feedElementId);
 
-        entryElement.startProcessing();
-        try {
-            for (final long partIndex : sourceStore.getPartIndices()) {
-                if (taskContext.isTerminated()) {
-                    break;
+            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+            locationFactory.setLocationFactory(streamLocationFactory);
+
+            final long maxPartIndex = source.count() - 1;
+            entryElement.startProcessing();
+            try {
+                for (final long partIndex : sourceStore.getPartIndices()) {
+                    if (taskContext.isTerminated()) {
+                        break;
+                    }
+                    metaHolder.setPartIndex(partIndex);
+                    streamLocationFactory.setPartIndex(partIndex);
+                    // The store's parts came from this same stream, so this holds; guarded rather than
+                    // asserted because a missing part must not cost the user the whole reprocess.
+                    if (partIndex <= maxPartIndex) {
+                        try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
+                            metaHolder.setInputStreamProvider(inputStreamProvider);
+                            fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
+                                    feedFingerprint);
+                        }
+                    } else {
+                        fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
+                                feedFingerprint);
+                    }
                 }
-                metaHolder.setPartIndex(partIndex);
-                streamLocationFactory.setPartIndex(partIndex);
-                fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId, feedFingerprint);
+            } finally {
+                entryElement.endProcessing();
             }
-        } finally {
-            entryElement.endProcessing();
+        } catch (final IOException e) {
+            throw ProcessException.wrap(e);
         }
     }
 
@@ -275,6 +308,11 @@ public class ReprocessDriver {
                 // source-parse location rather than defaults - this reprocess runs below the SplitFilter
                 // that normally populates it. Record-level; per stepping-design.md §11.
                 locationHolder.setReplayLocation(sourceStore.getSourceLocation(loc).orElse(null));
+                // Restore the stroom:put map the original sweep captured for this record. The elements above
+                // the edit are deliberately not re-run, so their stroom:put calls never happen here; without
+                // this a stroom:get below the edit would silently return nothing where the full sweep gave it
+                // a value. Anything the re-run elements put themselves overwrites this as they run.
+                taskScopeMap.restore(sourceStore.getScopeMap(loc));
                 try {
                     SaxEventReader.replay(inputEvents, entryHandler);
                 } catch (final Exception e) {
@@ -288,7 +326,8 @@ public class ReprocessDriver {
 
     private MidPipeline buildMidPipeline(final PipelineStepRequest request,
                                          final String feedName,
-                                         final String startElementId) {
+                                         final String startElementId,
+                                         final MidPipelineScope scope) {
         final PipelineDoc pipelineDoc = request.getPipelineDoc();
         feedHolder.setFeedName(feedName);
         metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
@@ -299,7 +338,7 @@ public class ReprocessDriver {
         final PipelineData pipelineData = pipelineDataHolder.getMergedPipelineData();
 
         final MidPipeline midPipeline =
-                pipelineFactory.createFrom(pipelineData, taskContext, controller, startElementId);
+                pipelineFactory.createFrom(pipelineData, taskContext, controller, startElementId, scope);
         if (controller.getRecordDetector() == null
                 || controller.getMonitors() == null
                 || controller.getMonitors().isEmpty()) {

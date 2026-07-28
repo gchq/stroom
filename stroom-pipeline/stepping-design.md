@@ -39,7 +39,8 @@ stroom.pipeline.stepping/
                                             StepDataStoreException, SteppingConfig,
                                             CapturedElementData, CapturedData,
                                             CapturedElementDataSerializer, CapturedElementDataMapper,
-                                            SourceLocationSerializer
+                                            SourceLocationSerializer, RecordScopeState,
+                                            RecordScopeStateSerializer
   capture/      the write side              StreamCaptureDriver, ReprocessDriver, StreamSweep,
                                             SteppingController, ElementMonitor, Recorder, RecordDetector,
                                             SteppingFilter
@@ -442,7 +443,10 @@ on clean shutdown.
 | `TestSteppingSessionLifecycle` | Lazy sweep (only stepped streams get a dir) and close deleting the session dir. Has its own class: its sibling shares a database, and `testTranslationTask` adds streams each run. |
 | `TestSessionStepping` | Cross-stream FORWARD/LAST agreement between `resolveSession` and `step()`. |
 | `TestChunkedCapture` | The synchronous `capture()` entry point agrees with the session path, over four feed types including a reader/text pipeline. |
-| `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction. |
+| `TestSteppingStateFixture` (stroom-app) | **That the fixtures still test anything.** Builds a probe chain and loads a stream carrying a `Meta` child stream, then asserts under a plain full sweep that `stroom:put`/`get`, `stroom:record-no`, `stroom:line-from` and `stroom:meta` all read back real values. The sample feeds exercise none of these, so without it a "reprocessed output == swept output" assertion can pass with both sides empty. Not covered: context reference data. |
+| `TestReprocessRestoresScopeState` (stroom-app) | That shared scope survives the split: an upstream `stroom:put` is still visible to a `stroom:get` below an edit, even though the reprocess never re-runs the put. Builds the two-XSLT topology it needs on an in-memory copy of the pipeline, so no sample pipeline is disturbed. Verified to fail (empty probe) with the restore removed. |
+| `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction, the per-record scope snapshot. |
+| `TestRecordScopeStateSerializer` / `TestTaskScopeMap` | The scope snapshot's framing (null/empty/awkward keys and values, >64KB) and the snapshot/restore/clear the stepping path relies on. |
 | `TestStreamSweep` | The progress signal: no lost wakeups, interrupt semantics, terminate handshake. |
 | `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour. |
 | `TestElementFingerprinter` | Sensitivity and stability — a wrong fingerprint serves stale IO or never reuses. |
@@ -537,11 +541,26 @@ rather than pay to preserve it. Two kinds, captured differently:
   `col-from`, `stroom:source` and the step-highlight. Not owned by any one element, so captured as a
   **per-stream, per-record scope snapshot** (a holder snapshot at `endRecord`), not a per-element chunk.
 
-**Dropped, on purpose:** `stroom:put`/`get` cross-record state. In stepping, `put`/`get` are scoped to the
-**current record** — `get` sees only same-record `put`s — via a stepping `TaskScopeMap` variant (or a
-per-record clear). Cross-record shared maps are not a stepping feature. `MergeFilter`-style
-accumulate-to-`endProcessing` aggregation is likewise best-effort: it has no per-record meaning and is not
-restartable mid-stream.
+- **Shared `stroom:put`/`get` map. — DONE.** `TaskScopeMap` backs `stroom:put`/`stroom:get` and is
+  `@PipelineScoped`, so on the normal path a `get` sees every `put` made earlier in the task. That does not
+  survive the split: a reprocess does not re-run the elements above the edit, so their `put`s simply never
+  happen and a `get` below the edit would silently return nothing where the full sweep gave it a value.
+  `SteppingController.endRecord` snapshots the map into the same per-record scope slot as the source location,
+  and `ReprocessDriver` restores that snapshot before replaying each record, so a `get` below the edit sees
+  what the elements above it put. Anything the re-run elements put themselves overwrites the restored value as
+  they run. Two consequences are accepted: a `get` of a key the *re-run* elements only write **later in the
+  same record** sees the previous run's value rather than nothing (a get-before-put is already a pathological
+  ordering); and because the snapshot is un-fingerprinted and skip-when-present, an edit that *removes* a
+  `put` leaves the old key visible until the session is recreated — the same best-effort trade-off the source
+  location makes.
+
+**Dropped, on purpose:** `stroom:put`/`get` **cross-record** state. In stepping, `put`/`get` are scoped to the
+**current record** — `get` sees only same-record `put`s — because `SteppingController.endRecord` clears the
+map once the record is captured. This deliberately narrows the task-wide scope normal processing gives it:
+cross-record shared state cannot survive a reprocess or the async per-element model, and behaviour that works
+only until you edit something is worse than behaviour that is consistently record-scoped. Cross-record shared
+maps are not a stepping feature. `MergeFilter`-style accumulate-to-`endProcessing` aggregation is likewise
+best-effort: it has no per-record meaning and is not restartable mid-stream.
 
 **Never fall back to a full re-run.** This reverses an earlier stance. A silent fallback to full reprocessing
 is the worst outcome, because it lets a user *unwittingly* re-introduce O(N²) stepping just by adding a
@@ -565,7 +584,9 @@ snapshot:
   keeping the resolved step's own `(metaId, part, record)` coordinates. This *adds* fidelity over the previous
   served path, which built `SourceLocation` from only `(metaId, part, record)` with no highlight — a win even
   before the split exists. The snapshot lives in a per-part, un-fingerprinted state file (`store/`:
-  `__state__.dat` via `SourceLocationSerializer`), reused across downstream edits because source location is an
+  `__state__.dat`, one `RecordScopeState` per record via `RecordScopeStateSerializer`, which frames the
+  location itself with `SourceLocationSerializer` and carries the `stroom:put` map alongside it), reused
+  across downstream edits because source location is an
   upstream property; the trade-off is that editing the *parse/split framing itself* can leave a stale highlight
   until the session is recreated (best-effort, per the philosophy above). Accept that precise **per-element**
   source line/col (what `stroom:line-from`/`col-from` report at element granularity) degrades to record-level
@@ -596,6 +617,15 @@ reads each record's stored upstream output events (the feed element's output, un
 fingerprint) and replays them into that entry, capturing the reprocessed IO. It also feeds the per-record
 `SourceLocation` back into `LocationHolder` (`setReplayLocation`) so downstream location functions stay correct
 below the split. `XsltFilter` is per-document clean, so the edited element's own pane is correct.
+
+A reprocess reads record data from the store, but it must still **open the stream** and hold it open for the
+whole run, setting `metaHolder.setInputStreamProvider` per part exactly as the capture driver does. Two things
+reach for that provider and both degrade *silently* without it: `StreamMetaDataProvider` (so `stroom:meta` and
+`stroom:meta-keys` would see an empty attribute map) and `ReferenceData` (so a `stroom:lookup` against the
+stream's own **context** child stream would quietly never load, and return nothing). Silence is the danger
+here — a step is trusted to show what really happened, so a reprocess that skipped this would serve
+convincingly wrong output after an edit. No sample feed carries stream metadata or context data, so this is
+covered by parity with `StreamCaptureDriver` rather than by a test.
 
 Because a reprocess writes into a store that already holds the reused upstream at the full record range, the
 resolver must not treat a record as ready just because the reused upstream is there: `SessionStepResolver`

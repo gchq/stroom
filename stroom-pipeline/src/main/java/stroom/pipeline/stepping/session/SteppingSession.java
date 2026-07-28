@@ -127,7 +127,7 @@ public class SteppingSession {
             // it must NOT count here - reprocessing from it would silently serve a short stream. A still
             // in-flight prior sweep was dropped by the removeIf above, so it does not count either.
             final boolean priorCompleteCapture = sweeps.values().stream()
-                    .anyMatch(existing -> existing.getMetaId() == metaId && existing.isSuccessfullyCaptured());
+                    .anyMatch(prior -> prior.getMetaId() == metaId && prior.isSuccessfullyCaptured());
             final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorCompleteCapture);
             sweeps.put(key, sweep);
             return sweep;

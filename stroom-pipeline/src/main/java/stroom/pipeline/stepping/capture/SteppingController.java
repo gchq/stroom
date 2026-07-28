@@ -26,6 +26,7 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.StepDataStore;
+import stroom.pipeline.xsltfunctions.TaskScopeMap;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -72,6 +73,7 @@ public class SteppingController {
     private final MetaHolder metaHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationHolder locationHolder;
+    private final TaskScopeMap taskScopeMap;
 
     private String streamInfo;
     private PipelineStepRequest request;
@@ -89,10 +91,12 @@ public class SteppingController {
     @Inject
     SteppingController(final MetaHolder metaHolder,
                        final ErrorReceiverProxy errorReceiverProxy,
-                       final LocationHolder locationHolder) {
+                       final LocationHolder locationHolder,
+                       final TaskScopeMap taskScopeMap) {
         this.metaHolder = metaHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationHolder = locationHolder;
+        this.taskScopeMap = taskScopeMap;
     }
 
     public void registerMonitor(final ElementMonitor monitor) {
@@ -194,6 +198,15 @@ public class SteppingController {
         captureRecord(progressLocation, highlight, sourceLocation);
         clearAllFilters(highlight);
 
+        // Scope stroom:put/get to the record, so a get only ever sees puts from the record being stepped.
+        // Stepping deliberately narrows this from the task-wide scope normal processing gives it: cross-record
+        // shared state cannot survive a reprocess (which does not re-run the elements above the edit) or the
+        // async per-element model this is heading for, and behaviour that works only until you edit something
+        // is worse than behaviour that is consistently record-scoped. See stepping-design.md §11.
+        if (taskScopeMap != null) {
+            taskScopeMap.clear();
+        }
+
         // Never terminate. A capture runs to the end of the stream, and the requested step - including
         // which records match the filters - is decided later by reading the store back, not here.
         return false;
@@ -220,9 +233,11 @@ public class SteppingController {
                         monitor.getCapturedElementData(errorReceiver, highlight)));
             }
         }
-        // Commit the whole record - element IO plus the source-location snapshot - atomically, then signal
-        // that it is available.
-        stepDataStore.putRecord(location, records, sourceLocation);
+        // Commit the whole record - element IO plus the shared-scope snapshot - atomically, then signal that
+        // it is available. The scope map is snapshotted here, after every element of the record has run, so a
+        // reprocess of a mid-pipeline element can be given what the elements above it put.
+        stepDataStore.putRecord(location, records, sourceLocation,
+                taskScopeMap == null ? null : taskScopeMap.snapshot());
         if (recordListener != null) {
             recordListener.accept(location);
         }

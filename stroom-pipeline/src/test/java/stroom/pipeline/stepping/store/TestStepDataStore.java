@@ -28,6 +28,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,6 +132,55 @@ class TestStepDataStore {
 
         assertThatThrownBy(() -> store.getSourceLocation(loc(0, 0)))
                 .isInstanceOf(StepDataStoreException.class);
+    }
+
+    @Test
+    void testScopeMapRoundTripAndRandomAccess(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 3; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "out" + r)), sourceLocation(r, 10 + r),
+                    Map.of("user", "user" + r));
+        }
+
+        assertThat(store.getScopeMap(loc(0, 2))).containsExactlyEntriesOf(Map.of("user", "user2"));
+        assertThat(store.getScopeMap(loc(0, 0))).containsExactlyEntriesOf(Map.of("user", "user0"));
+        // Both halves of the snapshot share a segment, so neither may disturb the other.
+        assertThat(store.getSourceLocation(loc(0, 2)).orElseThrow()
+                .getFirstHighlight().getLocationFrom().getLineNo()).isEqualTo(12);
+        // A record that was never written has no scope map rather than a null one.
+        assertThat(store.getScopeMap(loc(0, 5))).isEmpty();
+    }
+
+    @Test
+    void testAbsentScopeMapReadsBackEmpty(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putRecord(loc(0, 0), List.of(rec(E1, FP_A, "out")), sourceLocation(0, 10));
+
+        assertThat(store.getScopeMap(loc(0, 0))).isEmpty();
+        assertThat(store.getSourceLocation(loc(0, 0))).isPresent();
+    }
+
+    @Test
+    void testScopeMapPreservedOnResweep(@TempDir final Path tempDir) {
+        // The snapshot a reprocess needs is the one the FULL sweep took, because it holds the puts made by
+        // the elements the reprocess is not re-running. A re-sweep after an edit must therefore leave it
+        // alone, exactly as it leaves the unchanged element files alone.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 3; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "out" + r)), sourceLocation(r, 10),
+                    Map.of("upstream", "swept" + r));
+        }
+
+        for (int r = 0; r < 3; r++) {
+            store.putRecord(loc(0, r),
+                    List.of(rec(E1, FP_A, "out" + r), rec(E2, FP_B, "edited" + r)),
+                    sourceLocation(r, 999),
+                    Map.of("upstream", "overwritten"));
+        }
+
+        assertThat(store.getScopeMap(loc(0, 1))).containsExactlyEntriesOf(Map.of("upstream", "swept1"));
+        assertThat(store.getElementData(loc(0, 1), E2, FP_B)).map(CapturedElementData::outputText)
+                .contains("edited1");
     }
 
     @Test

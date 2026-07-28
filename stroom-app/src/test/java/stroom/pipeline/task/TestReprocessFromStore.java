@@ -26,6 +26,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.stepping.SteppingService.SteppingCaptureResult;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,6 +115,7 @@ class TestReprocessFromStore extends TranslationTest {
         // Full sweep of that whole stream.
         final SteppingCaptureResult sweep = steppingService.capture(request, metaId);
         SteppingCaptureResult reprocess = null;
+        SteppingCaptureResult elementOnly = null;
         try {
             final StepDataStore sourceStore = sweep.store();
             final ElementFingerprints fingerprints = sweep.fingerprints();
@@ -124,38 +127,73 @@ class TestReprocessFromStore extends TranslationTest {
                     .as(FEED_ELEMENT_ID + " is a fingerprinted element").isNotNull();
             reprocess = steppingService.reprocess(
                     request, metaId, START_ELEMENT_ID, FEED_ELEMENT_ID, sourceStore, fingerprints);
-            final StepDataStore targetStore = reprocess.store();
+            assertReprocessedOutputMatchesSweep(metaId, sourceStore, reprocess.store(), fingerprint);
 
-            final ElementId startId = new ElementId(START_ELEMENT_ID);
-            int comparedRecords = 0;
-            for (final long partIndex : sourceStore.getPartIndices()) {
-                final long firstRec = sourceStore.getFirstRecordIndex(partIndex);
-                final long lastRec = sourceStore.getLastRecordIndex(partIndex);
-                for (long r = firstRec; r <= lastRec; r++) {
-                    final StepLocation loc = new StepLocation(metaId, partIndex, r);
-                    final CapturedElementData swept =
-                            sourceStore.getElementData(loc, startId, fingerprint).orElse(null);
-                    final CapturedElementData reran =
-                            targetStore.getElementData(loc, startId, fingerprint).orElse(null);
-                    assertThat(swept).as("swept " + START_ELEMENT_ID + " at " + loc).isNotNull();
-                    assertThat(reran).as("reprocessed " + START_ELEMENT_ID + " at " + loc).isNotNull();
+            // The same element re-run ON ITS OWN - nothing below it linked - must produce the same output.
+            // That is what makes an element a unit that can be run, and restarted, independently of the rest
+            // of the pipeline.
+            elementOnly = steppingService.reprocess(
+                    request, metaId, START_ELEMENT_ID, FEED_ELEMENT_ID, sourceStore, fingerprints,
+                    MidPipelineScope.ELEMENT_ONLY);
+            assertReprocessedOutputMatchesSweep(metaId, sourceStore, elementOnly.store(), fingerprint);
 
-                    // The load-bearing check: the reprocessed output events are byte-identical to the sweep's.
-                    assertThat(reran.output()).as("output present at " + loc).isNotNull();
-                    assertThat(swept.output()).as("swept output present at " + loc).isNotNull();
-                    assertThat(Arrays.equals(reran.output().data(), swept.output().data()))
-                            .as("reprocessed output == swept output at " + loc)
-                            .isTrue();
-                    assertThat(reran.hasOutput()).isEqualTo(swept.hasOutput());
-                    comparedRecords++;
-                }
-            }
-            assertThat(comparedRecords).as("some records were compared").isGreaterThan(0);
+            // ...and it really did run alone: only the start element was captured. Guarded against being
+            // vacuous - if the sweep had captured nothing below the start element there would be nothing for
+            // ELEMENT_ONLY to leave out, and this would pass without testing anything.
+            final Set<String> sweptElements = sourceStore.getCapturedElementIds();
+            final Set<String> subtreeElements = reprocess.store().getCapturedElementIds();
+            assertThat(subtreeElements)
+                    .as("the whole-subtree reprocess captured more than just the start element")
+                    .hasSizeGreaterThan(1);
+            assertThat(sweptElements)
+                    .as("the sweep captured elements below the start element")
+                    .hasSizeGreaterThan(1);
+            assertThat(elementOnly.store().getCapturedElementIds())
+                    .as("ELEMENT_ONLY captured the start element and nothing else")
+                    .containsExactly(START_ELEMENT_ID);
         } finally {
             steppingService.deleteCaptureSession(sweep.sessionId());
             if (reprocess != null) {
                 steppingService.deleteCaptureSession(reprocess.sessionId());
             }
+            if (elementOnly != null) {
+                steppingService.deleteCaptureSession(elementOnly.sessionId());
+            }
         }
+    }
+
+    /**
+     * Assert the start element's captured output in {@code targetStore} is byte-identical to the sweep's, for
+     * every record the sweep captured.
+     */
+    private void assertReprocessedOutputMatchesSweep(final long metaId,
+                                                     final StepDataStore sourceStore,
+                                                     final StepDataStore targetStore,
+                                                     final String fingerprint) {
+        final ElementId startId = new ElementId(START_ELEMENT_ID);
+        int comparedRecords = 0;
+        for (final long partIndex : sourceStore.getPartIndices()) {
+            final long firstRec = sourceStore.getFirstRecordIndex(partIndex);
+            final long lastRec = sourceStore.getLastRecordIndex(partIndex);
+            for (long r = firstRec; r <= lastRec; r++) {
+                final StepLocation loc = new StepLocation(metaId, partIndex, r);
+                final CapturedElementData swept =
+                        sourceStore.getElementData(loc, startId, fingerprint).orElse(null);
+                final CapturedElementData reran =
+                        targetStore.getElementData(loc, startId, fingerprint).orElse(null);
+                assertThat(swept).as("swept " + START_ELEMENT_ID + " at " + loc).isNotNull();
+                assertThat(reran).as("reprocessed " + START_ELEMENT_ID + " at " + loc).isNotNull();
+
+                // The load-bearing check: the reprocessed output events are byte-identical to the sweep's.
+                assertThat(reran.output()).as("output present at " + loc).isNotNull();
+                assertThat(swept.output()).as("swept output present at " + loc).isNotNull();
+                assertThat(Arrays.equals(reran.output().data(), swept.output().data()))
+                        .as("reprocessed output == swept output at " + loc)
+                        .isTrue();
+                assertThat(reran.hasOutput()).isEqualTo(swept.hasOutput());
+                comparedRecords++;
+            }
+        }
+        assertThat(comparedRecords).as("some records were compared").isGreaterThan(0);
     }
 }

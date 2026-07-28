@@ -20,6 +20,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
+import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
@@ -180,6 +181,22 @@ public class SteppingService {
                                            final String feedElementId,
                                            final StepDataStore sourceStore,
                                            final ElementFingerprints fingerprints) {
+        return reprocess(request, metaId, startElementId, feedElementId, sourceStore, fingerprints,
+                MidPipelineScope.ELEMENT_AND_DESCENDANTS);
+    }
+
+    /**
+     * As {@link #reprocess(PipelineStepRequest, long, String, String, StepDataStore, ElementFingerprints)},
+     * but with control over how much of the pipeline below the start element is re-run - {@code ELEMENT_ONLY}
+     * runs just that element, which is how a per-element stage runs.
+     */
+    public SteppingCaptureResult reprocess(final PipelineStepRequest request,
+                                           final long metaId,
+                                           final String startElementId,
+                                           final String feedElementId,
+                                           final StepDataStore sourceStore,
+                                           final ElementFingerprints fingerprints,
+                                           final MidPipelineScope scope) {
         final String sessionId = UUID.randomUUID().toString();
         try {
             final StepDataStore targetStore = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
@@ -189,7 +206,8 @@ public class SteppingService {
                 CompletableFuture
                         .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
                                 reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
-                                        startElementId, feedElementId, sourceStore, sweep, fingerprints)), executor)
+                                        startElementId, feedElementId, sourceStore, sweep, fingerprints,
+                                        scope)), executor)
                         .whenComplete((unused, t) -> {
                             if (t != null) {
                                 sweep.markError(t);
@@ -358,7 +376,8 @@ public class SteppingService {
             CompletableFuture
                     .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
                             reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
-                                    startElementId, feedElementId, store, sweep, fingerprints)), executor)
+                                    startElementId, feedElementId, store, sweep, fingerprints,
+                                    MidPipelineScope.ELEMENT_AND_DESCENDANTS)), executor)
                     .whenComplete((unused, t) -> {
                         if (t != null) {
                             sweep.markError(t);

@@ -31,6 +31,7 @@ import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,17 +67,7 @@ public class StoreStepResolver {
                                           final long metaId,
                                           final ElementFingerprints fingerprints,
                                           final PipelineStepRequest request) {
-        return resolve(store, metaId, fingerprints, request, new CapturedRange() {
-            @Override
-            public long first(final long partIndex) {
-                return store.getFirstRecordIndex(partIndex);
-            }
-
-            @Override
-            public long last(final long partIndex) {
-                return store.getLastRecordIndex(partIndex);
-            }
-        });
+        return resolve(store, metaId, fingerprints, request, CapturedRange.of(store));
     }
 
     /**
@@ -140,15 +131,88 @@ public class StoreStepResolver {
      */
     public interface CapturedRange {
 
+        long NONE = -1;
+
         /**
-         * @return the first captured record index for the part, or -1 if none.
+         * @return the first captured record index for the part, or {@link #NONE} if none.
          */
         long first(long partIndex);
 
         /**
-         * @return the last captured record index for the part, or -1 if none.
+         * @return the last captured record index for the part, or {@link #NONE} if none.
          */
         long last(long partIndex);
+
+        /**
+         * The whole store's range. Correct while a single producer writes every element of a record together,
+         * which is what a full sweep does.
+         */
+        static CapturedRange of(final StepDataStore store) {
+            return new CapturedRange() {
+                @Override
+                public long first(final long partIndex) {
+                    return store.getFirstRecordIndex(partIndex);
+                }
+
+                @Override
+                public long last(final long partIndex) {
+                    return store.getLastRecordIndex(partIndex);
+                }
+            };
+        }
+
+        /**
+         * The range every one of {@code ranges} has reached: {@code first} is the highest of their firsts and
+         * {@code last} the lowest of their lasts.
+         * <p>
+         * Once elements are captured by independent producers they sit at different positions, and a step has
+         * to show <b>all</b> of a record's elements at once - a record that only some of them have reached
+         * would be served with the rest of its panes silently blank. So the servable range is the intersection,
+         * and a step aimed past it waits rather than resolving. If any contributor has captured nothing for a
+         * part, or their ranges do not overlap, the part has nothing servable at all.
+         * <p>
+         * An empty collection yields an empty range for the same reason: nothing has been captured, so there
+         * is nothing to serve.
+         */
+        static CapturedRange intersectionOf(final Collection<? extends CapturedRange> ranges) {
+            final List<CapturedRange> contributors = List.copyOf(ranges);
+            return new CapturedRange() {
+                @Override
+                public long first(final long partIndex) {
+                    return intersect(contributors, partIndex)[0];
+                }
+
+                @Override
+                public long last(final long partIndex) {
+                    return intersect(contributors, partIndex)[1];
+                }
+            };
+        }
+
+        /**
+         * @return {@code [first, last]}, or {@code [NONE, NONE]} if any contributor has nothing for this part
+         * or the ranges do not overlap. Recomputed per call rather than cached: the contributors are live
+         * producers, and a stale range would either hide records that have arrived or, worse, admit ones that
+         * have not.
+         */
+        private static long[] intersect(final List<CapturedRange> contributors, final long partIndex) {
+            final long[] none = {NONE, NONE};
+            if (contributors.isEmpty()) {
+                return none;
+            }
+            long first = Long.MIN_VALUE;
+            long last = Long.MAX_VALUE;
+            for (final CapturedRange range : contributors) {
+                final long rangeFirst = range.first(partIndex);
+                final long rangeLast = range.last(partIndex);
+                if (rangeFirst < 0 || rangeLast < 0) {
+                    return none;
+                }
+                first = Math.max(first, rangeFirst);
+                last = Math.min(last, rangeLast);
+            }
+            return first > last ? none : new long[]{first, last};
+        }
     }
 
     // --- scanning -------------------------------------------------------------------------------
