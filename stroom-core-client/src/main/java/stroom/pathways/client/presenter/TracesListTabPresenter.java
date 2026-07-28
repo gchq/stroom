@@ -68,7 +68,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
-        traceOverviewWidget = new TraceOverviewWidget(resources);
+        traceOverviewWidget = new TraceOverviewWidget(this, resources);
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);

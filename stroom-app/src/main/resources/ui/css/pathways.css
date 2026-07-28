@@ -442,10 +442,20 @@
 .span-info-attr {
     margin: 3px 0;
     word-break: break-all;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.span-info-row .docRefLinkContainer,
+.span-info-attr .docRefLinkContainer {
+    min-width: 0;
+    flex: 1;
 }
 
 .span-info-key {
     color: #9aa0a6;
+    flex-shrink: 0;
 }
 
 .span-info-section {
@@ -512,8 +522,19 @@
     margin-right: 8px;
 }
 
+.operation-content .docRefLinkContainer {
+    flex: 1;
+    min-width: 0;
+}
+
+.operation-content .docRefLinkText {
+    min-width: 0;
+    overflow: hidden;
+}
+
 .operation-name {
     color: #b0b0b0;
+    display: block;
     flex: 1;
     min-width: 0;              /* allow the flex item to shrink below its content width */
     overflow: hidden;

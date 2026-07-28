@@ -18,11 +18,13 @@ package stroom.pathways.client.presenter;
 
 import stroom.dashboard.client.table.TableCollapseButton;
 import stroom.dashboard.client.table.TableExpandButton;
+import stroom.data.client.presenter.CopyTextUtil;
 import stroom.data.grid.client.DefaultResources;
 import stroom.data.grid.client.Glass;
 import stroom.data.pager.client.Pager;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;
+import stroom.pathways.shared.otel.trace.AnyValue;
 import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.NanoTime;
@@ -40,6 +42,7 @@ import stroom.util.shared.StringUtil;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -49,6 +52,7 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -73,6 +77,7 @@ import java.util.function.Consumer;
 public class TraceOverviewWidget extends Composite implements TaskMonitorFactory {
 
     private final HTML panel = new HTML();
+    private final HasHandlers hasHandlers;
     private Trace trace;
     /** Lookup of spanId -&gt; Span for resolving clicks on span rows. */
     private final Map<String, Span> spanById = new HashMap<>();
@@ -153,7 +158,8 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                    Consumer<TraceSpanPage> onLoaded);
     }
 
-    public TraceOverviewWidget(final DefaultResources resources) {
+    public TraceOverviewWidget(final HasHandlers hasHandlers, final DefaultResources resources) {
+        this.hasHandlers = hasHandlers;
         // A vertical stack: the pager bar (top, right-aligned, above the timeline) then the trace content.
         final FlowPanel root = new FlowPanel();
         root.addStyleName("trace-overview-root");
@@ -197,6 +203,15 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         panel.addMouseDownHandler(e -> {
 
             final Element element = e.getNativeEvent().getEventTarget().cast();
+            if (ElementUtil.findParent(element, "docRefLinkContainer", 5) != null) {
+                CopyTextUtil.onClick(e.getNativeEvent(), hasHandlers);
+                // Only the copy icon (or a right-click menu) consumes the event; a plain click on the value
+                // text still falls through, so clicking an operation name opens the Span Info panel.
+                if (ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5) != null
+                        || !MouseUtil.isPrimary(e.getNativeEvent())) {
+                    return;
+                }
+            }
             if ("startSlider".equals(element.getId())) {
                 startX = e.getClientX();
                 offsetX = startX - element.getAbsoluteLeft() - 4;
@@ -999,9 +1014,10 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         // Indent the whole content row (expander + name) by depth so they stay aligned.
         hb.div(c -> {
             appendExpander(c, span, depth, hasChildren);
-            c.span(span.getName(),
-                    Attribute.className("operation-name"),
-                    Attribute.title(span.getName()));
+            final String name = span.getName() == null ? "" : span.getName();
+            final HtmlBuilder nameHtml = new HtmlBuilder();
+            nameHtml.span(name, Attribute.className("operation-name"), Attribute.title(name));
+            CopyTextUtil.render(name, nameHtml.toSafeHtml(), c, false);
         }, Attribute.className("operation-content"),
                 Attribute.style("padding-left: " + (depth * 30) + "px;"));
     }
@@ -1226,12 +1242,10 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                 if (attributes != null && !attributes.isEmpty()) {
                     body.div("Attributes", Attribute.className("span-info-section"));
                     attributes.forEach(attr -> {
-                        final String value = attr.getValue() == null
-                                ? ""
-                                : attr.getValue().toString();
+                        final String value = rawValue(attr.getValue());
                         body.div(row -> {
                             row.span(attr.getKey() + ": ", Attribute.className("span-info-key"));
-                            row.span(value);
+                            CopyTextUtil.render(value, row, false);
                         }, Attribute.className("span-info-attr"));
                     });
                 }
@@ -1244,8 +1258,18 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     private void appendInfoRow(final HtmlBuilder hb, final String key, final String value) {
         hb.div(row -> {
             row.span(key + ": ", Attribute.className("span-info-key"));
-            row.span(value == null ? "" : value);
+            CopyTextUtil.render(value, row, false);
         }, Attribute.className("span-info-row"));
+    }
+
+    // Raw string for string values (toString() would add surrounding quotes, which CopyTextUtil would copy).
+    private static String rawValue(final AnyValue value) {
+        if (value == null) {
+            return "";
+        }
+        return value.getStringValue() != null
+                ? value.getStringValue()
+                : value.toString();
     }
 
     private static String formatTime(final NanoTime time) {
