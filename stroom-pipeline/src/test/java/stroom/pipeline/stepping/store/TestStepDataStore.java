@@ -135,6 +135,59 @@ class TestStepDataStore {
     }
 
     @Test
+    void testCompletenessIsNotTheSameAsPresence(@TempDir final Path tempDir) {
+        // The distinction the reuse plan turns on. A sweep either captured a stream or it did not, so
+        // presence used to be a fair proxy for reusable; once records are materialised one at a time an
+        // element is present long before it is reusable, and treating it as reusable makes the planner
+        // decide there is nothing left to reprocess.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 4; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "swept" + r)));
+        }
+        // E2 has one record materialised out of the four the stream has.
+        store.putRecord(loc(0, 2), List.of(rec(E2, FP_B, "materialised")), null, null,
+                StepDataStore.RecordOrder.ON_DEMAND);
+
+        assertThat(store.hasElement(E2, FP_B)).as("something is stored for it").isTrue();
+        assertThat(store.hasCompleteElement(E2, FP_B)).as("but it is not reusable").isFalse();
+        assertThat(store.hasCompleteElement(E1, FP_A)).as("the swept element is").isTrue();
+        assertThat(store.hasCompleteElement(E1, FP_C)).as("an absent fingerprint is not").isFalse();
+    }
+
+    @Test
+    void testContiguousMaterialisationIsStillIncomplete(@TempDir final Path tempDir) {
+        // The trap: records 0 and 1 materialised are contiguous, so the element's own span matches its own
+        // count. Completeness has to be measured against the STREAM's range, not the element's.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 5; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "swept" + r)));
+        }
+        store.putRecord(loc(0, 0), List.of(rec(E2, FP_B, "m0")), null, null,
+                StepDataStore.RecordOrder.ON_DEMAND);
+        store.putRecord(loc(0, 1), List.of(rec(E2, FP_B, "m1")), null, null,
+                StepDataStore.RecordOrder.ON_DEMAND);
+
+        assertThat(store.hasCompleteElement(E2, FP_B))
+                .as("two contiguous records out of five is not the whole stream").isFalse();
+    }
+
+    @Test
+    void testAnElementMissingFromAPartIsIncomplete(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putRecord(loc(0, 0), List.of(rec(E1, FP_A, "p0"), rec(E2, FP_B, "p0")));
+        store.putRecord(loc(1, 0), List.of(rec(E1, FP_A, "p1")));
+
+        assertThat(store.hasCompleteElement(E1, FP_A)).as("present in both parts").isTrue();
+        assertThat(store.hasCompleteElement(E2, FP_B)).as("absent from the second part").isFalse();
+    }
+
+    @Test
+    void testAnEmptyStoreHasNoCompleteElements(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        assertThat(store.hasCompleteElement(E1, FP_A)).isFalse();
+    }
+
+    @Test
     void testOnDemandWritesNeedNotBeInOrder(@TempDir final Path tempDir) {
         // Materialising the record the user is looking at means writing one record, deep into the stream,
         // into an otherwise empty file - and later another, with nothing in between.

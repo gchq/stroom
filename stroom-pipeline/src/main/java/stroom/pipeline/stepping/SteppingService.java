@@ -375,15 +375,70 @@ public class SteppingService {
      */
     private StepLocation onDemandTargetFor(final PipelineStepRequest request,
                                            final Graph graph,
-                                           final Decision decision) {
-        final StepLocation target = request.getStepLocation();
-        if (target == null || request.getStepType() != StepType.REFRESH) {
-            // Only a REFRESH names the record it is about. FIRST/FORWARD/BACKWARD/LAST have to work theirs
-            // out, and doing so needs the planner to tell a partially materialised element from a fully
-            // captured one - see stepping-design.md §11. Until then they reprocess the stream as before.
+                                           final Decision decision,
+                                           final StepDataStore store,
+                                           final long metaId) {
+        if (isFilteredAtOrBelow(request, graph, decision.startElementId())) {
             return null;
         }
-        return isFilteredAtOrBelow(request, graph, decision.startElementId()) ? null : target;
+        final StepType stepType = request.getStepType();
+        final StepLocation ref = request.getStepLocation();
+        if (stepType == StepType.REFRESH) {
+            return ref;
+        }
+
+        // Navigating rather than refreshing: the record wanted is not named, it has to be worked out. That
+        // is only simple arithmetic while nothing is filtered - a filter makes "the next record" mean "the
+        // next one that matches", which cannot be known without running records to find out. Any filter at
+        // all, even above the edit, therefore falls back to reprocessing the stream.
+        if (isAnyFilterApplied(request)) {
+            return null;
+        }
+        final List<Long> parts = store.getPartIndices();
+        if (parts.isEmpty()) {
+            return null;
+        }
+        return switch (stepType) {
+            case FIRST -> locationIn(metaId, store, parts.getFirst(), true);
+            case LAST -> locationIn(metaId, store, parts.getLast(), false);
+            case FORWARD, BACKWARD -> neighbourOf(metaId, store, ref, stepType == StepType.FORWARD);
+            default -> null;
+        };
+    }
+
+    private StepLocation locationIn(final long metaId,
+                                    final StepDataStore store,
+                                    final long partIndex,
+                                    final boolean first) {
+        final long record = first
+                ? store.getFirstRecordIndex(partIndex)
+                : store.getLastRecordIndex(partIndex);
+        return record < 0 ? null : new StepLocation(metaId, partIndex, record);
+    }
+
+    /**
+     * @return the record either side of {@code ref} within its own part, or null at a part boundary. Falling
+     * back there is deliberate: stepping across parts or streams is the resolver's job, and it needs the
+     * whole-stream path to do it.
+     */
+    private StepLocation neighbourOf(final long metaId,
+                                     final StepDataStore store,
+                                     final StepLocation ref,
+                                     final boolean forward) {
+        if (ref == null || ref.getMetaId() != metaId) {
+            return null;
+        }
+        final long part = ref.getPartIndex();
+        final long candidate = ref.getRecordIndex() + (forward ? 1 : -1);
+        return candidate >= store.getFirstRecordIndex(part) && candidate <= store.getLastRecordIndex(part)
+                ? new StepLocation(metaId, part, candidate)
+                : null;
+    }
+
+    private boolean isAnyFilterApplied(final PipelineStepRequest request) {
+        return request.getStepFilterMap() != null
+               && request.getStepFilterMap().values().stream()
+                       .anyMatch(settings -> settings != null && settings.isFilterApplied());
     }
 
     private boolean isFilteredAtOrBelow(final PipelineStepRequest request,
@@ -426,7 +481,7 @@ public class SteppingService {
                         reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints);
                 if (!decision.fullSweep()) {
                     reprocessLaunches.incrementAndGet();
-                    final StepLocation target = onDemandTargetFor(request, graph, decision);
+                    final StepLocation target = onDemandTargetFor(request, graph, decision, store, metaId);
                     return launchReprocess(request, metaId, decision.startElementId(),
                             decision.feedElementId(), store, fingerprints, target);
                 }

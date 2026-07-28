@@ -62,9 +62,12 @@ public class StagePlanner {
 
         for (final PlannerElement element : elements) {
             final String fingerprint = current.getCumulativeFingerprint(element.id());
-            final boolean present = fingerprint != null
-                    && store.hasElement(new ElementId(element.id()), fingerprint);
-            if (present) {
+            // Reusable means the element holds the WHOLE stream at this fingerprint, not merely something.
+            // An element whose records are materialised on demand accumulates chunks as the user steps about,
+            // and treating those as reuse would make the planner decide there is nothing left to reprocess.
+            final boolean reusable = fingerprint != null
+                    && store.hasCompleteElement(new ElementId(element.id()), fingerprint);
+            if (reusable) {
                 reuse.add(element.id());
             } else {
                 reprocess.add(element.id());

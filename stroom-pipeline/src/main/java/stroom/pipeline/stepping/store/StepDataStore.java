@@ -369,6 +369,37 @@ public class StepDataStore {
     }
 
     /**
+     * @return true if this element holds <b>every</b> record the stream has, at this fingerprint.
+     * <p>
+     * Distinct from {@link #hasElement}, which is true of a single stored record. That was an adequate
+     * question while the only writer was a sweep that captured all of a stream or none of it, but an element
+     * whose records are materialised individually as the user visits them is <i>present</i> long before it is
+     * <i>reusable</i>. Anything deciding whether an element's output can be reused wholesale - the reuse plan
+     * above all - has to ask this instead, or one materialised record makes the element look complete.
+     * <p>
+     * Answered in constant time per part: a file with no holes holds exactly {@code last - first + 1}
+     * records, and this runs on every step, so it must not walk the stream to find out.
+     */
+    public synchronized boolean hasCompleteElement(final ElementId elementId, final String fingerprint) {
+        checkNotDeleted();
+        if (partMinRecordIndex.isEmpty()) {
+            return false;
+        }
+        for (final Map.Entry<Long, Long> entry : partMinRecordIndex.entrySet()) {
+            final long partIndex = entry.getKey();
+            final Long max = partMaxRecordIndex.get(partIndex);
+            if (max == null) {
+                return false;
+            }
+            final ElementSegmentFile file = openFiles.get(new FileKey(partIndex, elementId, fingerprint));
+            if (file == null || file.recordCount() != (max - entry.getValue() + 1)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * @return true if any IO has been stored for this element at this fingerprint (across parts).
      */
     public synchronized boolean hasElement(final ElementId elementId, final String fingerprint) {

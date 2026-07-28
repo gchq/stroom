@@ -181,6 +181,29 @@ class TestLiveReprocessOnEdit extends TranslationTest {
             assertThat(third.getStepData().getElementData(START_ELEMENT_ID))
                     .as("with the edited element served").isNotNull();
 
+            // 5) Navigating under an edit, not just refreshing. FORWARD names no record, so the target is
+            // worked out from the upstream range - which is complete, because upstream was swept.
+            final long onDemandBefore = steppingService.getOnDemandLaunchCount();
+            final SteppingResult forward = steppingService.step(base.copy()
+                    .stepType(StepType.FORWARD)
+                    .stepLocation(record1)
+                    .sessionUuid(third.getSessionUuid())
+                    .code(Map.of(START_ELEMENT_ID, xsltText))
+                    .build());
+
+            assertThat(forward.isFoundRecord()).as("FORWARD under an edit resolves").isTrue();
+            assertThat(forward.getFoundLocation().getMetaId())
+                    .as("in the same stream - not by crossing into another one")
+                    .isEqualTo(record1.getMetaId());
+            assertThat(forward.getFoundLocation().getRecordIndex())
+                    .as("and lands on the next record").isEqualTo(2);
+            // The mechanism, not just the outcome: an earlier version of this test asserted only the record
+            // index and passed while doing nothing, because the resolver had crossed into another stream
+            // whose record 2 also exists.
+            assertThat(steppingService.getOnDemandLaunchCount())
+                    .as("by materialising one record rather than re-running the stream")
+                    .isGreaterThan(onDemandBefore);
+
         } finally {
             if (second != null && second.getSessionUuid() != null) {
                 steppingService.terminateStepping(base.copy().sessionUuid(second.getSessionUuid()).build());

@@ -559,14 +559,21 @@ user actually visits**, rather than sweeping it:
   against the **step** that produced it, not against the fingerprint signature: a sweep holding one record,
   cached under the signature, makes the next step at another record find a "complete" sweep that does not
   hold what is wanted, which the resolver reads as "no such record, cross into the next stream".
-- **FIRST / NEXT / PREVIOUS / LAST — not yet.** These are also one record's work in principle: the target is
-  known from the unchanged upstream's captured range, so only that record need be materialised. What blocks it
-  is that they do not *name* their record, so the routing decision has to compute it - and by then the planner
-  has already decided. `StagePlanner` asks whether an element has chunks under the current fingerprint, and a
-  partially materialised element answers yes, so after a REFRESH has materialised a record or two the planner
-  concludes there is nothing to reprocess and falls back to a full sweep. **The planner has to be able to tell
-  a fully captured element from a partially materialised one before these step types can use this path.**
-  Until then they reprocess the stream as they do today - correct, just not fast.
+- **FIRST / NEXT / PREVIOUS / LAST — SHIPPED, while nothing is filtered.** These do not *name* their record,
+  so the target is worked out from the unchanged upstream's captured range, which is complete. A filter
+  anywhere - even above the edit - falls back to reprocessing the stream, because a filter makes "the next
+  record" mean "the next one that matches" and that cannot be known without running records to find out.
+  Stepping across a part or stream boundary falls back too: that is the resolver's job and it needs the
+  whole-stream path for it.
+
+  Making this work needed a correction in the reuse plan, and it is the interesting part. `StagePlanner` asked
+  whether an element *had chunks* under the current fingerprint. That was a fair proxy for "reusable" only
+  while the sole writer was a sweep that captured all of a stream or none of it; an element materialised a
+  record at a time is **present long before it is reusable**, so after a REFRESH had materialised a record or
+  two the planner concluded there was nothing left to reprocess and fell back to a full sweep. It now asks
+  `StepDataStore.hasCompleteElement`, which is true only if the element holds every record the stream has -
+  answered in constant time per part, because a file with no holes holds exactly `last - first + 1` records
+  and this runs on every step.
 - **A filter on the edited element or below** forces a progressive scan: materialise records in the direction
   of travel until one matches. Usually a handful, but a filter that matches nothing has to visit everything,
   and there is no way around that. FIRST and LAST are the awkward ends, LAST having to work backwards.
