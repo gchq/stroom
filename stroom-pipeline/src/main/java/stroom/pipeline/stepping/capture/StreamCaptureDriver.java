@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -100,6 +101,7 @@ public class StreamCaptureDriver {
     private final SecurityContext securityContext;
 
     private TaskContext taskContext;
+    private Set<String> stopAfter = Set.of();
     private String lastFeedName;
     private Pipeline pipeline;
     private LoggingErrorReceiver loggingErrorReceiver;
@@ -162,6 +164,21 @@ public class StreamCaptureDriver {
                             final long metaId,
                             final StreamSweep streamSweep,
                             final ElementFingerprints fingerprints) {
+        capture(taskContext, request, metaId, streamSweep, fingerprints, Set.of());
+    }
+
+    /**
+     * As {@link #capture(TaskContext, PipelineStepRequest, long, StreamSweep, ElementFingerprints)}, but the
+     * pipeline is built only as far as {@code stopAfter} - so this captures the head stage of the pipeline
+     * rather than all of it, leaving the elements below to be run as their own stages.
+     */
+    public void capture(final TaskContext taskContext,
+                            final PipelineStepRequest request,
+                            final long metaId,
+                            final StreamSweep streamSweep,
+                            final ElementFingerprints fingerprints,
+                            final Set<String> stopAfter) {
+        this.stopAfter = stopAfter;
         this.taskContext = taskContext;
         this.request = request;
         this.captureFingerprints = fingerprints;
@@ -314,7 +331,7 @@ public class StreamCaptureDriver {
             final PipelineDataHolder pipelineDataHolder = pipelineDataHolderFactory.create(pipelineDoc);
             final PipelineData pipelineData = pipelineDataHolder.getMergedPipelineData();
 
-            pipeline = pipelineFactory.create(pipelineData, taskContext, controller);
+            pipeline = pipelineFactory.create(pipelineData, taskContext, controller, stopAfter);
 
             // Don't return a pipeline if we cannot step with it.
             if (pipeline == null

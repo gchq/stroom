@@ -116,6 +116,7 @@ class TestReprocessFromStore extends TranslationTest {
         final SteppingCaptureResult sweep = steppingService.capture(request, metaId);
         SteppingCaptureResult reprocess = null;
         SteppingCaptureResult elementOnly = null;
+        SteppingCaptureResult head = null;
         try {
             final StepDataStore sourceStore = sweep.store();
             final ElementFingerprints fingerprints = sweep.fingerprints();
@@ -151,6 +152,18 @@ class TestReprocessFromStore extends TranslationTest {
             assertThat(elementOnly.store().getCapturedElementIds())
                     .as("ELEMENT_ONLY captured the start element and nothing else")
                     .containsExactly(START_ELEMENT_ID);
+
+            // The head stage: built from Source as usual, but stopped after the parser. This is the one
+            // stage that cannot be fed from the store - the elements above the first replayable output take
+            // raw bytes and text - so it has to run from the raw stream, and it must stop cleanly rather
+            // than sweeping the whole pipeline.
+            head = steppingService.capture(request, metaId, Set.of(FEED_ELEMENT_ID));
+            assertThat(head.store().getCapturedElementIds())
+                    .as("the head stage captured the parser and nothing below it")
+                    .containsExactly(FEED_ELEMENT_ID);
+            // And it produced the very records the next stage consumes, unchanged.
+            assertCapturedOutputMatchesSweep(metaId, sourceStore, head.store(), FEED_ELEMENT_ID,
+                    fingerprints.getCumulativeFingerprint(FEED_ELEMENT_ID));
         } finally {
             steppingService.deleteCaptureSession(sweep.sessionId());
             if (reprocess != null) {
@@ -158,6 +171,9 @@ class TestReprocessFromStore extends TranslationTest {
             }
             if (elementOnly != null) {
                 steppingService.deleteCaptureSession(elementOnly.sessionId());
+            }
+            if (head != null) {
+                steppingService.deleteCaptureSession(head.sessionId());
             }
         }
     }
@@ -170,7 +186,15 @@ class TestReprocessFromStore extends TranslationTest {
                                                      final StepDataStore sourceStore,
                                                      final StepDataStore targetStore,
                                                      final String fingerprint) {
-        final ElementId startId = new ElementId(START_ELEMENT_ID);
+        assertCapturedOutputMatchesSweep(metaId, sourceStore, targetStore, START_ELEMENT_ID, fingerprint);
+    }
+
+    private void assertCapturedOutputMatchesSweep(final long metaId,
+                                                  final StepDataStore sourceStore,
+                                                  final StepDataStore targetStore,
+                                                  final String elementId,
+                                                  final String fingerprint) {
+        final ElementId startId = new ElementId(elementId);
         int comparedRecords = 0;
         for (final long partIndex : sourceStore.getPartIndices()) {
             final long firstRec = sourceStore.getFirstRecordIndex(partIndex);
@@ -181,14 +205,14 @@ class TestReprocessFromStore extends TranslationTest {
                         sourceStore.getElementData(loc, startId, fingerprint).orElse(null);
                 final CapturedElementData reran =
                         targetStore.getElementData(loc, startId, fingerprint).orElse(null);
-                assertThat(swept).as("swept " + START_ELEMENT_ID + " at " + loc).isNotNull();
-                assertThat(reran).as("reprocessed " + START_ELEMENT_ID + " at " + loc).isNotNull();
+                assertThat(swept).as("swept " + elementId + " at " + loc).isNotNull();
+                assertThat(reran).as("re-run " + elementId + " at " + loc).isNotNull();
 
                 // The load-bearing check: the reprocessed output events are byte-identical to the sweep's.
                 assertThat(reran.output()).as("output present at " + loc).isNotNull();
                 assertThat(swept.output()).as("swept output present at " + loc).isNotNull();
                 assertThat(Arrays.equals(reran.output().data(), swept.output().data()))
-                        .as("reprocessed output == swept output at " + loc)
+                        .as("re-run output == swept output at " + loc)
                         .isTrue();
                 assertThat(reran.hasOutput()).isEqualTo(swept.hasOutput());
                 comparedRecords++;

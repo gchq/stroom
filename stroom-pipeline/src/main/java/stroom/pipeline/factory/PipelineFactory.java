@@ -98,6 +98,24 @@ public class PipelineFactory {
     public Pipeline create(final PipelineData pipelineData,
                            final Terminator terminator,
                            final SteppingController controller) {
+        return create(pipelineData, terminator, controller, Set.of());
+    }
+
+    /**
+     * As {@link #create(PipelineData, Terminator, SteppingController)}, but the build stops after the named
+     * elements: their children are not linked, so nothing below them runs or is captured.
+     * <p>
+     * This is the source-rooted counterpart of {@link MidPipelineScope#ELEMENT_ONLY}, and exists for the same
+     * reason - to run one stage of a pipeline on its own. The head stage has to start at {@code Source}
+     * because the elements above the first replayable output (the readers, and the parser itself) are fed by
+     * raw bytes and text, which cannot be replayed out of the store the way SAX events can.
+     *
+     * @param stopAfter element ids whose children should not be linked. Empty builds the whole pipeline.
+     */
+    public Pipeline create(final PipelineData pipelineData,
+                           final Terminator terminator,
+                           final SteppingController controller,
+                           final Set<String> stopAfter) {
         // Instantiate and configure every element, and record the link graph.
         final Map<String, Element> elementInstances = new HashMap<>();
         final Map<Element, PipelineElementType> elementTypeMap = new HashMap<>();
@@ -125,7 +143,8 @@ public class PipelineFactory {
                 controller,
                 sourceElement,
                 sourceElement.getElementId(),
-                controllerSplitDepth);
+                controllerSplitDepth,
+                stopAfter);
 
         // We need to create a root element that will be a target for the input
         // stream.
@@ -456,6 +475,18 @@ public class PipelineFactory {
                       final Element parentElement,
                       final ElementId parentElementId,
                       final int controllerSplitDepth) {
+        link(elementInstances, elementTypeMap, linkSets, controller, parentElement, parentElementId,
+                controllerSplitDepth, Set.of());
+    }
+
+    private void link(final Map<String, Element> elementInstances,
+                      final Map<Element, PipelineElementType> elementTypeMap,
+                      final Map<String, Set<String>> linkSets,
+                      final SteppingController controller,
+                      final Element parentElement,
+                      final ElementId parentElementId,
+                      final int controllerSplitDepth,
+                      final Set<String> stopAfter) {
         // Get the child elements of the supplied 'from' element id that we want
         // to work with.
         final List<Element> childElements = getChildElements(parentElementId.getId(), elementInstances, elementTypeMap,
@@ -492,14 +523,18 @@ public class PipelineFactory {
                 }
             }
 
-            // Continue to link the children of this child.
-            link(elementInstances,
-                    elementTypeMap,
-                    linkSets,
-                    controller,
-                    fragment.getOut(),
-                    elementId,
-                    controllerSplitDepth);
+            // Continue to link the children of this child - unless this is where the build stops, in which
+            // case the element still runs and is captured but nothing below it is built at all.
+            if (!stopAfter.contains(elementId.getId())) {
+                link(elementInstances,
+                        elementTypeMap,
+                        linkSets,
+                        controller,
+                        fragment.getOut(),
+                        elementId,
+                        controllerSplitDepth,
+                        stopAfter);
+            }
 
             // Now set the target of the parent element to be the 'wrapped'
             // child to complete the link.

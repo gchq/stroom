@@ -143,10 +143,20 @@ public class SteppingService {
      * genuinely want the entire stream captured up front.
      */
     public SteppingCaptureResult capture(final PipelineStepRequest request, final long metaId) {
+        return capture(request, metaId, Set.of());
+    }
+
+    /**
+     * As {@link #capture(PipelineStepRequest, long)}, but builds the pipeline only as far as
+     * {@code stopAfter} - capturing the head stage rather than the whole pipeline.
+     */
+    public SteppingCaptureResult capture(final PipelineStepRequest request,
+                                         final long metaId,
+                                         final Set<String> stopAfter) {
         final String sessionId = UUID.randomUUID().toString();
         try {
             final ElementFingerprints fingerprints = computeFingerprints(request);
-            final StreamSweep sweep = launchSweep(sessionId, request, metaId, fingerprints);
+            final StreamSweep sweep = launchSweep(sessionId, request, metaId, fingerprints, stopAfter);
             // Synchronous variant: wait for the whole stream to be captured. A timed-out wait must not be
             // mistaken for a complete capture - the sweep is still writing to the store we would return.
             if (!sweep.awaitFullyCaptured(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
@@ -246,6 +256,18 @@ public class SteppingService {
                                    final PipelineStepRequest request,
                                    final long metaId,
                                    final ElementFingerprints fingerprints) {
+        return launchSweep(sessionId, request, metaId, fingerprints, Set.of());
+    }
+
+    /**
+     * As {@link #launchSweep(String, PipelineStepRequest, long, ElementFingerprints)}, but builds only as far
+     * as {@code stopAfter}.
+     */
+    public StreamSweep launchSweep(final String sessionId,
+                                   final PipelineStepRequest request,
+                                   final long metaId,
+                                   final ElementFingerprints fingerprints,
+                                   final Set<String> stopAfter) {
         final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
         final StreamSweep sweep = new StreamSweep(metaId, store);
         final Executor executor = executorProvider.get(THREAD_POOL);
@@ -253,7 +275,7 @@ public class SteppingService {
             CompletableFuture
                     .runAsync(taskContextFactory.context("Stepping capture", taskContext ->
                             streamCaptureDriverProvider.get().capture(
-                                    taskContext, request, metaId, sweep, fingerprints)), executor)
+                                    taskContext, request, metaId, sweep, fingerprints, stopAfter)), executor)
                     // A reader blocks on this sweep until it signals, so every way the task can end must
                     // signal. The driver handles its own failures, but anything it cannot catch (an Error,
                     // or a failure constructing the handler/task context) would otherwise leave the sweep
