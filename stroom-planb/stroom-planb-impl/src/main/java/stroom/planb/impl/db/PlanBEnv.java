@@ -51,7 +51,9 @@ public class PlanBEnv implements AutoCloseable {
     protected final Env<ByteBuffer> env;
     private final ReentrantLock writeTxnLock = new ReentrantLock();
     private final ReentrantLock dbCommitLock = new ReentrantLock();
+    private final Path path;
     private final boolean readOnly;
+    private final int maxChangeCount;
     private final HashClashCommitRunnable commitRunnable;
 
     public PlanBEnv(final Path path,
@@ -59,8 +61,19 @@ public class PlanBEnv implements AutoCloseable {
                     final int maxDbs,
                     final boolean readOnly,
                     final HashClashCommitRunnable commitRunnable) {
+        this(path, mapSize, maxDbs, readOnly, commitRunnable, LmdbWriter.DEFAULT_MAX_CHANGE_COUNT);
+    }
+
+    public PlanBEnv(final Path path,
+                    final Long mapSize,
+                    final int maxDbs,
+                    final boolean readOnly,
+                    final HashClashCommitRunnable commitRunnable,
+                    final int maxChangeCount) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
+        this.path = path;
         this.readOnly = readOnly;
+        this.maxChangeCount = maxChangeCount;
         this.commitRunnable = commitRunnable;
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
 
@@ -93,12 +106,17 @@ public class PlanBEnv implements AutoCloseable {
     }
 
     public final LmdbWriter createWriter() {
-        return new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock);
+        return new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock, maxChangeCount);
     }
 
     public final <T> T write(final Function<LmdbWriter, T> function) {
         try (final LmdbWriter writer = createWriter()) {
-            return function.apply(writer);
+            try {
+                return function.apply(writer);
+            } catch (final Throwable e) {
+                fail(writer, e);
+                throw e;
+            }
         }
     }
 
@@ -106,13 +124,56 @@ public class PlanBEnv implements AutoCloseable {
         try (final LmdbWriter writer = createWriter()) {
             try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
                 return function.apply(readTxn, writer);
+            } catch (final Throwable e) {
+                fail(writer, e);
+                throw e;
             }
         }
     }
 
     public final void write(final Consumer<LmdbWriter> consumer) {
         try (final LmdbWriter writer = createWriter()) {
-            consumer.accept(writer);
+            try {
+                consumer.accept(writer);
+            } catch (final Throwable e) {
+                fail(writer, e);
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Runs one operation against a writer that the caller holds across many operations, aborting it
+     * on failure. Such a writer must not be left to commit on close: its txn is already dead, so
+     * committing runs the commit listener on it and reports that secondary failure instead of the
+     * real cause.
+     */
+    public final void writeWith(final LmdbWriter writer, final Runnable operation) {
+        try {
+            operation.run();
+        } catch (final Throwable e) {
+            fail(writer, e);
+            throw e;
+        }
+    }
+
+    /** Aborts the writer and translates a map-full failure. Callers rethrow. */
+    private void fail(final LmdbWriter writer, final Throwable e) {
+        abortQuietly(writer, e);
+        throwIfStoreFull(e);
+    }
+
+    private void throwIfStoreFull(final Throwable e) {
+        if (e instanceof Env.MapFullException) {
+            throw new PlanBStoreFullException(path, getUsage(), e);
+        }
+    }
+
+    private static void abortQuietly(final LmdbWriter writer, final Throwable cause) {
+        try {
+            writer.abort();
+        } catch (final Throwable e) {
+            cause.addSuppressed(e);
         }
     }
 
@@ -155,6 +216,51 @@ public class PlanBEnv implements AutoCloseable {
         env.close();
     }
 
+    /**
+     * How much of the map LMDB has allocated pages for. Pages freed by deletes are included
+     * because LMDB never shrinks the file, so this, not the live data size, is what determines
+     * whether another write can succeed.
+     */
+    public Usage getUsage() {
+        final EnvInfo info = env.info();
+        final long usedBytes = (info.lastPageNumber + 1) * env.stat().pageSize;
+        return new Usage(usedBytes, info.mapSize);
+    }
+
+    /**
+     * Bytes of pages actually holding data across every named DBI. The shortfall against
+     * {@link #getUsage()} is free pages, which LMDB will reuse but never returns to the OS, so this
+     * is what says whether compacting the file would reclaim anything.
+     *
+     * <p>Both {@code getDbiNames()} and {@code openDbi} begin their own write txn on a writable env,
+     * so this takes the writer lock for its duration and must not be called by a thread already
+     * holding an {@link LmdbWriter} — LMDB's write mutex is not reentrant, so that would deadlock
+     * natively. Such a call throws {@link IllegalStateException} instead.</p>
+     */
+    public long getLiveBytes() {
+        if (writeTxnLock.isHeldByCurrentThread()) {
+            throw new IllegalStateException(
+                    "getLiveBytes() cannot be called while this thread holds a writer");
+        }
+        writeTxnLock.lock();
+        try {
+            final List<Dbi<ByteBuffer>> dbis = env.getDbiNames().stream()
+                    .map(env::openDbi)
+                    .toList();
+            final long pageSize = env.stat().pageSize;
+            return read(readTxn -> {
+                long pages = 0;
+                for (final Dbi<ByteBuffer> dbi : dbis) {
+                    final Stat stat = dbi.stat(readTxn);
+                    pages += stat.branchPages + stat.leafPages + stat.overflowPages;
+                }
+                return pages * pageSize;
+            });
+        } finally {
+            writeTxnLock.unlock();
+        }
+    }
+
     public EnvInf getInfo() {
         final List<String> dbNames = getDbNames();
         return new EnvInf(env.stat(), env.info(), env.getMaxKeySize(), dbNames);
@@ -171,5 +277,14 @@ public class PlanBEnv implements AutoCloseable {
 
     public record EnvInf(Stat stat, EnvInfo envInfo, int maxKeySize, List<String> dbNames) {
 
+    }
+
+    public record Usage(long usedBytes, long mapSize) {
+
+        public double fraction() {
+            return mapSize == 0
+                    ? 0
+                    : (double) usedBytes / mapSize;
+        }
     }
 }

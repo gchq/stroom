@@ -49,6 +49,7 @@ public class TraceStatsSerde {
             output.writeInt(stats.depth());
             output.writeLong(stats.spanCountAtLastDepth());
             output.writeBoolean(stats.hasError());
+            output.writeBoolean(stats.truncated());
             final ByteBuffer byteBuffer = output.getByteBuffer();
             byteBuffer.flip();
             consumer.accept(byteBuffer);
@@ -64,11 +65,12 @@ public class TraceStatsSerde {
             final long lastActivityMs = input.readLong();
             final int depth = input.readInt();
             final long spanCountAtLastDepth = input.readLong();
-            // Trailing field appended after the fact (unversioned serde) — tolerate legacy shorter
-            // values that predate hasError.
+            // Trailing fields appended after the fact (unversioned serde) — tolerate legacy shorter
+            // values that predate hasError / truncated.
             final boolean hasError = (input.limit() - input.position()) >= 1 && input.readBoolean();
+            final boolean truncated = (input.limit() - input.position()) >= 1 && input.readBoolean();
             return new TraceStats(spanCount, serviceCount, maxEnd, lastActivityMs, depth,
-                    spanCountAtLastDepth, hasError);
+                    spanCountAtLastDepth, hasError, truncated);
         }
     }
 

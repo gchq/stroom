@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Max Spans Per Trace"
+                        helpText="How many spans will be stored for a single trace, e.g. 100k. All of a trace's spans are held in one shard, so this stops a single runaway trace filling that shard and stopping it accepting any data. Spans beyond the limit are dropped and the trace is flagged as truncated. Set to 0 for no limit.">
+            <g:TextBox ui:field="maxSpansPerTrace" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

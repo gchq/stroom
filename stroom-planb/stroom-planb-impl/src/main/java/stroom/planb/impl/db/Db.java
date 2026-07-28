@@ -18,6 +18,7 @@ package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.db.PlanBEnv.Usage;
 import stroom.planb.shared.ArchivalGranularity;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -68,9 +69,31 @@ public interface Db<K, V> extends AutoCloseable {
 
     void compact(Path destination);
 
+    /**
+     * How much of the store's fixed-size LMDB map is allocated. Callers use this to avoid starting
+     * work that cannot complete, because a full map fails the write rather than growing.
+     */
+    Usage getUsage();
+
+    /**
+     * Bytes of pages holding live data, for deciding whether compacting would reclaim anything.
+     *
+     * <p>Enumerating the DBIs begins a write txn, so this holds the store's writer lock for its
+     * duration and throws {@link IllegalStateException} if the calling thread already holds a writer.
+     * Unlike {@link #getUsage()} it is not safe on a hot path or inside a write.</p>
+     */
+    long getLiveBytes();
+
     LmdbWriter createWriter();
 
     void write(Consumer<LmdbWriter> consumer);
+
+    /**
+     * Runs one operation against a writer obtained from {@link #createWriter()} and held across many
+     * operations, aborting it on failure. Callers that hold a writer must route every write through
+     * here, because {@link #write(Consumer)}'s failure handling only covers the writer it owns.
+     */
+    void writeWith(LmdbWriter writer, Runnable operation);
 
     void lock(Runnable runnable);
 

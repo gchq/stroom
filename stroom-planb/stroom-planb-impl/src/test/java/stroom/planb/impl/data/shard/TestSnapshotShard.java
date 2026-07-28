@@ -24,8 +24,10 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.data.shard.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;
+import stroom.planb.impl.db.PlanBEnv.Usage;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileTransferClient;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -756,6 +758,24 @@ class TestSnapshotShard {
         @Override
         public void compact(final Path destination) {
             ensureOpen();
+        }
+
+        @Override
+        public void writeWith(final LmdbWriter writer, final Runnable operation) {
+            ensureOpen();
+            operation.run();
+        }
+
+        @Override
+        public Usage getUsage() {
+            ensureOpen();
+            return new Usage(0L, AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
+        }
+
+        @Override
+        public long getLiveBytes() {
+            ensureOpen();
+            return 0L;
         }
 
         @Override

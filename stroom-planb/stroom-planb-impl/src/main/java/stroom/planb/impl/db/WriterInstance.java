@@ -76,44 +76,54 @@ class WriterInstance implements AutoCloseable {
         this.synchroniseMerge = synchroniseMerge;
     }
 
+    /**
+     * Routes an insert through the store's failure handling. This writer is held for the whole
+     * stream, so a failed insert has to abort its txn here — {@link #close()} would otherwise commit
+     * a txn LMDB has already flagged as errored, and report that secondary failure in place of the
+     * real cause.
+     */
+    private void insert(final Runnable insertion) {
+        lmdb.writeWith(writer, insertion);
+    }
+
     void addState(final State state) {
         final StateDb db = (StateDb) lmdb;
-        db.insert(writer, state);
+        insert(() -> db.insert(writer, state));
     }
 
     void addTemporalState(final TemporalState temporalState) {
         final TemporalStateDb db = (TemporalStateDb) lmdb;
-        db.insert(writer, temporalState);
+        insert(() -> db.insert(writer, temporalState));
     }
 
     void addRangeState(final RangeState rangeState) {
         final RangeStateDb db = (RangeStateDb) lmdb;
-        db.insert(writer, rangeState);
+        insert(() -> db.insert(writer, rangeState));
     }
 
     void addTemporalRangeState(final TemporalRangeState temporalRangeState) {
         final TemporalRangeStateDb db = (TemporalRangeStateDb) lmdb;
-        db.insert(writer, temporalRangeState);
+        insert(() -> db.insert(writer, temporalRangeState));
     }
 
     void addSession(final Session session) {
         final SessionDb db = (SessionDb) lmdb;
-        db.insert(writer, session);
+        insert(() -> db.insert(writer, session));
     }
 
     void addHistogramValue(final TemporalValue temporalValue) {
         final HistogramDb db = (HistogramDb) lmdb;
-        db.insert(writer, temporalValue);
+        insert(() -> db.insert(writer, temporalValue));
     }
 
     void addMetricValue(final TemporalValue temporalValue) {
         final MetricDb db = (MetricDb) lmdb;
-        db.insert(writer, temporalValue);
+        insert(() -> db.insert(writer, temporalValue));
     }
 
     void addSpanValue(final SpanKV spanKV) {
         final TraceDb db = (TraceDb) lmdb;
-        db.insert(writer, spanKV);
+        insert(() -> db.insert(writer, spanKV));
     }
 
     boolean isSynchroniseMerge() {

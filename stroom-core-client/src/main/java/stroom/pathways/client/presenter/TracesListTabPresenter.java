@@ -148,17 +148,17 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                 : null;
         final TraceOverviewWidget.SpanWindowFetcher fetcher =
                 (offset, cursor, limit, groupSelection, onLoaded) -> {
-            final GetSpansRequest spansRequest = new GetSpansRequest(
-                    dataSourceRef, traceId, offset, limit, startTimeMs, cursor, groupSelection);
-            restFactory
-                    .create(TRACES_RESOURCE)
-                    .method(res -> res.getSpans(spansRequest))
-                    .onSuccess(onLoaded)
-                    .onFailure(error -> onLoaded.accept(null))
-                    // Spin the span-list pager's own refresh button, not the traces list's.
-                    .taskMonitorFactory(traceOverviewWidget)
-                    .exec();
-        };
+                    final GetSpansRequest spansRequest = new GetSpansRequest(
+                            dataSourceRef, traceId, offset, limit, startTimeMs, cursor, groupSelection);
+                    restFactory
+                            .create(TRACES_RESOURCE)
+                            .method(res -> res.getSpans(spansRequest))
+                            .onSuccess(onLoaded)
+                            .onFailure(error -> onLoaded.accept(null))
+                            // Spin the span-list pager's own refresh button, not the traces list's.
+                            .taskMonitorFactory(traceOverviewWidget)
+                            .exec();
+                };
         traceOverviewWidget.setLargeTrace(traceRoot, fetcher);
     }
 

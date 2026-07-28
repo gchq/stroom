@@ -25,28 +25,51 @@ import java.util.function.Consumer;
 
 public class LmdbWriter implements AutoCloseable {
 
+    /**
+     * Changes to allow in one txn for a store that performs a single LMDB write per change. A store
+     * that writes more than that per change needs a proportionally lower limit, because what has to
+     * be bounded is the pages the txn dirties, not the calls the caller makes.
+     */
+    public static final int DEFAULT_MAX_CHANGE_COUNT = 10_000;
+
     private final Env<ByteBuffer> env;
     private final ReentrantLock dbCommitLock;
     private final Consumer<Txn<ByteBuffer>> commitListener;
     private final ReentrantLock writeTxnLock;
+    private final int maxChangeCount;
     private Txn<ByteBuffer> writeTxn;
     private int changeCount = 0;
+    private boolean aborted;
 
     public LmdbWriter(final Env<ByteBuffer> env,
                       final ReentrantLock dbCommitLock,
                       final Consumer<Txn<ByteBuffer>> commitListener,
-                      final ReentrantLock writeTxnLock) {
+                      final ReentrantLock writeTxnLock,
+                      final int maxChangeCount) {
         this.env = env;
         this.dbCommitLock = dbCommitLock;
         this.commitListener = commitListener;
         this.writeTxnLock = writeTxnLock;
+        this.maxChangeCount = maxChangeCount;
 
         // We are only allowed a single write txn and we can only write with a single thread so ensure this is the
         // case.
         writeTxnLock.lock();
     }
 
+    /**
+     * The current write txn, opened on first request.
+     *
+     * <p>Do not hold the returned txn across a {@link #tryCommit()}, {@link #commit()} or
+     * {@link #abort()} — those close it, and a later use of the stale reference fails with
+     * {@code Txn$NotReadyException}. A loop that commits per item must therefore call this again on
+     * each iteration rather than hoisting it.</p>
+     */
     public Txn<ByteBuffer> getWriteTxn() {
+        if (aborted) {
+            throw new IllegalStateException(
+                    "This writer was aborted after a failed write and cannot accept more work");
+        }
         if (writeTxn == null) {
             writeTxn = env.txnWrite();
         }
@@ -65,7 +88,31 @@ public class LmdbWriter implements AutoCloseable {
     }
 
     public boolean shouldCommit() {
-        return changeCount > 10000;
+        return changeCount > maxChangeCount;
+    }
+
+    /**
+     * Discards the current txn without running the commit listener. Once a native LMDB operation
+     * has failed, e.g. with MDB_MAP_FULL, the txn is flagged MDB_TXN_ERROR and every subsequent
+     * use of it fails with MDB_BAD_TXN. Committing such a txn therefore throws from the listener's
+     * own put and masks the original cause, so callers must abort instead.
+     */
+    public void abort() {
+        dbCommitLock.lock();
+        try {
+            aborted = true;
+            if (writeTxn != null) {
+                try {
+                    writeTxn.close();
+                } finally {
+                    writeTxn = null;
+                }
+            }
+
+            changeCount = 0;
+        } finally {
+            dbCommitLock.unlock();
+        }
     }
 
     public void commit() {
@@ -93,7 +140,11 @@ public class LmdbWriter implements AutoCloseable {
     @Override
     public void close() {
         try {
-            commit();
+            if (aborted) {
+                abort();
+            } else {
+                commit();
+            }
         } finally {
             writeTxnLock.unlock();
         }

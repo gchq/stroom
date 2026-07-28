@@ -22,6 +22,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.db.PlanBEnv.Usage;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDocument;
 import stroom.security.api.SecurityContext;
@@ -30,6 +31,8 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -58,6 +61,20 @@ import java.util.stream.Stream;
 public class SharedFileStoreMergeProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileStoreMergeProcessor.class);
+
+    /**
+     * Fraction of a shard's LMDB map that, once allocated, makes a merge to it futile. A write txn
+     * needs spare pages to copy the pages it modifies, so a merge attempted with almost no headroom
+     * fails partway rather than merging a bit less.
+     */
+    private static final double MERGE_MAX_USED_FRACTION = 0.95;
+
+    /**
+     * Merge attempts to allow a single batch before it is quarantined. Retrying is normally right,
+     * because most failures are transient or clear once space is reclaimed, but a batch that can
+     * never merge must stop consuming a cycle's worth of copying and merging forever.
+     */
+    private static final int MAX_BATCH_MERGE_ATTEMPTS = 10;
 
     private final ClusterLockService clusterLockService;
     private final ByteBuffers byteBuffers;
@@ -217,13 +234,19 @@ public class SharedFileStoreMergeProcessor {
                         statePaths.getMergingDir());
 
                 try {
-                    boolean modified = mergeAllBatches(shard, completeBatchDirs);
+                    final MergeResult mergeResult = mergeAllBatches(shard, completeBatchDirs);
+                    boolean modified = !mergeResult.mergedBatchDirs().isEmpty();
 
                     // Maintenance operations (retention, archival, etc.).
                     final SharedFileStoreOperationContext ctx = new SharedFileStoreOperationContext(
                             doc, shardIndex, shard, sharedShardsDocDir, lockName);
                     for (final SharedFileStoreOperation op : operations) {
-                        modified |= op.run(ctx);
+                        try {
+                            modified |= op.run(ctx);
+                        } catch (final Exception e) {
+                            LOGGER.error(() -> LogUtil.message("Error running {} for {}",
+                                    op.getClass().getSimpleName(), lockName), e);
+                        }
                     }
 
                     if (modified) {
@@ -232,8 +255,18 @@ public class SharedFileStoreMergeProcessor {
                         publisher.push(doc, shardIndex, shard);
                     }
 
-                    cleanUpMergedBatches(completeBatchDirs);
-                    LOGGER.info("Successfully completed merge/maintenance for {}", lockName);
+                    cleanUpMergedBatches(mergeResult.mergedBatchDirs());
+
+                    if (mergeResult.failureCount() > 0) {
+                        LOGGER.error(() -> LogUtil.message(
+                                        "Completed merge/maintenance for {} with {} of {} batches failing",
+                                        lockName,
+                                        mergeResult.failureCount(),
+                                        completeBatchDirs.size()),
+                                mergeResult.firstFailure());
+                    } else {
+                        LOGGER.info("Successfully completed merge/maintenance for {}", lockName);
+                    }
                 } finally {
                     final Path mergeShardDir = shard.getShardDir();
                     shard.dispose();
@@ -253,21 +286,90 @@ public class SharedFileStoreMergeProcessor {
     }
 
     /**
-     * Merges each batch directory into the shard. Returns {@code true} if at
-     * least one batch was successfully merged.
+     * Merges each batch directory into the shard, isolating each one so a batch that cannot be
+     * merged neither abandons the remaining batches nor discards the work already done by those
+     * that succeeded.
      */
-    private boolean mergeAllBatches(final SharedFileStoreShard shard,
-                                    final List<Path> completeBatchDirs) throws IOException {
-        boolean modified = false;
+    private MergeResult mergeAllBatches(final SharedFileStoreShard shard,
+                                        final List<Path> completeBatchDirs) {
+        final Usage usage = shard.getUsage();
+        if (usage.fraction() >= MERGE_MAX_USED_FRACTION) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Skipping {} batches because Plan B store '{}' shard {} is {}% full ({} of a max " +
+                    "store size of {}). Raise the max store size for this doc, or reduce the data it " +
+                    "holds via retention or archival.",
+                    completeBatchDirs.size(),
+                    shard.getDoc().getName(),
+                    shard.getShardIndex(),
+                    Math.round(usage.fraction() * 100),
+                    ModelStringUtil.formatIECByteSizeString(usage.usedBytes()),
+                    ModelStringUtil.formatIECByteSizeString(usage.mapSize())));
+            return new MergeResult(Collections.emptyList(), 0, null);
+        }
+
+        final List<Path> mergedBatchDirs = new ArrayList<>();
+        int failureCount = 0;
+        Exception firstFailure = null;
+
         for (final Path batchDir : completeBatchDirs) {
-            modified |= mergeSingleBatch(shard, batchDir);
+            try {
+                if (mergeSingleBatch(shard, batchDir)) {
+                    mergedBatchDirs.add(batchDir);
+                }
+            } catch (final Exception e) {
+                failureCount++;
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+                LOGGER.error(() -> LogUtil.message("Error merging batch {} into shard {} of doc {}",
+                        batchDir, shard.getShardIndex(), shard.getDoc().getName()), e);
+                recordBatchFailure(batchDir, e);
+            }
         }
-        if (modified) {
-            // Recompute derived trace-root fields (depth/services/totalSpans) over the
-            // fully-merged spans, now that every batch of this cycle is present.
-            shard.mergeComplete();
+
+        if (!mergedBatchDirs.isEmpty()) {
+            try {
+                // Recompute derived trace-root fields (depth/services/totalSpans) over the
+                // fully-merged spans, now that every batch of this cycle is present.
+                shard.mergeComplete();
+            } catch (final Exception e) {
+                LOGGER.error(() -> LogUtil.message(
+                        "Error completing merge for shard {} of doc {}, leaving {} batches to retry",
+                        shard.getShardIndex(), shard.getDoc().getName(), mergedBatchDirs.size()), e);
+                return new MergeResult(Collections.emptyList(), failureCount + 1,
+                        firstFailure == null ? e : firstFailure);
+            }
         }
-        return modified;
+
+        return new MergeResult(mergedBatchDirs, failureCount, firstFailure);
+    }
+
+    /**
+     * Records that a batch failed to merge so that a batch which can never merge is eventually
+     * quarantined by {@link #collectBatchDirs} instead of being retried on every cycle forever.
+     */
+    private void recordBatchFailure(final Path batchDir, final Exception failure) {
+        final Path failedFile = batchDir.resolve(PlanBConstants.FAILED_FILE_NAME);
+        final int attempts = readFailedAttempts(batchDir) + 1;
+        try {
+            Files.writeString(failedFile, attempts + "\n" + Instant.now() + "\n" + failure);
+        } catch (final IOException e) {
+            LOGGER.error("Error writing .failed marker to {}", batchDir, e);
+        }
+    }
+
+    private int readFailedAttempts(final Path batchDir) {
+        final Path failedFile = batchDir.resolve(PlanBConstants.FAILED_FILE_NAME);
+        if (!Files.isRegularFile(failedFile)) {
+            return 0;
+        }
+        try {
+            final String first = Files.readString(failedFile).lines().findFirst().orElse("");
+            return Integer.parseInt(first.trim());
+        } catch (final IOException | NumberFormatException e) {
+            LOGGER.debug(() -> LogUtil.message("Unreadable .failed marker in {}", batchDir), e);
+            return 0;
+        }
     }
 
     /**
@@ -319,7 +421,15 @@ public class SharedFileStoreMergeProcessor {
                 batchStream.forEach(batchDir -> {
                     if (Files.exists(batchDir.resolve(PlanBConstants.VERSION_FILE_NAME))
                             && !Files.exists(batchDir.resolve(PlanBConstants.MERGED_FILE_NAME))) {
-                        completeBatchDirs.add(batchDir);
+                        final int attempts = readFailedAttempts(batchDir);
+                        if (attempts >= MAX_BATCH_MERGE_ATTEMPTS) {
+                            LOGGER.warn(() -> LogUtil.message(
+                                    "Quarantining batch {} after {} failed merge attempts. It will " +
+                                    "not be retried until its {} marker is removed.",
+                                    batchDir, attempts, PlanBConstants.FAILED_FILE_NAME));
+                        } else {
+                            completeBatchDirs.add(batchDir);
+                        }
                     }
                 });
             } catch (final IOException e) {
@@ -333,5 +443,13 @@ public class SharedFileStoreMergeProcessor {
         if (Files.exists(src)) {
             Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    /**
+     * Outcome of merging one cycle's batches into a shard. {@code mergedBatchDirs} lists only the
+     * batches safe to mark as merged; the rest are left for a later cycle.
+     */
+    private record MergeResult(List<Path> mergedBatchDirs, int failureCount, Exception firstFailure) {
+
     }
 }

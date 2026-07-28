@@ -27,6 +27,7 @@ import stroom.planb.client.view.SharedFileStoreView;
 import stroom.planb.client.view.SnapshotSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.TraceSettings;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,6 +36,12 @@ import com.gwtplatform.mvp.client.View;
 
 public class TraceSettingsPresenter
         extends AbstractPlanBSettingsPresenter<TraceSettingsView> {
+
+    /**
+     * Held from the most recent {@link #read} so that {@link #write} round-trips it. There is no
+     * editor for it, and without this a save would silently clear whatever was configured.
+     */
+    private SimpleDuration maxQueryTimeRange;
 
     @Inject
     public TraceSettingsPresenter(
@@ -57,7 +64,9 @@ public class TraceSettingsPresenter
 
     private void read(final TraceSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
+        maxQueryTimeRange = settings.getMaxQueryTimeRange();
         getView().setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setMaxSpansPerTrace(settings.getMaxSpansPerTrace());
         getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
         getView().setRetention(settings.getRetention());
@@ -69,11 +78,13 @@ public class TraceSettingsPresenter
     public AbstractPlanBSettings write() {
         return new TraceSettings.Builder()
                 .maxStoreSize(getView().getMaxStoreSize())
+                .maxSpansPerTrace(getView().getMaxSpansPerTrace())
                 .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
                 .retention(getView().getRetention())
                 .sharedFileStore(SharedFileStorePresenterUtil.writeSharedFileStore(getView(), getView()))
                 .snapshotSettings(getView().getSnapshotSettings())
+                .maxQueryTimeRange(maxQueryTimeRange)
                 .build();
     }
 
@@ -109,5 +120,9 @@ public class TraceSettingsPresenter
         void setShardingEnabled(boolean shardingEnabled);
 
         void setShardCountLocked(boolean locked);
+
+        Long getMaxSpansPerTrace();
+
+        void setMaxSpansPerTrace(Long maxSpansPerTrace);
     }
 }

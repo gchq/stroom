@@ -23,6 +23,7 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
+import stroom.planb.impl.db.PlanBEnv.Usage;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
@@ -503,6 +504,34 @@ public abstract class AbstractStoreShard implements Shard {
 
     public Path getShardDir() {
         return shardDir;
+    }
+
+    public int getShardIndex() {
+        return shardIndex;
+    }
+
+    public Usage getUsage() {
+        return withOpenDb(Db::getUsage);
+    }
+
+    public long getLiveBytes() {
+        return withOpenDb(Db::getLiveBytes);
+    }
+
+    private <R> R withOpenDb(final Function<Db<?, ?>, R> function) {
+        try {
+            readLock.lockInterruptibly();
+            try {
+                if (db == null) {
+                    throw new ShardClosedException();
+                }
+                return function.apply(db);
+            } finally {
+                readLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
     }
 
     @Override

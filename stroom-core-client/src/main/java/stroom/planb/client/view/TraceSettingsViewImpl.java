@@ -35,6 +35,7 @@ public class TraceSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
+    private final TraceGeneralSettingsWidget traceGeneralSettingsWidget;
     private final SharedFileStoreSettingsWidget shardingSettingsWidget;
     private final SnapshotSettingsWidget snapshotSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
@@ -52,17 +53,24 @@ public class TraceSettingsViewImpl
     @Inject
     public TraceSettingsViewImpl(final Binder binder,
                                  final GeneralSettingsWidget generalSettingsWidget,
+                                 final TraceGeneralSettingsWidget traceGeneralSettingsWidget,
                                  final SharedFileStoreSettingsWidget shardingSettingsWidget,
                                  final SnapshotSettingsWidget snapshotSettingsWidget,
                                  final RetentionSettingsWidget retentionSettingsWidget,
                                  final ArchivalSettingsWidget archivalSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
+        this.traceGeneralSettingsWidget = traceGeneralSettingsWidget;
         this.shardingSettingsWidget = shardingSettingsWidget;
         this.snapshotSettingsWidget = snapshotSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.archivalSettingsWidget = archivalSettingsWidget;
-        generalPanel.add(generalSettingsWidget.asWidget());
+
+        final FlowPanel generalContent = new FlowPanel();
+        generalContent.add(generalSettingsWidget.asWidget());
+        generalContent.add(traceGeneralSettingsWidget.asWidget());
+        generalPanel.add(generalContent);
+
         snapshotPanel.add(snapshotSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
 
@@ -76,6 +84,7 @@ public class TraceSettingsViewImpl
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
+        traceGeneralSettingsWidget.setUiHandlers(uiHandlers);
         // When the Enable Shared File Store checkbox or path changes, propagate the
         // enable state to the archival widget so the Archiving Enabled checkbox
         // is gated on the same condition.
@@ -104,6 +113,16 @@ public class TraceSettingsViewImpl
     @Override
     public void setMaxStoreSize(final Long maxStoreSize) {
         generalSettingsWidget.setMaxStoreSize(maxStoreSize);
+    }
+
+    @Override
+    public Long getMaxSpansPerTrace() {
+        return traceGeneralSettingsWidget.getMaxSpansPerTrace();
+    }
+
+    @Override
+    public void setMaxSpansPerTrace(final Long maxSpansPerTrace) {
+        traceGeneralSettingsWidget.setMaxSpansPerTrace(maxSpansPerTrace);
     }
 
     @Override
@@ -209,6 +228,7 @@ public class TraceSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
+        traceGeneralSettingsWidget.onReadOnly(readOnly);
         shardingSettingsWidget.onReadOnly(readOnly);
         snapshotSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);

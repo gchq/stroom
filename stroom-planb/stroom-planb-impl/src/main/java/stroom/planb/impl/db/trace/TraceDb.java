@@ -80,6 +80,7 @@ import stroom.util.shared.PageResponse;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
+import org.lmdbjava.LmdbNativeException;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
@@ -169,6 +170,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private static final long CHECKPOINT_MIN_SPANS = 10_000L;
 
     /**
+     * A single counted change here can perform up to ~18 LMDB writes — the span, its service name,
+     * the trace stats, the trace root, and a delete plus a put for each of the seven secondary
+     * indexes. The limit is scaled down from {@link LmdbWriter#DEFAULT_MAX_CHANGE_COUNT} to keep the
+     * pages a txn dirties, and hence the headroom it needs, comparable to a single-write store.
+     */
+    private static final int MAX_CHANGE_COUNT = LmdbWriter.DEFAULT_MAX_CHANGE_COUNT / 18;
+
+    /**
      * Returns a fresh zero-byte direct {@link ByteBuffer} for use as an empty
      * LMDB value. A new instance is returned on each call to avoid shared-state
      * issues with {@code ByteBuffer} position/limit under concurrent use.
@@ -247,6 +256,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      */
     private final Set<String> pendingRootRebuilds = ConcurrentHashMap.newKeySet();
 
+    /** Spans to accept per trace, or 0 for unlimited. See {@link #isOverSpanLimit}. */
+    private final long maxSpansPerTrace;
+
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final ByteBufferFactory byteBufferFactory,
@@ -265,6 +277,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         JsonUtil.writeValueAsString(new StateKeySchema.Builder().build()),
                         JsonUtil.writeValueAsString(new StateValueSchema.Builder().build())));
         this.byteBufferFactory = byteBufferFactory;
+        this.maxSpansPerTrace = settings.getEffectiveMaxSpansPerTrace();
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.spanValueSerde = (SpanValueSerde) valueSerde;
@@ -311,7 +324,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 settings.getMaxStoreSize(),
                 27,
                 readOnly,
-                hashClashCommitRunnable);
+                hashClashCommitRunnable,
+                MAX_CHANGE_COUNT);
         try {
             final KeySerde<SpanKey> keySerde = new SpanKeySerde(byteBuffers);
             final LookupSerdeImpl lookupSerde = new LookupSerdeImpl(env, hashClashCommitRunnable, byteBuffers);
@@ -376,6 +390,100 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
     }
 
+    /**
+     * Whether this trace has already had its full allowance of spans. All of a trace's spans live in
+     * one shard, so without a limit a single runaway trace can consume the shard's whole fixed-size
+     * map, at which point the shard can accept nothing at all — not even the deletes that would free
+     * space again. Dropping the excess keeps that failure local to the one bad trace.
+     *
+     * <p>Compares against the cumulative count, which is never decremented as spans age out, so a
+     * trace that has hit the limit stays closed rather than reopening under retention.</p>
+     */
+    private boolean isOverSpanLimit(final TraceStats stats) {
+        return maxSpansPerTrace > 0 && stats.spanCount() >= maxSpansPerTrace;
+    }
+
+    /**
+     * Marks the trace as truncated so the omission is visible rather than silent, and logs the first
+     * rejection for each trace. Called on the first span actually dropped for a trace, so the extra
+     * write happens once per trace rather than once per dropped span, and a trace that merely reaches
+     * the limit without losing anything is never flagged.
+     */
+    private void recordTruncation(final Txn<ByteBuffer> writeTxn,
+                                  final byte[] traceIdBytes,
+                                  final TraceStats stats) {
+        if (stats.truncated()) {
+            return;
+        }
+        writeStats(writeTxn, traceIdBytes, new TraceStats(
+                stats.spanCount(),
+                stats.serviceCount(),
+                stats.maxEnd(),
+                stats.lastActivityMs(),
+                stats.depth(),
+                stats.spanCountAtLastDepth(),
+                stats.hasError(),
+                true));
+        LOGGER.warn(() -> LogUtil.message(
+                "Trace {} in '{}' has reached its limit of {} spans; further spans for it are " +
+                "being dropped. A trace this large normally means an OpenTelemetry context leak " +
+                "rather than real work.",
+                HexStringUtil.encode(traceIdBytes), doc.getName(), maxSpansPerTrace));
+    }
+
+    /**
+     * Follows the trace whose spans are currently being merged. Because spans iterate grouped by
+     * traceId, the per-trace work — queueing the root rebuild and reading the stored span count —
+     * only has to happen when the id changes, instead of once per span.
+     */
+    private final class MergeTraceCursor {
+
+        private byte[] traceId;
+        private long spanCount;
+        private boolean overLimit;
+        private boolean truncationRecorded;
+
+        private void onSpan(final Txn<ByteBuffer> writeTxn, final byte[] tid) {
+            if (traceId != null && Arrays.equals(traceId, tid)) {
+                return;
+            }
+            traceId = tid;
+            truncationRecorded = false;
+            pendingRootRebuilds.add(HexStringUtil.encode(tid));
+            final TraceStats stats = readStats(writeTxn, tid);
+            spanCount = stats.spanCount();
+            overLimit = isOverSpanLimit(stats);
+        }
+
+        /**
+         * Called after a span has genuinely been added for the current trace, so the limit is
+         * reached mid-trace rather than only on the next batch. Reaching it is not truncation — the
+         * trace is only flagged once a span is actually dropped.
+         */
+        private void onSpanWritten() {
+            spanCount++;
+            if (maxSpansPerTrace > 0 && spanCount >= maxSpansPerTrace) {
+                overLimit = true;
+            }
+        }
+
+        /**
+         * Flags the trace on the first span dropped for it. Latched so the drop path stays free of
+         * LMDB reads for the remaining spans of a trace that may be dropping millions.
+         */
+        private void onSpanDropped(final Txn<ByteBuffer> writeTxn) {
+            if (truncationRecorded) {
+                return;
+            }
+            truncationRecorded = true;
+            recordTruncation(writeTxn, traceId, readStats(writeTxn, traceId));
+        }
+
+        private boolean isOverLimit() {
+            return overLimit;
+        }
+    }
+
     public void insert(final LmdbWriter writer, final Span span) {
         final SpanKey spanKey = SpanKey.create(span);
         final SpanValue spanValue = SpanValue.create(span);
@@ -385,6 +493,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     @Override
     public void insert(final LmdbWriter writer, final KV<SpanKey, SpanValue> kv) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
+
+        final byte[] traceIdBytes = HexStringUtil.decode(kv.key().getTraceId());
+
+        final TraceStats statsBefore = readStats(writeTxn, traceIdBytes);
+        if (isOverSpanLimit(statsBefore)) {
+            recordTruncation(writeTxn, traceIdBytes, statsBefore);
+            writer.tryCommit();
+            return;
+        }
+
         // Spans are immutable (first write wins) — MDB_NOOVERWRITE makes a genuinely-new span
         // detectable so the per-trace stats are counted exactly once (re-delivery is a no-op).
         final boolean[] isNew = {false};
@@ -392,8 +510,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 valueSerde.write(writeTxn, kv.val(), valueByteBuffer ->
                         isNew[0] = dbi.put(writeTxn, keyByteBuffer, valueByteBuffer,
                                 PutFlags.MDB_NOOVERWRITE)));
-
-        final byte[] traceIdBytes = HexStringUtil.decode(kv.key().getTraceId());
 
         if (isNew[0]) {
             final SpanValue v = kv.val();
@@ -443,6 +559,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     traceRootsMergeTimeDbi.put(writeTxn, mergeTimeKey, emptyValue(),
                             PutFlags.MDB_NOOVERWRITE);
                 });
+            } catch (final LmdbNativeException e) {
+                throw e;
             } catch (final RuntimeException e) {
                 LOGGER.warn("Failed to write trace root index for trace {}: {}",
                         kv.key().getTraceId(), e.getMessage(), e);
@@ -500,6 +618,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
                     updateChildSpanIndexes(writeTxn, traceIdBytes, oldRoot, newRoot);
                 }
+            } catch (final LmdbNativeException e) {
+                throw e;
             } catch (final RuntimeException e) {
                 LOGGER.warn("Failed to incrementally update trace root for trace {}: {}",
                         kv.key().getTraceId(), e.getMessage(), e);
@@ -614,23 +734,28 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 // Validate that the source DB has the same schema.
                 validateSchema(schemaInfo, sourceDb.getSchemaInfo());
 
-                // Merge.
+                final MergeTraceCursor cursor = new MergeTraceCursor();
                 sourceDb.env.read(readTxn -> {
                     try (final Stream<LmdbEntry> stream = LmdbStream.stream(readTxn, sourceDb.dbi)) {
                         stream.forEach(entry -> {
-                            // Queue EVERY trace whose spans are merged this cycle for a full
-                            // root recompute at mergeComplete — not just traces whose root span
-                            // appears. A span key is prefixed with the 16-byte traceId. Without
-                            // this, a trace whose children arrive after its root was processed
-                            // (root in an earlier cycle) keeps stale depth/services/totalSpans.
                             final ByteBuffer spanKeyBuf = entry.getKey().duplicate();
                             final byte[] tid;
                             if (spanKeyBuf.remaining() >= TRACE_ID_BYTES) {
                                 tid = new byte[TRACE_ID_BYTES];
                                 spanKeyBuf.get(tid);
-                                pendingRootRebuilds.add(HexStringUtil.encode(tid));
+                                // Queue EVERY trace whose spans are merged this cycle for a full
+                                // root recompute at mergeComplete — not just traces whose root span
+                                // appears. Without this, a trace whose children arrive after its
+                                // root was processed (root in an earlier cycle) keeps stale
+                                // depth/services/totalSpans.
+                                cursor.onSpan(writer.getWriteTxn(), tid);
                             } else {
                                 tid = null;
+                            }
+
+                            if (tid != null && cursor.isOverLimit()) {
+                                cursor.onSpanDropped(writer.getWriteTxn());
+                                return;
                             }
 
                             if (sourceDb.keySerde.usesLookup(entry.getKey()) ||
@@ -649,6 +774,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                                 spanValueSerde.readSummary(writer.getWriteTxn(), entry.getVal());
                                         recordNewSpan(writer.getWriteTxn(), tid, s.name(),
                                                 s.insertTime(), s.endTime(), isErrorStatus(s.statusCode()));
+                                        cursor.onSpanWritten();
                                     }
                                     writer.tryCommit();
                                 }
@@ -724,37 +850,43 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         pendingRootRebuilds.clear();
 
         env.write(writer -> {
-            final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
             for (final String hex : traceIds) {
-                final byte[] traceIdBytes = HexStringUtil.decode(hex);
-                // Bounded, streaming recompute over the fully-merged span set — exact
-                // totalSpans/services and (safety-valve aside) exact depth, plus the
-                // latest insert time as lastActivityMs (informational only — shown in the UI
-                // "Last Activity" column; retention/archival now age by the root's own end
-                // time, not activity), without materialising the whole trace. Empty ⇒ no
-                // root span present (a traceId whose only spans are orphans) ⇒ no queryable
-                // root, so skip.
-                final Optional<TraceRoot> optRebuilt =
-                        buildRootFromStats(writeTxn, traceIdBytes);
-                if (optRebuilt.isEmpty()) {
-                    continue;
-                }
-                final TraceRoot rebuilt = optRebuilt.get();
-                final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
-
-                // Drop stale sort-index entries for the existing stored root, then overwrite.
-                traceRootKeySerde.write(traceRootKey, keyBuf -> {
-                    final ByteBuffer existing = traceRootsDbi.get(writeTxn, keyBuf);
-                    if (existing != null) {
-                        deleteSecondaryIndexes(writeTxn, traceIdBytes,
-                                traceRootValueSerde.read(existing.duplicate()));
+                try {
+                    final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
+                    final byte[] traceIdBytes = HexStringUtil.decode(hex);
+                    // Bounded, streaming recompute over the fully-merged span set — exact
+                    // totalSpans/services and (safety-valve aside) exact depth, plus the
+                    // latest insert time as lastActivityMs (informational only — shown in the UI
+                    // "Last Activity" column; retention/archival now age by the root's own end
+                    // time, not activity), without materialising the whole trace. Empty ⇒ no
+                    // root span present (a traceId whose only spans are orphans) ⇒ no queryable
+                    // root, so skip.
+                    final Optional<TraceRoot> optRebuilt =
+                            buildRootFromStats(writeTxn, traceIdBytes);
+                    if (optRebuilt.isEmpty()) {
+                        continue;
                     }
-                });
-                traceRootKeySerde.write(traceRootKey, keyBuf ->
-                        traceRootValueSerde.write(rebuilt, valBuf ->
-                                traceRootsDbi.put(writeTxn, keyBuf, valBuf)));
-                writeSecondaryIndexes(writeTxn, traceIdBytes, rebuilt);
-                writer.tryCommit();
+                    final TraceRoot rebuilt = optRebuilt.get();
+                    final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
+
+                    // Drop stale sort-index entries for the existing stored root, then overwrite.
+                    traceRootKeySerde.write(traceRootKey, keyBuf -> {
+                        final ByteBuffer existing = traceRootsDbi.get(writeTxn, keyBuf);
+                        if (existing != null) {
+                            deleteSecondaryIndexes(writeTxn, traceIdBytes,
+                                    traceRootValueSerde.read(existing.duplicate()));
+                        }
+                    });
+                    traceRootKeySerde.write(traceRootKey, keyBuf ->
+                            traceRootValueSerde.write(rebuilt, valBuf ->
+                                    traceRootsDbi.put(writeTxn, keyBuf, valBuf)));
+                    writeSecondaryIndexes(writeTxn, traceIdBytes, rebuilt);
+                    writer.tryCommit();
+                } catch (final LmdbNativeException e) {
+                    throw e;
+                } catch (final RuntimeException e) {
+                    LOGGER.warn("Failed to rebuild trace root for trace {}: {}", hex, e.getMessage(), e);
+                }
             }
             return null;
         });
@@ -780,8 +912,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         final List<String> hexes = new ArrayList<>(pendingRootRebuilds);
         pendingRootRebuilds.clear();
         env.write(writer -> {
-            final Txn<ByteBuffer> txn = writer.getWriteTxn();
             for (final String hex : hexes) {
+                final Txn<ByteBuffer> txn = writer.getWriteTxn();
                 final byte[] tid = HexStringUtil.decode(hex);
                 setRootTotalSpans(txn, tid, (int) readStats(txn, tid).spanCount());
                 writer.tryCommit();
@@ -807,7 +939,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private void seedStatsSpanCount(final Txn<ByteBuffer> txn, final byte[] traceIdBytes, final long count) {
         final TraceStats s = readStats(txn, traceIdBytes);
         writeStats(txn, traceIdBytes, new TraceStats(
-                count, s.serviceCount(), s.maxEnd(), s.lastActivityMs(), s.depth(), count, s.hasError()));
+                count, s.serviceCount(), s.maxEnd(), s.lastActivityMs(), s.depth(), count, s.hasError(),
+                s.truncated()));
     }
 
     // Rewrite a (non-orphan) root's totalSpans and its secondary indexes. No-op if absent/orphan/unchanged.
@@ -2511,7 +2644,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     Math.max(prev.lastActivityMs(), insertMs),
                     prev.depth(),
                     prev.spanCountAtLastDepth(),
-                    prev.hasError() || spanError);
+                    prev.hasError() || spanError,
+                    prev.truncated());
             traceStatsSerde.write(next, valBuf -> traceStatsDbi.put(writeTxn, keyBuf, valBuf));
         });
     }
@@ -2575,6 +2709,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     .rootEndTime(null)
                     .orphan(true)
                     .error(orphanStats.hasError())
+                    .truncated(orphanStats.truncated())
                     .build());
         }
         final Span root = optRoot.get();
@@ -2602,7 +2737,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 depth = maxLevel[0];
             }
             stats = new TraceStats(stats.spanCount(), stats.serviceCount(), stats.maxEnd(),
-                    stats.lastActivityMs(), depth, stats.spanCount(), stats.hasError());
+                    stats.lastActivityMs(), depth, stats.spanCount(), stats.hasError(),
+                    stats.truncated());
             writeStats(txn, traceIdBytes, stats);
         }
 
@@ -2623,6 +2759,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 // background thread emitting spans under the trace long after the root finished).
                 .rootEndTime(root.end())
                 .error(stats.hasError())
+                .truncated(stats.truncated())
                 .build());
     }
 

@@ -77,6 +77,14 @@ public class TraceRoot {
      */
     @JsonProperty
     private final boolean error;
+    /**
+     * True when spans for this trace were rejected because it had already reached the store's
+     * per-trace span limit. The trace is deliberately incomplete: a single runaway trace, typically
+     * one whose OTel context leaked into pooled work, would otherwise fill a whole shard and stop
+     * that shard accepting any data at all.
+     */
+    @JsonProperty
+    private final boolean truncated;
 
     public TraceRoot(final Trace trace) {
         final Span root = trace.root();
@@ -91,6 +99,7 @@ public class TraceRoot {
         this.rootEndTime = root == null ? null : root.end();
         this.orphan = root == null;
         this.error = hasError(trace);
+        this.truncated = false;
     }
 
     private static boolean hasError(final Trace trace) {
@@ -153,7 +162,8 @@ public class TraceRoot {
                      @JsonProperty("lastActivityMs") final long lastActivityMs,
                      @JsonProperty("rootEndTime") final NanoTime rootEndTime,
                      @JsonProperty("orphan") final boolean orphan,
-                     @JsonProperty("error") final boolean error) {
+                     @JsonProperty("error") final boolean error,
+                     @JsonProperty("truncated") final boolean truncated) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
@@ -165,6 +175,7 @@ public class TraceRoot {
         this.rootEndTime = rootEndTime;
         this.orphan = orphan;
         this.error = error;
+        this.truncated = truncated;
     }
 
     public String getTraceId() {
@@ -211,6 +222,10 @@ public class TraceRoot {
         return error;
     }
 
+    public boolean isTruncated() {
+        return truncated;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -230,13 +245,14 @@ public class TraceRoot {
                Objects.equals(endTime, traceRoot.endTime) &&
                Objects.equals(rootEndTime, traceRoot.rootEndTime) &&
                orphan == traceRoot.orphan &&
-               error == traceRoot.error;
+               error == traceRoot.error &&
+               truncated == traceRoot.truncated;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans,
-                lastActivityMs, rootEndTime, orphan, error);
+                lastActivityMs, rootEndTime, orphan, error, truncated);
     }
 
     public static Builder builder() {
@@ -260,6 +276,7 @@ public class TraceRoot {
         private NanoTime rootEndTime;
         private boolean orphan;
         private boolean error;
+        private boolean truncated;
 
         private Builder() {
         }
@@ -276,6 +293,7 @@ public class TraceRoot {
             this.rootEndTime = traceRoot.rootEndTime;
             this.orphan = traceRoot.orphan;
             this.error = traceRoot.error;
+            this.truncated = traceRoot.truncated;
         }
 
         public Builder traceId(final String traceId) {
@@ -333,6 +351,11 @@ public class TraceRoot {
             return self();
         }
 
+        public Builder truncated(final boolean truncated) {
+            this.truncated = truncated;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -351,7 +374,8 @@ public class TraceRoot {
                     lastActivityMs,
                     rootEndTime,
                     orphan,
-                    error
+                    error,
+                    truncated
             );
         }
     }

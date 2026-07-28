@@ -170,6 +170,8 @@ public class TracesListPresenter
      *       ({@link TraceRoot#isError()});</li>
      *   <li>else an <b>error</b> icon + "No root span found" placeholder when the trace has no root
      *       span (orphan-only — its root aged out or never arrived); see {@link TraceRoot#isOrphan()};</li>
+     *   <li>else a <b>warning</b> icon when the trace hit the store's per-trace span limit and so is
+     *       missing spans ({@link TraceRoot#isTruncated()});</li>
      *   <li>else a <b>warning</b> icon when the trace has trailing leaked activity
      *       ({@link #hasTrailingLeak(TraceRoot)}).</li>
      * </ul>
@@ -192,6 +194,10 @@ public class TracesListPresenter
             sb.append(SvgImageUtil.toSafeHtml(
                     "No root span found for this trace ID (its root has aged out "
                     + "or never arrived)", SvgImage.ERROR, "svgIcon"));
+        } else if (trace != null && trace.isTruncated()) {
+            sb.append(SvgImageUtil.toSafeHtml(
+                    "Truncated — this trace reached the store's per-trace span limit, so some of "
+                    + "its spans were not stored", SvgImage.WARNING, "svgIcon"));
         } else if (hasTrailingLeak(trace)) {
             sb.append(SvgImageUtil.toSafeHtml("Trailing spans — activity continued after the root span ended",
                     SvgImage.WARNING, "svgIcon"));

@@ -32,6 +32,8 @@ import stroom.pathways.shared.otel.trace.NanoTime;
  *       (depth is stable, so it stays off the per-cycle hot path).</li>
  *   <li>{@code hasError} — monotonic OR flag: set once any span reports an error status; never
  *       cleared (a trace that ever errored stays flagged even if that span later ages out).</li>
+ *   <li>{@code truncated} — monotonic OR flag: set once a span has been rejected because the trace
+ *       reached the store's per-trace span limit.</li>
  * </ul>
  */
 public record TraceStats(long spanCount,
@@ -40,7 +42,9 @@ public record TraceStats(long spanCount,
                          long lastActivityMs,
                          int depth,
                          long spanCountAtLastDepth,
-                         boolean hasError) {
+                         boolean hasError,
+                         boolean truncated) {
 
-    public static final TraceStats EMPTY = new TraceStats(0L, 0, NanoTime.ZERO, 0L, 0, 0L, false);
+    public static final TraceStats EMPTY =
+            new TraceStats(0L, 0, NanoTime.ZERO, 0L, 0, 0L, false, false);
 }

@@ -28,6 +28,7 @@ import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.BatchDestination;
 import stroom.planb.impl.db.DefaultBatchDestination;
 import stroom.planb.impl.fs.ArchiveOperation;
+import stroom.planb.impl.fs.CompactOperation;
 import stroom.planb.impl.fs.RetentionOperation;
 import stroom.planb.impl.fs.SharedFileStoreCleaner;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
@@ -96,7 +97,7 @@ public class PlanBModule extends AbstractModule {
         bind(SharedFileStoreMergeProcessor.class);
         bind(SharedFileStorePublisher.class);
         GuiceUtil.buildMultiBinder(binder(), SharedFileStoreOperation.class)
-                .addBindings(RetentionOperation.class, ArchiveOperation.class);
+                .addBindings(RetentionOperation.class, ArchiveOperation.class, CompactOperation.class);
 
         bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
 

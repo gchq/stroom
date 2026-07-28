@@ -21,6 +21,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.stream.LmdbIterable.EntryConsumer;
 import stroom.planb.impl.db.PlanBEnv.EnvInf;
+import stroom.planb.impl.db.PlanBEnv.Usage;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -262,9 +263,22 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     @Override
     public void write(final Consumer<LmdbWriter> consumer) {
-        try (final LmdbWriter writer = createWriter()) {
-            consumer.accept(writer);
-        }
+        env.write(consumer);
+    }
+
+    @Override
+    public void writeWith(final LmdbWriter writer, final Runnable operation) {
+        env.writeWith(writer, operation);
+    }
+
+    @Override
+    public Usage getUsage() {
+        return env.getUsage();
+    }
+
+    @Override
+    public long getLiveBytes() {
+        return env.getLiveBytes();
     }
 
     @Override
