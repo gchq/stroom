@@ -417,9 +417,9 @@ public class SteppingService {
     }
 
     /**
-     * @return the record either side of {@code ref} within its own part, or null at a part boundary. Falling
-     * back there is deliberate: stepping across parts or streams is the resolver's job, and it needs the
-     * whole-stream path to do it.
+     * @return the record either side of {@code ref}, continuing into the neighbouring <b>part</b> when it
+     * runs off the end of its own. Null once the stream itself runs out: crossing to another stream is the
+     * resolver's job - the next stream may not even be swept yet - and it needs the whole-stream path.
      */
     private StepLocation neighbourOf(final long metaId,
                                      final StepDataStore store,
@@ -430,9 +430,22 @@ public class SteppingService {
         }
         final long part = ref.getPartIndex();
         final long candidate = ref.getRecordIndex() + (forward ? 1 : -1);
-        return candidate >= store.getFirstRecordIndex(part) && candidate <= store.getLastRecordIndex(part)
-                ? new StepLocation(metaId, part, candidate)
-                : null;
+        if (candidate >= store.getFirstRecordIndex(part) && candidate <= store.getLastRecordIndex(part)) {
+            return new StepLocation(metaId, part, candidate);
+        }
+
+        // Off the end of this part. A multi-part stream is one stream to the user, so stepping should carry
+        // on into the next part rather than drop to reprocessing the whole stream to do it.
+        final List<Long> parts = store.getPartIndices();
+        final int index = parts.indexOf(part);
+        if (index < 0) {
+            return null;
+        }
+        final int neighbourIndex = forward ? index + 1 : index - 1;
+        if (neighbourIndex < 0 || neighbourIndex >= parts.size()) {
+            return null;
+        }
+        return locationIn(metaId, store, parts.get(neighbourIndex), forward);
     }
 
     private boolean isAnyFilterApplied(final PipelineStepRequest request) {

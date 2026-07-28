@@ -563,8 +563,9 @@ user actually visits**, rather than sweeping it:
   so the target is worked out from the unchanged upstream's captured range, which is complete. A filter
   anywhere - even above the edit - falls back to reprocessing the stream, because a filter makes "the next
   record" mean "the next one that matches" and that cannot be known without running records to find out.
-  Stepping across a part or stream boundary falls back too: that is the resolver's job and it needs the
-  whole-stream path for it.
+  Stepping off the end of a **part** continues into the next one, since a multi-part stream is one stream to
+  the user; stepping off the end of the **stream** falls back, because crossing to another stream is the
+  resolver's job and that stream may not even be swept yet.
 
   Making this work needed a correction in the reuse plan, and it is the interesting part. `StagePlanner` asked
   whether an element *had chunks* under the current fingerprint. That was a fair proxy for "reusable" only
@@ -574,9 +575,19 @@ user actually visits**, rather than sweeping it:
   `StepDataStore.hasCompleteElement`, which is true only if the element holds every record the stream has -
   answered in constant time per part, because a file with no holes holds exactly `last - first + 1` records
   and this runs on every step.
-- **A filter on the edited element or below** forces a progressive scan: materialise records in the direction
-  of travel until one matches. Usually a handful, but a filter that matches nothing has to visit everything,
-  and there is no way around that. FIRST and LAST are the awkward ends, LAST having to work backwards.
+- **A filter on the edited element or below — still reprocesses the stream.** In principle this wants a
+  progressive scan: materialise records in the direction of travel until one matches. Usually a handful,
+  though a filter matching nothing has to visit everything and there is no way around that; FIRST and LAST
+  are the awkward ends, LAST having to work backwards.
+
+  It is not built, and the reason is structural rather than fiddly. Everything on-demand so far fits the
+  existing shape - one launch decision per step, then a scan of what it produced. A progressive scan is a
+  *loop* between materialising and filter-matching, and those sit on opposite sides of the `capture/` and
+  `read/` boundary that the whole design rests on. The tractable form is probably to materialise a bounded
+  window ahead in the direction of travel and let the existing long-poll drive successive windows: that keeps
+  the layering, terminates, and shows progress between polls. It needs per-session state for where the last
+  window ended, and a window size to configure. Until then a filtered step after an edit is correct, just no
+  faster than it was.
 - **A filter on an unchanged upstream element does not force anything.** Its chunks are present under an
   unchanged fingerprint, so `PersistedFilterEvaluator` evaluates it straight from the store and navigation
   stays a single record. The cost is driven by *where* the filter sits relative to the edit, not by whether a
