@@ -103,11 +103,13 @@ public class TracesStoreImpl implements TracesStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TracesStoreImpl.class);
 
-    // Quick-filter field mappers: bare terms fuzzy-match either (OR'd); 'operation:'/'traceId:' qualify.
+    // Quick-filter field mappers: bare terms fuzzy-match either (OR'd); 'operation:'/'traceid:' qualify;
+    // 'iserror:' matches the boolean error flag (iserror:true / iserror:false).
     private static final ValueFunctionFactoriesImpl<TraceRoot> FILTER_VALUE_FUNCTIONS =
             new ValueFunctionFactoriesImpl<TraceRoot>()
                     .put(FindTraceCriteria.FIELD_DEF_OPERATION, TraceRoot::getName)
-                    .put(FindTraceCriteria.FIELD_DEF_TRACE_ID, TraceRoot::getTraceId);
+                    .put(FindTraceCriteria.FIELD_DEF_TRACE_ID, TraceRoot::getTraceId)
+                    .put(FindTraceCriteria.FIELD_DEF_IS_ERROR, root -> Boolean.toString(root.isError()));
     private static final FieldProvider FILTER_FIELD_PROVIDER =
             new FieldProviderImpl(FindTraceCriteria.FIELD_DEFINITIONS);
 

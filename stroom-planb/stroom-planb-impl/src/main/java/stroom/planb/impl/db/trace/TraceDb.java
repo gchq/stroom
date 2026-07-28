@@ -30,6 +30,8 @@ import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
+import stroom.pathways.shared.otel.trace.SpanStatus;
+import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
@@ -396,7 +398,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         if (isNew[0]) {
             final SpanValue v = kv.val();
             recordNewSpan(writeTxn, traceIdBytes, v.getName(), v.getInsertTime(),
-                    NanoTime.fromString(v.getEndTimeUnixNano()));
+                    NanoTime.fromString(v.getEndTimeUnixNano()), isErrorStatus(v.getStatus()));
         }
 
         final boolean isRootSpan = NullSafe.isEmptyString(kv.key().getParentSpanId());
@@ -481,11 +483,15 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
                     final long spanInsertMs = NanoTimeUtil.toInstant(
                             kv.val().getInsertTime()).toEpochMilli();
+                    // recordNewSpan (called above) has already folded this span into the stats, so
+                    // read the accumulator's monotonic error flag — the same source of truth as
+                    // buildRootFromStats — rather than inspecting this span alone.
                     final TraceRoot newRoot = oldRoot.copy()
                             .startTime(newStart)
                             .endTime(newEnd)
                             .totalSpans(oldRoot.getTotalSpans() + 1)
                             .lastActivityMs(Math.max(oldRoot.getLastActivityMs(), spanInsertMs))
+                            .error(readStats(writeTxn, traceIdBytes).hasError())
                             .build();
 
                     traceRootKeySerde.write(traceRootKey, keyBuffer ->
@@ -642,7 +648,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                         final SpanValueSerde.SpanSummary s =
                                                 spanValueSerde.readSummary(writer.getWriteTxn(), entry.getVal());
                                         recordNewSpan(writer.getWriteTxn(), tid, s.name(),
-                                                s.insertTime(), s.endTime());
+                                                s.insertTime(), s.endTime(), isErrorStatus(s.statusCode()));
                                     }
                                     writer.tryCommit();
                                 }
@@ -801,7 +807,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private void seedStatsSpanCount(final Txn<ByteBuffer> txn, final byte[] traceIdBytes, final long count) {
         final TraceStats s = readStats(txn, traceIdBytes);
         writeStats(txn, traceIdBytes, new TraceStats(
-                count, s.serviceCount(), s.maxEnd(), s.lastActivityMs(), s.depth(), count));
+                count, s.serviceCount(), s.maxEnd(), s.lastActivityMs(), s.depth(), count, s.hasError()));
     }
 
     // Rewrite a (non-orphan) root's totalSpans and its secondary indexes. No-op if absent/orphan/unchanged.
@@ -2470,7 +2476,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                final byte[] traceIdBytes,
                                final String name,
                                final NanoTime insertTime,
-                               final NanoTime endTime) {
+                               final NanoTime endTime,
+                               final boolean spanError) {
         // Distinct service-name set → detect a genuinely new name.
         final byte[] nameBytes = name == null
                 ? new byte[0]
@@ -2503,9 +2510,18 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     newMaxEnd,
                     Math.max(prev.lastActivityMs(), insertMs),
                     prev.depth(),
-                    prev.spanCountAtLastDepth());
+                    prev.spanCountAtLastDepth(),
+                    prev.hasError() || spanError);
             traceStatsSerde.write(next, valBuf -> traceStatsDbi.put(writeTxn, keyBuf, valBuf));
         });
+    }
+
+    private static boolean isErrorStatus(final StatusCode code) {
+        return StatusCode.STATUS_CODE_ERROR.equals(code);
+    }
+
+    private static boolean isErrorStatus(final SpanStatus status) {
+        return status != null && isErrorStatus(status.getCode());
     }
 
     /** The 8-byte parentSpanId of a span key, read without disturbing the buffer. */
@@ -2558,6 +2574,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     .lastActivityMs(orphanStats.lastActivityMs())
                     .rootEndTime(null)
                     .orphan(true)
+                    .error(orphanStats.hasError())
                     .build());
         }
         final Span root = optRoot.get();
@@ -2585,7 +2602,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 depth = maxLevel[0];
             }
             stats = new TraceStats(stats.spanCount(), stats.serviceCount(), stats.maxEnd(),
-                    stats.lastActivityMs(), depth, stats.spanCount());
+                    stats.lastActivityMs(), depth, stats.spanCount(), stats.hasError());
             writeStats(txn, traceIdBytes, stats);
         }
 
@@ -2605,6 +2622,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 // spans). A large gap between the two flags trailing leaked activity (a pooled/
                 // background thread emitting spans under the trace long after the root finished).
                 .rootEndTime(root.end())
+                .error(stats.hasError())
                 .build());
     }
 

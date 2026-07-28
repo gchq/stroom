@@ -539,6 +539,11 @@
     background: linear-gradient(90deg, #ff8c42 0%, #ff6b1a 100%);
 }
 
+/* Span that reported an error status — red bar (see TraceOverviewWidget.isErrorSpan). */
+.span-error {
+    background: linear-gradient(90deg, var(--red-400) 0%, var(--red-600) 100%);
+}
+
 .duration {
     color: #888;
     font-size: 11px;
@@ -565,4 +570,14 @@
     justify-content: flex-end;
     align-items: center;
     padding: 0 5px;
+}
+
+/* ---- Errored trace rows ---- */
+
+/* Colour all text in a trace-list row red when the trace has any errored span (TraceRoot.error).
+   Targets the cells (and their content) so it overrides the columns' own text colours; the themed
+   --text-color--red keeps it legible in both light and dark themes. */
+.trace-row--error .dataGridCell,
+.trace-row--error .dataGridCell * {
+    color: var(--text-color--red);
 }

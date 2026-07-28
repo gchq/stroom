@@ -50,6 +50,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -100,6 +101,7 @@ public class TracesListPresenter
         pagerView.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         addColumns();
+        dataGrid.setRowStyles(errorRowStyles());
 
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
@@ -133,6 +135,13 @@ public class TracesListPresenter
         return selectionModel;
     }
 
+    // Red-tints the whole row for a trace with any errored span (see pathways.css .trace-row--error).
+    private RowStyles<TraceRoot> errorRowStyles() {
+        return (row, rowIndex) -> row != null && row.isError()
+                ? "trace-row--error"
+                : "";
+    }
+
     private void addColumns() {
         addNameColumn();
         addIdColumn();
@@ -154,11 +163,14 @@ public class TracesListPresenter
     }
 
     /**
-     * Renders the operation name, prefixed with a warning icon (and hover tooltip):
+     * Renders the operation name, prefixed with a single status icon (and hover tooltip), in
+     * precedence order:
      * <ul>
-     *   <li>an <b>error</b> icon + "No root span found" placeholder when the trace has no root span
-     *       (orphan-only — its root aged out or never arrived); see {@link TraceRoot#isOrphan()};</li>
-     *   <li>otherwise a <b>warning</b> icon when the trace has trailing leaked activity
+     *   <li>an <b>error</b> icon when any span in the trace reported an error status
+     *       ({@link TraceRoot#isError()});</li>
+     *   <li>else an <b>error</b> icon + "No root span found" placeholder when the trace has no root
+     *       span (orphan-only — its root aged out or never arrived); see {@link TraceRoot#isOrphan()};</li>
+     *   <li>else a <b>warning</b> icon when the trace has trailing leaked activity
      *       ({@link #hasTrailingLeak(TraceRoot)}).</li>
      * </ul>
      */
@@ -173,7 +185,10 @@ public class TracesListPresenter
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString(
                 "<div style=\"display:flex;align-items:center;gap:4px;\">"));
-        if (orphan) {
+        if (trace != null && trace.isError()) {
+            sb.append(SvgImageUtil.toSafeHtml(
+                    "Trace contains one or more errored spans", SvgImage.ERROR, "svgIcon"));
+        } else if (orphan) {
             sb.append(SvgImageUtil.toSafeHtml(
                     "No root span found for this trace ID (its root has aged out "
                     + "or never arrived)", SvgImage.ERROR, "svgIcon"));

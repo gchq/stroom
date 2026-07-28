@@ -30,6 +30,8 @@ import stroom.pathways.shared.otel.trace.NanoTime;
  *   <li>{@code depth} — last computed longest-path depth; recomputed by the bounded DFS only when
  *       never computed or {@code spanCount} has grown to {@code >= 2 * spanCountAtLastDepth}
  *       (depth is stable, so it stays off the per-cycle hot path).</li>
+ *   <li>{@code hasError} — monotonic OR flag: set once any span reports an error status; never
+ *       cleared (a trace that ever errored stays flagged even if that span later ages out).</li>
  * </ul>
  */
 public record TraceStats(long spanCount,
@@ -37,7 +39,8 @@ public record TraceStats(long spanCount,
                          NanoTime maxEnd,
                          long lastActivityMs,
                          int depth,
-                         long spanCountAtLastDepth) {
+                         long spanCountAtLastDepth,
+                         boolean hasError) {
 
-    public static final TraceStats EMPTY = new TraceStats(0L, 0, NanoTime.ZERO, 0L, 0, 0L);
+    public static final TraceStats EMPTY = new TraceStats(0L, 0, NanoTime.ZERO, 0L, 0, 0L, false);
 }

@@ -105,10 +105,11 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     /**
      * Reads the fields the bounded aggregate sweep needs — span {@code name},
-     * {@code insertTime} (receipt) and {@code endTime} — in a single pass, without
-     * deserialising the rest of the span. Field order in the layout is
-     * insertTime, name, kind, startTime, endTime. The name is resolved through the UID
-     * lookup table (so the lookup must be present).
+     * {@code insertTime} (receipt), {@code endTime} and the {@code status} code — in a single
+     * pass, without materialising the full span. The status is the last field in the layout, so
+     * the intervening fields are consumed to reach it; this lets the merge quick-path fold a span's
+     * error state into the per-trace stats without a full {@link #read}. The name is resolved
+     * through the UID lookup table (so the lookup must be present).
      *
      * @param val raw serialised value buffer; its position is not modified.
      */
@@ -119,11 +120,21 @@ public class SpanValueSerde implements Serde<SpanValue> {
         input.get();                       // kind (1 byte) — skip
         skipNanoTime(input);               // startTimeUnixNano — skip
         final NanoTime endTime = readNanoTime(input);
-        return new SpanSummary(name, insertTime, endTime);
+        readString(txn, input);            // traceState
+        input.getInt();                    // flags
+        readKvList(txn, input);            // attributes
+        input.getInt();                    // droppedAttributesCount
+        readEvents(txn, input);            // events
+        input.getInt();                    // droppedEventsCount
+        readLinks(txn, input);             // links
+        input.getInt();                    // droppedLinksCount
+        final SpanStatus status = readStatus(txn, input);
+        final StatusCode statusCode = status == null ? null : status.getCode();
+        return new SpanSummary(name, insertTime, endTime, statusCode);
     }
 
     /** Lightweight subset of a span value read by {@link #readSummary}. */
-    public record SpanSummary(String name, NanoTime insertTime, NanoTime endTime) {
+    public record SpanSummary(String name, NanoTime insertTime, NanoTime endTime, StatusCode statusCode) {
     }
 
     private ByteBuffer writeKvList(final Txn<ByteBuffer> txn, final List<KeyValue> list, final ByteBuffer byteBuffer) {

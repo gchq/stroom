@@ -27,6 +27,8 @@ import stroom.pathways.shared.otel.trace.KeyValue;
 import stroom.pathways.shared.otel.trace.NanoDuration;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.Span;
+import stroom.pathways.shared.otel.trace.SpanStatus;
+import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.query.api.GroupSelection;
@@ -1047,14 +1049,23 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                 leftPct = Math.max(Math.min(leftPct, 100), 0);
                 widthPct = Math.max(Math.min(widthPct, 100), 0);
 
+                // A span that reported an error status gets a red bar; otherwise the default style.
+                final String barClass = isErrorSpan(span)
+                        ? "span-bar span-error"
+                        : "span-bar span-http";
                 c.div("",
-                        Attribute.className("span-bar span-http"),
+                        Attribute.className(barClass),
                         Attribute.style("left: " + leftPct + "%; width: " + widthPct + "%;"));
                 c.span(span.duration().toString(),
                         Attribute.className("duration"),
                         Attribute.style("left: " + (leftPct + widthPct) + "%;"));
             }
         }, Attribute.className("waterfall-container"));
+    }
+
+    private static boolean isErrorSpan(final Span span) {
+        final SpanStatus status = span.getStatus();
+        return status != null && StatusCode.STATUS_CODE_ERROR.equals(status.getCode());
     }
 
     // ---- Paged waterfall navigation --------------------------------------------------------------

@@ -71,6 +71,12 @@ public class TraceRoot {
      */
     @JsonProperty
     private final boolean orphan;
+    /**
+     * True when any span in the trace reported an error status
+     * ({@link StatusCode#STATUS_CODE_ERROR}).
+     */
+    @JsonProperty
+    private final boolean error;
 
     public TraceRoot(final Trace trace) {
         final Span root = trace.root();
@@ -84,6 +90,18 @@ public class TraceRoot {
         this.lastActivityMs = 0L;
         this.rootEndTime = root == null ? null : root.end();
         this.orphan = root == null;
+        this.error = hasError(trace);
+    }
+
+    private static boolean hasError(final Trace trace) {
+        return trace.getParentSpanIdMap()
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .anyMatch(span -> {
+                    final SpanStatus status = span.getStatus();
+                    return status != null && StatusCode.STATUS_CODE_ERROR.equals(status.getCode());
+                });
     }
 
     private static int services(final Trace trace) {
@@ -134,7 +152,8 @@ public class TraceRoot {
                      @JsonProperty("totalSpans") final int totalSpans,
                      @JsonProperty("lastActivityMs") final long lastActivityMs,
                      @JsonProperty("rootEndTime") final NanoTime rootEndTime,
-                     @JsonProperty("orphan") final boolean orphan) {
+                     @JsonProperty("orphan") final boolean orphan,
+                     @JsonProperty("error") final boolean error) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
@@ -145,6 +164,7 @@ public class TraceRoot {
         this.lastActivityMs = lastActivityMs;
         this.rootEndTime = rootEndTime;
         this.orphan = orphan;
+        this.error = error;
     }
 
     public String getTraceId() {
@@ -187,6 +207,10 @@ public class TraceRoot {
         return orphan;
     }
 
+    public boolean isError() {
+        return error;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -205,13 +229,14 @@ public class TraceRoot {
                Objects.equals(startTime, traceRoot.startTime) &&
                Objects.equals(endTime, traceRoot.endTime) &&
                Objects.equals(rootEndTime, traceRoot.rootEndTime) &&
-               orphan == traceRoot.orphan;
+               orphan == traceRoot.orphan &&
+               error == traceRoot.error;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans,
-                lastActivityMs, rootEndTime, orphan);
+                lastActivityMs, rootEndTime, orphan, error);
     }
 
     public static Builder builder() {
@@ -234,6 +259,7 @@ public class TraceRoot {
         private long lastActivityMs;
         private NanoTime rootEndTime;
         private boolean orphan;
+        private boolean error;
 
         private Builder() {
         }
@@ -249,6 +275,7 @@ public class TraceRoot {
             this.lastActivityMs = traceRoot.lastActivityMs;
             this.rootEndTime = traceRoot.rootEndTime;
             this.orphan = traceRoot.orphan;
+            this.error = traceRoot.error;
         }
 
         public Builder traceId(final String traceId) {
@@ -301,6 +328,11 @@ public class TraceRoot {
             return self();
         }
 
+        public Builder error(final boolean error) {
+            this.error = error;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -318,7 +350,8 @@ public class TraceRoot {
                     totalSpans,
                     lastActivityMs,
                     rootEndTime,
-                    orphan
+                    orphan,
+                    error
             );
         }
     }
