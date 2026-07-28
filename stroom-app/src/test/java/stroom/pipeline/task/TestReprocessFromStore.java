@@ -117,6 +117,7 @@ class TestReprocessFromStore extends TranslationTest {
         SteppingCaptureResult reprocess = null;
         SteppingCaptureResult elementOnly = null;
         SteppingCaptureResult head = null;
+        SteppingCaptureResult onDemand = null;
         try {
             final StepDataStore sourceStore = sweep.store();
             final ElementFingerprints fingerprints = sweep.fingerprints();
@@ -153,6 +154,41 @@ class TestReprocessFromStore extends TranslationTest {
                     .as("ELEMENT_ONLY captured the start element and nothing else")
                     .containsExactly(START_ELEMENT_ID);
 
+            // Materialise ONE record, deep in the stream, rather than re-running the element over all of
+            // them. This is the mid-point replay the whole direction rests on: the record's input is already
+            // in the store, so answering an edit about it should not depend on how far in it is.
+            final long lastRecord = sourceStore.getLastRecordIndex(sourceStore.getPartIndices().getFirst());
+            final long midRecord = lastRecord / 2;
+            assertThat(midRecord).as("the feed has enough records for a mid-point to be meaningful")
+                    .isGreaterThan(0);
+            final StepLocation midLocation =
+                    new StepLocation(metaId, sourceStore.getPartIndices().getFirst(), midRecord);
+
+            onDemand = steppingService.reprocess(
+                    request, metaId, START_ELEMENT_ID, FEED_ELEMENT_ID, sourceStore, fingerprints,
+                    MidPipelineScope.ELEMENT_ONLY, midLocation);
+            final StepDataStore onDemandStore = onDemand.store();
+            final ElementId startId = new ElementId(START_ELEMENT_ID);
+
+            final CapturedElementData sweptMid =
+                    sourceStore.getElementData(midLocation, startId, fingerprint).orElse(null);
+            final CapturedElementData replayedMid =
+                    onDemandStore.getElementData(midLocation, startId, fingerprint).orElse(null);
+            assertThat(replayedMid).as("the record was materialised at its own index, not as record 0")
+                    .isNotNull();
+            assertThat(Arrays.equals(replayedMid.output().data(), sweptMid.output().data()))
+                    .as("a single replayed record is byte-identical to the sweep's version of it")
+                    .isTrue();
+
+            // ...and nothing else was produced. That is the entire point: the cost is one record's work,
+            // not the stream's.
+            assertThat(onDemandStore.getElementData(new StepLocation(metaId, midLocation.getPartIndex(), 0),
+                    startId, fingerprint))
+                    .as("record 0 was not materialised").isEmpty();
+            assertThat(onDemandStore.getElementData(new StepLocation(metaId, midLocation.getPartIndex(),
+                    midRecord + 1), startId, fingerprint))
+                    .as("the following record was not materialised").isEmpty();
+
             // The head stage: built from Source as usual, but stopped after the parser. This is the one
             // stage that cannot be fed from the store - the elements above the first replayable output take
             // raw bytes and text - so it has to run from the raw stream, and it must stop cleanly rather
@@ -174,6 +210,9 @@ class TestReprocessFromStore extends TranslationTest {
             }
             if (head != null) {
                 steppingService.deleteCaptureSession(head.sessionId());
+            }
+            if (onDemand != null) {
+                steppingService.deleteCaptureSession(onDemand.sessionId());
             }
         }
     }

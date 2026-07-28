@@ -135,6 +135,58 @@ class TestStepDataStore {
     }
 
     @Test
+    void testOnDemandWritesNeedNotBeInOrder(@TempDir final Path tempDir) {
+        // Materialising the record the user is looking at means writing one record, deep into the stream,
+        // into an otherwise empty file - and later another, with nothing in between.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putRecord(loc(0, 5_000), List.of(rec(E1, FP_A, "deep")), null, null,
+                StepDataStore.RecordOrder.ON_DEMAND);
+        store.putRecord(loc(0, 12), List.of(rec(E1, FP_A, "shallow")), null, null,
+                StepDataStore.RecordOrder.ON_DEMAND);
+
+        assertThat(store.getElementData(loc(0, 5_000), E1, FP_A)).map(CapturedElementData::outputText)
+                .contains("deep");
+        assertThat(store.getElementData(loc(0, 12), E1, FP_A)).map(CapturedElementData::outputText)
+                .contains("shallow");
+        // A record between them was never materialised, and must not read back as anything.
+        assertThat(store.getElementData(loc(0, 100), E1, FP_A)).isEmpty();
+    }
+
+    @Test
+    void testSweepsStillMustWriteInOrder(@TempDir final Path tempDir) {
+        // The check is not gone, just scoped. It catches a record detector mis-keying records during a
+        // sweep, which would otherwise silently mis-address every later record - a real bug it has caught
+        // before - so the default path must still refuse.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.putRecord(loc(0, 0), List.of(rec(E1, FP_A, "out0")));
+
+        assertThatThrownBy(() -> store.putRecord(loc(0, 7), List.of(rec(E1, FP_A, "out7"))))
+                .as("a sweep writing out of order still fails loudly")
+                .isInstanceOf(StepDataStoreException.class)
+                .hasMessageContaining("expected index 1 but got 7");
+    }
+
+    @Test
+    void testAnOnDemandWriteCanFollowASweep(@TempDir final Path tempDir) {
+        // The real shape: a sweep captured the stream under one fingerprint, then an edit materialises a
+        // single record under a NEW fingerprint. The new file starts at that record, not at 0.
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        for (int r = 0; r < 5; r++) {
+            store.putRecord(loc(0, r), List.of(rec(E1, FP_A, "swept" + r)));
+        }
+
+        store.putRecord(loc(0, 3), List.of(rec(E1, FP_B, "edited3")), null, null,
+                StepDataStore.RecordOrder.ON_DEMAND);
+
+        assertThat(store.getElementData(loc(0, 3), E1, FP_B)).map(CapturedElementData::outputText)
+                .contains("edited3");
+        assertThat(store.getElementData(loc(0, 3), E1, FP_A)).map(CapturedElementData::outputText)
+                .as("the swept version is untouched").contains("swept3");
+        assertThat(store.getElementData(loc(0, 4), E1, FP_B))
+                .as("only the visited record was materialised").isEmpty();
+    }
+
+    @Test
     void testScopeMapRoundTripAndRandomAccess(@TempDir final Path tempDir) {
         final StepDataStore store = newStore(tempDir, new SteppingConfig());
         for (int r = 0; r < 3; r++) {

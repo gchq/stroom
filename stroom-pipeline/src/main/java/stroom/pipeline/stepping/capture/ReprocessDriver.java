@@ -28,6 +28,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Element;
+import stroom.pipeline.filter.SAXRecordDetector;
 import stroom.pipeline.factory.PipelineDataHolder;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory;
@@ -57,11 +58,14 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 
 import jakarta.inject.Inject;
+
+import java.util.function.BooleanSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Re-runs an edited element and its downstream from <b>stored upstream output</b> (SAX events) rather than
@@ -99,6 +103,8 @@ public class ReprocessDriver {
     private final TaskScopeMap taskScopeMap;
 
     private TaskContext taskContext;
+    // See SteppingService.abandonSweep: a superseded reprocess is stopped by a flag, not an interrupt.
+    private BooleanSupplier terminateCheck = () -> false;
     private LoggingErrorReceiver loggingErrorReceiver;
 
     @Inject
@@ -153,6 +159,31 @@ public class ReprocessDriver {
                           final StreamSweep targetSweep,
                           final ElementFingerprints fingerprints,
                           final MidPipelineScope scope) {
+        reprocess(taskContext, request, metaId, startElementId, feedElementId, sourceStore, targetSweep,
+                fingerprints, scope, null);
+    }
+
+    /**
+     * Reprocess a <b>single record</b> rather than the whole stream: read that record's stored upstream
+     * output, fire it through the edited element, capture the result, stop.
+     * <p>
+     * This is what makes an edit cheap wherever the user happens to be. Re-running the element over the whole
+     * stream costs time proportional to how deep the record is - measured at roughly half a second at record
+     * 1,000 and around a minute at record 100,000 - to answer a question about one record whose input is
+     * already sitting in the store. See {@code stepping-design.md} §11.
+     *
+     * @param onDemandTarget the one record to materialise, or null to reprocess the whole stream.
+     */
+    public void reprocess(final TaskContext taskContext,
+                          final PipelineStepRequest request,
+                          final long metaId,
+                          final String startElementId,
+                          final String feedElementId,
+                          final StepDataStore sourceStore,
+                          final StreamSweep targetSweep,
+                          final ElementFingerprints fingerprints,
+                          final MidPipelineScope scope,
+                          final StepLocation onDemandTarget) {
         this.taskContext = taskContext;
         targetSweep.setTaskContext(taskContext);
         if (targetSweep.isTerminateRequested()) {
@@ -170,12 +201,15 @@ public class ReprocessDriver {
 
                         controller.setRequest(request);
                         controller.setTaskContext(taskContext);
+                        // Abandoned (superseded) reprocesses are stopped by flag, not interrupt.
+                        this.terminateCheck = targetSweep::isTerminateRequested;
+                        controller.setTerminateCheck(targetSweep::isTerminateRequested);
                         controller.setCaptureTarget(
                                 targetSweep.getStore(), fingerprints, targetSweep::recordCaptured);
 
                         try {
                             reprocessStream(request, metaId, startElementId, feedElementId, sourceStore,
-                                    fingerprints, scope);
+                                    fingerprints, scope, onDemandTarget);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
                             targetSweep.markError(e);
@@ -204,7 +238,8 @@ public class ReprocessDriver {
                                  final String feedElementId,
                                  final StepDataStore sourceStore,
                                  final ElementFingerprints fingerprints,
-                                 final MidPipelineScope scope) {
+                                 final MidPipelineScope scope,
+                                 final StepLocation onDemandTarget) {
         final Source source;
         try {
             source = streamStore.openSource(metaId);
@@ -241,10 +276,18 @@ public class ReprocessDriver {
             locationFactory.setLocationFactory(streamLocationFactory);
 
             final long maxPartIndex = source.count() - 1;
+            if (onDemandTarget != null) {
+                // One record, written under the index it actually has - so the store must not expect it to
+                // continue a sequence, and the detector must not number it from zero.
+                controller.setRecordOrder(StepDataStore.RecordOrder.ON_DEMAND);
+                setDetectorBase(onDemandTarget.getRecordIndex());
+            }
             entryElement.startProcessing();
             try {
-                for (final long partIndex : sourceStore.getPartIndices()) {
-                    if (taskContext.isTerminated()) {
+                for (final long partIndex : onDemandTarget == null
+                        ? sourceStore.getPartIndices()
+                        : List.of(onDemandTarget.getPartIndex())) {
+                    if (taskContext.isTerminated() || terminateCheck.getAsBoolean()) {
                         break;
                     }
                     metaHolder.setPartIndex(partIndex);
@@ -255,11 +298,11 @@ public class ReprocessDriver {
                         try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
                             metaHolder.setInputStreamProvider(inputStreamProvider);
                             fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
-                                    feedFingerprint);
+                                    feedFingerprint, onDemandTarget);
                         }
                     } else {
                         fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
-                                feedFingerprint);
+                                feedFingerprint, onDemandTarget);
                     }
                 }
             } finally {
@@ -276,9 +319,14 @@ public class ReprocessDriver {
                              final long metaId,
                              final long partIndex,
                              final ElementId feedId,
-                             final String feedFingerprint) {
-        final long first = sourceStore.getFirstRecordIndex(partIndex);
-        final long last = sourceStore.getLastRecordIndex(partIndex);
+                             final String feedFingerprint,
+                             final StepLocation onDemandTarget) {
+        final long first = onDemandTarget != null
+                ? onDemandTarget.getRecordIndex()
+                : sourceStore.getFirstRecordIndex(partIndex);
+        final long last = onDemandTarget != null
+                ? onDemandTarget.getRecordIndex()
+                : sourceStore.getLastRecordIndex(partIndex);
         if (first < 0 || last < 0 || feedFingerprint == null) {
             return;
         }
@@ -321,6 +369,23 @@ public class ReprocessDriver {
             }
         } finally {
             entryElement.endStream();
+        }
+    }
+
+    /**
+     * Tell the entry record detector what index to report the record it is about to be given. Without this a
+     * single replayed record is numbered 0 and would be captured under the wrong index entirely.
+     */
+    private void setDetectorBase(final long baseRecordIndex) {
+        final RecordDetector recordDetector = controller.getRecordDetector();
+        if (recordDetector instanceof final SAXRecordDetector saxRecordDetector) {
+            saxRecordDetector.setBaseRecordIndex(baseRecordIndex);
+        } else {
+            // createFrom always forces a SAXRecordDetector at the entry, so this cannot happen - but
+            // capturing the record under index 0 would be silently wrong, so say so rather than carry on.
+            throw ProcessException.create("Cannot replay a single record: the entry record detector is "
+                                          + (recordDetector == null ? "absent" : recordDetector.getClass()
+                                                  .getSimpleName()));
         }
     }
 

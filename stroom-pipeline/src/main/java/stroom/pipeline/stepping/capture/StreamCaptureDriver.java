@@ -208,6 +208,9 @@ public class StreamCaptureDriver {
 
                     controller.setRequest(request);
                     controller.setTaskContext(taskContext);
+                    // A superseded sweep is abandoned by flag rather than interrupt, so the controller has
+                    // to watch the flag to stop at the next record.
+                    controller.setTerminateCheck(streamSweep::isTerminateRequested);
                     // Capture mode: persist each record atomically and advance the sweep's progress signal.
                     controller.setCaptureTarget(store, fingerprints, streamSweep::recordCaptured);
 
@@ -283,7 +286,9 @@ public class StreamCaptureDriver {
             final long maxPartIndex = source.count() - 1;
             final String encoding = feedProperties.getEncoding(feedName, meta.getTypeName(), childDataType);
 
-            for (long partIndex = 0; partIndex <= maxPartIndex && !taskContext.isTerminated(); partIndex++) {
+            for (long partIndex = 0;
+                    partIndex <= maxPartIndex && !taskContext.isTerminated() && !captureSweep.isTerminateRequested();
+                    partIndex++) {
                 metaHolder.setPartIndex(partIndex);
                 streamLocationFactory.setPartIndex(partIndex);
                 controller.clearAllFilters(null);

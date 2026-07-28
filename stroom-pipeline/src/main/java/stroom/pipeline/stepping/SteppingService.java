@@ -23,6 +23,7 @@ import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.capture.ReprocessDriver;
 import stroom.pipeline.stepping.capture.StreamCaptureDriver;
@@ -207,6 +208,21 @@ public class SteppingService {
                                            final StepDataStore sourceStore,
                                            final ElementFingerprints fingerprints,
                                            final MidPipelineScope scope) {
+        return reprocess(request, metaId, startElementId, feedElementId, sourceStore, fingerprints, scope, null);
+    }
+
+    /**
+     * As above, but materialises only {@code onDemandTarget} - the single record the user is looking at -
+     * rather than re-running the element over the whole stream.
+     */
+    public SteppingCaptureResult reprocess(final PipelineStepRequest request,
+                                           final long metaId,
+                                           final String startElementId,
+                                           final String feedElementId,
+                                           final StepDataStore sourceStore,
+                                           final ElementFingerprints fingerprints,
+                                           final MidPipelineScope scope,
+                                           final StepLocation onDemandTarget) {
         final String sessionId = UUID.randomUUID().toString();
         try {
             final StepDataStore targetStore = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
@@ -217,7 +233,7 @@ public class SteppingService {
                         .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
                                 reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
                                         startElementId, feedElementId, sourceStore, sweep, fingerprints,
-                                        scope)), executor)
+                                        scope, onDemandTarget)), executor)
                         .whenComplete((unused, t) -> {
                             if (t != null) {
                                 sweep.markError(t);
@@ -328,7 +344,7 @@ public class SteppingService {
                 (metaId, sweepRequest, sweepFingerprints, priorCompleteCapture) ->
                         launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorCompleteCapture),
                 this::closeSession,
-                this::terminateSweep,
+                this::abandonSweep,
                 steppingConfig.getMaxSweptStreamsPerSession());
     }
 
@@ -419,6 +435,30 @@ public class SteppingService {
         deleteCaptureSession(session.getSessionId());
     }
 
+    /**
+     * Stop a sweep whose work has become pointless - it was superseded by an edit - <b>without</b>
+     * interrupting its thread.
+     * <p>
+     * Interrupting would be actively harmful here. {@code TaskContextImpl.terminate()} interrupts the worker,
+     * and a {@link java.nio.channels.FileChannel} is closed permanently, for every user, when a thread is
+     * interrupted during I/O on it. The session deliberately <b>keeps its store</b> across an edit - that is
+     * what makes reverting free - so interrupting a superseded sweep can leave the very file the next step
+     * reads unusable, and every later step in the session then fails.
+     * <p>
+     * The flag is enough: the capture and reprocess loops check it at every record and part boundary, so the
+     * worst case is that one more record is captured before the sweep unwinds. The old engine interrupted
+     * because it wanted to stop the moment it reached the record it was looking for; this engine captures
+     * everything, so that reason no longer exists.
+     */
+    private void abandonSweep(final StreamSweep sweep) {
+        sweep.requestTerminate();
+    }
+
+    /**
+     * Stop a sweep because the session itself is going away (the user closed stepping, changed selection, or
+     * the session was reaped). Interrupting is right here: the work is genuinely unwanted, and the store is
+     * deleted immediately afterwards, so a channel closed by the interrupt costs nothing.
+     */
     private void terminateSweep(final StreamSweep sweep) {
         // Request termination BEFORE reading the task context. A sweep that has been launched but whose
         // task has not started yet has no context to terminate; the flag is what stops it, and this

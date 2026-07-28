@@ -144,6 +144,20 @@ public class StoreStepResolver {
         long last(long partIndex);
 
         /**
+         * @return true if this record is actually available to serve.
+         * <p>
+         * Separate from {@link #first}/{@link #last} because those describe where a stream <i>reaches</i>,
+         * which is not the same question once records are materialised individually rather than swept in
+         * order: an element that holds only the records the user has visited has gaps inside its own span.
+         * The default answers from the bounds, which is right for anything captured contiguously.
+         */
+        default boolean contains(final long partIndex, final long recordIndex) {
+            final long first = first(partIndex);
+            final long last = last(partIndex);
+            return first >= 0 && last >= 0 && recordIndex >= first && recordIndex <= last;
+        }
+
+        /**
          * The whole store's range. Correct while a single producer writes every element of a record together,
          * which is what a full sweep does.
          */
@@ -185,6 +199,42 @@ public class StoreStepResolver {
                 @Override
                 public long last(final long partIndex) {
                     return intersect(contributors, partIndex)[1];
+                }
+
+                @Override
+                public boolean contains(final long partIndex, final long recordIndex) {
+                    // Every contributor must hold it, not merely span it - one that has a hole here cannot
+                    // show its pane, and a record served with a blank pane is the failure this prevents.
+                    return !contributors.isEmpty()
+                           && contributors.stream().allMatch(r -> r.contains(partIndex, recordIndex));
+                }
+            };
+        }
+
+        /**
+         * A range that takes its <b>bounds</b> from one source and its <b>contents</b> from another.
+         * <p>
+         * This is how a step can be answered about an element that holds only what the user has visited. Such
+         * an element never "completes" and its own last record is just the last one looked at, so asking it
+         * where the stream ends gives the wrong answer - LAST would land mid-stream. The bounds therefore
+         * come from the upstream element that really did capture the whole stream, while what is servable
+         * comes from the materialised element itself.
+         */
+        static CapturedRange spanning(final CapturedRange bounds, final CapturedRange held) {
+            return new CapturedRange() {
+                @Override
+                public long first(final long partIndex) {
+                    return bounds.first(partIndex);
+                }
+
+                @Override
+                public long last(final long partIndex) {
+                    return bounds.last(partIndex);
+                }
+
+                @Override
+                public boolean contains(final long partIndex, final long recordIndex) {
+                    return held.contains(partIndex, recordIndex);
                 }
             };
         }
@@ -369,12 +419,8 @@ public class StoreStepResolver {
     }
 
     private boolean exists(final List<Long> parts, final StepLocation loc, final CapturedRange range) {
-        final long part = loc.getPartIndex();
-        final long first = range.first(part);
-        return parts.contains(part)
-                && first >= 0
-                && loc.getRecordIndex() >= first
-                && loc.getRecordIndex() <= range.last(part);
+        return parts.contains(loc.getPartIndex())
+               && range.contains(loc.getPartIndex(), loc.getRecordIndex());
     }
 
     // --- assembly -------------------------------------------------------------------------------

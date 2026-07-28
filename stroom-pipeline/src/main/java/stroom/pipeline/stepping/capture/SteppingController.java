@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
@@ -87,6 +88,11 @@ public class SteppingController {
     private Consumer<StepLocation> recordListener;
 
     private TaskContext taskContext;
+    // Set alongside the capture target. The task context's flag is only raised by an interrupt-bearing
+    // terminate, so a sweep that was merely abandoned (superseded by an edit) is invisible without this.
+    private BooleanSupplier terminateCheck = () -> false;
+    // A sweep produces records in order; an on-demand replay produces whichever one the user asked for.
+    private StepDataStore.RecordOrder recordOrder = StepDataStore.RecordOrder.SEQUENTIAL;
 
     @Inject
     SteppingController(final MetaHolder metaHolder,
@@ -166,7 +172,7 @@ public class SteppingController {
                 currentStreamIndex,
                 currentRecordIndex);
 
-        if (taskContext.isTerminated()) {
+        if (taskContext.isTerminated() || terminateCheck.getAsBoolean()) {
             return true;
         }
 
@@ -237,7 +243,7 @@ public class SteppingController {
         // it is available. The scope map is snapshotted here, after every element of the record has run, so a
         // reprocess of a mid-pipeline element can be given what the elements above it put.
         stepDataStore.putRecord(location, records, sourceLocation,
-                taskScopeMap == null ? null : taskScopeMap.snapshot());
+                taskScopeMap == null ? null : taskScopeMap.snapshot(), recordOrder);
         if (recordListener != null) {
             recordListener.accept(location);
         }
@@ -265,6 +271,23 @@ public class SteppingController {
         return null;
     }
 
+
+    /**
+     * Supply the check that says this capture is no longer wanted. Kept separate from the task context
+     * because abandoning a superseded sweep deliberately does not interrupt it - see
+     * {@code SteppingService.abandonSweep}.
+     */
+    /**
+     * Say how this capture produces records. Defaults to {@code SEQUENTIAL}; only a replay that materialises
+     * individual records needs to change it.
+     */
+    public void setRecordOrder(final StepDataStore.RecordOrder recordOrder) {
+        this.recordOrder = recordOrder == null ? StepDataStore.RecordOrder.SEQUENTIAL : recordOrder;
+    }
+
+    public void setTerminateCheck(final BooleanSupplier terminateCheck) {
+        this.terminateCheck = terminateCheck == null ? () -> false : terminateCheck;
+    }
 
     public void setStreamInfo(final String streamInfo) {
         this.streamInfo = streamInfo;

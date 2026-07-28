@@ -179,6 +179,36 @@ public class StepDataStore {
                                        final List<ElementRecord> elements,
                                        final SourceLocation sourceLocation,
                                        final Map<String, String> scopeMap) {
+        putRecord(location, elements, sourceLocation, scopeMap, RecordOrder.SEQUENTIAL);
+    }
+
+    /**
+     * How the caller is producing records, which decides whether the in-order append check applies.
+     */
+    public enum RecordOrder {
+        /**
+         * One record after another, as a sweep produces them. The in-order check applies: a record arriving
+         * out of sequence means a record detector has mis-keyed it, and that has to fail loudly rather than
+         * silently mis-address every later record.
+         */
+        SEQUENTIAL,
+        /**
+         * Records individually, in whatever order the user visits them, each written under an index the
+         * caller already knows. There is no sequence to be out of, so the check does not apply - see
+         * {@code stepping-design.md} §11.
+         */
+        ON_DEMAND
+    }
+
+    /**
+     * As {@link #putRecord(StepLocation, List, SourceLocation, Map)}, with control over whether records are
+     * required to arrive in order.
+     */
+    public synchronized void putRecord(final StepLocation location,
+                                       final List<ElementRecord> elements,
+                                       final SourceLocation sourceLocation,
+                                       final Map<String, String> scopeMap,
+                                       final RecordOrder order) {
         checkNotDeleted();
         if (elements == null || elements.isEmpty()) {
             return;
@@ -218,7 +248,7 @@ public class StepDataStore {
             }
             batchBytes += bytes.length;
 
-            if (existing != null && existing.recordCount() > 0) {
+            if (order == RecordOrder.SEQUENTIAL && existing != null && existing.recordCount() > 0) {
                 final long expected = existing.nextRecordIndex();
                 if (recordIndex != expected) {
                     throw new StepDataStoreException(LogUtil.message(
@@ -237,7 +267,7 @@ public class StepDataStore {
         byte[] stateBytes = null;
         final ElementSegmentFile existingState = partStateFiles.get(location.getPartIndex());
         if (existingState == null || !existingState.contains(recordIndex)) {
-            if (existingState != null && existingState.recordCount() > 0) {
+            if (order == RecordOrder.SEQUENTIAL && existingState != null && existingState.recordCount() > 0) {
                 final long expected = existingState.nextRecordIndex();
                 if (recordIndex != expected) {
                     throw new StepDataStoreException(LogUtil.message(

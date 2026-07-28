@@ -45,6 +45,12 @@ import java.util.Set;
  * {@link MidPipelineScope} modes are "just this element" and "this element and everything below it"). Rather
  * than half-support that, a pipeline that is not a chain plans as a single stage - which is exactly today's
  * whole-pipeline sweep, so the fallback costs nothing that is not already being paid.
+ * <p>
+ * <b>No callers yet, deliberately.</b> This was built for a decomposition into concurrent per-element stages,
+ * which {@code stepping-design.md} §11 records as considered and set aside - the prize turned out to be
+ * pipeline parallelism rather than less work. It is kept because the direction that replaced it, materialising
+ * an edited element on demand per record, needs the same answer: where a pipeline can legitimately be cut, and which elements have
+ * to travel together because their input cannot be replayed out of the store.
  */
 public final class StageGraphPlanner {
 

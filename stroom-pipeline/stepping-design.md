@@ -42,19 +42,20 @@ stroom.pipeline.stepping/
                                             SourceLocationSerializer, RecordScopeState,
                                             RecordScopeStateSerializer
   capture/      the write side              StreamCaptureDriver, ReprocessDriver, StreamSweep,
+                                            CaptureWatermark, CapturedRecordFeed,
                                             SteppingController, ElementMonitor, Recorder, RecordDetector,
                                             SteppingFilter
   read/         the read side               SessionStepResolver, StoreStepResolver,
                                             PersistedFilterEvaluator, StagePlanner, ReprocessPlanner,
-                                            SteppingGraphBuilder
+                                            SteppingGraphBuilder, StageGraphPlanner
   session/      what a user is stepping     SteppingSession, SteppingSessionRegistry
   (root)        the way in                  SteppingService, SteppingResultMapper,
                                             SteppingResourceImpl, SteppingPipelineLookup,
                                             PipelineSteppingModule
 ```
 
-`capture/` and `read/` never call each other. They meet at `store/` and at `StreamSweep`'s progress signal,
-and that is the seam the whole design rests on.
+`capture/` and `read/` never call each other. They meet at `store/` and at the `CaptureWatermark` progress
+signal, and that is the seam the whole design rests on.
 
 ```mermaid
 flowchart TB
@@ -108,7 +109,7 @@ flowchart TB
 ```
 
 **The one-line summary:** the write side fills a store asynchronously; the read side waits for and reads
-from that store. They meet only at `StepDataStore` and at `StreamSweep`'s progress signal.
+from that store. They meet only at `StepDataStore` and at the sweep's `CaptureWatermark`.
 
 ### Layer responsibilities
 
@@ -127,7 +128,9 @@ One class, one job:
 | Read | `StoreStepResolver` | Pure: navigation and filtering over one store. No async |
 | Read | `PersistedFilterEvaluator` | Filter matching against captured IO |
 | Write | `StreamCaptureDriver` | Runs the pipeline once per stream, capturing every record |
-| Write | `StreamSweep` | One stream's capture in flight: its store, metadata and progress signal |
+| Write | `ReprocessDriver` | Re-runs an edited element and its downstream from stored upstream output |
+| Write | `StreamSweep` | One stream's capture in flight: its store, its per-stream metadata, its task handle |
+| Write | `CaptureWatermark` | How far a producer has got, and how a reader waits for it. Held by the sweep |
 | Write | `SteppingController` | The framework's per-record callback; persists every element's IO |
 | Storage | `StepDataStore` | Per-element files for one stream, addressed by record index |
 | Storage | `ElementSegmentFile` | One element's file format: appended bytes + offset index |
@@ -164,6 +167,7 @@ There is no invalidation logic to get wrong. A chunk is valid because its key sa
 
 ```
 {stroom.temp}/stepping/{sessionId}/{metaId}/{partIndex}/{urlEncodedElementId}/{fingerprint}.dat
+{stroom.temp}/stepping/{sessionId}/{metaId}/{partIndex}/__state__.dat
 ```
 
 Each `.dat` is a purpose-built segmented file: records appended in order, with an **in-memory offset index**
@@ -176,8 +180,14 @@ write succeeds.
 > (`segment = recordIndex - base`) and the store exposes `getFirstRecordIndex`/`getLastRecordIndex`.
 > **Never assume records run `0..count-1`.** Navigate by first/last.
 
-`putRecord(location, elements)` is **atomic per record**: every element is serialised and validated, and
-every target file opened, *before* anything is appended. A reader can never see half a record.
+Alongside the per-element files, each part holds one **`__state__.dat`**: the per-record shared-scope
+snapshot (`RecordScopeState` — the source location and the `stroom:put`/`get` map) for state that belongs to no
+single element. It carries no fingerprint, because it is a property of the run rather than of one element's
+config, and it is skipped when already present so a re-sweep keeps the snapshot the first capture took.
+
+`putRecord(location, elements[, sourceLocation[, scopeMap]])` is **atomic per record**: every element *and*
+the state snapshot are serialised and validated, and every target file opened, *before* anything is appended.
+A reader can never see half a record.
 
 It is also **idempotent**: an `(element, fingerprint, record)` already present is skipped. Same fingerprint
 means same config and code, hence identical output. This is what lets a stream be re-swept after an edit —
@@ -192,8 +202,8 @@ This is the part that is easy to get wrong.
 
 ### A sweep is a producer; a step is a consumer
 
-`StreamSweep` is one stream's capture in flight. It owns the store, and carries a **version-based progress
-signal**:
+`StreamSweep` is one stream's capture in flight. It owns the store and delegates its **version-based
+progress signal** to a `CaptureWatermark`, which is the piece a reader actually waits on:
 
 ```mermaid
 sequenceDiagram
@@ -290,7 +300,7 @@ sequenceDiagram
     SS->>RR: resolve(session, request, fingerprints, timeout=40ms)
     RR->>SE: sweepFor(metaId, request, fingerprints)
     alt not swept under these fingerprints yet
-        SE->>SW: launch
+        SE->>SW: launch (sweep, or reprocess if only one element changed)
         SW-)CAP: async capture()
         CAP->>ST: putRecord(record 0..n)
         CAP->>SW: recordCaptured() / markFullyCaptured()
@@ -387,15 +397,23 @@ Assume a selection of three streams `[10, 20, 30]`, ten records each (0-based), 
 
 ### Edit an XSLT, then REFRESH
 1. The presenter sends the edited `code`; fingerprints change for that element **and everything below it**.
-2. `session.refresh` sees a new signature: in-flight sweeps under the old signature are terminated;
-   **completed ones are kept**.
-3. `sweepFor` keys on `(metaId, signature)` → a miss → a new sweep for the new code. A sweep still
-   running under the old signature is terminated **and dropped from the cache** - a terminated sweep is
-   an errored one, and keeping it would make the revert below serve that error.
-4. The sweep re-runs the pipeline, but `putRecord` **skips** every element whose fingerprint is unchanged —
-   so the parser and upstream XSLTs are re-run but not re-written; only the edited element and its
-   downstream are stored under new keys.
-5. `resolve` assembles the record from a mix: upstream chunks under old keys, edited/downstream under new.
+2. `sweepFor(metaId, request, fingerprints)` keys on `(metaId, signature)` → a miss. A sweep still running
+   under the *old* signature is terminated **and dropped from the cache** — a terminated sweep is an errored
+   one, and keeping it would make the revert below serve that error. Completed sweeps are kept.
+3. `launchFor` asks `ReprocessPlanner` (fed by `SteppingGraphBuilder`) what changed. A single edited element
+   whose one upstream neighbour is reusable is the fast path: `launchReprocess` runs `ReprocessDriver` over
+   the **edited element and its downstream only**, fed from the parent's stored output under its unchanged
+   fingerprint. **The pipeline above the edit is not re-run.** Anything else — first sweep, a change at or
+   above the record boundary, a fork, several edits — falls back to `launchSweep`, the normal once-per-stream
+   capture.
+4. Either way `putRecord` **skips** every `(element, fingerprint, record)` already present, so unchanged
+   elements are never rewritten; only the edited element and its downstream are stored under new keys.
+5. `resolve` assembles the record from a mix: upstream chunks under old keys, edited/downstream under new —
+   navigating within the **reprocess sweep's own** captured range, so a record is not served until the
+   reprocess has actually written its changed element.
+
+> This still re-runs the edited element over the *whole stream* to answer a step about *one record*. That is
+> the remaining cost, and what §11 is about.
 
 ### Revert the edit
 1. Fingerprints revert to their previous values.
@@ -443,6 +461,8 @@ on clean shutdown.
 | `TestSteppingSessionLifecycle` | Lazy sweep (only stepped streams get a dir) and close deleting the session dir. Has its own class: its sibling shares a database, and `testTranslationTask` adds streams each run. |
 | `TestSessionStepping` | Cross-stream FORWARD/LAST agreement between `resolveSession` and `step()`. |
 | `TestChunkedCapture` | The synchronous `capture()` entry point agrees with the session path, over four feed types including a reader/text pipeline. |
+| `TestReprocessFromStore` (stroom-app) | The load-bearing de-risk: re-running an interior element from its stored input, **without** re-running the parser above it, is byte-identical to the full sweep over a real feed. Also covers `ELEMENT_ONLY` and the `stopAfter` head build. |
+| `TestLiveReprocessOnEdit` (stroom-app) | That an edit actually routes to a reprocess rather than a second full sweep, and that the reprocessed output is served for an early record — the readiness gate. |
 | `TestSteppingStateFixture` (stroom-app) | **That the fixtures still test anything.** Builds a probe chain and loads a stream carrying a `Meta` child stream, then asserts under a plain full sweep that `stroom:put`/`get`, `stroom:record-no`, `stroom:line-from` and `stroom:meta` all read back real values. The sample feeds exercise none of these, so without it a "reprocessed output == swept output" assertion can pass with both sides empty. Not covered: context reference data. |
 | `TestReprocessRestoresScopeState` (stroom-app) | That shared scope survives the split: an upstream `stroom:put` is still visible to a `stroom:get` below an edit, even though the reprocess never re-runs the put. Builds the two-XSLT topology it needs on an in-memory copy of the pipeline, so no sample pipeline is disturbed. Verified to fail (empty probe) with the restore removed. |
 | `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction, the per-record scope snapshot. |
@@ -450,6 +470,7 @@ on clean shutdown.
 | `TestStreamSweep` | The progress signal: no lost wakeups, interrupt semantics, terminate handshake. |
 | `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour. |
 | `TestElementFingerprinter` | Sensitivity and stability — a wrong fingerprint serves stale IO or never reuses. |
+| `TestCaptureWatermark`, `TestCapturedRecordFeed`, `TestCapturedRange`, `TestStageGraphPlanner` | The substrate built for the set-aside stage decomposition and kept for the direction in §11: that every way a producer stops wakes its waiters, that a consumer follows a producer without hanging, that a record is only servable once every contributor has reached it, and where a pipeline may be cut. Liveness tests here assert the wake is **prompt** (a short join against a long await) — asserting only the return value passes even with the signal deleted. |
 
 Integration tests need MySQL on `localhost:3307` (`stroom-resources`: `bounceIt.sh -y stroom-all-dbs`).
 
@@ -467,32 +488,120 @@ Integration tests need MySQL on `localhost:3307` (`stroom-resources`: `bounceIt.
 - **Create stores only via `SteppingSession`**, never `StepDataStoreManager` directly.
 - **Resolve streams as the requesting user.** `getStreamIdList` must never run as the processing user, and a
   client-supplied `stepLocation` must be checked with `containsStream` — it is untrusted input.
-- **`StagePlanner` has no callers on purpose.** It is the decision logic for the stored-stepping-state
-  improvement below, not dead code left by accident.
+- **Some `read/` classes have no callers on purpose.** `StageGraphPlanner` and `CapturedRecordFeed` were
+  built for the concurrent-stage decomposition that §11 records as set aside, and are kept because the
+  direction that replaced it needs them; their javadoc says so. (`StagePlanner` *does* have a caller now —
+  `ReprocessPlanner` — so do not go looking for a missing one.)
 
 ---
 
-## 11. Future direction — reuse upstream processing on an edit
+## 11. Direction — from "re-run less" to "re-run one record"
 
-Editing an XSLT while stepping a large file currently re-sweeps the whole stream. That is O(N) per *edit*
-(versus the old O(N) per *step*), and `putRecord` idempotency means only the changed elements are re-*written*
-— but the pipeline is still re-*executed* from source, so the parser and every upstream XSLT run again for
-nothing. On a large file that upstream cost is the thing the user waits on. Removing it is the point of this
-direction.
+The store holds every element's per-record input and output. That is not merely a cache of results, it is
+*the stepping state*: an edited element's input for record N is its upstream element's stored output for
+record N, already present under an unchanged fingerprint. Everything here follows from that one fact.
 
-The store already holds every element's per-record input and output — that is not merely a cache of results,
-it is *the stepping state*. So an edited element's input for record N is its upstream element's stored output
-for record N, already present under an unchanged fingerprint. Feeding the changed element (and its downstream)
-from that, instead of re-running the pipeline above it, is the whole idea.
+**The first half is shipped.** Editing an XSLT used to re-sweep the whole stream — O(N) per *edit*, versus the
+old O(N) per *step* — re-executing the parser and every upstream XSLT for nothing. Feeding the changed element
+and its downstream from stored upstream output instead removed that cost; see *Build order* step 3 below,
+which describes the live path.
 
-### Destination: elements as independent async stages
+**The second half is not.** What remains is that an edit still re-runs the changed element and its downstream
+over the **whole stream**, when the user is looking at one record and wants to see one record. That is the
+cost this direction now attacks, and the sections below record how the target changed: away from decomposing
+the pipeline into concurrent stages (considered, substrate built, set aside — the prize turned out to be only
+pipeline parallelism) and towards materialising the edited element lazily, per record, for the records the
+user actually visits.
 
-The long-term shape is each element as its own async stage that consumes its upstream's captured output
-record-stream and produces its own. The store already record-boundaries every element's output, and
-`StreamSweep`'s progress signal is already "wake me when the next record lands", so stages could run
-**concurrently** — a downstream stage begins consuming record 0 the moment upstream captures it — and an edit
-tears down only the changed stage and its successors, which re-consume the upstream stream that is partly
-stored and partly still arriving. This is stepping-specific; live ingest stays the synchronous SAX chain.
+### Considered and set aside: elements as independent concurrent stages
+
+The long-term shape was going to be each element as its own async stage consuming its upstream's captured
+record-stream, all running concurrently. The substrate for it was built (see *What exists* below) and then the
+direction was **set aside**, because working through what it would actually deliver showed the prize was much
+smaller than it looked:
+
+- **The first capture should not be decomposed at all.** A single sweep runs the whole chain in one streaming
+  pass. Splitting it into stages adds a store round-trip between every element and does strictly *more* work.
+  Stages only pay off where unchanged ones can be skipped — that is, after an edit.
+- **After an edit the work is already minimal.** `ReprocessPlanner` re-runs the changed element and its
+  descendants fed from stored upstream, and because fingerprints are cumulative every descendant of an edited
+  element changes anyway. So the set of elements that must re-run is identical with or without stages.
+- **They already stream.** The re-run elements run as one SAX chain in which each record flows through every
+  element immediately. Stages would not shorten that chain.
+
+What stages *would* add is pipeline parallelism — stage A working record 10 while stage B works record 9, on
+separate threads, which a single-threaded SAX chain never gets. That is a real prize for long CPU-bound
+streams, but it is far narrower than "stop re-running upstream" (already shipped), and it buys it with store
+lock contention under N writers, pool exhaustion, and deadlock risk in the live path. It was not judged worth
+that trade before the benefit had been measured. Live ingest was never in scope either way; this is all
+stepping-specific.
+
+### Direction: materialise the edited element on demand, per record
+
+The transformative case is not parallelism, it is **not doing the work at all**. When an XSLT is edited, what
+the user wants is to see the effect *on the record they are looking at*, now. That record's input is already
+in the store — it is the unchanged parent's captured output — so serving it requires replaying **one record**
+through the edited element, not the stream.
+
+So the direction is to materialise the edited element's output **lazily, per record, for whichever records the
+user actually visits**, rather than sweeping it:
+
+- **REFRESH** is the case this is built for and is exactly one record's work. Editing an XSLT and refreshing
+  should be effectively instant regardless of how far into the stream the user is.
+- **FIRST / NEXT / PREVIOUS / LAST with no filter below the edit** are also one record's work: the target
+  index is known from the unchanged upstream's captured range, so only that record need be materialised.
+- **A filter on the edited element or below** forces a progressive scan: materialise records in the direction
+  of travel until one matches. Usually a handful, but a filter that matches nothing has to visit everything,
+  and there is no way around that. FIRST and LAST are the awkward ends, LAST having to work backwards.
+- **A filter on an unchanged upstream element does not force anything.** Its chunks are present under an
+  unchanged fingerprint, so `PersistedFilterEvaluator` evaluates it straight from the store and navigation
+  stays a single record. The cost is driven by *where* the filter sits relative to the edit, not by whether a
+  filter exists.
+
+**Counters are not a prerequisite.** A single-record replay leaves `IdEnrichmentFilter` and friends reporting
+1 rather than their swept value — the already-accepted inaccuracy recorded above, cosmetic and visible rather
+than silent corruption. Capturing counter state is a fidelity improvement to schedule on its own merits, not a
+blocker for this.
+
+The per-record shared scope, by contrast, *is* load-bearing and is already done: the source location snapshot
+and the `stroom:put`/`get` map are both restored before each replayed record. Without them a single-record
+replay would show a downstream `stroom:get` as empty and its location functions as defaults — wrong, and
+wrong quietly.
+
+#### What has to change first
+
+Two things block on-demand materialisation, both in the parts of the store it is least comfortable to disturb:
+
+1. **The store forbids holes.** `putRecord` enforces in-order contiguous appends per `(element, fingerprint)`
+   file and `ElementSegmentFile` indexes by `recordIndex - baseRecordIndex`, so materialising record 5 and then
+   record 9 into the same file trips *"expected index 6 but got 9"*. Sparse materialisation needs a sparse
+   index. Contained, but it is the invariant that keeps a torn record from ever being visible.
+2. **"Complete" and LAST must come from upstream.** The resolver waits for full capture to learn the true last
+   record; a sparsely materialised element is never complete, so LAST would hang. The last index has to be
+   taken from the unchanged upstream element's range instead. Relatedly `CapturedRange` is `first`/`last` per
+   part, which cannot express a hole — a sparse element likely needs `contains(record)`.
+
+#### Measure before building
+
+The deciding number is **wall-clock of a full edited-element-plus-downstream reprocess against stream length**,
+on a realistic pipeline. If a typical stream reprocesses in a few hundred milliseconds this is not worth the
+store change; if long streams take tens of seconds, on-demand replay is decisive. The same measurement shows
+where the filtered-scan degenerate cases start to hurt. The sample feeds are too small to answer it — it needs
+a real pipeline and a realistically sized stream.
+
+#### What exists, and how it serves this
+
+The concurrent-stages work was not wasted; it is the substrate this direction needs:
+
+| Built | Serves on-demand replay by |
+|---|---|
+| `capture/CaptureWatermark` | the progress/terminal-state signal, split out of `StreamSweep` so anything that produces records can own one |
+| `capture/CapturedRecordFeed` | the shape a progressive filtered scan wants — consume as records appear, wait, stop on terminal state |
+| `MidPipelineScope.ELEMENT_ONLY` | running one element detached, proven byte-identical to the sweep |
+| `create(..., stopAfter)` | the source-rooted counterpart, for the head of a pipeline that cannot be fed from the store |
+| `CapturedRange.intersectionOf` | what stops FORWARD landing on a record the edited element has not materialised, showing blank panes |
+| `read/StageGraphPlanner` | where a pipeline can be cut at all — cuts are only sound where the upstream output is replayable (SAX events); readers, writers and appenders store text, so they travel with their neighbours |
+| `TestSteppingStateFixture` | a fixture that actually carries put/get, location and metadata state, with every probe asserted non-empty under a plain sweep so it cannot silently stop testing |
 
 ### Rejected: hot-swap the element mid-stream
 
@@ -516,17 +625,20 @@ holds this element-specific form as {@code CapturedElementData}; the UI panes ar
 stays byte-identical to the old text store. XPath filters now run directly over the stored events
 (`filter.PersistedXPathFilterMatcher`) with no XML re-parse.
 
-**2. Capture the state that survives the cut, before splitting anything.** The destination is async
-per-element execution, where an edited stage (and its successors) is torn down and restarted against the
-stored upstream stream — potentially *mid-stream*, at record N, without re-processing 0..N-1. In that world
-there is **no state-free intermediate**: a stage restarted at record N needs its accumulated state as of
-record N-1, and state an **upstream** (not-restarted) element deposited into a shared scope is unreachable
-because upstream is the thing you are deliberately not re-running. So state is captured per record, now,
-alongside the IO — this is the same "store more than IO text" change as step 1, so the store format carries
-IO-as-events and state together.
+**2. Capture the state that survives the cut, before splitting anything.** An edited element is restarted
+against the stored upstream stream — and, in the direction above, restarted at a *single* record N without
+processing 0..N-1. In that world there is **no state-free intermediate**: an element re-run at record N needs
+its accumulated state as of record N-1, and state an **upstream** (not-restarted) element deposited into a
+shared scope is unreachable because upstream is the thing you are deliberately not re-running. So state is
+captured per record, alongside the IO — this is the same "store more than IO text" change as step 1, so the
+store format carries IO-as-events and state together.
 
-Scope is deliberately narrow. Stepping is an introspection tool with understood limitations, and the
-destination is async-per-event where cross-event shared state is at risk anyway. We capture only the state
+This is why the *shared scope* half of it is load-bearing and the *counter* half is not. Source location and
+the `stroom:put`/`get` map are deposited by elements that a replay does not re-run, so without the snapshots
+they are simply gone; counters belong to the element being re-run, which merely restarts them from 1.
+
+Scope is deliberately narrow. Stepping is an introspection tool with understood limitations, and a replay is
+a place where cross-record state is at risk anyway. We capture only the state
 whose *correctness users actually rely on* — **source location and counters** — and explicitly drop the rest
 rather than pay to preserve it. Two kinds, captured differently:
 
@@ -536,6 +648,11 @@ rather than pay to preserve it. Two kinds, captured differently:
   record). This is what lets the *counter-owning element itself* restart mid-stream. (Note `EventId` is also
   written into the event stream as an attribute, so a *downstream* reader of `@EventId` already gets it from
   captured IO — the stored counter serves the different case of restarting the owning element.)
+  **Not built, and not a prerequisite for anything.** Without it a replayed record reports 1 where a sweep
+  reported its true count — the accepted, visible inaccuracy recorded above. Verified twice since: under the
+  shipped reprocess every re-run element starts at record 0 and rebuilds its counter naturally, so nothing
+  consumes stored counters today. Schedule this as a fidelity improvement when a user actually needs the
+  counts to be right under an edit, not as a gate on the direction below.
 - **Shared source location** — `LocationHolder`'s per-record `SourceLocation`. Populated by the `SplitFilter`
   (just below the parser) from the SAX `Locator` and read downstream by `stroom:record-no`, `line-from`/
   `col-from`, `stroom:source` and the step-highlight. Not owned by any one element, so captured as a
@@ -557,8 +674,8 @@ rather than pay to preserve it. Two kinds, captured differently:
 **Dropped, on purpose:** `stroom:put`/`get` **cross-record** state. In stepping, `put`/`get` are scoped to the
 **current record** — `get` sees only same-record `put`s — because `SteppingController.endRecord` clears the
 map once the record is captured. This deliberately narrows the task-wide scope normal processing gives it:
-cross-record shared state cannot survive a reprocess or the async per-element model, and behaviour that works
-only until you edit something is worse than behaviour that is consistently record-scoped. Cross-record shared
+cross-record shared state cannot survive a reprocess, still less a single-record replay, and behaviour that
+works only until you edit something is worse than behaviour that is consistently record-scoped. Cross-record shared
 maps are not a stepping feature. `MergeFilter`-style accumulate-to-`endProcessing` aggregation is likewise
 best-effort: it has no per-record meaning and is not restartable mid-stream.
 
@@ -646,13 +763,17 @@ same state. So content-addressing still holds; there is no new invalidation axis
 downstream stage can be *fed* it without re-deriving it from a re-run of upstream, not because reuse becomes
 harder to reason about.
 
-### Non-goal (for now): instant mid-point replay
+### On validating instant mid-point replay
 
-Re-running the changed element + downstream over the **whole** stream (fed from stored upstream) delivers the
-headline win — no repeated upstream cost — and, once state is captured per record, is correct. Starting a
-downstream stage at record N *without* processing 0..N-1 (the "instant refresh at record 100,000" behaviour)
-is a further step that leans hardest on the per-record state snapshots; treat it as a later goal, proven out
-behind a shadow-diff (run full re-run and replay, diff every record) before it is trusted.
+Instant mid-point replay was previously listed here as a non-goal, deferred behind whole-stream re-running.
+That has been reversed: it is now the direction (see above), because the whole-stream re-run it was deferred
+behind turns out to be the thing worth avoiding, not the safe baseline to build on.
+
+What survives from that earlier framing is how to *trust* it. Replaying a single record is not obviously
+equivalent to that record's slice of a full re-run — element-local state is the known divergence, and there
+may be others. So the validation is a **shadow-diff**: run the full re-run and the on-demand replay over the
+same stream and diff every record, with the known counter divergence explicitly allowed for. That is what
+turns "it looked right in the UI" into evidence, and it should exist before the path is trusted, not after.
 
 ### Storage format (before and after step 1)
 
