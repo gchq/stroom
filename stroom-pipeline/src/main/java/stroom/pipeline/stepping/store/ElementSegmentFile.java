@@ -139,6 +139,21 @@ final class ElementSegmentFile {
         return buffer.array();
     }
 
+    /**
+     * @return the highest record index held, or -1 if none. Not the same as the base plus the count once a
+     * file holds records materialised individually, which may have gaps.
+     */
+    long maxRecordIndex() {
+        return extents.keySet().stream().mapToLong(Long::longValue).max().orElse(-1);
+    }
+
+    /**
+     * @return the lowest record index held, or -1 if none.
+     */
+    long minRecordIndex() {
+        return extents.keySet().stream().mapToLong(Long::longValue).min().orElse(-1);
+    }
+
     long recordCount() {
         return extents.size();
     }

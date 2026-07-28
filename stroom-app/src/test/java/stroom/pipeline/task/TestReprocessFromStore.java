@@ -28,6 +28,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.stepping.SteppingService;
+import stroom.pipeline.stepping.capture.ReprocessDriver.RecordRange;
 import stroom.pipeline.stepping.SteppingService.SteppingCaptureResult;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.CapturedElementData;
@@ -166,7 +167,7 @@ class TestReprocessFromStore extends TranslationTest {
 
             onDemand = steppingService.reprocess(
                     request, metaId, START_ELEMENT_ID, FEED_ELEMENT_ID, sourceStore, fingerprints,
-                    MidPipelineScope.ELEMENT_ONLY, midLocation);
+                    MidPipelineScope.ELEMENT_ONLY, RecordRange.of(midLocation));
             final StepDataStore onDemandStore = onDemand.store();
             final ElementId startId = new ElementId(START_ELEMENT_ID);
 

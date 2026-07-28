@@ -172,7 +172,7 @@ public class ReprocessDriver {
      * 1,000 and around a minute at record 100,000 - to answer a question about one record whose input is
      * already sitting in the store. See {@code stepping-design.md} §11.
      *
-     * @param onDemandTarget the one record to materialise, or null to reprocess the whole stream.
+     * @param onDemandRange the records to materialise, or null to reprocess the whole stream.
      */
     public void reprocess(final TaskContext taskContext,
                           final PipelineStepRequest request,
@@ -183,7 +183,7 @@ public class ReprocessDriver {
                           final StreamSweep targetSweep,
                           final ElementFingerprints fingerprints,
                           final MidPipelineScope scope,
-                          final StepLocation onDemandTarget) {
+                          final RecordRange onDemandRange) {
         this.taskContext = taskContext;
         targetSweep.setTaskContext(taskContext);
         if (targetSweep.isTerminateRequested()) {
@@ -209,7 +209,7 @@ public class ReprocessDriver {
 
                         try {
                             reprocessStream(request, metaId, startElementId, feedElementId, sourceStore,
-                                    fingerprints, scope, onDemandTarget);
+                                    fingerprints, scope, onDemandRange);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
                             targetSweep.markError(e);
@@ -239,7 +239,7 @@ public class ReprocessDriver {
                                  final StepDataStore sourceStore,
                                  final ElementFingerprints fingerprints,
                                  final MidPipelineScope scope,
-                                 final StepLocation onDemandTarget) {
+                                 final RecordRange onDemandRange) {
         final Source source;
         try {
             source = streamStore.openSource(metaId);
@@ -276,17 +276,17 @@ public class ReprocessDriver {
             locationFactory.setLocationFactory(streamLocationFactory);
 
             final long maxPartIndex = source.count() - 1;
-            if (onDemandTarget != null) {
-                // One record, written under the index it actually has - so the store must not expect it to
-                // continue a sequence, and the detector must not number it from zero.
+            if (onDemandRange != null) {
+                // Records written under the indices they actually have - so the store must not expect them
+                // to continue a sequence, and the detector must not number them from zero.
                 controller.setRecordOrder(StepDataStore.RecordOrder.ON_DEMAND);
-                setDetectorBase(onDemandTarget.getRecordIndex());
+                setDetectorBase(onDemandRange.firstRecord());
             }
             entryElement.startProcessing();
             try {
-                for (final long partIndex : onDemandTarget == null
+                for (final long partIndex : onDemandRange == null
                         ? sourceStore.getPartIndices()
-                        : List.of(onDemandTarget.getPartIndex())) {
+                        : List.of(onDemandRange.partIndex())) {
                     if (taskContext.isTerminated() || terminateCheck.getAsBoolean()) {
                         break;
                     }
@@ -298,11 +298,11 @@ public class ReprocessDriver {
                         try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
                             metaHolder.setInputStreamProvider(inputStreamProvider);
                             fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
-                                    feedFingerprint, onDemandTarget);
+                                    feedFingerprint, onDemandRange);
                         }
                     } else {
                         fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
-                                feedFingerprint, onDemandTarget);
+                                feedFingerprint, onDemandRange);
                     }
                 }
             } finally {
@@ -320,12 +320,12 @@ public class ReprocessDriver {
                              final long partIndex,
                              final ElementId feedId,
                              final String feedFingerprint,
-                             final StepLocation onDemandTarget) {
-        final long first = onDemandTarget != null
-                ? onDemandTarget.getRecordIndex()
+                             final RecordRange onDemandRange) {
+        final long first = onDemandRange != null
+                ? onDemandRange.firstRecord()
                 : sourceStore.getFirstRecordIndex(partIndex);
-        final long last = onDemandTarget != null
-                ? onDemandTarget.getRecordIndex()
+        final long last = onDemandRange != null
+                ? onDemandRange.lastRecord()
                 : sourceStore.getLastRecordIndex(partIndex);
         if (first < 0 || last < 0 || feedFingerprint == null) {
             return;
@@ -369,6 +369,18 @@ public class ReprocessDriver {
             }
         } finally {
             entryElement.endStream();
+        }
+    }
+
+    /**
+     * A contiguous run of records within one part, to be materialised on demand. One record is the
+     * edit-then-refresh case; a longer run is a window scanned for a filter match.
+     */
+    public record RecordRange(long partIndex, long firstRecord, long lastRecord) {
+
+        public static RecordRange of(final StepLocation location) {
+            return new RecordRange(location.getPartIndex(), location.getRecordIndex(),
+                    location.getRecordIndex());
         }
     }
 

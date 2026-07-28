@@ -369,6 +369,26 @@ public class StepDataStore {
     }
 
     /**
+     * @return the highest ({@code highest=true}) or lowest record index this element holds in this part at
+     * this fingerprint, or -1 if it holds none.
+     * <p>
+     * This is what lets a scan that materialises records progressively pick up where it left off without
+     * anyone remembering where that was: the frontier is written in the store, so the next window simply
+     * starts past it. State that would otherwise have to be carried between polls is read back instead.
+     */
+    public synchronized long getElementRecordBound(final long partIndex,
+                                                   final ElementId elementId,
+                                                   final String fingerprint,
+                                                   final boolean highest) {
+        checkNotDeleted();
+        final ElementSegmentFile file = openFiles.get(new FileKey(partIndex, elementId, fingerprint));
+        if (file == null) {
+            return -1;
+        }
+        return highest ? file.maxRecordIndex() : file.minRecordIndex();
+    }
+
+    /**
      * @return true if this element holds <b>every</b> record the stream has, at this fingerprint.
      * <p>
      * Distinct from {@link #hasElement}, which is true of a single stored record. That was an adequate

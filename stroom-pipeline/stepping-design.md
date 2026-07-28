@@ -580,7 +580,17 @@ user actually visits**, rather than sweeping it:
   though a filter matching nothing has to visit everything and there is no way around that; FIRST and LAST
   are the awkward ends, LAST having to work backwards.
 
-  It is not built, and the reason is structural rather than fiddly. Everything on-demand so far fits the
+  **Built, as a windowed scan.** Rather than materialise one record, a filtered navigation step materialises a
+  window of them in the direction of travel and lets the resolver scan it; if nothing matches, the client's
+  next poll asks again and the window moves on. The structural problem - that a progressive scan is a *loop*
+  between materialising (`capture/`) and filter-matching (`read/`), which must not call each other - is
+  resolved by **reading the frontier back out of the store**: the records already materialised for that
+  element at that fingerprint say where the last window ended, so the next simply starts past them. The two
+  sides meet at the store, exactly as everything else here does, and no state is carried between polls.
+  `StepDataStore.getElementRecordBound` is that query. Window size is currently a constant in
+  `SteppingService` rather than config - it wants tuning against a real filtered pipeline first.
+
+  The earlier reasoning, kept because the rejected options still apply: Everything on-demand so far fits the
   existing shape - one launch decision per step, then a scan of what it produced. A progressive scan is a
   *loop* between materialising and filter-matching, and those sit on opposite sides of the `capture/` and
   `read/` boundary that the whole design rests on. The tractable form is probably to materialise a bounded
