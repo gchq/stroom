@@ -158,6 +158,29 @@ class TestLiveReprocessOnEdit extends TranslationTest {
                     .as("reprocessed " + START_ELEMENT_ID + " served (not just the reused upstream)").isNotNull();
             assertThat(second.getStepData().getElementData(START_ELEMENT_ID).getOutput())
                     .as("reprocessed output equals original").isEqualTo(originalOutput);
+
+            // 4) A SECOND step, at a DIFFERENT record, under the SAME edit. This is the case a benchmark
+            // cannot catch: every benchmark cycle injects different code, so each step gets a fresh
+            // signature and a fresh sweep, and this path is never taken. Here the code is unchanged, so the
+            // session is asked for a sweep it already has - one that materialised only record 0. If such a
+            // sweep were cached under its signature, the resolver would find a "complete" sweep that does
+            // not hold this record and read that as "no such record, cross into the next stream".
+            final StepLocation record1 = new StepLocation(
+                    record0.getMetaId(), record0.getPartIndex(), 1);
+            final SteppingResult third = steppingService.step(base.copy()
+                    .stepType(StepType.REFRESH)
+                    .stepLocation(record1)
+                    .sessionUuid(second.getSessionUuid())
+                    .code(Map.of(START_ELEMENT_ID, xsltText))
+                    .build());
+
+            assertThat(third.isFoundRecord())
+                    .as("a second record under the same edit still resolves").isTrue();
+            assertThat(third.getFoundLocation().getRecordIndex())
+                    .as("and lands on the record asked for, not another stream").isEqualTo(1);
+            assertThat(third.getStepData().getElementData(START_ELEMENT_ID))
+                    .as("with the edited element served").isNotNull();
+
         } finally {
             if (second != null && second.getSessionUuid() != null) {
                 steppingService.terminateStepping(base.copy().sessionUuid(second.getSessionUuid()).build());

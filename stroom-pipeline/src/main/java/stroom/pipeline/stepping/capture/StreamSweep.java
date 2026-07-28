@@ -40,6 +40,11 @@ public class StreamSweep {
     private final StepDataStore store;
     private final CaptureWatermark watermark = new CaptureWatermark();
 
+    // Non-null when this sweep materialises individual records of one element on demand rather than
+    // capturing the stream. Such a sweep holds only the records the user has actually visited, so what it
+    // can answer is a question about the store rather than about a contiguous range.
+    private volatile String onDemandElementId;
+
     // Set when the async capture task is launched, so the owning session can terminate it on close.
     private volatile TaskContext taskContext;
 
@@ -70,6 +75,25 @@ public class StreamSweep {
      * @return how far this sweep has got. A consumer that follows this sweep's progress needs only this, not
      * the sweep itself.
      */
+    /**
+     * Mark this as materialising records of {@code elementId} on demand. See
+     * {@code stepping-design.md} §11.
+     */
+    public void setOnDemand(final String elementId) {
+        this.onDemandElementId = elementId;
+    }
+
+    public boolean isOnDemand() {
+        return onDemandElementId != null;
+    }
+
+    /**
+     * @return the element whose records this sweep materialises on demand, or null if it captures normally.
+     */
+    public String getOnDemandElementId() {
+        return onDemandElementId;
+    }
+
     public CaptureWatermark getWatermark() {
         return watermark;
     }

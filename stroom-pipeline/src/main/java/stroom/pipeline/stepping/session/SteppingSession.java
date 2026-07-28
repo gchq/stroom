@@ -97,8 +97,18 @@ public class SteppingSession {
             checkNotClosed();
             lastAccessTime = Instant.now();
 
-            final SweepKey key = new SweepKey(metaId, fingerprints.getSignature());
-            final StreamSweep existing = sweeps.get(key);
+            // An on-demand sweep answers ONE step. It is therefore cached against the step that produced
+            // it - the type plus the reference location - rather than against a record index: for FORWARD or
+            // LAST the record the step is about is not the one it names, and keying by the named record
+            // would hand a later step a sweep holding something else entirely.
+            final String stepKey = request.getStepType() + ":" + request.getStepLocation();
+            final SweepKey streamKey = new SweepKey(metaId, fingerprints.getSignature(), null);
+            final StreamSweep forStep =
+                    sweeps.get(new SweepKey(metaId, fingerprints.getSignature(), stepKey));
+            if (forStep != null) {
+                return forStep;
+            }
+            final StreamSweep existing = sweeps.get(streamKey);
             if (existing != null) {
                 return existing;
             }
@@ -129,7 +139,19 @@ public class SteppingSession {
             final boolean priorCompleteCapture = sweeps.values().stream()
                     .anyMatch(prior -> prior.getMetaId() == metaId && prior.isSuccessfullyCaptured());
             final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorCompleteCapture);
-            sweeps.put(key, sweep);
+            // An on-demand sweep is NOT cached. It holds only the record the step asked for, so caching it
+            // under the signature would make the next step at a DIFFERENT record find a "complete" sweep
+            // that does not contain what is wanted - and the resolver reads that as "no such record, cross
+            // into the next stream" rather than "go and materialise it". Leaving it uncached means each step
+            // materialises the record it is about; a record already materialised is skipped by putRecord, so
+            // repeating a step is cheap.
+            // Cache an on-demand sweep against the record it materialised, not against the signature alone.
+            // Keyed by signature only, the next step at a DIFFERENT record would find a "complete" sweep
+            // that does not hold what is wanted, and the resolver reads that as "no such record, cross into
+            // the next stream". Keyed by record, that step simply misses and materialises its own.
+            sweeps.put(sweep.isOnDemand()
+                    ? new SweepKey(metaId, fingerprints.getSignature(), stepKey)
+                    : streamKey, sweep);
             return sweep;
         }
     }
@@ -235,7 +257,12 @@ public class SteppingSession {
      * Identifies a sweep by the stream it captured and the fingerprint signature it captured under, so that
      * an edit starts a new sweep while the pre-edit one stays available for a revert.
      */
-    private record SweepKey(long metaId, String signature) {
+    /**
+     * Identifies a cached sweep. {@code onDemandRecord} is null for a sweep that captured a stream, and the
+     * record index for one that materialised a single record - those are only interchangeable for the record
+     * they actually hold.
+     */
+    private record SweepKey(long metaId, String signature, String onDemandStep) {
 
     }
 

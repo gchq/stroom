@@ -546,10 +546,27 @@ through the edited element, not the stream.
 So the direction is to materialise the edited element's output **lazily, per record, for whichever records the
 user actually visits**, rather than sweeping it:
 
-- **REFRESH** is the case this is built for and is exactly one record's work. Editing an XSLT and refreshing
-  should be effectively instant regardless of how far into the stream the user is.
-- **FIRST / NEXT / PREVIOUS / LAST with no filter below the edit** are also one record's work: the target
-  index is known from the unchanged upstream's captured range, so only that record need be materialised.
+- **REFRESH — SHIPPED.** Exactly one record's work, so editing an XSLT and refreshing is effectively instant
+  however far into the stream the user is. `SteppingService.onDemandTargetFor` routes a REFRESH that names a
+  record to `ReprocessDriver`'s single-record path, which reads that record's stored upstream output, fires it
+  through the edited element and captures the result. Measured over 2,000 records: a mid-stream edit went from
+  ~670ms to ~21ms and an end-of-stream edit from ~1,120ms to ~20ms, against a 7ms floor for a refresh that
+  computes nothing — and, more to the point, the cost stopped scaling with how deep the record is. See
+  `TestSteppingMidPointBenchmark`.
+
+  Two things this needed. `SAXRecordDetector` numbers records from the start of a stream, so it takes a base
+  index - otherwise a single replayed record is captured as record 0. And an on-demand sweep is cached
+  against the **step** that produced it, not against the fingerprint signature: a sweep holding one record,
+  cached under the signature, makes the next step at another record find a "complete" sweep that does not
+  hold what is wanted, which the resolver reads as "no such record, cross into the next stream".
+- **FIRST / NEXT / PREVIOUS / LAST — not yet.** These are also one record's work in principle: the target is
+  known from the unchanged upstream's captured range, so only that record need be materialised. What blocks it
+  is that they do not *name* their record, so the routing decision has to compute it - and by then the planner
+  has already decided. `StagePlanner` asks whether an element has chunks under the current fingerprint, and a
+  partially materialised element answers yes, so after a REFRESH has materialised a record or two the planner
+  concludes there is nothing to reprocess and falls back to a full sweep. **The planner has to be able to tell
+  a fully captured element from a partially materialised one before these step types can use this path.**
+  Until then they reprocess the stream as they do today - correct, just not fast.
 - **A filter on the edited element or below** forces a progressive scan: materialise records in the direction
   of travel until one matches. Usually a handful, but a filter that matches nothing has to visit everything,
   and there is no way around that. FIRST and LAST are the awkward ends, LAST having to work backwards.

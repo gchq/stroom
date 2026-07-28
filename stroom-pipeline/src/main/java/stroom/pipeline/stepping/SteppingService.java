@@ -24,6 +24,7 @@ import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.capture.ReprocessDriver;
 import stroom.pipeline.stepping.capture.StreamCaptureDriver;
@@ -58,6 +59,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -100,6 +102,8 @@ public class SteppingService {
     private final ReprocessPlanner reprocessPlanner = new ReprocessPlanner();
     // How each stream fill was served: a reprocess of just the changed elements, or a full sweep from source.
     // Observable so callers (and tests) can confirm an edit reused upstream rather than re-running it.
+    private final java.util.concurrent.atomic.AtomicLong onDemandLaunches =
+            new java.util.concurrent.atomic.AtomicLong();
     private final java.util.concurrent.atomic.AtomicLong reprocessLaunches =
             new java.util.concurrent.atomic.AtomicLong();
     private final java.util.concurrent.atomic.AtomicLong fullSweepLaunches =
@@ -356,6 +360,56 @@ public class SteppingService {
      * the clean single-edit case ({@link ReprocessPlanner}); everything else falls back to a full sweep, which
      * is the normal once-per-stream capture and always correct.
      */
+    /**
+     * Decide whether this step can be answered by materialising the <b>one record</b> it is about, rather
+     * than re-running the edited element over the whole stream.
+     * <p>
+     * Two conditions. The step must name the record it wants - a REFRESH does, which is what an edit-then-look
+     * cycle produces. And no filter may sit on the edited element or below it: deciding whether a record
+     * matches such a filter means running the element to find out, so the target cannot be known in advance
+     * and records have to be worked through in order instead. A filter on an element <i>above</i> the edit is
+     * no obstacle at all - its output is already in the store under an unchanged fingerprint, so it is
+     * evaluated by reading, exactly as it is today.
+     *
+     * @return the record to materialise, or null to reprocess the whole stream as before.
+     */
+    private StepLocation onDemandTargetFor(final PipelineStepRequest request,
+                                           final Graph graph,
+                                           final Decision decision) {
+        final StepLocation target = request.getStepLocation();
+        if (target == null || request.getStepType() != StepType.REFRESH) {
+            // Only a REFRESH names the record it is about. FIRST/FORWARD/BACKWARD/LAST have to work theirs
+            // out, and doing so needs the planner to tell a partially materialised element from a fully
+            // captured one - see stepping-design.md §11. Until then they reprocess the stream as before.
+            return null;
+        }
+        return isFilteredAtOrBelow(request, graph, decision.startElementId()) ? null : target;
+    }
+
+    private boolean isFilteredAtOrBelow(final PipelineStepRequest request,
+                                        final Graph graph,
+                                        final String startElementId) {
+        if (request.getStepFilterMap() == null || request.getStepFilterMap().isEmpty()) {
+            return false;
+        }
+        final Set<String> atOrBelow = new HashSet<>();
+        collectAtOrBelow(graph, startElementId, atOrBelow);
+        return atOrBelow.stream()
+                .map(request::getStepFilterSettings)
+                .anyMatch(settings -> settings != null && settings.isFilterApplied());
+    }
+
+    private void collectAtOrBelow(final Graph graph, final String elementId, final Set<String> collected) {
+        if (!collected.add(elementId)) {
+            return;
+        }
+        graph.parentsOf().forEach((child, parents) -> {
+            if (parents.contains(elementId)) {
+                collectAtOrBelow(graph, child, collected);
+            }
+        });
+    }
+
     private StreamSweep launchFor(final String sessionId,
                                   final PipelineStepRequest request,
                                   final long metaId,
@@ -372,8 +426,9 @@ public class SteppingService {
                         reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints);
                 if (!decision.fullSweep()) {
                     reprocessLaunches.incrementAndGet();
+                    final StepLocation target = onDemandTargetFor(request, graph, decision);
                     return launchReprocess(request, metaId, decision.startElementId(),
-                            decision.feedElementId(), store, fingerprints);
+                            decision.feedElementId(), store, fingerprints, target);
                 }
             }
         }
@@ -384,6 +439,14 @@ public class SteppingService {
     /**
      * @return the number of stream fills served by reprocessing just the changed elements (edit reuse).
      */
+    /**
+     * @return how many steps were answered by materialising a single record rather than re-running the
+     * edited element over the whole stream. For metrics and tests.
+     */
+    public long getOnDemandLaunchCount() {
+        return onDemandLaunches.get();
+    }
+
     public long getReprocessLaunchCount() {
         return reprocessLaunches.get();
     }
@@ -406,16 +469,23 @@ public class SteppingService {
                                         final String startElementId,
                                         final String feedElementId,
                                         final StepDataStore store,
-                                        final ElementFingerprints fingerprints) {
+                                        final ElementFingerprints fingerprints,
+                                        final StepLocation onDemandTarget) {
         // The reprocess reads the feed's output from, and writes the reprocessed chunks to, the same store.
         final StreamSweep sweep = new StreamSweep(metaId, store);
+        if (onDemandTarget != null) {
+            // Materialising one record rather than capturing the stream: what this sweep can answer is
+            // decided by what the store holds, not by a contiguous range.
+            sweep.setOnDemand(startElementId);
+            onDemandLaunches.incrementAndGet();
+        }
         final Executor executor = executorProvider.get(THREAD_POOL);
         try {
             CompletableFuture
                     .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
                             reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
                                     startElementId, feedElementId, store, sweep, fingerprints,
-                                    MidPipelineScope.ELEMENT_AND_DESCENDANTS)), executor)
+                                    MidPipelineScope.ELEMENT_AND_DESCENDANTS, onDemandTarget)), executor)
                     .whenComplete((unused, t) -> {
                         if (t != null) {
                             sweep.markError(t);
