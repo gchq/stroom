@@ -49,7 +49,20 @@ public class ReprocessPlanner {
                          final Map<String, List<String>> parentsOf,
                          final StepDataStore store,
                          final ElementFingerprints current) {
-        final StagePlan plan = stagePlanner.plan(elements, store, current);
+        return plan(elements, parentsOf, store, current, null);
+    }
+
+    /**
+     * As above, judging reuse against the records the step is about rather than the whole stream: with a
+     * span, an upstream captured <i>up to a frontier</i> can feed a replay of the records behind it, complete
+     * or not. Null keeps the whole-stream requirement.
+     */
+    public Decision plan(final List<PlannerElement> elements,
+                         final Map<String, List<String>> parentsOf,
+                         final StepDataStore store,
+                         final ElementFingerprints current,
+                         final StagePlanner.RecordSpan span) {
+        final StagePlan plan = stagePlanner.plan(elements, store, current, span);
         if (plan.fullRecapture() || plan.reuse().isEmpty() || plan.reprocess().isEmpty()) {
             // First sweep, boundary change, or nothing to reprocess - capture the whole stream from source.
             return Decision.full();

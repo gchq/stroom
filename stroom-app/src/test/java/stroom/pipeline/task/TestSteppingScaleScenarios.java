@@ -148,6 +148,65 @@ class TestSteppingScaleScenarios extends TranslationTest {
     }
 
     /**
+     * Scenario C, the behind-the-frontier half (build-order stage 2): capture has reached record N; the user
+     * edits the XSLT and refreshes a record <b>behind</b> N. The parser's output for that record is already
+     * on disk and the edit does not invalidate it, so the answer must be a reprocess fed from the partial
+     * capture - not a full re-sweep of everything already parsed.
+     * <p>
+     * The un-edited REFRESH first is what pins "behind the frontier": it waits until capture passes the
+     * record, so by the time the edit is issued the feed provably holds it - while the sweep, thousands of
+     * records from done, is still running.
+     */
+    @Test
+    void anEditBehindTheFrontierOfARunningSweepDoesNotResweep() {
+        final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
+        final PipelineStepRequest base = requestFor(metaId);
+        final String xsltText = xsltTextFor(EDITED_ELEMENT_ID);
+        final long record = 100;
+
+        String sessionUuid = null;
+        try {
+            final SteppingResult first = steppingService.step(base.copy().stepType(StepType.FIRST).build());
+            sessionUuid = first.getSessionUuid();
+            assertThat(first.isFoundRecord()).as("FIRST found a record").isTrue();
+            final long partIndex = first.getFoundLocation().getPartIndex();
+
+            // Un-edited: waits on the running sweep until the frontier passes the record. No new launch.
+            final SteppingResult unedited = steppingService.step(base.copy()
+                    .stepType(StepType.REFRESH)
+                    .stepLocation(new StepLocation(metaId, partIndex, record))
+                    .sessionUuid(sessionUuid)
+                    .build());
+            sessionUuid = unedited.getSessionUuid();
+            assertThat(unedited.isFoundRecord()).as("the frontier has passed record " + record).isTrue();
+
+            final long fullSweeps = steppingService.getFullSweepLaunchCount();
+            final long reprocesses = steppingService.getReprocessLaunchCount();
+
+            // The edit, issued while the sweep is still parsing towards record 3,999.
+            final SteppingResult edited = steppingService.step(base.copy()
+                    .stepType(StepType.REFRESH)
+                    .stepLocation(new StepLocation(metaId, partIndex, record))
+                    .sessionUuid(sessionUuid)
+                    .code(Map.of(EDITED_ELEMENT_ID, xsltText))
+                    .build());
+            sessionUuid = edited.getSessionUuid();
+
+            assertThat(edited.isFoundRecord()).as("the edited refresh resolved").isTrue();
+            assertThat(edited.getFoundLocation().getRecordIndex()).isEqualTo(record);
+            assertThat(edited.getStepData().getElementData(EDITED_ELEMENT_ID))
+                    .as("the edited element was served").isNotNull();
+            assertThat(steppingService.getFullSweepLaunchCount())
+                    .as("fed from the partial capture - no full re-sweep of records already parsed")
+                    .isEqualTo(fullSweeps);
+            assertThat(steppingService.getReprocessLaunchCount())
+                    .as("and the mechanism was a reprocess").isEqualTo(reprocesses + 1);
+        } finally {
+            terminate(base, sessionUuid);
+        }
+    }
+
+    /**
      * Scenario C: capture has reached record N; the user edits the XSLT and refreshes. The parser's
      * fingerprint is unchanged by the edit, so the upstream capture is still valid and should be kept - only
      * the edited element and below need re-running. Asserted via the launch counter: answering the edit must

@@ -35,6 +35,7 @@ import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.ReprocessPlanner;
 import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
 import stroom.pipeline.stepping.read.SessionStepResolver;
+import stroom.pipeline.stepping.read.StagePlanner;
 import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
@@ -581,7 +582,15 @@ public class SteppingService {
                                   final long metaId,
                                   final ElementFingerprints fingerprints,
                                   final boolean priorCompleteCapture) {
-        if (priorCompleteCapture) {
+        // What must the feed cover? A whole-stream reprocess (span == null) still requires a prior COMPLETE,
+        // error-free capture: hasCompleteElement measures against the store's own extent, so without the
+        // completion gate a capture truncated by an error would count as "complete" and a reprocess from it
+        // would silently serve a short stream. But a step that names its record does not need the whole
+        // stream - it needs the feed to HOLD that record, which a partial capture legitimately can. That is
+        // what lets an edit land while the stream's first capture is still running (scenario C, the
+        // behind-the-frontier half) instead of costing a full re-sweep.
+        final StagePlanner.RecordSpan span = priorCompleteCapture ? null : namedRecordSpanFor(request, metaId);
+        if (priorCompleteCapture || span != null) {
             final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
             final Set<String> capturedElementIds = store.getCapturedElementIds();
             if (!capturedElementIds.isEmpty()) {
@@ -589,11 +598,19 @@ public class SteppingService {
                         .create(request.getPipelineDoc()).getMergedPipelineData();
                 final Graph graph = SteppingGraphBuilder.build(pipelineData, capturedElementIds);
                 final Decision decision =
-                        reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints);
+                        reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints, span);
                 if (!decision.fullSweep()) {
-                    reprocessLaunches.incrementAndGet();
                     final RecordRange range =
                             onDemandRangeFor(request, graph, decision, store, fingerprints, metaId);
+                    // A plan made against a span is only good for materialising that span. If the range
+                    // computation declined (e.g. the step turned out to need whole-stream work), a
+                    // whole-stream reprocess from a feed only checked for a few records would truncate the
+                    // stream - fall back to the sweep instead of risking it.
+                    if (span != null && range == null) {
+                        fullSweepLaunches.incrementAndGet();
+                        return launchSweep(sessionId, request, metaId, fingerprints);
+                    }
+                    reprocessLaunches.incrementAndGet();
                     return launchReprocess(request, metaId, decision.startElementId(),
                             decision.feedElementId(), store, fingerprints, range);
                 }
@@ -601,6 +618,20 @@ public class SteppingService {
         }
         fullSweepLaunches.incrementAndGet();
         return launchSweep(sessionId, request, metaId, fingerprints);
+    }
+
+    /**
+     * The span a step demands, when it names one: an unfiltered-or-filtered REFRESH is about exactly the
+     * record it points at. Navigation names no record (its target is worked out from captured extents, which
+     * a partial capture cannot yet answer), so everything else returns null and keeps the whole-stream
+     * requirement.
+     */
+    private StagePlanner.RecordSpan namedRecordSpanFor(final PipelineStepRequest request, final long metaId) {
+        final StepLocation ref = request.getStepLocation();
+        if (request.getStepType() == StepType.REFRESH && ref != null && ref.getMetaId() == metaId) {
+            return new StagePlanner.RecordSpan(ref.getPartIndex(), ref.getRecordIndex(), ref.getRecordIndex());
+        }
+        return null;
     }
 
     /**

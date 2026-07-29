@@ -69,6 +69,51 @@ class TestReprocessPlanner {
         return store;
     }
 
+    // --- span-based decisions: reprocess from a PARTIAL capture ---------------------------------
+
+    /**
+     * A store as an abandoned mid-flight sweep leaves it: parser and xslt captured to a frontier, nothing
+     * beyond. Note {@code hasCompleteElement} would call the truncated parser "complete" - the store measures
+     * against its own extent - which is exactly why whole-stream (null-span) plans must keep the
+     * prior-successful-capture gate while span plans may not need it.
+     */
+    private StepDataStore truncatedStore(final Path tempDir, final long frontier) {
+        final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
+        for (long r = 0; r <= frontier; r++) {
+            store.putElementData(new StepLocation(META, 0, r), new ElementId("parser"), "p1", ed());
+            store.putElementData(new StepLocation(META, 0, r), new ElementId("xslt"), "x1", ed());
+            store.putElementData(new StepLocation(META, 0, r), new ElementId("writer"), "w1", ed());
+        }
+        return store;
+    }
+
+    @Test
+    void testAnEditBehindTheFrontierReprocessesFromThePartialFeed(@TempDir final Path tempDir) {
+        // The 2.1 case: the first capture got to record 6 and was abandoned by an edit. A REFRESH of record
+        // 2 under the edited xslt needs the parser to hold record 2 - it does - so the decision is a
+        // reprocess fed from the partial parser, not a full re-sweep of everything already parsed.
+        final StepDataStore store = truncatedStore(tempDir, 6);
+
+        final Decision d = planner.plan(elements, parentsOf, store, fingerprints("p1", "x2", "w2"),
+                new StagePlanner.RecordSpan(0, 2, 2));
+
+        assertThat(d.fullSweep()).isFalse();
+        assertThat(d.startElementId()).isEqualTo("xslt");
+        assertThat(d.feedElementId()).isEqualTo("parser");
+    }
+
+    @Test
+    void testAnEditBeyondTheFrontierFallsBackToAFullSweep(@TempDir final Path tempDir) {
+        // The other direction: record 8 was never parsed, so there is nothing to feed the replay from and
+        // the only correct answer is to capture from source.
+        final StepDataStore store = truncatedStore(tempDir, 6);
+
+        final Decision d = planner.plan(elements, parentsOf, store, fingerprints("p1", "x2", "w2"),
+                new StagePlanner.RecordSpan(0, 8, 8));
+
+        assertThat(d.fullSweep()).isTrue();
+    }
+
     @Test
     void testFirstSweepFromEmptyStoreIsFullSweep(@TempDir final Path tempDir) {
         final StepDataStore empty = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
