@@ -545,25 +545,32 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return pipelineLayer;
     }
 
+    /**
+     * Sets the layer being edited without rebuilding or notifying anybody. Only for initial setup;
+     * use {@link #update(PipelineData)} to make an edit.
+     */
     public void setPipelineLayer(final PipelineLayer pipelineLayer) {
         this.pipelineLayer = pipelineLayer;
+    }
+
+    /**
+     * Replaces the data of the layer being edited, rebuilds the combined view of the pipeline and
+     * notifies listeners.
+     * <p>
+     * Every edit must go through a model method that ends in {@link #refresh()} like this one does.
+     * The resulting change event is what makes the enclosing document re-evaluate whether it is
+     * dirty, so an edit applied with {@link #setPipelineLayer(PipelineLayer)} alone will not enable
+     * the Save button.
+     */
+    public void update(final PipelineData pipelineData) throws PipelineModelException {
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
+        buildCombinedData();
+        refresh();
     }
 
     public PipelineData getPipelineData() {
         return pipelineLayer.getPipelineData();
     }
-
-//    /**
-//     * Set the provided filters on the pipeline elements in our model
-//     */
-//    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
-//        this.elementIdToStepFilterMap = elementIdToStepFilterMap;
-//        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
-//            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
-//        });
-//        refresh();
-//    }
-
 
     public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
         this.stepFilterMap = stepFilterMap;

@@ -22,8 +22,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.util.function.ToIntFunction;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add, remove"})
@@ -57,14 +61,75 @@ public abstract class AbstractAddRemove<T> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractAddRemove<?> that = (AbstractAddRemove<?>) o;
-        return Objects.equals(add, that.add) &&
-               Objects.equals(remove, that.remove);
+        @SuppressWarnings("unchecked") // Same class, so same type parameter.
+        final AbstractAddRemove<T> that = (AbstractAddRemove<T>) o;
+        return listsEqual(add, that.add) &&
+               listsEqual(remove, that.remove);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(add, remove);
+        return listHashCode(add) * 31 + listHashCode(remove);
+    }
+
+    /**
+     * Compares an add or remove list with the equivalent list from another instance. Order is
+     * significant by default; subclasses whose list order carries no meaning should override this
+     * (and {@link #listHashCode(List)}) so that equality reflects content alone.
+     */
+    protected boolean listsEqual(final List<T> list, final List<T> other) {
+        return Objects.equals(list, other);
+    }
+
+    /**
+     * @see #listsEqual(List, List)
+     */
+    protected int listHashCode(final List<T> list) {
+        return Objects.hashCode(list);
+    }
+
+    /**
+     * Compares two lists ignoring order, using the natural ordering of the items to pair them up and
+     * the supplied equality test to compare each pair. Used by subclasses whose list order is not
+     * meaningful, so that a list rebuilt in a different order (e.g. by
+     * {@code PipelineModel.diff()}, which iterates hash based maps) still compares equal.
+     */
+    static <T extends Comparable<T>> boolean unorderedEquals(final List<T> list,
+                                                             final List<T> other,
+                                                             final BiPredicate<T, T> equality) {
+        if (list == other) {
+            return true;
+        }
+        if (list == null || other == null || list.size() != other.size()) {
+            return false;
+        }
+
+        final List<T> sorted = new ArrayList<>(list);
+        final List<T> otherSorted = new ArrayList<>(other);
+        Collections.sort(sorted);
+        Collections.sort(otherSorted);
+
+        for (int i = 0; i < sorted.size(); i++) {
+            if (!equality.test(sorted.get(i), otherSorted.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @see #unorderedEquals(List, List, BiPredicate)
+     */
+    static <T> int unorderedHashCode(final List<T> list, final ToIntFunction<T> hash) {
+        if (list == null) {
+            return 0;
+        }
+        int result = list.size();
+        for (final T item : list) {
+            // Sum so that the hash does not depend on order.
+            result += hash.applyAsInt(item);
+        }
+        return result;
     }
 
     @Override

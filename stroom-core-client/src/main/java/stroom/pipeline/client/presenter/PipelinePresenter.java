@@ -22,6 +22,7 @@ import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -147,16 +148,14 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             }
         };
 
-        structureTabProvider = new AbstractTabProvider<PipelineDoc, PipelineStructurePresenter>(getEventBus()) {
+        // A DocTabProvider (rather than a hand rolled AbstractTabProvider) so that the structure
+        // presenter's dirty events reach the tab content provider, and from there this presenter's
+        // onChange(). An AbstractTabProvider listens for dirty events fired by itself, which the
+        // structure presenter never does, so its edits used to go unnoticed.
+        structureTabProvider = new DocTabProvider<PipelineDoc>(() -> pipelineStructurePresenter) {
             @Override
-            protected PipelineStructurePresenter createPresenter() {
-                return pipelineStructurePresenter;
-            }
-
-            @Override
-            public void onRead(final PipelineStructurePresenter presenter, final DocRef docRef,
-                               final PipelineDoc document, final boolean readOnly) {
-                pipelineStructurePresenter.read(docRef, document, readOnly);
+            public void read(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
+                super.read(docRef, document, readOnly);
                 loadPipelineModel(docRef, pipelineStructurePresenter::setPipelineModel);
             }
         };
@@ -275,19 +274,13 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     protected void onBind() {
         super.onBind();
 
-        pipelineStructurePresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
-
         // Editing an element's code (e.g. XSLT) while stepping does not change the PipelineDoc itself,
         // so onChange()'s structure comparison won't detect it. The stepping presenter fires a
         // ChangeEvent on each edit; route it directly to onChange() so the pipeline's Save button is
-        // re-evaluated via hasAssociatedDirty() (which checks steppingPresenter.getDirtyDocs()). This
-        // is done here rather than through the tab framework because a replaceTab()-swapped provider
-        // never gets its handler registered by TabContentProvider.
+        // re-evaluated via hasAssociatedDirty() (which checks steppingPresenter.getDirtyDocs()).
+        // Note that this must not touch the pipeline model: element code is not part of the pipeline
+        // structure, and rebuilding on each keypress makes the tree flash and the editor lag.
         registerHandler(steppingPresenter.addChangeHandler(this::onChange));
-    }
-
-    public void rebuildPipelineModel(final PipelineModel model) {
-        model.build();
     }
 
     @Override
@@ -320,10 +313,11 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                     if (pipelineModel == null) {
                         this.pipelineModel = model;
 
+                        // The structure presenter recomputes dirty from the same event, so this
+                        // only has to keep the stepping view in step with the model.
                         pipelineModel.addChangeDataHandler(event -> {
                             this.pipelineModel = event.getData();
                             steppingPresenter.setPipelineModel(pipelineModel);
-                            this.onChange();
                         });
                     }
 
@@ -368,7 +362,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
 
     @Override
     protected PipelineDoc onWrite(final PipelineDoc document) {
-        return pipelineStructurePresenter.onWrite(document);
+        // Write via the tab content provider so that every tab contributes, including Documentation.
+        return super.onWrite(document);
     }
 
     public void setMetaListExpression(final ExpressionOperator expressionOperator, final Runnable afterSet) {
