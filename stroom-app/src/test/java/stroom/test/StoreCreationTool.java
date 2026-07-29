@@ -559,8 +559,13 @@ public final class StoreCreationTool {
         return docRef;
     }
 
-    private DocRef getContextPipeline(final String feedName, final TextConverterType textConverterType,
-                                      final Path contextTextConverterLocation, final Path contextXsltLocation) {
+    /**
+     * Public so a test can build a context-data pipeline on its own, without going through
+     * {@link #addEventData} - a stepping fixture needs to attach one to a pipeline it assembles in memory.
+     * {@code feedName} is used only to name the created docs, so it need not be a real feed.
+     */
+    public DocRef getContextPipeline(final String feedName, final TextConverterType textConverterType,
+                                     final Path contextTextConverterLocation, final Path contextXsltLocation) {
         final DocRef contextTextConverterRef = getTextConverter(feedName + "_CONTEXT", textConverterType,
                 contextTextConverterLocation);
         final DocRef contextXSLT = getXSLT(feedName + "_CONTEXT", contextXsltLocation);

@@ -44,6 +44,48 @@ class TestRecordScopeStateSerializer {
     }
 
     @Test
+    void testCountsRoundTrip() {
+        final RecordScopeState roundTripped = roundTrip(new RecordScopeState(
+                location(), Map.of("k", "v"), Map.of("idEnrichmentFilter", 407L, "other", 0L)));
+
+        assertThat(roundTripped.countFor("idEnrichmentFilter")).hasValue(407L);
+        assertThat(roundTripped.countFor("other"))
+                .as("zero is a real count, not an absence")
+                .hasValue(0L);
+        assertThat(roundTripped.scopeMap()).as("the earlier halves still round-trip alongside")
+                .containsEntry("k", "v");
+    }
+
+    @Test
+    void testAnElementThatWasNotCountingIsDistinguishableFromOneThatCountedZero() {
+        // The restore treats these differently - an absent element is left alone rather than zeroed - so the
+        // serialiser must not collapse them into each other.
+        final RecordScopeState roundTripped = roundTrip(
+                new RecordScopeState(null, null, Map.of("counted", 0L)));
+
+        assertThat(roundTripped.countFor("counted")).hasValue(0L);
+        assertThat(roundTripped.countFor("neverCounted")).isEmpty();
+    }
+
+    @Test
+    void testStateWrittenBeforeCountersExistedStillReads() {
+        // Counters were appended to this format, and a store written by an earlier build is still on disk
+        // when the user upgrades mid-session. Truncated state must read back as "no counters", not blow up.
+        final byte[] withCounters = RecordScopeStateSerializer.toBytes(
+                new RecordScopeState(location(), Map.of("k", "v"), Map.of("e", 3L)));
+        final byte[] withoutCounters = RecordScopeStateSerializer.toBytes(
+                new RecordScopeState(location(), Map.of("k", "v")));
+        // The old form is a strict prefix of the new one, which is what makes the append safe.
+        final byte[] truncated = java.util.Arrays.copyOf(withoutCounters, withoutCounters.length);
+        assertThat(withCounters.length).isGreaterThan(truncated.length);
+
+        final RecordScopeState old = RecordScopeStateSerializer.fromBytes(truncated);
+        assertThat(old.sourceLocation()).isEqualTo(location());
+        assertThat(old.scopeMap()).containsEntry("k", "v");
+        assertThat(old.elementCounts()).isEmpty();
+    }
+
+    @Test
     void testNullStateStillOccupiesASegment() {
         // A record that captured nothing must still be framed, or the state file stops being index-aligned
         // with the record stream.

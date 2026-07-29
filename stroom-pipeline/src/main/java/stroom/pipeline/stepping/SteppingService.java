@@ -104,13 +104,6 @@ public class SteppingService {
     private final ReprocessPlanner reprocessPlanner = new ReprocessPlanner();
     // How each stream fill was served: a reprocess of just the changed elements, or a full sweep from source.
     // Observable so callers (and tests) can confirm an edit reused upstream rather than re-running it.
-    // How many records a filtered scan materialises per poll. Deliberately a constant rather than config
-    // for now: adding a SteppingConfig property means regenerating the config module and expected YAML, and
-    // this wants tuning against a real filtered pipeline before it is worth exposing. Big enough that a
-    // typical "skip to the next error" lands in one or two polls, small enough that a filter matching
-    // nothing does not materialise the stream in one go.
-    private static final int FILTERED_SCAN_WINDOW = 50;
-
     private final java.util.concurrent.atomic.AtomicLong onDemandLaunches =
             new java.util.concurrent.atomic.AtomicLong();
     private final java.util.concurrent.atomic.AtomicLong reprocessLaunches =
@@ -409,12 +402,16 @@ public class SteppingService {
      * past them. That is what keeps this on one side of the {@code capture/}-{@code read/} line - the two
      * sides meet at the store, as everything else here does, instead of one driving the other round a loop.
      */
-    private RecordRange filteredWindowFor(final PipelineStepRequest request,
-                                          final Graph graph,
-                                          final Decision decision,
-                                          final StepDataStore store,
-                                          final ElementFingerprints fingerprints,
-                                          final long metaId) {
+    // Package-private rather than private so a test can drive it directly. Its output is a range, which is
+    // otherwise only visible through what a whole step happens to materialise - and the window size defaults
+    // to the value it had as a constant, so a test that went through step() would pass whether or not the
+    // size is really read from config.
+    RecordRange filteredWindowFor(final PipelineStepRequest request,
+                                  final Graph graph,
+                                  final Decision decision,
+                                  final StepDataStore store,
+                                  final ElementFingerprints fingerprints,
+                                  final long metaId) {
         final StepType stepType = request.getStepType();
         final boolean forward = stepType == StepType.FORWARD || stepType == StepType.FIRST;
         final boolean backward = stepType == StepType.BACKWARD || stepType == StepType.LAST;
@@ -457,7 +454,7 @@ public class SteppingService {
             return null;
         }
 
-        final int window = FILTERED_SCAN_WINDOW;
+        final int window = steppingConfig.getFilteredScanWindow();
         final long end = forward
                 ? Math.min(streamLast, start + window - 1)
                 : Math.max(streamFirst, start - window + 1);

@@ -39,8 +39,10 @@ import stroom.util.shared.TextRange;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -223,6 +225,27 @@ public class SteppingController {
      * fingerprint - the key that makes the IO reusable until that element, or something upstream of it,
      * changes.
      */
+    /**
+     * Every counting element's running total, as it stands now - after the whole record has been processed.
+     * A replay of the <em>next</em> record reads this back, so what is stored is deliberately "the count
+     * before record N+1" rather than anything about this record in isolation.
+     *
+     * @return the counts by element id, or null if this pipeline has no counting elements, so that the
+     * common case costs nothing to store.
+     */
+    private Map<String, Long> countsAtEndOfRecord() {
+        Map<String, Long> counts = null;
+        for (final ElementMonitor monitor : monitors) {
+            if (monitor.getElement() instanceof final SteppingCounter counter) {
+                if (counts == null) {
+                    counts = new HashMap<>();
+                }
+                counts.put(monitor.getElementId().getId(), counter.getSteppingCount());
+            }
+        }
+        return counts;
+    }
+
     private void captureRecord(final StepLocation location,
                                final TextRange highlight,
                                final SourceLocation sourceLocation) {
@@ -243,7 +266,7 @@ public class SteppingController {
         // it is available. The scope map is snapshotted here, after every element of the record has run, so a
         // reprocess of a mid-pipeline element can be given what the elements above it put.
         stepDataStore.putRecord(location, records, sourceLocation,
-                taskScopeMap == null ? null : taskScopeMap.snapshot(), recordOrder);
+                taskScopeMap == null ? null : taskScopeMap.snapshot(), countsAtEndOfRecord(), recordOrder);
         if (recordListener != null) {
             recordListener.accept(location);
         }

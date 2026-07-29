@@ -26,6 +26,7 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.CapturedElementDataMapper;
+import stroom.pipeline.stepping.store.Coverage;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
@@ -158,8 +159,33 @@ public class StoreStepResolver {
         }
 
         /**
+         * The navigation view of a {@link Coverage}. This is the only bridge between the two: coverage is
+         * what a producer has captured, a range is what a resolve may navigate, and every range in the
+         * system is now some coverage seen through this view.
+         */
+        static CapturedRange of(final Coverage coverage) {
+            return new CapturedRange() {
+                @Override
+                public long first(final long partIndex) {
+                    return coverage.first(partIndex);
+                }
+
+                @Override
+                public long last(final long partIndex) {
+                    return coverage.last(partIndex);
+                }
+
+                @Override
+                public boolean contains(final long partIndex, final long recordIndex) {
+                    return coverage.holds(partIndex, recordIndex);
+                }
+            };
+        }
+
+        /**
          * The whole store's range. Correct while a single producer writes every element of a record together,
-         * which is what a full sweep does.
+         * which is what a full sweep does. Bounds-only on purpose: the synchronous single-producer path this
+         * serves has no holes, and answering {@code contains} from the bounds is what its callers always got.
          */
         static CapturedRange of(final StepDataStore store) {
             return new CapturedRange() {

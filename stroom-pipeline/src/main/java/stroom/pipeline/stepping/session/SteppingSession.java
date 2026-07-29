@@ -16,7 +16,9 @@
 
 package stroom.pipeline.stepping.session;
 
+import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.StepDataStore;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * A durable stepping session scoped to one pipeline + stream selection. It owns the ordered list of
@@ -101,7 +104,14 @@ public class SteppingSession {
             // it - the type plus the reference location - rather than against a record index: for FORWARD or
             // LAST the record the step is about is not the one it names, and keying by the named record
             // would hand a later step a sweep holding something else entirely.
-            final String stepKey = request.getStepType() + ":" + request.getStepLocation();
+            //
+            // The filters are part of that identity. An unfiltered FORWARD materialises the single next
+            // record; a filtered one has to scan a window looking for a match. Same type, same location, but
+            // they need different records materialised - so without the filters in the key, applying a filter
+            // and stepping again reuses the unfiltered sweep, the scan finds only the one record it holds, and
+            // the step reports "no matching record" on a stream that has one.
+            final String stepKey = request.getStepType() + ":" + request.getStepLocation()
+                                   + ":" + filterSignature(request);
             final SweepKey streamKey = new SweepKey(metaId, fingerprints.getSignature(), null);
             final StreamSweep forStep =
                     sweeps.get(new SweepKey(metaId, fingerprints.getSignature(), stepKey));
@@ -154,6 +164,47 @@ public class SteppingSession {
                     : streamKey, sweep);
             return sweep;
         }
+    }
+
+    /**
+     * A stable identity for the filters a step is taken under, for use in the on-demand sweep key.
+     * <p>
+     * Deliberately built field by field rather than from {@link SteppingFilterSettings#toString()}: an
+     * {@link XPathFilter}'s {@code toString} includes its {@code uniqueValues}, which are accumulated <em>as
+     * the step runs</em>. A key containing those would change under its own entry, so the sweep just cached
+     * could never be found again.
+     * <p>
+     * Only elements with an effectively applied filter contribute, so an untouched or half-configured filter
+     * pane does not invalidate a sweep. Sorted by element id so the map's iteration order cannot matter.
+     */
+    private static String filterSignature(final PipelineStepRequest request) {
+        final Map<String, SteppingFilterSettings> filterMap = request.getStepFilterMap();
+        if (filterMap == null || filterMap.isEmpty()) {
+            return "";
+        }
+        return filterMap.entrySet().stream()
+                .filter(entry -> entry.getValue() != null && entry.getValue().isFilterApplied())
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + "=" + describe(entry.getValue()))
+                .collect(Collectors.joining(","));
+    }
+
+    private static String describe(final SteppingFilterSettings settings) {
+        final StringBuilder sb = new StringBuilder()
+                .append(settings.getSkipToSeverity())
+                .append('/')
+                .append(settings.getSkipToOutput());
+        if (settings.getFilters() != null) {
+            for (final XPathFilter filter : settings.getFilters()) {
+                sb.append('/')
+                        .append(filter.getPath())
+                        .append('|').append(filter.getMatchType())
+                        .append('|').append(filter.getSearchType())
+                        .append('|').append(filter.getValue())
+                        .append('|').append(filter.isIgnoreCase());
+            }
+        }
+        return sb.toString();
     }
 
     private boolean isStreamSwept(final long metaId) {

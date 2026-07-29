@@ -63,6 +63,19 @@ public final class RecordScopeStateSerializer {
                     writeString(output, entry.getValue());
                 }
             }
+
+            // Appended last so that state written before counters existed still reads back: fromBytes treats
+            // a truncated stream as "no counters" rather than failing.
+            final Map<String, Long> counts = state == null ? null : state.elementCounts();
+            if (counts == null) {
+                output.writeInt(ABSENT_MAP);
+            } else {
+                output.writeInt(counts.size());
+                for (final Map.Entry<String, Long> entry : counts.entrySet()) {
+                    writeString(output, entry.getKey());
+                    output.writeLong(entry.getValue());
+                }
+            }
         } catch (final IOException e) {
             throw new StepDataStoreException(LogUtil.message("Unable to serialise record scope state: {}",
                     e.getMessage()), e);
@@ -88,7 +101,18 @@ public final class RecordScopeStateSerializer {
                     scopeMap.put(key, readString(input));
                 }
             }
-            return new RecordScopeState(SourceLocationSerializer.fromBytes(locationBytes), scopeMap);
+            Map<String, Long> elementCounts = null;
+            if (input.available() > 0) {
+                final int countSize = input.readInt();
+                if (countSize != ABSENT_MAP) {
+                    elementCounts = new HashMap<>(Math.max(1, countSize));
+                    for (int i = 0; i < countSize; i++) {
+                        elementCounts.put(readString(input), input.readLong());
+                    }
+                }
+            }
+            return new RecordScopeState(
+                    SourceLocationSerializer.fromBytes(locationBytes), scopeMap, elementCounts);
         } catch (final IOException e) {
             throw new StepDataStoreException(LogUtil.message("Unable to deserialise record scope state: {}",
                     e.getMessage()), e);

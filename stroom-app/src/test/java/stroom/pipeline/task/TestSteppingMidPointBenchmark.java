@@ -16,13 +16,9 @@
 
 package stroom.pipeline.task;
 
-import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
@@ -45,10 +41,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -137,8 +129,8 @@ class TestSteppingMidPointBenchmark extends TranslationTest {
     void measureTheCostOfAMidPointStep() {
         testTranslationTask(FEED, false, false);
 
-        final int recordCount = configuredRecordCount();
-        final long metaId = loadGeneratedStream(recordCount);
+        final int recordCount = GeneratedEventStream.configuredRecordCount(DEFAULT_RECORDS);
+        final long metaId = GeneratedEventStream.load(store, FEED, recordCount);
 
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
@@ -200,19 +192,6 @@ class TestSteppingMidPointBenchmark extends TranslationTest {
     }
 
     /**
-     * @return the requested record count. Gradle does not forward {@code -D} to the test JVM, so an
-     * environment variable is accepted too - {@code STEPPING_BENCHMARK_RECORDS=20000 ./gradlew ...} works
-     * without touching the build.
-     */
-    private int configuredRecordCount() {
-        final String env = System.getenv("STEPPING_BENCHMARK_RECORDS");
-        if (env != null && !env.isBlank()) {
-            return Integer.parseInt(env.trim());
-        }
-        return Integer.getInteger("stepping.benchmark.records", DEFAULT_RECORDS);
-    }
-
-    /**
      * Run one REFRESH, time it, record it, and return the session id to carry into the next step.
      *
      * @param code the edited XSLT to inject, or null for an unedited refresh.
@@ -261,52 +240,6 @@ class TestSteppingMidPointBenchmark extends TranslationTest {
         final int close = xsltText.lastIndexOf("</xsl:stylesheet>");
         assertThat(close).as("the XSLT has a closing stylesheet tag").isGreaterThan(0);
         return xsltText.substring(0, close) + "<!-- benchmark edit " + edit + " -->" + xsltText.substring(close);
-    }
-
-    /**
-     * Write a stream of {@code recordCount} records in the shape the feed's parser expects. Generated rather
-     * than checked in: the point is to vary the size, and a file of tens of thousands of records has no place
-     * in the repo.
-     */
-    private long loadGeneratedStream(final int recordCount) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-                .append("<records xmlns=\"records:2\" ")
-                .append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ")
-                .append("xsi:schemaLocation=\"records:2 file://records-v2.0.xsd\" version=\"2.0\">\n");
-        for (int i = 0; i < recordCount; i++) {
-            // Keep the clock valid however many records are generated.
-            final int seconds = i % 60;
-            final int minutes = (i / 60) % 60;
-            final int hours = (i / 3600) % 24;
-            sb.append("<record>")
-                    .append("<data name=\"Date\" value=\"01/01/2010\"/>")
-                    .append(String.format("<data name=\"Time\" value=\"%02d:%02d:%02d\"/>", hours, minutes, seconds))
-                    .append("<data name=\"FileNo\" value=\"1\"/>")
-                    .append("<data name=\"LineNo\" value=\"").append(i + 1).append("\"/>")
-                    .append("<data name=\"User\" value=\"user").append(i % 50).append("\"/>")
-                    .append("<data name=\"Message\" value=\"Benchmark message ").append(i).append("\"/>")
-                    .append("</record>\n");
-        }
-        sb.append("</records>\n");
-
-        final byte[] data = sb.toString().getBytes(StandardCharsets.UTF_8);
-        LOGGER.info(() -> String.format("Generated %,d records (%,d bytes) for the benchmark stream",
-                recordCount, data.length));
-
-        try (final Target target = store.openTarget(MetaProperties.builder()
-                .feedName(FEED)
-                .typeName(StreamTypeNames.RAW_EVENTS)
-                .build())) {
-            try (final OutputStreamProvider outputStreamProvider = target.next()) {
-                try (final OutputStream outputStream = outputStreamProvider.get()) {
-                    outputStream.write(data);
-                }
-            }
-            return target.getMeta().getId();
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     private String xsltTextFor(final PipelineDoc pipelineDoc, final String elementId) {

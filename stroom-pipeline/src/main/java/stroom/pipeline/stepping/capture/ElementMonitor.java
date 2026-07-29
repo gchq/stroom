@@ -51,6 +51,15 @@ public class ElementMonitor {
         return elementId;
     }
 
+    /**
+     * @return the live element instance, so that per-record state which is not part of its IO - a
+     * {@link SteppingCounter}'s running count - can be read from it at capture time and given back to it on
+     * replay.
+     */
+    public Element getElement() {
+        return element;
+    }
+
     public void setInputMonitor(final Recorder inputMonitor) {
         this.inputRecorder = inputMonitor;
     }

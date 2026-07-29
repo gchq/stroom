@@ -48,6 +48,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
+import stroom.pipeline.stepping.store.RecordScopeState;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.xml.event.SaxEventReader;
@@ -66,6 +67,7 @@ import org.xml.sax.ContentHandler;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Re-runs an edited element and its downstream from <b>stored upstream output</b> (SAX events) rather than
@@ -361,6 +363,7 @@ public class ReprocessDriver {
                 // this a stroom:get below the edit would silently return nothing where the full sweep gave it
                 // a value. Anything the re-run elements put themselves overwrites this as they run.
                 taskScopeMap.restore(sourceStore.getScopeMap(loc));
+                restoreCounts(sourceStore, loc);
                 try {
                     SaxEventReader.replay(inputEvents, entryHandler);
                 } catch (final Exception e) {
@@ -381,6 +384,35 @@ public class ReprocessDriver {
         public static RecordRange of(final StepLocation location) {
             return new RecordRange(location.getPartIndex(), location.getRecordIndex(),
                     location.getRecordIndex());
+        }
+    }
+
+    /**
+     * Resume every counting element from where the sweep left it at the end of the <b>previous</b> record.
+     * <p>
+     * The previous record's snapshot is the right one by definition: a count stored at the end of record
+     * {@code N-1} is exactly "what this element had counted before record N". Record 0 has no predecessor and
+     * needs no restore - a fresh element already starts at zero, which is correct there.
+     * <p>
+     * An element the snapshot says nothing about is left alone rather than zeroed. "Was not counting" and
+     * "had counted nothing" are different: the first happens when a pipeline gains a counting element after
+     * the sweep, and forcing it to zero would be no better than the bug this fixes.
+     */
+    private void restoreCounts(final StepDataStore sourceStore, final StepLocation loc) {
+        final long recordIndex = loc.getRecordIndex();
+        if (recordIndex <= 0) {
+            return;
+        }
+        final Optional<RecordScopeState> previous = sourceStore.getRecordScopeState(
+                new StepLocation(loc.getMetaId(), loc.getPartIndex(), recordIndex - 1));
+        if (previous.isEmpty()) {
+            return;
+        }
+        for (final ElementMonitor monitor : controller.getMonitors()) {
+            if (monitor.getElement() instanceof final SteppingCounter counter) {
+                previous.get().countFor(monitor.getElementId().getId())
+                        .ifPresent(counter::setSteppingCount);
+            }
         }
     }
 

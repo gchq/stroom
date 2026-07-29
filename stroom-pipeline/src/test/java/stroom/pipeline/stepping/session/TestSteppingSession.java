@@ -16,8 +16,12 @@
 
 package stroom.pipeline.stepping.session;
 
+import stroom.pipeline.shared.Rec;
 import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.capture.StreamSweep;
@@ -31,6 +35,7 @@ import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreException;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.OutputState;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -108,6 +113,140 @@ class TestSteppingSession {
         assertThat(session.sweepFor(10L, req(StepType.FIRST, null), FINGERPRINTS)).isSameAs(s10);
         assertThat(launches.get()).isEqualTo(1);
         assertThat(session.getActiveSweeps()).containsExactly(s10);
+    }
+
+    // --- on-demand sweep keying --------------------------------------------------------------------
+    //
+    // An on-demand sweep materialises only the records its own step needed, so two steps may share a cache
+    // entry only if they need the same records. Get this wrong in either direction and stepping breaks: too
+    // coarse a key serves a step a sweep that does not hold what it is looking for (which reads as "no such
+    // record"), too fine a key re-materialises on every keystroke.
+
+    private static final StepLocation RECORD_0 = new StepLocation(10L, 0, 0);
+
+    private SteppingSession onDemandSession(final AtomicInteger launchCount) {
+        return new SteppingSession(
+                "session",
+                List.of(10L, 20L),
+                (metaId, request, fp, priorComplete) -> {
+                    launchCount.incrementAndGet();
+                    // A distinct instance per launch, so a reused cache entry is identifiable by identity.
+                    final StreamSweep sweep = new StreamSweep(metaId, null);
+                    sweep.setOnDemand("e1");
+                    return sweep;
+                },
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+    }
+
+    private PipelineStepRequest filteredReq(final SteppingFilterSettings settings) {
+        return PipelineStepRequest.builder()
+                .stepType(StepType.FORWARD)
+                .stepLocation(RECORD_0)
+                .stepFilterMap(settings == null ? null : Map.of("e1", settings))
+                .build();
+    }
+
+    private static SteppingFilterSettings notEmpty() {
+        return new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of());
+    }
+
+    @Test
+    void testAFilteredStepDoesNotReuseAnUnfilteredStepsSweep() {
+        // The bug this guards: an unfiltered FORWARD materialises the single next record, and a filtered
+        // FORWARD from the same place has to scan a window for a match. Same type, same location - but handing
+        // the second the first's sweep leaves the scan with one record to look at, so it reports "no matching
+        // record" on a stream that has one.
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = onDemandSession(launches);
+
+        final StreamSweep unfiltered = session.sweepFor(10L, filteredReq(null), FINGERPRINTS);
+        final StreamSweep filtered = session.sweepFor(10L, filteredReq(notEmpty()), FINGERPRINTS);
+
+        assertThat(launches.get()).as("the filtered step launched its own sweep").isEqualTo(2);
+        assertThat(filtered).as("and did not get handed the unfiltered one").isNotSameAs(unfiltered);
+    }
+
+    @Test
+    void testRepeatingTheSameFilteredStepReusesItsSweep() {
+        // The other direction. Stepping is interactive and the resolver asks for a sweep on every loop
+        // iteration, so an unstable key would re-materialise continuously.
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = onDemandSession(launches);
+
+        final StreamSweep first = session.sweepFor(10L, filteredReq(notEmpty()), FINGERPRINTS);
+        final StreamSweep second = session.sweepFor(10L, filteredReq(notEmpty()), FINGERPRINTS);
+
+        assertThat(launches.get()).isEqualTo(1);
+        assertThat(second).isSameAs(first);
+    }
+
+    @Test
+    void testAccumulatingUniqueValuesDoesNotInvalidateTheSweep() {
+        // XPathFilter collects uniqueValues as the step runs, and its toString includes them. A key built from
+        // that would change under its own cache entry - the sweep just stored could never be found again, so
+        // every iteration would launch another one. Hence the key is built from the filter's fields by hand.
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = onDemandSession(launches);
+        final XPathFilter xPathFilter = new XPathFilter(
+                "/Events/Event", MatchType.EXISTS, null, null, null, null);
+        final SteppingFilterSettings settings =
+                new SteppingFilterSettings(null, null, List.of(xPathFilter));
+
+        final StreamSweep first = session.sweepFor(10L, filteredReq(settings), FINGERPRINTS);
+        xPathFilter.addUniqueValue("some value seen while stepping", new Rec(10L, 3));
+
+        assertThat(session.sweepFor(10L, filteredReq(settings), FINGERPRINTS))
+                .as("the sweep is still found after the filter recorded a match")
+                .isSameAs(first);
+        assertThat(launches.get()).isEqualTo(1);
+    }
+
+    @Test
+    void testDifferentFiltersGetDifferentSweeps() {
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = onDemandSession(launches);
+
+        final StreamSweep notEmpty = session.sweepFor(10L, filteredReq(notEmpty()), FINGERPRINTS);
+        final StreamSweep empty = session.sweepFor(10L,
+                filteredReq(new SteppingFilterSettings(null, OutputState.EMPTY, List.of())), FINGERPRINTS);
+
+        assertThat(empty).as("changing the filter is a different step, needing different records")
+                .isNotSameAs(notEmpty);
+        assertThat(launches.get()).isEqualTo(2);
+    }
+
+    @Test
+    void testAHalfConfiguredFilterDoesNotInvalidateTheSweep() {
+        // Opening the filter pane puts an empty XPathFilter in the map before the user has typed a path. That
+        // is not a filter yet (isFilterApplied is false), and treating it as one would throw away the sweep
+        // for a UI gesture that changes nothing about which records are needed.
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = onDemandSession(launches);
+
+        final StreamSweep unfiltered = session.sweepFor(10L, filteredReq(null), FINGERPRINTS);
+        final StreamSweep stillUnfiltered = session.sweepFor(10L,
+                filteredReq(new SteppingFilterSettings(null, null, List.of(new XPathFilter()))), FINGERPRINTS);
+
+        assertThat(stillUnfiltered).isSameAs(unfiltered);
+        assertThat(launches.get()).isEqualTo(1);
+    }
+
+    @Test
+    void testAFullSweepIsReusedAcrossFilterChanges() {
+        // Filters must key ON-DEMAND sweeps only. A full sweep captures every record whatever the filter, so
+        // applying one has to be answerable from the sweep already taken - re-sweeping a whole stream because
+        // the user typed in the filter box is exactly what this engine exists to stop.
+        final AtomicInteger launches = new AtomicInteger();
+        final StreamSweep full = new StreamSweep(10L, null);
+        final SteppingSession session = session(List.of(10L, 20L), Map.of(10L, full), launches);
+
+        assertThat(session.sweepFor(10L, filteredReq(null), FINGERPRINTS)).isSameAs(full);
+        assertThat(session.sweepFor(10L, filteredReq(notEmpty()), FINGERPRINTS)).isSameAs(full);
+        assertThat(launches.get()).as("the filter did not trigger a second full sweep").isEqualTo(1);
     }
 
     @Test

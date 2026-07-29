@@ -40,6 +40,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private static final long DEFAULT_MAX_RECORD_SIZE_BYTES = 100L * 1024 * 1024; // 100 MiB
     private static final int DEFAULT_MAX_SWEPT_STREAMS_PER_SESSION = 10;
     private static final int DEFAULT_MAX_RETAINED_FINGERPRINTS_PER_ELEMENT = 3;
+    private static final int DEFAULT_FILTERED_SCAN_WINDOW = 50;
 
     private final String storeSubDir;
     private final long maxRecordsPerStream;
@@ -47,6 +48,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private final long maxRecordSizeBytes;
     private final int maxSweptStreamsPerSession;
     private final int maxRetainedFingerprintsPerElement;
+    private final int filteredScanWindow;
     private final StroomDuration maxSessionIdleTime;
     private final StroomDuration orphanMaxAge;
 
@@ -57,6 +59,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         maxRecordSizeBytes = DEFAULT_MAX_RECORD_SIZE_BYTES;
         maxSweptStreamsPerSession = DEFAULT_MAX_SWEPT_STREAMS_PER_SESSION;
         maxRetainedFingerprintsPerElement = DEFAULT_MAX_RETAINED_FINGERPRINTS_PER_ELEMENT;
+        filteredScanWindow = DEFAULT_FILTERED_SCAN_WINDOW;
         maxSessionIdleTime = StroomDuration.ofMinutes(10);
         orphanMaxAge = StroomDuration.ofHours(1);
     }
@@ -70,6 +73,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                           @JsonProperty("maxSweptStreamsPerSession") final Integer maxSweptStreamsPerSession,
                           @JsonProperty("maxRetainedFingerprintsPerElement")
                           final Integer maxRetainedFingerprintsPerElement,
+                          @JsonProperty("filteredScanWindow") final Integer filteredScanWindow,
                           @JsonProperty("maxSessionIdleTime") final StroomDuration maxSessionIdleTime,
                           @JsonProperty("orphanMaxAge") final StroomDuration orphanMaxAge) {
         this.storeSubDir = Objects.requireNonNullElse(storeSubDir, DEFAULT_STORE_SUB_DIR);
@@ -80,6 +84,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                 maxSweptStreamsPerSession, DEFAULT_MAX_SWEPT_STREAMS_PER_SESSION);
         this.maxRetainedFingerprintsPerElement = Objects.requireNonNullElse(
                 maxRetainedFingerprintsPerElement, DEFAULT_MAX_RETAINED_FINGERPRINTS_PER_ELEMENT);
+        this.filteredScanWindow = Objects.requireNonNullElse(filteredScanWindow, DEFAULT_FILTERED_SCAN_WINDOW);
         this.maxSessionIdleTime = Objects.requireNonNullElse(maxSessionIdleTime, StroomDuration.ofMinutes(10));
         this.orphanMaxAge = Objects.requireNonNullElse(orphanMaxAge, StroomDuration.ofHours(1));
     }
@@ -96,6 +101,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.maxSweptStreamsPerSession = source.maxSweptStreamsPerSession;
         this.maxRetainedFingerprintsPerElement = Objects.requireNonNullElse(
                 maxRetainedFingerprintsPerElement, source.maxRetainedFingerprintsPerElement);
+        this.filteredScanWindow = source.filteredScanWindow;
         this.maxSessionIdleTime = source.maxSessionIdleTime;
         this.orphanMaxAge = source.orphanMaxAge;
     }
@@ -136,6 +142,15 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         return maxRetainedFingerprintsPerElement;
     }
 
+    @JsonPropertyDescription("How many records a filtered stepping scan materialises per poll. When a " +
+            "filter is applied at or below an edited element, whether a record matches is not known until " +
+            "that record has been produced, so navigation materialises a window of records at a time and " +
+            "scans it, resuming from where it left off on the next poll. Larger values find a distant match " +
+            "in fewer polls; smaller values do less work when a filter matches nothing.")
+    public int getFilteredScanWindow() {
+        return filteredScanWindow;
+    }
+
     @JsonPropertyDescription("How long a stepping session may be idle before it is torn down and its " +
             "persisted IO deleted.")
     public StroomDuration getMaxSessionIdleTime() {
@@ -161,6 +176,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                 ", maxRecordSizeBytes=" + maxRecordSizeBytes +
                 ", maxSweptStreamsPerSession=" + maxSweptStreamsPerSession +
                 ", maxRetainedFingerprintsPerElement=" + maxRetainedFingerprintsPerElement +
+                ", filteredScanWindow=" + filteredScanWindow +
                 ", maxSessionIdleTime=" + maxSessionIdleTime +
                 ", orphanMaxAge=" + orphanMaxAge +
                 '}';

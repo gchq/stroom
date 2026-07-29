@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * On-disk, content-addressed store of per-element stepping IO for a single stream (metaId).
@@ -209,6 +210,19 @@ public class StepDataStore {
                                        final SourceLocation sourceLocation,
                                        final Map<String, String> scopeMap,
                                        final RecordOrder order) {
+        putRecord(location, elements, sourceLocation, scopeMap, null, order);
+    }
+
+    /**
+     * As above, additionally carrying each {@link stroom.pipeline.stepping.capture.SteppingCounter} element's
+     * running total at the end of this record, so a replay of the next one can resume its count.
+     */
+    public synchronized void putRecord(final StepLocation location,
+                                       final List<ElementRecord> elements,
+                                       final SourceLocation sourceLocation,
+                                       final Map<String, String> scopeMap,
+                                       final Map<String, Long> elementCounts,
+                                       final RecordOrder order) {
         checkNotDeleted();
         if (elements == null || elements.isEmpty()) {
             return;
@@ -248,7 +262,11 @@ public class StepDataStore {
             }
             batchBytes += bytes.length;
 
-            if (order == RecordOrder.SEQUENTIAL && existing != null && existing.recordCount() > 0) {
+            // Only assert ordering on a file a sweep alone has written. A file that has had a record
+            // materialised on demand has holes by design, so "the next index" is not a property it has, and
+            // demanding contiguity would reject the sweep's perfectly correct next record.
+            if (order == RecordOrder.SEQUENTIAL && existing != null && existing.recordCount() > 0
+                && existing.isContiguouslyWritten()) {
                 final long expected = existing.nextRecordIndex();
                 if (recordIndex != expected) {
                     throw new StepDataStoreException(LogUtil.message(
@@ -267,7 +285,8 @@ public class StepDataStore {
         byte[] stateBytes = null;
         final ElementSegmentFile existingState = partStateFiles.get(location.getPartIndex());
         if (existingState == null || !existingState.contains(recordIndex)) {
-            if (order == RecordOrder.SEQUENTIAL && existingState != null && existingState.recordCount() > 0) {
+            if (order == RecordOrder.SEQUENTIAL && existingState != null && existingState.recordCount() > 0
+                && existingState.isContiguouslyWritten()) {
                 final long expected = existingState.nextRecordIndex();
                 if (recordIndex != expected) {
                     throw new StepDataStoreException(LogUtil.message(
@@ -275,7 +294,8 @@ public class StepDataStore {
                             location.getPartIndex(), expected, recordIndex));
                 }
             }
-            stateBytes = RecordScopeStateSerializer.toBytes(new RecordScopeState(sourceLocation, scopeMap));
+            stateBytes = RecordScopeStateSerializer.toBytes(
+                    new RecordScopeState(sourceLocation, scopeMap, elementCounts));
             batchBytes += stateBytes.length;
         }
 
@@ -305,12 +325,21 @@ public class StepDataStore {
         // the whole sweep rather than being skipped over.
         for (int i = 0; i < prepared.size(); i++) {
             final PreparedWrite write = prepared.get(i);
-            targetFiles.get(i).append(recordIndex, write.bytes());
+            final ElementSegmentFile file = targetFiles.get(i);
+            file.append(recordIndex, write.bytes());
+            if (order == RecordOrder.ON_DEMAND) {
+                // Remember that this file no longer holds a contiguous run, so a sweep writing to it later
+                // is not asked to follow on from a record it had nothing to do with.
+                file.markOutOfBandWrite();
+            }
             totalBytes += write.bytes().length;
             touchFingerprint(write.elementId(), write.fingerprint());
         }
         if (stateFile != null) {
             stateFile.append(recordIndex, stateBytes);
+            if (order == RecordOrder.ON_DEMAND) {
+                stateFile.markOutOfBandWrite();
+            }
             totalBytes += stateBytes.length;
         }
         partMinRecordIndex.merge(location.getPartIndex(), recordIndex, Math::min);
@@ -386,6 +415,88 @@ public class StepDataStore {
             return -1;
         }
         return highest ? file.maxRecordIndex() : file.minRecordIndex();
+    }
+
+    /**
+     * @return true if this element holds this exact record at this fingerprint. The per-record question
+     * behind {@link Coverage#holds} - a sparse element has gaps inside its own bounds, and only the file's
+     * extent map knows which indices are real.
+     */
+    public synchronized boolean hasElementRecord(final long partIndex,
+                                                 final ElementId elementId,
+                                                 final String fingerprint,
+                                                 final long recordIndex) {
+        checkNotDeleted();
+        final ElementSegmentFile file = openFiles.get(new FileKey(partIndex, elementId, fingerprint));
+        return file != null && file.contains(recordIndex);
+    }
+
+    /**
+     * The store-wide record coverage: which records have been committed at all, per part. Bounds come from
+     * the per-part min/max the readers already navigate by; {@code holds} answers from the un-fingerprinted
+     * state file, which every committed record occupies, so holes punched by on-demand materialisation are
+     * reported honestly rather than spanned over.
+     *
+     * @param extentFinal whether the producer filling this store has finished - the store itself cannot know,
+     *                    because "no more records" is producer knowledge, not storage knowledge.
+     */
+    public synchronized Coverage recordCoverage(final BooleanSupplier extentFinal) {
+        return new Coverage() {
+            @Override
+            public long first(final long partIndex) {
+                return getFirstRecordIndex(partIndex);
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return getLastRecordIndex(partIndex);
+            }
+
+            @Override
+            public boolean holds(final long partIndex, final long recordIndex) {
+                synchronized (StepDataStore.this) {
+                    final ElementSegmentFile state = partStateFiles.get(partIndex);
+                    return state != null && state.contains(recordIndex);
+                }
+            }
+
+            @Override
+            public boolean isExtentFinal() {
+                return extentFinal.getAsBoolean();
+            }
+        };
+    }
+
+    /**
+     * One element's coverage at one fingerprint: the sparse truth of what has been materialised, live against
+     * the files as they fill.
+     *
+     * @param extentFinal whether this element will receive further records - producer knowledge, as above.
+     */
+    public synchronized Coverage elementCoverage(final ElementId elementId,
+                                                 final String fingerprint,
+                                                 final BooleanSupplier extentFinal) {
+        return new Coverage() {
+            @Override
+            public long first(final long partIndex) {
+                return getElementRecordBound(partIndex, elementId, fingerprint, false);
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return getElementRecordBound(partIndex, elementId, fingerprint, true);
+            }
+
+            @Override
+            public boolean holds(final long partIndex, final long recordIndex) {
+                return hasElementRecord(partIndex, elementId, fingerprint, recordIndex);
+            }
+
+            @Override
+            public boolean isExtentFinal() {
+                return extentFinal.getAsBoolean();
+            }
+        };
     }
 
     /**

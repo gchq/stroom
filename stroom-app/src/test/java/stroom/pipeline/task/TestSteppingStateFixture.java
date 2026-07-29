@@ -69,9 +69,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * it knowing the probes are live; if a probe ever goes empty, this test fails rather than some downstream
  * comparison silently succeeding.
  * <p>
- * Not yet covered: context reference data ({@code stroom:lookup} against the stream's own context child
- * stream, the other consumer of {@code metaHolder.getInputStreamProvider()}). No fixture in the repo loads a
- * context stream, so it needs a context text converter and context pipeline built from scratch.
+ * Context reference data ({@code stroom:lookup} against the stream's own context child stream, the other
+ * consumer of {@code metaHolder.getInputStreamProvider()}) is covered separately by
+ * {@link TestSteppingContextLookup}, which has to load a stream with a context child stream and build a
+ * context pipeline of its own because no sample feed has either.
  */
 class TestSteppingStateFixture extends TranslationTest {
 

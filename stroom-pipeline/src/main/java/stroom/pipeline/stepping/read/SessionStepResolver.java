@@ -131,17 +131,7 @@ public class SessionStepResolver {
             // two coincide.
             final Optional<StoreStepResolver.ResolvedStep> resolved = storeStepResolver.resolve(
                     sweep.getStore(), currentStream, fingerprints, streamRequest,
-                    new StoreStepResolver.CapturedRange() {
-                        @Override
-                        public long first(final long partIndex) {
-                            return sweep.getCapturedFirstRecordIndex(partIndex);
-                        }
-
-                        @Override
-                        public long last(final long partIndex) {
-                            return sweep.getCapturedLastRecordIndex(partIndex);
-                        }
-                    });
+                    StoreStepResolver.CapturedRange.of(sweep.coverage()));
             if (resolved.isPresent()) {
                 final StepLocation found = resolved.get().foundLocation();
                 return SessionStepResult.resolved(

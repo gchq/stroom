@@ -386,7 +386,7 @@ class TestStepDataStore {
     @Test
     void testMaxRecordSizeExceededThrows(@TempDir final Path tempDir) {
         final SteppingConfig tinyConfig = new SteppingConfig(
-                null, null, null, 10L, null, null, null, null);
+                null, null, null, 10L, null, null, null, null, null);
         final StepDataStore store = newStore(tempDir, tinyConfig);
         assertThatThrownBy(() -> store.putElementData(loc(0, 0), E1, FP_A,
                 data("a-fairly-long-input-value", "and-output")))
@@ -398,7 +398,7 @@ class TestStepDataStore {
     void testMaxBytesPerStreamExceededThrows(@TempDir final Path tempDir) {
         // maxBytesPerStream = 150 bytes; records are ~100 bytes each so a couple trip the cap.
         final SteppingConfig config = new SteppingConfig(
-                null, null, 150L, null, null, null, null, null);
+                null, null, 150L, null, null, null, null, null, null);
         final StepDataStore store = newStore(tempDir, config);
 
         assertThatThrownBy(() -> {
@@ -416,7 +416,7 @@ class TestStepDataStore {
     void testMaxRecordsPerStreamExceededThrows(@TempDir final Path tempDir) {
         // maxRecordsPerStream = 3 (2nd ctor arg).
         final SteppingConfig config = new SteppingConfig(
-                null, 3L, null, null, null, null, null, null);
+                null, 3L, null, null, null, null, null, null, null);
         final StepDataStore store = newStore(tempDir, config);
 
         store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
@@ -459,7 +459,7 @@ class TestStepDataStore {
     void testPutRecordIsAllOrNothingOnCapFailure(@TempDir final Path tempDir) {
         // A record-size cap that the second element's IO exceeds; the whole record must be rejected so the
         // first element is NOT left committed (no torn record).
-        final SteppingConfig config = new SteppingConfig(null, null, null, 60L, null, null, null, null);
+        final SteppingConfig config = new SteppingConfig(null, null, null, 60L, null, null, null, null, null);
         final StepDataStore store = newStore(tempDir, config);
 
         assertThatThrownBy(() -> store.putRecord(loc(0, 0), List.of(
@@ -521,7 +521,7 @@ class TestStepDataStore {
         // so live bytes stay ~1 record even though far more than 1000 bytes are written in total. This
         // only holds if evicting a fingerprint reclaims its byte budget.
         final SteppingConfig config = new SteppingConfig(
-                null, null, 1000L, null, null, 1, null, null);
+                null, null, 1000L, null, null, 1, null, null, null);
         final StepDataStore store = newStore(tempDir, config);
 
         assertThatCode(() -> {

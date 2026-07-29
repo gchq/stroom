@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.capture;
 
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.stepping.store.Coverage;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
@@ -117,6 +118,40 @@ public class StreamSweep {
      */
     public long getCapturedLastRecordIndex(final long partIndex) {
         return watermark.getCapturedLastRecordIndex(partIndex);
+    }
+
+    /**
+     * This sweep's {@link Coverage}: what the producer has <b>signalled</b> captured, which readers must
+     * navigate by rather than by the store - the store already holds a record's bytes for a moment before the
+     * producer signals it whole, and a reprocess writes into a store whose reused upstream spans far past
+     * what this sweep has re-produced. Contiguous per part (a sweep walks the stream in order), so holding is
+     * answered from the bounds; the extent is final exactly when capture has ended, in success or failure -
+     * an errored sweep adds no more records either, and saying otherwise would leave a waiter hanging (§5,
+     * everything must signal).
+     */
+    public Coverage coverage() {
+        return new Coverage() {
+            @Override
+            public long first(final long partIndex) {
+                return watermark.getCapturedFirstRecordIndex(partIndex);
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return watermark.getCapturedLastRecordIndex(partIndex);
+            }
+
+            @Override
+            public boolean holds(final long partIndex, final long recordIndex) {
+                final long first = first(partIndex);
+                return first >= 0 && recordIndex >= first && recordIndex <= last(partIndex);
+            }
+
+            @Override
+            public boolean isExtentFinal() {
+                return watermark.isFullyCaptured();
+            }
+        };
     }
 
     public void markFullyCaptured() {

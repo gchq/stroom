@@ -154,15 +154,39 @@ final class ElementSegmentFile {
         return extents.keySet().stream().mapToLong(Long::longValue).min().orElse(-1);
     }
 
+    private boolean outOfBandWritten;
+
     long recordCount() {
         return extents.size();
     }
 
     /**
-     * @return the next expected (contiguous) record index, or -1 if nothing written yet.
+     * @return the next expected (contiguous) record index, or -1 if nothing written yet. Only meaningful
+     * while {@link #isContiguouslyWritten()} - once a record has been materialised out of band the file has
+     * holes and "the next index" is not a property it has.
      */
     long nextRecordIndex() {
         return baseRecordIndex < 0 ? -1 : baseRecordIndex + extents.size();
+    }
+
+    /**
+     * Records that this file has received a record written <b>out of band</b> - materialised on demand for
+     * one step rather than appended by a sweep walking the stream.
+     */
+    void markOutOfBandWrite() {
+        outOfBandWritten = true;
+    }
+
+    /**
+     * @return true if every record in this file was appended in sequence, so "the next record index" is a
+     * meaningful thing to assert about. False once anything has been materialised on demand: a sweep and a
+     * single-record replay share the un-fingerprinted state file (and may share an element file, when a sweep
+     * follows a replay under the same fingerprint), and the sweep's records legitimately do not follow the
+     * replay's. Also false if the file simply has holes, which covers a file re-opened from disk after such a
+     * write.
+     */
+    boolean isContiguouslyWritten() {
+        return !outOfBandWritten && (baseRecordIndex < 0 || recordCount() == maxRecordIndex() - baseRecordIndex + 1);
     }
 
     /**
