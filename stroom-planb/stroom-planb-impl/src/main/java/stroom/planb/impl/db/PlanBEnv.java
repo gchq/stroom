@@ -53,7 +53,6 @@ public class PlanBEnv implements AutoCloseable {
     private final ReentrantLock dbCommitLock = new ReentrantLock();
     private final Path path;
     private final boolean readOnly;
-    private final int maxChangeCount;
     private final HashClashCommitRunnable commitRunnable;
 
     public PlanBEnv(final Path path,
@@ -61,19 +60,9 @@ public class PlanBEnv implements AutoCloseable {
                     final int maxDbs,
                     final boolean readOnly,
                     final HashClashCommitRunnable commitRunnable) {
-        this(path, mapSize, maxDbs, readOnly, commitRunnable, LmdbWriter.DEFAULT_MAX_CHANGE_COUNT);
-    }
-
-    public PlanBEnv(final Path path,
-                    final Long mapSize,
-                    final int maxDbs,
-                    final boolean readOnly,
-                    final HashClashCommitRunnable commitRunnable,
-                    final int maxChangeCount) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
         this.path = path;
         this.readOnly = readOnly;
-        this.maxChangeCount = maxChangeCount;
         this.commitRunnable = commitRunnable;
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
 
@@ -106,7 +95,7 @@ public class PlanBEnv implements AutoCloseable {
     }
 
     public final LmdbWriter createWriter() {
-        return new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock, maxChangeCount);
+        return new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock);
     }
 
     public final <T> T write(final Function<LmdbWriter, T> function) {

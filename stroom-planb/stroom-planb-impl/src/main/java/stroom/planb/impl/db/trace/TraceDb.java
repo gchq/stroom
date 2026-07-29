@@ -170,14 +170,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private static final long CHECKPOINT_MIN_SPANS = 10_000L;
 
     /**
-     * A single counted change here can perform up to ~18 LMDB writes — the span, its service name,
-     * the trace stats, the trace root, and a delete plus a put for each of the seven secondary
-     * indexes. The limit is scaled down from {@link LmdbWriter#DEFAULT_MAX_CHANGE_COUNT} to keep the
-     * pages a txn dirties, and hence the headroom it needs, comparable to a single-write store.
-     */
-    private static final int MAX_CHANGE_COUNT = LmdbWriter.DEFAULT_MAX_CHANGE_COUNT / 18;
-
-    /**
      * Returns a fresh zero-byte direct {@link ByteBuffer} for use as an empty
      * LMDB value. A new instance is returned on each call to avoid shared-state
      * issues with {@code ByteBuffer} position/limit under concurrent use.
@@ -324,8 +316,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 settings.getMaxStoreSize(),
                 27,
                 readOnly,
-                hashClashCommitRunnable,
-                MAX_CHANGE_COUNT);
+                hashClashCommitRunnable);
         try {
             final KeySerde<SpanKey> keySerde = new SpanKeySerde(byteBuffers);
             final LookupSerdeImpl lookupSerde = new LookupSerdeImpl(env, hashClashCommitRunnable, byteBuffers);

@@ -25,18 +25,10 @@ import java.util.function.Consumer;
 
 public class LmdbWriter implements AutoCloseable {
 
-    /**
-     * Changes to allow in one txn for a store that performs a single LMDB write per change. A store
-     * that writes more than that per change needs a proportionally lower limit, because what has to
-     * be bounded is the pages the txn dirties, not the calls the caller makes.
-     */
-    public static final int DEFAULT_MAX_CHANGE_COUNT = 10_000;
-
     private final Env<ByteBuffer> env;
     private final ReentrantLock dbCommitLock;
     private final Consumer<Txn<ByteBuffer>> commitListener;
     private final ReentrantLock writeTxnLock;
-    private final int maxChangeCount;
     private Txn<ByteBuffer> writeTxn;
     private int changeCount = 0;
     private boolean aborted;
@@ -44,13 +36,11 @@ public class LmdbWriter implements AutoCloseable {
     public LmdbWriter(final Env<ByteBuffer> env,
                       final ReentrantLock dbCommitLock,
                       final Consumer<Txn<ByteBuffer>> commitListener,
-                      final ReentrantLock writeTxnLock,
-                      final int maxChangeCount) {
+                      final ReentrantLock writeTxnLock) {
         this.env = env;
         this.dbCommitLock = dbCommitLock;
         this.commitListener = commitListener;
         this.writeTxnLock = writeTxnLock;
-        this.maxChangeCount = maxChangeCount;
 
         // We are only allowed a single write txn and we can only write with a single thread so ensure this is the
         // case.
@@ -88,7 +78,7 @@ public class LmdbWriter implements AutoCloseable {
     }
 
     public boolean shouldCommit() {
-        return changeCount > maxChangeCount;
+        return changeCount > 10000;
     }
 
     /**
