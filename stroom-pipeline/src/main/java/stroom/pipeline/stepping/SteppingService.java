@@ -37,6 +37,7 @@ import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
 import stroom.pipeline.stepping.read.SessionStepResolver;
 import stroom.pipeline.stepping.read.StagePlanner;
 import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
+import stroom.pipeline.stepping.read.SteppableElements;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 import stroom.pipeline.stepping.session.SteppingSession;
@@ -64,6 +65,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -102,6 +104,7 @@ public class SteppingService {
     private final SteppingConfig steppingConfig;
     private final SessionStepResolver sessionStepResolver;
     private final SteppingSessionRegistry sessionRegistry;
+    private final SteppableElements steppableElements;
     private final SteppingResultMapper resultMapper = new SteppingResultMapper();
     private final ReprocessPlanner reprocessPlanner = new ReprocessPlanner();
     // How each stream fill was served: a reprocess of just the changed elements, or a full sweep from source.
@@ -126,7 +129,8 @@ public class SteppingService {
                            final ElementFingerprinter elementFingerprinter,
                            final SteppingConfig steppingConfig,
                            final SessionStepResolver sessionStepResolver,
-                           final SteppingSessionRegistry sessionRegistry) {
+                           final SteppingSessionRegistry sessionRegistry,
+                           final SteppableElements steppableElements) {
         this.taskContextFactory = taskContextFactory;
         this.streamCaptureDriverProvider = streamCaptureDriverProvider;
         this.reprocessDriverProvider = reprocessDriverProvider;
@@ -140,6 +144,7 @@ public class SteppingService {
         this.steppingConfig = steppingConfig;
         this.sessionStepResolver = sessionStepResolver;
         this.sessionRegistry = sessionRegistry;
+        this.steppableElements = steppableElements;
     }
 
     /**
@@ -626,7 +631,14 @@ public class SteppingService {
         if (!capturedElementIds.isEmpty()) {
             final PipelineData pipelineData = pipelineDataHolderFactory
                     .create(request.getPipelineDoc()).getMergedPipelineData();
-            final Graph graph = SteppingGraphBuilder.build(pipelineData, capturedElementIds);
+            // The steppable set comes from the PIPELINE, not from what has been captured: a capture that
+            // stopped at the record boundary has captured nothing below it, and a set read from the store
+            // would tell the planner there is nothing below it to run. What the store holds is unioned in so
+            // that an element type the registry cannot classify, but which was captured anyway, is still
+            // planned for.
+            final Set<String> steppableIds = new LinkedHashSet<>(steppableElements.in(pipelineData));
+            steppableIds.addAll(capturedElementIds);
+            final Graph graph = SteppingGraphBuilder.build(pipelineData, steppableIds);
 
             // What must the feed cover? A whole-stream reprocess (span == null) still requires a prior
             // COMPLETE, error-free capture: hasCompleteElement measures against the store's own extent, so

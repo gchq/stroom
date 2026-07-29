@@ -92,7 +92,7 @@ class TestFilteredScanWindow {
         return new SteppingService(
                 null, null, null, null, null, null, null, null, null, null,
                 new SteppingConfig(null, null, null, null, null, null, window, null, null),
-                null, null);
+                null, null, null);
     }
 
     private RecordRange window(final SteppingService service,
@@ -133,7 +133,7 @@ class TestFilteredScanWindow {
 
         assertThat(window(new SteppingService(
                         null, null, null, null, null, null, null, null, null, null,
-                        new SteppingConfig(), null, null),
+                        new SteppingConfig(), null, null, null),
                 store, StepType.FORWARD, 0L))
                 .as("the default window is still 50 records")
                 .isEqualTo(new RecordRange(PART, 1, 50));

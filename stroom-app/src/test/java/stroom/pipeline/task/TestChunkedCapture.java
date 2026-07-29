@@ -31,6 +31,8 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.stepping.SteppingService.SteppingCaptureResult;
+import stroom.pipeline.factory.PipelineDataHolderFactory;
+import stroom.pipeline.stepping.read.SteppableElements;
 import stroom.pipeline.stepping.read.StoreStepResolver;
 import stroom.pipeline.stepping.read.StoreStepResolver.ResolvedStep;
 import stroom.query.api.ExpressionOperator;
@@ -67,6 +69,10 @@ class TestChunkedCapture extends TranslationTest {
     private PipelineStore pipelineStore;
     @Inject
     private DocFinder docFinder;
+    @Inject
+    private SteppableElements steppableElements;
+    @Inject
+    private PipelineDataHolderFactory pipelineDataHolderFactory;
 
     private final StoreStepResolver resolver = new StoreStepResolver();
 
@@ -132,6 +138,14 @@ class TestChunkedCapture extends TranslationTest {
         // Capture that whole stream in one pass.
         final SteppingCaptureResult capture = steppingService.capture(baseRequest, metaId);
         try {
+            // The steppable set derived from the PIPELINE must be exactly what a full capture of it holds.
+            // A capture truncated at the record boundary holds less, which is why the planner cannot read
+            // the set out of the store - and this is the oracle that the pipeline-derived answer is the same
+            // one, for real feeds including a reader/text pipeline with no XML parser.
+            assertThat(steppableElements.in(pipelineDataHolderFactory.create(pipelineDoc).getMergedPipelineData()))
+                    .as("steppable elements derived from the pipeline for " + feedName)
+                    .containsExactlyInAnyOrderElementsOf(capture.store().getCapturedElementIds());
+
             int compared = 0;
             SteppingResult stepped = first;
             // Walk every record step() visits within this stream and compare it to the capture.
