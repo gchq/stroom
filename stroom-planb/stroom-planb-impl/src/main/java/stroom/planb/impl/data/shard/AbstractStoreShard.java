@@ -514,10 +514,6 @@ public abstract class AbstractStoreShard implements Shard {
         return withOpenDb(Db::getUsage);
     }
 
-    public long getLiveBytes() {
-        return withOpenDb(Db::getLiveBytes);
-    }
-
     private <R> R withOpenDb(final Function<Db<?, ?>, R> function) {
         try {
             readLock.lockInterruptibly();

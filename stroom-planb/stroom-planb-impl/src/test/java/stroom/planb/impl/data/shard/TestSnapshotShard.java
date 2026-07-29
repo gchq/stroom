@@ -772,11 +772,6 @@ class TestSnapshotShard {
             return new Usage(0L, AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         }
 
-        @Override
-        public long getLiveBytes() {
-            ensureOpen();
-            return 0L;
-        }
 
         @Override
         public LmdbWriter createWriter() {

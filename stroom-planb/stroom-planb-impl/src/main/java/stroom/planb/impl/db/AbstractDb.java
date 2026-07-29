@@ -277,11 +277,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
     }
 
     @Override
-    public long getLiveBytes() {
-        return env.getLiveBytes();
-    }
-
-    @Override
     public void compact(final Path destination) {
         env.copy(destination.toFile(), CopyFlags.MDB_CP_COMPACT);
     }

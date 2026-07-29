@@ -75,15 +75,6 @@ public interface Db<K, V> extends AutoCloseable {
      */
     Usage getUsage();
 
-    /**
-     * Bytes of pages holding live data, for deciding whether compacting would reclaim anything.
-     *
-     * <p>Enumerating the DBIs begins a write txn, so this holds the store's writer lock for its
-     * duration and throws {@link IllegalStateException} if the calling thread already holds a writer.
-     * Unlike {@link #getUsage()} it is not safe on a hot path or inside a write.</p>
-     */
-    long getLiveBytes();
-
     LmdbWriter createWriter();
 
     void write(Consumer<LmdbWriter> consumer);

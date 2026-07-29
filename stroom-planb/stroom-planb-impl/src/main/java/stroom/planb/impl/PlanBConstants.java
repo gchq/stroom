@@ -47,7 +47,6 @@ public final class PlanBConstants {
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";
     public static final String ARCHIVE_DIR_NAME          = "archive";
     public static final String ARCHIVAL_LAST_FILE_NAME   = ".archival.last";
-    public static final String COMPACTION_LAST_FILE_NAME = ".compaction.last";
 
     private PlanBConstants() {
         // Utility class
