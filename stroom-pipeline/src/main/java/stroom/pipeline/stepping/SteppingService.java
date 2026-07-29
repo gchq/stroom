@@ -235,7 +235,7 @@ public class SteppingService {
         final String sessionId = UUID.randomUUID().toString();
         try {
             final StepDataStore targetStore = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
-            final StreamSweep sweep = new StreamSweep(metaId, targetStore);
+            final StreamSweep sweep = new StreamSweep(metaId, targetStore, fingerprints);
             final Executor executor = executorProvider.get(THREAD_POOL);
             try {
                 CompletableFuture
@@ -294,7 +294,7 @@ public class SteppingService {
                                    final ElementFingerprints fingerprints,
                                    final Set<String> stopAfter) {
         final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
-        final StreamSweep sweep = new StreamSweep(metaId, store);
+        final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
         final Executor executor = executorProvider.get(THREAD_POOL);
         try {
             CompletableFuture
@@ -350,9 +350,8 @@ public class SteppingService {
         return new SteppingSession(
                 sessionId,
                 streamIds,
-                (metaId, sweepRequest, sweepFingerprints, priorCompleteCapture, running) ->
-                        launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorCompleteCapture,
-                                running),
+                (metaId, sweepRequest, sweepFingerprints, priorSweeps, running) ->
+                        launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorSweeps, running),
                 this::closeSession,
                 this::abandonSweep,
                 steppingConfig.getMaxSweptStreamsPerSession());
@@ -582,8 +581,20 @@ public class SteppingService {
                                   final PipelineStepRequest request,
                                   final long metaId,
                                   final ElementFingerprints fingerprints,
-                                  final boolean priorCompleteCapture,
+                                  final List<StreamSweep> priorSweeps,
                                   final List<StreamSweep> running) {
+        // True only if a prior sweep of this stream captured it in full WITHOUT error, so its upstream chunks
+        // are complete and a whole-stream reprocess from them is safe. An errored sweep is also "fully
+        // captured" (markError stops readers waiting) but its store is truncated, so it must NOT count -
+        // reprocessing from it would silently serve a short stream.
+        final boolean priorCompleteCapture = priorSweeps.stream().anyMatch(StreamSweep::isSuccessfullyCaptured);
+        // A capture of this stream that is still running. Its records are arriving as we speak, so a step
+        // whose demand it has not reached yet can wait on it instead of launching a second capture.
+        final StreamSweep liveProducer = priorSweeps.stream()
+                .filter(prior -> !prior.isFullyCaptured())
+                .findFirst()
+                .orElse(null);
+
         // What must the feed cover? A whole-stream reprocess (span == null) still requires a prior COMPLETE,
         // error-free capture: hasCompleteElement measures against the store's own extent, so without the
         // completion gate a capture truncated by an error would count as "complete" and a reprocess from it
@@ -645,10 +656,54 @@ public class SteppingService {
                     sweep.setDemand(range);
                     return sweep;
                 }
+                // Nothing can be planned from what has been captured so far. Before falling back to a second
+                // capture of this stream, see whether the one already running will answer this step shortly.
+                final StreamSweep waiting = waitForFrontier(liveProducer, graph, store, fingerprints, span);
+                if (waiting != null) {
+                    return waiting;
+                }
             }
         }
         fullSweepLaunches.incrementAndGet();
         return launchSweep(sessionId, request, metaId, fingerprints);
+    }
+
+    /**
+     * Wait for the capture already running, rather than start a second one?
+     * <p>
+     * Yes when the step names records the running capture simply has not reached yet. Its output for those
+     * records will be exactly what a reprocess needs - an edit below the record boundary does not change the
+     * fingerprints it is writing above - so the work is already being done, and duplicating it would parse the
+     * same stream twice to produce the same chunks.
+     * <p>
+     * The test is a question the planner can actually answer: <b>would this step be answerable about a record
+     * the capture has already produced?</b> If planning against the frontier yields a reprocess, the only thing
+     * missing is the records, and they are on their way. If it yields a full sweep, the edit changed something
+     * this capture cannot supply (a parser change re-keys everything) and waiting would only delay the sweep
+     * that is genuinely needed.
+     *
+     * @return a handle to wait on, or null to go ahead and launch.
+     */
+    private StreamSweep waitForFrontier(final StreamSweep liveProducer,
+                                        final Graph graph,
+                                        final StepDataStore store,
+                                        final ElementFingerprints fingerprints,
+                                        final StagePlanner.RecordSpan span) {
+        if (liveProducer == null || span == null) {
+            return null;
+        }
+        final long frontier = liveProducer.coverage().last(span.partIndex());
+        if (frontier < 0) {
+            // Nothing captured for this part yet, so there is no record to test the plan against.
+            return null;
+        }
+        final Decision atFrontier = reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store,
+                fingerprints, new StagePlanner.RecordSpan(span.partIndex(), frontier, frontier));
+        if (atFrontier.fullSweep()) {
+            return null;
+        }
+        LOGGER.debug(() -> "launchFor() - waiting for the running capture to reach " + span);
+        return StreamSweep.waitingOn(liveProducer);
     }
 
     /**
@@ -755,7 +810,7 @@ public class SteppingService {
                                         final ElementFingerprints fingerprints,
                                         final RecordRange onDemandRange) {
         // The reprocess reads the feed's output from, and writes the reprocessed chunks to, the same store.
-        final StreamSweep sweep = new StreamSweep(metaId, store);
+        final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
         if (onDemandRange != null) {
             // Materialising one record rather than capturing the stream: what this sweep can answer is
             // decided by what the store holds, not by a contiguous range.

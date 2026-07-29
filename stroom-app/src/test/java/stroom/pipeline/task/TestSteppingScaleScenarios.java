@@ -54,9 +54,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li><b>B</b> - a step ahead of the capture frontier waits for the sweep it already has, rather than
  *   launching another or discarding anything. Passes today.</li>
- *   <li><b>C</b> - an edit issued while the sweep is mid-flight should keep the partial upstream capture.
- *   <b>Fails today</b> - see the disabled test - and is the acceptance test for the lifetime-decoupling work:
- *   when it passes un-disabled, scenario C is fixed.</li>
+ *   <li><b>C</b> - an edit issued while the sweep is mid-flight keeps the partial upstream capture, whether
+ *   the record it asks about is behind the capture frontier or still ahead of it. Two tests, one per half;
+ *   they are the acceptance tests for the lifetime-decoupling work.</li>
  * </ul>
  * <p>
  * Both use a generated stream big enough that the sweep is still running when the second step is issued - the
@@ -207,23 +207,18 @@ class TestSteppingScaleScenarios extends TranslationTest {
     }
 
     /**
-     * Scenario C: capture has reached record N; the user edits the XSLT and refreshes. The parser's
-     * fingerprint is unchanged by the edit, so the upstream capture is still valid and should be kept - only
-     * the edited element and below need re-running. Asserted via the launch counter: answering the edit must
-     * not cost a second full sweep from record 0.
+     * Scenario C: capture has reached record N; the user edits the XSLT and refreshes a record <b>ahead</b> of
+     * N. The parser's fingerprint is unchanged by the edit, so the upstream capture is still valid and is
+     * kept - only the edited element and below need re-running. Asserted via the launch counter: answering the
+     * edit must not cost a second full sweep from record 0.
      * <p>
-     * Disabled because it asserts the <b>desired</b> behaviour and the deficiency is real. Run un-disabled on
-     * 2026-07-28 it failed exactly as §11 describes - "expected: 1L but was: 2L": {@code sweepFor} abandons
-     * the in-flight sweep on any signature change, {@code priorCompleteCapture} requires a <i>complete</i>
-     * prior capture, so the edit relaunched a full sweep and re-parsed everything the abandoned one had
-     * already captured. The step still resolves (correctness holds; the second assertion passed) - the cost
-     * is the failure. This is the acceptance test for the lifetime-decoupling work: fix scenario C, remove
-     * the annotation, and this must pass as written.
+     * This is the harder half of C (its behind-the-frontier sibling is above): at the moment the edit is
+     * issued, the record it asks about has not been captured yet, so there is nothing to reprocess from
+     * <i>yet</i>. Two things make it work - the in-flight capture is no longer abandoned on an edit that
+     * leaves its fingerprints intact, and a step whose records the capture has not reached waits on that
+     * capture instead of starting a second one. When the frontier passes the record, the edited element is
+     * materialised from it.
      */
-    @org.junit.jupiter.api.Disabled("Scenario C is a known deficiency - an edit mid-sweep abandons the "
-                                    + "partial upstream capture and re-sweeps from record 0 (observed: "
-                                    + "expected 1 full sweep but was 2). See stepping-design.md §11 'The "
-                                    + "scale scenarios'. Enable when lifetime decoupling is built.")
     @Test
     void anEditIssuedMidSweepKeepsThePartialUpstreamCapture() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
@@ -249,7 +244,6 @@ class TestSteppingScaleScenarios extends TranslationTest {
                     .build());
             sessionUuid = edited.getSessionUuid();
 
-            // Correctness holds today - the step resolves. The deficiency is what it cost.
             assertThat(edited.isFoundRecord()).as("the edited refresh resolved").isTrue();
             assertThat(edited.getFoundLocation().getRecordIndex()).isEqualTo(RECORD_COUNT / 2);
 

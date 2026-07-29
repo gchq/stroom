@@ -85,7 +85,7 @@ class TestSteppingSession {
     private SteppingSession session(final List<Long> order,
                                     final Map<Long, StreamSweep> sweeps,
                                     final AtomicInteger launchCount) {
-        final SteppingSession.SweepLauncher launcher = (metaId, request, fp, priorComplete, running) -> {
+        final SteppingSession.SweepLauncher launcher = (metaId, request, fp, priorSweeps, running) -> {
             launchCount.incrementAndGet();
             runningSeen.add(running);
             return sweeps.get(metaId);
@@ -136,7 +136,7 @@ class TestSteppingSession {
         return new SteppingSession(
                 "session",
                 List.of(10L, 20L),
-                (metaId, request, fp, priorComplete, running) -> {
+                (metaId, request, fp, priorSweeps, running) -> {
                     launchCount.incrementAndGet();
                     runningSeen.add(running);
                     final StreamSweep sweep = new StreamSweep(metaId, null);
@@ -213,7 +213,7 @@ class TestSteppingSession {
         final SteppingSession session = new SteppingSession(
                 "session",
                 List.of(10L),
-                (metaId, request, fp, priorComplete, running) -> {
+                (metaId, request, fp, priorSweeps, running) -> {
                     launches.incrementAndGet();
                     runningSeen.add(running);
                     final StreamSweep sweep = new StreamSweep(metaId, null);
@@ -231,6 +231,179 @@ class TestSteppingSession {
 
         assertThat(terminated).as("the old-code producer was abandoned").containsExactly(underOldCode);
         assertThat(runningSeen.get(1)).as("and not offered to the new-code step").isEmpty();
+    }
+
+    // --- abandonment: only when the edit invalidates everything the capture is producing ----------
+
+    private static final ElementFingerprints TWO_ELEMENTS = new ElementFingerprints(
+            Map.of("parser", "p1", "xslt", "x1"),
+            Map.of("parser", "p1", "xslt", "p1x1"));
+    /** An edit to the downstream XSLT: the parser's cumulative fingerprint is untouched. */
+    private static final ElementFingerprints XSLT_EDITED = new ElementFingerprints(
+            Map.of("parser", "p1", "xslt", "x2"),
+            Map.of("parser", "p1", "xslt", "p1x2"));
+    /** An edit to the parser: cumulative fingerprints fold in everything upstream, so both change. */
+    private static final ElementFingerprints PARSER_EDITED = new ElementFingerprints(
+            Map.of("parser", "p2", "xslt", "x1"),
+            Map.of("parser", "p2", "xslt", "p2x1"));
+
+    private SteppingSession abandonmentSession(final StreamSweep inFlight,
+                                               final List<StreamSweep> terminated,
+                                               final List<List<StreamSweep>> priorSeen) {
+        return new SteppingSession(
+                "session",
+                List.of(10L),
+                (metaId, request, fp, priorSweeps, running) -> {
+                    priorSeen.add(priorSweeps);
+                    return inFlight;
+                },
+                s -> {
+                },
+                terminated::add,
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+    }
+
+    @Test
+    void testADownstreamEditKeepsTheInFlightCapture() {
+        // Scenario C. The capture is writing the parser's output under a fingerprint the edit does not
+        // change, so its remaining work is exactly the feed the edited element will be replayed from -
+        // and its pre-edit downstream chunks are what makes reverting free. Killing it re-parsed the
+        // stream from record 0.
+        final List<StreamSweep> terminated = new ArrayList<>();
+        final List<List<StreamSweep>> priorSeen = new ArrayList<>();
+        final StreamSweep inFlight = new StreamSweep(10L, null, TWO_ELEMENTS);
+        final SteppingSession session = abandonmentSession(inFlight, terminated, priorSeen);
+
+        session.sweepFor(10L, req(StepType.FIRST, null), TWO_ELEMENTS);
+        session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), XSLT_EDITED);
+
+        assertThat(terminated).as("the running capture was kept").isEmpty();
+        assertThat(priorSeen.get(1)).as("and offered to the edited step to wait on").containsExactly(inFlight);
+    }
+
+    @Test
+    void testAnEditAboveTheRecordBoundaryAbandonsTheInFlightCapture() {
+        // NEGATIVE CONTROL for the test above. A parser edit re-keys every element (a cumulative fingerprint
+        // folds in everything upstream), so nothing the capture goes on to write is addressed by the new
+        // configuration at all - letting it run would read a whole stream for nobody.
+        final List<StreamSweep> terminated = new ArrayList<>();
+        final List<List<StreamSweep>> priorSeen = new ArrayList<>();
+        final StreamSweep inFlight = new StreamSweep(10L, null, TWO_ELEMENTS);
+        final SteppingSession session = abandonmentSession(inFlight, terminated, priorSeen);
+
+        session.sweepFor(10L, req(StepType.FIRST, null), TWO_ELEMENTS);
+        session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), PARSER_EDITED);
+
+        assertThat(terminated).as("the superseded capture was abandoned").containsExactly(inFlight);
+        assertThat(priorSeen.get(1)).as("and dropped from the cache, not merely stopped").isEmpty();
+    }
+
+    @Test
+    void testACompletedCaptureIsNeverAbandoned() {
+        // Even a parser edit leaves a COMPLETED capture alone: it is doing no further work, and its chunks
+        // are what a revert is served from.
+        final List<StreamSweep> terminated = new ArrayList<>();
+        final List<List<StreamSweep>> priorSeen = new ArrayList<>();
+        final StreamSweep completed = new StreamSweep(10L, null, TWO_ELEMENTS);
+        completed.markFullyCaptured();
+        final SteppingSession session = abandonmentSession(completed, terminated, priorSeen);
+
+        session.sweepFor(10L, req(StepType.FIRST, null), TWO_ELEMENTS);
+        session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), PARSER_EDITED);
+
+        assertThat(terminated).isEmpty();
+        assertThat(priorSeen.get(1)).containsExactly(completed);
+    }
+
+    @Test
+    void testACaptureWithNoKnownConfigIsAbandoned() {
+        // It cannot be judged, so it is treated as superseded: stopping work that might have been useful
+        // costs time, whereas keeping work that is genuinely dead costs the whole stream twice over.
+        final List<StreamSweep> terminated = new ArrayList<>();
+        final List<List<StreamSweep>> priorSeen = new ArrayList<>();
+        final StreamSweep inFlight = new StreamSweep(10L, null);
+        final SteppingSession session = abandonmentSession(inFlight, terminated, priorSeen);
+
+        session.sweepFor(10L, req(StepType.FIRST, null), TWO_ELEMENTS);
+        session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), XSLT_EDITED);
+
+        assertThat(terminated).containsExactly(inFlight);
+    }
+
+    @Test
+    void testAWaitHandleIsNeverCached() {
+        // A handle serves nothing, so caching one would mean every later poll got it back and the step could
+        // never be re-planned against the records that arrived in the meantime.
+        final AtomicInteger launches = new AtomicInteger();
+        final StreamSweep producer = new StreamSweep(10L, null, TWO_ELEMENTS);
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L),
+                (metaId, request, fp, priorSweeps, running) -> {
+                    launches.incrementAndGet();
+                    return StreamSweep.waitingOn(producer);
+                },
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+
+        final StreamSweep first = session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), TWO_ELEMENTS);
+        final StreamSweep second = session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), TWO_ELEMENTS);
+
+        assertThat(first.isWaitHandle()).isTrue();
+        assertThat(launches.get()).as("the launcher was consulted both times").isEqualTo(2);
+        assertThat(second).isNotSameAs(first);
+        assertThat(session.getActiveSweeps()).as("a handle owns nothing, so there is nothing to terminate")
+                .isEmpty();
+    }
+
+    @Test
+    void testAWaitHandleServesNothingButCarriesItsProducersProgress(@TempDir final Path dir) {
+        final StreamSweep producer = sweptStream(dir, 10L, 3, false);
+        final StreamSweep handle = StreamSweep.waitingOn(producer);
+
+        assertThat(handle.coverage().parts()).as("nothing is servable through a handle").isEmpty();
+        assertThat(handle.coverage().holds(0, 0)).isFalse();
+        assertThat(handle.coverage().isExtentFinal()).isFalse();
+        // ...but the producer's progress is exactly what it is for.
+        assertThat(handle.getVersion()).isEqualTo(producer.getVersion());
+        assertThat(handle.isFullyCaptured()).isFalse();
+        producer.markFullyCaptured();
+        assertThat(handle.isFullyCaptured()).isTrue();
+    }
+
+    @Test
+    void testResolvingThroughAWaitHandleRePlansOnceTheProducerFinishes(@TempDir final Path dir) {
+        // The resolver must not read "handle served nothing, producer complete" as "this stream has no such
+        // record" - the handle never searched anything. It has to go round again, which is when the launcher
+        // plans against the records that have now landed.
+        // A real (empty) store: a handle carries its producer's store, and the resolver reads through it.
+        final StreamSweep producer = new StreamSweep(
+                10L, new StepDataStore(dir.resolve("producer"), new SteppingConfig()), TWO_ELEMENTS);
+        producer.markFullyCaptured();
+        final StreamSweep swept = sweptStream(dir, 10L, 3, true);
+        final AtomicInteger calls = new AtomicInteger();
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L),
+                (metaId, request, fp, priorSweeps, running) ->
+                        // First poll: nothing can be planned yet, so wait on the completed producer.
+                        // Second: the records are there, serve them.
+                        calls.getAndIncrement() == 0 ? StreamSweep.waitingOn(producer) : swept,
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+
+        final SessionStepResult result = resolver.resolve(
+                session, req(StepType.REFRESH, new StepLocation(10L, 0, 1)), FINGERPRINTS, 5_000);
+
+        assertThat(calls.get()).as("it went round again rather than concluding").isEqualTo(2);
+        assertThat(result.foundRecord()).isTrue();
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 1));
     }
 
     @Test
@@ -377,7 +550,7 @@ class TestSteppingSession {
         final SteppingSession session = new SteppingSession(
                 "s",
                 List.of(1L),
-                (metaId, request, fp, priorComplete, running) -> new StreamSweep(metaId, null),
+                (metaId, request, fp, priorSweeps, running) -> new StreamSweep(metaId, null),
                 s -> closed.incrementAndGet(),
                 sweep -> {
                 },
@@ -414,7 +587,7 @@ class TestSteppingSession {
         final SteppingSession session = new SteppingSession(
                 "session",
                 List.of(10L, 20L, 30L),
-                (metaId, request, fp, priorComplete, running) -> {
+                (metaId, request, fp, priorSweeps, running) -> {
                     launches.incrementAndGet();
                     return new StreamSweep(metaId, null);
                 },

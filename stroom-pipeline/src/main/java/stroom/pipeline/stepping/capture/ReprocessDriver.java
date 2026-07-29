@@ -50,6 +50,7 @@ import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.RecordScopeState;
 import stroom.pipeline.stepping.store.StepDataStore;
+import stroom.pipeline.stepping.store.StorePin;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.xml.event.SaxEventReader;
 import stroom.pipeline.xsltfunctions.TaskScopeMap;
@@ -194,7 +195,14 @@ public class ReprocessDriver {
             return;
         }
 
-        try {
+        // Claim both ends for as long as this runs: the feed's versions, which are read record by record,
+        // and the reprocessed element's, which are written the same way. An edit made while this is in
+        // flight adds fingerprints to the same elements, and without the claim the retention LRU could
+        // reclaim either end mid-reprocess - the feed reading back as "never captured", or the file being
+        // written deleted underneath the writer. (Usually the same store on both sides; pins are reference
+        // counted, so claiming it twice is exactly as safe as claiming it once.)
+        try (final StorePin sourcePin = sourceStore.pin(fingerprints.getCumulativeFingerprints());
+                final StorePin targetPin = targetSweep.getStore().pin(fingerprints.getCumulativeFingerprints())) {
             securityContext.secure(AppPermission.STEPPING_PERMISSION, () ->
                     securityContext.useAsRead(() -> {
                         currentUserHolder.setCurrentUser(securityContext.getUserIdentity());

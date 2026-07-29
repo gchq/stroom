@@ -83,6 +83,10 @@ public class StepDataStore {
     private final Map<Long, Long> partMaxRecordIndex = new HashMap<>();
     // Per-element LRU of retained fingerprints (access-ordered; eldest first) for version eviction.
     private final Map<String, LinkedHashMap<String, Boolean>> elementFingerprintLru = new HashMap<>();
+    // Versions currently in use, reference counted - see pin(). A pinned version is not evictable however
+    // old it is, because "least recently used" is a guess at what nobody wants and a running producer or an
+    // in-flight read is proof to the contrary.
+    private final Map<PinKey, Integer> pinCounts = new HashMap<>();
     // Per-part shared-scope state file: currently the per-record source-location snapshot. Keyed by part
     // only - unlike element IO it carries no fingerprint, because source location is an upstream property
     // that does not change when a downstream element is edited, so it is reused across edits.
@@ -609,7 +613,56 @@ public class StepDataStore {
     }
 
     /**
+     * Claim the given versions ({@code elementId -> fingerprint}, i.e. exactly an
+     * {@code ElementFingerprints.getCumulativeFingerprints()} map) so that the retention LRU cannot evict
+     * them while they are in use. Release the returned {@link StorePin} - in a {@code finally} or with
+     * try-with-resources - when the work is done.
+     * <p>
+     * Why this exists: the LRU's premise is that the least-recently-used version of an element is the one
+     * nobody wants any more. That is a fair guess about <i>past</i> versions, and a bad one about a version
+     * something is using right now. Two producers are routinely live at once (a stream capture and a
+     * materialisation of the records the user is looking at), and an edit adds a fingerprint per element per
+     * distinct version of the code, so a handful of edits while a capture runs can push that capture's own
+     * fingerprint off the end of the retention window. Evicting it would close and delete the file
+     * underneath its writer, which then silently re-creates an empty one and produces a truncated element.
+     * The same applies to a read: a step assembles several elements' IO over several calls, and a version
+     * evicted between them reads back as "never captured".
+     * <p>
+     * Pins are reference counted, so overlapping producers and readers claiming the same version are
+     * independent of one another, and pinning a version that is not in the store yet is legitimate - a
+     * producer pins what it is <i>about</i> to write.
+     */
+    public synchronized StorePin pin(final Map<String, String> fingerprintByElementId) {
+        if (fingerprintByElementId == null || fingerprintByElementId.isEmpty()) {
+            return new StorePin(() -> {
+            });
+        }
+        final List<PinKey> keys = new ArrayList<>(fingerprintByElementId.size());
+        fingerprintByElementId.forEach((elementId, fingerprint) -> {
+            if (elementId != null && fingerprint != null) {
+                final PinKey key = new PinKey(elementId, fingerprint);
+                pinCounts.merge(key, 1, Integer::sum);
+                keys.add(key);
+            }
+        });
+        return new StorePin(() -> unpin(keys));
+    }
+
+    private synchronized void unpin(final List<PinKey> keys) {
+        for (final PinKey key : keys) {
+            pinCounts.computeIfPresent(key, (k, count) -> count <= 1 ? null : count - 1);
+        }
+    }
+
+    private boolean isPinned(final ElementId elementId, final String fingerprint) {
+        return pinCounts.containsKey(new PinKey(elementId.getId(), fingerprint));
+    }
+
+    /**
      * Evict (close and delete) all files for the given element at the given fingerprint, across all parts.
+     * <p>
+     * This is an explicit instruction rather than the retention policy making a choice, so unlike the LRU it
+     * does not consult {@link #pin} - a caller that asks for a version to go has said what it means.
      */
     public synchronized void evictElement(final ElementId elementId, final String fingerprint) {
         checkNotDeleted();
@@ -641,6 +694,8 @@ public class StepDataStore {
         partMinRecordIndex.clear();
         partMaxRecordIndex.clear();
         elementFingerprintLru.clear();
+        // Nothing is left to evict, so outstanding pins protect nothing; releasing one after this is a no-op.
+        pinCounts.clear();
         totalBytes = 0;
         FileUtil.deleteDir(streamDir);
         deleted = true;
@@ -687,11 +742,10 @@ public class StepDataStore {
     }
 
     private void touchFingerprint(final ElementId elementId, final String fingerprint) {
-        // NOTE: a plain LRU, with no pinning. An element edited repeatedly accumulates a fingerprint per
-        // distinct version, and the oldest is evicted - which is what makes reverting an edit free only
-        // while the prior version is still retained. maxRetainedFingerprintsPerElement must therefore stay
-        // >= the number of fingerprints in play for one config, or a fingerprint still being captured or
-        // served could be evicted underneath its reader.
+        // An element edited repeatedly accumulates a fingerprint per distinct version, and the oldest
+        // unpinned one is evicted - which is what makes reverting an edit free only while the prior version
+        // is still retained. Versions something is using are pinned (see pin()) and skipped, so the limit
+        // bounds the retained HISTORY rather than capping what may be in use at once.
         final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.computeIfAbsent(
                 elementId.getId(),
                 k -> new LinkedHashMap<>(16, 0.75f, true));
@@ -701,13 +755,38 @@ public class StepDataStore {
         // limit must not delete the data being written.
         final int max = Math.max(1, config.getMaxRetainedFingerprintsPerElement());
         while (lru.size() > max) {
-            final String eldest = lru.entrySet().iterator().next().getKey();
+            final String eldest = eldestEvictable(elementId, lru, fingerprint);
+            if (eldest == null) {
+                // Everything older is pinned, so the retention limit gives way rather than deleting data
+                // out from under a producer or a reader. Transient by nature: the pins are released when
+                // the work using them ends, and the next touch evicts as usual.
+                LOGGER.debug(() -> LogUtil.message(
+                        "Retaining {} versions of element {} (limit {}) - the rest are in use",
+                        lru.size(), elementId, max));
+                break;
+            }
             lru.remove(eldest);
             removeFingerprintFiles(elementId, eldest);
             LOGGER.debug(() -> LogUtil.message(
                     "Evicted stepping IO for element {} fingerprint {} (retain limit {})",
                     elementId, eldest, max));
         }
+    }
+
+    /**
+     * @return the least-recently-used fingerprint of this element that is neither pinned nor the one just
+     * touched, or null if there is no such version to give up.
+     */
+    private String eldestEvictable(final ElementId elementId,
+                                   final LinkedHashMap<String, Boolean> lru,
+                                   final String touched) {
+        // Access-ordered, so this walks eldest-first.
+        for (final String candidate : lru.keySet()) {
+            if (!candidate.equals(touched) && !isPinned(elementId, candidate)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private void removeFingerprintFiles(final ElementId elementId, final String fingerprint) {
@@ -743,6 +822,13 @@ public class StepDataStore {
     // --------------------------------------------------------------------------------
 
     private record FileKey(long partIndex, ElementId elementId, String fingerprint) {
+    }
+
+    /**
+     * A pinned version. Keyed by element id string rather than {@link ElementId} to match
+     * {@code ElementFingerprints}, which is keyed the same way, and the LRU, which is too.
+     */
+    private record PinKey(String elementId, String fingerprint) {
     }
 
     /**

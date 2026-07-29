@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.capture;
 
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.Coverage;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.task.api.TaskContext;
@@ -38,9 +39,46 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class StreamSweep {
 
+    /**
+     * Holds nothing, ever. The extent is deliberately NOT final: a wait handle's whole purpose is that more is
+     * coming, and its producer's own {@link #isFullyCaptured()} is what says when that stops being true.
+     */
+    private static final Coverage EMPTY_COVERAGE = new Coverage() {
+        @Override
+        public List<Long> parts() {
+            return List.of();
+        }
+
+        @Override
+        public long first(final long partIndex) {
+            return Coverage.NONE;
+        }
+
+        @Override
+        public long last(final long partIndex) {
+            return Coverage.NONE;
+        }
+
+        @Override
+        public boolean holds(final long partIndex, final long recordIndex) {
+            return false;
+        }
+
+        @Override
+        public boolean isExtentFinal() {
+            return false;
+        }
+    };
+
     private final long metaId;
     private final StepDataStore store;
-    private final CaptureWatermark watermark = new CaptureWatermark();
+    private final CaptureWatermark watermark;
+    // The configuration this sweep captures under. Held so that the session can ask whether a later edit
+    // invalidates any of what it is producing - see SteppingSession.sweepFor. Null only where no caller asks
+    // (the synchronous capture entry points and unit tests).
+    private final ElementFingerprints fingerprints;
+    // True for a handle on somebody else's producer rather than a producer of its own - see waitingOn.
+    private final boolean waitHandle;
     private volatile ReprocessDriver.RecordRange demand;
 
     // Non-null when this sweep materialises individual records of one element on demand rather than
@@ -62,12 +100,60 @@ public class StreamSweep {
     private volatile Map<ElementId, Indicators> startProcessIndicators = Map.of();
 
     public StreamSweep(final long metaId, final StepDataStore store) {
+        this(metaId, store, null);
+    }
+
+    public StreamSweep(final long metaId, final StepDataStore store, final ElementFingerprints fingerprints) {
+        this(metaId, store, fingerprints, new CaptureWatermark(), false);
+    }
+
+    private StreamSweep(final long metaId,
+                        final StepDataStore store,
+                        final ElementFingerprints fingerprints,
+                        final CaptureWatermark watermark,
+                        final boolean waitHandle) {
         this.metaId = metaId;
         this.store = store;
+        this.fingerprints = fingerprints;
+        this.watermark = watermark;
+        this.waitHandle = waitHandle;
+    }
+
+    /**
+     * A handle on a producer that <b>somebody else</b> launched: it shares that producer's progress signal but
+     * serves nothing of its own.
+     * <p>
+     * This is how a step whose records are still ahead of a running capture's frontier waits for the work
+     * already in flight instead of launching a second capture of the same stream. Its {@link #coverage()} is
+     * deliberately empty: the producer is capturing under a different configuration to the one this step is
+     * being served under, so nothing it has written is servable here - only its <i>progress</i> is of interest.
+     * Serving from the producer's own coverage would show the user a record with the edited element's pane
+     * blank, which is precisely the half-truth the store's fingerprint keying exists to prevent.
+     * <p>
+     * A handle owns nothing, so it is never cached and never terminated; the producer's own lifecycle is
+     * managed where it was launched.
+     */
+    public static StreamSweep waitingOn(final StreamSweep producer) {
+        return new StreamSweep(producer.metaId, producer.store, producer.fingerprints, producer.watermark, true);
     }
 
     public long getMetaId() {
         return metaId;
+    }
+
+    /**
+     * @return the fingerprints this sweep captures under, or null if it was created without them.
+     */
+    public ElementFingerprints getFingerprints() {
+        return fingerprints;
+    }
+
+    /**
+     * @return true if this is a handle on another producer rather than one in its own right - see
+     * {@link #waitingOn}.
+     */
+    public boolean isWaitHandle() {
+        return waitHandle;
     }
 
     public StepDataStore getStore() {
@@ -145,6 +231,10 @@ public class StreamSweep {
      * everything must signal).
      */
     public Coverage coverage() {
+        if (waitHandle) {
+            // Nothing of the producer's is servable under the configuration this handle was handed out for.
+            return EMPTY_COVERAGE;
+        }
         return new Coverage() {
             @Override
             public List<Long> parts() {

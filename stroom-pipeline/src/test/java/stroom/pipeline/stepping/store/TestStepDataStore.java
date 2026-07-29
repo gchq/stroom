@@ -574,6 +574,92 @@ class TestStepDataStore {
     }
 
     @Test
+    void testPinnedFingerprintIsNotEvicted(@TempDir final Path tempDir) {
+        // Retain 1 version per element: without a pin, every new fingerprint evicts the previous one - that
+        // is exactly what testLruEvictionOfOldFingerprints and the negative control below assert. Here FP_A
+        // is in use (a producer writing it, or a read serving from it), so it must survive versions that
+        // would otherwise retire it.
+        final SteppingConfig config = new SteppingConfig().withMaxRetainedFingerprintsPerElement(1);
+        final StepDataStore store = newStore(tempDir, config);
+
+        store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
+        try (final StorePin pin = store.pin(Map.of(E1.getId(), FP_A))) {
+            store.putElementData(loc(0, 0), E1, FP_B, data("b", "b"));
+            store.putElementData(loc(0, 0), E1, FP_C, data("c", "c"));
+
+            // The pinned version survives, even though the retention limit is 1.
+            assertThat(store.hasElement(E1, FP_A)).isTrue();
+            // FP_B was not pinned, so it was evicted as usual - the limit still bites where it can.
+            assertThat(store.hasElement(E1, FP_B)).isFalse();
+            assertThat(store.hasElement(E1, FP_C)).isTrue();
+            // Read last: a read is an access, so under a limit of 1 it makes FP_A the most recent and
+            // retires FP_C. Asserting FP_C above rather than below is deliberate.
+            assertThat(store.getElementData(loc(0, 0), E1, FP_A))
+                    .map(CapturedElementData::outputText).contains("a");
+        }
+
+        // Released: FP_A is ordinary history again and the next write retires it.
+        store.putElementData(loc(0, 0), E1, FP_D, data("d", "d"));
+        assertThat(store.hasElement(E1, FP_A)).isFalse();
+        assertThat(store.hasElement(E1, FP_D)).isTrue();
+    }
+
+    @Test
+    void testUnpinnedFingerprintStillEvicts(@TempDir final Path tempDir) {
+        // NEGATIVE CONTROL for the test above: same shape, but the pin is on a DIFFERENT element's version.
+        // If pinning were doing nothing (or pinning everything), one of these two assertions would fail.
+        final SteppingConfig config = new SteppingConfig().withMaxRetainedFingerprintsPerElement(1);
+        final StepDataStore store = newStore(tempDir, config);
+
+        store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
+        store.putElementData(loc(0, 0), E2, FP_A, data("a", "a"));
+        try (final StorePin pin = store.pin(Map.of(E2.getId(), FP_A))) {
+            store.putElementData(loc(0, 0), E1, FP_B, data("b", "b"));
+            store.putElementData(loc(0, 0), E2, FP_B, data("b", "b"));
+
+            assertThat(store.hasElement(E1, FP_A)).isFalse();
+            assertThat(store.hasElement(E2, FP_A)).isTrue();
+        }
+    }
+
+    @Test
+    void testOverlappingPinsAreIndependent(@TempDir final Path tempDir) {
+        // Two things using the same version at once - a capture writing it and a step reading it, say. The
+        // first to finish must not release the other's claim.
+        final SteppingConfig config = new SteppingConfig().withMaxRetainedFingerprintsPerElement(1);
+        final StepDataStore store = newStore(tempDir, config);
+
+        store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
+        final StorePin first = store.pin(Map.of(E1.getId(), FP_A));
+        final StorePin second = store.pin(Map.of(E1.getId(), FP_A));
+
+        // Closing twice must not decrement twice either, or it would free the other holder's claim.
+        first.close();
+        first.close();
+        store.putElementData(loc(0, 0), E1, FP_B, data("b", "b"));
+        assertThat(store.hasElement(E1, FP_A)).isTrue();
+
+        second.close();
+        store.putElementData(loc(0, 0), E1, FP_C, data("c", "c"));
+        assertThat(store.hasElement(E1, FP_A)).isFalse();
+    }
+
+    @Test
+    void testAPinTakenBeforeTheDataIsWrittenStillProtectsIt(@TempDir final Path tempDir) {
+        // A producer pins what it is ABOUT to write - the version does not exist in the store yet. The claim
+        // has to apply to the file when it appears, not just to one already there.
+        final SteppingConfig config = new SteppingConfig().withMaxRetainedFingerprintsPerElement(1);
+        final StepDataStore store = newStore(tempDir, config);
+
+        try (final StorePin pin = store.pin(Map.of(E1.getId(), FP_A))) {
+            store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
+            store.putElementData(loc(0, 0), E1, FP_B, data("b", "b"));
+
+            assertThat(store.hasElement(E1, FP_A)).isTrue();
+        }
+    }
+
+    @Test
     void testDeleteAll(@TempDir final Path tempDir) {
         final StepDataStore store = newStore(tempDir, new SteppingConfig());
         store.putElementData(loc(0, 0), E1, FP_A, data("in", "out"));

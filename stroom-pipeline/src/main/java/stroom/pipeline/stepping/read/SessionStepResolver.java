@@ -24,6 +24,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.session.SteppingSession;
+import stroom.pipeline.stepping.store.StorePin;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 
@@ -129,9 +130,16 @@ public class SessionStepResolver {
             // that already holds the reused upstream at the full range, so gating on the store would let a
             // step reach a record before the reprocess has written its changed element. For a full sweep the
             // two coincide.
-            final Optional<StoreStepResolver.ResolvedStep> resolved = storeStepResolver.resolve(
-                    sweep.getStore(), currentStream, fingerprints, streamRequest,
-                    StoreStepResolver.CapturedRange.of(sweep.coverage()));
+            // Claim the versions this scan reads for as long as it reads them. A scan is many store calls -
+            // a record's elements, and for a filtered step many records - and a producer writing new
+            // fingerprints concurrently could otherwise retire one of them part way through, which reads
+            // back as "never captured" rather than as an error.
+            final Optional<StoreStepResolver.ResolvedStep> resolved;
+            try (final StorePin pin = sweep.getStore().pin(fingerprints.getCumulativeFingerprints())) {
+                resolved = storeStepResolver.resolve(
+                        sweep.getStore(), currentStream, fingerprints, streamRequest,
+                        StoreStepResolver.CapturedRange.of(sweep.coverage()));
+            }
             if (resolved.isPresent()) {
                 final StepLocation found = resolved.get().foundLocation();
                 return SessionStepResult.resolved(
@@ -145,6 +153,14 @@ public class SessionStepResolver {
             if (sweep.getError() != null) {
                 final String message = sweep.getError().getMessage();
                 return SessionStepResult.error(message != null ? message : "Stepping capture error");
+            }
+
+            if (sweep.isWaitHandle() && sweep.isFullyCaptured()) {
+                // We were waiting on a capture launched under a different configuration and it has now
+                // finished. Its records are in the store, so the next pass plans this step against them.
+                // Concluding "nothing in this stream" here would be reading a handle that never served
+                // anything as though it had searched.
+                continue;
             }
 
             if (!sweep.isFullyCaptured()) {

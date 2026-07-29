@@ -48,6 +48,7 @@ import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.SessionStepResolver;
 import stroom.pipeline.stepping.read.StoreStepResolver;
 import stroom.pipeline.stepping.store.StepDataStore;
+import stroom.pipeline.stepping.store.StorePin;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -198,7 +199,10 @@ public class StreamCaptureDriver {
         taskContext.info(() -> "Capturing stepping data");
         final StepDataStore store = streamSweep.getStore();
 
-        try {
+        // Claim the versions this capture is about to write for as long as it runs. Without this an edit -
+        // or three - made while the capture is still going can push its own fingerprints out of the
+        // retention window, deleting the files it is writing to underneath it.
+        try (final StorePin pin = store.pin(fingerprints.getCumulativeFingerprints())) {
             securityContext.secure(AppPermission.STEPPING_PERMISSION, () -> {
                 securityContext.useAsRead(() -> {
                     currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
@@ -245,7 +249,6 @@ public class StreamCaptureDriver {
             // otherwise leave the sweep neither complete nor errored, hanging every reader on it.
             streamSweep.markError(t);
             throw t;
-        } finally {
         }
     }
 

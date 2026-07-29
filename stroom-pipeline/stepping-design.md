@@ -51,8 +51,8 @@ wrong even if every test stays green.
   edit is the inner loop of translation development, and its cost must not scale with where the record is in
   the stream (§11: measured at ~20ms, was ~670ms mid-stream).
 - R5 — *Paid work is kept.* Capture already done is never discarded while it could still serve a step - not
-  by a later step (scenario B), not by an edit below the record boundary (scenario C - the open deficiency),
-  not by a revert (free while retained, §7).
+  by a later step (scenario B), not by an edit below the record boundary (scenario C), not by a revert (free
+  while retained, §7).
 - R6 — *A step always answers.* Waiting is fine (long-poll, with progress); hanging is not. Every way a
   producer can stop must wake its waiters (§5). A step that cannot be answered says so.
 
@@ -515,17 +515,17 @@ on clean shutdown.
 | `TestLiveReprocessOnEdit` (stroom-app) | That an edit actually routes to a reprocess rather than a second full sweep, and that the reprocessed output is served for an early record — the readiness gate. |
 | `TestSteppingStateFixture` (stroom-app) | **That the fixtures still test anything.** Builds a probe chain and loads a stream carrying a `Meta` child stream, then asserts under a plain full sweep that `stroom:put`/`get`, `stroom:record-no`, `stroom:line-from` and `stroom:meta` all read back real values. The sample feeds exercise none of these, so without it a "reprocessed output == swept output" assertion can pass with both sides empty. Not covered: context reference data. |
 | `TestReprocessRestoresScopeState` (stroom-app) | That shared scope survives the split: an upstream `stroom:put` is still visible to a `stroom:get` below an edit, even though the reprocess never re-runs the put. Builds the two-XSLT topology it needs on an in-memory copy of the pipeline, so no sample pipeline is disturbed. Verified to fail (empty probe) with the restore removed. |
-| `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction, the per-record scope snapshot. |
+| `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction and the pins that override it, the per-record scope snapshot. |
 | `TestRecordScopeStateSerializer` / `TestTaskScopeMap` | The scope snapshot's framing (null/empty/awkward keys and values, >64KB) and the snapshot/restore/clear the stepping path relies on. |
 | `TestStreamSweep` | The progress signal: no lost wakeups, interrupt semantics, terminate handshake. |
-| `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour. |
+| `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour, and the narrow abandonment rule (a downstream edit keeps the running capture; a parser edit does not) with the wait handle it makes possible. |
 | `TestElementFingerprinter` | Sensitivity and stability — a wrong fingerprint serves stale IO or never reuses. |
 | `TestFilteredStepAfterEdit` (stroom-app) | Filtered navigation after an edit, end to end: the windowed scan is entered (launch counter), lands on genuine matches for FORWARD **and** the awkward FIRST/LAST ends, with unfiltered controls and a no-re-sweep assertion. Its control found the filters-missing-from-the-sweep-key bug. |
 | `TestFilteredScanWindow` | The scan window's arithmetic (inclusive ends, clamping, direction reversal, frontier resume, null when dry) and that the size genuinely comes from `filteredScanWindow` - the config default equals the old constant, so only a test that varies it can tell wiring from residue. |
 | `TestSteppingContextLookup` (stroom-app) | Context reference data (`stroom:lookup` against the stream's own context child stream) survives a single-record replay. Negative control: nulling `ReprocessDriver`'s one `setInputStreamProvider` call fails exactly this. |
 | `TestSteppingCounterReplay` (stroom-app) | A replayed record keeps the `EventId` the sweep gave it. Negative control: disabling the restore fails `expected: 6L but was: 1L`. |
 | `TestSweepAndReplaySharingAStore` | A sweep and a replay writing the same store: holes in the shared state file and in a shared-fingerprint element file must not trip the in-order check, both writers stay readable, and a pure sweep still rejects out-of-order appends. |
-| `TestSteppingScaleScenarios` (stroom-app) | Scenarios B and C by launch counters. C is **disabled** - it asserts the desired behaviour and is the acceptance test for build-order stages 1-3 of the target design. |
+| `TestSteppingScaleScenarios` (stroom-app) | Scenarios B and C by launch counters - C in both halves, an edit behind the running capture's frontier and one ahead of it. They were the acceptance tests for build-order stages 1-3 of the target design; both pass. Also that a filtered scan advances across windows. |
 | `TestSteppingMidPointBenchmark`, `TestSteppingScenarioBenchmarks` (stroom-app) | The scenario numbers (A; C and D's ceiling). No timing assertions - correctness asserted, wall-clock logged for a human. |
 | `TestCaptureWatermark`, `TestCapturedRecordFeed`, `TestCapturedRange`, `TestStageGraphPlanner` | The substrate built for the set-aside stage decomposition and kept for the direction in §11: that every way a producer stops wakes its waiters, that a consumer follows a producer without hanging, that a record is only servable once every contributor has reached it, and where a pipeline may be cut. Liveness tests here assert the wake is **prompt** (a short join against a long await) — asserting only the return value passes even with the signal deleted. |
 
@@ -537,13 +537,14 @@ Integration tests need MySQL on `localhost:3307` (`stroom-resources`: `bounceIt.
 
 ### A sweep and a replay share a store
 
-Editing an XSLT while a sweep of that stream is still running does **not** start a second producer alongside
-it: `SteppingSession.sweepFor` abandons the in-flight sweep first, because nothing will read output captured
-under the old fingerprints. But abandonment is a cooperative flag, not an interrupt (see *Termination
-handshake*), so the abandoned sweep runs on to its next record boundary and the two writers are briefly live
-together. `StepDataStore` is a monitor - every public method is `synchronized` - so that overlap cannot tear a
-write, and element chunks cannot collide because a replay writes under the new fingerprints while the sweep
-writes under the old.
+Editing an XSLT while a sweep of that stream is still running leaves **two producers live on one store**, and
+that is now the ordinary case rather than a brief overlap: the sweep is deliberately not abandoned (its
+upstream fingerprints are untouched by the edit, so it is producing the very feed the edit needs - see §11,
+scenario C), and the materialisation of the edited element writes into the same store beside it.
+`StepDataStore` is a monitor - every public method is `synchronized` - so the overlap cannot tear a write, and
+element chunks cannot collide because a materialisation writes under the new fingerprints while the sweep
+writes under the old. Retention is the other shared resource, and that is what `StepDataStore.pin` guards: a
+version a live producer is writing, or a scan is reading, is not evictable however old the LRU thinks it is.
 
 What they do share is the **per-part state file**, which carries no fingerprint by design, and an element file
 whenever a sweep and a replay run under the *same* fingerprint. That sharing broke the in-order check:
@@ -730,7 +731,7 @@ tests and benchmarks that follow are organised around them.
 |---|---|---|---|
 | A | Refresh record 1M against a **completed** capture | a few ms | **Works** - measured at ~20ms incl. transport, vs ~670ms before §11 |
 | B | Step to record 1M while capture has reached 500k | wait for the frontier to pass 1M; keep everything captured so far; launch nothing new | **Works** - the resolver waits on the watermark; no second sweep |
-| C | Capture has reached 2M; the user edits the XSLT and refreshes | keep the 2M records of upstream capture; re-run only the edited element and below | **Broken** - the in-flight sweep is abandoned and a full re-sweep starts from record 0 |
+| C | Capture has reached 2M; the user edits the XSLT and refreshes | keep the 2M records of upstream capture; re-run only the edited element and below | **Works** - the capture runs on and only the edited element is materialised; nothing is re-parsed |
 | D | Jump straight to record 1M of a stream never swept | capture boundary IO only on the way; materialise below the boundary for that one record | **Not built** - the skeleton sweep, proposed below |
 
 **A** is the shipped §11 work: `TestSteppingMidPointBenchmark` measures it, `TestLiveReprocessOnEdit` pins the
@@ -742,43 +743,55 @@ frontier passes its record. The wait is irreducible - record 1M's input cannot b
 999,999 records before it - so B is "as fast as the first pass over the stream", never faster. What matters
 is that it launches nothing and discards nothing.
 
-**C** is where the current rules compound against the user, in three steps that are each individually
-reasonable:
+**C** used to be where three individually reasonable rules compounded against the user - the in-flight sweep
+was abandoned on any signature change, `priorCompleteCapture` demanded a *complete* prior capture, and the
+reuse gate was `hasCompleteElement`, all records or nothing. The captured chunks were on disk, valid, and
+worth two million records of parsing; every reuse decision was all-or-nothing on completeness, so they were
+worth exactly nothing. **Lifetime decoupling** removed all three:
 
-1. `SteppingSession.sweepFor` abandons any in-flight sweep of the stream whose signature does not match -
-   keyed on `metaId` alone, without asking whether the edit invalidated what the sweep is capturing. An edit
-   to the XSLT does *not* change the parser's cumulative fingerprint, so the 2M records of upstream capture
-   are still perfectly valid - but capture stops at 2M and never resumes.
-2. The launch decision (`priorCompleteCapture`) requires `isSuccessfullyCaptured()` - a *complete*, error-free
-   prior sweep. An abandoned partial one does not qualify, so the replacement is a full sweep from record 0.
-3. Even reaching the planner, the reuse gate is `hasCompleteElement` - all records or nothing.
+1. **Reuse is a span, not a boolean** (`StagePlanner.RecordSpan`, `Coverage`): a step that names its record
+   asks only whether the feed *holds that record*, which an element captured up to a frontier legitimately
+   does. `hasCompleteElement` survives only for whole-stream reprocesses.
+2. **Abandonment is narrow** (`SteppingSession.stillProduces`): an in-flight capture is stopped only if the
+   new configuration shares *no* cumulative fingerprint with it. An XSLT edit leaves every element above it
+   untouched, so the capture runs on - and what it goes on to write is exactly the feed the edited element is
+   replayed from, as well as the pre-edit chunks a revert wants back.
+3. **A step ahead of the frontier waits for that capture** (`StreamSweep.waitingOn`,
+   `SteppingService.waitForFrontier`) instead of launching a second one. The handle serves nothing - its
+   coverage is deliberately empty, because the producer is capturing under a different configuration - and
+   carries only the producer's progress signal, so the resolver's existing wait loop does the waiting and
+   re-plans each time round. When the frontier passes the record, the ordinary on-demand materialisation
+   answers it.
 
-The captured chunks are on disk, valid, and worth two million records of parsing; every reuse decision is
-all-or-nothing on completeness, so they are worth exactly nothing to it. The remedy is **lifetime
-decoupling**, and it is narrower than the concurrent-stages idea set aside above: abandon a sweep only for
-the elements whose fingerprints actually changed; make reuse incremental ("complete up to N" - a watermark,
-not a boolean); let a replay wait on the upstream frontier rather than on "fully captured". The unused
-substrate built for concurrent stages (`CapturedRecordFeed`, and `CaptureWatermark` which is already live) is
-the right shape for this join. The risks are the two already encountered in miniature: multiple producers on
-one store (see §10, *A sweep and a replay share a store*), and relaxing `hasCompleteElement`, which exists
-because a partially materialised element once looked reusable and the planner concluded there was nothing to
-reprocess.
+The wait itself remains irreducible, exactly as in B: an edit that refreshes a record the capture has not
+reached still waits for it to be parsed. What changed is that the waiting is done *on the work already
+running*, so nothing is re-parsed and nothing is thrown away. Measured on 4,000 records: the mid-sweep edited
+refresh launches **zero** full sweeps (it launched one before), and its wall-clock is now bounded by the one
+capture's progress rather than by a second capture starting again from record 0 - at 4k the two are within
+noise of each other, and the difference is the whole prefix, so it grows with the frontier.
+
+Both risks named when this was designed did materialise and are handled: multiple producers on one store
+(§10, *A sweep and a replay share a store* - now the routine case, not the exception), and eviction of a
+version still in use, which is what `StepDataStore.pin` exists for.
 
 **D** is the skeleton sweep, next.
 
 Each scenario is pinned by a test or benchmark so the claims above stay honest:
 
-- `TestSteppingScaleScenarios` (stroom-app) - B as a passing test (no second launch, record served); C as a
-  **disabled** test asserting the *desired* behaviour, with the observed failure recorded in its reason. It
-  is the acceptance test for the lifetime-decoupling work: when it passes un-disabled, C is fixed.
+- `TestSteppingScaleScenarios` (stroom-app) - B as a passing test (no second launch, record served); C as
+  **two** passing tests, one per half - an edit *behind* the running capture's frontier (reprocessed from the
+  partial capture) and one *ahead* of it (waits on that capture; no second sweep). Both assert the mechanism
+  through the launch counters, which is what makes them meaningful at 4,000 records rather than 10M.
 - `TestSteppingScenarioBenchmarks` (stroom-app) - the cost of an edited refresh issued mid-sweep (C's
   number), and the full-sweep vs boundary-only-sweep ratio (D's ceiling). **Measured, 4,000 records,
-  2026-07-28:** the same edit-and-refresh at the mid record costs **1,427ms mid-sweep** (its launch counter
-  confirms the full re-sweep) against **18-32ms after completion** - the gap is scenario C's prize, and it
-  scales with stream length. The full sweep took **3,829ms** against **397ms** for the boundary-only
-  truncation: **~90% of sweep cost is transforms and below-boundary capture**, so the skeleton sweep's
-  ceiling is roughly a 10x faster first pass. Success for the C work is the first number approaching the
-  second; success for D is a skeleton sweep approaching the boundary-only time.
+  2026-07-29:** the edit-and-refresh at the mid record costs **1,585ms mid-sweep, launching zero full
+  sweeps** (it launched one, and took 1,427ms, before lifetime decoupling) against **30-33ms after
+  completion**. The mid-sweep number is dominated by the irreducible wait for the frontier to reach the mid
+  record - at 4,000 records that wait is most of a sweep either way, which is why the number did not fall
+  with the fix; what fell is the *work*, from two passes over the stream to one. The full sweep took
+  **4,090ms** against **404ms** for the boundary-only truncation: **~90% of sweep cost is transforms and
+  below-boundary capture**, so the skeleton sweep's ceiling is roughly a 10x faster first pass. Success for D
+  is a skeleton sweep approaching the boundary-only time.
 - `TestSteppingMidPointBenchmark` (stroom-app) - A, as before.
 
 **Beyond the headline four**, scenarios that a design answering A-D must not regress, each with where it is
@@ -786,8 +799,13 @@ pinned:
 
 - **E - edit/revert cycling.** The other inner loop: try a change, revert it, try another. A revert must be
   free while the prior fingerprints are retained (`maxRetainedFingerprintsPerElement`, default 3) - see §7
-  *Revert the edit*. The retention LRU has **no pinning**, so cycling more distinct edits than the limit can
-  evict a version still being read; noted as a hazard in `StepDataStore.touchFingerprint` and unresolved.
+  *Revert the edit*. Cycling more distinct edits than the limit retires the oldest versions, so a revert that
+  far back costs a re-materialisation; what it must never do is retire a version something is **using**, and
+  since narrow abandonment leaves two producers routinely live that is no longer hypothetical.
+  `StepDataStore.pin` is the answer: a producer claims the versions it is writing for as long as it runs, a
+  resolve claims the ones it is reading for as long as the scan lasts, and the LRU evicts the eldest
+  *unpinned* version - giving way on the limit entirely rather than deleting data out from under either.
+  Pinned in `TestStepDataStore` (with a negative control: an unpinned version still evicts).
 - **F - the filter that matches nothing.** The degenerate end of filtered navigation: on a swept stream it
   is one pass over the store; after an edit it is the windowed scan, which visits everything in
   `filteredScanWindow`-sized steps - correct, bounded per poll, and slow at scale by design (a 10M-record
@@ -988,13 +1006,13 @@ intersection are all queries on coverage; `CapturedRange` becomes its read view 
 
 | Component | Today | Target |
 |---|---|---|
-| `SteppingSession` | one sweep kind, keyed `(stream, signature)`, any mismatch abandons in-flight; on-demand sweeps cached by a hand-built `(step, filters)` key | backbone keyed `(stream, boundary-signature)`; materialisations have **no identity cache** - the store is the cache, the session only tracks running producers; abandonment exists only for a *boundary* edit |
-| launch decision (`SteppingService`) | full sweep unless a *complete* prior capture allows reprocess | backbone if missing, else materialise against its frontier; full sweep only under the small-stream policy |
-| `StagePlanner` / reuse | `hasCompleteElement` - all records or nothing | range-based: reusable *for the records asked about*; complete-element kept as fast path |
+| `SteppingSession` | two producer kinds: stream captures keyed `(stream, signature)`, materialisations tracked only while they run; an in-flight capture is abandoned only when the new configuration shares no fingerprint with it | backbone keyed `(stream, boundary-signature)`; materialisations have **no identity cache** - the store is the cache, the session only tracks running producers; abandonment exists only for a *boundary* edit |
+| launch decision (`SteppingService`) | full sweep unless the store - or a running capture, once its frontier arrives - can feed a reprocess of the records asked for | backbone if missing, else materialise against its frontier; full sweep only under the small-stream policy |
+| `StagePlanner` / reuse | range-based for a step that names its records; `hasCompleteElement` still gates a whole-stream reprocess | range-based: reusable *for the records asked about*; complete-element kept as fast path |
 | resolver waits (`SessionStepResolver`) | waits on the one sweep's watermark; LAST waits for full capture | waits on the backbone's watermark for shape, on the materialisation's for content; LAST waits only for the backbone |
-| `ReprocessDriver` | single record / window from a complete prior capture | same mechanics, fed from a *partial* backbone up to its frontier - the frontier is the only new input |
+| `ReprocessDriver` | single record / window from whatever the store holds, complete or partial | same mechanics, fed from a *partial* backbone up to its frontier - the frontier is the only new input |
 | store | in-order per file with `RecordOrder` modes; sparse tolerated as the exception (§10) | sparse, idempotent, atomic, capped - full stop. The order modes and contiguity heuristics go; producer sequencing (the replayed-record-numbered-0 class) is asserted by the producer, which is the only party that knows what order it meant |
-| `CapturedRecordFeed` | built, no callers | the backbone→materialiser join for scans that follow a still-running backbone |
+| `CapturedRecordFeed` | built, no callers - the wait for a frontier currently happens in the resolver's poll loop instead | the backbone→materialiser join for scans that follow a still-running backbone |
 | counters / state | captured per record by the full sweep | captured by the backbone (they sit at/above the boundary or in `RecordScopeState`) - **except** counts owned by below-boundary elements, which never run in a backbone pass; see open decisions |
 
 #### The scenarios, in the end state
@@ -1003,9 +1021,9 @@ intersection are all queries on coverage; `CapturedRange` becomes its read view 
 |---|---|---|
 | A | refresh vs complete capture | unchanged - materialise one record (~20ms) |
 | B | step ahead of the frontier | wait on the **backbone** frontier; materialise on arrival - same behaviour, cheaper producer |
-| C | edit mid-capture | *the fix falls out*: the backbone does not carry the edited fingerprint, so nothing is abandoned; the edit materialises against the frontier. The disabled acceptance test passes as written |
+| C | edit mid-capture | already fixed ahead of the backbone (narrow abandonment + wait on the frontier); under a backbone it becomes structural - the backbone cannot carry an edited fingerprint at all |
 | D | jump to record 1M, never swept | backbone passes the stream once at skeleton cost; one record materialised below |
-| E | edit/revert cycling | untouched backbone; versions come and go under retention |
+| E | edit/revert cycling | untouched backbone; versions come and go under retention, pinned while in use |
 | F | filter matching nothing | windowed scan over the backbone's extent; still the honest degenerate case |
 | G | multi-part | backbone is per-part like every store structure |
 | H | many streams | one backbone per *stepped* stream, lazily, as now |
@@ -1027,10 +1045,12 @@ starts - the discipline that caught every real bug so far.
    `TestSteppingScaleScenarios`: a REFRESH behind the frontier of a running sweep is served without waiting
    for completion and without launching anything. The `TestSteppingSession` keying tests are rewritten
    against the demand model - same behaviours, no identity cache to key wrongly.*
-3. **Narrow the abandonment rule.** Abandon an in-flight capture only when the edit changes a fingerprint
-   the capture is actually writing. With 1+2 in place this *is* scenario C. *Acceptance: un-disable
-   `anEditIssuedMidSweepKeepsThePartialUpstreamCapture`; it passes as written. The mid-sweep number in
-   `measureAnEditIssuedMidSweep` falls from ~1,4xx ms towards the ~20ms floor.*
+3. **Narrow the abandonment rule.** Abandon an in-flight capture only when the edit invalidates everything
+   it is producing, and let a step whose records it has not reached wait on it. With 1+2 in place this *is*
+   scenario C. *Acceptance: un-disable `anEditIssuedMidSweepKeepsThePartialUpstreamCapture`; it passes as
+   written, and `measureAnEditIssuedMidSweep` launches zero full sweeps.* **Done** - see *The scale
+   scenarios* above for what the benchmark did and did not move, and why. Eviction pinning
+   (`StepDataStore.pin`) landed first, as the open decision below required.
 4. **The backbone as a launch mode.** The boundary-truncated pipeline as a first-class capture (the factory
    complement of `createFrom`: build *up to* the boundary, downstream elements never constructed), plus the
    small-stream policy threshold. *Acceptance: `measureTheSkeletonSweepCeiling`'s boundary time becomes the
@@ -1062,8 +1082,12 @@ target has not actually been reached.
   for this keeps working), and otherwise served with an *indicative* marker (R1: a documented divergence,
   surfaced in the UI, not silent). No free lunch exists; pretending one might is why this was previously an
   "open decision".
-- **Eviction pinning** (before stage 3 widens concurrency): the retention LRU can evict a fingerprint still
-  being written or read (§ scale scenarios, E). With two producers routinely live, "in use" needs to pin.
+- **Eviction pinning - decided and built** (it was due before stage 3 widened concurrency): the retention LRU
+  could evict a fingerprint still being written or read (§ scale scenarios, E). `StepDataStore.pin` returns a
+  reference-counted `StorePin` over a set of `(element, fingerprint)` versions; the LRU evicts the eldest
+  *unpinned* version and, if every candidate is pinned, exceeds its limit rather than deleting data in use.
+  Producers pin for the length of their run (`StreamCaptureDriver`, `ReprocessDriver` - both ends, feed and
+  target), and `SessionStepResolver` pins for the length of a scan.
 - **The caps** (with stage 4): backbone-only capture changes what `maxRecordsPerStream`/`maxBytesPerStream`
   are protecting against; decide whether they scale with capture mode or stay one-size.
 - **Below-boundary error indicators** (before stage 5 makes skeleton the default): "skip to error" on an

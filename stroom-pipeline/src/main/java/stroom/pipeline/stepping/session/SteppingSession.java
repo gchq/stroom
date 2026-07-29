@@ -21,6 +21,8 @@ import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,15 +43,19 @@ import java.util.stream.Stream;
  * <p>
  * The user edits code while stepping, and an edit changes the fingerprints that key the captured IO. A
  * sweep is therefore identified by <em>both</em> the stream and the fingerprint signature it captured
- * under. Superseded sweeps that have already completed are kept: reverting an edit restores the previous
- * signature, finds that sweep still cached, and serves the stream with no reprocessing at all. The
- * underlying {@link StepDataStore} is shared by every sweep of a stream and keys IO by fingerprint, so the
- * elements an edit did not touch are reused rather than recaptured.
+ * under. Superseded sweeps are kept: a completed one means reverting an edit restores the previous
+ * signature, finds that sweep still cached, and serves the stream with no reprocessing at all - and a
+ * <em>running</em> one is kept too unless the edit invalidates everything it is producing (see
+ * {@code stillProduces}), because its upstream output is exactly what the edited element will be replayed
+ * from. The underlying {@link StepDataStore} is shared by every sweep of a stream and keys IO by
+ * fingerprint, so the elements an edit did not touch are reused rather than recaptured.
  * <p>
  * The session holds no notion of a "current" request or fingerprints: every caller passes what it wants to
  * {@link #sweepFor}. It is a cache plus a lifecycle owner, nothing more.
  */
 public class SteppingSession {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SteppingSession.class);
 
     private final String sessionId;
     private final List<Long> streamIdList;
@@ -114,13 +120,19 @@ public class SteppingSession {
             running.values().forEach(list -> list.removeIf(StreamSweep::isFullyCaptured));
             running.values().removeIf(List::isEmpty);
 
-            // This stream is wanted under different code, so a sweep of it still running under the old code
-            // is now pointless - nothing will read its output. Abandon it rather than let it finish reading
-            // a whole stream for nobody. It must also be dropped from the cache, not merely terminated: a
-            // terminated sweep is an errored one, and leaving it here would make reverting the edit serve
-            // that error instead of re-capturing.
+            // An in-flight capture of this stream is abandoned ONLY if the new configuration invalidates
+            // everything it is producing (see stillProduces). A downstream edit invalidates none of its
+            // upstream: those chunks keep the fingerprints they had, so the capture is - right now, while it
+            // runs - materialising exactly the feed the edited element needs, as well as the pre-edit
+            // downstream chunks a revert would want. Killing it was scenario C: the paid work was thrown
+            // away and the stream re-parsed from record 0.
+            // When it IS abandoned it must be dropped from the cache, not merely terminated: a terminated
+            // sweep is an errored one, and leaving it here would make reverting the edit serve that error
+            // instead of re-capturing.
             sweeps.entrySet().removeIf(entry -> {
-                if (entry.getKey().metaId() == metaId && !entry.getValue().isFullyCaptured()) {
+                if (entry.getKey().metaId() == metaId
+                    && !entry.getValue().isFullyCaptured()
+                    && !stillProduces(entry.getValue(), fingerprints)) {
                     onTerminateSweep.accept(entry.getValue());
                     return true;
                 }
@@ -144,21 +156,27 @@ public class SteppingSession {
                         "This stepping session has already swept the maximum of " + maxSweptStreams
                         + " streams; narrow your selection");
             }
-            // True only if a prior sweep of this stream captured it in full WITHOUT error, so its upstream
-            // chunks are complete and the launcher may reprocess from them rather than re-sweep. An errored
-            // sweep is also "fully captured" (markError stops readers waiting) but its store is truncated, so
-            // it must NOT count here - reprocessing from it would silently serve a short stream. A still
-            // in-flight prior sweep was dropped by the removeIf above, so it does not count either.
-            final boolean priorCompleteCapture = sweeps.values().stream()
-                    .anyMatch(prior -> prior.getMetaId() == metaId && prior.isSuccessfullyCaptured());
-            final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorCompleteCapture,
+            // Every capture of this stream the session knows about, whatever configuration it ran under:
+            // completed ones say what may be reprocessed from, and an in-flight one is work the launcher can
+            // wait on rather than duplicate. Which of those matters is the launcher's decision, not the
+            // session's - the session's job is to hand over what it has.
+            final List<StreamSweep> priorSweeps = sweeps.values().stream()
+                    .filter(prior -> prior.getMetaId() == metaId)
+                    .toList();
+            final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorSweeps,
                     List.copyOf(running.getOrDefault(streamKey, List.of())));
             // The two producer kinds part ways here. A sweep that captures the stream (full sweep or
             // whole-stream reprocess) is cached by signature - durable, revert-friendly, exactly as before.
             // A materialisation has NO identity cache at all: its results are in the store, which answers a
             // repeated demand by coverage, so all the session tracks is that it is RUNNING - the launcher
             // uses that to attach a step to a producer already making its records rather than double-launch.
-            if (sweep.isOnDemand()) {
+            if (sweep.isWaitHandle()) {
+                // A handle on somebody else's producer: it owns nothing, so there is nothing to cache or
+                // register. Caching one would be actively wrong - it serves nothing, so every later poll
+                // would get it back and the step could never be re-planned against the records that have
+                // arrived in the meantime.
+                LOGGER.debug(() -> "sweepFor() - waiting on the capture already running for stream " + metaId);
+            } else if (sweep.isOnDemand()) {
                 if (!sweep.isFullyCaptured()) {
                     running.computeIfAbsent(streamKey, k -> new ArrayList<>()).add(sweep);
                 }
@@ -167,6 +185,29 @@ public class SteppingSession {
             }
             return sweep;
         }
+    }
+
+    /**
+     * Is an in-flight capture still producing something the new configuration wants?
+     * <p>
+     * Yes exactly when some element's cumulative fingerprint is the same in both. A cumulative fingerprint
+     * folds in everything upstream, so an edit low in the pipeline leaves every element above it with the
+     * fingerprint the capture is already writing - its remaining work is the feed the edited element will be
+     * replayed from, and finishing it is the cheapest way to get that feed. An edit at the very top (the
+     * parser, a reader) changes every cumulative fingerprint there is, so nothing the capture goes on to
+     * write would be addressed by the new configuration at all, and it is stopped.
+     * <p>
+     * A sweep created without fingerprints cannot be judged, so it is treated as superseded - the old
+     * behaviour, and the safe direction: stopping work that might have been useful costs time, whereas
+     * keeping work that is genuinely dead costs the whole stream twice over.
+     */
+    private boolean stillProduces(final StreamSweep sweep, final ElementFingerprints current) {
+        final ElementFingerprints captured = sweep.getFingerprints();
+        if (captured == null) {
+            return false;
+        }
+        return captured.getCumulativeFingerprints().entrySet().stream()
+                .anyMatch(entry -> entry.getValue().equals(current.getCumulativeFingerprint(entry.getKey())));
     }
 
     private boolean isStreamSwept(final long metaId) {
@@ -288,23 +329,22 @@ public class SteppingSession {
     /**
      * Launches (starts filling) a stream's sweep. Supplied by the owner (e.g. {@code SteppingService}), bound
      * to the session's current request and fingerprints, which change as the user edits code.
-     *
-     * @param priorCompleteCapture true if this stream already has a fully-captured sweep in this session, so
-     *                             its upstream chunks are complete and the launcher may reprocess just the
-     *                             changed elements from them instead of re-sweeping the whole stream.
      */
     @FunctionalInterface
     public interface SweepLauncher {
 
         /**
-         * @param running the materialisations currently in flight for this stream under these fingerprints,
-         *                so the launcher can attach a step to a producer already making the records it wants
-         *                instead of launching a duplicate.
+         * @param priorSweeps every stream-capturing sweep this session holds for this stream, in any
+         *                    configuration: a completed one says its chunks may be reprocessed from, an
+         *                    in-flight one is a capture to wait on rather than duplicate.
+         * @param running     the materialisations currently in flight for this stream under these
+         *                    fingerprints, so the launcher can attach a step to a producer already making the
+         *                    records it wants instead of launching a duplicate.
          */
         StreamSweep launch(long metaId,
                            PipelineStepRequest request,
                            ElementFingerprints fingerprints,
-                           boolean priorCompleteCapture,
+                           List<StreamSweep> priorSweeps,
                            List<StreamSweep> running);
     }
 }
