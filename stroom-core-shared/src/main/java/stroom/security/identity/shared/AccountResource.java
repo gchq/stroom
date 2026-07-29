@@ -91,7 +91,7 @@ public interface AccountResource extends RestResource, DirectRestService, FetchW
     @Path("{id}")
     @NotNull
     Boolean update(
-            @Parameter(description = "account", required = true) @NotNull UpdateAccountRequest request,
+            @Parameter(description = "change", required = true) @NotNull AccountChange change,
             @PathParam("id") int accountId);
 
     @Operation(

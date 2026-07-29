@@ -17,8 +17,11 @@
 package stroom.security.identity.dao;
 
 import stroom.db.util.JooqUtil;
+import stroom.security.identity.account.InternalIdpProcessingUserIdentity;
 import stroom.security.identity.db.IdentityDbConnProvider;
 import stroom.security.identity.db.IdentityDbModule;
+import stroom.security.identity.shared.SigningKeyRow;
+import stroom.security.identity.shared.SigningKeyStatus;
 import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.JwkFactoryImpl;
 import stroom.security.identity.token.JwkRotationSummary;
@@ -354,4 +357,168 @@ class TestJwkDaoImpl {
                 .orElseThrow()
                 .expiresOnMs();
     }
+
+    @Test
+    void revokingAKeyWithdrawsItFromEverythingThatTrustsKeys() {
+        // The whole point: a withdrawn key must stop being published and stop being chosen to sign with.
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        final SigningKeyRow active = onlyRow();
+        assertThat(active.getStatus()).isEqualTo(SigningKeyStatus.ACTIVE);
+
+        assertThat(jwkDao.revoke(active.getId(), "tester")).isEqualTo(1);
+
+        final SigningKeyRow reread = jwkDao.list().stream()
+                .filter(row -> row.getId() == active.getId())
+                .findFirst()
+                .orElseThrow();
+        assertThat(reread.getStatus()).isEqualTo(SigningKeyStatus.REVOKED);
+        assertThat(jwkDao.listPublishable().stream().map(PublicJsonWebKey::getKeyId))
+                .as("a revoked key must not be published")
+                .doesNotContain(keyIdOf(active.getId()));
+        assertThat(jwkDao.getActiveKey().getKeyId())
+                .as("nor may it be chosen to sign with")
+                .isNotEqualTo(keyIdOf(active.getId()));
+    }
+
+    @Test
+    void revokingTheActiveKeyLeavesAReplacementInTheSameBreath() {
+        // Waiting for the next request to make one leaves a window with nothing to sign with, and invites
+        // two nodes to each make one.
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        final SigningKeyRow active = onlyRow();
+
+        jwkDao.revoke(active.getId(), "tester");
+
+        final List<SigningKeyRow> after = jwkDao.list();
+        assertThat(after).hasSize(2);
+        assertThat(after.stream().filter(row -> row.getStatus() == SigningKeyStatus.ACTIVE))
+                .as("exactly one key must be signing, and it must not be the revoked one")
+                .hasSize(1);
+    }
+
+    @Test
+    void revokingEverythingLeavesExactlyOneNewKey() {
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        jwkDao.rotate(ROTATE_NOW, LONG_RETENTION);
+        assertThat(jwkDao.list()).as("an active key and a retired one").hasSize(2);
+
+        assertThat(jwkDao.revokeAll("tester")).isEqualTo(2);
+
+        final List<SigningKeyRow> after = jwkDao.list();
+        assertThat(after.stream().filter(row -> row.getStatus() == SigningKeyStatus.ACTIVE)).hasSize(1);
+        assertThat(after.stream().filter(row -> row.getStatus() == SigningKeyStatus.REVOKED)).hasSize(2);
+        assertThat(jwkDao.listPublishable()).as("only the replacement is trusted").hasSize(1);
+    }
+
+    @Test
+    void revokingAnAlreadyRevokedKeyChangesNothing() {
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        final int id = onlyRow().getId();
+        jwkDao.revoke(id, "tester");
+        final int keyCount = jwkDao.list().size();
+
+        assertThat(jwkDao.revoke(id, "tester")).as("nothing left to withdraw").isZero();
+        assertThat(jwkDao.list()).as("and no further replacement made").hasSize(keyCount);
+    }
+
+    @Test
+    void rotationDoesNotResurrectARevokedKey() {
+        // Rotation reconciles surplus active keys and deletes expired ones; it must not undo a decision an
+        // administrator made.
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        final int revokedId = onlyRow().getId();
+        jwkDao.revoke(revokedId, "tester");
+
+        jwkDao.rotate(ROTATE_NOW, LONG_RETENTION);
+
+        assertThat(jwkDao.list().stream()
+                .filter(row -> row.getId() == revokedId)
+                .map(SigningKeyRow::getStatus))
+                .containsExactly(SigningKeyStatus.REVOKED);
+    }
+
+    @Test
+    void listedKeyDescribesNothingAboutTheKeyItself() {
+        // The stored json is the private key. Asserting on the fields we expect would pass while material
+        // sat in a field we forgot about, so this checks the whole serialised row.
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        final String storedJson = JooqUtil.contextResult(connProvider, context -> context
+                .select(JSON_WEB_KEY.JSON)
+                .from(JSON_WEB_KEY)
+                .fetchOne(JSON_WEB_KEY.JSON));
+        final String storedKeyId = keyIdOf(onlyRow().getId());
+
+        final String rendered = jwkDao.list().toString();
+
+        assertThat(rendered)
+                .as("no part of the stored key may appear in what is handed out")
+                .doesNotContain(storedJson)
+                .doesNotContain(storedKeyId);
+    }
+
+    @Test
+    void scheduledRetirementIsTellableFromAnAdministratorsRevocation() {
+        // Both stop a key being used and both stamp update_user, so if they wrote the same value the audit
+        // columns could not answer the question an incident actually asks: did this key lapse, or did
+        // somebody pull it? "admin" was written for the scheduled case and is also a seeded account name,
+        // so it read as a person having acted.
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+        final int retiredId = onlyRow().getId();
+        jwkDao.rotate(ROTATE_NOW, LONG_RETENTION);
+        final int revokedId = jwkDao.list().stream()
+                .map(SigningKeyRow::getId)
+                .filter(id -> id != retiredId)
+                .findFirst()
+                .orElseThrow();
+        jwkDao.revoke(revokedId, "jbloggs");
+
+        assertThat(updateUserOf(retiredId))
+                .as("retired on schedule, by nobody")
+                .isEqualTo(InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER)
+                .isNotEqualTo("admin");
+        assertThat(updateUserOf(revokedId))
+                .as("revoked deliberately, by a person")
+                .isEqualTo("jbloggs");
+    }
+
+    @Test
+    void createdKeyIsNotAttributedToAnyPerson() {
+        // create_user is always the system here, so it carries no information - but written as "admin" it
+        // carried misinformation, naming an account that can be signed into.
+        jwkDao.rotate(NEVER_ROTATE, LONG_RETENTION);
+
+        assertThat(createUserOf(onlyRow().getId()))
+                .isEqualTo(InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER);
+    }
+
+    private String updateUserOf(final int id) {
+        return JooqUtil.contextResult(connProvider, context -> context
+                .select(JSON_WEB_KEY.UPDATE_USER)
+                .from(JSON_WEB_KEY)
+                .where(JSON_WEB_KEY.ID.eq(id))
+                .fetchOne(JSON_WEB_KEY.UPDATE_USER));
+    }
+
+    private String createUserOf(final int id) {
+        return JooqUtil.contextResult(connProvider, context -> context
+                .select(JSON_WEB_KEY.CREATE_USER)
+                .from(JSON_WEB_KEY)
+                .where(JSON_WEB_KEY.ID.eq(id))
+                .fetchOne(JSON_WEB_KEY.CREATE_USER));
+    }
+
+    private SigningKeyRow onlyRow() {
+        final List<SigningKeyRow> rows = jwkDao.list();
+        assertThat(rows).hasSize(1);
+        return rows.getFirst();
+    }
+
+    private String keyIdOf(final int id) {
+        return JooqUtil.contextResult(connProvider, context -> context
+                .select(JSON_WEB_KEY.KEY_ID)
+                .from(JSON_WEB_KEY)
+                .where(JSON_WEB_KEY.ID.eq(id))
+                .fetchOne(JSON_WEB_KEY.KEY_ID));
+    }
+
 }

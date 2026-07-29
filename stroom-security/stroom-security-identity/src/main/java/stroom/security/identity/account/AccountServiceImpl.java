@@ -21,11 +21,15 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountAction;
+import stroom.security.identity.shared.AccountChange;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.AppPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDesc;
@@ -38,6 +42,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class AccountServiceImpl implements AccountService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AccountServiceImpl.class);
 
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
@@ -183,6 +189,9 @@ public class AccountServiceImpl implements AccountService {
         account.setLoginCount(0);
         // Set enabled by default.
         account.setEnabled(true);
+        // Deliberately left as they default, and deliberately not on CreateAccountRequest either: neither
+        // is a state an account can be created in. A lock is only ever applied by repeated wrong passwords,
+        // and inactivity only by the account maintenance job when an account goes unused.
         return account;
     }
 
@@ -206,7 +215,17 @@ public class AccountServiceImpl implements AccountService {
                 final String loggedInUserSubjectId = securityContext.getUserRef().getSubjectId();
                 final boolean isUserAccessingThemselves = loggedInUserSubjectId.equals(foundAccount.getUserId());
                 if (!isUserAccessingThemselves) {
-                    throw new RuntimeException("Unauthorized");
+                    // Answered as though the account is not there, because refusing it any other way tells
+                    // the caller that it is. Account ids are sequential integers and this is reachable by
+                    // any signed-in user, so a refusal distinguishable from "no such account" lets them map
+                    // which ids are live by walking them. The caller learns nothing they did not bring.
+                    //
+                    // The attempt is still recorded: the resource logs the view event either way, and the
+                    // reason for the refusal is here in the debug log.
+                    LOGGER.debug(() -> LogUtil.message(
+                            "User {} tried to read account id {}, which belongs to {}",
+                            loggedInUserSubjectId, accountId, foundAccount.getUserId()));
+                    return Optional.empty();
                 }
             }
         }
@@ -220,45 +239,40 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void update(final UpdateAccountRequest request, final int accountId) {
+    public void update(final AccountChange change, final int accountId) {
         checkPermission();
-        validateUpdateRequest(request, accountId);
+        validateChange(change, accountId);
 
         final Account existingAccount = accountDao.get(accountId)
                 .orElseThrow(() -> new RuntimeException("Account with id = " + accountId + " not found"));
 
-//        // Update Stroom user
-//        Optional<Account> optionalUser = accountDao.get(userId);
-//        Account foundAccount = optionalUser.get();
-//        boolean isEnabled = account.isEnabled();
-//        stroom.security.shared.User userToUpdate = securityUserService.getUserByName(foundAccount.getEmail());
-//        userToUpdate.setEnabled(isEnabled);
-//        securityUserService.update(userToUpdate);
+        accountDao.applyChange(
+                accountId,
+                change,
+                securityContext.getUserIdentityForAudit(),
+                System.currentTimeMillis());
 
-        final Account account = request.getAccount();
-        account.setUpdateUser(securityContext.getUserIdentityForAudit());
-        account.setUpdateTimeMs(System.currentTimeMillis());
+        // Read the account back rather than assuming what the change left behind, so the work below acts on
+        // what was actually stored.
+        final Account updatedAccount = accountDao.get(accountId)
+                .orElseThrow(() -> new RuntimeException("Account with id = " + accountId + " not found"));
 
-        // If we are reactivating account then set the reactivated time.
-        if ((account.isEnabled() && !existingAccount.isEnabled()) ||
-            (!account.isInactive() && existingAccount.isInactive()) ||
-            (!account.isLocked() && existingAccount.isLocked())) {
-            account.setReactivatedMs(System.currentTimeMillis());
+        // Change the account password if the change includes a new one. The force-change flag is passed
+        // through rather than left to default, because setting a password and requiring the user to change
+        // it at next sign in is one save in the UI - and an administrator who does both now knows the
+        // credential, so silently clearing the flag would leave the user on it indefinitely.
+        if (!Strings.isNullOrEmpty(change.getPassword())
+            && change.getPassword().equals(change.getConfirmPassword())) {
+            accountDao.changePassword(
+                    updatedAccount.getUserId(),
+                    change.getPassword(),
+                    updatedAccount.isForcePasswordChange());
         }
 
-        account.setId(accountId);
-        accountDao.update(account);
-
-        // Change the account password if the update request includes a new password.
-        if (!Strings.isNullOrEmpty(request.getPassword())
-            && request.getPassword().equals(request.getConfirmPassword())) {
-            accountDao.changePassword(account.getUserId(), request.getPassword());
-        }
-
-        // If the fullName has changed we need to update the corresponding stroom user.
-        // userId obviously can't change and displayName is same as userId
-        if (!Objects.equals(existingAccount.getFirstName(), account.getFullName())) {
-            userIdentityFactory.ensureUserIdentity(createUserIdentity(account));
+        // If the full name has changed we need to update the corresponding stroom user. userId cannot change
+        // for an existing user and displayName is the same as userId, so the name is all there is to carry.
+        if (!Objects.equals(existingAccount.getFullName(), updatedAccount.getFullName())) {
+            userIdentityFactory.ensureUserIdentity(createUserIdentity(updatedAccount));
         }
     }
 
@@ -308,25 +322,32 @@ public class AccountServiceImpl implements AccountService {
                 });
     }
 
-    private void validateUpdateRequest(final UpdateAccountRequest request, final int accountId) {
-        if (request == null) {
-            throw new RuntimeException("Null request");
-        } else {
-            if (request.getAccount() == null || request.getAccount().getId() == null) {
-                throw new RuntimeException("No user id has been provided");
-            }
-
-            if (request.getPassword() != null || request.getConfirmPassword() != null) {
-                PasswordValidator.validateLength(request.getPassword(),
-                        config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateStrength(request.getPassword(),
-                        config.getPasswordPolicyConfig().getMinimumPasswordStrength());
-                PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
-            }
-
-            // Exclude the account being updated, which is allowed to keep its own address.
-            validateEmailIsNotInUse(request.getAccount().getEmail(), accountId);
+    private void validateChange(final AccountChange change, final int accountId) {
+        if (change == null) {
+            throw new RuntimeException("Null change");
         }
+
+        // A change that asks for a state and its opposite has no meaningful outcome, so refuse it rather
+        // than letting the order the actions happen to be applied in decide what the account ends up as.
+        for (final AccountAction action : change.getActions()) {
+            action.getOpposite()
+                    .filter(change::hasAction)
+                    .ifPresent(opposite -> {
+                        throw new RuntimeException(
+                                "A change cannot ask to " + action + " and " + opposite + " an account");
+                    });
+        }
+
+        if (change.getPassword() != null || change.getConfirmPassword() != null) {
+            PasswordValidator.validateLength(change.getPassword(),
+                    config.getPasswordPolicyConfig().getMinimumPasswordLength());
+            PasswordValidator.validateStrength(change.getPassword(),
+                    config.getPasswordPolicyConfig().getMinimumPasswordStrength());
+            PasswordValidator.validateConfirmation(change.getPassword(), change.getConfirmPassword());
+        }
+
+        // Exclude the account being updated, which is allowed to keep its own address.
+        validateEmailIsNotInUse(change.getEmail(), accountId);
     }
 
     private void checkPermission() {

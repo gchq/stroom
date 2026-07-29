@@ -43,6 +43,8 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
     private static final boolean DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT = false;
     public static final boolean DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION = false;
+    private static final String DEFAULT_CERTIFICATE_CN_PATTERN = ".*\\((.*)\\)";
+    private static final int DEFAULT_FAILED_LOGIN_LOCK_THRESHOLD = 3;
     private static final int DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX = 1;
     private static final boolean DEFAULT_REACTIVATE_INACTIVE_ACCOUNTS_ON_LOGIN = false;
     private static final boolean DEFAULT_ALLOW_LOCKED_ACCOUNT_PASSWORD_RESET = false;
@@ -68,9 +70,9 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public IdentityConfig() {
         autoCreateAdminAccountOnBoot = DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT;
         allowCertificateAuthentication = DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION;
-        certificateCnPattern = ".*\\((.*)\\)";
+        certificateCnPattern = DEFAULT_CERTIFICATE_CN_PATTERN;
         certificateCnCaptureGroupIndex = DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX;
-        failedLoginLockThreshold = 3;
+        failedLoginLockThreshold = DEFAULT_FAILED_LOGIN_LOCK_THRESHOLD;
         failedLoginLockDuration = DEFAULT_FAILED_LOGIN_LOCK_DURATION;
         reactivateInactiveAccountsOnLogin = DEFAULT_REACTIVATE_INACTIVE_ACCOUNTS_ON_LOGIN;
         allowLockedAccountPasswordReset = DEFAULT_ALLOW_LOCKED_ACCOUNT_PASSWORD_RESET;
@@ -108,11 +110,19 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
         this.allowCertificateAuthentication = Objects.requireNonNullElse(
                 allowCertificateAuthentication,
                 DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION);
-        this.certificateCnPattern = certificateCnPattern;
+        // Defaulted like its siblings. Left raw, a partial identity block in the YAML that turned
+        // certificate authentication on would make Pattern.compile(null) throw on every attempt.
+        this.certificateCnPattern = Objects.requireNonNullElse(
+                certificateCnPattern,
+                DEFAULT_CERTIFICATE_CN_PATTERN);
         this.certificateCnCaptureGroupIndex = Objects.requireNonNullElse(
                 certificateCnCaptureGroupIndex,
                 DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX);
-        this.failedLoginLockThreshold = failedLoginLockThreshold;
+        // Left raw, a partial identity block would leave this null - and a null threshold does not
+        // fail, it silently turns account lockout off altogether, which is worse than an error.
+        this.failedLoginLockThreshold = Objects.requireNonNullElse(
+                failedLoginLockThreshold,
+                DEFAULT_FAILED_LOGIN_LOCK_THRESHOLD);
         this.failedLoginLockDuration = Objects.requireNonNullElse(
                 failedLoginLockDuration,
                 DEFAULT_FAILED_LOGIN_LOCK_DURATION);
@@ -125,11 +135,15 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
         this.passwordResetRequestCooldown = Objects.requireNonNullElse(
                 passwordResetRequestCooldown,
                 DEFAULT_PASSWORD_RESET_REQUEST_COOLDOWN);
-        this.emailConfig = emailConfig;
-        this.tokenConfig = tokenConfig;
-        this.openIdConfig = openIdConfig;
-        this.passwordPolicyConfig = passwordPolicyConfig;
-        this.dbConfig = dbConfig;
+        // The nested blocks are defaulted like the scalars above, and for the same reason: a YAML block
+        // naming this section but not a sub-section left these null, and a null here does not fail on
+        // boot - it fails on the first sign in (passwordPolicy is read on every successful login) or the
+        // first reset request, long after the config that caused it was written.
+        this.emailConfig = Objects.requireNonNullElseGet(emailConfig, EmailConfig::new);
+        this.tokenConfig = Objects.requireNonNullElseGet(tokenConfig, TokenConfig::new);
+        this.openIdConfig = Objects.requireNonNullElseGet(openIdConfig, OpenIdConfig::new);
+        this.passwordPolicyConfig = Objects.requireNonNullElseGet(passwordPolicyConfig, PasswordPolicyConfig::new);
+        this.dbConfig = Objects.requireNonNullElseGet(dbConfig, IdentityDbConfig::new);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)

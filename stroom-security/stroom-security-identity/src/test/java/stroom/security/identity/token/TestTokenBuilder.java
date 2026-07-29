@@ -78,8 +78,8 @@ class TestTokenBuilder {
 
     @Test
     void everyTokenHasAUniqueId() {
-        final String first = accessTokenBuilder().build();
-        final String second = accessTokenBuilder().build();
+        final String first = accessTokenBuilder().build().token();
+        final String second = accessTokenBuilder().build().token();
 
         final String firstJti = claimsOf(first).getClaimValueAsString("jti");
         final String secondJti = claimsOf(second).getClaimValueAsString("jti");
@@ -90,8 +90,38 @@ class TestTokenBuilder {
     }
 
     @Test
+    void theReturnedJtiIsTheOneActuallyInTheToken() {
+        // The whole point of returning the jti is that a row recorded against it can revoke that token. If
+        // the returned id and the claim ever diverged, revocation would silently target nothing.
+        final MintedToken minted = accessTokenBuilder().build();
+
+        assertThat(minted.jti()).isNotBlank();
+        assertThat(claimsOf(minted.token()).getClaimValueAsString("jti")).isEqualTo(minted.jti());
+    }
+
+    @Test
+    void theReturnedExpiryMatchesTheExpClaim() throws Exception {
+        final MintedToken minted = accessTokenBuilder().build();
+
+        // exp has second granularity, so the returned millis must be a whole second and must agree with the
+        // claim - an inventory row that outlived or predeceased its token would break the denylist.
+        assertThat(minted.expiresMs() % 1000).isZero();
+        assertThat(claimsOf(minted.token()).getExpirationTime().getValueInMillis())
+                .isEqualTo(minted.expiresMs());
+    }
+
+    @Test
+    void inventoryExpiryOutlivesTheTokenBySecondGranularity() {
+        final MintedToken minted = accessTokenBuilder().build();
+
+        // A token is accepted throughout the second in which it expires, so the inventory row - and hence
+        // the revoked-jti denylist entry - has to survive one second longer than exp.
+        assertThat(minted.inventoryExpiresMs()).isEqualTo(minted.expiresMs() + 1000L);
+    }
+
+    @Test
     void accessTokenIdentifiesTheClient() {
-        final JwtClaims claims = claimsOf(accessTokenBuilder().build());
+        final JwtClaims claims = claimsOf(accessTokenBuilder().build().token());
 
         // azp (Keycloak style) and client_id (RFC 9068) both name the client.
         assertThat(claims.getClaimValueAsString(OpenId.CLAIM__AUTHORIZED_PARTY)).isEqualTo(CLIENT_ID);
@@ -102,7 +132,7 @@ class TestTokenBuilder {
     void idTokenHasAzpButNotTheAccessTokenOnlyClientIdClaim() {
         // An id token is not an access token, so it carries azp (an OIDC id token claim) but not the
         // RFC 9068 access-token client_id claim.
-        final JwtClaims claims = claimsOf(idTokenBuilder().build());
+        final JwtClaims claims = claimsOf(idTokenBuilder().build().token());
 
         assertThat(claims.getClaimValueAsString(OpenId.CLAIM__AUTHORIZED_PARTY)).isEqualTo(CLIENT_ID);
         assertThat(claims.hasClaim(OpenId.CLIENT_ID)).isFalse();
@@ -110,14 +140,14 @@ class TestTokenBuilder {
 
     @Test
     void accessTokenCarriesScope() {
-        final JwtClaims claims = claimsOf(accessTokenBuilder().scope("openid email").build());
+        final JwtClaims claims = claimsOf(accessTokenBuilder().scope("openid email").build().token());
 
         assertThat(claims.getClaimValueAsString(OpenId.SCOPE)).isEqualTo("openid email");
     }
 
     @Test
     void idTokenCarriesAuthTimeAsTheLoginTime() {
-        final JwtClaims claims = claimsOf(idTokenBuilder().authTime(1_700_000_000L).build());
+        final JwtClaims claims = claimsOf(idTokenBuilder().authTime(1_700_000_000L).build().token());
 
         assertThat(claims.getClaimValue(OpenId.CLAIM__AUTH_TIME)).isNotNull();
         assertThat(((Number) claims.getClaimValue(OpenId.CLAIM__AUTH_TIME)).longValue())
@@ -127,8 +157,8 @@ class TestTokenBuilder {
     @Test
     void stateIsNeverAClaim() {
         // state is an OAuth redirect parameter, not a token claim, so it must not appear on any token.
-        assertThat(claimsOf(accessTokenBuilder().scope("openid").build()).hasClaim(OpenId.STATE)).isFalse();
-        assertThat(claimsOf(idTokenBuilder().authTime(1L).build()).hasClaim(OpenId.STATE)).isFalse();
+        assertThat(claimsOf(accessTokenBuilder().scope("openid").build().token()).hasClaim(OpenId.STATE)).isFalse();
+        assertThat(claimsOf(idTokenBuilder().authTime(1L).build().token()).hasClaim(OpenId.STATE)).isFalse();
     }
 
     private TokenBuilder accessTokenBuilder() {

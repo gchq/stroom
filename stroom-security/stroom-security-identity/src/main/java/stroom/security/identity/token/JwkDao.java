@@ -16,6 +16,8 @@
 
 package stroom.security.identity.token;
 
+import stroom.security.identity.shared.SigningKeyRow;
+
 import org.jose4j.jwk.PublicJsonWebKey;
 
 import java.time.Duration;
@@ -88,4 +90,39 @@ public interface JwkDao {
      * @return What changed, for logging.
      */
     JwkRotationSummary rotate(Duration rotationInterval, Duration retention);
+
+    /**
+     * Every key the store holds, newest first, described only by what it is doing and when - never by what
+     * it is. Unlike {@link #listPublishable} this includes keys already revoked or expired, because the
+     * point of listing them is to decide about them.
+     * <p>
+     * The stored key is written with its private material included, so this deliberately returns rows rather
+     * than keys: nothing on this path reads the key material out of the database at all.
+     * </p>
+     */
+    List<SigningKeyRow> list();
+
+    /**
+     * Withdraw one key, so that anything signed with it stops being accepted.
+     * <p>
+     * If the key was the one signing new tokens, a replacement is created in the same transaction. Leaving
+     * that to the next caller would let the store sit with nothing to sign with, and would invite two nodes
+     * to each create one.
+     * </p>
+     *
+     * @param id        The row to withdraw.
+     * @param auditUser Who is withdrawing it, for the row's audit columns. Passed in because the data
+     *                  access layer has no notion of who is asking.
+     * @return 1 if the key was withdrawn, 0 if it was already revoked or is not there.
+     */
+    int revoke(int id, String auditUser);
+
+    /**
+     * Withdraw every key still trusted, and create a replacement. For the usual compromise, where which key
+     * was exposed is not known.
+     *
+     * @param auditUser Who is withdrawing them, for the rows' audit columns.
+     * @return how many keys were withdrawn.
+     */
+    int revokeAll(String auditUser);
 }

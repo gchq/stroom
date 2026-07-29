@@ -1100,7 +1100,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       userCache:
         expireAfterAccess: "PT30M"
-        expireAfterWrite: null
+        expireAfterWrite: "PT30M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -1147,7 +1147,6 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       email:
-        allowPasswordResets: false
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
         passwordResetSubject: "Password reset for Stroom"
@@ -1168,12 +1167,6 @@ appConfig:
           maximumSize: 1000
           refreshAfterWrite: null
           statisticsMode: "INTERNAL"
-        refreshTokenCache:
-          expireAfterAccess: "P1D"
-          expireAfterWrite: null
-          maximumSize: 10000
-          refreshAfterWrite: null
-          statisticsMode: "INTERNAL"
       passwordPolicy:
         allowPasswordResets: true
         forcePasswordChangeOnFirstLogin: true
@@ -1182,8 +1175,8 @@ appConfig:
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
         passwordPolicyMessage: "To conform with our Strong Password policy, you are\
-          \ required to use a sufficiently strong password. Password must be more\
-          \ than 8 characters."
+          \ required to use a sufficiently strong password. Password must be at least\
+          \ 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
       passwordResetRequestCooldown: "PT1M"
       reactivateInactiveAccountsOnLogin: false

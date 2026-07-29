@@ -20,6 +20,7 @@ import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.KeyTypeDao;
+import stroom.security.identity.token.OAuthTokenDao;
 
 import com.google.inject.AbstractModule;
 
@@ -32,6 +33,7 @@ public class IdentityDaoModule extends AbstractModule {
         bind(AccountDao.class).to(AccountDaoImpl.class);
         bind(JwkDao.class).to(JwkDaoImpl.class);
         bind(KeyTypeDao.class).to(KeyTypeDaoImpl.class);
+        bind(OAuthTokenDao.class).to(OAuthTokenDaoImpl.class);
         bind(OpenIdClientDao.class).to(OpenIdClientDaoImpl.class);
     }
 }

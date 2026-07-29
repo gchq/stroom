@@ -31,6 +31,25 @@ import static org.mockito.Mockito.when;
 
 class TestOpenIdService {
 
+    @Test
+    void authorizeRequestMustAskForTheOpenIdScope() {
+        // Without it this is a plain OAuth request, and the id token this flow issues was never asked for.
+        assertThat(OpenIdService.hasOpenIdScope("openid profile email")).isTrue();
+        assertThat(OpenIdService.hasOpenIdScope("openid")).isTrue();
+        assertThat(OpenIdService.hasOpenIdScope("profile email")).isFalse();
+        assertThat(OpenIdService.hasOpenIdScope("")).isFalse();
+        assertThat(OpenIdService.hasOpenIdScope(null)).isFalse();
+    }
+
+    @Test
+    void scopeThatMerelyContainsTheWordIsNotEnough() {
+        // Scope is a space delimited list, so a substring match would accept "openidconnect" and anything
+        // else that happened to start with it.
+        assertThat(OpenIdService.hasOpenIdScope("openidconnect")).isFalse();
+        assertThat(OpenIdService.hasOpenIdScope("notopenid")).isFalse();
+    }
+
+
     private static final String PUBLIC_ROOT = "https://stroom.example.com";
     // The single redirect_uri the internal IdP accepts: the OIDC sign-in callback (BFF endpoint).
     private static final String SIGN_IN_OIDC_CALLBACK =
@@ -41,7 +60,7 @@ class TestOpenIdService {
         when(uriFactory.publicUri(ResourcePaths.buildSignInOidcCallbackPath()))
                 .thenReturn(URI.create(SIGN_IN_OIDC_CALLBACK));
         // Only uriFactory is used by isRedirectUriAllowed; the rest are irrelevant here.
-        return new OpenIdService(null, null, null, null, null, null, uriFactory);
+        return new OpenIdService(null, null, null, null, null, null, null, uriFactory);
     }
 
     @Test

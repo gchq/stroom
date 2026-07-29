@@ -132,6 +132,20 @@ public class AccountsListPresenter
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
+    /**
+     * Blank unless the lock is actually in force, so a glance down the column finds the locked accounts.
+     * Uses the derived {@code isLocked} rather than the stored flag, which outlives the lock itself because
+     * a lapsed lock is only cleared on the next sign in attempt.
+     */
+    private String describeLock(final Account account) {
+        if (!account.isLocked()) {
+            return "";
+        }
+        return account.getFailureLockedUntilMs() == null
+                ? "Locked"
+                : "Locked until " + dateTimeFormatter.format(account.getFailureLockedUntilMs());
+    }
+
     private void initButtons() {
         addButton.setSvg(SvgImage.ADD);
         addButton.setTitle("Add new account");
@@ -226,16 +240,62 @@ public class AccountsListPresenter
                 .build();
         dataGrid.addResizableColumn(emailColumn, "Email", 250);
 
-        // Status
+        // The three account states get a column each rather than being collapsed into one "status". They
+        // are independent, and any single value has to pick a precedence, which hides two of the three
+        // answers behind whichever it happens to rank first.
+
+        // Enabled
         dataGrid.addColumn(
-                DataGridUtil.textColumnBuilder(Account::getStatus)
+                DataGridUtil.textColumnBuilder((Account account) -> account.isEnabled()
+                                ? "Enabled"
+                                : "Disabled")
                         .enabledWhen(Account::isEnabled)
-                        .withSorting(AccountFields.FIELD_NAME_STATUS)
+                        .withSorting(AccountFields.FIELD_NAME_ENABLED)
                         .build(),
-                DataGridUtil.headingBuilder("Status")
-                        .withToolTip("The status of the account. One of (Enabled|Disabled|Locked|Inactive).")
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether an administrator has allowed the account to be used. "
+                                     + "This is the only one of the three states an administrator sets.")
                         .build(),
                 ColumnSizeConstants.SMALL_COL);
+
+        // Locked
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder(this::describeLock)
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(AccountFields.FIELD_NAME_LOCKED)
+                        .build(),
+                DataGridUtil.headingBuilder("Locked")
+                        .withToolTip("Whether repeated wrong passwords are currently barring the account. "
+                                     + "Blank when it is not locked. Locks are applied automatically and "
+                                     + "normally clear themselves.")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
+
+        // Active
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder((Account account) -> account.isInactive()
+                                ? "Inactive"
+                                : "Active")
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(AccountFields.FIELD_NAME_INACTIVE)
+                        .build(),
+                DataGridUtil.headingBuilder("Active")
+                        .withToolTip("Whether the account has gone unused. Applied by the account "
+                                     + "maintenance job, not by an administrator.")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
+
+        // Sign In Failures
+        dataGrid.addColumn(
+                DataGridUtil.textColumnBuilder((Account account) ->
+                                "" + account.getFailureCount())
+                        .enabledWhen(Account::isEnabled)
+                        .withSorting(AccountFields.FIELD_NAME_FAILURE_COUNT)
+                        .build(),
+                DataGridUtil.headingBuilder("Sign In Failures")
+                        .withToolTip("The number of sign in failures since the last successful sign in.")
+                        .build(),
+                130);
 
         // Last Sign In
         dataGrid.addColumn(
@@ -248,18 +308,6 @@ public class AccountsListPresenter
                         .withToolTip("The date/time the user last successfully signed in.")
                         .build(),
                 ColumnSizeConstants.DATE_COL);
-
-        // Sign In Failures
-        dataGrid.addColumn(
-                DataGridUtil.textColumnBuilder((Account account) ->
-                                "" + account.getLoginFailures())
-                        .enabledWhen(Account::isEnabled)
-                        .withSorting(AccountFields.FIELD_NAME_LOGIN_FAILURES)
-                        .build(),
-                DataGridUtil.headingBuilder("Sign In Failures")
-                        .withToolTip("The number of sign in failures since the last successful sign in.")
-                        .build(),
-                130);
 
         // Comments
         final Column<Account, String> commentsColumn = DataGridUtil.textColumnBuilder(Account::getComments)

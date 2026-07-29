@@ -119,8 +119,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAccountRequest"
-        description: account
+              $ref: "#/components/schemas/AccountChange"
+        description: change
         required: true
       responses:
         default:
@@ -7712,6 +7712,29 @@ paths:
       summary: Sign out of all of the current user's other sessions across the cluster
       tags:
       - Sessions
+  /session/v1/terminateSession:
+    post:
+      operationId: terminateSession
+      parameters:
+      - in: query
+        name: sessionHandle
+        schema:
+          type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Terminate a single session by id (own session, or requires Manage\
+        \ Users)"
+      tags:
+      - Sessions
   /sessionInfo/v1:
     get:
       operationId: getSessionInfo
@@ -7725,6 +7748,75 @@ paths:
       summary: Get information for the current session
       tags:
       - Session Info
+  /signingKey/v1/list:
+    get:
+      operationId: listSigningKeys
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SigningKeyRow"
+          description: default response
+      summary: List the internal identity provider's signing keys (requires Administrator)
+      tags:
+      - Signing Keys
+  /signingKey/v1/refresh:
+    post:
+      operationId: refreshSigningKeys
+      parameters:
+      - in: query
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Discard this node's cached signing keys (requires Administrator)
+      tags:
+      - Signing Keys
+  /signingKey/v1/revoke:
+    post:
+      operationId: revokeSigningKey
+      parameters:
+      - in: query
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Revoke one signing key (requires Administrator)
+      tags:
+      - Signing Keys
+  /signingKey/v1/revokeAll:
+    post:
+      operationId: revokeAllSigningKeys
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Revoke all signing keys (requires Administrator)
+      tags:
+      - Signing Keys
   /solrIndex/v1/fetchSolrTypes:
     post:
       operationId: fetchSolrTypes
@@ -8488,6 +8580,24 @@ paths:
       summary: Update a text converter doc
       tags:
       - Text Converters
+  /tokenRevocation/v1/invalidateCache:
+    post:
+      operationId: invalidateRevokedTokenCache
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Tell a node to re-read the revoked token denylist (inter-node call)
+      tags:
+      - Token Revocation
   /traces/v1/getTrace:
     post:
       operationId: tracesGetTrace
@@ -8564,6 +8674,66 @@ paths:
       summary: Find traces
       tags:
       - Traces
+  /userAccess/v1/find:
+    post:
+      operationId: findUserAccess
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindUserAccessCriteria"
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageUserAccessRow"
+          description: default response
+      summary: Find users holding live sessions or tokens
+      tags:
+      - User Access
+  /userAccess/v1/revoke:
+    post:
+      operationId: revokeUserAccess
+      parameters:
+      - in: query
+        name: subjectId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Revoke a user's sessions and tokens (requires Manage Users)
+      tags:
+      - User Access
+  /userAccess/v1/sessions:
+    post:
+      operationId: findUserSessions
+      parameters:
+      - in: query
+        name: subjectId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionDetails"
+          description: default response
+      summary: List one user's sessions (requires Manage Users)
+      tags:
+      - User Access
   /userInfo/v1/{userUuid}:
     get:
       operationId: fetchUser
@@ -9606,6 +9776,15 @@ components:
           type: string
         enabled:
           type: boolean
+        failureCount:
+          type: integer
+          format: int32
+        failureLockedMs:
+          type: integer
+          format: int64
+        failureLockedUntilMs:
+          type: integer
+          format: int64
         firstName:
           type: string
         forcePasswordChange:
@@ -9620,17 +9799,10 @@ components:
           format: int64
         lastName:
           type: string
-        locked:
-          type: boolean
         loginCount:
           type: integer
           format: int32
-        loginFailures:
-          type: integer
-          format: int32
         neverExpires:
-          type: boolean
-        processingAccount:
           type: boolean
         reactivatedMs:
           type: integer
@@ -9645,6 +9817,37 @@ components:
         version:
           type: integer
           format: int32
+    AccountChange:
+      type: object
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+            enum:
+            - UNLOCK
+            - ENABLE
+            - DISABLE
+            - REACTIVATE
+          uniqueItems: true
+        comments:
+          type: string
+        confirmPassword:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        forcePasswordChange:
+          type: boolean
+        lastName:
+          type: string
+        neverExpires:
+          type: boolean
+        password:
+          type: string
+        userId:
+          type: string
     AcknowledgeSplashRequest:
       type: object
       properties:
@@ -14353,6 +14556,22 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         temporalOrderingTolerance:
           $ref: "#/components/schemas/SimpleDuration"
+    FindUserAccessCriteria:
+      type: object
+      properties:
+        activeOnly:
+          type: boolean
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
     FindUserCriteria:
       type: object
       properties:
@@ -18587,6 +18806,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/User"
+    ResultPageUserAccessRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserAccessRow"
     ResultPageUserDependency:
       type: object
       description: A page of results.
@@ -19198,6 +19427,8 @@ components:
           format: int64
         nodeName:
           type: string
+        sessionHandle:
+          type: string
         userRef:
           $ref: "#/components/schemas/UserRef"
     SessionInfo:
@@ -19327,6 +19558,25 @@ components:
             $ref: "#/components/schemas/SharedElementData"
         sourceLocation:
           $ref: "#/components/schemas/SourceLocation"
+    SigningKeyRow:
+      type: object
+      properties:
+        expiresMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int32
+        issuedMs:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - RETIRED
+          - EXPIRED
+          - REVOKED
     SimpleDuration:
       type: object
       properties:
@@ -21067,15 +21317,6 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/EventId"
-    UpdateAccountRequest:
-      type: object
-      properties:
-        account:
-          $ref: "#/components/schemas/Account"
-        confirmPassword:
-          type: string
-        password:
-          type: string
     UpdateField:
       type: object
       properties:
@@ -21172,6 +21413,34 @@ components:
         version:
           type: integer
           format: int32
+    UserAccessRow:
+      type: object
+      properties:
+        displayName:
+          type: string
+        lastAccessedMs:
+          type: integer
+          format: int64
+        lastTokenExpiryMs:
+          type: integer
+          format: int64
+        nextTokenExpiryMs:
+          type: integer
+          format: int64
+        nodeNames:
+          type: array
+          items:
+            type: string
+        sessionCount:
+          type: integer
+          format: int32
+        subjectId:
+          type: string
+        tokenCount:
+          type: integer
+          format: int32
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     UserDependency:
       type: object
       properties:

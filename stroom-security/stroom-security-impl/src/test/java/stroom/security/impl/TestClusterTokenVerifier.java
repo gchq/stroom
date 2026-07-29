@@ -151,7 +151,41 @@ class TestClusterTokenVerifier {
     private ClusterTokenVerifier verifier() {
         final PublicJsonWebKeyProvider provider = Mockito.mock(PublicJsonWebKeyProvider.class);
         Mockito.when(provider.list()).thenReturn(List.<PublicJsonWebKey>of(internalKey));
-        return new ClusterTokenVerifier(provider);
+        return new ClusterTokenVerifier(provider, new StaleKeySetRecovery(provider));
+    }
+
+    @Test
+    void clusterTokenSignedWithARotatedKeyIsAcceptedAfterReloadingKeys() {
+        // Cluster tokens are verified on every inter-node call and re-minted every few minutes, so a rotation
+        // that left lagging nodes unable to verify them would show up as a burst of failed node-to-node
+        // requests at every rotation.
+        // A newly rotated key, which this node has not loaded yet.
+        final RsaJsonWebKey rotatedKey;
+        try {
+            rotatedKey = RsaJwkGenerator.generateJwk(2048);
+            rotatedKey.setKeyId("rotated-key");
+        } catch (final JoseException e) {
+            throw new RuntimeException(e);
+        }
+        final String token = buildToken(rotatedKey,
+                ClusterToken.CLUSTER_ISSUER,
+                ClusterToken.CLUSTER_AUDIENCE,
+                ClusterToken.PROCESSING_USER_SUBJECT,
+                OpenId.TOKEN_TYPE__ACCESS,
+                validExpiry());
+
+        final PublicJsonWebKeyProvider provider = Mockito.mock(PublicJsonWebKeyProvider.class);
+        Mockito.when(provider.list()).thenReturn(List.of(internalKey));
+        Mockito.doAnswer(inv -> {
+            Mockito.when(provider.list()).thenReturn(List.of(internalKey, rotatedKey));
+            return null;
+        }).when(provider).refresh();
+
+        final ClusterTokenVerifier rotationAwareVerifier =
+                new ClusterTokenVerifier(provider, new StaleKeySetRecovery(provider));
+
+        assertThat(rotationAwareVerifier.verify(token)).isPresent();
+        Mockito.verify(provider).refresh();
     }
 
     private NumericDate validExpiry() {

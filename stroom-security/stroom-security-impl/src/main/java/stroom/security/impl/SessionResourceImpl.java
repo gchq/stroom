@@ -138,4 +138,16 @@ class SessionResourceImpl implements SessionResource {
         // SessionListListener, not here, so the self-service run-as call is not rejected up front.
         return sessionListService.get().evictUserSessionsOnNode(subjectId, exceptSessionId, nodeName);
     }
+
+    @Override
+    @AutoLogged(OperationType.DELETE)
+    public Boolean terminateSession(final String sessionHandle, final String nodeName) {
+        // As with terminate(), authorisation (self vs MANAGE_USERS) is enforced per node in
+        // SessionListListener, which is the only place that can tell who owns the session.
+        LOGGER.debug("terminateSession(sessionHandle: {}, nodeName: {}) called", sessionHandle, nodeName);
+        if (nodeName != null) {
+            return sessionListService.get().evictSessionOnNode(sessionHandle, nodeName);
+        }
+        return sessionListService.get().evictSession(sessionHandle);
+    }
 }

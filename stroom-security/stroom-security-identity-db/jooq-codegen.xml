@@ -21,13 +21,23 @@
             <name>org.jooq.meta.mysql.MySQLDatabase</name>
             <inputSchema>__INPUT_SCHEMA__</inputSchema>
             <outputSchema>stroom</outputSchema>
-            <includes>account|token|token_type|json_web_key|oauth_client</includes>
+            <!--
+              Each entry is a java regex matched against the WHOLE object name, which is why token_type
+              has to be listed separately from token, and why oauth_token is not covered by 'token'.
+
+              The legacy `token` table is deliberately NOT listed. Its jooq code was removed by hand in
+              48611dc23a (gh-3937) because the table is obsolete; nothing outside the generated code
+              refers to it. Codegen here runs only this module's migrations against a fresh database, so
+              V07_00_00_025__token.sql always applies and the table is always present - listing it would
+              silently resurrect Token.java on every regen.
+            -->
+            <includes>account|token_type|json_web_key|oauth_client|oauth_token</includes>
             <excludes>authentication_schema_version</excludes>
             <recordVersionFields>version</recordVersionFields>
             <forcedTypes>
                 <forcedType>
                     <name>BOOLEAN</name>
-                    <includeExpression>.*\.account\.force_password_change|.*\.account\.never_expires|.*\.account\.enabled|.*\.account\.inactive|.*\.account\.locked|.*\.account\.processing_account|.*\.json_web_key\.enabled|.*\.token\.enabled</includeExpression>
+                    <includeExpression>.*\.account\.force_password_change|.*\.account\.never_expires|.*\.account\.enabled|.*\.account\.inactive|.*\.json_web_key\.enabled|.*\.oauth_token\.revoked</includeExpression>
                     <!-- see https://github.com/jOOQ/jOOQ/issues/9405 -->
                     <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
                 </forcedType>

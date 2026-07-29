@@ -20,6 +20,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.PasswordPolicyConfig;
+import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
@@ -90,11 +91,17 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
             try {
                 final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
-                final LoginResponse response = serviceProvider.get().handleLogin(loginRequest, request);
+                final AuthenticationServiceImpl.LoginOutcome outcome =
+                        serviceProvider.get().handleLogin(loginRequest, request);
+                final LoginResponse response = outcome.response();
                 if (response != null && !response.isLoginSuccessful()) {
+                    // The reason comes from the service, which knows which control refused the sign in. It
+                    // used to be hardcoded as a wrong password, so a lockout or a disabled account left a
+                    // trail claiming the credentials were wrong.
                     eventBuilder.withOutcome(AuthenticateOutcome.builder()
                             .withSuccess(false)
-                            .withReason(AuthenticateOutcomeReason.INCORRECT_USERNAME_OR_PASSWORD)
+                            .withReason(outcome.reason())
+                            .withDescription(response.getMessage())
                             .build());
                 }
                 stroomEventLoggingServiceProvider.get().log(
@@ -116,7 +123,11 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                         "AuthenticationResourceImpl.LoginInteractive",
                         "Stroom user login",
                         eventBuilder.build());
-                return new LoginResponse(false, e.getMessage(), false);
+                // The sign in screen is reachable without authenticating, so it is told only that the
+                // attempt failed. Whatever went wrong - a database fault, a bad configuration - is in the
+                // audit event above and the log, where the people who can act on it will see it.
+                LOGGER.error("Error handling login request", e);
+                return new LoginResponse(false, "Unable to sign in at this time.", false);
             }
         } else {
             throw new NoSuchUserException("loginRequest cannot be null");
@@ -188,6 +199,11 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     @Unauthenticated
     @Override
     public ChangePasswordResponse changePassword(final ChangePasswordRequest changePasswordRequest) {
+        if (changePasswordRequest == null) {
+            // Guarded as login is. Without this the body is dereferenced before the audit event exists, so
+            // the attempt is neither recorded nor answered - it becomes a server error.
+            throw new BadRequestException(null, AuthenticateOutcomeReason.OTHER, "No request was supplied");
+        }
         final HttpServletRequest request = httpServletRequestHolderProvider.get().get();
         final AuthenticationServiceImpl service = serviceProvider.get();
         final String userId = service.getUserIdFromRequest(request);
@@ -203,9 +219,16 @@ class AuthenticationResourceImpl implements AuthenticationResource {
                     service.changePassword(request, changePasswordRequest);
 
             if (!response.isChangeSucceeded()) {
+                // A refusal because the session is too old, or because nobody is signed in, is not a
+                // credential failure and must not be audited as one - it says nothing about whether the
+                // password given was right. Finer distinctions than this are not drawn: a wrong current
+                // password and a new password that breaks the policy both arrive here as a refusal, and
+                // the description carries which it was.
                 eventBuilder.withOutcome(AuthenticateOutcome.builder()
                         .withSuccess(false)
-                        .withReason(AuthenticateOutcomeReason.INCORRECT_USERNAME_OR_PASSWORD)
+                        .withReason(response.isForceSignIn()
+                                ? AuthenticateOutcomeReason.OTHER
+                                : AuthenticateOutcomeReason.INCORRECT_USERNAME_OR_PASSWORD)
                         .withDescription(response.getMessage())
                         .build());
             }

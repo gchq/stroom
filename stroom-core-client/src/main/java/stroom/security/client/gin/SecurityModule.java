@@ -24,6 +24,8 @@ import stroom.security.client.DocumentPermissionsPlugin;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.SignOutOtherSessionsPlugin;
+import stroom.security.client.SigningKeyPlugin;
+import stroom.security.client.UserAccessPlugin;
 import stroom.security.client.UserPlugin;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
@@ -53,6 +55,8 @@ import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.Doc
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.client.presenter.EditApiKeyPresenter;
+import stroom.security.client.presenter.SigningKeyPresenter;
+import stroom.security.client.presenter.UserAccessPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.security.client.presenter.UserInfoPresenter;
@@ -75,6 +79,8 @@ import stroom.security.client.view.DocumentUserCreatePermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
+import stroom.security.client.view.SigningKeyViewImpl;
+import stroom.security.client.view.UserAccessViewImpl;
 import stroom.security.client.view.UserAndGroupsViewImpl;
 import stroom.security.client.view.UserInfoViewImpl;
 import stroom.security.client.view.UserPermissionReportViewImpl;
@@ -106,6 +112,8 @@ public class SecurityModule extends PluginModule {
         bindPlugin(UsersAndGroupsPlugin.class);
 //        bindPlugin(UserPermissionsReportPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
+        bindPlugin(UserAccessPlugin.class);
+        bindPlugin(SigningKeyPlugin.class);
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
         bindPresenterWidget(
@@ -176,6 +184,14 @@ public class SecurityModule extends PluginModule {
                 ApiKeysPresenter.class,
                 ApiKeysPresenter.ApiKeysView.class,
                 ApiKeysViewImpl.class);
+        bindPresenterWidget(
+                UserAccessPresenter.class,
+                UserAccessPresenter.UserAccessView.class,
+                UserAccessViewImpl.class);
+        bindPresenterWidget(
+                SigningKeyPresenter.class,
+                SigningKeyPresenter.SigningKeyView.class,
+                SigningKeyViewImpl.class);
         bindPresenterWidget(
                 EditApiKeyPresenter.class,
                 EditApiKeyPresenter.EditApiKeyView.class,

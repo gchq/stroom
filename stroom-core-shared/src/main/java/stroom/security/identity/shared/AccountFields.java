@@ -29,16 +29,22 @@ public class AccountFields {
     public static final String FIELD_NAME_EMAIL = "email";
     public static final String FIELD_NAME_FIRST_NAME = "first";
     public static final String FIELD_NAME_LAST_NAME = "last";
-    public static final String FIELD_NAME_STATUS = "status";
+    public static final String FIELD_NAME_ENABLED = "enabled";
+    public static final String FIELD_NAME_LOCKED = "locked";
+    public static final String FIELD_NAME_INACTIVE = "inactive";
     public static final String FIELD_NAME_LAST_LOGIN_MS = "lastLoginMs";
-    public static final String FIELD_NAME_LOGIN_FAILURES = "loginFailures";
+    public static final String FIELD_NAME_FAILURE_COUNT = "failureCount";
     public static final String FIELD_NAME_COMMENTS = "comments";
 
     public static final QueryField FIELD_USER_ID = QueryField.createText(FIELD_NAME_USER_ID);
     public static final QueryField FIELD_EMAIL = QueryField.createText(FIELD_NAME_EMAIL);
     public static final QueryField FIELD_FIRST_NAME = QueryField.createText(FIELD_NAME_FIRST_NAME);
     public static final QueryField FIELD_LAST_NAME = QueryField.createText(FIELD_NAME_LAST_NAME);
-    public static final QueryField FIELD_STATUS = QueryField.createText(FIELD_NAME_STATUS);
+    // Boolean rather than text on purpose: the quick filter appends a wildcard to a text value,
+    // and "true*" converts to false, which would silently filter to the opposite of what was asked.
+    public static final QueryField FIELD_ENABLED = QueryField.createBoolean(FIELD_NAME_ENABLED);
+    public static final QueryField FIELD_LOCKED = QueryField.createBoolean(FIELD_NAME_LOCKED);
+    public static final QueryField FIELD_INACTIVE = QueryField.createBoolean(FIELD_NAME_INACTIVE);
     public static final QueryField FIELD_COMMENTS = QueryField.createText(FIELD_NAME_COMMENTS);
 
     public static final FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField(
@@ -49,8 +55,12 @@ public class AccountFields {
             FIELD_NAME_FIRST_NAME);
     public static final FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField(
             FIELD_NAME_LAST_NAME);
-    public static final FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField(
-            FIELD_NAME_STATUS);
+    public static final FilterFieldDefinition FIELD_DEF_ENABLED = FilterFieldDefinition.qualifiedField(
+            FIELD_NAME_ENABLED);
+    public static final FilterFieldDefinition FIELD_DEF_LOCKED = FilterFieldDefinition.qualifiedField(
+            FIELD_NAME_LOCKED);
+    public static final FilterFieldDefinition FIELD_DEF_INACTIVE = FilterFieldDefinition.qualifiedField(
+            FIELD_NAME_INACTIVE);
     public static final FilterFieldDefinition FIELD_DEF_COMMENTS = FilterFieldDefinition.qualifiedField(
             FIELD_NAME_COMMENTS);
 
@@ -59,7 +69,9 @@ public class AccountFields {
             FIELD_DEF_EMAIL,
             FIELD_DEF_FIRST_NAME,
             FIELD_DEF_LAST_NAME,
-            FIELD_DEF_STATUS,
+            FIELD_DEF_ENABLED,
+            FIELD_DEF_LOCKED,
+            FIELD_DEF_INACTIVE,
             FIELD_DEF_COMMENTS);
 
     public static final Set<QueryField> DEFAULT_FIELDS = Set.of(
@@ -70,7 +82,9 @@ public class AccountFields {
             FIELD_EMAIL,
             FIELD_FIRST_NAME,
             FIELD_LAST_NAME,
-            FIELD_STATUS,
+            FIELD_ENABLED,
+            FIELD_LOCKED,
+            FIELD_INACTIVE,
             FIELD_COMMENTS);
 
     private AccountFields() {

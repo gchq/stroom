@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.8] - 2026-07-27
+
+* Feature **#5656** : Add self service account unlocking for the internal identity provider, controlled by the new properties `stroom.security.identity.reactivateInactiveAccountsOnLogin` and `stroom.security.identity.allowLockedAccountPasswordReset`, and rebuild the 'Forgot password' reset page so that an emailed reset link can be completed.
+
+
 ## [v7.13-beta.7] - 2026-07-16
 
 * Bug **#5663** : Fix OpenAPI spec for polymorphic types.
@@ -2369,7 +2374,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.8...HEAD
+[v7.13-beta.8]: https://github.com/gchq/stroom/compare/v7.13-beta.7...v7.13-beta.8
 [v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7
 [v7.13-beta.6]: https://github.com/gchq/stroom/compare/v7.13-beta.5...v7.13-beta.6
 [v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5

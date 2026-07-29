@@ -32,7 +32,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SMTP = "smtp";
 
-    private static final boolean DEFAULT_ALLOW_PASSWORD_RESETS = false;
 
     @NotNull
     @JsonProperty(PROP_NAME_SMTP)
@@ -60,13 +59,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
 
     @NotNull
 
-    @NotNull
-    @JsonProperty
-    @JsonPropertyDescription("Enables/disables the sending of password reset emails. This should only be " +
-            "enabled when all the SMTP server configuration has been set.")
-    // Defaults to false because this feature needs to be configured and actively turned on before it works.
-    private final boolean allowPasswordResets;
-
     public EmailConfig() {
         smtpConfig = new SmtpConfig();
         fromAddress = "noreply@stroom";
@@ -75,7 +67,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         passwordResetText = "A password reset has been requested for this email address. Please visit " +
                 "the following URL to reset your password: %s.";
         // Defaults to false because this feature needs to be configured and actively turned on before it works.
-        allowPasswordResets = DEFAULT_ALLOW_PASSWORD_RESETS;
     }
 
     @SuppressWarnings("unused")
@@ -84,14 +75,12 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("fromAddress") final String fromAddress,
                        @JsonProperty("fromName") final String fromName,
                        @JsonProperty("passwordResetSubject") final String passwordResetSubject,
-                       @JsonProperty("passwordResetText") final String passwordResetText,
-                       @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets) {
+                       @JsonProperty("passwordResetText") final String passwordResetText) {
         this.smtpConfig = smtpConfig;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
         this.passwordResetSubject = passwordResetSubject;
         this.passwordResetText = passwordResetText;
-        this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, DEFAULT_ALLOW_PASSWORD_RESETS);
     }
 
     @JsonProperty(PROP_NAME_SMTP)
@@ -115,10 +104,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         return fromName;
     }
 
-    public boolean isAllowPasswordResets() {
-        return allowPasswordResets;
-    }
-
     @Override
     public String toString() {
         return "EmailConfig{" +
@@ -127,7 +112,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                 ", fromName='" + fromName + '\'' +
                 ", passwordResetSubject='" + passwordResetSubject + '\'' +
                 ", passwordResetText='" + passwordResetText + '\'' +
-                ", allowPasswordResets=" + allowPasswordResets +
                 '}';
     }
 }

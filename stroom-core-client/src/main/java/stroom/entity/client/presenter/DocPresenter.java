@@ -46,9 +46,9 @@ public abstract class DocPresenter<V extends View, D>
     @Override
     public final void onChange() {
         if (!isReadOnly()) {
-            final D original = entity;
-            final D updated = write(original);
-            final boolean dirty = !Objects.equals(original, updated) || hasAssociatedDirty();
+            // Test the associated documents first as it short circuits the comparison below, which
+            // for some documents is expensive and is run on every keypress in an embedded editor.
+            final boolean dirty = hasAssociatedDirty() || !Objects.equals(entity, write(entity));
             setDirty(dirty);
         }
     }

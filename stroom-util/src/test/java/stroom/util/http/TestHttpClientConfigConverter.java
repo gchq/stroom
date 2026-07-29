@@ -52,4 +52,21 @@ class TestHttpClientConfigConverter {
 
         assertThat(httpClientConfiguration).isEqualTo(reverse);
     }
+
+    @Test
+    void testVerifyHostname() {
+        final PathCreator pathCreator = new TemporaryPathCreator();
+        final HttpClientConfigConverter restClientConfigConverter = new HttpClientConfigConverter(pathCreator);
+
+        final HttpTlsConfiguration in = HttpTlsConfiguration
+                .builder()
+                .verifyHostname(false)
+                .build();
+
+        final io.dropwizard.client.ssl.TlsConfiguration out = restClientConfigConverter.convert(
+                in,
+                io.dropwizard.client.ssl.TlsConfiguration.class);
+
+        assertThat(out.isVerifyHostname()).isFalse();
+    }
 }

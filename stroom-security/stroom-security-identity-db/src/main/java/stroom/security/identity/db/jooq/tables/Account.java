@@ -123,9 +123,9 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, Integer> LOGIN_COUNT = createField(DSL.name("login_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.inline("0", SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>stroom.account.login_failures</code>.
+     * The column <code>stroom.account.failure_count</code>.
      */
-    public final TableField<AccountRecord, Integer> LOGIN_FAILURES = createField(DSL.name("login_failures"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.inline("0", SQLDataType.INTEGER)), this, "");
+    public final TableField<AccountRecord, Integer> FAILURE_COUNT = createField(DSL.name("failure_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.inline("0", SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>stroom.account.last_login_ms</code>.
@@ -158,16 +158,6 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, Boolean> INACTIVE = createField(DSL.name("inactive"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>stroom.account.locked</code>.
-     */
-    public final TableField<AccountRecord, Boolean> LOCKED = createField(DSL.name("locked"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
-
-    /**
-     * The column <code>stroom.account.processing_account</code>.
-     */
-    public final TableField<AccountRecord, Boolean> PROCESSING_ACCOUNT = createField(DSL.name("processing_account"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
-
-    /**
      * The column <code>stroom.account.reset_token_hash</code>.
      */
     public final TableField<AccountRecord, String> RESET_TOKEN_HASH = createField(DSL.name("reset_token_hash"), SQLDataType.VARCHAR(64), this, "");
@@ -183,9 +173,9 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, Long> RESET_EMAIL_REQUESTED_MS = createField(DSL.name("reset_email_requested_ms"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.account.locked_until_ms</code>.
+     * The column <code>stroom.account.failure_locked_ms</code>.
      */
-    public final TableField<AccountRecord, Long> LOCKED_UNTIL_MS = createField(DSL.name("locked_until_ms"), SQLDataType.BIGINT, this, "");
+    public final TableField<AccountRecord, Long> FAILURE_LOCKED_MS = createField(DSL.name("failure_locked_ms"), SQLDataType.BIGINT, this, "");
 
     private Account(Name alias, Table<AccountRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

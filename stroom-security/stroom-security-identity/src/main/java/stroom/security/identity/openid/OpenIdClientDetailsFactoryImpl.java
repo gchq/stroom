@@ -16,6 +16,7 @@
 
 package stroom.security.identity.openid;
 
+import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClient;
@@ -27,6 +28,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.StringUtil;
 
+import event.logging.AuthenticateOutcomeReason;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -71,8 +73,17 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
         final OpenIdClient client = getClient();
         // Internal IDP only supports one client
         if (!Objects.requireNonNull(clientId).equals(client.getClientId())) {
-            throw new RuntimeException(LogUtil.message(
+            // The caller is told only that the client id was wrong, never what the right one is. It is a
+            // forty character random credential the rest of the system works to keep unguessable, and this
+            // is reachable without authenticating - naming it in the error hands over the value needed to
+            // build a well-formed authorize request. The token endpoint already answers this way; the
+            // authorize and refresh paths did not.
+            //
+            // The supplied id becomes the subject so the audit records what was attempted, and the id we
+            // expected goes no further than a debug log.
+            LOGGER.debug(() -> LogUtil.message(
                     "Unexpected client ID: {}, expecting {}", clientId, client.getClientId()));
+            throw new BadRequestException(clientId, AuthenticateOutcomeReason.OTHER, "Invalid client ID");
         } else {
             return client;
         }

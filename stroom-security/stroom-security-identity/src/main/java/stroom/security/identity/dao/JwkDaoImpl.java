@@ -17,8 +17,11 @@
 package stroom.security.identity.dao;
 
 import stroom.db.util.JooqUtil;
+import stroom.security.identity.account.InternalIdpProcessingUserIdentity;
 import stroom.security.identity.db.IdentityDbConnProvider;
 import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
+import stroom.security.identity.shared.SigningKeyRow;
+import stroom.security.identity.shared.SigningKeyStatus;
 import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.JwkRotationSummary;
 import stroom.security.openid.api.JsonWebKeyFactory;
@@ -51,6 +54,17 @@ import static stroom.security.identity.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
 public class JwkDaoImpl implements JwkDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwkDaoImpl.class);
+
+    /**
+     * Stamped on rows written by the system rather than by a person: creating a key, and retiring one on
+     * schedule. Nobody signs in as this, so it cannot be confused with an act by a human - which
+     * {@code "admin"}, previously used here, could be, there being a seeded account of that name.
+     * <p>
+     * This matters most for {@code update_user}, where a scheduled retirement now shares a column with an
+     * administrator's deliberate revocation. Those are the two events an incident most needs to tell apart.
+     * </p>
+     */
+    private static final String SYSTEM_AUDIT_USER = InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER;
 
     private final IdentityDbConnProvider identityDbConnProvider;
     private final JsonWebKeyFactory jsonWebKeyFactory;
@@ -87,7 +101,7 @@ public class JwkDaoImpl implements JwkDao {
 
         return records
                 .stream()
-                .map(record -> jsonWebKeyFactory.fromJson(record.getJson()))
+                .map(this::toPublicJsonWebKey)
                 .toList();
     }
 
@@ -101,7 +115,7 @@ public class JwkDaoImpl implements JwkDao {
             active = JooqUtil.contextResult(identityDbConnProvider, context ->
                     insertActiveKey(context, System.currentTimeMillis()));
         }
-        return jsonWebKeyFactory.fromJson(active.getJson());
+        return toPublicJsonWebKey(active);
     }
 
     @Override
@@ -151,6 +165,111 @@ public class JwkDaoImpl implements JwkDao {
     }
 
     /**
+     * The four columns are named rather than taking the whole row. {@code selectFrom} would fetch the
+     * {@code json} column too, putting private key material in memory on every refresh of a screen that
+     * exists precisely to avoid handling it - where one incautious log of the record would expose it.
+     * Naming the columns means it is never read.
+     */
+    @Override
+    public List<SigningKeyRow> list() {
+        final long now = System.currentTimeMillis();
+        return JooqUtil.contextResult(identityDbConnProvider, context -> context
+                        .select(JSON_WEB_KEY.ID,
+                                JSON_WEB_KEY.ENABLED,
+                                JSON_WEB_KEY.CREATE_TIME_MS,
+                                JSON_WEB_KEY.EXPIRES_ON_MS)
+                        .from(JSON_WEB_KEY)
+                        .orderBy(JSON_WEB_KEY.CREATE_TIME_MS.desc(), JSON_WEB_KEY.ID.desc())
+                        .fetch())
+                .map(record -> toSigningKeyRow(
+                        record.get(JSON_WEB_KEY.ID),
+                        record.get(JSON_WEB_KEY.ENABLED),
+                        record.get(JSON_WEB_KEY.CREATE_TIME_MS),
+                        record.get(JSON_WEB_KEY.EXPIRES_ON_MS),
+                        now));
+    }
+
+    /**
+     * Only what a key is doing and when, never what it is.
+     */
+    private static SigningKeyRow toSigningKeyRow(final int id,
+                                                 final boolean enabled,
+                                                 final long createTimeMs,
+                                                 final Long expiresOnMs,
+                                                 final long now) {
+        final SigningKeyStatus status;
+        if (!enabled) {
+            status = SigningKeyStatus.REVOKED;
+        } else if (expiresOnMs == null) {
+            status = SigningKeyStatus.ACTIVE;
+        } else if (expiresOnMs > now) {
+            status = SigningKeyStatus.RETIRED;
+        } else {
+            status = SigningKeyStatus.EXPIRED;
+        }
+
+        // A revoked key is not trusted whatever its expiry says, and an active key has no expiry stamped,
+        // so neither has a date to give.
+        final Long effectiveExpiry = status == SigningKeyStatus.REVOKED || status == SigningKeyStatus.ACTIVE
+                ? null
+                : expiresOnMs;
+
+        return new SigningKeyRow(id, status, createTimeMs, effectiveExpiry);
+    }
+
+    @Override
+    public int revoke(final int id, final String auditUser) {
+        final long now = System.currentTimeMillis();
+        return JooqUtil.transactionResult(identityDbConnProvider, context -> {
+            final int revoked = context
+                    .update(JSON_WEB_KEY)
+                    .set(JSON_WEB_KEY.VERSION, JSON_WEB_KEY.VERSION.plus(1))
+                    .set(JSON_WEB_KEY.UPDATE_TIME_MS, now)
+                    .set(JSON_WEB_KEY.UPDATE_USER, auditUser)
+                    .set(JSON_WEB_KEY.ENABLED, false)
+                    .where(JSON_WEB_KEY.ID.eq(id))
+                    // Already revoked is not an error, but it is not a revocation either.
+                    .and(JSON_WEB_KEY.ENABLED.isTrue())
+                    .execute();
+
+            ensureActiveKey(context, now);
+            return revoked;
+        });
+    }
+
+    @Override
+    public int revokeAll(final String auditUser) {
+        final long now = System.currentTimeMillis();
+        return JooqUtil.transactionResult(identityDbConnProvider, context -> {
+            final int revoked = context
+                    .update(JSON_WEB_KEY)
+                    .set(JSON_WEB_KEY.VERSION, JSON_WEB_KEY.VERSION.plus(1))
+                    .set(JSON_WEB_KEY.UPDATE_TIME_MS, now)
+                    .set(JSON_WEB_KEY.UPDATE_USER, auditUser)
+                    .set(JSON_WEB_KEY.ENABLED, false)
+                    .where(JSON_WEB_KEY.ENABLED.isTrue())
+                    .execute();
+
+            ensureActiveKey(context, now);
+            return revoked;
+        });
+    }
+
+    /**
+     * Leave the store with something to sign with, in the same transaction that took it away.
+     * <p>
+     * {@code listPublishable} would make one on the next request, but that leaves a moment where a node
+     * asked to sign has no key, and invites two nodes to each make one. Doing it here means the store is
+     * never observed without an active key.
+     * </p>
+     */
+    private void ensureActiveKey(final DSLContext context, final long now) {
+        if (fetchActiveKeys(context).isEmpty()) {
+            insertActiveKey(context, now);
+        }
+    }
+
+    /**
      * The active key: enabled, no expiry, newest first.
      */
     private JsonWebKeyRecord fetchActive(final DSLContext context) {
@@ -174,6 +293,23 @@ public class JwkDaoImpl implements JwkDao {
                 .and(JSON_WEB_KEY.EXPIRES_ON_MS.isNull())
                 .orderBy(JSON_WEB_KEY.CREATE_TIME_MS.desc(), JSON_WEB_KEY.ID.desc())
                 .fetch();
+    }
+
+    /**
+     * Deserialise a stored key, naming the row if it cannot be read.
+     * <p>
+     * The stored JSON contains the private key, so it is never included in the error - the key id and row id
+     * are what let an operator find the offending record without the key itself reaching a log.
+     * </p>
+     */
+    private PublicJsonWebKey toPublicJsonWebKey(final JsonWebKeyRecord record) {
+        try {
+            return jsonWebKeyFactory.fromJson(record.getJson());
+        } catch (final RuntimeException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to read the signing key in json_web_key row id {} (key_id '{}')",
+                    record.getId(), record.getKeyId()), e);
+        }
     }
 
     /**
@@ -207,9 +343,9 @@ public class JwkDaoImpl implements JwkDao {
                         JSON_WEB_KEY.ENABLED)
                 .values(1,
                         now,
-                        "admin",
+                        SYSTEM_AUDIT_USER,
                         now,
-                        "admin",
+                        SYSTEM_AUDIT_USER,
                         typeId,
                         publicJsonWebKey.getKeyId(),
                         jsonWebKeyFactory.asJson(publicJsonWebKey),
@@ -242,7 +378,7 @@ public class JwkDaoImpl implements JwkDao {
                 .update(JSON_WEB_KEY)
                 .set(JSON_WEB_KEY.VERSION, JSON_WEB_KEY.VERSION.plus(1))
                 .set(JSON_WEB_KEY.UPDATE_TIME_MS, now)
-                .set(JSON_WEB_KEY.UPDATE_USER, "admin")
+                .set(JSON_WEB_KEY.UPDATE_USER, SYSTEM_AUDIT_USER)
                 .set(JSON_WEB_KEY.EXPIRES_ON_MS, expiresOnMs)
                 .where(JSON_WEB_KEY.ID.eq(key.getId()))
                 .and(JSON_WEB_KEY.EXPIRES_ON_MS.isNull())

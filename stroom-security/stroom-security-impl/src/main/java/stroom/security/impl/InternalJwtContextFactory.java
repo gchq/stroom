@@ -21,6 +21,7 @@ import stroom.security.common.impl.JwtUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
+import stroom.security.openid.api.RevokedTokenChecker;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -35,6 +36,7 @@ import org.jose4j.jwa.AlgorithmConstraints.ConstraintType;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -59,12 +61,18 @@ public class InternalJwtContextFactory implements JwtContextFactory {
 
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+    private final RevokedTokenChecker revokedTokenChecker;
+    private final StaleKeySetRecovery staleKeySetRecovery;
 
     @Inject
     InternalJwtContextFactory(final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
-                              final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
+                              final Provider<OpenIdConfiguration> openIdConfigurationProvider,
+                              final RevokedTokenChecker revokedTokenChecker,
+                              final StaleKeySetRecovery staleKeySetRecovery) {
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
         this.openIdConfigurationProvider = openIdConfigurationProvider;
+        this.revokedTokenChecker = revokedTokenChecker;
+        this.staleKeySetRecovery = staleKeySetRecovery;
     }
 
     @Override
@@ -129,61 +137,122 @@ public class InternalJwtContextFactory implements JwtContextFactory {
     }
 
     /**
+     * Has this token been revoked before its natural expiry?
+     * <p>
+     * Answered from an in-memory denylist, so this adds no database work to the request path. Only tokens
+     * minted by the internal IdP can appear on it - this factory is the {@code INTERNAL_IDP} arm of
+     * {@link DelegatingJwtContextFactory}, so externally minted tokens are never tested here, and their
+     * revocation remains the external IdP's business.
+     * </p>
+     */
+    private boolean isRevoked(final JwtContext jwtContext) {
+        final String jti;
+        try {
+            jti = jwtContext.getJwtClaims().getJwtId();
+        } catch (final MalformedClaimException e) {
+            // A jti that is present but not a string. We cannot identify the token, so we cannot show it has
+            // been revoked; the signature still proves we minted it. Logged because it should not happen.
+            LOGGER.warn(() -> "Token has a malformed jti claim: " + e.getMessage(), e);
+            return false;
+        }
+        if (revokedTokenChecker.isRevoked(jti)) {
+            LOGGER.info(() -> LogUtil.message(
+                    "Rejecting a revoked token (jti '{}', subject '{}')",
+                    jti,
+                    // Read as a raw string rather than via getSubject(), which throws a checked exception
+                    // that would be pointless noise inside a log message supplier.
+                    jwtContext.getJwtClaims().getClaimValueAsString(OpenId.CLAIM__SUBJECT)));
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Verify the JSON Web Signature and then extract the user identity from it
      */
     @Override
     public Optional<JwtContext> getJwtContext(final String jwt) {
-        Optional<JwtContext> optionalJwtContext = Optional.empty();
-
         Objects.requireNonNull(jwt, "Null JWS");
         LOGGER.trace(() -> "Found auth header in request. It looks like this: " + jwt);
 
         try {
-            final JwtConsumer jwtConsumer = newJwtConsumer();
-            final JwtContext jwtContext = jwtConsumer.process(jwt);
-
-            if (LOGGER.isDebugEnabled()) {
-                final String uniqueIdentityClaim = openIdConfigurationProvider.get().getUniqueIdentityClaim();
-                final String userDisplayNameClaim = openIdConfigurationProvider.get().getUserDisplayNameClaim();
-                final String uniqueId = NullSafe.isBlankString(uniqueIdentityClaim)
-                        ? "<ERROR uniqueIdentityClaim not configured>"
-                        : JwtUtil.getClaimValue(jwtContext, uniqueIdentityClaim).orElse(null);
-                final String displayName = NullSafe.isBlankString(userDisplayNameClaim)
-                        ? "<ERROR userDisplayNameClaim not configured>"
-                        : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
-
-                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
-            }
-
-            optionalJwtContext = Optional.of(jwtContext);
-
+            return verify(jwt);
         } catch (final RuntimeException | InvalidJwtException e) {
+            if (staleKeySetRecovery.isUnresolvableKey(e) && staleKeySetRecovery.tryRefresh()) {
+                // The key set may simply be stale - a rotation on another node can mint tokens with a kid this
+                // node has not loaded yet. Reload once and retry before writing the token off.
+                LOGGER.debug("Retrying verification after refreshing the key set");
+                try {
+                    // Deliberately the same verify(), so the retry gets the identical checks - including the
+                    // revocation check. Bypassing it here would let a revoked token signed with a rotated key
+                    // slip through on the retry path.
+                    return verify(jwt);
+                } catch (final RuntimeException | InvalidJwtException retryFailure) {
+                    LOGGER.debug(() -> "Unable to verify token after refreshing keys: "
+                                       + retryFailure.getMessage(), retryFailure);
+                    return Optional.empty();
+                }
+            }
             // You will likely come in here when trying to decode an external IDP jws using the internal IDP
             // first.
             LOGGER.debug(() -> "Unable to verify token: " + e.getMessage(), e);
+            return Optional.empty();
         }
-
-        return optionalJwtContext;
     }
 
+    /**
+     * Extract a token's claims, optionally without verifying it.
+     * <p>
+     * The unverified form exists for callers that only need to read a claim, and applies <b>none</b> of the
+     * checks in {@link #verify(String)} - no signature, no expiry, no revocation. It must never be used to
+     * decide whether a request is authorised.
+     * </p>
+     */
     @Override
     public Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification) {
-        Optional<JwtContext> optJwtContext = Optional.empty();
         if (doVerification) {
-            optJwtContext = getJwtContext(jwt);
-        } else {
-            final JwtConsumer simpleJwtConsumer = new JwtConsumerBuilder()
-                    .setSkipSignatureVerification()
-                    .setSkipDefaultAudienceValidation()
-                    .build();
-            try {
-                optJwtContext = Optional.of(simpleJwtConsumer.process(jwt));
-            } catch (final Exception e) {
-                LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
-            }
+            return getJwtContext(jwt);
         }
-        return optJwtContext;
+        final JwtConsumer simpleJwtConsumer = new JwtConsumerBuilder()
+                .setSkipSignatureVerification()
+                .setSkipDefaultAudienceValidation()
+                .build();
+        try {
+            return Optional.of(simpleJwtConsumer.process(jwt));
+        } catch (final Exception e) {
+            LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Verify a token and apply every check that governs whether it may be used. The single place both the
+     * first attempt and the post-key-reload retry go through, so the two cannot drift apart.
+     */
+    private Optional<JwtContext> verify(final String jwt) throws InvalidJwtException {
+        final JwtContext jwtContext = newJwtConsumer().process(jwt);
+
+        // Only after the signature, issuer, audience and expiry checks above have passed. Order matters: the
+        // jti of an unverified token proves nothing, so it must never be trusted enough to look up.
+        if (isRevoked(jwtContext)) {
+            return Optional.empty();
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            final String uniqueIdentityClaim = openIdConfigurationProvider.get().getUniqueIdentityClaim();
+            final String userDisplayNameClaim = openIdConfigurationProvider.get().getUserDisplayNameClaim();
+            final String uniqueId = NullSafe.isBlankString(uniqueIdentityClaim)
+                    ? "<ERROR uniqueIdentityClaim not configured>"
+                    : JwtUtil.getClaimValue(jwtContext, uniqueIdentityClaim).orElse(null);
+            final String displayName = NullSafe.isBlankString(userDisplayNameClaim)
+                    ? "<ERROR userDisplayNameClaim not configured>"
+                    : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
+
+            LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
+                    uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+        }
+
+        return Optional.of(jwtContext);
     }
 
     private JwtConsumer newJwtConsumer() {

@@ -68,7 +68,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 public class PipelineStructurePresenter
         extends DocPresenter<PipelineStructureView, PipelineDoc>
@@ -97,8 +96,6 @@ public class PipelineStructurePresenter
 
     private List<Item> addMenuItems;
     private List<Item> restoreMenuItems;
-
-    private final List<Consumer<PipelineModel>> pipelineChangeHandlers = new ArrayList<>();
 
     @Inject
     public PipelineStructurePresenter(final EventBus eventBus,
@@ -136,8 +133,6 @@ public class PipelineStructurePresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(propertyListPresenter.addChangeHandler(this::onChange));
-        registerHandler(pipelineReferenceListPresenter.addChangeHandler(this::onChange));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
             final DocRef selectedDocRef = event.getSelectedItem();
             if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
@@ -171,7 +166,6 @@ public class PipelineStructurePresenter
 
                     enableButtons();
                 }));
-        registerHandler(pipelineTreePresenter.addChangeHandler(this::onStructureChange));
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
@@ -209,32 +203,35 @@ public class PipelineStructurePresenter
         }
     }
 
-    public void addPipelineChangeHandler(final Consumer<PipelineModel> handler) {
-        pipelineChangeHandlers.add(handler);
-    }
-
-    private void handlePipelineChange() {
-        pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
-    }
-
-    /**
-     * Invoked on every structural edit. Recomputes dirty, rebuilds the pipeline model and re-renders
-     * the tree. This must run on every edit: it previously lived in onDirty(), but the "dirty based on
-     * equality" refactor left onDirty() firing only on the clean&lt;-&gt;dirty transition, so the structure
-     * tree went stale after the first edit of a clean pipeline.
-     */
-    private void onStructureChange() {
-        onChange();
-        handlePipelineChange();
-        setPipelineModel(pipelineModel);
-    }
-
     public void setPipelineModel(final PipelineModel model) {
+        if (pipelineModel != model) {
+            pipelineModel = model;
+            if (model != null) {
+                // Every edit ends in a model change event, so this is the only place that needs to
+                // react to one. Anything that edits the pipeline via the model therefore enables the
+                // Save button without having to remember to say so.
+                registerHandler(model.addChangeDataHandler(event -> onPipelineModelChanged()));
+            }
+        }
+        refreshTree();
+    }
+
+    private void onPipelineModelChanged() {
+        // Re-evaluate whether the document is dirty and redraw the tree. Deliberately does NOT
+        // rebuild the model: doing so here would re-enter this handler, and rebuilding on every
+        // change is what previously made the tree flash and stepping editors lag.
+        onChange();
+        refreshTree();
+    }
+
+    private void refreshTree() {
         try {
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
-            pipelineModel = model;
             pipelineTreePresenter.setModel(pipelineModel);
-            pipelineTreePresenter.getSelectionModel().setSelected(selectedElement, true);
+            // Keep the selection, unless the edit that triggered this removed the selected element.
+            if (selectedElement == null || pipelineModel == null || pipelineModel.hasElement(selectedElement)) {
+                pipelineTreePresenter.getSelectionModel().setSelected(selectedElement, true);
+            }
         } catch (final PipelineModelException e) {
             AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
         }
@@ -281,12 +278,13 @@ public class PipelineStructurePresenter
             if (advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement)) {
                 ConfirmEvent.fire(this, "Are you sure you want to remove this element?", ok -> {
                     if (ok) {
+                        // Select the parent before removing, as removing fires the change event that
+                        // redraws the tree.
                         final PipelineElement parentElement = pipelineModel.getParentMap().get(selectedElement);
-                        pipelineModel.removeElement(selectedElement);
                         if (parentElement != null) {
                             pipelineTreePresenter.getSelectionModel().setSelected(parentElement, true);
                         }
-                        onStructureChange();
+                        pipelineModel.removeElement(selectedElement);
                     }
                 });
             }
@@ -331,11 +329,9 @@ public class PipelineStructurePresenter
                             PipelineElement renamedElement = selected;
                             if (!Objects.equals(currentName, newName)) {
                                 renamedElement = pipelineModel.renameElement(selected, newName.trim());
-                                onStructureChange();
                             }
                             if (!Objects.equals(currentDescription, newDescription)) {
                                 renamedElement = pipelineModel.changeElementDescription(renamedElement, newDescription);
-                                onStructureChange();
                             }
                             pipelineTreePresenter.getSelectionModel().setSelected(renamedElement, true);
                         } catch (final RuntimeException ex) {
@@ -643,7 +639,6 @@ public class PipelineStructurePresenter
             pipelineModel.setBaseStack(null);
             try {
                 pipelineModel.build();
-                onStructureChange();
             } catch (final PipelineModelException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
@@ -657,7 +652,6 @@ public class PipelineStructurePresenter
 
                         try {
                             pipelineModel.build();
-                            onStructureChange();
                         } catch (final PipelineModelException e) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -726,7 +720,6 @@ public class PipelineStructurePresenter
                                     name,
                                     description);
                             pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
-                            onStructureChange();
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -773,7 +766,6 @@ public class PipelineStructurePresenter
                 try {
                     pipelineModel.addExistingElement(selectedElement, element);
                     pipelineTreePresenter.getSelectionModel().setSelected(element, true);
-                    onStructureChange();
                 } catch (final RuntimeException e) {
                     AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                 }

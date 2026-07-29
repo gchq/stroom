@@ -66,6 +66,20 @@ public class JwkCache implements PublicJsonWebKeyProvider {
         return cache.get(KEY).active();
     }
 
+    /**
+     * Drop the cached key set so it is re-read on next use.
+     * <p>
+     * {@code refreshAfterWrite} above means the cache heals on its own within a minute, so this is about
+     * closing that minute rather than about eventual correctness: a token signed with a newly rotated key
+     * would otherwise be rejected by a node that had not yet reloaded.
+     * </p>
+     */
+    @Override
+    public void refresh() {
+        LOGGER.debug("Invalidating the JWK cache");
+        cache.invalidateAll();
+    }
+
     private record Keys(PublicJsonWebKey active, List<PublicJsonWebKey> publishable) {
 
     }

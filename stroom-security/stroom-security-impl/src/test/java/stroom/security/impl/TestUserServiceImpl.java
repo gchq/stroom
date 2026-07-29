@@ -48,6 +48,7 @@ class TestUserServiceImpl {
                 null,
                 null,
                 null,
+                null,
                 null);
 
         final UserDesc userDesc = UserDesc.builder(SUBJECT_ID)
@@ -80,6 +81,7 @@ class TestUserServiceImpl {
                 null,
                 null,
                 null,
+                null,
                 null);
 
         final UserDesc userDesc = UserDesc.builder(SUBJECT_ID)
@@ -102,5 +104,68 @@ class TestUserServiceImpl {
                 .isEqualTo(DISPLAY_NAME);  // No display name so use sub
         Assertions.assertThat(user.getFullName())
                 .isEqualTo(FULL_NAME);
+    }
+
+    // --- Disabling a user cuts off live access ------------------------------------------------------
+
+    @Test
+    void disablingAUserRevokesTheirLiveAccess() {
+        // Disabling only changes a row. Without this, a bearer token the user already holds keeps working
+        // until it expires - token verification consults no user cache - and a node that missed the
+        // permission-change event keeps serving the cached, still-enabled user.
+        final UserAccessRevocationService revocationService =
+                Mockito.mock(UserAccessRevocationService.class);
+        final UserServiceImpl userService = userServiceWith(revocationService);
+        final User disabled = userBuilder().enabled(false).build();
+        Mockito.when(mockUserDao.update(Mockito.any(User.class))).thenReturn(disabled);
+
+        userService.update(disabled);
+
+        Mockito.verify(revocationService).revokeAccessForUser(SUBJECT_ID);
+    }
+
+    @Test
+    void updatingAStillEnabledUserRevokesNothing() {
+        final UserAccessRevocationService revocationService =
+                Mockito.mock(UserAccessRevocationService.class);
+        final UserServiceImpl userService = userServiceWith(revocationService);
+        final User enabled = userBuilder().enabled(true).build();
+        Mockito.when(mockUserDao.update(Mockito.any(User.class))).thenReturn(enabled);
+
+        userService.update(enabled);
+
+        Mockito.verifyNoInteractions(revocationService);
+    }
+
+    @Test
+    void disabledGroupIsUnrepresentableSoTheGroupGuardIsBeltAndBraces() {
+        // UserRef refuses to model a disabled group at all, so the isGroup() guard in
+        // revokeAccessIfDisabled can never actually fire. Kept as defence in depth, and pinned here so that
+        // if the domain ever does allow it, this documents what the guard is for: a group holds no sessions
+        // or tokens of its own, so revoking against it would be meaningless.
+        Assertions.assertThatThrownBy(() -> userBuilder().group(true).enabled(false).build().asRef())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Groups cannot be disabled");
+    }
+
+    private UserServiceImpl userServiceWith(final UserAccessRevocationService revocationService) {
+        return new UserServiceImpl(
+                new MockSecurityContext(),
+                mockUserDao,
+                Mockito.mock(stroom.security.impl.event.PermissionChangeEventBus.class),
+                null,
+                null,
+                null,
+                null,
+                null,
+                () -> revocationService);
+    }
+
+    private static User.Builder userBuilder() {
+        return User.builder()
+                .uuid(SUBJECT_ID)
+                .subjectId(SUBJECT_ID)
+                .displayName(DISPLAY_NAME)
+                .group(false);
     }
 }

@@ -101,6 +101,6 @@ class TestSessionListServlet {
                 .displayName(displayName)
                 .fullName("Full Name")
                 .build();
-        return new SessionDetails(userRef, 0L, 0L, agent, "node1");
+        return new SessionDetails(userRef, 0L, 0L, agent, "node1", "handle-" + agent);
     }
 }
