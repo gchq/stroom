@@ -25,6 +25,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.xsltfunctions.TaskScopeMap;
 import stroom.task.api.TaskContext;
@@ -95,6 +96,8 @@ public class SteppingController {
     private BooleanSupplier terminateCheck = () -> false;
     // A sweep produces records in order; an on-demand replay produces whichever one the user asked for.
     private StepDataStore.RecordOrder recordOrder = StepDataStore.RecordOrder.SEQUENTIAL;
+    // Elements whose captured IO this run must mark as carrying indicative counts - see setIndicativeCountElements.
+    private Set<String> indicativeCountElementIds = Set.of();
 
     @Inject
     SteppingController(final MetaHolder metaHolder,
@@ -246,6 +249,15 @@ public class SteppingController {
         return counts;
     }
 
+    /**
+     * Mark the named elements' captured IO as carrying indicative running counts for every record of this
+     * run. Set by {@code ReprocessDriver} when a materialisation starts mid-stream with no counter state to
+     * restore; empty for any capture that counts from the true stream start.
+     */
+    public void setIndicativeCountElements(final Set<String> elementIds) {
+        this.indicativeCountElementIds = elementIds == null ? Set.of() : elementIds;
+    }
+
     private void captureRecord(final StepLocation location,
                                final TextRange highlight,
                                final SourceLocation sourceLocation) {
@@ -256,10 +268,18 @@ public class SteppingController {
             // to store its IO under and nothing could ever read it back.
             final String fingerprint = fingerprints.getCumulativeFingerprint(monitor.getElementId().getId());
             if (fingerprint != null) {
+                CapturedElementData data = monitor.getCapturedElementData(errorReceiver, highlight);
+                // A counting element whose run started mid-stream with no count to restore produces
+                // plausible-but-wrong running counts (EventId 1 on record 500). The record is stored
+                // marked, so wherever it is later served from, the divergence is declared rather than
+                // silent. See ReprocessDriver.indicativeCountElements.
+                if (indicativeCountElementIds.contains(monitor.getElementId().getId())) {
+                    data = data.withIndicativeCounts();
+                }
                 records.add(new StepDataStore.ElementRecord(
                         monitor.getElementId(),
                         fingerprint,
-                        monitor.getCapturedElementData(errorReceiver, highlight)));
+                        data));
             }
         }
         // Commit the whole record - element IO plus the shared-scope snapshot - atomically, then signal that

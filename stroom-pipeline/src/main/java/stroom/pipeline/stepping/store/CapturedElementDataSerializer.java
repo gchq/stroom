@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
- * Binary framing for a {@link CapturedElementData} record in the store: three flags, the indicators (as
+ * Binary framing for a {@link CapturedElementData} record in the store: four flags, the indicators (as
  * JSON, since they are small and structured), and each IO side as a tagged, length-prefixed blob - the SAX
  * event bytes or the text bytes are written straight through, not JSON-escaped or base64'd.
  */
@@ -48,6 +48,7 @@ public final class CapturedElementDataSerializer {
             out.writeBoolean(data.formatInput());
             out.writeBoolean(data.formatOutput());
             out.writeBoolean(data.hasOutput());
+            out.writeBoolean(data.indicativeCounts());
             writeBlock(out, data.indicators() == null
                     ? null
                     : JsonUtil.writeValueAsBytes(data.indicators(), false));
@@ -64,13 +65,15 @@ public final class CapturedElementDataSerializer {
             final boolean formatInput = in.readBoolean();
             final boolean formatOutput = in.readBoolean();
             final boolean hasOutput = in.readBoolean();
+            final boolean indicativeCounts = in.readBoolean();
             final byte[] indicatorBytes = readBlock(in);
             final Indicators indicators = indicatorBytes == null
                     ? null
                     : JsonUtil.readValue(indicatorBytes, Indicators.class);
             final CapturedData input = readCapturedData(in);
             final CapturedData output = readCapturedData(in);
-            return new CapturedElementData(input, output, formatInput, formatOutput, hasOutput, indicators);
+            return new CapturedElementData(input, output, formatInput, formatOutput, hasOutput, indicativeCounts,
+                    indicators);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

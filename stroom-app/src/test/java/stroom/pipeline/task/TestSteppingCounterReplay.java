@@ -162,12 +162,86 @@ class TestSteppingCounterReplay extends TranslationTest {
             assertThat(eventIdOf(replayed, "replayed"))
                     .as("the replayed record keeps the EventId the sweep gave it, rather than restarting at 1")
                     .isEqualTo(sweptEventId);
+
+            // Both counts are EXACT - the sweep counted from the stream start and the replay restored its
+            // snapshot - so neither may carry the indicative marker. (The marker's negative control: if
+            // marking were unconditional it would show here.)
+            assertThat(swept.getStepData().getElementData(COUNTER_ELEMENT_ID).isIndicativeCounts())
+                    .as("swept counts are exact, not marked").isFalse();
+            assertThat(replayed.getStepData().getElementData(COUNTER_ELEMENT_ID).isIndicativeCounts())
+                    .as("restored-replay counts are exact, not marked").isFalse();
         } finally {
             if (last != null && last.getSessionUuid() != null) {
                 steppingService.terminateStepping(
                         base.copy().sessionUuid(last.getSessionUuid()).build());
             }
         }
+    }
+
+    /**
+     * The backbone case, where an exact count is <b>unknowable</b>: under the skeleton sweep only the parser
+     * runs during capture, so no counter snapshots exist, and a record materialised on demand mid-stream
+     * counts only itself - EventId 1 on a mid-stream record. The decided policy (stepping-design.md, open
+     * decisions) is not to guess and not to stay silent: serve the count the run produced, MARKED indicative.
+     * This pins both halves - the wrong-but-declared value, and the marker that declares it.
+     */
+    @Test
+    void aRecordMaterialisedOverABackboneIsMarkedIndicative() {
+        final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        final PipelineStepRequest base = PipelineStepRequest.builder()
+                .pipelineDoc(withIdEnrichment(pipelineDoc))
+                .criteria(new FindMetaCriteria(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, FEED)
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                .build())
+                        .build()))
+                .timeout(Long.MAX_VALUE)
+                .build();
+
+        // Skeleton capture, demand-shaped (eager would materialise from the stream start and be exact).
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(0));
+        SteppingResult refreshed = null;
+        try {
+            // Straight to a mid-stream record: the only below-boundary work ever done for this stream is
+            // this one record's materialisation, so the counter has genuinely never seen records 0..4.
+            final StepLocation firstLocation = firstLocationOf(base);
+            refreshed = steppingService.step(base.copy()
+                    .stepType(StepType.REFRESH)
+                    .stepLocation(new StepLocation(
+                            firstLocation.getMetaId(), firstLocation.getPartIndex(), MID_RECORD))
+                    .build());
+            assertThat(refreshed.isFoundRecord()).as("the materialised record resolved").isTrue();
+
+            assertThat(eventIdOf(refreshed, "materialised"))
+                    .as("the count reflects only this run - the honest wrong value, not a guess")
+                    .isEqualTo(1);
+            assertThat(refreshed.getStepData().getElementData(COUNTER_ELEMENT_ID).isIndicativeCounts())
+                    .as("and it is marked indicative rather than served silently")
+                    .isTrue();
+        } finally {
+            clearConfigValueMapper();
+            if (refreshed != null && refreshed.getSessionUuid() != null) {
+                steppingService.terminateStepping(
+                        base.copy().sessionUuid(refreshed.getSessionUuid()).build());
+            }
+        }
+    }
+
+    /**
+     * @return where the selection's first record lives (stream and part), discovered in a THROWAWAY session
+     * that is terminated before returning - so the session under test starts with a store that has never
+     * materialised anything below the boundary, which is what "never materialised" in the test means.
+     */
+    private StepLocation firstLocationOf(final PipelineStepRequest base) {
+        final SteppingResult first = steppingService.step(base.copy().stepType(StepType.FIRST).build());
+        assertThat(first.isFoundRecord()).isTrue();
+        steppingService.terminateStepping(base.copy().sessionUuid(first.getSessionUuid()).build());
+        return first.getFoundLocation();
     }
 
     private long eventIdOf(final SteppingResult result, final String what) {

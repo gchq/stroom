@@ -32,7 +32,30 @@ public record CapturedElementData(CapturedData input,
                                   boolean formatInput,
                                   boolean formatOutput,
                                   boolean hasOutput,
+                                  boolean indicativeCounts,
                                   Indicators indicators) {
+
+    /**
+     * Compatibility constructor for callers that predate the counters marker: counts are exact.
+     */
+    public CapturedElementData(final CapturedData input,
+                               final CapturedData output,
+                               final boolean formatInput,
+                               final boolean formatOutput,
+                               final boolean hasOutput,
+                               final Indicators indicators) {
+        this(input, output, formatInput, formatOutput, hasOutput, false, indicators);
+    }
+
+    /**
+     * This element's data, marked as carrying indicative rather than exact running counts - see
+     * {@code SteppingCounter} and {@code ReprocessDriver}: the run that produced it started mid-stream with
+     * no counter state to restore, so any count observable in the output (an {@code EventId}) reflects only
+     * the records that run processed, not the stream.
+     */
+    public CapturedElementData withIndicativeCounts() {
+        return new CapturedElementData(input, output, formatInput, formatOutput, hasOutput, true, indicators);
+    }
 
     /**
      * The input as text if it is a text side, else null. A convenience for callers that only deal in text;

@@ -523,6 +523,8 @@ on clean shutdown.
 | `TestElementFingerprinter` | Sensitivity and stability — a wrong fingerprint serves stale IO or never reuses. |
 | `TestFilteredStepAfterEdit` (stroom-app) | Filtered navigation after an edit, end to end: the windowed scan is entered (launch counter), lands on genuine matches for FORWARD **and** the awkward FIRST/LAST ends, with unfiltered controls and a no-re-sweep assertion. Its control found the filters-missing-from-the-sweep-key bug. |
 | `TestFilteredScanWindow` | The scan window's arithmetic (inclusive ends, clamping, direction reversal, frontier resume, null when dry) and that the size genuinely comes from `filteredScanWindow` - the config default equals the old constant, so only a test that varies it can tell wiring from residue. |
+| `TestSkeletonShadowDiff` (stroom-app) | The depth half of the shadow diff: a skeleton-swept generated stream serves byte-identical element IO to a synchronous whole-pipeline capture, for a head walk and for records materialised in isolation deep in the stream. Bounded coverage, logged. |
+| `TestSteppingCounterReplay` (stroom-app) | Both halves of the counters decision: a replay with a snapshot to restore keeps the swept `EventId` (and is not marked); a record materialised over a backbone - no snapshots ever written - serves the honest wrong count **marked indicative**. |
 | `TestSteppingContextLookup` (stroom-app) | Context reference data (`stroom:lookup` against the stream's own context child stream) survives a single-record replay. Negative control: nulling `ReprocessDriver`'s one `setInputStreamProvider` call fails exactly this. |
 | `TestSteppingCounterReplay` (stroom-app) | A replayed record keeps the `EventId` the sweep gave it. Negative control: disabling the restore fails `expected: 6L but was: 1L`. |
 | `TestSweepAndReplaySharingAStore` | A sweep and a replay writing the same store: holes in the shared state file and in a shared-fingerprint element file must not trip the in-order check, both writers stay readable, and a pure sweep still rejects out-of-order appends. |
@@ -1115,7 +1117,8 @@ starts - the discipline that caught every real bug so far.
    the parser; `TestSkeletonSweptStepping` runs the whole golden corpus with the flag on (eager threshold
    zero, so the corpus gates the demand-shaped path); the eager policy is measured at parity with the full
    sweep (see *The small-stream policy* above). Remaining from this stage: flipping the default on (a
-   roll-out/test-churn decision), the counters marker (below), and the caps decision.*
+   roll-out/test-churn decision) - the counters marker, the caps decision and the shadow-diff harness are
+   all closed; see the decisions below and the §9 test table.*
 5. **Demand shaping.** Prefetch windows around the user's position; adaptive window growth for scenario F if
    it proves to matter. *Acceptance: walking NEXT over a skeleton-swept stream costs store-reads, not
    replays, after the first.*
@@ -1133,23 +1136,38 @@ target has not actually been reached.
 
 #### Open decisions, to make before the stage that needs them
 
-- **Counters under the backbone - decided: accept and mark.** A record's `EventId` counts events in the
+- **Counters under the backbone - decided and built.** A record's `EventId` counts events in the
   *translation output* of every record before it, so for a record whose predecessors were never materialised
   it is not merely unstored - it is **unknowable** without doing the work the design exists to avoid.
   Deriving it from the record index is right only when every record yields exactly one event, i.e. wrong in
   general, and a plausible-but-wrong id on the field that identifies events is the worst failure mode here.
-  So: counts are exact wherever materialisation has been contiguous from record 0 (the capture/restore built
-  for this keeps working), and otherwise served with an *indicative* marker (R1: a documented divergence,
-  surfaced in the UI, not silent). No free lunch exists; pretending one might is why this was previously an
-  "open decision".
+  So: counts are exact wherever the producing run counted from the stream start or restored a snapshot that
+  carried counts (the capture/restore built for this keeps working), and otherwise served **marked**:
+  `ReprocessDriver.indicativeCountElements` decides per run - a materialisation is exact only if it starts at
+  the stream's true first record or the previous record's scope snapshot has a count to restore - and the
+  producing run stamps the flag into the stored chunk (`CapturedElementData.indicativeCounts`), so wherever
+  the record is later served from, the divergence travels with it onto the wire
+  (`SharedElementData.isIndicativeCounts`). Decided at capture, not reconstructed at serve time, because
+  exactness is a property of the run that produced the bytes - the `EventId` is *inside the stored output* -
+  and no amount of coverage arithmetic later can recover what the run did or did not restore. Pinned both
+  ways in `TestSteppingCounterReplay`: the backbone materialisation serves EventId 1 marked, the full-sweep
+  and restored-replay counts serve unmarked. The UI marker itself is still to do - the wire now carries the
+  truth for it to render.
 - **Eviction pinning - decided and built** (it was due before stage 3 widened concurrency): the retention LRU
   could evict a fingerprint still being written or read (§ scale scenarios, E). `StepDataStore.pin` returns a
   reference-counted `StorePin` over a set of `(element, fingerprint)` versions; the LRU evicts the eldest
   *unpinned* version and, if every candidate is pinned, exceeds its limit rather than deleting data in use.
   Producers pin for the length of their run (`StreamCaptureDriver`, `ReprocessDriver` - both ends, feed and
   target), and `SessionStepResolver` pins for the length of a scan.
-- **The caps** (with stage 4): backbone-only capture changes what `maxRecordsPerStream`/`maxBytesPerStream`
-  are protecting against; decide whether they scale with capture mode or stay one-size.
+- **The caps - decided: one size, because each cap protects a different thing and both still apply.**
+  `maxBytesPerStream` protects the node's disk, and the backbone's gain arrives *through* it, not around it:
+  a backbone writes one element's IO per record instead of every element's, so the same byte budget admits
+  roughly an order of magnitude more records - that IS the caps headroom, no scaling required.
+  `maxRecordsPerStream` protects the heap: every open segment file keeps an in-memory offset/extent entry
+  per record, and a backbone at a million records carries the same per-file index weight as a full sweep's
+  parser file - so weakening it "because backbones are cheap" would trade a disk saving for the exact heap
+  exposure the cap exists to prevent. A stream past the record cap stays uncapturable in either mode, and
+  says so.
 - **Below-boundary error indicators** (before stage 5 makes skeleton the default): "skip to error" on an
   element that has not been materialised has nothing to read; the windowed scan answers it, but the UX of
   "searching..." over a large stream wants deciding, not discovering.
@@ -1347,10 +1365,14 @@ behind turns out to be the thing worth avoiding, not the safe baseline to build 
 
 What survives from that earlier framing is how to *trust* it. Replaying a single record is not obviously
 equivalent to that record's slice of a full re-run — element-local state is the known divergence, and there
-may be others. So the validation is a **shadow-diff**: run the full re-run and the on-demand replay over the
-same stream and diff every record. (The counter divergence this once had to allow for is fixed - counts are
-captured and restored - so the diff can now demand equality.) That is what turns "it looked right in the UI"
-into evidence, and it should exist before the path is trusted, not after.
+may be others. So the validation is a **shadow-diff**: the full capture and the on-demand path over the same
+stream, diffed. **Built**, in two complementary halves: `TestSkeletonSweptStepping` holds skeleton serving to
+the old engine's recorded output across every feed and step type (breadth), and `TestSkeletonShadowDiff`
+diffs a skeleton-swept generated stream against a synchronous whole-pipeline capture at depth - a head walk
+plus records materialised in isolation a thousand records past anything else that ever ran below the
+boundary, byte-equal per element, with the bounded coverage logged rather than implied. Counter divergence
+is the one decided exception, and it is *marked*, not silent (`indicativeCounts`; restored-replay counts
+still diff equal, which `TestSteppingCounterReplay` demands).
 
 ### Storage format (before and after step 1)
 

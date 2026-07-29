@@ -67,7 +67,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 
 /**
@@ -291,6 +293,8 @@ public class ReprocessDriver {
                 // to continue a sequence, and the detector must not number them from zero.
                 controller.setRecordOrder(StepDataStore.RecordOrder.ON_DEMAND);
                 setDetectorBase(onDemandRange.firstRecord());
+                controller.setIndicativeCountElements(
+                        indicativeCountElements(sourceStore, onDemandRange));
             }
             entryElement.startProcessing();
             try {
@@ -393,6 +397,44 @@ public class ReprocessDriver {
             return new RecordRange(location.getPartIndex(), location.getRecordIndex(),
                     location.getRecordIndex());
         }
+    }
+
+    /**
+     * The counting elements whose counts this run cannot make exact, so their captured IO must be marked
+     * indicative rather than served as silently wrong.
+     * <p>
+     * A count is exact in two cases only. The run starts at the <b>true beginning of the stream</b> - first
+     * record of the first part - where a fresh element's zero is genuinely correct. Or the previous record's
+     * scope snapshot <b>carries a count to restore</b> ({@link #restoreCounts}), which only a run that itself
+     * counted from the stream start can have written. Anything else - above all a record materialised on
+     * demand over a backbone, whose snapshots exist but carry no counts because the counting elements never
+     * ran - produces a count that reflects only this run's records: a plausible number, wrong on exactly the
+     * field that identifies events. Records later in the same run stay consistent with the first (the count
+     * runs on within the run), so one determination covers the whole range.
+     */
+    private Set<String> indicativeCountElements(final StepDataStore sourceStore, final RecordRange range) {
+        final Set<String> counters = new HashSet<>();
+        for (final ElementMonitor monitor : controller.getMonitors()) {
+            if (monitor.getElement() instanceof SteppingCounter) {
+                counters.add(monitor.getElementId().getId());
+            }
+        }
+        if (counters.isEmpty()) {
+            return Set.of();
+        }
+        final List<Long> parts = sourceStore.getPartIndices();
+        final boolean atStreamStart = !parts.isEmpty()
+                && range.partIndex() == parts.getFirst()
+                && range.firstRecord() == sourceStore.getFirstRecordIndex(range.partIndex());
+        if (atStreamStart) {
+            return Set.of();
+        }
+        final Optional<RecordScopeState> previous = range.firstRecord() > 0
+                ? sourceStore.getRecordScopeState(new StepLocation(
+                        metaHolder.getMeta().getId(), range.partIndex(), range.firstRecord() - 1))
+                : Optional.empty();
+        counters.removeIf(id -> previous.map(state -> state.countFor(id).isPresent()).orElse(false));
+        return counters;
     }
 
     /**

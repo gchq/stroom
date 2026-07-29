@@ -239,7 +239,8 @@ public class SessionStepResolver {
                             Indicators.combine(indicators, existing.getIndicators()),
                             existing.isFormatInput(),
                             existing.isFormatOutput(),
-                            existing.isHasOutput()));
+                            existing.isHasOutput(),
+                            existing.isIndicativeCounts()));
         });
         return new SharedStepData(stepData.getSourceLocation(), merged);
     }

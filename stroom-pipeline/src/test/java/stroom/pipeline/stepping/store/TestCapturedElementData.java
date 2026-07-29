@@ -68,6 +68,30 @@ class TestCapturedElementData {
     }
 
     @Test
+    void indicativeCountsSurvivesTheStoreAndReachesTheWire() {
+        // The flag is decided at capture time (the producing run knows whether it could restore counts) but
+        // may be served much later from the store by a different step entirely - so it must round-trip the
+        // binary framing and come out on the wire form, or a marked record would quietly serve as exact.
+        final CapturedElementData marked = new CapturedElementData(
+                CapturedData.text("in"), CapturedData.text("out"), false, false, true, null)
+                .withIndicativeCounts();
+
+        final CapturedElementData roundTripped =
+                CapturedElementDataSerializer.fromBytes(CapturedElementDataSerializer.toBytes(marked));
+        assertThat(roundTripped.indicativeCounts()).as("survives the binary framing").isTrue();
+        assertThat(CapturedElementDataMapper.toShared(roundTripped).isIndicativeCounts())
+                .as("and reaches the wire form").isTrue();
+
+        // NEGATIVE CONTROL: the unmarked case stays unmarked - a flag that reads back true either way
+        // would mark every record and the marker would mean nothing.
+        final CapturedElementData unmarked = new CapturedElementData(
+                CapturedData.text("in"), CapturedData.text("out"), false, false, true, null);
+        assertThat(CapturedElementDataSerializer.fromBytes(
+                CapturedElementDataSerializer.toBytes(unmarked)).indicativeCounts()).isFalse();
+        assertThat(CapturedElementDataMapper.toShared(unmarked).isIndicativeCounts()).isFalse();
+    }
+
+    @Test
     void mapperRendersSaxOutputToByteIdenticalDisplayText() throws Exception {
         final byte[] eventBytes = saxEventBytes(XML);
 
