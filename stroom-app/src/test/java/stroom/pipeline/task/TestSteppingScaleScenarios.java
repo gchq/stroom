@@ -261,6 +261,70 @@ class TestSteppingScaleScenarios extends TranslationTest {
         }
     }
 
+    /**
+     * A filtered scan whose match lies beyond the first window ({@code filteredScanWindow} default 50): the
+     * probe hits only record-no 100 (index 99), so the scan must materialise window 1, find nothing, move
+     * its frontier and materialise window 2 - within one long-poll, driven by the resolver loop.
+     * <p>
+     * This could not work under the step-keyed sweep cache: every loop iteration got the <i>completed</i>
+     * first-window sweep back from the cache, read "fully captured, no match" and gave up - the scan could
+     * never advance past window one. The store-as-cache model fixes it structurally: each iteration
+     * recomputes its window from the frontier, the finished window is satisfied from the store, and only
+     * the next one launches. The launch counter pins the mechanism: at least two materialisations.
+     */
+    @Test
+    void aFilteredScanAdvancesAcrossWindows() {
+        final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
+        final PipelineStepRequest base = requestFor(metaId);
+        final String probeXslt = """
+                <?xml version="1.0" encoding="UTF-8" ?>
+                <xsl:stylesheet version="2.0"
+                                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                                xmlns:stroom="stroom">
+                  <xsl:template match="/">
+                    <Probe>
+                      <xsl:if test="number(stroom:record-no()) = 100">
+                        <Hit><xsl:value-of select="stroom:record-no()"/></Hit>
+                      </xsl:if>
+                    </Probe>
+                  </xsl:template>
+                </xsl:stylesheet>
+                """;
+
+        String sessionUuid = null;
+        try {
+            final SteppingResult last = steppingService.step(base.copy().stepType(StepType.LAST).build());
+            sessionUuid = last.getSessionUuid();
+            assertThat(last.isFoundRecord()).as("LAST completed the sweep").isTrue();
+            final StepLocation record0 =
+                    new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
+
+            final long onDemandBefore = steppingService.getOnDemandLaunchCount();
+
+            final SteppingResult found = steppingService.step(base.copy()
+                    .stepType(StepType.FORWARD)
+                    .stepLocation(record0)
+                    .sessionUuid(sessionUuid)
+                    .code(Map.of(EDITED_ELEMENT_ID, probeXslt))
+                    .stepFilterMap(Map.of(EDITED_ELEMENT_ID, new stroom.pipeline.shared.stepping
+                            .SteppingFilterSettings(null, stroom.util.shared.OutputState.NOT_EMPTY,
+                            java.util.List.of())))
+                    .build());
+            sessionUuid = found.getSessionUuid();
+
+            assertThat(found.isFoundRecord()).as("the scan found the match beyond the first window").isTrue();
+            assertThat(found.getFoundLocation().getMetaId())
+                    .as("in this stream, not by crossing into another").isEqualTo(metaId);
+            assertThat(found.getFoundLocation().getRecordIndex())
+                    .as("record-no 100 is index 99 - past the 50-record first window").isEqualTo(99);
+            assertThat(steppingService.getOnDemandLaunchCount() - onDemandBefore)
+                    .as("which took at least two windows of materialisation")
+                    .isGreaterThanOrEqualTo(2);
+        } finally {
+            terminate(base, sessionUuid);
+        }
+    }
+
     private PipelineStepRequest requestFor(final long metaId) {
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);

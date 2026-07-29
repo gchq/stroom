@@ -16,22 +16,21 @@
 
 package stroom.pipeline.stepping.session;
 
-import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A durable stepping session scoped to one pipeline + stream selection. It owns the ordered list of
@@ -60,6 +59,10 @@ public class SteppingSession {
     private final int maxSweptStreams;
 
     private final Map<SweepKey, StreamSweep> sweeps = new HashMap<>();
+    // In-flight materialisations by (stream, signature). A registry of RUNNING producers, not a cache:
+    // entries leave when their producer finishes, because the store is the only cache of materialised
+    // records. Only ever touched under the lifecycle lock.
+    private final Map<SweepKey, List<StreamSweep>> running = new HashMap<>();
     private volatile Instant lastAccessTime = Instant.now();
 
     // Guards sweep creation against teardown. StepDataStoreManager requires that a store is never created
@@ -100,28 +103,16 @@ public class SteppingSession {
             checkNotClosed();
             lastAccessTime = Instant.now();
 
-            // An on-demand sweep answers ONE step. It is therefore cached against the step that produced
-            // it - the type plus the reference location - rather than against a record index: for FORWARD or
-            // LAST the record the step is about is not the one it names, and keying by the named record
-            // would hand a later step a sweep holding something else entirely.
-            //
-            // The filters are part of that identity. An unfiltered FORWARD materialises the single next
-            // record; a filtered one has to scan a window looking for a match. Same type, same location, but
-            // they need different records materialised - so without the filters in the key, applying a filter
-            // and stepping again reuses the unfiltered sweep, the scan finds only the one record it holds, and
-            // the step reports "no matching record" on a stream that has one.
-            final String stepKey = request.getStepType() + ":" + request.getStepLocation()
-                                   + ":" + filterSignature(request);
-            final SweepKey streamKey = new SweepKey(metaId, fingerprints.getSignature(), null);
-            final StreamSweep forStep =
-                    sweeps.get(new SweepKey(metaId, fingerprints.getSignature(), stepKey));
-            if (forStep != null) {
-                return forStep;
-            }
+            final SweepKey streamKey = new SweepKey(metaId, fingerprints.getSignature());
             final StreamSweep existing = sweeps.get(streamKey);
             if (existing != null) {
                 return existing;
             }
+            // A finished materialisation leaves the registry: its results live in the store, which is the
+            // only cache of them - the launcher answers a repeated demand from the store's coverage, so
+            // holding a dead producer here would add nothing and keep its error (if any) alive.
+            running.values().forEach(list -> list.removeIf(StreamSweep::isFullyCaptured));
+            running.values().removeIf(List::isEmpty);
 
             // This stream is wanted under different code, so a sweep of it still running under the old code
             // is now pointless - nothing will read its output. Abandon it rather than let it finish reading
@@ -131,6 +122,18 @@ public class SteppingSession {
             sweeps.entrySet().removeIf(entry -> {
                 if (entry.getKey().metaId() == metaId && !entry.getValue().isFullyCaptured()) {
                     onTerminateSweep.accept(entry.getValue());
+                    return true;
+                }
+                return false;
+            });
+            // Same rule for in-flight materialisations - but scoped to the signature explicitly. A full
+            // sweep under the current signature never reaches this line (the cache hit returned it above);
+            // a materialisation always gets here, because it is never cached, so without the signature guard
+            // this would abandon the very producer the step is about to attach to.
+            running.entrySet().removeIf(entry -> {
+                if (entry.getKey().metaId() == metaId
+                    && !entry.getKey().signature().equals(fingerprints.getSignature())) {
+                    entry.getValue().forEach(onTerminateSweep);
                     return true;
                 }
                 return false;
@@ -148,71 +151,34 @@ public class SteppingSession {
             // in-flight prior sweep was dropped by the removeIf above, so it does not count either.
             final boolean priorCompleteCapture = sweeps.values().stream()
                     .anyMatch(prior -> prior.getMetaId() == metaId && prior.isSuccessfullyCaptured());
-            final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorCompleteCapture);
-            // An on-demand sweep is NOT cached. It holds only the record the step asked for, so caching it
-            // under the signature would make the next step at a DIFFERENT record find a "complete" sweep
-            // that does not contain what is wanted - and the resolver reads that as "no such record, cross
-            // into the next stream" rather than "go and materialise it". Leaving it uncached means each step
-            // materialises the record it is about; a record already materialised is skipped by putRecord, so
-            // repeating a step is cheap.
-            // Cache an on-demand sweep against the record it materialised, not against the signature alone.
-            // Keyed by signature only, the next step at a DIFFERENT record would find a "complete" sweep
-            // that does not hold what is wanted, and the resolver reads that as "no such record, cross into
-            // the next stream". Keyed by record, that step simply misses and materialises its own.
-            sweeps.put(sweep.isOnDemand()
-                    ? new SweepKey(metaId, fingerprints.getSignature(), stepKey)
-                    : streamKey, sweep);
+            final StreamSweep sweep = launcher.launch(metaId, request, fingerprints, priorCompleteCapture,
+                    List.copyOf(running.getOrDefault(streamKey, List.of())));
+            // The two producer kinds part ways here. A sweep that captures the stream (full sweep or
+            // whole-stream reprocess) is cached by signature - durable, revert-friendly, exactly as before.
+            // A materialisation has NO identity cache at all: its results are in the store, which answers a
+            // repeated demand by coverage, so all the session tracks is that it is RUNNING - the launcher
+            // uses that to attach a step to a producer already making its records rather than double-launch.
+            if (sweep.isOnDemand()) {
+                if (!sweep.isFullyCaptured()) {
+                    running.computeIfAbsent(streamKey, k -> new ArrayList<>()).add(sweep);
+                }
+            } else {
+                sweeps.put(streamKey, sweep);
+            }
             return sweep;
         }
     }
 
-    /**
-     * A stable identity for the filters a step is taken under, for use in the on-demand sweep key.
-     * <p>
-     * Deliberately built field by field rather than from {@link SteppingFilterSettings#toString()}: an
-     * {@link XPathFilter}'s {@code toString} includes its {@code uniqueValues}, which are accumulated <em>as
-     * the step runs</em>. A key containing those would change under its own entry, so the sweep just cached
-     * could never be found again.
-     * <p>
-     * Only elements with an effectively applied filter contribute, so an untouched or half-configured filter
-     * pane does not invalidate a sweep. Sorted by element id so the map's iteration order cannot matter.
-     */
-    private static String filterSignature(final PipelineStepRequest request) {
-        final Map<String, SteppingFilterSettings> filterMap = request.getStepFilterMap();
-        if (filterMap == null || filterMap.isEmpty()) {
-            return "";
-        }
-        return filterMap.entrySet().stream()
-                .filter(entry -> entry.getValue() != null && entry.getValue().isFilterApplied())
-                .sorted(Map.Entry.comparingByKey())
-                .map(entry -> entry.getKey() + "=" + describe(entry.getValue()))
-                .collect(Collectors.joining(","));
-    }
-
-    private static String describe(final SteppingFilterSettings settings) {
-        final StringBuilder sb = new StringBuilder()
-                .append(settings.getSkipToSeverity())
-                .append('/')
-                .append(settings.getSkipToOutput());
-        if (settings.getFilters() != null) {
-            for (final XPathFilter filter : settings.getFilters()) {
-                sb.append('/')
-                        .append(filter.getPath())
-                        .append('|').append(filter.getMatchType())
-                        .append('|').append(filter.getSearchType())
-                        .append('|').append(filter.getValue())
-                        .append('|').append(filter.isIgnoreCase());
-            }
-        }
-        return sb.toString();
-    }
-
     private boolean isStreamSwept(final long metaId) {
-        return sweeps.keySet().stream().anyMatch(key -> key.metaId() == metaId);
+        return sweeps.keySet().stream().anyMatch(key -> key.metaId() == metaId)
+               || running.keySet().stream().anyMatch(key -> key.metaId() == metaId);
     }
 
     private long countSweptStreams() {
-        return sweeps.keySet().stream().map(SweepKey::metaId).distinct().count();
+        return Stream.concat(sweeps.keySet().stream(), running.keySet().stream())
+                .map(SweepKey::metaId)
+                .distinct()
+                .count();
     }
 
     private void checkNotClosed() {
@@ -245,7 +211,9 @@ public class SteppingSession {
 
     public Collection<StreamSweep> getActiveSweeps() {
         synchronized (lifecycleLock) {
-            return List.copyOf(sweeps.values());
+            final List<StreamSweep> all = new ArrayList<>(sweeps.values());
+            running.values().forEach(all::addAll);
+            return all;
         }
     }
 
@@ -313,7 +281,7 @@ public class SteppingSession {
      * record index for one that materialised a single record - those are only interchangeable for the record
      * they actually hold.
      */
-    private record SweepKey(long metaId, String signature, String onDemandStep) {
+    private record SweepKey(long metaId, String signature) {
 
     }
 
@@ -328,9 +296,15 @@ public class SteppingSession {
     @FunctionalInterface
     public interface SweepLauncher {
 
+        /**
+         * @param running the materialisations currently in flight for this stream under these fingerprints,
+         *                so the launcher can attach a step to a producer already making the records it wants
+         *                instead of launching a duplicate.
+         */
         StreamSweep launch(long metaId,
                            PipelineStepRequest request,
                            ElementFingerprints fingerprints,
-                           boolean priorCompleteCapture);
+                           boolean priorCompleteCapture,
+                           List<StreamSweep> running);
     }
 }

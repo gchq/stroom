@@ -41,6 +41,7 @@ public class StreamSweep {
     private final long metaId;
     private final StepDataStore store;
     private final CaptureWatermark watermark = new CaptureWatermark();
+    private volatile ReprocessDriver.RecordRange demand;
 
     // Non-null when this sweep materialises individual records of one element on demand rather than
     // capturing the stream. Such a sweep holds only the records the user has actually visited, so what it
@@ -83,6 +84,19 @@ public class StreamSweep {
      */
     public void setOnDemand(final String elementId) {
         this.onDemandElementId = elementId;
+    }
+
+    /**
+     * The records an on-demand materialisation was launched to produce. What lets a second step attach to a
+     * producer already making the records it wants instead of double-launching - the store cannot answer
+     * that, because the records are precisely the ones not written yet.
+     */
+    public void setDemand(final ReprocessDriver.RecordRange demand) {
+        this.demand = demand;
+    }
+
+    public ReprocessDriver.RecordRange getDemand() {
+        return demand;
     }
 
     public boolean isOnDemand() {

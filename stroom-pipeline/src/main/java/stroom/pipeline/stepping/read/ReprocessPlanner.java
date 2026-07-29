@@ -63,9 +63,18 @@ public class ReprocessPlanner {
                          final ElementFingerprints current,
                          final StagePlanner.RecordSpan span) {
         final StagePlan plan = stagePlanner.plan(elements, store, current, span);
-        if (plan.fullRecapture() || plan.reuse().isEmpty() || plan.reprocess().isEmpty()) {
-            // First sweep, boundary change, or nothing to reprocess - capture the whole stream from source.
+        if (plan.fullRecapture() || plan.reuse().isEmpty()) {
+            // First sweep or boundary change - capture the whole stream from source.
             return Decision.full();
+        }
+        if (plan.reprocess().isEmpty()) {
+            // Everything covers what was asked. For a whole-stream plan that means a re-sweep adds nothing
+            // but is also all we can offer (the old behaviour); for a span it means the demand is ALREADY
+            // SATISFIED - the records were materialised by an earlier step - and launching anything, least
+            // of all a full sweep, would be pure waste. This distinction matters because a resolver loop
+            // re-plans after its materialisation lands, and that second plan always finds nothing left to
+            // do.
+            return span != null ? Decision.alreadySatisfied() : Decision.full();
         }
 
         // The reprocess set must have exactly one entry into it: a single element whose one upstream neighbour
@@ -92,14 +101,22 @@ public class ReprocessPlanner {
      * Either a full sweep, or a reprocess of {@code startElementId} fed from {@code feedElementId}'s stored
      * output. When {@link #fullSweep()} is true the element ids are null.
      */
-    public record Decision(boolean fullSweep, String startElementId, String feedElementId) {
+    public record Decision(boolean fullSweep, boolean satisfied, String startElementId, String feedElementId) {
 
         public static Decision full() {
-            return new Decision(true, null, null);
+            return new Decision(true, false, null, null);
+        }
+
+        /**
+         * The demanded records are already in the store under every element's current fingerprint - nothing
+         * to launch at all.
+         */
+        public static Decision alreadySatisfied() {
+            return new Decision(false, true, null, null);
         }
 
         public static Decision reprocess(final String startElementId, final String feedElementId) {
-            return new Decision(false, startElementId, feedElementId);
+            return new Decision(false, false, startElementId, feedElementId);
         }
     }
 }

@@ -350,8 +350,9 @@ public class SteppingService {
         return new SteppingSession(
                 sessionId,
                 streamIds,
-                (metaId, sweepRequest, sweepFingerprints, priorCompleteCapture) ->
-                        launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorCompleteCapture),
+                (metaId, sweepRequest, sweepFingerprints, priorCompleteCapture, running) ->
+                        launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorCompleteCapture,
+                                running),
                 this::closeSession,
                 this::abandonSweep,
                 steppingConfig.getMaxSweptStreamsPerSession());
@@ -581,7 +582,8 @@ public class SteppingService {
                                   final PipelineStepRequest request,
                                   final long metaId,
                                   final ElementFingerprints fingerprints,
-                                  final boolean priorCompleteCapture) {
+                                  final boolean priorCompleteCapture,
+                                  final List<StreamSweep> running) {
         // What must the feed cover? A whole-stream reprocess (span == null) still requires a prior COMPLETE,
         // error-free capture: hasCompleteElement measures against the store's own extent, so without the
         // completion gate a capture truncated by an error would count as "complete" and a reprocess from it
@@ -599,6 +601,14 @@ public class SteppingService {
                 final Graph graph = SteppingGraphBuilder.build(pipelineData, capturedElementIds);
                 final Decision decision =
                         reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints, span);
+                if (decision.satisfied()) {
+                    // Everything the step demands is already in the store - materialised by an earlier step
+                    // or a previous loop iteration of this one. Launching anything would be waste; the
+                    // resolver just needs a sweep signalling the records so it navigates them as usual.
+                    final StepLocation ref = request.getStepLocation();
+                    return signalledSweep(metaId, store, new RecordRange(
+                            ref.getPartIndex(), ref.getRecordIndex(), ref.getRecordIndex()));
+                }
                 if (!decision.fullSweep()) {
                     final RecordRange range =
                             onDemandRangeFor(request, graph, decision, store, fingerprints, metaId);
@@ -610,14 +620,89 @@ public class SteppingService {
                         fullSweepLaunches.incrementAndGet();
                         return launchSweep(sessionId, request, metaId, fingerprints);
                     }
+                    if (range != null) {
+                        // The store is the cache. A demand whose records the edited element already holds is
+                        // answered without constructing a pipeline at all; a demand a running producer is
+                        // already making attaches to that producer rather than double-launching. Only the
+                        // gap is ever launched. (This is also what lets a windowed scan advance across
+                        // polls: each poll recomputes its window from the frontier, the finished window is
+                        // satisfied from the store, and the next one launches.)
+                        final StreamSweep satisfied =
+                                satisfiedFromStore(metaId, store, decision.startElementId(),
+                                        fingerprints, range);
+                        if (satisfied != null) {
+                            return satisfied;
+                        }
+                        for (final StreamSweep producer : running) {
+                            if (producer.isOnDemand() && covers(producer.getDemand(), range)) {
+                                return producer;
+                            }
+                        }
+                    }
                     reprocessLaunches.incrementAndGet();
-                    return launchReprocess(request, metaId, decision.startElementId(),
+                    final StreamSweep sweep = launchReprocess(request, metaId, decision.startElementId(),
                             decision.feedElementId(), store, fingerprints, range);
+                    sweep.setDemand(range);
+                    return sweep;
                 }
             }
         }
         fullSweepLaunches.incrementAndGet();
         return launchSweep(sessionId, request, metaId, fingerprints);
+    }
+
+    /**
+     * A sweep that is already answered: every record of the demand is held by the element the plan would
+     * have re-run, so there is nothing to launch. The records were committed atomically with all their
+     * sibling elements' IO ({@code putRecord} is all-or-nothing per record), so the one element holding a
+     * record means the whole materialisation of that record is present. The returned sweep just signals the
+     * demanded records into its watermark so the resolver navigates them exactly as it would a fresh
+     * materialisation's.
+     */
+    private StreamSweep satisfiedFromStore(final long metaId,
+                                           final StepDataStore store,
+                                           final String startElementId,
+                                           final ElementFingerprints fingerprints,
+                                           final RecordRange range) {
+        final String fingerprint = fingerprints.getCumulativeFingerprint(startElementId);
+        if (fingerprint == null) {
+            return null;
+        }
+        final Coverage held = store.elementCoverage(new ElementId(startElementId), fingerprint, () -> true);
+        for (long record = range.firstRecord(); record <= range.lastRecord(); record++) {
+            if (!held.holds(range.partIndex(), record)) {
+                return null;
+            }
+        }
+        //
+        return signalledSweep(metaId, store, range);
+    }
+
+    /**
+     * A completed on-demand sweep over records that are already in the store: nothing runs, the records are
+     * just signalled into the watermark so the resolver navigates them exactly as it would a fresh
+     * materialisation's.
+     */
+    private StreamSweep signalledSweep(final long metaId, final StepDataStore store, final RecordRange range) {
+        final StreamSweep sweep = new StreamSweep(metaId, store);
+        sweep.setOnDemand("(already materialised)");
+        sweep.setDemand(range);
+        for (long record = range.firstRecord(); record <= range.lastRecord(); record++) {
+            sweep.recordCaptured(new StepLocation(metaId, range.partIndex(), record));
+        }
+        sweep.markFullyCaptured();
+        return sweep;
+    }
+
+    /**
+     * @return true if a producer's demand contains every record of the asked range - same part, asked range
+     * within the demanded one.
+     */
+    private boolean covers(final RecordRange demand, final RecordRange asked) {
+        return demand != null
+               && demand.partIndex() == asked.partIndex()
+               && demand.firstRecord() <= asked.firstRecord()
+               && demand.lastRecord() >= asked.lastRecord();
     }
 
     /**
