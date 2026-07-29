@@ -38,7 +38,13 @@ class TestSkeletonSweptStepping extends TestFullTranslationTaskAndStepping {
 
     @BeforeEach
     void enableSkeletonSweep() {
-        setConfigValueMapper(SteppingConfig.class, config -> config.withSkeletonSweep(true));
+        // Eager threshold zero: the corpus streams are all small, and letting them go eager would reduce
+        // this class to one whole-stream reprocess per feed - the DEMAND-SHAPED path (per-record and
+        // windowed materialisation, cross-part navigation over sparse coverage) is the hard part and the
+        // one this corpus run exists to gate. Eager parity with the full sweep is pinned separately
+        // (TestReprocessFromStore byte-identity, and the small-stream scale scenario's counters).
+        setConfigValueMapper(SteppingConfig.class,
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(0));
     }
 
     @AfterEach

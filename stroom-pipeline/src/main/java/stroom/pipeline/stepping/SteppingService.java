@@ -668,7 +668,7 @@ public class SteppingService {
                             priorSweeps);
                 }
                 if (!decision.fullSweep()) {
-                    final RecordRange range = onDemandRangeFor(request, graph, decision, store, fingerprints,
+                    RecordRange range = onDemandRangeFor(request, graph, decision, store, fingerprints,
                             metaId, priorCompleteCapture);
                     // A plan made against a span is only good for materialising that span. If the range
                     // computation declined (e.g. the step turned out to need whole-stream work), a
@@ -677,6 +677,19 @@ public class SteppingService {
                     if (span != null && range == null) {
                         fullSweepLaunches.incrementAndGet();
                         return launchSweep(sessionId, request, metaId, fingerprints);
+                    }
+                    // The small-stream policy: a demand on a skeleton-swept stream whose extent is small is
+                    // promoted to the whole extent - one reprocess, roughly what the whole-pipeline sweep it
+                    // replaced would have cost, and every later step is a store read. Only once the backbone
+                    // has COMPLETED (span == null; a whole-stream reprocess from a partial feed would serve a
+                    // truncated stream), and only while the code is still exactly what that backbone ran
+                    // under - an edit changes the signature and is never promoted, whatever the stream size,
+                    // because the per-record post-edit refresh is the inner loop this design exists to keep
+                    // fast.
+                    if (range != null && span == null
+                        && shouldMaterialiseEagerly(store, fingerprints, priorSweeps)) {
+                        LOGGER.debug(() -> "launchFor() - small stream, materialising the whole extent");
+                        range = null;
                     }
                     if (range != null) {
                         // The store is the cache. A demand whose records the edited element already holds is
@@ -728,6 +741,36 @@ public class SteppingService {
         }
         fullSweepLaunches.incrementAndGet();
         return launchSweep(sessionId, request, metaId, fingerprints);
+    }
+
+    /**
+     * Materialise the whole stream now rather than the demanded records?
+     * <p>
+     * Yes when a backbone of this stream has completed, the request's code is still <b>exactly what that
+     * backbone captured under</b> (same fingerprint signature), and the extent - known, because the backbone
+     * finished - is small enough that doing it all costs no more than the whole-pipeline sweep the backbone
+     * replaced. The signature test is what protects the inner loop: an edit changes the signature, so an
+     * edit's materialisation is never promoted, whatever the stream size. Records already materialised (a
+     * step served behind the backbone's frontier while it ran) are skipped by the store's idempotent writes,
+     * so promotion never redoes them.
+     */
+    private boolean shouldMaterialiseEagerly(final StepDataStore store,
+                                             final ElementFingerprints fingerprints,
+                                             final List<StreamSweep> priorSweeps) {
+        final boolean unEditedBackboneComplete = priorSweeps.stream()
+                .anyMatch(prior -> prior.getCacheKey() != null
+                                   && prior.isSuccessfullyCaptured()
+                                   && prior.getFingerprints() != null
+                                   && prior.getFingerprints().getSignature()
+                                           .equals(fingerprints.getSignature()));
+        if (!unEditedBackboneComplete) {
+            return false;
+        }
+        long totalRecords = 0;
+        for (final long partIndex : store.getPartIndices()) {
+            totalRecords += store.getRecordCount(partIndex);
+        }
+        return totalRecords <= steppingConfigProvider.get().getEagerMaterialisationRecords();
     }
 
     /**
@@ -1038,6 +1081,15 @@ public class SteppingService {
                 securityContext.useAsReadResult(() ->
                         metaService.find(criteria).getValues().stream()
                                 .map(Meta::getId)
+                                // The criteria carry no sort, so find()'s order is whatever the database
+                                // happens to produce - which can differ from one query to the next under
+                                // load. This list is load-bearing twice over: it defines what FIRST/LAST
+                                // mean and which stream a step crosses into, and the session registry
+                                // compares it as a LIST to decide whether a session still matches its
+                                // selection - an order flip would tear down a session mid-walk and lose
+                                // every capture in it. Sort by id: creation order, stable, and what the
+                                // unsorted query returned in practice when the golden corpus was recorded.
+                                .sorted()
                                 .toList()));
     }
 

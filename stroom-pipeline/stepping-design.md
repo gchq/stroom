@@ -913,9 +913,28 @@ form. Pinned both ways in `TestStoreStepResolver`.
   the obvious mitigation is to materialise a window around the visited record — again the machinery the
   filtered scan already has.
 
-**Likely policy.** Not a user-visible mode. Skeleton-sweep by default and prefetch a window around wherever
-the user is; full-sweep only where the stream is small enough that capturing everything is cheaper than the
-replays that would otherwise follow. That threshold wants measuring rather than guessing.
+**The small-stream policy (built).** Under the skeleton sweep, a stream whose extent is at or under
+`stepping.eagerMaterialisationRecords` (default 5,000) is materialised in full on the first demand after the
+backbone completes - one whole-extent reprocess, and every later step is a store read. Three properties earn
+their keep:
+
+- *The extent is known.* Record count cannot be known before parsing, so no pre-launch threshold on it could
+  work - but the policy fires after the backbone, which is the extent authority. No metadata lookup, no
+  guessing from bytes.
+- *The gate is the backbone's fingerprint signature*, so only the un-edited code is ever promoted. An edit
+  changes the signature and stays per-record whatever the stream size - the post-edit refresh is the inner
+  loop, and eagerly re-running a whole stream on every edit would be the old engine back again.
+- *It costs what the full sweep cost.* Measured (`measureTheEagerFirstPass`, 4,000 records, 2026-07-29):
+  LAST via full sweep 3,840ms; LAST via backbone + eager materialisation 3,193ms. The split is free - same
+  parse, same transforms, meeting at the store - which is what lets "small stream" be policy on one capture
+  shape rather than a second architecture. The default threshold is set where the eager pass costs a few
+  seconds (~1ms per record of below-boundary work on the sample pipeline).
+
+A step served behind the running backbone's frontier (scenario C machinery) is not delayed by any of this -
+promotion applies only once the backbone has completed, and records materialised early are skipped by the
+store's idempotent writes. Still to decide: turning `skeletonSweep` on by default, which is a test-churn and
+roll-out decision rather than an engineering one - every counter-asserting test encodes the full-sweep-first
+launch pattern.
 
 **Measured** (see `TestSteppingScenarioBenchmarks.measureTheSkeletonSweepCeiling`, 4,000 records, sample
 event pipeline): the full-pipeline sweep took 3,829ms and the boundary-only truncation 397ms, so ~90% of
@@ -1091,11 +1110,12 @@ starts - the discipline that caught every real bug so far.
 4. **The backbone as a launch mode.** The boundary-truncated pipeline as a first-class capture, plus the
    small-stream policy threshold. *Acceptance: `measureTheSkeletonSweepCeiling`'s boundary time becomes the
    real first-pass cost for a large stream; a golden-corpus run over a skeleton-swept stream still matches,
-   record for record, for every step type.* **The capture mode is done, behind `stepping.skeletonSweep`
-   (default off)**: the existing `create(..., stopAfter)` head build truncates at the parser, and
-   `TestSkeletonSweptStepping` runs the whole golden corpus with the flag on. Remaining from this stage: the
-   launch **policy** (on by default above a measured stream-size threshold), the counters marker (below), and
-   the caps decision.*
+   record for record, for every step type.* **The capture mode and the small-stream policy are done, behind
+   `stepping.skeletonSweep` (default off)**: the existing `create(..., stopAfter)` head build truncates at
+   the parser; `TestSkeletonSweptStepping` runs the whole golden corpus with the flag on (eager threshold
+   zero, so the corpus gates the demand-shaped path); the eager policy is measured at parity with the full
+   sweep (see *The small-stream policy* above). Remaining from this stage: flipping the default on (a
+   roll-out/test-churn decision), the counters marker (below), and the caps decision.*
 5. **Demand shaping.** Prefetch windows around the user's position; adaptive window growth for scenario F if
    it proves to matter. *Acceptance: walking NEXT over a skeleton-swept stream costs store-reads, not
    replays, after the first.*

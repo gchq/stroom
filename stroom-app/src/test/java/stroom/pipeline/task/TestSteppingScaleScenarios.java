@@ -410,8 +410,11 @@ class TestSteppingScaleScenarios extends TranslationTest {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final PipelineStepRequest base = requestFor(metaId);
 
+        // Threshold below the stream size: this is the LARGE-stream shape, where cost must follow what the
+        // user looks at - per-record materialisation, never the whole extent. (Its small-stream sibling
+        // below is the negative control: same steps, threshold above the size, one eager pass instead.)
         setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
-                config -> config.withSkeletonSweep(true));
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(100));
         String sessionUuid = null;
         try {
             final long backbones = steppingService.getBackboneLaunchCount();
@@ -442,6 +445,78 @@ class TestSteppingScaleScenarios extends TranslationTest {
             assertThat(steppingService.getOnDemandLaunchCount())
                     .as("each visited record was materialised below the boundary")
                     .isGreaterThanOrEqualTo(onDemand + 2);
+        } finally {
+            clearConfigValueMapper();
+            terminate(base, sessionUuid);
+        }
+    }
+
+    /**
+     * The small-stream policy: once the backbone of a stream at or under the eager threshold has completed,
+     * the next demand under the same (un-edited) code is promoted to the whole extent - one reprocess,
+     * roughly the cost of the full sweep it replaced - and every later step is a store read, launching
+     * nothing. The gate is the backbone's fingerprint signature, so an EDIT is never promoted however small
+     * the stream: the post-edit refresh stays per-record, the inner loop this whole design exists to keep
+     * fast.
+     * <p>
+     * Starts with LAST because LAST deterministically waits for the backbone to complete - a FIRST would be
+     * served per-record behind the still-running backbone's frontier (scenario C machinery, correct but
+     * racy for a counter test).
+     */
+    @Test
+    void aSmallSkeletonStreamIsMaterialisedEagerlyExactlyOnce() {
+        final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
+        final PipelineStepRequest base = requestFor(metaId);
+        final String xsltText = xsltTextFor(EDITED_ELEMENT_ID);
+
+        // Threshold at the stream size: the 4,000-record stream counts as small.
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(RECORD_COUNT));
+        String sessionUuid = null;
+        try {
+            final long backbones = steppingService.getBackboneLaunchCount();
+            final long fullSweeps = steppingService.getFullSweepLaunchCount();
+            final long reprocesses = steppingService.getReprocessLaunchCount();
+            final long onDemand = steppingService.getOnDemandLaunchCount();
+
+            final SteppingResult last = steppingService.step(base.copy().stepType(StepType.LAST).build());
+            sessionUuid = last.getSessionUuid();
+            assertThat(last.isFoundRecord()).as("LAST resolved").isTrue();
+            assertThat(last.getFoundLocation().getRecordIndex()).isEqualTo(RECORD_COUNT - 1);
+
+            // Walk back a few records: every one must be a store read - no further launches of any kind.
+            SteppingResult stepped = last;
+            for (int i = 0; i < 3; i++) {
+                stepped = steppingService.step(base.copy()
+                        .stepType(StepType.BACKWARD)
+                        .stepLocation(stepped.getFoundLocation())
+                        .sessionUuid(sessionUuid)
+                        .build());
+                sessionUuid = stepped.getSessionUuid();
+                assertThat(stepped.isFoundRecord()).isTrue();
+            }
+
+            assertThat(steppingService.getBackboneLaunchCount()).isEqualTo(backbones + 1);
+            assertThat(steppingService.getReprocessLaunchCount())
+                    .as("one eager whole-extent materialisation").isEqualTo(reprocesses + 1);
+            assertThat(steppingService.getOnDemandLaunchCount())
+                    .as("and nothing per-record").isEqualTo(onDemand);
+            assertThat(steppingService.getFullSweepLaunchCount()).isEqualTo(fullSweeps);
+
+            // An edit on the same small stream: per-record, NOT eager - the edit changed the signature, and
+            // only the backbone's own signature is ever promoted.
+            final SteppingResult edited = steppingService.step(base.copy()
+                    .stepType(StepType.REFRESH)
+                    .stepLocation(stepped.getFoundLocation())
+                    .sessionUuid(sessionUuid)
+                    .code(Map.of(EDITED_ELEMENT_ID, xsltText))
+                    .build());
+            sessionUuid = edited.getSessionUuid();
+            assertThat(edited.isFoundRecord()).as("the edited refresh resolved").isTrue();
+            assertThat(steppingService.getOnDemandLaunchCount())
+                    .as("the edit was materialised per-record").isEqualTo(onDemand + 1);
+            assertThat(steppingService.getReprocessLaunchCount())
+                    .as("not eagerly").isEqualTo(reprocesses + 2);
         } finally {
             clearConfigValueMapper();
             terminate(base, sessionUuid);

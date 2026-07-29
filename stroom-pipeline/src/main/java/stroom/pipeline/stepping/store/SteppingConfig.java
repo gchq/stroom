@@ -42,6 +42,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private static final int DEFAULT_MAX_RETAINED_FINGERPRINTS_PER_ELEMENT = 3;
     private static final int DEFAULT_FILTERED_SCAN_WINDOW = 50;
     private static final boolean DEFAULT_SKELETON_SWEEP = false;
+    private static final long DEFAULT_EAGER_MATERIALISATION_RECORDS = 5_000L;
 
     private final String storeSubDir;
     private final long maxRecordsPerStream;
@@ -53,6 +54,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private final StroomDuration maxSessionIdleTime;
     private final StroomDuration orphanMaxAge;
     private final boolean skeletonSweep;
+    private final long eagerMaterialisationRecords;
 
     public SteppingConfig() {
         storeSubDir = DEFAULT_STORE_SUB_DIR;
@@ -65,6 +67,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         maxSessionIdleTime = StroomDuration.ofMinutes(10);
         orphanMaxAge = StroomDuration.ofHours(1);
         skeletonSweep = DEFAULT_SKELETON_SWEEP;
+        eagerMaterialisationRecords = DEFAULT_EAGER_MATERIALISATION_RECORDS;
     }
 
     @SuppressWarnings("unused")
@@ -79,7 +82,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                           @JsonProperty("filteredScanWindow") final Integer filteredScanWindow,
                           @JsonProperty("maxSessionIdleTime") final StroomDuration maxSessionIdleTime,
                           @JsonProperty("orphanMaxAge") final StroomDuration orphanMaxAge,
-                          @JsonProperty("skeletonSweep") final Boolean skeletonSweep) {
+                          @JsonProperty("skeletonSweep") final Boolean skeletonSweep,
+                          @JsonProperty("eagerMaterialisationRecords") final Long eagerMaterialisationRecords) {
         this.storeSubDir = Objects.requireNonNullElse(storeSubDir, DEFAULT_STORE_SUB_DIR);
         this.maxRecordsPerStream = Objects.requireNonNullElse(maxRecordsPerStream, DEFAULT_MAX_RECORDS_PER_STREAM);
         this.maxBytesPerStream = Objects.requireNonNullElse(maxBytesPerStream, DEFAULT_MAX_BYTES_PER_STREAM);
@@ -92,6 +96,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.maxSessionIdleTime = Objects.requireNonNullElse(maxSessionIdleTime, StroomDuration.ofMinutes(10));
         this.orphanMaxAge = Objects.requireNonNullElse(orphanMaxAge, StroomDuration.ofHours(1));
         this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, DEFAULT_SKELETON_SWEEP);
+        this.eagerMaterialisationRecords = Objects.requireNonNullElse(
+                eagerMaterialisationRecords, DEFAULT_EAGER_MATERIALISATION_RECORDS);
     }
 
     /**
@@ -99,7 +105,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
      */
     private SteppingConfig(final SteppingConfig source,
                            final Integer maxRetainedFingerprintsPerElement,
-                           final Boolean skeletonSweep) {
+                           final Boolean skeletonSweep,
+                           final Long eagerMaterialisationRecords) {
         this.storeSubDir = source.storeSubDir;
         this.maxRecordsPerStream = source.maxRecordsPerStream;
         this.maxBytesPerStream = source.maxBytesPerStream;
@@ -111,6 +118,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.maxSessionIdleTime = source.maxSessionIdleTime;
         this.orphanMaxAge = source.orphanMaxAge;
         this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, source.skeletonSweep);
+        this.eagerMaterialisationRecords = Objects.requireNonNullElse(
+                eagerMaterialisationRecords, source.eagerMaterialisationRecords);
     }
 
     @JsonPropertyDescription("The sub-directory of the Stroom temp directory under which stepping session " +
@@ -179,12 +188,28 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         return skeletonSweep;
     }
 
+    @JsonPropertyDescription("Under the skeleton sweep, a stream whose record count is at or below this " +
+            "is materialised in full the first time a step needs anything below the record boundary - " +
+            "paying roughly what a whole-pipeline sweep would have cost, once, so that every later step is " +
+            "a store read. Streams above it are materialised on demand, a record or window at a time, so " +
+            "the cost follows what the user looks at. The default is set where the eager pass costs a few " +
+            "seconds (measured ~1ms per record of below-boundary work on the sample event pipeline). Edits " +
+            "are never materialised eagerly, whatever the stream size - a post-edit refresh stays " +
+            "per-record, which is what keeps it interactive.")
+    public long getEagerMaterialisationRecords() {
+        return eagerMaterialisationRecords;
+    }
+
     public SteppingConfig withMaxRetainedFingerprintsPerElement(final int value) {
-        return new SteppingConfig(this, value, null);
+        return new SteppingConfig(this, value, null, null);
     }
 
     public SteppingConfig withSkeletonSweep(final boolean value) {
-        return new SteppingConfig(this, null, value);
+        return new SteppingConfig(this, null, value, null);
+    }
+
+    public SteppingConfig withEagerMaterialisationRecords(final long value) {
+        return new SteppingConfig(this, null, null, value);
     }
 
     @Override
@@ -200,6 +225,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                 ", maxSessionIdleTime=" + maxSessionIdleTime +
                 ", orphanMaxAge=" + orphanMaxAge +
                 ", skeletonSweep=" + skeletonSweep +
+                ", eagerMaterialisationRecords=" + eagerMaterialisationRecords +
                 '}';
     }
 }

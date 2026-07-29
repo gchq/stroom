@@ -745,6 +745,7 @@ appConfig:
         readAheadEnabled: true
         readerBlockedByWriter: false
     stepping:
+      eagerMaterialisationRecords: 5000
       filteredScanWindow: 50
       maxBytesPerStream: 2147483648
       maxRecordSizeBytes: 104857600

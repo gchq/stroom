@@ -201,6 +201,56 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
     }
 
     /**
+     * The eager small-stream policy's cost claim: a skeleton-swept small stream, materialised in full on the
+     * first post-backbone demand, should cost about what one whole-pipeline sweep costs - the same parse and
+     * the same transforms, meeting at the store instead of inside one SAX chain. LAST is the demand used
+     * because it deterministically drives both paths to full extent. Two streams (same generated content) so
+     * neither run reuses the other's capture. No asserts - the number is the point, and it justifies the
+     * {@code eagerMaterialisationRecords} default.
+     */
+    @Test
+    void measureTheEagerFirstPass() {
+        final int recordCount = GeneratedEventStream.configuredRecordCount(DEFAULT_RECORDS);
+        final List<String> report = new ArrayList<>();
+        report.add(String.format("records=%,d", recordCount));
+
+        // Full sweep (skeleton off), LAST as the first step.
+        final long fullMetaId = GeneratedEventStream.load(store, FEED, recordCount);
+        final PipelineStepRequest fullBase = requestFor(fullMetaId, feedPipeline());
+        String sessionUuid = null;
+        try {
+            final long start = System.currentTimeMillis();
+            final SteppingResult result =
+                    steppingService.step(fullBase.copy().stepType(StepType.LAST).build());
+            sessionUuid = result.getSessionUuid();
+            assertThat(result.isFoundRecord()).isTrue();
+            report.add(String.format("LAST via full sweep             %,6dms", System.currentTimeMillis() - start));
+        } finally {
+            terminate(fullBase, sessionUuid);
+        }
+
+        // Backbone + eager whole-extent materialisation (skeleton on, threshold at the stream size).
+        final long eagerMetaId = GeneratedEventStream.load(store, FEED, recordCount);
+        final PipelineStepRequest eagerBase = requestFor(eagerMetaId, feedPipeline());
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(recordCount));
+        sessionUuid = null;
+        try {
+            final long start = System.currentTimeMillis();
+            final SteppingResult result =
+                    steppingService.step(eagerBase.copy().stepType(StepType.LAST).build());
+            sessionUuid = result.getSessionUuid();
+            assertThat(result.isFoundRecord()).isTrue();
+            report.add(String.format("LAST via backbone + eager       %,6dms", System.currentTimeMillis() - start));
+        } finally {
+            clearConfigValueMapper();
+            terminate(eagerBase, sessionUuid);
+            LOGGER.info(() -> "\n=== eager small-stream policy: first pass vs full sweep ===\n"
+                              + String.join("\n", report) + "\n");
+        }
+    }
+
+    /**
      * Scenario D's ceiling. Sweeps the same stream twice in separate sessions: once through the full
      * pipeline, once through the boundary-only truncation. Both parse every record; only the second skips the
      * transforms and their capture.
