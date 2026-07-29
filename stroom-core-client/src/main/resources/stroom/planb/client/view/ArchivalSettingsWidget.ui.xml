@@ -12,22 +12,22 @@
             <tickbox:CustomCheckBox ui:field="archivalEnabled"
                                     identity="archivalEnabled"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="archivalLeadTimePanel"
-                        identity="archivalLeadTimePanel"
-                        label="Minimum Archive Age"
-                        helpText="Data older than this period becomes eligible for archiving. Must be less than the retention duration.">
-            <g:FlowPanel styleName="durationSetting">
-                <valuespinner:ValueSpinner ui:field="archivalAge"/>
-                <i:SelectionBox ui:field="archivalTimeUnit" addStyleNames="allow-focus"/>
-            </g:FlowPanel>
-        </form:FormGroup>
         <form:FormGroup ui:field="archivalCheckIntervalPanel"
                         identity="archivalCheckIntervalPanel"
-                        label="Check Frequency"
+                        label="Frequency"
                         helpText="How often to look for data old enough to archive. This is the schedule, not the policy: the minimum archive age above decides which data moves, this decides how often we check. Data can stay in the main store for up to the minimum archive age plus this interval. Checking more often than the bucket granularity gains nothing.">
             <g:FlowPanel styleName="durationSetting">
                 <valuespinner:ValueSpinner ui:field="archivalCheckInterval"/>
                 <i:SelectionBox ui:field="archivalCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="archivalLeadTimePanel"
+                        identity="archivalLeadTimePanel"
+                        label="Archive Data Older Than"
+                        helpText="Data older than this period becomes eligible for archiving. Must be less than the retention duration.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="archivalAge"/>
+                <i:SelectionBox ui:field="archivalTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="archivalGranularityPanel"

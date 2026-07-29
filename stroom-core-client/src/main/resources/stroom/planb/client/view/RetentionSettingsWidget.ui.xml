@@ -12,6 +12,15 @@
             <tickbox:CustomCheckBox ui:field="retentionEnabled"
                                     identity="retentionEnabled"/>
         </form:FormGroup>
+        <form:FormGroup ui:field="retentionCheckIntervalPanel"
+                        identity="retentionCheckIntervalPanel"
+                        label="Frequency"
+                        helpText="How often to look for data that has passed its retention period. This is the schedule, not the policy: 'Retain For' above decides which data is deleted, this decides how often we check. Retention is only honoured to within this interval, so it must be shorter than the retention period.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="retentionCheckInterval"/>
+                <i:SelectionBox ui:field="retentionCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
         <form:FormGroup ui:field="retentionAgePanel"
                         identity="retentionAgePanel"
                         label="Retain For"
@@ -19,15 +28,6 @@
             <g:FlowPanel styleName="durationSetting">
                 <valuespinner:ValueSpinner ui:field="retentionAge"/>
                 <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
-            </g:FlowPanel>
-        </form:FormGroup>
-        <form:FormGroup ui:field="retentionCheckIntervalPanel"
-                        identity="retentionCheckIntervalPanel"
-                        label="Check Frequency"
-                        helpText="How often to look for data that has passed its retention period. This is the schedule, not the policy: 'Retain For' above decides which data is deleted, this decides how often we check. Retention is only honoured to within this interval, so it must be shorter than the retention period.">
-            <g:FlowPanel styleName="durationSetting">
-                <valuespinner:ValueSpinner ui:field="retentionCheckInterval"/>
-                <i:SelectionBox ui:field="retentionCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="useStateTimePanel"

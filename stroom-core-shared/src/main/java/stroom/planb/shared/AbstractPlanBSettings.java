@@ -17,6 +17,7 @@
 package stroom.planb.shared;
 
 import stroom.docs.shared.Description;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -108,6 +109,45 @@ public abstract sealed class AbstractPlanBSettings permits
 
     public SnapshotSettings getSnapshotSettings() {
         return snapshotSettings;
+    }
+
+    /**
+     * Validates the settings that have to agree with each other, for both the client (which blocks
+     * the save) and the server (which backstops the import and REST paths).
+     *
+     * @return the first user-facing message found, or null if the settings are valid
+     */
+    public static String validationError(final AbstractPlanBSettings settings) {
+        if (settings == null) {
+            return null;
+        }
+        final String checkIntervalError = RetentionSettings.checkIntervalError(settings.getRetention());
+        if (checkIntervalError != null) {
+            return checkIntervalError;
+        }
+        return archiveAgeError(settings);
+    }
+
+    private static String archiveAgeError(final AbstractPlanBSettings settings) {
+        final ArchivalSettings archival = settings instanceof final HasSharedFileStore s
+                                          && s.getSharedFileStore() != null
+                ? s.getSharedFileStore().getArchival()
+                : null;
+        final RetentionSettings retention = settings.getRetention();
+        if (archival == null || !archival.isEnabled() || retention == null || !retention.isEnabled()) {
+            return null;
+        }
+        final SimpleDuration archiveAge = archival.getDuration();
+        final SimpleDuration retainFor = retention.getDuration();
+        if (archiveAge == null || retainFor == null) {
+            return null;
+        }
+        if (archiveAge.getApproxMillis() >= retainFor.getApproxMillis()) {
+            return "'Archive Data Older Than' (" + archiveAge.toLongString() + ") must be shorter than "
+                   + "'Retain For' (" + retainFor.toLongString() + "), otherwise retention deletes the "
+                   + "data before it can be archived and nothing is ever written to the archive.";
+        }
+        return null;
     }
 
     @Override

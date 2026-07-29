@@ -67,16 +67,23 @@ public class TraceSettingsViewImpl
         this.archivalSettingsWidget = archivalSettingsWidget;
 
         final FlowPanel generalContent = new FlowPanel();
-        generalContent.add(generalSettingsWidget.asWidget());
+        generalContent.addStyleName("form");
+        final Widget general = generalSettingsWidget.asWidget();
+        general.removeStyleName("max");
+        generalContent.add(general);
         generalContent.add(traceGeneralSettingsWidget.asWidget());
         generalPanel.add(generalContent);
 
         snapshotPanel.add(snapshotSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
 
+        final SettingsGroup archivingGroup = new SettingsGroup();
+        archivingGroup.setLabel("Archiving");
+        archivingGroup.add(archivalSettingsWidget.asWidget());
+
         final FlowPanel shardingArchivingContent = new FlowPanel();
         shardingArchivingContent.add(shardingSettingsWidget.asWidget());
-        shardingArchivingContent.add(archivalSettingsWidget.asWidget());
+        shardingArchivingContent.add(archivingGroup);
         shardingArchivingPanel.add(shardingArchivingContent);
     }
 

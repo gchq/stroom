@@ -25,9 +25,9 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.planb.client.presenter.PlanBPresenter;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocResource;
-import stroom.planb.shared.RetentionSettings;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 
@@ -106,13 +106,11 @@ public class PlanBPlugin extends DocumentPlugin<PlanBDoc> {
     }
 
     /**
-     * Block the save and display a warning if the retention check frequency is not shorter than
-     * the retention period, so the user is told in the browser rather than by a server error.
+     * Block the save and display a warning if the settings contradict each other, so the user is
+     * told in the browser rather than by a server error.
      */
     @Override
     protected String getPreSaveError(final PlanBDoc doc) {
-        return doc.getSettings() != null
-                ? RetentionSettings.checkIntervalError(doc.getSettings().getRetention())
-                : null;
+        return AbstractPlanBSettings.validationError(doc.getSettings());
     }
 }
