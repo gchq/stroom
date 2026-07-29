@@ -34,6 +34,21 @@ public class PipelineElements extends AbstractAddRemove<PipelineElement> {
         super(add, remove);
     }
 
+    /**
+     * Element order carries no meaning, so lists are compared ignoring it. Elements are compared by
+     * content rather than by {@link PipelineElement#equals(Object)}, which only tests graph identity
+     * (id and type) and would therefore report a renamed or re-described element as unchanged.
+     */
+    @Override
+    protected boolean listsEqual(final List<PipelineElement> list, final List<PipelineElement> other) {
+        return unorderedEquals(list, other, PipelineElement::contentEquals);
+    }
+
+    @Override
+    protected int listHashCode(final List<PipelineElement> list) {
+        return unorderedHashCode(list, PipelineElement::contentHashCode);
+    }
+
 
     // --------------------------------------------------------------------------------
 

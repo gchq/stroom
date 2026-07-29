@@ -78,10 +78,13 @@ public class UserAccessPresenter
         view.setList(listPresenter.getView());
         view.setSessionList(sessionsListPresenter.getView());
 
-        // Named for what it does, not for "kill sessions". Under-promising here would invite the assumption
-        // that ending sessions is enough, which is precisely the mistake this screen exists to prevent.
+        // Named for exactly what it does. "Revoke this user's access" was the earlier wording and claimed
+        // more than the action delivers: nothing about the user's access is withdrawn, and they can sign
+        // straight back in. The confirmation said so, but only once it had been clicked, which is too late
+        // for an administrator scanning the toolbar for the containment action. "Revoke" is kept for the
+        // tokens, where it is literally true - those never work again.
         revokeButton = listPresenter.addButton(
-                SvgPresets.DELETE.title("Revoke this user's access"));
+                SvgPresets.DELETE.title("End this user's sessions and revoke their tokens"));
         // Revoking does not stop someone coming back, and under an external identity provider it barely
         // slows them down. Disabling is what does, so it belongs next to it rather than on a screen an
         // administrator has to know to go and find.
@@ -177,7 +180,7 @@ public class UserAccessPresenter
      */
     private String buildConfirmMessage(final UserAccessRow row) {
         final StringBuilder sb = new StringBuilder()
-                .append("Are you sure you want to revoke access for '")
+                .append("End all sessions and revoke all tokens for '")
                 .append(row.getDisplayName())
                 .append("'?")
                 .append("\n\nThis will end all ")
@@ -191,7 +194,7 @@ public class UserAccessPresenter
                     .append("next request is likely to sign them straight back in automatically, without ")
                     .append("being asked for a password. Any access token they already hold also keeps ")
                     .append("working until it expires.")
-                    .append("\n\nRevoking is therefore a forced re-authentication, not a way to lock ")
+                    .append("\n\nThis is therefore a forced re-authentication, not a way to lock ")
                     .append("someone out. To do that, disable the user here and disable or revoke them at ")
                     .append("the identity provider.");
         } else {
