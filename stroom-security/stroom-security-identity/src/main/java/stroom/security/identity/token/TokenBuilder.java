@@ -28,6 +28,7 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class TokenBuilder {
 
@@ -110,17 +111,31 @@ public class TokenBuilder {
         return this.expirationTime;
     }
 
-    public String build() {
+    /**
+     * Mint the token.
+     *
+     * @return the serialised JWT plus its {@code jti} and expiry. The {@code jti} is returned rather than
+     * discarded because it is the key the token inventory and the revocation denylist are built on - a token
+     * whose id was never captured cannot be revoked.
+     */
+    public MintedToken build() {
         final JwtClaims claims = new JwtClaims();
+        long expiresMs = 0L;
         if (expirationTime != null) {
-            claims.setExpirationTime(NumericDate.fromSeconds(expirationTime.getEpochSecond()));
+            // exp has second granularity, so record exactly the value the token carries rather than the
+            // original instant - otherwise an inventory row and its token would disagree about expiry.
+            final long expiresSeconds = expirationTime.getEpochSecond();
+            claims.setExpirationTime(NumericDate.fromSeconds(expiresSeconds));
+            expiresMs = expiresSeconds * 1000L;
         }
         claims.setSubject(subject);
         claims.setIssuer(issuer);
         claims.setAudience(clientId);
         // A unique id per token, giving each token a distinct identity for logging, correlation and
-        // future refresh token reuse detection.
-        claims.setGeneratedJwtId();
+        // revocation. Generated here rather than by claims.setGeneratedJwtId() so that the value can be
+        // returned to the caller and persisted; jose4j offers no way to read back what it generated.
+        final String jti = UUID.randomUUID().toString();
+        claims.setJwtId(jti);
         if (clientId != null) {
             // The authorized party - the client the token was issued to. Providers such as Keycloak
             // set this on both id and access tokens.
@@ -156,7 +171,7 @@ public class TokenBuilder {
         }
 
         try {
-            return jws.getCompactSerialization();
+            return new MintedToken(jws.getCompactSerialization(), jti, expiresMs);
         } catch (final JoseException e) {
             throw new RuntimeException(e);
         }

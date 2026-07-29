@@ -116,6 +116,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(AuthFlowResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
+                .bind(UserAccessResourceImpl.class)
                 .bind(UserResourceImpl.class)
                 .bind(UserRefResourceImpl.class)
                 .bind(UserInfoResourceImpl.class)

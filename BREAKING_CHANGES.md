@@ -66,7 +66,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
   **If you rely on lockouts being permanent** (cleared only by an administrator or by completing the
   'Forgot password' flow), set `failedLoginLockDuration` to zero, e.g. `"PT0S"`, to restore the previous
-  behaviour. A lock set manually by an administrator is never affected by this and never expires.
+  behaviour.
+
+  **The duration now governs locks that are already held, not just new ones.** It is applied when a lock is
+  read rather than baked in when the lock is applied, so shortening it releases people who are already
+  locked, and lengthening it extends them. In particular, setting it to zero makes **every lock currently in
+  force permanent** until an administrator clears it, where previously it would only have affected locks
+  applied afterwards.
 
 * When Stroom is configured to use an **external identity provider**, the audience (`aud`) claim of an
   inbound token is now **validated by default**. Previously, if `allowedAudiences` was not configured no
@@ -153,6 +159,67 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   When enabled, a request whose bearer token equals the secret is authenticated as the service (processing)
   user. Because these are runtime settings rather than config-file properties, they do not travel with a
   copied configuration. **Never set them in production.**
+
+* **Locking an account is no longer something an administrator does.** The internal identity provider's
+  three account states now have one owner each: an administrator decides whether an account is **enabled**,
+  the sign-in process locks an account after repeated wrong passwords, and the account maintenance job marks
+  an unused account **inactive**. An administrator can still *undo* the latter two — unlocking an account or
+  making it active again — but can no longer apply them.
+
+  **To prevent an account being used, disable it.** That is now the only administrative control over access,
+  and it is what the Locked checkbox was often being used for. On the account edit screen, Locked and
+  Inactive are no longer tick boxes: each shows what has happened and offers the one action an administrator
+  can take.
+
+  **On upgrade, two kinds of account are converted to disabled** and will appear in the accounts list as
+  such:
+
+  - an account that was locked with no expiry, which is how a lock applied by an administrator was stored;
+  - an account flagged as a *processing account*, a setting that has been removed.
+
+  Review the accounts list after upgrading and re-enable anything that was disabled in error. If you run
+  with `failedLoginLockDuration` set to zero, note that failure locks are also stored without an expiry and
+  so cannot be told apart from an administrator's — those accounts will be disabled too, and should be
+  re-enabled deliberately.
+
+  A user who is locked out is now told that their account is locked, rather than that their credentials were
+  wrong, whether or not the password they typed was correct.
+
+* The internal identity provider's account fields have been **renamed** in the REST API and in the accounts
+  screen's quick filter, to name the lockout for the one thing it is for:
+
+  | Was | Now |
+  | --- | --- |
+  | `loginFailures` | `failureCount` |
+  | `failureLocked` | `failureLockedMs` (when the lock was applied, rather than a flag) |
+  | `status:Locked`, `status:Enabled`, `status:Inactive`, `status:Disabled` | `locked:true`, `enabled:true`, `inactive:true` |
+
+  **If you have saved quick filters, dashboards or scripts that use `status:` or `loginFailures`, update
+  them.** The `status` filter term has been removed rather than renamed: the three states are independent,
+  so the accounts list now has a column for each instead of collapsing them into one value.
+
+* The internal identity provider's **authorization endpoint now validates the request**. `/oauth2/v1/auth`
+  requires `response_type=code`, a `nonce`, and the `openid` scope, and rejects a request that omits any of
+  them. Stroom's own sign-in sends all three, so no change is needed for a normal deployment.
+
+  **If you have set `requestScopes` to an empty list**, Stroom omits the `scope` parameter entirely and
+  sign-in through the internal identity provider will now fail. Restore the default, or ensure the list
+  contains `openid`:
+
+  ```yaml
+  requestScopes:
+    - "openid"
+  ```
+
+* The unused **`allowPasswordResets` property has been removed from the internal identity provider's `email`
+  section**. It was documented as the switch that enabled password reset emails, but nothing read it —
+  password resets were, and still are, governed only by `allowPasswordResets` under the **password policy**
+  section, which defaults to enabled.
+
+  **If your configuration sets `email.allowPasswordResets`, Stroom will now fail to start** with an unknown
+  property error. Remove it. If you set it to `false` believing that password reset emails were switched
+  off, they were not — set `allowPasswordResets` under the password policy section to `false` to actually
+  disable them.
 
 ## [v7.3]
 * StroomQL `vis as` keyword combination replaced with `show`.

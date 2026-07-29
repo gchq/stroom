@@ -38,4 +38,21 @@ public interface SessionListService extends UserSessionEvictor {
      * @return the number of sessions terminated on that node.
      */
     int evictUserSessionsOnNode(String userSubjectId, String exceptSessionId, String nodeName);
+
+    /**
+     * Terminate a single session, wherever in the cluster it lives. Identified by its opaque handle from
+     * {@link stroom.security.shared.SessionDetails#getSessionHandle()}, never by its raw id. Stops at the
+     * first node that reports having terminated it.
+     *
+     * @return true if the session was found and terminated on some node.
+     */
+    boolean evictSession(String sessionHandle);
+
+    /**
+     * Terminate a single session on the specified node only (the per-node step of the fan-out performed
+     * by {@link #evictSession(String)}).
+     *
+     * @return true if the session was found and terminated on that node.
+     */
+    boolean evictSessionOnNode(String sessionHandle, String nodeName);
 }

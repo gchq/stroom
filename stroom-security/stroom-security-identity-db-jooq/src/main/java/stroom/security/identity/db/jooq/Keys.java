@@ -13,10 +13,12 @@ import org.jooq.impl.Internal;
 import stroom.security.identity.db.jooq.tables.Account;
 import stroom.security.identity.db.jooq.tables.JsonWebKey;
 import stroom.security.identity.db.jooq.tables.OauthClient;
+import stroom.security.identity.db.jooq.tables.OauthToken;
 import stroom.security.identity.db.jooq.tables.TokenType;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
 import stroom.security.identity.db.jooq.tables.records.OauthClientRecord;
+import stroom.security.identity.db.jooq.tables.records.OauthTokenRecord;
 import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
 
 
@@ -38,6 +40,9 @@ public class Keys {
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_CLIENT_ID = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, DSL.name("KEY_oauth_client_client_id"), new TableField[] { OauthClient.OAUTH_CLIENT.CLIENT_ID }, true);
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_NAME = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, DSL.name("KEY_oauth_client_name"), new TableField[] { OauthClient.OAUTH_CLIENT.NAME }, true);
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_PRIMARY = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, DSL.name("KEY_oauth_client_PRIMARY"), new TableField[] { OauthClient.OAUTH_CLIENT.ID }, true);
+    public static final UniqueKey<OauthTokenRecord> KEY_OAUTH_TOKEN_OAUTH_TOKEN_JTI_IDX = Internal.createUniqueKey(OauthToken.OAUTH_TOKEN, DSL.name("KEY_oauth_token_oauth_token_jti_idx"), new TableField[] { OauthToken.OAUTH_TOKEN.JTI }, true);
+    public static final UniqueKey<OauthTokenRecord> KEY_OAUTH_TOKEN_OAUTH_TOKEN_TOKEN_HASH_IDX = Internal.createUniqueKey(OauthToken.OAUTH_TOKEN, DSL.name("KEY_oauth_token_oauth_token_token_hash_idx"), new TableField[] { OauthToken.OAUTH_TOKEN.TOKEN_HASH }, true);
+    public static final UniqueKey<OauthTokenRecord> KEY_OAUTH_TOKEN_PRIMARY = Internal.createUniqueKey(OauthToken.OAUTH_TOKEN, DSL.name("KEY_oauth_token_PRIMARY"), new TableField[] { OauthToken.OAUTH_TOKEN.ID }, true);
     public static final UniqueKey<TokenTypeRecord> KEY_TOKEN_TYPE_PRIMARY = Internal.createUniqueKey(TokenType.TOKEN_TYPE, DSL.name("KEY_token_type_PRIMARY"), new TableField[] { TokenType.TOKEN_TYPE.ID }, true);
 
     // -------------------------------------------------------------------------

@@ -24,7 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class Account implements HasIntegerId {
@@ -54,7 +55,7 @@ public class Account implements HasIntegerId {
     @JsonProperty
     private int loginCount;
     @JsonProperty
-    private int loginFailures;
+    private int failureCount;
     @JsonProperty
     private Long lastLoginMs;
     @JsonProperty
@@ -68,9 +69,9 @@ public class Account implements HasIntegerId {
     @JsonProperty
     private boolean inactive;
     @JsonProperty
-    private boolean locked;
+    private Long failureLockedMs;
     @JsonProperty
-    private boolean processingAccount;
+    private Long failureLockedUntilMs;
 
     public Account() {
     }
@@ -88,15 +89,15 @@ public class Account implements HasIntegerId {
                    @JsonProperty("lastName") final String lastName,
                    @JsonProperty("comments") final String comments,
                    @JsonProperty("loginCount") final int loginCount,
-                   @JsonProperty("loginFailures") final int loginFailures,
+                   @JsonProperty("failureCount") final int failureCount,
                    @JsonProperty("lastLoginMs") final Long lastLoginMs,
                    @JsonProperty("reactivatedMs") final Long reactivatedMs,
                    @JsonProperty("forcePasswordChange") final boolean forcePasswordChange,
                    @JsonProperty("neverExpires") final boolean neverExpires,
                    @JsonProperty("enabled") final boolean enabled,
                    @JsonProperty("inactive") final boolean inactive,
-                   @JsonProperty("locked") final boolean locked,
-                   @JsonProperty("processingAccount") final boolean processingAccount) {
+                   @JsonProperty("failureLockedMs") final Long failureLockedMs,
+                   @JsonProperty("failureLockedUntilMs") final Long failureLockedUntilMs) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -109,15 +110,15 @@ public class Account implements HasIntegerId {
         this.lastName = lastName;
         this.comments = comments;
         this.loginCount = loginCount;
-        this.loginFailures = loginFailures;
+        this.failureCount = failureCount;
         this.lastLoginMs = lastLoginMs;
         this.reactivatedMs = reactivatedMs;
         this.forcePasswordChange = forcePasswordChange;
         this.neverExpires = neverExpires;
         this.enabled = enabled;
         this.inactive = inactive;
-        this.locked = locked;
-        this.processingAccount = processingAccount;
+        this.failureLockedMs = failureLockedMs;
+        this.failureLockedUntilMs = failureLockedUntilMs;
     }
 
     @Override
@@ -217,12 +218,12 @@ public class Account implements HasIntegerId {
         this.loginCount = loginCount;
     }
 
-    public int getLoginFailures() {
-        return loginFailures;
+    public int getFailureCount() {
+        return failureCount;
     }
 
-    public void setLoginFailures(final int loginFailures) {
-        this.loginFailures = loginFailures;
+    public void setFailureCount(final int failureCount) {
+        this.failureCount = failureCount;
     }
 
     public Long getLastLoginMs() {
@@ -273,20 +274,45 @@ public class Account implements HasIntegerId {
         this.inactive = inactive;
     }
 
+    /**
+     * When the lockout was applied, or null if the account is not locked. This is the single stored value:
+     * an account is locked exactly when there is a time at which it was locked.
+     */
+    public Long getFailureLockedMs() {
+        return failureLockedMs;
+    }
+
+    public void setFailureLockedMs(final Long failureLockedMs) {
+        this.failureLockedMs = failureLockedMs;
+    }
+
+    public Long getFailureLockedUntilMs() {
+        return failureLockedUntilMs;
+    }
+
+    public void setFailureLockedUntilMs(final Long failureLockedUntilMs) {
+        this.failureLockedUntilMs = failureLockedUntilMs;
+    }
+
+    /**
+     * Whether repeated wrong passwords are currently barring this account, as distinct from the stored flag.
+     * <p>
+     * A lock is released lazily, on the next sign in attempt, so the flag outlives the lock itself. Reading
+     * the flag alone reports an account as locked when it would in fact be admitted straight away. Every
+     * caller wants this rather than the flag, which is why this keeps the plain name.
+     * </p>
+     * <p>
+     * Note that {@link #getFailureLockedUntilMs()} is not a stored value. The account table records only
+     * when a lock was applied, and the data access layer adds the configured lock duration when it builds
+     * this object, so that changing that duration governs locks already in force. A null end time means the
+     * lock does not lapse, which is how a duration of zero arrives here - so it has to be read together
+     * with {@link #getFailureLockedMs()}, which is what says whether there is a lock at all.
+     * </p>
+     */
+    @JsonIgnore
     public boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(final boolean locked) {
-        this.locked = locked;
-    }
-
-    public boolean isProcessingAccount() {
-        return processingAccount;
-    }
-
-    public void setProcessingAccount(final boolean processingAccount) {
-        this.processingAccount = processingAccount;
+        return failureLockedMs != null
+               && (failureLockedUntilMs == null || failureLockedUntilMs > System.currentTimeMillis());
     }
 
     /**
@@ -296,26 +322,14 @@ public class Account implements HasIntegerId {
     public String getFullName() {
         if (firstName == null && lastName == null) {
             return null;
-        } else {
-            return String.join(
-                    " ",
-                    Optional.ofNullable(firstName).orElse(""),
-                    Optional.ofNullable(lastName).orElse(""));
         }
+        // Only the parts we have. Joining unconditionally produced " Smith" or "John ", which then became
+        // the stroom user's stored full name and stopped later comparisons matching.
+        return Stream.of(firstName, lastName)
+                .filter(part -> part != null && !part.isBlank())
+                .collect(Collectors.joining(" "));
     }
 
-    @JsonIgnore
-    public String getStatus() {
-        if (locked) {
-            return "Locked";
-        } else if (inactive) {
-            return "Inactive";
-        } else if (enabled) {
-            return "Enabled";
-        } else {
-            return "Disabled";
-        }
-    }
 
     @Override
     public String toString() {
@@ -332,15 +346,15 @@ public class Account implements HasIntegerId {
                 ", lastName='" + lastName + '\'' +
                 ", comments='" + comments + '\'' +
                 ", loginCount=" + loginCount +
-                ", loginFailures=" + loginFailures +
+                ", failureCount=" + failureCount +
                 ", lastLoginMs=" + lastLoginMs +
                 ", reactivatedMs=" + reactivatedMs +
                 ", forcePasswordChange=" + forcePasswordChange +
                 ", neverExpires=" + neverExpires +
                 ", enabled=" + enabled +
                 ", inactive=" + inactive +
-                ", locked=" + locked +
-                ", processingAccount=" + processingAccount +
+                ", failureLockedMs=" + failureLockedMs +
+                ", failureLockedUntilMs=" + failureLockedUntilMs +
                 '}';
     }
 }

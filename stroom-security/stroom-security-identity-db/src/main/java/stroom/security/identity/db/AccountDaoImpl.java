@@ -26,11 +26,12 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountAction;
+import stroom.security.identity.shared.AccountChange;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.util.ResultPageFactory;
-import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -51,6 +52,7 @@ import org.jooq.impl.DSL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -64,17 +66,7 @@ class AccountDaoImpl implements AccountDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AccountDaoImpl.class);
 
-    /**
-     * Create a derived field that represents the account state.
-     */
-    private static final Field<String> ACCOUNT_STATUS = DSL
-            .when(ACCOUNT.LOCKED.eq(true), "Locked")
-            .when(ACCOUNT.INACTIVE.eq(true), "Inactive")
-            .when(ACCOUNT.ENABLED.eq(true), "Enabled")
-            .otherwise("Disabled")
-            .as(DSL.field("status", String.class));
-
-    private static final Function<Record, Account> RECORD_TO_ACCOUNT_MAPPER = record -> {
+    private Account toAccount(final Record record) {
         final Account account = new Account();
         account.setId(record.get(ACCOUNT.ID));
         account.setVersion(record.get(ACCOUNT.VERSION));
@@ -88,7 +80,7 @@ class AccountDaoImpl implements AccountDao {
         account.setLastName(record.get(ACCOUNT.LAST_NAME));
         account.setComments(record.get(ACCOUNT.COMMENTS));
         account.setLoginCount(record.get(ACCOUNT.LOGIN_COUNT));
-        account.setLoginFailures(record.get(ACCOUNT.LOGIN_FAILURES));
+        account.setFailureCount(record.get(ACCOUNT.FAILURE_COUNT));
         account.setLastLoginMs(record.get(ACCOUNT.LAST_LOGIN_MS));
         account.setReactivatedMs(record.get(ACCOUNT.REACTIVATED_MS));
         account.setForcePasswordChange(
@@ -96,11 +88,34 @@ class AccountDaoImpl implements AccountDao {
         account.setNeverExpires(record.get(ACCOUNT.NEVER_EXPIRES));
         account.setEnabled(record.get(ACCOUNT.ENABLED));
         account.setInactive(record.get(ACCOUNT.INACTIVE));
-        account.setLocked(record.get(ACCOUNT.LOCKED));
-        account.setProcessingAccount(
-                record.get(ACCOUNT.PROCESSING_ACCOUNT));
+        account.setFailureLockedMs(record.get(ACCOUNT.FAILURE_LOCKED_MS));
+        // The table records when the lock was applied; callers want to know when it ends. Working that out
+        // here means a change to the configured duration takes effect on locks already in force, and keeps
+        // every reader - including the browser, which cannot see configuration - on one answer.
+        account.setFailureLockedUntilMs(lockEndsAt(record.get(ACCOUNT.FAILURE_LOCKED_MS)));
         return account;
-    };
+    }
+
+    /**
+     * When a lock applied at the given time is due to end, or null if it is not due to end at all.
+     * <p>
+     * A configured duration of zero means a lock does not lapse. Null is how the shared account object
+     * already represents that, so the two agree without either needing to know about the setting.
+     * </p>
+     */
+    private Long lockEndsAt(final Long lockedMs) {
+        if (lockedMs == null) {
+            return null;
+        }
+        final long durationMs = lockDurationMs();
+        return durationMs > 0
+                ? lockedMs + durationMs
+                : null;
+    }
+
+    private long lockDurationMs() {
+        return identityConfigProvider.get().getFailedLoginLockDuration().toMillis();
+    }
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
             Map.entry("id", ACCOUNT.ID),
@@ -115,20 +130,18 @@ class AccountDaoImpl implements AccountDao {
             Map.entry(AccountFields.FIELD_NAME_LAST_NAME, ACCOUNT.LAST_NAME),
             Map.entry(AccountFields.FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
             Map.entry("loginCount", ACCOUNT.LOGIN_COUNT),
-            Map.entry(AccountFields.FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
+            Map.entry(AccountFields.FIELD_NAME_FAILURE_COUNT, ACCOUNT.FAILURE_COUNT),
             Map.entry(AccountFields.FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
             Map.entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
             Map.entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
             Map.entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
-            Map.entry("enabled", ACCOUNT.ENABLED),
-            Map.entry("inactive", ACCOUNT.INACTIVE),
-            Map.entry("locked", ACCOUNT.LOCKED),
-            Map.entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
-            Map.entry(AccountFields.FIELD_NAME_STATUS, ACCOUNT_STATUS));
+            Map.entry(AccountFields.FIELD_NAME_ENABLED, ACCOUNT.ENABLED),
+            Map.entry(AccountFields.FIELD_NAME_INACTIVE, ACCOUNT.INACTIVE),
+            Map.entry(AccountFields.FIELD_NAME_LOCKED, ACCOUNT.FAILURE_LOCKED_MS));
 
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;
-    private final ExpressionMapper expressionMapper;
+    private final ExpressionMapperFactory expressionMapperFactory;
 
     @Inject
     public AccountDaoImpl(final Provider<IdentityConfig> identityConfigProvider,
@@ -136,14 +149,42 @@ class AccountDaoImpl implements AccountDao {
                           final ExpressionMapperFactory expressionMapperFactory) {
         this.identityConfigProvider = identityConfigProvider;
         this.identityDbConnProvider = identityDbConnProvider;
+        this.expressionMapperFactory = expressionMapperFactory;
+    }
 
-        expressionMapper = expressionMapperFactory.create()
+    /**
+     * Built per search rather than once, because the lock filter has to compare an expiry against the
+     * current time. Held as a field it would compare against whenever the DAO happened to be constructed.
+     * Registering a handful of handlers is nothing beside the query that follows.
+     */
+    private ExpressionMapper expressionMapper(final long nowMs) {
+        return expressionMapperFactory.create()
                 .map(AccountFields.FIELD_USER_ID, ACCOUNT.USER_ID, String::valueOf)
                 .map(AccountFields.FIELD_FIRST_NAME, ACCOUNT.FIRST_NAME, String::valueOf)
                 .map(AccountFields.FIELD_LAST_NAME, ACCOUNT.LAST_NAME, String::valueOf)
                 .map(AccountFields.FIELD_EMAIL, ACCOUNT.EMAIL, String::valueOf)
-                .map(AccountFields.FIELD_STATUS, ACCOUNT_STATUS, String::valueOf)
-                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf);
+                .map(AccountFields.FIELD_COMMENTS, ACCOUNT.COMMENTS, String::valueOf)
+                .map(AccountFields.FIELD_ENABLED, ACCOUNT.ENABLED, Boolean::valueOf)
+                .map(AccountFields.FIELD_INACTIVE, ACCOUNT.INACTIVE, Boolean::valueOf)
+                .map(AccountFields.FIELD_LOCKED, lockInForce(nowMs), Boolean::valueOf);
+    }
+
+    /**
+     * Whether a failure lock is actually barring the account, rather than merely recorded against it.
+     * <p>
+     * The SQL half of the rule that {@code Account.isLocked()} applies in Java. Filtering has to agree with
+     * what the screen shows, and the stored flag outlives the lock because it is only cleared lazily, on the
+     * next sign in attempt.
+     * </p>
+     */
+    private Field<Boolean> lockInForce(final long nowMs) {
+        final long durationMs = lockDurationMs();
+        if (durationMs <= 0) {
+            // No lock lapses, so having been locked at all is being locked now.
+            return DSL.field(ACCOUNT.FAILURE_LOCKED_MS.isNotNull());
+        }
+        return DSL.field(ACCOUNT.FAILURE_LOCKED_MS.isNotNull()
+                .and(ACCOUNT.FAILURE_LOCKED_MS.plus(durationMs).gt(nowMs)));
     }
 
     @Override
@@ -152,18 +193,16 @@ class AccountDaoImpl implements AccountDao {
                 ACCOUNT.USER_ID;
         final List<Account> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                         .selectFrom(ACCOUNT)
-                        .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
                         .orderBy(orderByUserIdField)
                         .fetch())
-                .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+                .map(this::toAccount);
         return ResultPageFactory.createUnboundedList(list, AccountResultPage::new);
     }
 
     @Override
     public ResultPage<Account> search(final FindAccountRequest request) {
-        final Condition notProcessingUser = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
         final Condition filterConditions = NullSafe.getOrElseGet(
-                expressionMapper,
+                expressionMapper(System.currentTimeMillis()),
                 mapper -> mapper.apply(request.getExpression()),
                 DSL::trueCondition);
         // Sort on user_id if no sort supplied
@@ -173,16 +212,14 @@ class AccountDaoImpl implements AccountDao {
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             final List<Account> accounts = context
-                    .select(ACCOUNT.asterisk(),
-                            ACCOUNT_STATUS)
+                    .select(ACCOUNT.asterisk())
                     .from(ACCOUNT)
-                    .where(notProcessingUser)
-                    .and(filterConditions)
+                    .where(filterConditions)
                     .orderBy(orderFields)
                     .offset(offset)
                     .limit(limit)
                     .fetch()
-                    .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+                    .map(this::toAccount);
             return ResultPage.createCriterialBasedList(accounts, request);
         });
     }
@@ -212,16 +249,16 @@ class AccountDaoImpl implements AccountDao {
                     .set(ACCOUNT.FIRST_NAME, account.getFirstName())
                     .set(ACCOUNT.LAST_NAME, account.getLastName())
                     .set(ACCOUNT.COMMENTS, account.getComments())
-                    .set(ACCOUNT.LOGIN_COUNT, account.getLoginCount())
-                    .set(ACCOUNT.LOGIN_FAILURES, account.getLoginFailures())
-                    .set(ACCOUNT.LAST_LOGIN_MS, account.getLastLoginMs())
+                    .set(ACCOUNT.FAILURE_COUNT, account.getFailureCount())
+                    // Written by an administrator's edit as well as by the login path: making an account
+                    // active again stamps this so the maintenance job does not immediately deactivate it
+                    // in the window before the next successful login.
                     .set(ACCOUNT.REACTIVATED_MS, account.getReactivatedMs())
                     .set(ACCOUNT.FORCE_PASSWORD_CHANGE, account.isForcePasswordChange())
                     .set(ACCOUNT.NEVER_EXPIRES, account.isNeverExpires())
                     .set(ACCOUNT.ENABLED, account.isEnabled())
                     .set(ACCOUNT.INACTIVE, account.isInactive())
-                    .set(ACCOUNT.LOCKED, account.isLocked())
-                    .set(ACCOUNT.PROCESSING_ACCOUNT, account.isProcessingAccount())
+                    .set(ACCOUNT.FAILURE_LOCKED_MS, account.getFailureLockedMs())
                     .returning(ACCOUNT.ID)
                     .fetchOne(ACCOUNT.ID));
         } catch (final RuntimeException e) {
@@ -236,11 +273,17 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public void recordSuccessfulLogin(final String userId) {
-        // We reset the failed login count if we have a successful login
+        // A successful sign in ends the lockout, so all three lock columns are cleared together.
+        //
+        // The flag has to be cleared alongside the expiry, not left behind it. A set flag with no expiry is
+        // how a lock that never lapses is stored, so clearing only the expiry would turn a lock that had
+        // already lapsed into a permanent one. That is reachable: a certificate sign in is admitted once the
+        // window has passed, without the lazy auto-unlock above having run.
         JooqUtil.context(identityDbConnProvider, context -> context
                 .update(ACCOUNT)
-                .set(ACCOUNT.LOGIN_FAILURES, 0)
-                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
+                .set(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1))
+                .set(ACCOUNT.FAILURE_COUNT, 0)
+                .set(ACCOUNT.FAILURE_LOCKED_MS, (Long) null)
                 .set(ACCOUNT.REACTIVATED_MS, (Long) null)
                 .set(ACCOUNT.LOGIN_COUNT,
                         ACCOUNT.LOGIN_COUNT.plus(1))
@@ -259,6 +302,7 @@ class AccountDaoImpl implements AccountDao {
         // and LAST_LOGIN_MS takes over that job.
         final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .update(ACCOUNT)
+                .set(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1))
                 .set(ACCOUNT.INACTIVE, false)
                 .set(ACCOUNT.REACTIVATED_MS, System.currentTimeMillis())
                 .where(ACCOUNT.USER_ID.eq(userId))
@@ -274,23 +318,25 @@ class AccountDaoImpl implements AccountDao {
         if (Strings.isNullOrEmpty(userId)
             || Strings.isNullOrEmpty(password)) {
             return new CredentialValidationResult(
-                    false, true, false, false, false, false);
+                    false, true, false, false, false);
         }
 
-        // Clear a failure lock whose window has passed, so the account is usable again on this attempt.
-        // An admin lock has a NULL expiry and is never cleared here; a lock is only ever released once its
-        // stamped expiry is reached. Cluster-safe, since the row is the shared state, and a no-op when
-        // auto-unlock is disabled because no expiry is ever stamped.
-        JooqUtil.context(identityDbConnProvider, context -> context
-                .update(ACCOUNT)
-                .set(ACCOUNT.LOCKED, false)
-                .set(ACCOUNT.LOGIN_FAILURES, 0)
-                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
-                .where(ACCOUNT.USER_ID.eq(userId))
-                .and(ACCOUNT.LOCKED.isTrue())
-                .and(ACCOUNT.LOCKED_UNTIL_MS.isNotNull())
-                .and(ACCOUNT.LOCKED_UNTIL_MS.le(System.currentTimeMillis()))
-                .execute());
+        // Clear a lock whose window has passed, so the account is usable again on this attempt. A lock is
+        // only released here once the configured duration has run from the moment it was applied, so with
+        // a duration of zero nothing is ever cleared here and a lock needs an administrator.
+        // Cluster-safe, since the row is the shared state.
+        final long durationMs = lockDurationMs();
+        if (durationMs > 0) {
+            JooqUtil.context(identityDbConnProvider, context -> context
+                    .update(ACCOUNT)
+                    .set(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1))
+                    .set(ACCOUNT.FAILURE_COUNT, 0)
+                    .set(ACCOUNT.FAILURE_LOCKED_MS, (Long) null)
+                    .where(ACCOUNT.USER_ID.eq(userId))
+                    .and(ACCOUNT.FAILURE_LOCKED_MS.isNotNull())
+                    .and(ACCOUNT.FAILURE_LOCKED_MS.plus(durationMs).le(System.currentTimeMillis()))
+                    .execute());
+        }
 
         // Is this is a login by the default local 'admin' account, then that should have already been created
         // by AdminAccountBootstrap
@@ -309,19 +355,37 @@ class AccountDaoImpl implements AccountDao {
                     true,
                     false,
                     false,
-                    false,
                     false);
         }
 
         final AccountRecord record = optRecord.get();
-        final boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
         final boolean isDisabled = !record.getEnabled();
         final boolean isInactive = record.getInactive();
-        final boolean isLocked = record.getLocked();
-        final boolean isProcessingAccount = record.getProcessingAccount();
+        // A lock time survives here only if the auto-unlock above did not clear it, which means either the
+        // lock has not run its course or no lock lapses at all. Everywhere else must use
+        // Account.isLocked(), which applies the configured duration.
+        final boolean isLocked = record.getFailureLockedMs() != null;
+
+        if (isDisabled || isLocked) {
+            // The password is not checked at all. Neither state can be talked out of with a correct
+            // password, so there is nothing to learn from checking - and anything that knows whether the
+            // password was right is something that can be made to tell. That matters most while an account
+            // is locked, because failures are deliberately not counted then, so a check here would be one
+            // that costs an attacker nothing.
+            //
+            // Still spend the time a real verify would, for the same reason the unknown-account path above
+            // does: otherwise a fast refusal reports the account's state to anyone who asks.
+            PasswordHashUtil.fakeCheck(password);
+            return new CredentialValidationResult(false, false, isLocked, isDisabled, isInactive);
+        }
+
+        // An inactive account is checked, unlike the two above, because a correct password is precisely
+        // what earns it reactivation. Guessing at one is bounded by the lockout in the ordinary way, and
+        // once that locks the account the branch above takes over.
+        final boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
 
         return new CredentialValidationResult(
-                isPasswordCorrect, false, isLocked, isDisabled, isInactive, isProcessingAccount);
+                isPasswordCorrect, false, isLocked, isDisabled, isInactive);
     }
 
     @Override
@@ -331,47 +395,33 @@ class AccountDaoImpl implements AccountDao {
         final IdentityConfig identityConfig = identityConfigProvider.get();
         final Integer threshold = identityConfig.getFailedLoginLockThreshold();
         if (threshold != null) {
-            final long lockDurationMs = identityConfig.getFailedLoginLockDuration().toMillis();
-            if (lockDurationMs > 0) {
-                final long lockedUntil = System.currentTimeMillis() + lockDurationMs;
-                JooqUtil.context(identityDbConnProvider, context -> context
-                        .update(ACCOUNT)
-                        // Stamp the expiry FIRST so it reads the pre-update LOCKED / LOGIN_FAILURES
-                        // (MySQL evaluates SET left to right). Only a failure that newly locks an account
-                        // that was not already locked gets an expiry; an admin lock (NULL expiry) or an
-                        // existing failure lock keeps its value, so admin locks stay permanent and a lock
-                        // is not extended by continued attempts.
-                        .set(ACCOUNT.LOCKED_UNTIL_MS,
-                                DSL.when(ACCOUNT.LOCKED.isFalse()
-                                                .and(ACCOUNT.LOGIN_FAILURES.plus(1).ge(threshold)),
-                                        DSL.val(lockedUntil))
-                                        .otherwise(ACCOUNT.LOCKED_UNTIL_MS))
-                        .set(ACCOUNT.LOGIN_FAILURES,
-                                ACCOUNT.LOGIN_FAILURES.plus(1))
-                        .set(ACCOUNT.LOCKED,
-                                DSL.field(ACCOUNT.LOCKED.isTrue()
-                                        .or(ACCOUNT.LOGIN_FAILURES.ge(threshold))))
-                        .where(ACCOUNT.USER_ID.eq(userId))
-                        .execute());
-            } else {
-                // Auto-unlock disabled (zero duration): the lock is permanent, no expiry is stamped.
-                // A failed login may only add a lock, never clear one, so an existing lock (e.g. one set
-                // by an administrator) is preserved. MySQL evaluates SET left to right, so LOGIN_FAILURES
-                // here is the just-incremented value while LOCKED is its pre-update value.
-                JooqUtil.context(identityDbConnProvider, context -> context
-                        .update(ACCOUNT)
-                        .set(ACCOUNT.LOGIN_FAILURES,
-                                ACCOUNT.LOGIN_FAILURES.plus(1))
-                        .set(ACCOUNT.LOCKED,
-                                DSL.field(ACCOUNT.LOCKED.isTrue()
-                                        .or(ACCOUNT.LOGIN_FAILURES.ge(threshold))))
-                        .where(ACCOUNT.USER_ID.eq(userId))
-                        .execute());
-            }
+            final long lockedAt = System.currentTimeMillis();
+            JooqUtil.context(identityDbConnProvider, context -> context
+                    .update(ACCOUNT)
+                    .set(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1))
+                    // Stamp the lock time FIRST so it reads the pre-update count (MySQL evaluates SET left
+                    // to right). Only a failure that newly locks an account stamps it, and an account
+                    // already locked keeps the time it was applied, so continued guessing cannot push the
+                    // end of the lock further out.
+                    //
+                    // A failed sign in may only ever add a lock, never clear one, and that now holds by
+                    // construction rather than by expression: the only value this can write is a time where
+                    // there was none, so it cannot release a lock however far below the threshold the count
+                    // happens to be.
+                    .set(ACCOUNT.FAILURE_LOCKED_MS,
+                            DSL.when(ACCOUNT.FAILURE_LOCKED_MS.isNull()
+                                            .and(ACCOUNT.FAILURE_COUNT.plus(1).ge(threshold)),
+                                    DSL.val(lockedAt))
+                                    .otherwise(ACCOUNT.FAILURE_LOCKED_MS))
+                    .set(ACCOUNT.FAILURE_COUNT,
+                            ACCOUNT.FAILURE_COUNT.plus(1))
+                    .where(ACCOUNT.USER_ID.eq(userId))
+                    .execute());
 
-            // Query the field back to find out if we locked.
+            // Read back whether the account is now barred, rather than only whether a lock exists: with a
+            // zero duration they are the same, but otherwise a lock that has already lapsed is not one.
             locked = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                            .select(ACCOUNT.LOCKED)
+                            .select(lockInForce(System.currentTimeMillis()))
                             .from(ACCOUNT)
                             .where(ACCOUNT.USER_ID.eq(userId))
                             .fetchOptional())
@@ -380,8 +430,8 @@ class AccountDaoImpl implements AccountDao {
         } else {
             JooqUtil.context(identityDbConnProvider, context -> context
                     .update(ACCOUNT)
-                    .set(ACCOUNT.LOGIN_FAILURES,
-                            ACCOUNT.LOGIN_FAILURES.plus(1))
+                    .set(ACCOUNT.FAILURE_COUNT,
+                            ACCOUNT.FAILURE_COUNT.plus(1))
                     .where(ACCOUNT.USER_ID.eq(userId))
                     .execute());
         }
@@ -399,7 +449,7 @@ class AccountDaoImpl implements AccountDao {
                         .selectFrom(ACCOUNT)
                         .where(ACCOUNT.USER_ID.eq(userId))
                         .fetchOptional())
-                .map(RECORD_TO_ACCOUNT_MAPPER);
+                .map(this::toAccount);
     }
 
     @Override
@@ -412,7 +462,7 @@ class AccountDaoImpl implements AccountDao {
                         .selectFrom(ACCOUNT)
                         .where(ACCOUNT.EMAIL.eq(email))
                         .fetch())
-                .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+                .map(this::toAccount);
 
         if (accounts.size() > 1) {
             // A unique index makes this impossible, but refuse to guess rather than reset an arbitrary
@@ -427,53 +477,92 @@ class AccountDaoImpl implements AccountDao {
 
 
     @Override
-    public void update(final Account account) {
-        // Matching on the version and bumping it in the same statement is what makes this safe against a
-        // concurrent edit: an update made from a stale copy of the account matches no rows and is
-        // refused, rather than quietly overwriting whatever someone else did.
+    public void applyChange(final int accountId,
+                            final AccountChange change,
+                            final String updateUser,
+                            final long updateTimeMs) {
+        // Only what the change actually asks for is written. Columns the change says nothing about are left
+        // alone, so a save cannot revert a writer it never knew about - which is why this does not test the
+        // account's version. Guarding on the version would buy nothing here and would cost a great deal:
+        // failed logins and successful ones both write to the account, so an account being hammered or one
+        // used by an automated client would fail every administrator save, denying the lock and disable
+        // controls exactly when they are wanted.
         //
-        // The password and the password reset state are deliberately not listed, so they survive an
-        // update; they are only ever written by the methods that own them.
+        // The password and the password reset state are never written here either. They are owned by the
+        // methods that exist for them, so an update leaves them intact.
+        final Map<Field<?>, Object> values = new LinkedHashMap<>();
+        values.put(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1));
+        values.put(ACCOUNT.UPDATE_USER, updateUser);
+        values.put(ACCOUNT.UPDATE_TIME_MS, updateTimeMs);
+
+        putIfSpecified(values, ACCOUNT.USER_ID, change.getUserId());
+        putIfSpecified(values, ACCOUNT.EMAIL, change.getEmail());
+        putIfSpecified(values, ACCOUNT.FIRST_NAME, change.getFirstName());
+        putIfSpecified(values, ACCOUNT.LAST_NAME, change.getLastName());
+        putIfSpecified(values, ACCOUNT.COMMENTS, change.getComments());
+        putIfSpecified(values, ACCOUNT.NEVER_EXPIRES, change.getNeverExpires());
+        putIfSpecified(values, ACCOUNT.FORCE_PASSWORD_CHANGE, change.getForcePasswordChange());
+
+        putActions(values, change, updateTimeMs);
+
         final int count;
         try {
             count = JooqUtil.contextResult(identityDbConnProvider, context -> context
                     .update(ACCOUNT)
-                    .set(ACCOUNT.VERSION, ACCOUNT.VERSION.plus(1))
-                    .set(ACCOUNT.CREATE_TIME_MS, account.getCreateTimeMs())
-                    .set(ACCOUNT.CREATE_USER, account.getCreateUser())
-                    .set(ACCOUNT.UPDATE_TIME_MS, account.getUpdateTimeMs())
-                    .set(ACCOUNT.UPDATE_USER, account.getUpdateUser())
-                    .set(ACCOUNT.USER_ID, account.getUserId())
-                    .set(ACCOUNT.EMAIL, account.getEmail())
-                    .set(ACCOUNT.FIRST_NAME, account.getFirstName())
-                    .set(ACCOUNT.LAST_NAME, account.getLastName())
-                    .set(ACCOUNT.COMMENTS, account.getComments())
-                    .set(ACCOUNT.LOGIN_COUNT, account.getLoginCount())
-                    .set(ACCOUNT.LOGIN_FAILURES, account.getLoginFailures())
-                    .set(ACCOUNT.LAST_LOGIN_MS, account.getLastLoginMs())
-                    .set(ACCOUNT.REACTIVATED_MS, account.getReactivatedMs())
-                    .set(ACCOUNT.FORCE_PASSWORD_CHANGE, account.isForcePasswordChange())
-                    .set(ACCOUNT.NEVER_EXPIRES, account.isNeverExpires())
-                    .set(ACCOUNT.ENABLED, account.isEnabled())
-                    .set(ACCOUNT.INACTIVE, account.isInactive())
-                    .set(ACCOUNT.LOCKED, account.isLocked())
-                    // An administrator's edit normalises the lock to a manual one: a lock set here is
-                    // permanent (NULL expiry) and an unlock clears any expiry. This keeps the invariant
-                    // that only failure locks carry an expiry, so the auto-unlock never releases a lock
-                    // an administrator set.
-                    .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
-                    .set(ACCOUNT.PROCESSING_ACCOUNT, account.isProcessingAccount())
-                    .where(ACCOUNT.ID.eq(account.getId()))
-                    .and(ACCOUNT.VERSION.eq(account.getVersion()))
+                    .set(values)
+                    .where(ACCOUNT.ID.eq(accountId))
                     .execute());
         } catch (final RuntimeException e) {
-            throw describeIfDuplicate(account, e);
+            throw describeIfDuplicate(accountId, change, e);
         }
 
         if (count == 0) {
-            throw new DataChangedException("This account has been changed by someone else since it was "
-                                           + "read, so it has not been updated. Read it again and reapply "
-                                           + "the change.");
+            throw new NoSuchUserException("Account with id = " + accountId + " does not exist");
+        }
+    }
+
+    private static void putIfSpecified(final Map<Field<?>, Object> values,
+                                     final Field<?> field,
+                                     final Object value) {
+        // Null means the change does not mention this column. An empty string is a value, and will clear it.
+        if (value != null) {
+            values.put(field, value);
+        }
+    }
+
+    /**
+     * Turns the state an administrator asked for into the columns that express it. Each action is absolute,
+     * so applying one twice leaves the same result and applying one never depends on what the account looked
+     * like when the request was made.
+     */
+    private static void putActions(final Map<Field<?>, Object> values,
+                                   final AccountChange change,
+                                   final long updateTimeMs) {
+        if (change.hasAction(AccountAction.UNLOCK)) {
+            values.put(ACCOUNT.FAILURE_LOCKED_MS, null);
+            // Unlocking has to clear the count. Left at or above the lock threshold, the very next failed
+            // attempt re-locks the account and the unlock achieves nothing.
+            values.put(ACCOUNT.FAILURE_COUNT, 0);
+        }
+        if (change.hasAction(AccountAction.ENABLE)) {
+            values.put(ACCOUNT.ENABLED, true);
+        }
+        if (change.hasAction(AccountAction.DISABLE)) {
+            values.put(ACCOUNT.ENABLED, false);
+        }
+        if (change.hasAction(AccountAction.REACTIVATE)) {
+            values.put(ACCOUNT.INACTIVE, false);
+        }
+
+        // Making an account usable again stamps the reactivation time so the account maintenance job does
+        // not immediately make it inactive again in the window before the next successful sign in, after
+        // which LAST_LOGIN_MS takes over as the measure of inactivity.
+        //
+        // Deliberately not stamped by UNLOCK. A lock has no bearing on whether an account is being used, so
+        // unlocking one would otherwise extend the dormancy grace period for an unrelated reason.
+        if (change.hasAction(AccountAction.ENABLE)
+                || change.hasAction(AccountAction.REACTIVATE)) {
+            values.put(ACCOUNT.REACTIVATED_MS, updateTimeMs);
         }
     }
 
@@ -491,12 +580,14 @@ class AccountDaoImpl implements AccountDao {
                         .selectFrom(ACCOUNT)
                         .where(ACCOUNT.ID.eq(id))
                         .fetchOptional())
-                .map(RECORD_TO_ACCOUNT_MAPPER);
+                .map(this::toAccount);
     }
 
 
     @Override
-    public void changePassword(final String userId, final String newPassword) {
+    public void changePassword(final String userId,
+                               final String newPassword,
+                               final boolean forcePasswordChange) {
         final String newPasswordHash = PasswordHashUtil.hash(newPassword);
 
         final int count = JooqUtil.contextResult(identityDbConnProvider, context -> context
@@ -504,7 +595,7 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
                 .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
                         System.currentTimeMillis())
-                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
+                .set(ACCOUNT.FORCE_PASSWORD_CHANGE, forcePasswordChange)
                 // Any password change invalidates an outstanding reset link.
                 .set(ACCOUNT.RESET_TOKEN_HASH, (String) null)
                 .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, (Long) null)
@@ -526,11 +617,10 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
                         System.currentTimeMillis())
                 .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
-                .set(ACCOUNT.LOCKED, false)
-                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
+                .set(ACCOUNT.FAILURE_LOCKED_MS, (Long) null)
                 .set(ACCOUNT.INACTIVE, false)
                 .set(ACCOUNT.ENABLED, true)
-                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.FAILURE_COUNT, 0)
                 // Any password change invalidates an outstanding reset link.
                 .set(ACCOUNT.RESET_TOKEN_HASH, (String) null)
                 .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, (Long) null)
@@ -565,9 +655,8 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS,
                         System.currentTimeMillis())
                 .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
-                .set(ACCOUNT.LOCKED, false)
-                .set(ACCOUNT.LOCKED_UNTIL_MS, (Long) null)
-                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.FAILURE_LOCKED_MS, (Long) null)
+                .set(ACCOUNT.FAILURE_COUNT, 0)
                 .set(ACCOUNT.RESET_TOKEN_HASH, (String) null)
                 .set(ACCOUNT.RESET_TOKEN_EXPIRY_MS, (Long) null)
                 .where(ACCOUNT.USER_ID.eq(userId))
@@ -740,27 +829,41 @@ class AccountDaoImpl implements AccountDao {
      * @return The exception to throw, which is the original if it was not a duplicate key.
      */
     private RuntimeException describeIfDuplicate(final Account account, final RuntimeException e) {
+        return describeIfDuplicate(account.getId(), account.getUserId(), account.getEmail(), e);
+    }
+
+    private RuntimeException describeIfDuplicate(final int accountId,
+                                                 final AccountChange change,
+                                                 final RuntimeException e) {
+        return describeIfDuplicate(accountId, change.getUserId(), change.getEmail(), e);
+    }
+
+    private RuntimeException describeIfDuplicate(final Integer accountId,
+                                                 final String userId,
+                                                 final String email,
+                                                 final RuntimeException e) {
         if (!JooqUtil.isDuplicateKeyException(e)) {
             return e;
         }
 
         // An account being updated is allowed to keep its own user id and email address.
-        if (!Strings.isNullOrEmpty(account.getEmail())
-            && isUsedByAnotherAccount(getByEmail(account.getEmail()), account)) {
+        if (!Strings.isNullOrEmpty(email)
+            && isUsedByAnotherAccount(getByEmail(email), accountId)) {
             return new RuntimeException(
-                    "The email address '" + account.getEmail() + "' is already used by another account", e);
+                    "The email address '" + email + "' is already used by another account", e);
         }
-        if (isUsedByAnotherAccount(get(account.getUserId()), account)) {
+        if (!Strings.isNullOrEmpty(userId)
+            && isUsedByAnotherAccount(get(userId), accountId)) {
             return new RuntimeException(
-                    "The user id '" + account.getUserId() + "' is already used by another account", e);
+                    "The user id '" + userId + "' is already used by another account", e);
         }
 
         return e;
     }
 
-    private boolean isUsedByAnotherAccount(final Optional<Account> optExisting, final Account account) {
+    private boolean isUsedByAnotherAccount(final Optional<Account> optExisting, final Integer accountId) {
         return optExisting
-                .filter(existing -> !Objects.equals(existing.getId(), account.getId()))
+                .filter(existing -> !Objects.equals(existing.getId(), accountId))
                 .isPresent();
     }
 

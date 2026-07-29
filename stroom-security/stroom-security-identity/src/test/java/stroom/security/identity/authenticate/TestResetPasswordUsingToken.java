@@ -86,7 +86,7 @@ class TestResetPasswordUsingToken {
                 .thenReturn(true);
         // By default the new password is not the one already on the account.
         lenient().when(accountDao.validateCredentials(eq(USER_ID), anyString()))
-                .thenReturn(new CredentialValidationResult(false, false, false, false, false, false));
+                .thenReturn(new CredentialValidationResult(false, false, false, false, false));
     }
 
     @Test
@@ -125,15 +125,33 @@ class TestResetPasswordUsingToken {
     @Test
     void resettingAPasswordDoesNotReactivateAnInactiveAccount() {
         // The whole point of unlockAndSetPassword rather than resetPassword. Only a successful
-        // authentication may make an inactive account active again.
+        // authentication may make an inactive account active again - the reset merely leaves the way
+        // clear for the sign in that follows to do it.
         givenAccount(account(false, true, true));
 
-        final ChangePasswordResponse response = resetPassword(config(false));
+        final ChangePasswordResponse response = resetPassword(configWithReactivation(false, true));
 
         assertThat(response.isChangeSucceeded()).isTrue();
         verify(accountDao).unlockAndSetPassword(USER_ID, NEW_PASSWORD, HASH);
         verify(accountDao, never()).reactivateAccount(anyString());
         verify(accountDao, never()).resetPassword(anyString(), anyString());
+    }
+
+    @Test
+    void inactiveAccountWhoseSignInWouldStayRefusedCannotCompleteAReset() {
+        // Without auto reactivation a completed reset ends at "account deactivated" on sign in anyway,
+        // so the link is refused rather than letting the user finish a journey that goes nowhere. The
+        // request-time gate normally stops the link existing; this is the backstop for a link issued
+        // before the account went inactive.
+        givenAccount(account(false, true, true));
+
+        final ChangePasswordResponse response = resetPassword(configWithReactivation(false, false));
+
+        assertThat(response.isChangeSucceeded()).isFalse();
+        // Must not say why. The caller does not necessarily own this account.
+        assertThat(response.getMessage()).doesNotContain("inactive");
+        assertThat(response.getMessage()).contains("contact your administrator");
+        verify(accountDao, never()).unlockAndSetPassword(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -174,7 +192,7 @@ class TestResetPasswordUsingToken {
         // Otherwise a user locked out by mistyping could clear the lock without changing anything.
         givenAccount(account(true, false, true));
         when(accountDao.validateCredentials(USER_ID, NEW_PASSWORD))
-                .thenReturn(new CredentialValidationResult(true, false, true, false, false, false));
+                .thenReturn(new CredentialValidationResult(true, false, true, false, false));
 
         final ChangePasswordResponse response = resetPassword(config(true));
 
@@ -229,18 +247,6 @@ class TestResetPasswordUsingToken {
         when(accountDao.getPasswordResetToken(USER_ID)).thenReturn(Optional.of(new ResetToken(HASH, 0L)));
 
         final ChangePasswordResponse response = resetPassword(config(false));
-
-        assertThat(response.isChangeSucceeded()).isFalse();
-        verify(accountDao, never()).unlockAndSetPassword(anyString(), anyString(), anyString());
-    }
-
-    @Test
-    void processingAccountCanNeverResetItsPassword() {
-        final Account account = account(false, false, true);
-        account.setProcessingAccount(true);
-        givenAccount(account);
-
-        final ChangePasswordResponse response = resetPassword(config(true));
 
         assertThat(response.isChangeSucceeded()).isFalse();
         verify(accountDao, never()).unlockAndSetPassword(anyString(), anyString(), anyString());
@@ -320,7 +326,9 @@ class TestResetPasswordUsingToken {
     private Account account(final boolean locked, final boolean inactive, final boolean enabled) {
         final Account account = new Account();
         account.setUserId(USER_ID);
-        account.setLocked(locked);
+        account.setFailureLockedMs(locked
+                ? System.currentTimeMillis()
+                : null);
         account.setInactive(inactive);
         account.setEnabled(enabled);
         return account;
@@ -353,6 +361,18 @@ class TestResetPasswordUsingToken {
 
     private IdentityConfig config(final boolean allowLockedAccountPasswordReset,
                                   final boolean allowPasswordResets) {
+        return configWithReactivation(allowLockedAccountPasswordReset, false, allowPasswordResets);
+    }
+
+    private IdentityConfig configWithReactivation(final boolean allowLockedAccountPasswordReset,
+                                                  final boolean reactivateInactiveAccountsOnLogin) {
+        return configWithReactivation(
+                allowLockedAccountPasswordReset, reactivateInactiveAccountsOnLogin, true);
+    }
+
+    private IdentityConfig configWithReactivation(final boolean allowLockedAccountPasswordReset,
+                                                  final boolean reactivateInactiveAccountsOnLogin,
+                                                  final boolean allowPasswordResets) {
         return new IdentityConfig(
                 null,
                 null,
@@ -360,7 +380,7 @@ class TestResetPasswordUsingToken {
                 null,
                 3,
                 null,
-                false,
+                reactivateInactiveAccountsOnLogin,
                 allowLockedAccountPasswordReset,
                 null,
                 null,

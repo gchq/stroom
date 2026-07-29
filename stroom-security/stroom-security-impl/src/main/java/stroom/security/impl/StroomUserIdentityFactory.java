@@ -19,6 +19,7 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.security.api.HasJwt;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
@@ -37,6 +38,7 @@ import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.openid.api.ClusterToken;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
+import stroom.security.openid.api.TokenRevoker;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.authentication.HasRefreshable;
@@ -93,6 +95,8 @@ public class StroomUserIdentityFactory
     // promotes to the processing user, in every IdP mode - the internal signing key is the trust anchor.
     private final ClusterTokenVerifier clusterTokenVerifier;
     private final InsecureTestCredentials insecureTestCredentials;
+    private final JwtContextFactory jwtContextFactory;
+    private final Provider<TokenRevoker> tokenRevokerProvider;
 
     @Inject
     public StroomUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -110,7 +114,8 @@ public class StroomUserIdentityFactory
                                      final CacheManager cacheManager,
                                      final SimplePathCreator simplePathCreator,
                                      final ClusterTokenVerifier clusterTokenVerifier,
-                                     final InsecureTestCredentials insecureTestCredentials) {
+                                     final InsecureTestCredentials insecureTestCredentials,
+                                     final Provider<TokenRevoker> tokenRevokerProvider) {
 
         super(jwtContextFactory,
                 openIdConfigProvider,
@@ -128,6 +133,8 @@ public class StroomUserIdentityFactory
         this.apiKeyService = apiKeyService;
         this.clusterTokenVerifier = clusterTokenVerifier;
         this.insecureTestCredentials = insecureTestCredentials;
+        this.jwtContextFactory = jwtContextFactory;
+        this.tokenRevokerProvider = tokenRevokerProvider;
 
         cacheBySubjectId = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_SUBJECT_ID,
@@ -251,6 +258,45 @@ public class StroomUserIdentityFactory
                     // Swallow the error so the rest of the logout can proceed
                 }
             }
+        }
+        revokeGrantHeldBySession(userIdentity);
+    }
+
+    /**
+     * Retire the tokens this session was holding.
+     * <p>
+     * Tokens minted for a browser session live only in that session, on the server - the browser is given a
+     * session cookie and never the tokens themselves. So when the session goes, by logout or by expiry, the only
+     * copy of those tokens goes with it and nothing can present them again. Leaving the rows usable would
+     * overstate how much live access the subject has, and would leave a refresh token redeemable for weeks after
+     * the last legitimate copy of it ceased to exist.
+     * </p>
+     * <p>
+     * Tokens issued to a real OAuth client are unaffected: such a client holds its own tokens and has no stroom
+     * session, so nothing here ever runs for them.
+     * </p>
+     */
+    private void revokeGrantHeldBySession(final UserIdentity userIdentity) {
+        if (!(userIdentity instanceof final HasJwt hasJwt)) {
+            return;
+        }
+        try {
+            final String jwt = hasJwt.getJwt();
+            if (NullSafe.isBlankString(jwt)) {
+                return;
+            }
+            // Unverified: the token has already served its purpose and may well have expired by now, and all
+            // that is wanted from it is the id naming the grant. A jti that matches nothing revokes nothing.
+            jwtContextFactory.getJwtContext(jwt, false)
+                    .map(JwtContext::getJwtClaims)
+                    .map(claims -> claims.getClaimValueAsString("jti"))
+                    .filter(jti -> !NullSafe.isBlankString(jti))
+                    .ifPresent(jti -> tokenRevokerProvider.get().revokeGrant(jti));
+        } catch (final Exception e) {
+            // Never fail a logout because the tidy-up failed - the session is going either way, and the tokens
+            // expire on their own.
+            LOGGER.error("Error revoking the grant held by the session for {}. {}",
+                    userIdentity, LogUtil.exceptionMessage(e), e);
         }
     }
 

@@ -89,7 +89,16 @@ public class InternalServiceUserFactory implements ServiceUserFactory {
                 // The inter-node processing-user token is a bearer credential, so it must be marked as
                 // an access token to pass the bearer check.
                 .type(OpenId.TOKEN_TYPE__ACCESS);
-        final String token = tokenBuilder.build();
+        // Deliberately NOT recorded in the oauth_token inventory, unlike the user-facing tokens minted by
+        // OpenIdService. Three reasons:
+        //  1. This factory is bound for EXTERNAL_IDP as well as INTERNAL_IDP, so recording here would put
+        //     rows in the internal IdP's table for deployments that have no internal IdP.
+        //  2. It could not safely be acted on. Revoking a live cluster token breaks inter-node comms, so
+        //     offering it to an admin alongside real user tokens is a footgun; the remedy for a compromised
+        //     cluster credential is rotating the signing key, not denylisting a jti.
+        //  3. It is re-minted every ~8.5 minutes per node, so it would swamp an inventory whose purpose is
+        //     showing which *users* hold live access.
+        final String token = tokenBuilder.build().token();
         return new PerishableItem<>(expiryTime, token);
     }
 }

@@ -30,6 +30,7 @@ import stroom.security.openid.api.ClusterToken;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.TokenRevoker;
 import stroom.security.shared.User;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.SimplePathCreator;
@@ -133,7 +134,8 @@ class TestStroomUserIdentityFactory {
                 new CacheManagerImpl(),
                 new SimplePathCreator(() -> null, () -> null),
                 clusterTokenVerifier,
-                new InsecureTestCredentials());
+                new InsecureTestCredentials(),
+                () -> Mockito.mock(TokenRevoker.class));
 
         factory.getApiUserIdentity(request);
 
@@ -247,7 +249,8 @@ class TestStroomUserIdentityFactory {
                 new CacheManagerImpl(),
                 new SimplePathCreator(() -> null, () -> null),
                 clusterTokenVerifier,
-                new InsecureTestCredentials());
+                new InsecureTestCredentials(),
+                () -> Mockito.mock(TokenRevoker.class));
     }
 
     private static User.Builder userBuilder() {
@@ -301,6 +304,7 @@ class TestStroomUserIdentityFactory {
                 new CacheManagerImpl(),
                 new SimplePathCreator(() -> null, () -> null),
                 null,
-                new InsecureTestCredentials());
+                new InsecureTestCredentials(),
+                () -> Mockito.mock(TokenRevoker.class));
     }
 }

@@ -26,6 +26,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -59,11 +60,15 @@ public class EditAccountViewImpl
     @UiField
     FormGroup inactiveGroup;
     @UiField
-    CustomCheckBox inactive;
+    Label activityState;
+    @UiField
+    Button reactivate;
     @UiField
     FormGroup lockedGroup;
     @UiField
-    CustomCheckBox locked;
+    Label lockState;
+    @UiField
+    Button unlock;
     @UiField
     Button changePassword;
 
@@ -168,13 +173,9 @@ public class EditAccountViewImpl
     }
 
     @Override
-    public void setInactive(final boolean inactive) {
-        this.inactive.setValue(inactive);
-    }
-
-    @Override
-    public boolean isInactive() {
-        return inactive.getValue();
+    public void setActivityState(final String description, final boolean canReactivate) {
+        activityState.setText(description);
+        reactivate.setEnabled(canReactivate);
     }
 
     @Override
@@ -183,13 +184,9 @@ public class EditAccountViewImpl
     }
 
     @Override
-    public void setLocked(final boolean locked) {
-        this.locked.setValue(locked);
-    }
-
-    @Override
-    public boolean isLocked() {
-        return locked.getValue();
+    public void setLockState(final String description, final boolean canUnlock) {
+        lockState.setText(description);
+        unlock.setEnabled(canUnlock);
     }
 
     @Override
@@ -210,6 +207,16 @@ public class EditAccountViewImpl
     @UiHandler("changePassword")
     public void onChangePassword(final ClickEvent e) {
         getUiHandlers().onChangePassword();
+    }
+
+    @UiHandler("unlock")
+    public void onUnlock(final ClickEvent e) {
+        getUiHandlers().onUnlock();
+    }
+
+    @UiHandler("reactivate")
+    public void onReactivate(final ClickEvent e) {
+        getUiHandlers().onReactivate();
     }
 
     public interface Binder extends UiBinder<Widget, EditAccountViewImpl> {

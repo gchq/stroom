@@ -54,4 +54,22 @@ public interface PublicJsonWebKeyProvider {
      * @return The active key.
      */
     PublicJsonWebKey getActiveKey();
+
+    /**
+     * Discard any cached copy of the key set so the next read reloads it.
+     * <p>
+     * The correctness backstop for key rotation. Keys are cached, so immediately after a rotation a node can
+     * hold a key set that does not yet contain the {@code kid} a freshly signed token names - and would reject
+     * a perfectly valid token until the cache happened to refresh. A verifier that meets an unknown
+     * {@code kid} can call this and retry rather than failing.
+     * </p>
+     * <p>
+     * Default is a no-op, for implementations that do not cache. Implementations that do <b>must</b> tolerate
+     * being called on the request path: see the rate limiting in {@code InternalJwtContextFactory}, because an
+     * unknown {@code kid} is trivially attacker-controlled.
+     * </p>
+     */
+    default void refresh() {
+        // Nothing cached, nothing to discard.
+    }
 }

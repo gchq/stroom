@@ -18,11 +18,13 @@ package stroom.security.identity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccountView;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountAction;
+import stroom.security.identity.shared.AccountChange;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.CreateAccountRequest;
-import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -49,6 +51,7 @@ public class EditAccountPresenter
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
 
     private Account account;
     private Runnable onChangeHandler;
@@ -60,9 +63,11 @@ public class EditAccountPresenter
     public EditAccountPresenter(final EventBus eventBus,
                                 final EditAccountView view,
                                 final RestFactory restFactory,
+                                final DateTimeFormatter dateTimeFormatter,
                                 final Provider<ChangePasswordPresenter> changePasswordPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
         this.changePasswordPresenterProvider = changePasswordPresenterProvider;
         getView().setUiHandlers(this);
     }
@@ -99,9 +104,13 @@ public class EditAccountPresenter
         getView().setLastName(account.getLastName());
         getView().setComments(account.getComments());
         getView().setNeverExpires(account.isNeverExpires());
+        // Set explicitly rather than relying on the template default, so that this does not depend on the
+        // presenter being a fresh instance - showCreateDialog hides all three.
+        getView().setEnabledVisible(true);
+        getView().setLockedVisible(true);
+        getView().setInactiveVisible(true);
         getView().setEnabled(account.isEnabled());
-        getView().setInactive(account.isInactive());
-        getView().setLocked(account.isLocked());
+        showLockAndActivity();
         getView().setPasswordButtonText(getPasswordCaption());
 
         final PopupSize popupSize = PopupSize.resizableX(400);
@@ -187,22 +196,105 @@ public class EditAccountPresenter
                 .exec();
     }
 
-    private void updateAccount(final HidePopupRequestEvent e) {
-        account.setUserId(getView().getUserId());
-        account.setEmail(getView().getEmail());
-        account.setFirstName(getView().getFirstName());
-        account.setLastName(getView().getLastName());
-        account.setComments(getView().getComments());
-        account.setNeverExpires(getView().isNeverExpires());
-        account.setEnabled(getView().isEnabled());
-        account.setInactive(getView().isInactive());
-        account.setLocked(getView().isLocked());
+    @Override
+    public void onUnlock() {
+        applyImmediately(AccountAction.UNLOCK, "Error unlocking account: ");
+    }
 
-        final UpdateAccountRequest request = new UpdateAccountRequest(account, password, confirmPassword);
+    @Override
+    public void onReactivate() {
+        applyImmediately(AccountAction.REACTIVATE, "Error reactivating account: ");
+    }
+
+    /**
+     * Applies a single action now rather than staging it into the save. Each is one unambiguous act with
+     * nothing to combine it with, and doing it this way keeps them working while the administrator has
+     * unsaved edits to the text fields.
+     */
+    private void applyImmediately(final AccountAction action, final String errorPrefix) {
+        if (account == null) {
+            // Both buttons live in groups hidden while creating an account, so this cannot normally happen.
+            return;
+        }
+        final AccountChange change = AccountChange.builder().action(action).build();
         restFactory
                 .create(ACCOUNT_RESOURCE)
-                .method(res -> res.update(request, account.getId()))
-                .onSuccess(account -> {
+                .method(res -> res.update(change, account.getId()))
+                .onSuccess(result -> restFactory
+                        .create(ACCOUNT_RESOURCE)
+                        .method(res -> res.fetch(account.getId()))
+                        .onSuccess(updated -> {
+                            // Re-read rather than assume, so the dialog shows what was actually stored.
+                            account = updated;
+                            showLockAndActivity();
+                            onChangeHandler.run();
+                        })
+                        .taskMonitorFactory(this)
+                        .exec())
+                .onFailure(throwable ->
+                        AlertEvent.fireError(this, errorPrefix + throwable.getMessage(), null))
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void showLockAndActivity() {
+        getView().setLockState(describeLock(), account.isLocked());
+        getView().setActivityState(describeActivity(), account.isInactive());
+    }
+
+    private String describeLock() {
+        final int failures = account.getFailureCount();
+        if (!account.isLocked()) {
+            return failures == 0
+                    ? "Not locked"
+                    : "Not locked - " + failures + " failed sign-ins since the last successful one";
+        }
+        final Long until = account.getFailureLockedUntilMs();
+        return until == null
+                ? "Locked after " + failures + " failed sign-ins - will not clear on its own"
+                : "Locked until " + dateTimeFormatter.format(until) + ", after " + failures
+                  + " failed sign-ins";
+    }
+
+    private String describeActivity() {
+        if (!account.isInactive()) {
+            return "Active";
+        }
+        final Long lastLogin = account.getLastLoginMs();
+        return lastLogin == null
+                ? "Inactive - never signed in"
+                : "Inactive - last signed in " + dateTimeFormatter.format(lastLogin);
+    }
+
+    private void updateAccount(final HidePopupRequestEvent e) {
+        // Only what was actually altered is sent. The account this screen was opened with is a snapshot, and
+        // returning it whole would write back every column - including ones the login path owns, undoing a
+        // lockout or a login that happened while the screen was open.
+        final AccountChange.Builder builder = AccountChange.builder()
+                .valueIfChanged(getView().getUserId(), account.getUserId(), AccountChange.Builder::userId)
+                .valueIfChanged(getView().getEmail(), account.getEmail(), AccountChange.Builder::email)
+                .valueIfChanged(getView().getFirstName(), account.getFirstName(),
+                        AccountChange.Builder::firstName)
+                .valueIfChanged(getView().getLastName(), account.getLastName(), AccountChange.Builder::lastName)
+                .valueIfChanged(getView().getComments(), account.getComments(), AccountChange.Builder::comments)
+                // Enabled is the only one of the three account states an administrator sets, so it is the
+                // only one carried by the save. Unlocking and reactivating are their own actions, applied
+                // when their button is pressed.
+                .actionIfChanged(getView().isEnabled(), account.isEnabled(),
+                        AccountAction.ENABLE, AccountAction.DISABLE);
+
+        if (getView().isNeverExpires() != account.isNeverExpires()) {
+            builder.neverExpires(getView().isNeverExpires());
+        }
+        if (password != null) {
+            builder.password(password, confirmPassword);
+        }
+
+        final AccountChange change = builder.build();
+        restFactory
+                .create(ACCOUNT_RESOURCE)
+                .method(res -> res.update(change, account.getId()))
+                .onSuccess(result -> {
                     onChangeHandler.run();
                     e.hide();
                 })
@@ -255,17 +347,21 @@ public class EditAccountPresenter
 
         void setEnabledVisible(boolean visible);
 
-        void setInactive(boolean inactive);
-
-        boolean isInactive();
-
-        void setInactiveVisible(boolean visible);
-
-        void setLocked(boolean locked);
-
-        boolean isLocked();
+        /**
+         * Shows what the lockout has done and whether there is anything to undo. Read only: an
+         * administrator does not lock an account, repeated wrong passwords do.
+         */
+        void setLockState(String description, boolean canUnlock);
 
         void setLockedVisible(boolean visible);
+
+        /**
+         * Shows whether the account has gone unused. Read only, as for {@link #setLockState}: inactivity is
+         * applied by the account maintenance job, not by an administrator.
+         */
+        void setActivityState(String description, boolean canReactivate);
+
+        void setInactiveVisible(boolean visible);
 
         void setPasswordButtonText(String text);
     }

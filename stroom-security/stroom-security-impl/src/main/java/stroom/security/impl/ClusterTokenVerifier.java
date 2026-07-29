@@ -68,10 +68,13 @@ public class ClusterTokenVerifier {
     private static final String TYP_HEADER = "typ";
 
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
+    private final StaleKeySetRecovery staleKeySetRecovery;
 
     @Inject
-    ClusterTokenVerifier(final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
+    ClusterTokenVerifier(final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
+                         final StaleKeySetRecovery staleKeySetRecovery) {
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
+        this.staleKeySetRecovery = staleKeySetRecovery;
     }
 
     /**
@@ -92,13 +95,30 @@ public class ClusterTokenVerifier {
             return Optional.empty();
         }
         try {
-            final JwtContext jwtContext = newJwtConsumer().process(jwt);
-            if (isClusterToken(jwtContext)) {
-                return Optional.of(jwtContext);
-            }
+            return verifyOnce(jwt);
         } catch (final RuntimeException | InvalidJwtException e) {
+            if (staleKeySetRecovery.isUnresolvableKey(e) && staleKeySetRecovery.tryRefresh()) {
+                // A rotation on another node mints cluster tokens with a kid this node may not have loaded
+                // yet. Inter-node calls run continuously, so without this every rotation would cause a burst
+                // of rejected node-to-node requests until the key set happened to reload.
+                try {
+                    return verifyOnce(jwt);
+                } catch (final RuntimeException | InvalidJwtException retryFailure) {
+                    LOGGER.debug(() -> "Not a valid internal cluster token after reloading keys: "
+                                       + retryFailure.getMessage(), retryFailure);
+                    return Optional.empty();
+                }
+            }
             // Expected when the token is not an internal cluster token (wrong key/issuer/audience/expiry).
             LOGGER.debug(() -> "Not a valid internal cluster token: " + e.getMessage(), e);
+        }
+        return Optional.empty();
+    }
+
+    private Optional<JwtContext> verifyOnce(final String jwt) throws InvalidJwtException {
+        final JwtContext jwtContext = newJwtConsumer().process(jwt);
+        if (isClusterToken(jwtContext)) {
+            return Optional.of(jwtContext);
         }
         return Optional.empty();
     }

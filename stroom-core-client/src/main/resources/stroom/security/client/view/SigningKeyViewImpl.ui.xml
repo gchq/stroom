@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <!-- A single list. Unlike User Access there is no detail pane, because there is nothing further about a
+         signing key that is safe to show: the stored key includes its private material, so the three columns
+         in the list are the whole of what leaves the server. -->
+    <g:SimplePanel ui:field="listContainer" styleName="max"/>
+</ui:UiBinder>

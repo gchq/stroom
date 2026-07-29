@@ -45,7 +45,10 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
     public static final int DEFAULT_MINIMUM_PASSWORD_LENGTH = 8;
 
     @JsonProperty
-    @JsonPropertyDescription("Will the UI allow password resets")
+    @JsonPropertyDescription("Whether users may reset their own password by email. This is the only switch " +
+            "for the feature: it governs both what the UI offers and whether a reset is honoured. Sending " +
+            "the email needs the identity 'email' section configured as well, so turning this on without " +
+            "working SMTP settings will issue reset links that never arrive.")
     private final boolean allowPasswordResets;
 
     @NotNull
@@ -173,7 +176,7 @@ public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConf
     private static String buildDefaultPolicyMessage(final int minimumPasswordLength) {
         return "To conform with our Strong Password policy, " +
                "you are required to use" +
-               " a sufficiently strong password. Password must be more than " +
+               " a sufficiently strong password. Password must be at least " +
                minimumPasswordLength + " characters.";
     }
 

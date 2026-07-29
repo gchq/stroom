@@ -19,6 +19,7 @@ package stroom.security.identity.account;
 import stroom.security.identity.authenticate.CredentialValidationResult;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountChange;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.util.shared.ResultPage;
@@ -82,7 +83,10 @@ public interface AccountDao {
      * Use {@link #changePassword(String, String)} to set a password.
      * </p>
      */
-    void update(Account account);
+    // Applies only what the change asks for, leaving every other column as it is. Nothing is tested against
+    // the account's version: a change cannot express a revert, so there is nothing for a version to guard.
+    // Throws NoSuchUserException if no account has this id.
+    void applyChange(int accountId, AccountChange change, String updateUser, long updateTimeMs);
 
     /**
      * Permanently delete an account, so its credentials can no longer be used to sign in. Does nothing
@@ -131,15 +135,20 @@ public interface AccountDao {
     boolean incrementLoginFailures(String userId);
 
     /**
-     * Set a new password for a user who is signed in and has supplied their current one. Records when the
-     * password was changed and clears any requirement to change it.
+     * Set a new password, recording when it was changed and invalidating any outstanding reset link.
      * <p>
      * Deliberately does not change the locked, inactive or enabled state.
      * </p>
      *
+     * @param forcePasswordChange Whether the user must still change their password at next sign in. The caller
+     *                            has to decide, because it depends on <em>who</em> set the password: a user
+     *                            changing their own has just satisfied the requirement, whereas an
+     *                            administrator setting someone else's now knows their credential, so the
+     *                            requirement may well need to stand. Getting this wrong silently leaves a
+     *                            user operating on a password an administrator knows.
      * @throws NoSuchUserException If there is no such account.
      */
-    void changePassword(String userId, String newPassword);
+    void changePassword(String userId, String newPassword, boolean forcePasswordChange);
 
     /**
      * Set a new password and clear everything stopping the user signing in: the locked state, the

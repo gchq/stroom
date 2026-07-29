@@ -55,8 +55,17 @@ jooq {
                         // The schema name to use in the genned classes, instead of inputSchema
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
-                        // and comments allowed. Each one is a java regex
-                        includes = 'account|token|token_type|json_web_key|oauth_client'
+                        // and comments allowed. Each one is a java regex.
+                        // These are matched against the WHOLE object name, which is why token_type has to
+                        // be listed separately from token, and why oauth_token is not covered by 'token'.
+                        //
+                        // The legacy `token` table is deliberately NOT listed. Its jooq code was removed by
+                        // hand in 48611dc23a (gh-3937) because the table is obsolete, but the table itself
+                        // only gets dropped if stroom-security-impl-db's V07_02_00_115 happens to run after
+                        // identity's V07_00_00_025 - cross-module order is non-deterministic, so on some
+                        // fresh installs it survives. Listing it here would resurrect Token.java on the next
+                        // regen against such a database, silently reverting that commit.
+                        includes = 'account|token_type|json_web_key|oauth_client|oauth_token'
                         // We don't want to include flyway versioning
                         excludes = 'authentication_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
@@ -70,10 +79,8 @@ jooq {
                                     '.*\\.account\\.never_expires|' +
                                     '.*\\.account\\.enabled|' +
                                     '.*\\.account\\.inactive|' +
-                                    '.*\\.account\\.locked|' +
-                                    '.*\\.account\\.processing_account|' +
                                     '.*\\.json_web_key\\.enabled|' +
-                                    '.*\\.token\\.enabled'
+                                    '.*\\.oauth_token\\.revoked'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

@@ -11234,6 +11234,38 @@
         "tags" : [ "Sessions" ]
       }
     },
+    "/session/v1/terminateSession" : {
+      "post" : {
+        "operationId" : "terminateSession",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "sessionHandle",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Terminate a single session by id (own session, or requires Manage Users)",
+        "tags" : [ "Sessions" ]
+      }
+    },
     "/sessionInfo/v1" : {
       "get" : {
         "operationId" : "getSessionInfo",
@@ -12381,6 +12413,32 @@
         "tags" : [ "Text Converters" ]
       }
     },
+    "/tokenRevocation/v1/invalidateCache" : {
+      "post" : {
+        "operationId" : "invalidateRevokedTokenCache",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Tell a node to re-read the revoked token denylist (inter-node call)",
+        "tags" : [ "Token Revocation" ]
+      }
+    },
     "/traces/v1/getTrace" : {
       "post" : {
         "operationId" : "tracesGetTrace",
@@ -12495,6 +12553,93 @@
         },
         "summary" : "Find traces",
         "tags" : [ "Traces" ]
+      }
+    },
+    "/userAccess/v1/find" : {
+      "post" : {
+        "operationId" : "findUserAccess",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserAccessCriteria"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageUserAccessRow"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find users holding live sessions or tokens",
+        "tags" : [ "User Access" ]
+      }
+    },
+    "/userAccess/v1/revoke" : {
+      "post" : {
+        "operationId" : "revokeUserAccess",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Revoke a user's sessions and tokens (requires Manage Users)",
+        "tags" : [ "User Access" ]
+      }
+    },
+    "/userAccess/v1/sessions" : {
+      "post" : {
+        "operationId" : "findUserSessions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SessionDetails"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List one user's sessions (requires Manage Users)",
+        "tags" : [ "User Access" ]
       }
     },
     "/userInfo/v1/{userUuid}" : {
@@ -19733,6 +19878,30 @@
           }
         }
       },
+      "FindUserAccessCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "activeOnly" : {
+            "type" : "boolean"
+          },
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
@@ -25059,6 +25228,21 @@
           }
         }
       },
+      "ResultPageUserAccessRow" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserAccessRow"
+            }
+          }
+        }
+      },
       "ResultPageUserDependency" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -25858,6 +26042,9 @@
             "format" : "int64"
           },
           "nodeName" : {
+            "type" : "string"
+          },
+          "sessionHandle" : {
             "type" : "string"
           },
           "userRef" : {
@@ -28392,6 +28579,46 @@
           "version" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "UserAccessRow" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "lastAccessedMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastTokenExpiryMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nextTokenExpiryMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nodeNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "sessionCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "subjectId" : {
+            "type" : "string"
+          },
+          "tokenCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
           }
         }
       },

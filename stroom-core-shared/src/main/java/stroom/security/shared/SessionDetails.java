@@ -37,18 +37,22 @@ public class SessionDetails {
     private final String lastAccessedAgent;
     @JsonProperty
     private final String nodeName;
+    @JsonProperty
+    private final String sessionHandle;
 
     @JsonCreator
     public SessionDetails(@JsonProperty("userRef") final UserRef userRef,
                           @JsonProperty("createMs") final long createMs,
                           @JsonProperty("lastAccessedMs") final long lastAccessedMs,
                           @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
-                          @JsonProperty("nodeName") final String nodeName) {
+                          @JsonProperty("nodeName") final String nodeName,
+                          @JsonProperty("sessionHandle") final String sessionHandle) {
         this.userRef = userRef;
         this.createMs = createMs;
         this.lastAccessedMs = lastAccessedMs;
         this.lastAccessedAgent = lastAccessedAgent;
         this.nodeName = nodeName;
+        this.sessionHandle = sessionHandle;
     }
 
     public UserRef getUserRef() {
@@ -69,6 +73,24 @@ public class SessionDetails {
 
     public String getLastAccessedAgent() {
         return lastAccessedAgent;
+    }
+
+    /**
+     * An opaque handle identifying this session, for use with
+     * {@link SessionResource#terminateSession(String, String)}.
+     * <p>
+     * <b>Deliberately not the session id.</b> A session id is the value of the session cookie, so returning one
+     * would hand the caller a credential they could replay to impersonate that user - turning the Manage Users
+     * permission into the ability to become anybody. This is a one-way hash of the id instead: it is stable
+     * enough to name a session across a list-then-terminate round trip, and useless as a credential.
+     * </p>
+     * <p>
+     * Guessing a handle gains nothing either. The only thing it can be used for is termination, which is already
+     * gated on owning the session or holding Manage Users, and the worst outcome is signing somebody out.
+     * </p>
+     */
+    public String getSessionHandle() {
+        return sessionHandle;
     }
 
     @Override
