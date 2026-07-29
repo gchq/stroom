@@ -16,6 +16,8 @@
 
 package stroom.pipeline.stepping.store;
 
+import java.util.List;
+
 /**
  * What a producer has captured: per part, <b>which records are held, and is the extent final</b>.
  * <p>
@@ -42,6 +44,13 @@ public interface Coverage {
      * The value meaning "no record": returned by {@link #first}/{@link #last} for a part with nothing held.
      */
     long NONE = -1;
+
+    /**
+     * @return the parts that hold anything, ascending. Navigation enumerates parts before it can ask about
+     * records in them, so a coverage that could not answer this would leave its callers reaching back into
+     * the store for half the question.
+     */
+    List<Long> parts();
 
     /**
      * @return the lowest record index held for the part, or {@link #NONE}.

@@ -443,6 +443,11 @@ public class StepDataStore {
     public synchronized Coverage recordCoverage(final BooleanSupplier extentFinal) {
         return new Coverage() {
             @Override
+            public List<Long> parts() {
+                return getPartIndices();
+            }
+
+            @Override
             public long first(final long partIndex) {
                 return getFirstRecordIndex(partIndex);
             }
@@ -477,6 +482,18 @@ public class StepDataStore {
                                                  final String fingerprint,
                                                  final BooleanSupplier extentFinal) {
         return new Coverage() {
+            @Override
+            public List<Long> parts() {
+                synchronized (StepDataStore.this) {
+                    return openFiles.keySet().stream()
+                            .filter(key -> key.elementId().equals(elementId)
+                                           && key.fingerprint().equals(fingerprint))
+                            .map(FileKey::partIndex)
+                            .sorted()
+                            .toList();
+                }
+            }
+
             @Override
             public long first(final long partIndex) {
                 return getElementRecordBound(partIndex, elementId, fingerprint, false);

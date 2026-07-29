@@ -40,6 +40,7 @@ import stroom.pipeline.stepping.read.SteppingGraphBuilder;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.pipeline.stepping.session.SteppingSessionRegistry;
+import stroom.pipeline.stepping.store.Coverage;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreManager;
 import stroom.pipeline.stepping.store.SteppingConfig;
@@ -423,22 +424,27 @@ public class SteppingService {
             return null;
         }
         final StepLocation ref = request.getStepLocation();
+        // Two coverages frame the scan: the stream's records say where a scan may reach, and the scanned
+        // element's own coverage says where the last window ended - the frontier read back from the store
+        // rather than remembered between polls.
+        final Coverage stream = store.recordCoverage(() -> false);
+        final Coverage scanned = store.elementCoverage(
+                new ElementId(decision.startElementId()), fingerprint, () -> false);
         // A step that names no record starts at the end of the stream it is walking from.
-        final List<Long> parts = store.getPartIndices();
+        final List<Long> parts = stream.parts();
         if (parts.isEmpty()) {
             return null;
         }
         final long part = ref != null && ref.getMetaId() == metaId
                 ? ref.getPartIndex()
                 : (forward ? parts.getFirst() : parts.getLast());
-        final long streamFirst = store.getFirstRecordIndex(part);
-        final long streamLast = store.getLastRecordIndex(part);
+        final long streamFirst = stream.first(part);
+        final long streamLast = stream.last(part);
         if (streamFirst < 0 || streamLast < 0) {
             return null;
         }
 
-        final ElementId elementId = new ElementId(decision.startElementId());
-        final long frontier = store.getElementRecordBound(part, elementId, fingerprint, forward);
+        final long frontier = forward ? scanned.last(part) : scanned.first(part);
         final long start;
         if (frontier >= 0) {
             // Carry on from where an earlier window of this same scan finished.
@@ -485,25 +491,24 @@ public class SteppingService {
             // Handled by the windowed scan instead - see filteredWindowFor.
             return null;
         }
-        final List<Long> parts = store.getPartIndices();
+        final Coverage stream = store.recordCoverage(() -> false);
+        final List<Long> parts = stream.parts();
         if (parts.isEmpty()) {
             return null;
         }
         return switch (stepType) {
-            case FIRST -> locationIn(metaId, store, parts.getFirst(), true);
-            case LAST -> locationIn(metaId, store, parts.getLast(), false);
-            case FORWARD, BACKWARD -> neighbourOf(metaId, store, ref, stepType == StepType.FORWARD);
+            case FIRST -> locationIn(metaId, stream, parts.getFirst(), true);
+            case LAST -> locationIn(metaId, stream, parts.getLast(), false);
+            case FORWARD, BACKWARD -> neighbourOf(metaId, stream, ref, stepType == StepType.FORWARD);
             default -> null;
         };
     }
 
     private StepLocation locationIn(final long metaId,
-                                    final StepDataStore store,
+                                    final Coverage stream,
                                     final long partIndex,
                                     final boolean first) {
-        final long record = first
-                ? store.getFirstRecordIndex(partIndex)
-                : store.getLastRecordIndex(partIndex);
+        final long record = first ? stream.first(partIndex) : stream.last(partIndex);
         return record < 0 ? null : new StepLocation(metaId, partIndex, record);
     }
 
@@ -513,7 +518,7 @@ public class SteppingService {
      * resolver's job - the next stream may not even be swept yet - and it needs the whole-stream path.
      */
     private StepLocation neighbourOf(final long metaId,
-                                     final StepDataStore store,
+                                     final Coverage stream,
                                      final StepLocation ref,
                                      final boolean forward) {
         if (ref == null || ref.getMetaId() != metaId) {
@@ -521,13 +526,15 @@ public class SteppingService {
         }
         final long part = ref.getPartIndex();
         final long candidate = ref.getRecordIndex() + (forward ? 1 : -1);
-        if (candidate >= store.getFirstRecordIndex(part) && candidate <= store.getLastRecordIndex(part)) {
+        // Bounds, not holds(): the question is whether the record EXISTS in the stream - a hole punched by
+        // an earlier on-demand materialisation is still a legitimate record to step to and materialise.
+        if (candidate >= stream.first(part) && candidate <= stream.last(part)) {
             return new StepLocation(metaId, part, candidate);
         }
 
         // Off the end of this part. A multi-part stream is one stream to the user, so stepping should carry
         // on into the next part rather than drop to reprocessing the whole stream to do it.
-        final List<Long> parts = store.getPartIndices();
+        final List<Long> parts = stream.parts();
         final int index = parts.indexOf(part);
         if (index < 0) {
             return null;
@@ -536,7 +543,7 @@ public class SteppingService {
         if (neighbourIndex < 0 || neighbourIndex >= parts.size()) {
             return null;
         }
-        return locationIn(metaId, store, parts.get(neighbourIndex), forward);
+        return locationIn(metaId, stream, parts.get(neighbourIndex), forward);
     }
 
     private boolean isAnyFilterApplied(final PipelineStepRequest request) {

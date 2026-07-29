@@ -149,6 +149,22 @@ class TestCoverage {
                 .isFalse();
     }
 
+    @Test
+    void testPartsEnumerateOnlyWhatIsHeld(@TempDir final Path dir) {
+        // Element coverage lists the parts THIS element has records in - not the stream's parts. An element
+        // reprocessed for one part must not claim the others.
+        final StepDataStore store = store(dir);
+        put(store, 0, StepDataStore.RecordOrder.SEQUENTIAL);
+        store.putRecord(new StepLocation(META_ID, 2, 0),
+                List.of(new StepDataStore.ElementRecord(new ElementId("other"), FP, data("x"))),
+                null, Map.of(), null, StepDataStore.RecordOrder.SEQUENTIAL);
+
+        assertThat(store.elementCoverage(E1, FP, () -> false).parts())
+                .as("e1 only has part 0; part 2 belongs to another element").containsExactly(0L);
+        assertThat(store.recordCoverage(() -> false).parts())
+                .as("the stream has both").containsExactly(0L, 2L);
+    }
+
     // --- extent finality ------------------------------------------------------------------------
 
     @Test

@@ -23,6 +23,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -131,6 +132,11 @@ public class StreamSweep {
      */
     public Coverage coverage() {
         return new Coverage() {
+            @Override
+            public List<Long> parts() {
+                return watermark.getCapturedPartIndices();
+            }
+
             @Override
             public long first(final long partIndex) {
                 return watermark.getCapturedFirstRecordIndex(partIndex);
