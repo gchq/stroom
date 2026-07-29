@@ -123,7 +123,6 @@ class TestSimpleReceiver extends StroomUnitTest {
         final SimpleReceiver simpleReceiver = new SimpleReceiver(
                 mockAttributeMapFilterFactory,
                 () -> dataDir,
-                null,
                 mockLogStream,
                 null,
                 () -> mockReceiveDataConfig);

@@ -23,6 +23,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
+import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
@@ -59,6 +60,7 @@ public class EventStore implements EventConsumer, Managed {
     public static final String EVENT_STORE_NAME_PART = "eventStore";
 
     private final ReceiverFactory receiverFactory;
+    private final CommonSecurityContext securityContext;
     private final Path dir;
     private final Provider<EventStoreConfig> eventStoreConfigProvider;
     private final StroomCache<FeedKey, EventAppender> openAppendersCache;
@@ -70,6 +72,7 @@ public class EventStore implements EventConsumer, Managed {
 
     @Inject
     public EventStore(final ReceiverFactory receiverFactory,
+                      final CommonSecurityContext securityContext,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
                       final DataDirProvider dataDirProvider,
                       final FileStores fileStores,
@@ -89,6 +92,7 @@ public class EventStore implements EventConsumer, Managed {
         fileStores.add(0, "Event Store", dir);
 
         this.receiverFactory = receiverFactory;
+        this.securityContext = securityContext;
 
         this.openAppendersCache = cacheManager.create(
                 CACHE_NAME,
@@ -200,9 +204,15 @@ public class EventStore implements EventConsumer, Managed {
             handleTimer.time(() -> {
                 final AtomicBoolean success = new AtomicBoolean();
                 try (final BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
-                    receiverFactory
-                            .get(attributeMap)
-                            .receive(Instant.now(), attributeMap, "event-store", () -> inputStream);
+                    // The request that produced these events was authenticated and filtered long ago,
+                    // under ReceiveDataHelper's elevation. This runs later, on the forwarding thread
+                    // (and at startup for files left behind), so no user is in scope - yet receive()
+                    // filters again and the feed status lookup needs an identity. Elevate for the same
+                    // reason the datafeed and dir-scanner entry points do.
+                    securityContext.asProcessingUser(() ->
+                            receiverFactory
+                                    .get(attributeMap)
+                                    .receive(Instant.now(), attributeMap, "event-store", () -> inputStream));
                     success.set(true);
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
