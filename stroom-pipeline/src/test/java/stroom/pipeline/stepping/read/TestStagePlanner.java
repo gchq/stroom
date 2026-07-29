@@ -68,6 +68,108 @@ class TestStagePlanner {
         return store;
     }
 
+    // --- span-based reuse: the stage-1 generalisation -------------------------------------------
+    //
+    // A whole-stream plan (span == null) needs complete elements; a plan for a span of records only needs
+    // those records held. The dangerous direction is permissive - reusing a feed that does not hold what the
+    // replay will read - so both directions are pinned.
+
+    /**
+     * A store where the xslt element holds only records {@code from..to} of a stream whose full extent is
+     * 0..9 (established by the parser element), i.e. a partially materialised element mid-capture.
+     */
+    private StepDataStore storeWithPartialXslt(final Path tempDir, final long from, final long to) {
+        final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
+        for (long r = 0; r <= 9; r++) {
+            store.putElementData(new StepLocation(META, 0, r), new ElementId("parser"), "p1", ed());
+        }
+        for (long r = from; r <= to; r++) {
+            store.putElementData(new StepLocation(META, 0, r), new ElementId("xslt"), "x1", ed());
+        }
+        return store;
+    }
+
+    @Test
+    void testAPartialElementIsReusableForTheRecordsItHolds(@TempDir final Path tempDir) {
+        // The point of the change: captured up to a frontier is reusable for everything behind it, long
+        // before the element is complete. Under the old completeness gate this store planned xslt as
+        // reprocess - which is scenario C's "partial capture is worth exactly nothing".
+        final StepDataStore store = storeWithPartialXslt(tempDir, 0, 6);
+
+        final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
+                new StagePlanner.RecordSpan(0, 2, 5));
+
+        assertThat(plan.reuse()).contains("xslt");
+        assertThat(plan.fullRecapture()).isFalse();
+    }
+
+    @Test
+    void testAPartialElementIsNotReusableBeyondItsFrontier(@TempDir final Path tempDir) {
+        // The other direction: asked past what it holds, the answer must be no - a replay fed from here
+        // would read records that do not exist.
+        final StepDataStore store = storeWithPartialXslt(tempDir, 0, 6);
+
+        final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
+                new StagePlanner.RecordSpan(0, 5, 8));
+
+        assertThat(plan.reuse()).doesNotContain("xslt");
+        assertThat(plan.reprocess()).contains("xslt");
+    }
+
+    @Test
+    void testAHoleInsideTheSpanIsNotCovered(@TempDir final Path tempDir) {
+        // Bounds are not enough: an on-demand element has gaps inside its own span, and each record of the
+        // demand must be held individually.
+        final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
+        for (long r = 0; r <= 9; r++) {
+            store.putElementData(new StepLocation(META, 0, r), new ElementId("parser"), "p1", ed());
+        }
+        // Materialised on demand - which is exactly how an element comes to have holes.
+        for (final long r : new long[]{2, 5}) {
+            store.putRecord(new StepLocation(META, 0, r),
+                    List.of(new StepDataStore.ElementRecord(new ElementId("xslt"), "x1", ed())),
+                    null, Map.of(), null, StepDataStore.RecordOrder.ON_DEMAND);
+        }
+
+        final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
+                new StagePlanner.RecordSpan(0, 2, 5));
+
+        assertThat(plan.reuse()).as("records 3 and 4 are holes").doesNotContain("xslt");
+    }
+
+    @Test
+    void testTheWrongPartCoversNothing(@TempDir final Path tempDir) {
+        final StepDataStore store = storeWithPartialXslt(tempDir, 0, 9);
+
+        final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
+                new StagePlanner.RecordSpan(1, 0, 1));
+
+        assertThat(plan.reuse()).doesNotContain("xslt");
+    }
+
+    @Test
+    void testAnEmptySpanIsACallerErrorNotAVacuousPass(@TempDir final Path tempDir) {
+        // first > last covers nothing. Vacuously-true would hand a replay a feed nobody checked.
+        final StepDataStore store = storeWithPartialXslt(tempDir, 0, 9);
+
+        final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
+                new StagePlanner.RecordSpan(0, 5, 4));
+
+        assertThat(plan.reuse()).isEmpty();
+    }
+
+    @Test
+    void testANullSpanStillDemandsCompleteness(@TempDir final Path tempDir) {
+        // The old behaviour, kept exactly: whole-stream plans need whole-stream elements, or a partially
+        // materialised element would make the planner conclude there is nothing left to reprocess.
+        final StepDataStore store = storeWithPartialXslt(tempDir, 0, 6);
+
+        final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"), null);
+
+        assertThat(plan.reuse()).as("xslt holds 0..6 of 0..9 - not complete").doesNotContain("xslt");
+        assertThat(plan.reuse()).as("parser holds everything").contains("parser");
+    }
+
     @Test
     void testEverythingReusedWhenNothingChanged(@TempDir final Path tempDir) {
         final StepDataStore store = storeWith(tempDir, "p1", "x1", "w1");

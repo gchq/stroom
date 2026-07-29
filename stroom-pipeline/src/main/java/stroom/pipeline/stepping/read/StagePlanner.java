@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.read;
 
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.store.Coverage;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.util.shared.ElementId;
 
@@ -38,12 +39,14 @@ import java.util.Set;
  * what a "record" is, so record-indexed chunks are meaningless and everything must be re-captured from
  * source. When such an element is not reusable the plan is a {@code fullRecapture}.
  * <p>
- * <b>Nothing calls this yet, deliberately.</b> Editing an element currently re-sweeps the whole stream;
- * that is correct, and cheap enough, because {@link StepDataStore#putRecord} skips any element whose
- * fingerprint is unchanged, so untouched elements are never rewritten. This class is the decision logic
- * for the "stored stepping state" improvement - refreshing an edited element from its stored input rather
- * than re-running the pipeline above it - which is designed but not built. See {@code stepping-design.md}.
- * Keep it or delete it with that feature in mind; it is not dead by accident.
+ * "Reusable" is a {@link Coverage} question, and it depends on <b>which records the step is about</b>. A
+ * whole-stream reprocess needs the whole stream ({@code span == null}, answered by the
+ * {@code hasCompleteElement} fast path); a step materialising a handful of records only needs the feed
+ * element to hold <i>those</i> records - an element captured up to a frontier is reusable for everything
+ * behind it long before it is "complete". Callers that pass null today get exactly the old behaviour; the
+ * span is what lets a partial capture serve (see {@code stepping-design.md} §11, build order stage 1).
+ * <p>
+ * Live via {@link ReprocessPlanner}, which turns the plan into the sweep-vs-reprocess launch decision.
  */
 public class StagePlanner {
 
@@ -56,17 +59,27 @@ public class StagePlanner {
     public StagePlan plan(final List<PlannerElement> elements,
                           final StepDataStore store,
                           final ElementFingerprints current) {
+        return plan(elements, store, current, null);
+    }
+
+    /**
+     * As above, but reuse is judged against the records the step is actually about: an element is reusable
+     * if its coverage <b>holds every record of the span</b>, complete or not.
+     *
+     * @param span the records the step needs, or null for the whole stream.
+     */
+    public StagePlan plan(final List<PlannerElement> elements,
+                          final StepDataStore store,
+                          final ElementFingerprints current,
+                          final RecordSpan span) {
         final Set<String> reuse = new LinkedHashSet<>();
         final Set<String> reprocess = new LinkedHashSet<>();
         boolean boundaryChanged = false;
 
         for (final PlannerElement element : elements) {
             final String fingerprint = current.getCumulativeFingerprint(element.id());
-            // Reusable means the element holds the WHOLE stream at this fingerprint, not merely something.
-            // An element whose records are materialised on demand accumulates chunks as the user steps about,
-            // and treating those as reuse would make the planner decide there is nothing left to reprocess.
             final boolean reusable = fingerprint != null
-                    && store.hasCompleteElement(new ElementId(element.id()), fingerprint);
+                    && covers(store, new ElementId(element.id()), fingerprint, span);
             if (reusable) {
                 reuse.add(element.id());
             } else {
@@ -85,6 +98,45 @@ public class StagePlanner {
         }
 
         return new StagePlan(false, reuse, reprocess);
+    }
+
+    /**
+     * Does this element's captured IO cover what is being asked of it?
+     * <p>
+     * Whole stream ({@code span == null}): the {@code hasCompleteElement} fast path - an element materialised
+     * a record at a time is <i>present</i> long before it is <i>reusable wholesale</i>, and treating presence
+     * as reuse once made the planner conclude there was nothing left to reprocess.
+     * <p>
+     * A span: every record of it must be <b>held</b>, individually - a sparse element has holes inside its
+     * own bounds, and a bounds answer here would feed a replay from records that do not exist. The walk is
+     * bounded by the span, which is a scan window at most, never a stream.
+     */
+    private boolean covers(final StepDataStore store,
+                           final ElementId elementId,
+                           final String fingerprint,
+                           final RecordSpan span) {
+        if (span == null) {
+            return store.hasCompleteElement(elementId, fingerprint);
+        }
+        if (span.firstRecord() > span.lastRecord()) {
+            // An empty span is a caller error, not a vacuously-covered demand; permissive here would hand a
+            // replay a feed that was never checked at all.
+            return false;
+        }
+        final Coverage coverage = store.elementCoverage(elementId, fingerprint, () -> false);
+        for (long record = span.firstRecord(); record <= span.lastRecord(); record++) {
+            if (!coverage.holds(span.partIndex(), record)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The records a step is about: a contiguous run within one part. What a REFRESH (one record) or a
+     * windowed scan (a window of them) asks the plan to cover.
+     */
+    public record RecordSpan(long partIndex, long firstRecord, long lastRecord) {
     }
 
     /**
