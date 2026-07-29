@@ -50,6 +50,7 @@ dependencies {
     testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-explorer:stroom-explorer-api')
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-security:stroom-security-openid-api')
     testImplementation project(':stroom-task:stroom-task-mock')
     testImplementation project(':stroom-test-common')
 

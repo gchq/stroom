@@ -17,6 +17,8 @@
 package stroom.security.identity.token;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.shared.SigningKeyResource;
 import stroom.security.identity.shared.SigningKeyRow;
@@ -36,6 +38,9 @@ import jakarta.inject.Provider;
 import java.util.List;
 import java.util.Objects;
 
+// revoke() and revokeAll() write their own event in afterRevoke(), which knows the thing worth recording -
+// whether the key that signs new tokens was among those withdrawn.
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SigningKeyResourceImpl implements SigningKeyResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SigningKeyResourceImpl.class);
@@ -57,6 +62,7 @@ public class SigningKeyResourceImpl implements SigningKeyResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public List<SigningKeyRow> list() {
         return securityContextProvider.get().secureResult(
                 AppPermission.ADMINISTRATOR,
@@ -92,9 +98,11 @@ public class SigningKeyResourceImpl implements SigningKeyResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Boolean refreshOnNode(final String nodeName) {
         // Called by another node after it revoked a key, and reachable directly, so it is gated too - this
-        // discards a cache that the whole cluster's token verification depends on.
+        // discards a cache that the whole cluster's token verification depends on. Not audited, because it
+        // is the fan-out arm of a revoke already recorded once; an entry per node would say nothing more.
         return securityContextProvider.get().secureResult(
                 AppPermission.ADMINISTRATOR,
                 () -> signingKeyRefreshFanOutProvider.get().refreshOnNode(nodeName));

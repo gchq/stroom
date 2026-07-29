@@ -30,6 +30,7 @@ import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.mock.MockHasUserDependenciesModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockUserIdentityFactoryModule;
+import stroom.security.openid.api.TokenRevoker;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
@@ -63,6 +64,8 @@ public class TestModule extends AbstractModule {
 
         bind(AppPermissionService.class).to(AppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+        bind(SessionListService.class).toInstance(mock(SessionListService.class));
+        bind(TokenRevoker.class).toInstance(mock(TokenRevoker.class));
         bind(ExplorerService.class).toInstance(mock(ExplorerService.class));
         bind(EntityEventBus.class).toInstance(mock(EntityEventBus.class));
         bind(PermissionChangeEventBus.class).toInstance(mock(PermissionChangeEventBus.class));
