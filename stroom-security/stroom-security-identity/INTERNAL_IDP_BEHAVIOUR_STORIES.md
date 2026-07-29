@@ -106,8 +106,9 @@ While locked, further guesses do nothing: not counted, not extending the lock, n
 Actions, not checkboxes — each is explicit and applies regardless of what else is happening
 to the account (no lost updates against a user busy failing logins):
 
-- **Disable / Enable** — the admin's lever for access. Disabling also promptly ends the user's
-  sessions cluster-wide and revokes their tokens; it is not "they'll be gone within the hour".
+- **Disable / Enable** — the admin's lever over signing in. Note this is the *account*: it blocks
+  authentication but does **not** end sessions already running or revoke tokens already issued.
+  Disabling the corresponding **Stroom user** is what does that (§7).
 - **Unlock** — clears a failed-login lock. There is no *Lock*: to bar someone, disable them;
   locking is the system's brute-force response, not an admin control.
 - **Reactivate** — clears inactivity. There is no *Deactivate* for the same reason.
@@ -117,16 +118,27 @@ to the account (no lost updates against a user busy failing logins):
 
 ## 7. Ending access and sessions
 
-- **User, self-service:** *sign out of other sessions* — ends every session but the current one.
+Three actions, easily confused. Only the last two stop somebody, and the first is deliberately
+named so it cannot be mistaken for containment.
+
+| Action | Where | Ends sessions + tokens | Stops them signing in |
+|---|---|---|---|
+| *End this user's sessions and revoke their tokens* | Security > User Access | yes | **no** |
+| Disable the **Stroom user** | Security > Users | yes | yes |
+| Disable the **account** | Security > Manage Accounts | **no** | yes |
+
+- **User, self-service:** *User > Sign Out Other Sessions* — ends every session but the current one.
   A password reset (§3) ends all of them.
-- **Admin, sessions:** the Sessions screen (MANAGE_USERS) lists sessions across every node;
-  a user's sessions can be terminated from there.
-- **Admin, tokens:** the token management screen (MANAGE_USERS) revokes a user's issued tokens;
-  revocation takes effect across the cluster within about a minute.
-- **Admin, full stop:** disable the account (§6) — sessions and tokens go with it.
-- **External IdP caveat:** when Stroom is not the identity provider, revoking sessions/tokens
-  forces re-authentication, but the provider will typically sign the user straight back in without
-  asking for a password. Containment is *disable the account* — at the provider, in Stroom, or both.
+- **Admin, in-flight access:** Security > User Access (MANAGE_USERS) shows every user with their
+  session and token counts, plus the sessions held across all nodes. Its button ends the sessions
+  and revokes the tokens cluster-wide. The tokens are dead permanently; the user is not shut out and
+  can sign straight back in. Named for exactly that, since "revoke access" read as containment.
+- **Admin, full stop:** disable the Stroom user — same screen, *Open this user* button. This ends
+  sessions, revokes tokens *and* refuses them at authentication, interactive or token.
+- **External IdP caveat:** when Stroom is not the identity provider, ending sessions forces
+  re-authentication but the provider will typically sign the user straight back in without asking
+  for a password, and tokens it minted cannot be revoked here. Containment is *disable* — at the
+  provider, in Stroom, or both.
 
 ## 8. Passwords and policy
 
