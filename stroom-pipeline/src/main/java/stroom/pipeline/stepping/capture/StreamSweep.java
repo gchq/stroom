@@ -79,6 +79,9 @@ public class StreamSweep {
     private final ElementFingerprints fingerprints;
     // True for a handle on somebody else's producer rather than a producer of its own - see waitingOn.
     private final boolean waitHandle;
+    // Non-null for a sweep the session must own and keep but never serve a step from directly - a backbone,
+    // cached under this key instead of the step's fingerprint signature so no step lookup can ever hit it.
+    private volatile String cacheKey;
     private volatile ReprocessDriver.RecordRange demand;
 
     // Non-null when this sweep materialises individual records of one element on demand rather than
@@ -154,6 +157,22 @@ public class StreamSweep {
      */
     public boolean isWaitHandle() {
         return waitHandle;
+    }
+
+    /**
+     * Give this sweep its own cache identity, distinct from the fingerprint signature of the step that
+     * launched it. A backbone captures only the record-boundary elements, so a record it has "captured" is
+     * <b>not servable</b> as a step - every below-boundary pane would be blank. Caching it under the step's
+     * signature would hand it straight to the next step under the same code; caching it under its own key
+     * means a step lookup can never hit it, while the session still owns it (termination, the swept-stream
+     * cap, and offering it to the launcher as prior work to build on).
+     */
+    public void setCacheKey(final String cacheKey) {
+        this.cacheKey = cacheKey;
+    }
+
+    public String getCacheKey() {
+        return cacheKey;
     }
 
     public StepDataStore getStore() {
@@ -362,5 +381,19 @@ public class StreamSweep {
 
     public Map<ElementId, Indicators> getStartProcessIndicators() {
         return startProcessIndicators;
+    }
+
+    /**
+     * Take another sweep's per-stream facts. A materialisation runs no whole-stream capture, so it never
+     * learns whether a part is segmented or what indicators the pipeline raised while starting up - but the
+     * capture that swept this same stream did, and stream-level facts do not change with the code being
+     * edited. Without this, every record served from a materialisation reports its part unsegmented and its
+     * startup indicators absent.
+     */
+    public void copyStreamMetadataFrom(final StreamSweep source) {
+        segmentedByPart.putAll(source.segmentedByPart);
+        if (!source.startProcessIndicators.isEmpty()) {
+            startProcessIndicators = source.startProcessIndicators;
+        }
     }
 }

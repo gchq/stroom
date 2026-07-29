@@ -101,7 +101,9 @@ public class SteppingService {
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
-    private final SteppingConfig steppingConfig;
+    // A Provider, not the object: config is live (the UI can change it, and tests override it per class),
+    // and this is a singleton - injecting the object directly would freeze whatever the value was at startup.
+    private final Provider<SteppingConfig> steppingConfigProvider;
     private final SessionStepResolver sessionStepResolver;
     private final SteppingSessionRegistry sessionRegistry;
     private final SteppableElements steppableElements;
@@ -115,6 +117,8 @@ public class SteppingService {
             new java.util.concurrent.atomic.AtomicLong();
     private final java.util.concurrent.atomic.AtomicLong fullSweepLaunches =
             new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicLong backboneLaunches =
+            new java.util.concurrent.atomic.AtomicLong();
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -127,7 +131,7 @@ public class SteppingService {
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final ElementFingerprinter elementFingerprinter,
-                           final SteppingConfig steppingConfig,
+                           final Provider<SteppingConfig> steppingConfigProvider,
                            final SessionStepResolver sessionStepResolver,
                            final SteppingSessionRegistry sessionRegistry,
                            final SteppableElements steppableElements) {
@@ -141,7 +145,7 @@ public class SteppingService {
         this.stepDataStoreManager = stepDataStoreManager;
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
-        this.steppingConfig = steppingConfig;
+        this.steppingConfigProvider = steppingConfigProvider;
         this.sessionStepResolver = sessionStepResolver;
         this.sessionRegistry = sessionRegistry;
         this.steppableElements = steppableElements;
@@ -359,7 +363,7 @@ public class SteppingService {
                         launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorSweeps, running),
                 this::closeSession,
                 this::abandonSweep,
-                steppingConfig.getMaxSweptStreamsPerSession());
+                steppingConfigProvider.get().getMaxSweptStreamsPerSession());
     }
 
     /**
@@ -466,7 +470,7 @@ public class SteppingService {
             return null;
         }
 
-        final int window = steppingConfig.getFilteredScanWindow();
+        final int window = steppingConfigProvider.get().getFilteredScanWindow();
         final long end = forward
                 ? Math.min(streamLast, start + window - 1)
                 : Math.max(streamFirst, start - window + 1);
@@ -628,9 +632,9 @@ public class SteppingService {
 
         final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
         final Set<String> capturedElementIds = store.getCapturedElementIds();
+        final PipelineData pipelineData = pipelineDataHolderFactory
+                .create(request.getPipelineDoc()).getMergedPipelineData();
         if (!capturedElementIds.isEmpty()) {
-            final PipelineData pipelineData = pipelineDataHolderFactory
-                    .create(request.getPipelineDoc()).getMergedPipelineData();
             // The steppable set comes from the PIPELINE, not from what has been captured: a capture that
             // stopped at the record boundary has captured nothing below it, and a set read from the store
             // would tell the planner there is nothing below it to run. What the store holds is unioned in so
@@ -660,7 +664,8 @@ public class SteppingService {
                     // resolver just needs a sweep signalling the records so it navigates them as usual.
                     // Signalled for the record the DEMAND named, not for the request's reference location -
                     // navigation demands the record next to its reference, and FIRST has no reference at all.
-                    return signalledSweep(metaId, store, RecordRange.of(demanded));
+                    return withStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded)),
+                            priorSweeps);
                 }
                 if (!decision.fullSweep()) {
                     final RecordRange range = onDemandRangeFor(request, graph, decision, store, fingerprints,
@@ -684,7 +689,7 @@ public class SteppingService {
                                 satisfiedFromStore(metaId, store, decision.startElementId(),
                                         fingerprints, range);
                         if (satisfied != null) {
-                            return satisfied;
+                            return withStreamMetadata(satisfied, priorSweeps);
                         }
                         for (final StreamSweep producer : running) {
                             if (producer.isOnDemand() && covers(producer.getDemand(), range)) {
@@ -696,7 +701,7 @@ public class SteppingService {
                     final StreamSweep sweep = launchReprocess(request, metaId, decision.startElementId(),
                             decision.feedElementId(), store, fingerprints, range);
                     sweep.setDemand(range);
-                    return sweep;
+                    return withStreamMetadata(sweep, priorSweeps);
                 }
             }
             // Nothing could be planned - either the step's demand cannot be named until more has been
@@ -707,8 +712,93 @@ public class SteppingService {
                 return waiting;
             }
         }
+
+        // Nothing to build on: the stream needs capturing from source. With the skeleton sweep enabled the
+        // capture is truncated at the record boundary - the parser and everything above it, whose
+        // fingerprints no below-boundary edit can change - and everything below is materialised on demand
+        // by the machinery above, exactly as it already is after an edit. The whole-pipeline sweep remains
+        // the path for pipelines with no boundary (reader/text, no parser) and the fallback when a
+        // completed backbone still could not satisfy the planner.
+        if (steppingConfigProvider.get().isSkeletonSweep()) {
+            final StreamSweep backbone = backboneFor(sessionId, request, metaId, fingerprints,
+                    pipelineData, priorSweeps);
+            if (backbone != null) {
+                return backbone;
+            }
+        }
         fullSweepLaunches.incrementAndGet();
         return launchSweep(sessionId, request, metaId, fingerprints);
+    }
+
+    /**
+     * Hand a sweep that serves records without capturing the stream the per-stream facts a step result
+     * needs - is a part segmented, what did the pipeline raise while starting up. Those belong to the
+     * stream, so they are taken from a capture of it: preferably a complete one, else whatever capture is
+     * running. Without this, every record served from a materialisation reports its part unsegmented.
+     */
+    private StreamSweep withStreamMetadata(final StreamSweep sweep, final List<StreamSweep> priorSweeps) {
+        priorSweeps.stream()
+                .max(java.util.Comparator.comparing(StreamSweep::isSuccessfullyCaptured))
+                .ifPresent(sweep::copyStreamMetadataFrom);
+        return sweep;
+    }
+
+    /**
+     * The backbone answer for a stream that needs capturing, or null to fall back to a full sweep.
+     * <p>
+     * One backbone per {@code (stream, boundary fingerprints)}: if one is already running, wait on it (the
+     * launcher was consulted because the step could not be planned yet, and the records it is waiting for
+     * are on their way); if none exists, launch one - truncated at the boundary via {@code stopAfter} - and
+     * mark it with its own cache key so no step lookup can ever be served from it directly. A backbone that
+     * has already FINISHED and still left the planner unable to plan is not waited on - waiting on a
+     * completed producer would spin, and whatever the plan's problem was (an errored backbone, most likely),
+     * the full sweep is the answer that is always correct.
+     */
+    private StreamSweep backboneFor(final String sessionId,
+                                    final PipelineStepRequest request,
+                                    final long metaId,
+                                    final ElementFingerprints fingerprints,
+                                    final PipelineData pipelineData,
+                                    final List<StreamSweep> priorSweeps) {
+        final Set<String> boundary = steppableElements.boundaryIn(pipelineData);
+        final String cacheKey = backboneKeyFor(boundary, fingerprints);
+        if (cacheKey == null) {
+            return null;
+        }
+        final StreamSweep existing = priorSweeps.stream()
+                .filter(prior -> cacheKey.equals(prior.getCacheKey()))
+                .findFirst()
+                .orElse(null);
+        if (existing != null) {
+            return existing.isFullyCaptured() ? null : StreamSweep.waitingOn(existing);
+        }
+        backboneLaunches.incrementAndGet();
+        LOGGER.debug(() -> "backboneFor() - launching skeleton capture of stream " + metaId
+                           + " truncated at " + boundary);
+        final StreamSweep backbone = launchSweep(sessionId, request, metaId, fingerprints, boundary);
+        backbone.setCacheKey(cacheKey);
+        return backbone;
+    }
+
+    /**
+     * The cache identity of a backbone: the boundary elements' cumulative fingerprints, which a
+     * below-boundary edit cannot change - so every step of an editing session finds the same backbone -
+     * and a boundary edit does, which is exactly when a fresh backbone is needed. Null (no backbone
+     * possible) for a pipeline with no boundary or one whose boundary has no computed fingerprint.
+     */
+    private String backboneKeyFor(final Set<String> boundary, final ElementFingerprints fingerprints) {
+        if (boundary.isEmpty()) {
+            return null;
+        }
+        final List<String> boundaryFingerprints = boundary.stream()
+                .map(fingerprints::getCumulativeFingerprint)
+                .toList();
+        if (boundaryFingerprints.contains(null)) {
+            // A boundary element with no fingerprint cannot be keyed; sorted after the null check because
+            // sorting nulls throws.
+            return null;
+        }
+        return "backbone:" + boundaryFingerprints.stream().sorted().collect(java.util.stream.Collectors.joining("+"));
     }
 
     /**
@@ -847,6 +937,13 @@ public class SteppingService {
      */
     public long getFullSweepLaunchCount() {
         return fullSweepLaunches.get();
+    }
+
+    /**
+     * @return the number of skeleton (backbone) captures launched. For metrics and tests.
+     */
+    public long getBackboneLaunchCount() {
+        return backboneLaunches.get();
     }
 
     /**

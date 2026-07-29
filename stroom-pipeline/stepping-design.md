@@ -508,6 +508,7 @@ on clean shutdown.
 | Test | Guards |
 |---|---|
 | `TestFullTranslationTaskAndStepping` (stroom-app) | **The acceptance gate.** Scripted step sequences over ~11 real feeds, diffed against the committed `~STEPPING~…{input,output}.out` golden corpus. This corpus was produced by the *old* engine, so it is the only thing pinning the rebuild to the original behaviour. `TranslationTest.step` carries the session id across steps, exactly as the UI does. |
+| `TestSkeletonSweptStepping` (stroom-app) | **The skeleton acceptance gate**: the whole golden corpus again with `stepping.skeletonSweep` on. R1 says the mode must be invisible in what is served; this is what says so, for every feed type (including the boundary-less reader/text feeds, which must fall back untouched) and every step type. |
 | `TestSteppingSessionLifecycle` | Lazy sweep (only stepped streams get a dir) and close deleting the session dir. Has its own class: its sibling shares a database, and `testTranslationTask` adds streams each run. |
 | `TestSessionStepping` | Cross-stream FORWARD/LAST agreement between `resolveSession` and `step()`. |
 | `TestChunkedCapture` | The synchronous `capture()` entry point agrees with the session path, over four feed types including a reader/text pipeline. |
@@ -525,7 +526,7 @@ on clean shutdown.
 | `TestSteppingContextLookup` (stroom-app) | Context reference data (`stroom:lookup` against the stream's own context child stream) survives a single-record replay. Negative control: nulling `ReprocessDriver`'s one `setInputStreamProvider` call fails exactly this. |
 | `TestSteppingCounterReplay` (stroom-app) | A replayed record keeps the `EventId` the sweep gave it. Negative control: disabling the restore fails `expected: 6L but was: 1L`. |
 | `TestSweepAndReplaySharingAStore` | A sweep and a replay writing the same store: holes in the shared state file and in a shared-fingerprint element file must not trip the in-order check, both writers stay readable, and a pure sweep still rejects out-of-order appends. |
-| `TestSteppingScaleScenarios` (stroom-app) | Scenarios B and C by launch counters - C in both halves, an edit behind the running capture's frontier and one ahead of it. They were the acceptance tests for build-order stages 1-3 of the target design; both pass. Also that a filtered scan advances across windows. |
+| `TestSteppingScaleScenarios` (stroom-app) | Scenarios B, C and D by launch counters - C in three parts (edit behind the frontier, edit ahead of it, edit-then-step), D as the skeleton mechanism (one backbone, N materialisations, zero full sweeps, below-boundary pane served). The acceptance tests for build-order stages 1-4. Also that a filtered scan advances across windows. |
 | `TestSteppingMidPointBenchmark`, `TestSteppingScenarioBenchmarks` (stroom-app) | The scenario numbers (A; C and D's ceiling). No timing assertions - correctness asserted, wall-clock logged for a human. |
 | `TestCaptureWatermark`, `TestCapturedRecordFeed`, `TestCapturedRange`, `TestStageGraphPlanner` | The substrate built for the set-aside stage decomposition and kept for the direction in §11: that every way a producer stops wakes its waiters, that a consumer follows a producer without hanging, that a record is only servable once every contributor has reached it, and where a pipeline may be cut. Liveness tests here assert the wake is **prompt** (a short join against a long await) — asserting only the return value passes even with the signal deleted. |
 
@@ -732,7 +733,7 @@ tests and benchmarks that follow are organised around them.
 | A | Refresh record 1M against a **completed** capture | a few ms | **Works** - measured at ~20ms incl. transport, vs ~670ms before §11 |
 | B | Step to record 1M while capture has reached 500k | wait for the frontier to pass 1M; keep everything captured so far; launch nothing new | **Works** - the resolver waits on the watermark; no second sweep |
 | C | Capture has reached 2M; the user edits the XSLT and refreshes | keep the 2M records of upstream capture; re-run only the edited element and below | **Works** - the capture runs on and only the edited element is materialised; nothing is re-parsed |
-| D | Jump straight to record 1M of a stream never swept | capture boundary IO only on the way; materialise below the boundary for that one record | **Not built** - the skeleton sweep, proposed below |
+| D | Jump straight to record 1M of a stream never swept | capture boundary IO only on the way; materialise below the boundary for that one record | **Built, behind config** - `stepping.skeletonSweep`, default off; the launch policy that turns it on by default for large streams is the remaining piece |
 
 **A** is the shipped §11 work: `TestSteppingMidPointBenchmark` measures it, `TestLiveReprocessOnEdit` pins the
 routing.
@@ -837,7 +838,7 @@ pinned:
   makes it the difference between "cannot step this stream" and "can" - a stronger claim than the 10x
   speed-up, and the reason D is scoped as it is.
 
-### Proposed: the skeleton sweep — capture only down to the record boundary
+### The skeleton sweep — capture only down to the record boundary (built, behind `stepping.skeletonSweep`)
 
 Everything above assumes a sweep captures **every element's IO for every record**. For a 10M-record stream
 that is the dominant cost, and most of it is wasted: to answer "show me record 1,000,000" the only thing we
@@ -862,13 +863,38 @@ when the user types, because nothing it captured has changed. That is a direct a
 records and then edited" problem in the section above — the expensive producer becomes the one that never has
 to be thrown away.
 
-**What it needs.** The symmetry is already half-built: `ReprocessDriver` calls
-`pipelineFactory.createFrom(..., startElementId, ...)` to build a pipeline *from* an element. This needs the
-complement — build one *up to* the boundary, so downstream elements are never constructed and their recorders
-never inserted. Registering monitors and then ignoring them would not do: the cost being avoided is the
-recorder buffering SAX events, not the write. `StagePlanner.PlannerElement` already carries
-`atOrAboveRecordBoundary`, so the cut line is modelled; what is missing is a factory that honours it and a
-launch decision that chooses this mode.
+**How it is built.** The factory complement already existed: `PipelineFactory.create(..., stopAfter)` stops
+linking below the named elements, so nothing below them is constructed and no recorder buffers their events.
+The boundary is the **parser** - a stepping pipeline's record framing is created immediately after it
+(`PipelineFactory` inserts its own single-record `SplitFilter` plus the SAX record detector directly on the
+parser's output), so from the parser down one document is one record, and `SteppableElements.boundaryIn`
+derives the cut from the `ROLE_PARSER` role (cross-checked against the link-derived boundary in
+`TestChunkedCapture`). A reader/text pipeline has no parser, hence no boundary: it is swept in full, exactly
+as before.
+
+The launch decision (`SteppingService.backboneFor`) sits at the point where a stream would be fully swept:
+with the flag on and a boundary derivable, it launches the capture truncated at the boundary instead - one
+backbone per `(stream, boundary fingerprints)`, so every step of an editing session finds the same one and
+only a boundary edit keys a fresh one. The one delicate rule is that a step may **never be served from a
+backbone directly** - it holds only boundary IO, so every other pane would be blank. The backbone therefore
+carries its own cache key (`StreamSweep.cacheKey`): the session owns it (termination, the swept-stream cap,
+prior work offered to the launcher, kept across downstream edits by `stillProduces`), but a step's cache
+lookup can never produce it, and the resolver only ever receives a wait handle on it. Everything else falls
+out of machinery stages 1-3 already built and tested: a completed backbone is a prior complete capture, so
+the planner reuses the parser and treats everything below as reprocess; a running one is the live producer
+the frontier-wait already knows how to wait on; each visited record is an ordinary on-demand
+materialisation. Serving sweeps take their per-stream facts (segmented parts, startup indicators) from the
+capture via `StreamSweep.copyStreamMetadataFrom` - a materialisation never learns them itself, which
+predates the skeleton mode but becomes ubiquitous under it.
+
+The one bug the skeleton corpus caught was **multi-part navigation** (scenario G doing its job): a
+cross-part step's materialisation holds only the neighbouring part's record, so the serving range has a
+hole where the reference part is, and `next()`/`prev()` read that hole as "not captured yet" - a completed
+sweep then read as "no match in this stream" and every later part of the ZIP feed was skipped. The fix
+crosses into a part the range does serve, but only when the reference sits at its own part's true end (per
+the store, whose extent the boundary capture fills) - anywhere short of that the absent records really may
+be on their way, and crossing would skip them, which is the BACKWARD ahead-of-the-sweep trap in cross-part
+form. Pinned both ways in `TestStoreStepResolver`.
 
 **What it gives up, and where that lands.**
 
@@ -1062,11 +1088,14 @@ starts - the discipline that caught every real bug so far.
    written, and `measureAnEditIssuedMidSweep` launches zero full sweeps.* **Done** - see *The scale
    scenarios* above for what the benchmark did and did not move, and why. Eviction pinning
    (`StepDataStore.pin`) landed first, as the open decision below required.
-4. **The backbone as a launch mode.** The boundary-truncated pipeline as a first-class capture (the factory
-   complement of `createFrom`: build *up to* the boundary, downstream elements never constructed), plus the
+4. **The backbone as a launch mode.** The boundary-truncated pipeline as a first-class capture, plus the
    small-stream policy threshold. *Acceptance: `measureTheSkeletonSweepCeiling`'s boundary time becomes the
    real first-pass cost for a large stream; a golden-corpus run over a skeleton-swept stream still matches,
-   record for record, for every step type.*
+   record for record, for every step type.* **The capture mode is done, behind `stepping.skeletonSweep`
+   (default off)**: the existing `create(..., stopAfter)` head build truncates at the parser, and
+   `TestSkeletonSweptStepping` runs the whole golden corpus with the flag on. Remaining from this stage: the
+   launch **policy** (on by default above a measured stream-size threshold), the counters marker (below), and
+   the caps decision.*
 5. **Demand shaping.** Prefetch windows around the user's position; adaptive window growth for scenario F if
    it proves to matter. *Acceptance: walking NEXT over a skeleton-swept stream costs store-reads, not
    replays, after the first.*

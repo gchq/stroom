@@ -63,11 +63,30 @@ public class SteppableElements {
      * planned for.
      */
     public Set<String> in(final PipelineData pipelineData) {
+        return withRole(pipelineData, PipelineElementType.VISABILITY_STEPPING);
+    }
+
+    /**
+     * @return the ids of the record-boundary elements - the parsers. Empty for a pipeline with none (a
+     * reader/text pipeline), which means it has no capture boundary to truncate at: its record framing
+     * comes from a reader, and a chain of readers has no single element below which "the rest" hangs, so a
+     * skeleton sweep of one is not attempted and it is swept in full.
+     * <p>
+     * The parser is the boundary because a stepping pipeline's record framing is created immediately after
+     * it: {@code PipelineFactory} inserts its own {@code SplitFilter} (split count 1) plus the SAX record
+     * detector directly on the parser's output, so from the parser down, one document is one record - and
+     * everything at or above the parser is exactly what a below-boundary edit cannot invalidate.
+     */
+    public Set<String> boundaryIn(final PipelineData pipelineData) {
+        return withRole(pipelineData, PipelineElementType.ROLE_PARSER);
+    }
+
+    private Set<String> withRole(final PipelineData pipelineData, final String role) {
         final ElementRegistry registry = elementRegistryFactory.get();
         final Set<String> ids = new LinkedHashSet<>();
         for (final PipelineElement element : pipelineData.getAddedElements()) {
             final PipelineElementType type = registry.getElementType(element.getType());
-            if (type != null && type.hasRole(PipelineElementType.VISABILITY_STEPPING)) {
+            if (type != null && type.hasRole(role)) {
                 ids.add(element.getId());
             }
         }

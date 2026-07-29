@@ -89,9 +89,11 @@ class TestFilteredScanWindow {
     private SteppingService serviceWithWindow(final int window) {
         // Only the config and the arguments matter to filteredWindowFor; nothing else is touched, so the rest
         // of the graph of collaborators is deliberately absent rather than mocked.
+        final SteppingConfig config =
+                new SteppingConfig(null, null, null, null, null, null, window, null, null, null);
         return new SteppingService(
                 null, null, null, null, null, null, null, null, null, null,
-                new SteppingConfig(null, null, null, null, null, null, window, null, null),
+                () -> config,
                 null, null, null);
     }
 
@@ -133,7 +135,7 @@ class TestFilteredScanWindow {
 
         assertThat(window(new SteppingService(
                         null, null, null, null, null, null, null, null, null, null,
-                        new SteppingConfig(), null, null, null),
+                        SteppingConfig::new, null, null, null),
                 store, StepType.FORWARD, 0L))
                 .as("the default window is still 50 records")
                 .isEqualTo(new RecordRange(PART, 1, 50));

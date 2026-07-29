@@ -105,7 +105,7 @@ public class StoreStepResolver {
             case FORWARD -> {
                 final StepLocation start = ref == null
                         ? firstRecord(parts, metaId, range)
-                        : next(parts, metaId, ref, range).orElse(null);
+                        : next(store, parts, metaId, ref, range).orElse(null);
                 yield start == null
                         ? Optional.empty()
                         : scanForward(store, parts, metaId, start, request, fingerprints, range);
@@ -113,7 +113,7 @@ public class StoreStepResolver {
             case BACKWARD -> {
                 final StepLocation start = ref == null
                         ? lastRecord(parts, metaId, range)
-                        : prev(parts, metaId, ref, range).orElse(null);
+                        : prev(store, parts, metaId, ref, range).orElse(null);
                 yield start == null
                         ? Optional.empty()
                         : scanBackward(store, parts, metaId, start, request, fingerprints, range);
@@ -305,7 +305,7 @@ public class StoreStepResolver {
             if (matches(store, loc, request, fingerprints)) {
                 return Optional.of(loc);
             }
-            loc = next(parts, metaId, loc, range).orElse(null);
+            loc = next(store, parts, metaId, loc, range).orElse(null);
         }
         return Optional.empty();
     }
@@ -322,7 +322,7 @@ public class StoreStepResolver {
             if (matches(store, loc, request, fingerprints)) {
                 return Optional.of(loc);
             }
-            loc = prev(parts, metaId, loc, range).orElse(null);
+            loc = prev(store, parts, metaId, loc, range).orElse(null);
         }
         return Optional.empty();
     }
@@ -391,18 +391,36 @@ public class StoreStepResolver {
      * {@code resolveSession} wait for the sweep to get there (and only means "there is no such record", i.e.
      * cross into the neighbouring stream, once the sweep has completed and the range is final).
      */
-    private Optional<StepLocation> next(final List<Long> parts,
+    private Optional<StepLocation> next(final StepDataStore store,
+                                        final List<Long> parts,
                                         final long metaId,
                                         final StepLocation loc,
                                         final CapturedRange range) {
         final long part = loc.getPartIndex();
         final long record = loc.getRecordIndex();
         final long last = range.last(part);
+        if (last < 0) {
+            // The serving range holds NOTHING of this part - a materialisation produced for a neighbouring
+            // part, which is what a cross-part step demands. Crossing is only safe when the reference sits at
+            // its part's true end (per the store, whose extent the parser capture fills whatever else has or
+            // has not run), so no record of this part is being stepped over; anywhere short of that the
+            // absent records may yet be captured here, and the answer is to wait, not to skip them.
+            final int idx = parts.indexOf(part);
+            if (idx >= 0 && record >= store.getLastRecordIndex(part)) {
+                for (int i = idx + 1; i < parts.size(); i++) {
+                    final long candidateFirst = range.first(parts.get(i));
+                    if (candidateFirst >= 0) {
+                        return Optional.of(new StepLocation(metaId, parts.get(i), candidateFirst));
+                    }
+                }
+            }
+            return Optional.empty();
+        }
         if (record < last) {
             return Optional.of(new StepLocation(metaId, part, record + 1));
         }
         if (record > last) {
-            // Ahead of the sweep (or this part not captured yet) - the next record may yet be captured here.
+            // Ahead of the sweep - the next record may yet be captured here.
             return Optional.empty();
         }
         final int idx = parts.indexOf(part);
@@ -415,7 +433,8 @@ public class StoreStepResolver {
         return Optional.empty();
     }
 
-    private Optional<StepLocation> prev(final List<Long> parts,
+    private Optional<StepLocation> prev(final StepDataStore store,
+                                        final List<Long> parts,
                                         final long metaId,
                                         final StepLocation loc,
                                         final CapturedRange range) {
@@ -423,7 +442,23 @@ public class StoreStepResolver {
         final long record = loc.getRecordIndex();
         final long first = range.first(part);
         final long last = range.last(part);
-        if (first >= 0 && record > first) {
+        if (first < 0) {
+            // Mirror of next(): the range holds nothing of this part, so it serves a neighbouring part's
+            // records. Cross back only from the part's true first record - stepping back from anywhere later
+            // would skip this part's earlier records, which are merely not captured yet (the BACKWARD
+            // ahead-of-the-sweep trap).
+            final int idx = parts.indexOf(part);
+            if (idx >= 0 && record <= store.getFirstRecordIndex(part)) {
+                for (int i = idx - 1; i >= 0; i--) {
+                    final long candidateLast = range.last(parts.get(i));
+                    if (candidateLast >= 0) {
+                        return Optional.of(new StepLocation(metaId, parts.get(i), candidateLast));
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+        if (record > first) {
             final long candidate = record - 1;
             // Stepping back from a reference the sweep has not reached yet would walk down over records
             // that are merely absent-so-far, treat each as a non-match, and land on the first record of the

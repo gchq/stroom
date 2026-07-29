@@ -753,6 +753,7 @@ appConfig:
       maxSessionIdleTime: "PT10M"
       maxSweptStreamsPerSession: 10
       orphanMaxAge: "PT1H"
+      skeletonSweep: false
       storeSubDir: "stepping"
     xmlSchema:
       cache:

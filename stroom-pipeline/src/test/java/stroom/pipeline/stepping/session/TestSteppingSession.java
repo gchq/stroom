@@ -331,6 +331,68 @@ class TestSteppingSession {
     }
 
     @Test
+    void testACacheKeyedSweepIsOwnedButNeverServed() {
+        // A backbone: the session must OWN it (terminate on close, offer it to the launcher as prior work,
+        // count it against the cap) while the resolver must get a wait handle, never the backbone itself -
+        // it holds only boundary IO, so serving a step from it would render every other pane blank.
+        final AtomicInteger launches = new AtomicInteger();
+        final List<List<StreamSweep>> priorSeen = new ArrayList<>();
+        final StreamSweep backbone = new StreamSweep(10L, null, TWO_ELEMENTS);
+        backbone.setCacheKey("backbone:p1");
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L),
+                (metaId, request, fp, priorSweeps, running) -> {
+                    launches.incrementAndGet();
+                    priorSeen.add(priorSweeps);
+                    // First consultation launches the backbone; later ones wait on the one the session owns.
+                    return priorSweeps.isEmpty() ? backbone : StreamSweep.waitingOn(priorSweeps.getFirst());
+                },
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+
+        final StreamSweep first = session.sweepFor(10L, req(StepType.FIRST, null), TWO_ELEMENTS);
+        final StreamSweep second = session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), TWO_ELEMENTS);
+
+        assertThat(first.isWaitHandle()).as("the resolver never receives the backbone itself").isTrue();
+        assertThat(second.isWaitHandle()).isTrue();
+        assertThat(launches.get()).as("no step lookup ever hits the backbone's cache entry").isEqualTo(2);
+        assertThat(priorSeen.get(1)).as("but the session owns it and offers it as prior work")
+                .containsExactly(backbone);
+        assertThat(session.getActiveSweeps()).as("and will terminate it on close").containsExactly(backbone);
+    }
+
+    @Test
+    void testADownstreamEditKeepsTheBackbone() {
+        // The whole point of the backbone: an edit below the boundary shares the boundary fingerprints, so
+        // stillProduces keeps the in-flight backbone running - its output is the edited element's feed.
+        final List<StreamSweep> terminated = new ArrayList<>();
+        final List<List<StreamSweep>> priorSeen = new ArrayList<>();
+        final StreamSweep backbone = new StreamSweep(10L, null, TWO_ELEMENTS);
+        backbone.setCacheKey("backbone:p1");
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L),
+                (metaId, request, fp, priorSweeps, running) -> {
+                    priorSeen.add(priorSweeps);
+                    return priorSweeps.isEmpty() ? backbone : StreamSweep.waitingOn(priorSweeps.getFirst());
+                },
+                s -> {
+                },
+                terminated::add,
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+
+        session.sweepFor(10L, req(StepType.FIRST, null), TWO_ELEMENTS);
+        session.sweepFor(10L, req(StepType.REFRESH, RECORD_0), XSLT_EDITED);
+
+        assertThat(terminated).as("the running backbone survives the downstream edit").isEmpty();
+        assertThat(priorSeen.get(1)).containsExactly(backbone);
+    }
+
+    @Test
     void testAWaitHandleIsNeverCached() {
         // A handle serves nothing, so caching one would mean every later poll got it back and the step could
         // never be re-planned against the records that arrived in the meantime.

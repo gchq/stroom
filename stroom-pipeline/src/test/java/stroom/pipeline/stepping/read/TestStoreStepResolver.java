@@ -261,4 +261,68 @@ class TestStoreStepResolver {
         assertThat(step).isPresent();
         assertThat(step.get().stepData().getElementMap()).containsOnlyKeys(E1, E2);
     }
+
+    /**
+     * A range that covers records only in {@code coveredPart} - the shape a cross-part materialisation
+     * serves: the neighbouring part's records, and a hole where the reference part is.
+     */
+    private StoreStepResolver.CapturedRange partOnlyRange(final long coveredPart,
+                                                          final long first,
+                                                          final long last) {
+        return new StoreStepResolver.CapturedRange() {
+            @Override
+            public long first(final long partIndex) {
+                return partIndex == coveredPart ? first : StoreStepResolver.CapturedRange.NONE;
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return partIndex == coveredPart ? last : StoreStepResolver.CapturedRange.NONE;
+            }
+        };
+    }
+
+    @Test
+    void testForwardCrossesIntoAPartTheRangeServes(@TempDir final Path tempDir) {
+        // A cross-part FORWARD under on-demand materialisation: the serving sweep holds only the NEXT part's
+        // first record, and the reference sits at its own part's true end. Concluding "may yet be captured"
+        // here would let a completed sweep read as "no match in this stream" and skip every later part -
+        // the multi-part (ZIP) golden failure.
+        final StepDataStore store = twoParts(tempDir);
+
+        assertThat(resolver.resolve(store, META, fingerprints,
+                req(StepType.FORWARD, loc(0, 1), null), partOnlyRange(1, 0, 0))
+                .orElseThrow().foundLocation()).isEqualTo(loc(1, 0));
+    }
+
+    @Test
+    void testForwardFromMidPartStillWaitsWhenTheRangeServesALaterPart(@TempDir final Path tempDir) {
+        // NEGATIVE CONTROL for the cross: the reference is NOT at its part's end, so the records between it
+        // and the end are merely absent-so-far. Crossing would skip them; the answer is to wait.
+        final StepDataStore store = twoParts(tempDir);
+
+        assertThat(resolver.resolve(store, META, fingerprints,
+                req(StepType.FORWARD, loc(0, 0), null), partOnlyRange(1, 0, 0)))
+                .isEmpty();
+    }
+
+    @Test
+    void testBackwardCrossesIntoAPartTheRangeServes(@TempDir final Path tempDir) {
+        final StepDataStore store = twoParts(tempDir);
+
+        assertThat(resolver.resolve(store, META, fingerprints,
+                req(StepType.BACKWARD, loc(1, 0), null), partOnlyRange(0, 1, 1))
+                .orElseThrow().foundLocation()).isEqualTo(loc(0, 1));
+    }
+
+    @Test
+    void testBackwardFromMidPartStillWaitsWhenTheRangeServesAnEarlierPart(@TempDir final Path tempDir) {
+        // The BACKWARD ahead-of-the-sweep trap, cross-part edition: stepping back from mid-part must not
+        // skip this part's earlier records just because an earlier part happens to be served.
+        final StepDataStore store = twoParts(tempDir);
+
+        assertThat(resolver.resolve(store, META, fingerprints,
+                req(StepType.BACKWARD, loc(1, 1), null), partOnlyRange(0, 1, 1)))
+                .isEmpty();
+    }
 }

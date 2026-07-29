@@ -398,6 +398,56 @@ class TestSteppingScaleScenarios extends TranslationTest {
         }
     }
 
+    /**
+     * Scenario D, the mechanism: with the skeleton sweep enabled, the first capture of a stream is truncated
+     * at the record boundary and every record the user visits is materialised below it on demand. The launch
+     * counters pin that nothing ever falls back to a whole-pipeline sweep - one backbone, N materialisations,
+     * zero full sweeps - and the served step carries the below-boundary element, which the backbone alone
+     * could never supply.
+     */
+    @Test
+    void aSkeletonSweptStreamServesStepsWithoutAFullSweep() {
+        final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
+        final PipelineStepRequest base = requestFor(metaId);
+
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(true));
+        String sessionUuid = null;
+        try {
+            final long backbones = steppingService.getBackboneLaunchCount();
+            final long fullSweeps = steppingService.getFullSweepLaunchCount();
+            final long onDemand = steppingService.getOnDemandLaunchCount();
+
+            final SteppingResult first = steppingService.step(base.copy().stepType(StepType.FIRST).build());
+            sessionUuid = first.getSessionUuid();
+            assertThat(first.isFoundRecord()).as("FIRST resolved on a skeleton-swept stream").isTrue();
+            assertThat(first.getStepData().getElementData(EDITED_ELEMENT_ID))
+                    .as("with the below-boundary element served - which only a materialisation can supply")
+                    .isNotNull();
+
+            final SteppingResult second = steppingService.step(base.copy()
+                    .stepType(StepType.FORWARD)
+                    .stepLocation(first.getFoundLocation())
+                    .sessionUuid(sessionUuid)
+                    .build());
+            sessionUuid = second.getSessionUuid();
+            assertThat(second.isFoundRecord()).as("FORWARD resolved").isTrue();
+            assertThat(second.getFoundLocation().getRecordIndex())
+                    .isEqualTo(first.getFoundLocation().getRecordIndex() + 1);
+
+            assertThat(steppingService.getBackboneLaunchCount())
+                    .as("one backbone captured the stream's shape").isEqualTo(backbones + 1);
+            assertThat(steppingService.getFullSweepLaunchCount())
+                    .as("and the whole pipeline was never swept").isEqualTo(fullSweeps);
+            assertThat(steppingService.getOnDemandLaunchCount())
+                    .as("each visited record was materialised below the boundary")
+                    .isGreaterThanOrEqualTo(onDemand + 2);
+        } finally {
+            clearConfigValueMapper();
+            terminate(base, sessionUuid);
+        }
+    }
+
     private PipelineStepRequest requestFor(final long metaId) {
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);

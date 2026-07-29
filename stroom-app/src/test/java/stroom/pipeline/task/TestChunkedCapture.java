@@ -142,9 +142,28 @@ class TestChunkedCapture extends TranslationTest {
             // A capture truncated at the record boundary holds less, which is why the planner cannot read
             // the set out of the store - and this is the oracle that the pipeline-derived answer is the same
             // one, for real feeds including a reader/text pipeline with no XML parser.
-            assertThat(steppableElements.in(pipelineDataHolderFactory.create(pipelineDoc).getMergedPipelineData()))
+            final stroom.pipeline.shared.data.PipelineData merged =
+                    pipelineDataHolderFactory.create(pipelineDoc).getMergedPipelineData();
+            assertThat(steppableElements.in(merged))
                     .as("steppable elements derived from the pipeline for " + feedName)
                     .containsExactlyInAnyOrderElementsOf(capture.store().getCapturedElementIds());
+            // The role-derived record boundary must agree with the link-derived one: the steppable elements
+            // with no steppable parent. A reader/text pipeline has no parser, so no boundary - its parentless
+            // element is a reader, and a skeleton sweep of it is (deliberately) not attempted.
+            final java.util.Set<String> parentless = stroom.pipeline.stepping.read.SteppingGraphBuilder
+                    .build(merged, capture.store().getCapturedElementIds())
+                    .elements().stream()
+                    .filter(stroom.pipeline.stepping.read.StagePlanner.PlannerElement::atOrAboveRecordBoundary)
+                    .map(stroom.pipeline.stepping.read.StagePlanner.PlannerElement::id)
+                    .collect(java.util.stream.Collectors.toSet());
+            if ("RAW_STREAMING-EVENTS".equals(feedName)) {
+                assertThat(steppableElements.boundaryIn(merged))
+                        .as("a reader/text pipeline has no record boundary").isEmpty();
+            } else {
+                assertThat(steppableElements.boundaryIn(merged))
+                        .as("the role-derived boundary for " + feedName)
+                        .containsExactlyInAnyOrderElementsOf(parentless);
+            }
 
             int compared = 0;
             SteppingResult stepped = first;

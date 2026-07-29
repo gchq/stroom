@@ -176,6 +176,14 @@ public class SteppingSession {
                 // would get it back and the step could never be re-planned against the records that have
                 // arrived in the meantime.
                 LOGGER.debug(() -> "sweepFor() - waiting on the capture already running for stream " + metaId);
+            } else if (sweep.getCacheKey() != null) {
+                // A sweep the session must own but no step may be served from - a backbone, which captures
+                // only the record-boundary elements. It is cached under its OWN key, which no step lookup
+                // can produce, and the RESOLVER gets a wait handle on it: the session keeps the producer
+                // (termination, the cap, prior work offered to the launcher, kept across downstream edits by
+                // stillProduces) while the step waits on its progress and re-plans as records arrive.
+                sweeps.put(new SweepKey(metaId, sweep.getCacheKey()), sweep);
+                return StreamSweep.waitingOn(sweep);
             } else if (sweep.isOnDemand()) {
                 if (!sweep.isFullyCaptured()) {
                     running.computeIfAbsent(streamKey, k -> new ArrayList<>()).add(sweep);

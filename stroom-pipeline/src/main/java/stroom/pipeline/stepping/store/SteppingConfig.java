@@ -41,6 +41,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private static final int DEFAULT_MAX_SWEPT_STREAMS_PER_SESSION = 10;
     private static final int DEFAULT_MAX_RETAINED_FINGERPRINTS_PER_ELEMENT = 3;
     private static final int DEFAULT_FILTERED_SCAN_WINDOW = 50;
+    private static final boolean DEFAULT_SKELETON_SWEEP = false;
 
     private final String storeSubDir;
     private final long maxRecordsPerStream;
@@ -51,6 +52,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private final int filteredScanWindow;
     private final StroomDuration maxSessionIdleTime;
     private final StroomDuration orphanMaxAge;
+    private final boolean skeletonSweep;
 
     public SteppingConfig() {
         storeSubDir = DEFAULT_STORE_SUB_DIR;
@@ -62,6 +64,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         filteredScanWindow = DEFAULT_FILTERED_SCAN_WINDOW;
         maxSessionIdleTime = StroomDuration.ofMinutes(10);
         orphanMaxAge = StroomDuration.ofHours(1);
+        skeletonSweep = DEFAULT_SKELETON_SWEEP;
     }
 
     @SuppressWarnings("unused")
@@ -75,7 +78,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                           final Integer maxRetainedFingerprintsPerElement,
                           @JsonProperty("filteredScanWindow") final Integer filteredScanWindow,
                           @JsonProperty("maxSessionIdleTime") final StroomDuration maxSessionIdleTime,
-                          @JsonProperty("orphanMaxAge") final StroomDuration orphanMaxAge) {
+                          @JsonProperty("orphanMaxAge") final StroomDuration orphanMaxAge,
+                          @JsonProperty("skeletonSweep") final Boolean skeletonSweep) {
         this.storeSubDir = Objects.requireNonNullElse(storeSubDir, DEFAULT_STORE_SUB_DIR);
         this.maxRecordsPerStream = Objects.requireNonNullElse(maxRecordsPerStream, DEFAULT_MAX_RECORDS_PER_STREAM);
         this.maxBytesPerStream = Objects.requireNonNullElse(maxBytesPerStream, DEFAULT_MAX_BYTES_PER_STREAM);
@@ -87,13 +91,15 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.filteredScanWindow = Objects.requireNonNullElse(filteredScanWindow, DEFAULT_FILTERED_SCAN_WINDOW);
         this.maxSessionIdleTime = Objects.requireNonNullElse(maxSessionIdleTime, StroomDuration.ofMinutes(10));
         this.orphanMaxAge = Objects.requireNonNullElse(orphanMaxAge, StroomDuration.ofHours(1));
+        this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, DEFAULT_SKELETON_SWEEP);
     }
 
     /**
-     * Builder-style copy used mainly by tests to vary a single cap.
+     * Builder-style copy used mainly by tests to vary a single value.
      */
     private SteppingConfig(final SteppingConfig source,
-                           final Integer maxRetainedFingerprintsPerElement) {
+                           final Integer maxRetainedFingerprintsPerElement,
+                           final Boolean skeletonSweep) {
         this.storeSubDir = source.storeSubDir;
         this.maxRecordsPerStream = source.maxRecordsPerStream;
         this.maxBytesPerStream = source.maxBytesPerStream;
@@ -104,6 +110,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.filteredScanWindow = source.filteredScanWindow;
         this.maxSessionIdleTime = source.maxSessionIdleTime;
         this.orphanMaxAge = source.orphanMaxAge;
+        this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, source.skeletonSweep);
     }
 
     @JsonPropertyDescription("The sub-directory of the Stroom temp directory under which stepping session " +
@@ -163,8 +170,21 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         return orphanMaxAge;
     }
 
+    @JsonPropertyDescription("Whether the first capture of a stream is a skeleton (backbone) sweep that " +
+            "captures IO only for the parser - the record boundary - leaving everything below it to be " +
+            "materialised on demand for the records the user actually visits. Roughly ten times cheaper as " +
+            "a first pass over a stream, at the cost of below-boundary panes being produced lazily. When " +
+            "off, the first capture runs the whole pipeline for every record, as before.")
+    public boolean isSkeletonSweep() {
+        return skeletonSweep;
+    }
+
     public SteppingConfig withMaxRetainedFingerprintsPerElement(final int value) {
-        return new SteppingConfig(this, value);
+        return new SteppingConfig(this, value, null);
+    }
+
+    public SteppingConfig withSkeletonSweep(final boolean value) {
+        return new SteppingConfig(this, null, value);
     }
 
     @Override
@@ -179,6 +199,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                 ", filteredScanWindow=" + filteredScanWindow +
                 ", maxSessionIdleTime=" + maxSessionIdleTime +
                 ", orphanMaxAge=" + orphanMaxAge +
+                ", skeletonSweep=" + skeletonSweep +
                 '}';
     }
 }
