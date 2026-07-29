@@ -35,7 +35,7 @@ import java.util.Objects;
  * before being moved to an archive shard. The retention duration must be
  * greater than this value.
  */
-@JsonPropertyOrder({"enabled", "duration", "granularity"})
+@JsonPropertyOrder({"enabled", "duration", "checkInterval", "granularity"})
 @JsonInclude(Include.NON_NULL)
 public class ArchivalSettings extends DurationSetting {
 
@@ -51,8 +51,9 @@ public class ArchivalSettings extends DurationSetting {
     public ArchivalSettings(
             @JsonProperty("enabled") final boolean enabled,
             @JsonProperty("duration") final SimpleDuration duration,
+            @JsonProperty("checkInterval") final SimpleDuration checkInterval,
             @JsonProperty("granularity") final ArchivalGranularity granularity) {
-        super(enabled, Objects.requireNonNullElse(duration, DEFAULT_LEAD_TIME));
+        super(enabled, Objects.requireNonNullElse(duration, DEFAULT_LEAD_TIME), checkInterval);
         if (getDuration().getTime() <= 0) {
             throw new IllegalArgumentException(
                     "ArchivalSettings duration must be positive, got: " + getDuration());
@@ -96,6 +97,7 @@ public class ArchivalSettings extends DurationSetting {
 
         private boolean enabled;
         private SimpleDuration duration;
+        private SimpleDuration checkInterval;
         private ArchivalGranularity granularity;
 
         public Builder() {
@@ -105,6 +107,7 @@ public class ArchivalSettings extends DurationSetting {
             if (settings != null) {
                 this.enabled = settings.isEnabled();
                 this.duration = settings.getDuration();
+                this.checkInterval = settings.getCheckInterval();
                 this.granularity = settings.granularity;
             }
         }
@@ -119,13 +122,18 @@ public class ArchivalSettings extends DurationSetting {
             return this;
         }
 
+        public Builder checkInterval(final SimpleDuration checkInterval) {
+            this.checkInterval = checkInterval;
+            return this;
+        }
+
         public Builder granularity(final ArchivalGranularity granularity) {
             this.granularity = granularity;
             return this;
         }
 
         public ArchivalSettings build() {
-            return new ArchivalSettings(enabled, duration, granularity);
+            return new ArchivalSettings(enabled, duration, checkInterval, granularity);
         }
     }
 }

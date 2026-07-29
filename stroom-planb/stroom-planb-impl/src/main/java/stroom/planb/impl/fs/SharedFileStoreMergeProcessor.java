@@ -241,12 +241,7 @@ public class SharedFileStoreMergeProcessor {
                     final SharedFileStoreOperationContext ctx = new SharedFileStoreOperationContext(
                             doc, shardIndex, shard, sharedShardsDocDir, lockName);
                     for (final SharedFileStoreOperation op : operations) {
-                        try {
-                            modified |= op.run(ctx);
-                        } catch (final Exception e) {
-                            LOGGER.error(() -> LogUtil.message("Error running {} for {}",
-                                    op.getClass().getSimpleName(), lockName), e);
-                        }
+                        modified |= op.run(ctx);
                     }
 
                     if (modified) {

@@ -769,10 +769,13 @@ appConfig:
       HISTOGRAM: 16
       METRIC: 16
       TRACE: 64
+    mergedCheckpointCacheTtl: "PT10M"
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
+    minTimeToKeepStoreShardEnv: "PT1H"
     nodeList: []
     path: "planb"
+    shardMergeThreadCount: 4
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null

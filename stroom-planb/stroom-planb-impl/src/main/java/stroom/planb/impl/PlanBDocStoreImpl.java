@@ -21,10 +21,13 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -191,6 +194,7 @@ public class PlanBDocStoreImpl
     @Override
     public PlanBDoc writeDocument(final PlanBDoc document) {
         validateName(document.getName());
+        validateRetentionCheckInterval(document);
 
         final DocRef docRef = DocRef.builder()
                 .type(document.getType())
@@ -208,6 +212,14 @@ public class PlanBDocStoreImpl
         }
 
         return super.writeDocument(document);
+    }
+
+    private void validateRetentionCheckInterval(final PlanBDoc document) {
+        final String error = RetentionSettings.checkIntervalError(NullSafe.get(
+                document, PlanBDoc::getSettings, AbstractPlanBSettings::getRetention));
+        if (error != null) {
+            throw new EntityServiceException(error);
+        }
     }
 
     private boolean hasData(final PlanBDoc doc) {

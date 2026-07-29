@@ -45,6 +45,12 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
     @UiField
     SelectionBox<TimeUnit> archivalTimeUnit;
     @UiField
+    FormGroup archivalCheckIntervalPanel;
+    @UiField
+    ValueSpinner archivalCheckInterval;
+    @UiField
+    SelectionBox<TimeUnit> archivalCheckIntervalTimeUnit;
+    @UiField
     SelectionBox<ArchivalGranularity> archivalGranularity;
 
     private boolean readOnly;
@@ -65,6 +71,15 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         archivalTimeUnit.addItem(TimeUnit.MONTHS);
         archivalTimeUnit.setValue(TimeUnit.DAYS);
 
+        archivalCheckInterval.setMin(1);
+        archivalCheckInterval.setMax(9999);
+        archivalCheckInterval.setValue(1);
+
+        archivalCheckIntervalTimeUnit.addItem(TimeUnit.MINUTES);
+        archivalCheckIntervalTimeUnit.addItem(TimeUnit.HOURS);
+        archivalCheckIntervalTimeUnit.addItem(TimeUnit.DAYS);
+        archivalCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
+
         archivalGranularity.addItem(ArchivalGranularity.HOUR);
         archivalGranularity.addItem(ArchivalGranularity.DAY);
         archivalGranularity.addItem(ArchivalGranularity.WEEK);
@@ -84,6 +99,10 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
                         .time(archivalAge.getValue())
                         .timeUnit(archivalTimeUnit.getValue())
                         .build())
+                .checkInterval(SimpleDuration.builder()
+                        .time(archivalCheckInterval.getValue())
+                        .timeUnit(archivalCheckIntervalTimeUnit.getValue())
+                        .build())
                 .granularity(archivalGranularity.getValue())
                 .build();
     }
@@ -100,6 +119,13 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         } else {
             this.archivalAge.setValue(7L);
             this.archivalTimeUnit.setValue(TimeUnit.DAYS);
+        }
+        if (settings.getCheckInterval() != null) {
+            this.archivalCheckInterval.setValue(settings.getCheckInterval().getTime());
+            this.archivalCheckIntervalTimeUnit.setValue(settings.getCheckInterval().getTimeUnit());
+        } else {
+            this.archivalCheckInterval.setValue(1L);
+            this.archivalCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
         }
         this.archivalGranularity.setValue(
                 settings.getGranularity() != null
@@ -119,8 +145,11 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
 
         final boolean on = archivalEnabled.getValue();
         archivalLeadTimePanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
+        archivalCheckIntervalPanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
         archivalAge.setEnabled(editable && on);
         archivalTimeUnit.setEnabled(editable && on);
+        archivalCheckInterval.setEnabled(editable && on);
+        archivalCheckIntervalTimeUnit.setEnabled(editable && on);
         archivalGranularity.setEnabled(editable && on);
     }
 
@@ -143,6 +172,16 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
 
     @UiHandler("archivalTimeUnit")
     public void onArchivalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("archivalCheckInterval")
+    public void onArchivalCheckInterval(final ValueChangeEvent<Long> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("archivalCheckIntervalTimeUnit")
+    public void onArchivalCheckIntervalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         getUiHandlers().onChange();
     }
 

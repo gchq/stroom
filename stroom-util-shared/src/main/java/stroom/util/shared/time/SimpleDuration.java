@@ -70,6 +70,31 @@ public class SimpleDuration {
         return timeUnit;
     }
 
+    /**
+     * The duration in milliseconds, for comparing two durations expressed in different units.
+     *
+     * <p>Approximate because months and years are not fixed length: a month counts as 31 days and
+     * a year as 365, matching {@code SimpleDurationUtil.convertToStroomDuration} so client and
+     * server agree. Use {@code SimpleDurationUtil.plus/minus} for real date arithmetic — those
+     * work in calendar terms and are exact.
+     */
+    public long getApproxMillis() {
+        if (timeUnit == null) {
+            return 0L;
+        }
+        return switch (timeUnit) {
+            case NANOSECONDS -> time / 1_000_000L;
+            case MILLISECONDS -> time;
+            case SECONDS -> time * 1_000L;
+            case MINUTES -> time * 60_000L;
+            case HOURS -> time * 3_600_000L;
+            case DAYS -> time * 86_400_000L;
+            case WEEKS -> time * 7L * 86_400_000L;
+            case MONTHS -> time * 31L * 86_400_000L;
+            case YEARS -> time * 365L * 86_400_000L;
+        };
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

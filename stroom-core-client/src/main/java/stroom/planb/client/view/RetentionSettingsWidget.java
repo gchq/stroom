@@ -44,6 +44,12 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     @UiField
     SelectionBox<TimeUnit> retentionTimeUnit;
     @UiField
+    FormGroup retentionCheckIntervalPanel;
+    @UiField
+    ValueSpinner retentionCheckInterval;
+    @UiField
+    SelectionBox<TimeUnit> retentionCheckIntervalTimeUnit;
+    @UiField
     CustomCheckBox useStateTime;
 
     private boolean readOnly;
@@ -61,6 +67,15 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         retentionTimeUnit.addItem(TimeUnit.MONTHS);
         retentionTimeUnit.addItem(TimeUnit.YEARS);
         retentionTimeUnit.setValue(TimeUnit.YEARS);
+
+        retentionCheckInterval.setMin(1);
+        retentionCheckInterval.setMax(9999);
+        retentionCheckInterval.setValue(1);
+
+        retentionCheckIntervalTimeUnit.addItem(TimeUnit.MINUTES);
+        retentionCheckIntervalTimeUnit.addItem(TimeUnit.HOURS);
+        retentionCheckIntervalTimeUnit.addItem(TimeUnit.DAYS);
+        retentionCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
     }
 
     @Override
@@ -77,6 +92,11 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                         .time(retentionAge.getValue())
                         .timeUnit(retentionTimeUnit.getValue())
                         .build())
+                .checkInterval(SimpleDuration
+                        .builder()
+                        .time(retentionCheckInterval.getValue())
+                        .timeUnit(retentionCheckIntervalTimeUnit.getValue())
+                        .build())
                 .useStateTime(useStateTime.getValue())
                 .build();
     }
@@ -88,10 +108,16 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         final RetentionSettings settings = new RetentionSettings.Builder(retention).build();
         this.retentionAge.setValue(1);
         this.retentionTimeUnit.setValue(TimeUnit.YEARS);
+        this.retentionCheckInterval.setValue(1);
+        this.retentionCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
         this.retentionEnabled.setValue(settings.isEnabled());
         if (settings.getDuration() != null) {
             this.retentionAge.setValue(settings.getDuration().getTime());
             this.retentionTimeUnit.setValue(settings.getDuration().getTimeUnit());
+        }
+        if (settings.getCheckInterval() != null) {
+            this.retentionCheckInterval.setValue(settings.getCheckInterval().getTime());
+            this.retentionCheckIntervalTimeUnit.setValue(settings.getCheckInterval().getTimeUnit());
         }
         this.useStateTime.setValue(settings.useStateTime());
         updateStates();
@@ -117,8 +143,14 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                 retentionAgePanel.getElement().getStyle().setOpacity(0.5);
             }
         }
+        if (editable) {
+            retentionCheckIntervalPanel.getElement().getStyle()
+                    .setOpacity(retentionOn ? 1 : 0.5);
+        }
         retentionAge.setEnabled(editable && retentionOn);
         retentionTimeUnit.setEnabled(editable && retentionOn);
+        retentionCheckInterval.setEnabled(editable && retentionOn);
+        retentionCheckIntervalTimeUnit.setEnabled(editable && retentionOn);
         useStateTime.setEnabled(editable && retentionOn && !shardingEnabled);
     }
 
@@ -140,6 +172,16 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
 
     @UiHandler("retentionTimeUnit")
     public void onRetainTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("retentionCheckInterval")
+    public void onRetentionCheckInterval(final ValueChangeEvent<Long> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("retentionCheckIntervalTimeUnit")
+    public void onRetentionCheckIntervalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         getUiHandlers().onChange();
     }
 

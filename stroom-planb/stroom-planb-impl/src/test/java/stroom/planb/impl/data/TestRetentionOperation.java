@@ -53,6 +53,8 @@ class TestRetentionOperation {
     private static final int SHARD_INDEX = 0;
     private static final SimpleDuration ONE_HOUR = SimpleDuration.builder()
             .time(1).timeUnit(TimeUnit.HOURS).build();
+    private static final SimpleDuration CHECK_INTERVAL = SimpleDuration.builder()
+            .time(6).timeUnit(TimeUnit.MINUTES).build();
 
     @TempDir
     Path tempDir;
@@ -248,6 +250,7 @@ class TestRetentionOperation {
                         .retention(new RetentionSettings.Builder()
                                 .enabled(enabled)
                                 .duration(duration)
+                                .checkInterval(CHECK_INTERVAL)
                                 .build())
                         .build())
                 .build();
@@ -270,6 +273,7 @@ class TestRetentionOperation {
                         .retention(new RetentionSettings.Builder()
                                 .enabled(enabled)
                                 .duration(duration)
+                                .checkInterval(CHECK_INTERVAL)
                                 .build())
                         .build())
                 .build();

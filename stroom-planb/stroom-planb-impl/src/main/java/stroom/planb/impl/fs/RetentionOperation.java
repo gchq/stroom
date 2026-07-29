@@ -20,7 +20,6 @@ import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.ArchivalGranularity;
-import stroom.planb.shared.ArchivalSettings;
 import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RetentionSettings;
@@ -30,12 +29,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
-import stroom.util.time.StroomDuration;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.stream.Stream;
@@ -43,9 +39,12 @@ import java.util.stream.Stream;
 /**
  * {@link SharedFileStoreOperation} that enforces data retention on a Plan B shard.
  *
- * <p>Tracks the last-run timestamp in a {@code .retention.last} file inside
- * the canonical shared shard directory. The check interval is 10% of the
- * configured retention duration, clamped between 1 minute and 1 day.
+ * <p>Tracks the last-run timestamp in a {@code .retention.last} file inside the canonical
+ * shared shard directory. How often it is checked comes from the doc's own
+ * {@link RetentionSettings#getCheckInterval()} — it is not derived from the retention period,
+ * which decides only which data is deleted. Retention is therefore honoured to within that
+ * interval, which is why {@code PlanBDocStoreImpl} rejects a check interval longer than the
+ * retention period.
  *
  * <p>{@link #isDue} is safe to call outside the shard cluster lock (read-only).
  * {@link #run} must be called inside the lock.
@@ -53,6 +52,9 @@ import java.util.stream.Stream;
 public class RetentionOperation implements SharedFileStoreOperation {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RetentionOperation.class);
+
+    private static final OperationMarker MARKER =
+            new OperationMarker(PlanBConstants.RETENTION_LAST_FILE_NAME);
 
     // Runs before archival (priority 200) within a merge cycle.
     @Override
@@ -73,18 +75,9 @@ public class RetentionOperation implements SharedFileStoreOperation {
         if (retention == null || !retention.isEnabled()) {
             return false;
         }
-        final Path lastFile = lastRunFile(sharedShardsDocDir, shardIndex);
-        try {
-            final Instant lastRun = Instant.parse(
-                    Files.readString(lastFile, StandardCharsets.UTF_8).trim());
-            return Instant.now().isAfter(nextDue(lastRun, retention.getDuration()));
-        } catch (final NoSuchFileException e) {
-            return true; // never run -- due immediately
-        } catch (final Exception e) {
-            LOGGER.warn("Could not read retention last-run file {}, treating as due: {}",
-                    lastFile, e.getMessage());
-            return true;
-        }
+        final Instant lastRun = MARKER.lastRun(sharedShardsDocDir, shardIndex);
+        return lastRun == null
+               || Instant.now().isAfter(SimpleDurationUtil.plus(lastRun, retention.getCheckInterval()));
     }
 
     // -----------------------------------------------------------------------
@@ -103,7 +96,11 @@ public class RetentionOperation implements SharedFileStoreOperation {
         }
 
         // Step 1: Apply retention to the main shard (existing behaviour)
-        LOGGER.info("Running retention on main shard for {}", ctx.lockName());
+        final SimpleDuration interval = NullSafe.get(
+                ctx.doc(), PlanBDocument::getSettings, AbstractPlanBSettings::getRetention,
+                RetentionSettings::getCheckInterval);
+        LOGGER.info("Running retention on main shard for {} (every {}, next due {})",
+                ctx.lockName(), interval, SimpleDurationUtil.plus(Instant.now(), interval));
         final long deleted = ctx.shard().deleteOldData(ctx.doc());
         if (deleted > 0) {
             LOGGER.info("Deleted {} records from main shard for {}", deleted, ctx.lockName());
@@ -116,7 +113,7 @@ public class RetentionOperation implements SharedFileStoreOperation {
         // archive shards created by a previous configuration are also cleaned up.
         deleteExpiredArchiveShards(ctx);
 
-        writeLastRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+        MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
         return deleted > 0;
     }
 
@@ -185,40 +182,4 @@ public class RetentionOperation implements SharedFileStoreOperation {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Scheduling helpers
-    // -----------------------------------------------------------------------
-
-    private void writeLastRun(final Path sharedShardsDocDir, final int shardIndex) {
-        final Path lastFile = lastRunFile(sharedShardsDocDir, shardIndex);
-        try {
-            Files.createDirectories(lastFile.getParent());
-            Files.writeString(lastFile, Instant.now().toString(), StandardCharsets.UTF_8);
-        } catch (final IOException e) {
-            LOGGER.error("Failed to write retention last-run file: {}", lastFile, e);
-        }
-    }
-
-    private static Path lastRunFile(final Path sharedShardsDocDir, final int shardIndex) {
-        return sharedShardsDocDir
-                .resolve(PlanBConstants.formatShardIndex(shardIndex))
-                .resolve(PlanBConstants.RETENTION_LAST_FILE_NAME);
-    }
-
-    /**
-     * Check interval = 10% of the retention duration,
-     * clamped between 1 minute and 1 day.
-     */
-    private static Instant nextDue(final Instant lastRun, final SimpleDuration duration) {
-        final long durationMs = toMillis(duration);
-        final long intervalMs = Math.min(
-                Math.max(durationMs / 10L, 60_000L),
-                86_400_000L);
-        return lastRun.plusMillis(intervalMs);
-    }
-
-    private static long toMillis(final SimpleDuration duration) {
-        final StroomDuration d = SimpleDurationUtil.convertToStroomDuration(duration);
-        return d != null ? d.toMillis() : 0L;
-    }
 }

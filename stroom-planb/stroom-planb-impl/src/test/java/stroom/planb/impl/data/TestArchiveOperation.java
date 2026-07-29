@@ -57,6 +57,8 @@ class TestArchiveOperation {
     private static final int SHARD_INDEX = 0;
     private static final SimpleDuration SEVEN_DAYS = SimpleDuration.builder()
             .time(7).timeUnit(TimeUnit.DAYS).build();
+    private static final SimpleDuration CHECK_INTERVAL = SimpleDuration.builder()
+            .time(16).timeUnit(TimeUnit.HOURS).build();
 
     @TempDir
     Path tempDir;
@@ -112,7 +114,7 @@ class TestArchiveOperation {
     void isDue_lastRunTooRecent_returnsFalse() throws IOException {
         writeLastRunFile(Instant.now());
         final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
-        // 10% of 7 days = 16.8 hours — running now should not be due
+        // Configured check interval is 16 hours — running now should not be due
         assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isFalse();
     }
 
@@ -122,7 +124,7 @@ class TestArchiveOperation {
 
     @Test
     void isDue_lastRunIntervalElapsed_returnsTrue() throws IOException {
-        // Write a last-run 2 days ago. 10% of 7 days = ~16.8 hours — well overdue.
+        // Write a last-run 2 days ago, well past the configured 16 hour check interval.
         writeLastRunFile(Instant.now().minusSeconds(2 * 24 * 3600));
         final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
         assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isTrue();
@@ -272,6 +274,7 @@ class TestArchiveOperation {
                                 new ArchivalSettings.Builder()
                                         .enabled(enabled)
                                         .duration(duration)
+                                        .checkInterval(CHECK_INTERVAL)
                                         .granularity(ArchivalGranularity.DAY)
                                         .build()))
                         .build())

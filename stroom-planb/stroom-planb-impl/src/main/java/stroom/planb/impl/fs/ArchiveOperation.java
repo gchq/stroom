@@ -25,14 +25,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
-import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -45,13 +42,18 @@ import java.util.stream.Stream;
  * <p>Archival is only supported for doc types whose settings implement
  * {@link HasSharedFileStore}. All other doc types are skipped without error.
  *
- * <p>Archival cadence: 10% of the archival lead time, clamped [1 hour, 1 day].
- * After archiving, the main shard is compacted to reclaim freed space.
+ * <p>How often archival is checked comes from the doc's own
+ * {@link ArchivalSettings#getCheckInterval()} — it is not derived from the archival lead time,
+ * which decides only which data moves. After archiving, the main shard is compacted to reclaim
+ * freed space.
  */
 public class ArchiveOperation implements SharedFileStoreOperation {
 
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(ArchiveOperation.class);
+
+    private static final OperationMarker MARKER =
+            new OperationMarker(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
 
     private final SharedFileStorePublisher publisher;
 
@@ -70,24 +72,20 @@ public class ArchiveOperation implements SharedFileStoreOperation {
     public boolean isDue(final PlanBDocument doc,
                          final Path sharedShardsDocDir,
                          final int shardIndex) {
-        final ArchivalSettings archival = doc.getSettings() instanceof final HasSharedFileStore s
-                && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getArchival() : null;
+        final ArchivalSettings archival = archival(doc);
         if (archival == null || !archival.isEnabled()) {
             return false;
         }
-        final Path lastFile = lastRunFile(sharedShardsDocDir, shardIndex);
-        try {
-            final Instant lastRun = Instant.parse(
-                    Files.readString(lastFile, StandardCharsets.UTF_8).trim());
-            return Instant.now().isAfter(nextDue(lastRun, archival.getDuration()));
-        } catch (final NoSuchFileException e) {
-            return true;
-        } catch (final Exception e) {
-            LOGGER.warn("Could not read archival last-run file {}: {}",
-                    lastFile, e.getMessage());
-            return true;
-        }
+        final Instant lastRun = MARKER.lastRun(sharedShardsDocDir, shardIndex);
+        return lastRun == null
+               || Instant.now().isAfter(SimpleDurationUtil.plus(lastRun, archival.getCheckInterval()));
+    }
+
+    private static ArchivalSettings archival(final PlanBDocument doc) {
+        return doc.getSettings() instanceof final HasSharedFileStore s
+               && s.getSharedFileStore() != null
+                ? s.getSharedFileStore().getArchival()
+                : null;
     }
 
     @Override
@@ -95,7 +93,9 @@ public class ArchiveOperation implements SharedFileStoreOperation {
         if (!isDue(ctx.doc(), ctx.sharedShardsDocDir(), ctx.shardIndex())) {
             return false;
         }
-        LOGGER.info("Running archival for {}", ctx.lockName());
+        final SimpleDuration interval = archival(ctx.doc()).getCheckInterval();
+        LOGGER.info("Running archival for {} (every {}, next due {})",
+                ctx.lockName(), interval, SimpleDurationUtil.plus(Instant.now(), interval));
 
         final Path localArchiveBase = Files.createTempDirectory("planb_archive_");
         try {
@@ -103,7 +103,7 @@ public class ArchiveOperation implements SharedFileStoreOperation {
 
             if (count == 0) {
                 LOGGER.debug(() -> "No data to archive for " + ctx.lockName());
-                writeLastRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+                MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
                 return false;
             }
 
@@ -122,7 +122,7 @@ public class ArchiveOperation implements SharedFileStoreOperation {
             // Push each archive shard. If any push fails the data is already deleted
             // from the main shard (pass 3 ran inside archiveOldData) and cannot be
             // recovered automatically. We therefore log at ERROR, skip compact and
-            // writeLastRun so isDue() stays true and the operator is alerted, then
+            // recordRun so isDue() stays true and the operator is alerted, then
             // rethrow so the caller's error handling can take over.
             IOException firstFailure = null;
             for (final StagedArchive archiveShard : archiveShards) {
@@ -148,7 +148,7 @@ public class ArchiveOperation implements SharedFileStoreOperation {
             LOGGER.info("Compacting main shard after archival for {}", ctx.lockName());
             ctx.shard().compact();
 
-            writeLastRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+            MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
             return true;
 
         } finally {
@@ -156,34 +156,4 @@ public class ArchiveOperation implements SharedFileStoreOperation {
         }
     }
 
-    private void writeLastRun(final Path sharedShardsDocDir, final int shardIndex) {
-        final Path lastFile = lastRunFile(sharedShardsDocDir, shardIndex);
-        try {
-            Files.createDirectories(lastFile.getParent());
-            Files.writeString(lastFile,
-                    Instant.now().toString(), StandardCharsets.UTF_8);
-        } catch (final IOException e) {
-            LOGGER.error("Failed to write archival last-run file: {}", lastFile, e);
-        }
-    }
-
-    private static Path lastRunFile(final Path sharedShardsDocDir, final int shardIndex) {
-        return sharedShardsDocDir
-                .resolve(PlanBConstants.formatShardIndex(shardIndex))
-                .resolve(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
-    }
-
-    /** Check interval = 10% of lead time, clamped [1 hour, 1 day]. */
-    private static Instant nextDue(final Instant lastRun, final SimpleDuration duration) {
-        final long durationMs = toMillis(duration);
-        final long intervalMs = Math.min(
-                Math.max(durationMs / 10L, 3_600_000L),
-                86_400_000L);
-        return lastRun.plusMillis(intervalMs);
-    }
-
-    private static long toMillis(final SimpleDuration duration) {
-        final StroomDuration d = SimpleDurationUtil.convertToStroomDuration(duration);
-        return d != null ? d.toMillis() : 0L;
-    }
 }
