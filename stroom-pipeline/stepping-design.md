@@ -749,19 +749,27 @@ reuse gate was `hasCompleteElement`, all records or nothing. The captured chunks
 worth two million records of parsing; every reuse decision was all-or-nothing on completeness, so they were
 worth exactly nothing. **Lifetime decoupling** removed all three:
 
-1. **Reuse is a span, not a boolean** (`StagePlanner.RecordSpan`, `Coverage`): a step that names its record
-   asks only whether the feed *holds that record*, which an element captured up to a frontier legitimately
-   does. `hasCompleteElement` survives only for whole-stream reprocesses.
+1. **Reuse is a span, not a boolean** (`StagePlanner.RecordSpan`, `Coverage`): a step about one record asks
+   only whether the feed *holds that record*, which an element captured up to a frontier legitimately does.
+   `hasCompleteElement` survives only for whole-stream reprocesses. A REFRESH names its record outright; a
+   step *derives* one - "the record after this one", "the first record" - and that arithmetic
+   (`SteppingService.demandedRecordFor`) is as valid against a capture in flight as against a finished one,
+   which is what stops an edit-then-step being answered the expensive way. The two demands that genuinely
+   cannot be derived from a partial capture stay on the whole-stream path: **LAST**, which asks where the
+   stream *ends*, and anything **filtered**, where "the next record" means "the next one that matches".
 2. **Abandonment is narrow** (`SteppingSession.stillProduces`): an in-flight capture is stopped only if the
    new configuration shares *no* cumulative fingerprint with it. An XSLT edit leaves every element above it
    untouched, so the capture runs on - and what it goes on to write is exactly the feed the edited element is
    replayed from, as well as the pre-edit chunks a revert wants back.
-3. **A step ahead of the frontier waits for that capture** (`StreamSweep.waitingOn`,
+3. **A step the capture has not reached waits for it** (`StreamSweep.waitingOn`,
    `SteppingService.waitForFrontier`) instead of launching a second one. The handle serves nothing - its
    coverage is deliberately empty, because the producer is capturing under a different configuration - and
    carries only the producer's progress signal, so the resolver's existing wait loop does the waiting and
    re-plans each time round. When the frontier passes the record, the ordinary on-demand materialisation
-   answers it.
+   answers it. This is the fallback for every demand that cannot be named *yet* - a record beyond the
+   frontier, a step off the captured end, and LAST, which needs a complete capture however it is served and
+   so can only be better off waiting for the one in flight. A filtered step is the exception and does not
+   wait: its answer is the next record that *matches*, which a second capture can start finding as it goes.
 
 The wait itself remains irreducible, exactly as in B: an edit that refreshes a record the capture has not
 reached still waits for it to be parsed. What changed is that the waiting is done *on the work already
@@ -779,9 +787,12 @@ version still in use, which is what `StepDataStore.pin` exists for.
 Each scenario is pinned by a test or benchmark so the claims above stay honest:
 
 - `TestSteppingScaleScenarios` (stroom-app) - B as a passing test (no second launch, record served); C as
-  **two** passing tests, one per half - an edit *behind* the running capture's frontier (reprocessed from the
-  partial capture) and one *ahead* of it (waits on that capture; no second sweep). Both assert the mechanism
-  through the launch counters, which is what makes them meaningful at 4,000 records rather than 10M.
+  **three** passing tests - an edit *behind* the running capture's frontier (reprocessed from the partial
+  capture), one *ahead* of it (waits on that capture; no second sweep), and an edit followed by a *step*
+  rather than a refresh (materialised from the frontier, promptly). They assert the mechanism through the
+  launch counters, which is what makes them meaningful at 4,000 records rather than 10M; the third also
+  compares its own timing against the LAST that follows it, because "materialised now" and "waited for the
+  capture, then materialised" launch exactly the same nothing.
 - `TestSteppingScenarioBenchmarks` (stroom-app) - the cost of an edited refresh issued mid-sweep (C's
   number), and the full-sweep vs boundary-only-sweep ratio (D's ceiling). **Measured, 4,000 records,
   2026-07-29:** the edit-and-refresh at the mid record costs **1,585ms mid-sweep, launching zero full
@@ -1008,7 +1019,7 @@ intersection are all queries on coverage; `CapturedRange` becomes its read view 
 |---|---|---|
 | `SteppingSession` | two producer kinds: stream captures keyed `(stream, signature)`, materialisations tracked only while they run; an in-flight capture is abandoned only when the new configuration shares no fingerprint with it | backbone keyed `(stream, boundary-signature)`; materialisations have **no identity cache** - the store is the cache, the session only tracks running producers; abandonment exists only for a *boundary* edit |
 | launch decision (`SteppingService`) | full sweep unless the store - or a running capture, once its frontier arrives - can feed a reprocess of the records asked for | backbone if missing, else materialise against its frontier; full sweep only under the small-stream policy |
-| `StagePlanner` / reuse | range-based for a step that names its records; `hasCompleteElement` still gates a whole-stream reprocess | range-based: reusable *for the records asked about*; complete-element kept as fast path |
+| `StagePlanner` / reuse | range-based for any step whose record can be named or derived; `hasCompleteElement` still gates a whole-stream reprocess | range-based: reusable *for the records asked about*; complete-element kept as fast path |
 | resolver waits (`SessionStepResolver`) | waits on the one sweep's watermark; LAST waits for full capture | waits on the backbone's watermark for shape, on the materialisation's for content; LAST waits only for the backbone |
 | `ReprocessDriver` | single record / window from whatever the store holds, complete or partial | same mechanics, fed from a *partial* backbone up to its frontier - the frontier is the only new input |
 | store | in-order per file with `RecordOrder` modes; sparse tolerated as the exception (§10) | sparse, idempotent, atomic, capped - full stop. The order modes and contiguity heuristics go; producer sequencing (the replayed-record-numbered-0 class) is asserted by the producer, which is the only party that knows what order it meant |

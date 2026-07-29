@@ -256,6 +256,85 @@ class TestSteppingScaleScenarios extends TranslationTest {
     }
 
     /**
+     * The same edit, but followed by a <b>step</b> rather than a refresh. Navigation names no record - the
+     * target has to be derived - but deriving "the record after this one" is arithmetic on what has been
+     * captured so far, and works just as well against a capture still in flight. So this must be answered by
+     * materialising that one record <b>now</b>, neither by capturing the stream a second time alongside the
+     * first nor by waiting for the first to finish.
+     * <p>
+     * Worth its own test because the two paths diverge before the planner is ever consulted: a REFRESH names
+     * its record and a FORWARD does not, and until the demand covered both, keeping the running capture (which
+     * scenario C requires) meant an edit-then-step ran two full captures of one stream at once.
+     * <p>
+     * The launch counters alone cannot tell "materialised promptly" from "waited for the capture, then
+     * materialised" - both launch nothing. The LAST that follows supplies the discriminator without a
+     * hard-coded threshold: it genuinely must wait for the capture to finish, so if the step had waited too,
+     * the step would be the slow one and LAST the fast one. Asserting step &lt; LAST is therefore an assertion
+     * about <i>which mechanism answered</i>, self-calibrating to whatever the machine is doing.
+     */
+    @Test
+    void anEditFollowedByAStepMidSweepDoesNotResweep() {
+        final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
+        final PipelineStepRequest base = requestFor(metaId);
+        final String xsltText = xsltTextFor(EDITED_ELEMENT_ID);
+
+        String sessionUuid = null;
+        try {
+            final SteppingResult first = steppingService.step(base.copy().stepType(StepType.FIRST).build());
+            sessionUuid = first.getSessionUuid();
+            assertThat(first.isFoundRecord()).as("FIRST found a record").isTrue();
+            final StepLocation start = first.getFoundLocation();
+
+            final long fullSweeps = steppingService.getFullSweepLaunchCount();
+            final long onDemand = steppingService.getOnDemandLaunchCount();
+
+            // Edit, then step forward - issued while the sweep is still thousands of records from done.
+            final long steppedStart = System.currentTimeMillis();
+            final SteppingResult stepped = steppingService.step(base.copy()
+                    .stepType(StepType.FORWARD)
+                    .stepLocation(start)
+                    .sessionUuid(sessionUuid)
+                    .code(Map.of(EDITED_ELEMENT_ID, xsltText))
+                    .build());
+            final long steppedMs = System.currentTimeMillis() - steppedStart;
+            sessionUuid = stepped.getSessionUuid();
+
+            assertThat(stepped.isFoundRecord()).as("the edited step resolved").isTrue();
+            assertThat(stepped.getFoundLocation().getRecordIndex())
+                    .as("on the record after the one it stepped from")
+                    .isEqualTo(start.getRecordIndex() + 1);
+            assertThat(stepped.getStepData().getElementData(EDITED_ELEMENT_ID))
+                    .as("the edited element was served").isNotNull();
+            assertThat(steppingService.getFullSweepLaunchCount())
+                    .as("no second capture of a stream already being captured").isEqualTo(fullSweeps);
+            assertThat(steppingService.getOnDemandLaunchCount())
+                    .as("it materialised the one record instead").isEqualTo(onDemand + 1);
+
+            // LAST cannot be answered until the capture finishes - it asks where the stream ends - so it waits
+            // for the very capture the step above did not wait for.
+            final long lastStart = System.currentTimeMillis();
+            final SteppingResult last = steppingService.step(base.copy()
+                    .stepType(StepType.LAST)
+                    .sessionUuid(sessionUuid)
+                    .code(Map.of(EDITED_ELEMENT_ID, xsltText))
+                    .build());
+            final long lastMs = System.currentTimeMillis() - lastStart;
+            sessionUuid = last.getSessionUuid();
+
+            assertThat(last.isFoundRecord()).as("LAST resolved once the capture completed").isTrue();
+            assertThat(steppingService.getFullSweepLaunchCount())
+                    .as("and it waited for the running capture rather than starting one")
+                    .isEqualTo(fullSweeps);
+            assertThat(steppedMs)
+                    .as("the step was served from the frontier, not by waiting for the capture "
+                        + "(step %dms vs LAST %dms)", steppedMs, lastMs)
+                    .isLessThan(lastMs);
+        } finally {
+            terminate(base, sessionUuid);
+        }
+    }
+
+    /**
      * A filtered scan whose match lies beyond the first window ({@code filteredScanWindow} default 50): the
      * probe hits only record-no 100 (index 99), so the scan must materialise window 1, find nothing, move
      * its frontier and materialise window 2 - within one long-poll, driven by the resolver loop.

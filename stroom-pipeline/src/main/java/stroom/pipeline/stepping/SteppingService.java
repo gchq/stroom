@@ -369,22 +369,22 @@ public class SteppingService {
      * Decide whether this step can be answered by materialising the <b>one record</b> it is about, rather
      * than re-running the edited element over the whole stream.
      * <p>
-     * Two conditions. The step must name the record it wants - a REFRESH does, which is what an edit-then-look
-     * cycle produces. And no filter may sit on the edited element or below it: deciding whether a record
-     * matches such a filter means running the element to find out, so the target cannot be known in advance
-     * and records have to be worked through in order instead. A filter on an element <i>above</i> the edit is
-     * no obstacle at all - its output is already in the store under an unchanged fingerprint, so it is
-     * evaluated by reading, exactly as it is today.
+     * The step's record has to be knowable ({@link #demandedRecordFor}), and no filter may sit on the edited
+     * element or below it: deciding whether a record matches such a filter means running the element to find
+     * out, so the target cannot be known in advance and records have to be worked through in order instead
+     * (the windowed scan). A filter on an element <i>above</i> the edit is no obstacle at all - its output is
+     * already in the store under an unchanged fingerprint, so it is evaluated by reading.
      *
-     * @return the record to materialise, or null to reprocess the whole stream as before.
+     * @return the records to materialise, or null to reprocess the whole stream as before.
      */
     private RecordRange onDemandRangeFor(final PipelineStepRequest request,
                                          final Graph graph,
                                          final Decision decision,
                                          final StepDataStore store,
                                          final ElementFingerprints fingerprints,
-                                         final long metaId) {
-        final StepLocation located = onDemandTargetFor(request, graph, decision, store, metaId);
+                                         final long metaId,
+                                         final boolean extentFinal) {
+        final StepLocation located = onDemandTargetFor(request, graph, decision, store, metaId, extentFinal);
         if (located != null) {
             return RecordRange.of(located);
         }
@@ -474,32 +474,58 @@ public class SteppingService {
                                            final Graph graph,
                                            final Decision decision,
                                            final StepDataStore store,
-                                           final long metaId) {
+                                           final long metaId,
+                                           final boolean extentFinal) {
         if (isFilteredAtOrBelow(request, graph, decision.startElementId())) {
             return null;
         }
+        return demandedRecordFor(request, metaId, store, extentFinal);
+    }
+
+    /**
+     * The single record this step is about, if that can be worked out from what has already been captured.
+     * <p>
+     * A REFRESH names its record outright. Navigation does not - it has to be derived - but deriving it is
+     * simple arithmetic on the captured record coverage, and that arithmetic is just as valid against a
+     * capture still in flight as against a finished one: the record after the one the user is looking at is
+     * the record after it, whether or not the stream beyond has been captured yet. That is what lets an edit
+     * followed by a step (rather than a refresh) be answered by materialising one record instead of capturing
+     * the stream a second time.
+     * <p>
+     * Two kinds of step cannot be answered this way:
+     * <ul>
+     *   <li><b>Filtered</b> - a filter makes "the next record" mean "the next one that <i>matches</i>", which
+     *   cannot be known without running records to find out. The windowed scan (see {@link #filteredWindowFor})
+     *   answers those, and it needs the whole-stream path first.</li>
+     *   <li><b>LAST against a capture still running</b> - it asks where the stream <i>ends</i>, and the last
+     *   record captured so far is merely the last so far. Answering from it would land mid-stream.</li>
+     * </ul>
+     *
+     * @param extentFinal whether the captured extent is the whole stream, which is what LAST needs.
+     * @return the record, or null if this step's demand cannot be named yet.
+     */
+    private StepLocation demandedRecordFor(final PipelineStepRequest request,
+                                           final long metaId,
+                                           final StepDataStore store,
+                                           final boolean extentFinal) {
         final StepType stepType = request.getStepType();
         final StepLocation ref = request.getStepLocation();
         if (stepType == StepType.REFRESH) {
-            return ref;
+            // A reference to another stream's record is not a demand on this one; the resolver only ever
+            // refreshes the stream the reference is in, so this is a guard rather than a case.
+            return (ref != null && ref.getMetaId() == metaId) ? ref : null;
         }
-
-        // Navigating rather than refreshing: the record wanted is not named, it has to be worked out. That
-        // is only simple arithmetic while nothing is filtered - a filter makes "the next record" mean "the
-        // next one that matches", which cannot be known without running records to find out. Any filter at
-        // all, even above the edit, therefore falls back to reprocessing the stream.
         if (isAnyFilterApplied(request)) {
-            // Handled by the windowed scan instead - see filteredWindowFor.
             return null;
         }
-        final Coverage stream = store.recordCoverage(() -> false);
+        final Coverage stream = store.recordCoverage(() -> extentFinal);
         final List<Long> parts = stream.parts();
         if (parts.isEmpty()) {
             return null;
         }
         return switch (stepType) {
             case FIRST -> locationIn(metaId, stream, parts.getFirst(), true);
-            case LAST -> locationIn(metaId, stream, parts.getLast(), false);
+            case LAST -> extentFinal ? locationIn(metaId, stream, parts.getLast(), false) : null;
             case FORWARD, BACKWARD -> neighbourOf(metaId, stream, ref, stepType == StepType.FORWARD);
             default -> null;
         };
@@ -595,34 +621,38 @@ public class SteppingService {
                 .findFirst()
                 .orElse(null);
 
-        // What must the feed cover? A whole-stream reprocess (span == null) still requires a prior COMPLETE,
-        // error-free capture: hasCompleteElement measures against the store's own extent, so without the
-        // completion gate a capture truncated by an error would count as "complete" and a reprocess from it
-        // would silently serve a short stream. But a step that names its record does not need the whole
-        // stream - it needs the feed to HOLD that record, which a partial capture legitimately can. That is
-        // what lets an edit land while the stream's first capture is still running (scenario C, the
-        // behind-the-frontier half) instead of costing a full re-sweep.
-        final StagePlanner.RecordSpan span = priorCompleteCapture ? null : namedRecordSpanFor(request, metaId);
-        if (priorCompleteCapture || span != null) {
-            final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
-            final Set<String> capturedElementIds = store.getCapturedElementIds();
-            if (!capturedElementIds.isEmpty()) {
-                final PipelineData pipelineData = pipelineDataHolderFactory
-                        .create(request.getPipelineDoc()).getMergedPipelineData();
-                final Graph graph = SteppingGraphBuilder.build(pipelineData, capturedElementIds);
+        final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
+        final Set<String> capturedElementIds = store.getCapturedElementIds();
+        if (!capturedElementIds.isEmpty()) {
+            final PipelineData pipelineData = pipelineDataHolderFactory
+                    .create(request.getPipelineDoc()).getMergedPipelineData();
+            final Graph graph = SteppingGraphBuilder.build(pipelineData, capturedElementIds);
+
+            // What must the feed cover? A whole-stream reprocess (span == null) still requires a prior
+            // COMPLETE, error-free capture: hasCompleteElement measures against the store's own extent, so
+            // without the completion gate a capture truncated by an error would count as "complete" and a
+            // reprocess from it would silently serve a short stream. But a step that is about ONE record does
+            // not need the whole stream - it needs the feed to HOLD that record, which a partial capture
+            // legitimately can. That is what lets an edit land while the stream's first capture is still
+            // running (scenario C) instead of costing a full re-sweep.
+            final StepLocation demanded = priorCompleteCapture
+                    ? null
+                    : demandedRecordFor(request, metaId, store, false);
+            final StagePlanner.RecordSpan span = spanFor(demanded);
+            if (priorCompleteCapture || span != null) {
                 final Decision decision =
                         reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints, span);
                 if (decision.satisfied()) {
                     // Everything the step demands is already in the store - materialised by an earlier step
                     // or a previous loop iteration of this one. Launching anything would be waste; the
                     // resolver just needs a sweep signalling the records so it navigates them as usual.
-                    final StepLocation ref = request.getStepLocation();
-                    return signalledSweep(metaId, store, new RecordRange(
-                            ref.getPartIndex(), ref.getRecordIndex(), ref.getRecordIndex()));
+                    // Signalled for the record the DEMAND named, not for the request's reference location -
+                    // navigation demands the record next to its reference, and FIRST has no reference at all.
+                    return signalledSweep(metaId, store, RecordRange.of(demanded));
                 }
                 if (!decision.fullSweep()) {
-                    final RecordRange range =
-                            onDemandRangeFor(request, graph, decision, store, fingerprints, metaId);
+                    final RecordRange range = onDemandRangeFor(request, graph, decision, store, fingerprints,
+                            metaId, priorCompleteCapture);
                     // A plan made against a span is only good for materialising that span. If the range
                     // computation declined (e.g. the step turned out to need whole-stream work), a
                     // whole-stream reprocess from a feed only checked for a few records would truncate the
@@ -656,12 +686,13 @@ public class SteppingService {
                     sweep.setDemand(range);
                     return sweep;
                 }
-                // Nothing can be planned from what has been captured so far. Before falling back to a second
-                // capture of this stream, see whether the one already running will answer this step shortly.
-                final StreamSweep waiting = waitForFrontier(liveProducer, graph, store, fingerprints, span);
-                if (waiting != null) {
-                    return waiting;
-                }
+            }
+            // Nothing could be planned - either the step's demand cannot be named until more has been
+            // captured, or the plan came back a full sweep. Before starting a second capture of this stream,
+            // see whether the one already running will answer this step once it gets further.
+            final StreamSweep waiting = waitForFrontier(liveProducer, request, graph, store, fingerprints);
+            if (waiting != null) {
+                return waiting;
             }
         }
         fullSweepLaunches.incrementAndGet();
@@ -669,40 +700,64 @@ public class SteppingService {
     }
 
     /**
+     * The one-record span a demand names, or null if it named none.
+     */
+    private StagePlanner.RecordSpan spanFor(final StepLocation demanded) {
+        return demanded == null
+                ? null
+                : new StagePlanner.RecordSpan(
+                        demanded.getPartIndex(), demanded.getRecordIndex(), demanded.getRecordIndex());
+    }
+
+    /**
      * Wait for the capture already running, rather than start a second one?
      * <p>
-     * Yes when the step names records the running capture simply has not reached yet. Its output for those
+     * Yes when this step is about records the running capture simply has not reached yet. Its output for those
      * records will be exactly what a reprocess needs - an edit below the record boundary does not change the
      * fingerprints it is writing above - so the work is already being done, and duplicating it would parse the
-     * same stream twice to produce the same chunks.
+     * same stream twice to produce the same chunks. This covers both a step that named its record and one
+     * whose record cannot be named until the capture gets further (stepping off the captured end), and LAST,
+     * which needs a complete capture however it is served and so can only be better off waiting for the one in
+     * flight than starting another.
      * <p>
      * The test is a question the planner can actually answer: <b>would this step be answerable about a record
      * the capture has already produced?</b> If planning against the frontier yields a reprocess, the only thing
      * missing is the records, and they are on their way. If it yields a full sweep, the edit changed something
      * this capture cannot supply (a parser change re-keys everything) and waiting would only delay the sweep
      * that is genuinely needed.
+     * <p>
+     * A <b>filtered</b> step does not wait. Its answer is the next record that <i>matches</i>, which a second
+     * capture can start finding as it goes, whereas waiting here would block until the first capture finished;
+     * the windowed scan takes over once there is a complete capture to scan.
      *
      * @return a handle to wait on, or null to go ahead and launch.
      */
     private StreamSweep waitForFrontier(final StreamSweep liveProducer,
+                                        final PipelineStepRequest request,
                                         final Graph graph,
                                         final StepDataStore store,
-                                        final ElementFingerprints fingerprints,
-                                        final StagePlanner.RecordSpan span) {
-        if (liveProducer == null || span == null) {
+                                        final ElementFingerprints fingerprints) {
+        if (liveProducer == null || isAnyFilterApplied(request)) {
             return null;
         }
-        final long frontier = liveProducer.coverage().last(span.partIndex());
+        // The frontier: the furthest record the capture has signalled, in the furthest part it has reached.
+        final Coverage captured = liveProducer.coverage();
+        final List<Long> parts = captured.parts();
+        if (parts.isEmpty()) {
+            return null;
+        }
+        final long part = parts.getLast();
+        final long frontier = captured.last(part);
         if (frontier < 0) {
-            // Nothing captured for this part yet, so there is no record to test the plan against.
+            // Nothing captured yet, so there is no record to test the plan against.
             return null;
         }
         final Decision atFrontier = reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store,
-                fingerprints, new StagePlanner.RecordSpan(span.partIndex(), frontier, frontier));
+                fingerprints, new StagePlanner.RecordSpan(part, frontier, frontier));
         if (atFrontier.fullSweep()) {
             return null;
         }
-        LOGGER.debug(() -> "launchFor() - waiting for the running capture to reach " + span);
+        LOGGER.debug(() -> "launchFor() - waiting for the capture already running past " + part + ":" + frontier);
         return StreamSweep.waitingOn(liveProducer);
     }
 
@@ -758,20 +813,6 @@ public class SteppingService {
                && demand.partIndex() == asked.partIndex()
                && demand.firstRecord() <= asked.firstRecord()
                && demand.lastRecord() >= asked.lastRecord();
-    }
-
-    /**
-     * The span a step demands, when it names one: an unfiltered-or-filtered REFRESH is about exactly the
-     * record it points at. Navigation names no record (its target is worked out from captured extents, which
-     * a partial capture cannot yet answer), so everything else returns null and keeps the whole-stream
-     * requirement.
-     */
-    private StagePlanner.RecordSpan namedRecordSpanFor(final PipelineStepRequest request, final long metaId) {
-        final StepLocation ref = request.getStepLocation();
-        if (request.getStepType() == StepType.REFRESH && ref != null && ref.getMetaId() == metaId) {
-            return new StagePlanner.RecordSpan(ref.getPartIndex(), ref.getRecordIndex(), ref.getRecordIndex());
-        }
-        return null;
     }
 
     /**
