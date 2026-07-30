@@ -180,7 +180,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     @Min(1)
     @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
                              "Note that this number will be exceeded if we have currently queued tasks from lower " +
-                             "priority filters.")
+                             "priority filters. This is a cluster wide total shared by all nodes, so it should " +
+                             "comfortably exceed the number of tasks all nodes will ask for at once, i.e. the " +
+                             "number of nodes multiplied by their Data Processing job task limit. Note also that " +
+                             "no further filters are considered once half this number is already queued.")
     public int getQueueSize() {
         return queueSize;
     }

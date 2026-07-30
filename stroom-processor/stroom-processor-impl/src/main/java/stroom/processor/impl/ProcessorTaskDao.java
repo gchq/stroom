@@ -64,14 +64,16 @@ public interface ProcessorTaskDao {
     int countTasksForFilter(int filterId, TaskStatus status);
 
     /**
-     * Count the current number of tasks for a filter matching the specified status.
+     * Count the current number of tasks for a filter matching the specified status, both for a single node and
+     * for the whole cluster. Both counts come from one query so that they are a consistent view of the same
+     * moment, as the number of tasks being processed changes constantly.
      *
      * @param filterId The filter to count tasks for.
      * @param nodeName The node to count tasks for.
      * @param status   Task status.
-     * @return The number of tasks matching the specified status.
+     * @return The number of tasks matching the specified status for the node and for the cluster.
      */
-    int countTasksForFilter(int filterId, String nodeName, TaskStatus status);
+    FilterTaskCounts countTasksForFilter(int filterId, String nodeName, TaskStatus status);
 
     /**
      * Create new tasks for the specified filter and add them to the queue.
@@ -156,4 +158,15 @@ public interface ProcessorTaskDao {
 
 
     List<ExistingCreatedTask> findExistingCreatedTasks(long lastTaskId, int filterId, int limit);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The number of tasks a filter has in a given status, for a single node and for the whole cluster.
+     */
+    record FilterTaskCounts(int nodeCount, int clusterCount) {
+
+    }
 }

@@ -19,10 +19,9 @@
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxProcessingTasks"
                         label="Max Processing Tasks"
-                        helpText="Choose the maximum number of tasks that will be processed concurrently across the cluster.">
+                        helpText="Choose the maximum number of tasks that will be processed concurrently across the cluster. Set to 0 for no limit.">
             <v:ValueSpinner ui:field="maxProcessingTasks"
-                            addStyleNames="dock-max"
-                            wrapValues="true"/>
+                            addStyleNames="dock-max"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditProfile"
                         label="Processing Profile"

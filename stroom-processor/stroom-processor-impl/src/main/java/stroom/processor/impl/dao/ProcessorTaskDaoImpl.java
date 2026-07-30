@@ -68,6 +68,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.BatchBindStep;
 import org.jooq.Condition;
@@ -117,6 +118,21 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final int BATCH_SIZE = 1_000;
 
+    /**
+     * Another node or job can change a task while we are updating it, e.g. the master disowning tasks from a
+     * node it thinks has died. A reload and retry recovers from that, but if a few attempts haven't succeeded
+     * then more won't either.
+     */
+    private static final int MAX_TASK_STATUS_UPDATE_TRIES = 5;
+    /**
+     * How long to wait after losing a race to update a task, so that we don't spin on the database.
+     */
+    private static final long TASK_STATUS_UPDATE_CONTENTION_DELAY_MS = 50;
+    /**
+     * How long to wait after an error updating a task, which is likely to take longer to clear than a lost race.
+     */
+    private static final long TASK_STATUS_UPDATE_ERROR_DELAY_MS = 1_000;
+
     //    private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
 //    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
 //            new RecordToProcessorFilterMapper();
@@ -161,7 +177,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorFeedCache processorFeedCache;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final ProcessorFilterCache processorFilterCache;
-    private final ProcessorConfig processorConfig;
+    private final Provider<ProcessorConfig> processorConfigProvider;
     private final ProcessorDbConnProvider processorDbConnProvider;
     //    private final ProcessorFilterMarshaller marshaller;
     private final DocFinder docFinder;
@@ -173,7 +189,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ProcessorFeedCache processorFeedCache,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorFilterCache processorFilterCache,
-                         final ProcessorConfig processorConfig,
+                         final Provider<ProcessorConfig> processorConfigProvider,
                          final ProcessorDbConnProvider processorDbConnProvider,
                          final ExpressionMapperFactory expressionMapperFactory,
                          final DocFinder docFinder) {
@@ -181,7 +197,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.processorFeedCache = processorFeedCache;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorFilterCache = processorFilterCache;
-        this.processorConfig = processorConfig;
+        this.processorConfigProvider = processorConfigProvider;
         this.processorDbConnProvider = processorDbConnProvider;
         this.docFinder = docFinder;
 
@@ -635,17 +651,33 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public int countTasksForFilter(final int filterId, final String nodeName, final TaskStatus status) {
+    public FilterTaskCounts countTasksForFilter(final int filterId,
+                                                final String nodeName,
+                                                final TaskStatus status) {
         final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
-        return JooqUtil.contextResult(
-                processorDbConnProvider, context ->
-                        context
-                                .selectCount()
-                                .from(PROCESSOR_TASK)
-                                .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
-                                .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
-                                .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
-                                .fetchOne(0, int.class));
+        return JooqUtil.contextResult(processorDbConnProvider, context -> {
+            // Count by node so that we get the node and cluster counts from a single consistent view. There is
+            // one row per node that has tasks for the filter, so at most one row per node in the cluster.
+            final Result<Record2<Integer, Integer>> result = context
+                    .select(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, DSL.count())
+                    .from(PROCESSOR_TASK)
+                    .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
+                    .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
+                    .groupBy(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
+                    .fetch();
+
+            int nodeCount = 0;
+            int clusterCount = 0;
+            for (final Record2<Integer, Integer> record : result) {
+                final int count = record.value2();
+                // Tasks with no node still count towards the cluster total.
+                clusterCount += count;
+                if (Objects.equals(nodeId, record.value1())) {
+                    nodeCount = count;
+                }
+            }
+            return new FilterTaskCounts(nodeCount, clusterCount);
+        });
     }
 
     private Result<Record> select(final DSLContext context,
@@ -696,6 +728,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                              final Object[][] allBindValues) {
         BatchBindStep batchBindStep = null;
         int i = 0;
+        final int maxBatchSize = processorConfigProvider.get().getDatabaseMultiInsertMaxBatchSize();
 
         for (final Object[] bindValues : allBindValues) {
             i++;
@@ -712,7 +745,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             batchBindStep = batchBindStep.bind(bindValues);
 
             // Execute insert if we have reached batch size.
-            if (i >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
+            if (i >= maxBatchSize) {
                 executeInsert(batchBindStep, i);
                 i = 0;
                 batchBindStep = null;
@@ -1045,22 +1078,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 result = updateProcessorTask(nodeId, updated);
 
             } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.warn(() -> LogUtil.message(
-                            "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
-                            status, e.getMessage(), processorTask), e);
-                }
+                // Reported below if we can't recover by reloading and trying again.
+                LOGGER.debug(() -> LogUtil.message(
+                        "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
+                        status, e.getMessage(), processorTask), e);
             }
 
             if (result == null) {
                 // Try this operation a few times.
                 RuntimeException lastError = null;
 
-                // Try and do this up to 100 times.
-                for (int tries = 0; tries < 100 && result == null; tries++) {
+                for (int tries = 0; tries < MAX_TASK_STATUS_UPDATE_TRIES && result == null; tries++) {
+                    final int attempt = tries + 1;
                     try {
-                        LOGGER.warn(() -> LogUtil.message(
+                        logTaskStatusRetry(attempt, () -> LogUtil.message(
                                 "changeTaskStatus({}) - Task has changed, attempting reload {}",
                                 status, processorTask));
 
@@ -1072,7 +1103,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             LOGGER.warn(() -> LogUtil.message(
                                     "changeTaskStatus({}) - Task does not exist, " +
                                     "task may have been physically deleted {}",
-                                    processorTask));
+                                    status, processorTask));
                             break;
                         } else if (TaskStatus.DELETED.equals(reloaded.getStatus())) {
                             LOGGER.warn(() -> LogUtil.message(
@@ -1081,7 +1112,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     processorTask));
                             break;
                         } else {
-                            LOGGER.warn(() -> LogUtil.message(
+                            logTaskStatusRetry(attempt, () -> LogUtil.message(
                                     "changeTaskStatus({}) - Re-loaded stream task {}",
                                     status,
                                     reloaded));
@@ -1094,16 +1125,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .build();
 
                             result = updateProcessorTask(nodeId, updated);
+
+                            if (result == null) {
+                                // Something changed the task again, so pause before trying once more rather
+                                // than spinning on the database.
+                                Thread.sleep(TASK_STATUS_UPDATE_CONTENTION_DELAY_MS);
+                            }
                         }
                     } catch (final RuntimeException e2) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.warn(() -> LogUtil.message(
-                                    "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
-                                    status, e2.getMessage(), processorTask), e2);
-                        }
+                        LOGGER.debug(() -> LogUtil.message(
+                                "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
+                                status, e2.getMessage(), processorTask), e2);
                         lastError = e2;
                         // Wait before trying this operation again.
-                        Thread.sleep(1000);
+                        Thread.sleep(TASK_STATUS_UPDATE_ERROR_DELAY_MS);
                     }
                 }
 
@@ -1119,6 +1154,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             Thread.currentThread().interrupt();
         }
         return result;
+    }
+
+    /**
+     * Recovering from a task that has been changed elsewhere is expected and normally succeeds first time, so
+     * only make a noise about it if the first attempt didn't work.
+     */
+    private void logTaskStatusRetry(final int attempt, final Supplier<String> message) {
+        if (attempt == 1) {
+            LOGGER.debug(message);
+        } else {
+            LOGGER.warn(message);
+        }
     }
 
     private ProcessorTask updateProcessorTask(final Integer nodeId,
