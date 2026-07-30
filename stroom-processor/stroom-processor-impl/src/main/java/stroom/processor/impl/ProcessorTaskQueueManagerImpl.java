@@ -498,6 +498,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private long releaseQueuedFilterTasks(final ProcessorFilter filter) {
         if (filter != null) {
             return LOGGER.logDurationIfDebugEnabled(() -> {
+                long totalReleased = 0;
                 final Set<Long> taskIdSet = new HashSet<>();
                 final ProcessorTaskQueue queue = queueMap.remove(filter);
                 if (queue != null) {
@@ -506,13 +507,15 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         taskIdSet.add(processorTask.getId());
                         if (taskIdSet.size() >= BATCH_SIZE) {
                             releaseQueuedTask(taskIdSet);
+                            totalReleased += taskIdSet.size();
                             taskIdSet.clear();
                         }
                         processorTask = queue.poll();
                     }
                 }
                 releaseQueuedTask(taskIdSet);
-                return taskIdSet.size();
+                totalReleased += taskIdSet.size();
+                return totalReleased;
             }, () -> "Released tasks for filter " + filter.getFilterInfo());
         }
         return 0;
@@ -710,6 +713,58 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return totalAdded;
     }
 
+    /**
+     * Get the maximum number of tasks for the filter that could currently be assigned across the whole cluster.
+     * Task assignment applies processing profiles but queueing does not, so without this we would fill the queue
+     * with tasks that no node is allowed to process, using up the queue and stopping us from queueing tasks for
+     * other filters.
+     *
+     * @return The maximum number of tasks that can currently be assigned for the filter, 0 if no active node is
+     * currently allowed to process tasks for it, or {@link Integer#MAX_VALUE} if there is no limit.
+     */
+    private int getMaxClusterTasks(final ProcessorFilter filter) {
+        if (filter.getProfileName() == null) {
+            return filter.isProcessingTaskCountBounded()
+                    ? filter.getMaxProcessingTasks()
+                    : Integer.MAX_VALUE;
+        }
+
+        final Set<String> activeNodes;
+        try {
+            activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
+            // We can't tell which nodes are active so assume tasks can be queued rather than queueing nothing.
+            LOGGER.debug(() -> "Unable to get active nodes, assuming tasks can be queued for " +
+                               filter.getFilterInfo(), e);
+            return Integer.MAX_VALUE;
+        }
+
+        try {
+            // A profile can stop all nodes processing tasks for the filter, e.g. when the current time is
+            // outside its processing periods or its node group is disabled, so see if any active node is
+            // currently allowed to process tasks for it.
+            int maxClusterTasks = 0;
+            for (final String node : activeNodes) {
+                final ProfileResult profileResult = processorProfileCache
+                        .getProfile(node, filter.getProfileName());
+                if (profileResult.maxNodeTasks() > 0) {
+                    maxClusterTasks = Math.max(maxClusterTasks, profileResult.maxClusterTasks());
+                }
+            }
+            return maxClusterTasks;
+
+        } catch (final RuntimeException e) {
+            // Task assignment will refuse to assign tasks for this filter so don't queue any. Assignment
+            // reports this error so only debug log it here to avoid duplicating it on every queue fill.
+            LOGGER.debug(() -> "Error getting processing profile for filter (filter=" +
+                               filter +
+                               ", profileName=" +
+                               filter.getProfileName() +
+                               "), not queueing tasks for filter", e);
+            return 0;
+        }
+    }
+
     private int queueTasksForFilter(final TaskContext taskContext,
                                     final String nodeName,
                                     final ProcessorFilter filter,
@@ -726,6 +781,23 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
             // Only try and create tasks if the processor is enabled.
             if (filter.isEnabled() && filter.getProcessor().isEnabled()) {
+                // Don't queue tasks that no node is currently allowed to process as they would just use up the
+                // queue and stop us queueing tasks for other filters.
+                final int maxClusterTasks = getMaxClusterTasks(filter);
+                if (maxClusterTasks <= 0) {
+                    // Release any tasks that we queued while the profile was still allowing them, otherwise
+                    // they would remain owned by this node and unable to be processed until it allows them
+                    // again, which could be a long time for a profile that only processes overnight etc.
+                    final DurationTimer durationTimer = DurationTimer.start();
+                    final long released = releaseQueuedFilterTasks(filter);
+                    filterProgressMonitor.logPhase(
+                            Phase.RELEASE_TASKS_FOR_INACTIVE_PROFILES, durationTimer, released);
+                    filterProgressMonitor.complete();
+                    LOGGER.debug("queueTasksForFilter() - No tasks can currently be assigned for {}, " +
+                                 "released {} queued tasks", filter.getFilterInfo(), released);
+                    return 0;
+                }
+
                 info(taskContext, filter::getFilterInfo);
 
                 // If there are any tasks for this filter that were previously created but aren't queued and
@@ -737,7 +809,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         filter,
                         queue,
                         queueProcessTasksState,
-                        filterProgressMonitor);
+                        filterProgressMonitor,
+                        maxClusterTasks);
                 filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
                 return count;
             }
@@ -752,7 +825,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final ProcessorFilter filter,
                                   final ProcessorTaskQueue queue,
                                   final QueueProcessTasksState queueProcessTasksState,
-                                  final FilterProgressMonitor filterProgressMonitor) {
+                                  final FilterProgressMonitor filterProgressMonitor,
+                                  final int maxClusterTasks) {
         // Queue tasks for this filter.
         final int initialQueueSize = queue.size();
         queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
@@ -845,11 +919,12 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             LOGGER.error(e.getMessage(), e);
         }
 
-        if (filter.isProcessingTaskCountBounded()) {
-            // If the filter specifies a maximum number of concurrent processing tasks then limit the number we
-            // report as being added to the queue otherwise we might stop adding other tasks early.
+        if (maxClusterTasks < Integer.MAX_VALUE) {
+            // If the number of tasks that can be processed at once is limited, either by the filter or by its
+            // processing profile, then limit the number we report as being added to the queue otherwise we
+            // might stop adding other tasks early.
             queueProcessTasksState
-                    .addTotalQueuedTasks(Math.min(filter.getMaxProcessingTasks(), initialQueueSize + totalAddedTasks));
+                    .addTotalQueuedTasks(Math.min(maxClusterTasks, initialQueueSize + totalAddedTasks));
         } else {
             queueProcessTasksState.addTotalQueuedTasks(initialQueueSize + totalAddedTasks);
         }
