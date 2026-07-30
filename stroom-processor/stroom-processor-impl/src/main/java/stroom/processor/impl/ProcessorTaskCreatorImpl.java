@@ -648,14 +648,18 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         if (queryData.getLimits() != null) {
             final Limits limits = queryData.getLimits();
 
-            // If there is a duration limit set on task creation then set the
-            // tracker to complete and return if we have exceeded this duration.
+            // If any of the limits on task creation have been reached then set the tracker to complete and
+            // return, as there are no more tasks to create for this filter.
             if (limits.getDurationMs() != null) {
                 final long start = filter.getCreateTimeMs();
                 final long end = start + limits.getDurationMs();
                 if (end < System.currentTimeMillis()) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "createTasksFromSearchQuery() - Duration limit reached, filter: {}",
+                            filter.getFilterInfo()));
                     tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                     updateTracker(tracker, filterProgressMonitor);
+                    return;
                 }
             }
 
@@ -668,8 +672,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 maxStreams = Math.min(streamLimit, maxStreams);
 
                 if (streamLimit <= 0) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "createTasksFromSearchQuery() - Stream count limit reached, filter: {}",
+                            filter.getFilterInfo()));
                     tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                     updateTracker(tracker, filterProgressMonitor);
+                    return;
                 }
             }
 
@@ -682,8 +690,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 maxEvents = Math.min(eventLimit, maxEvents);
 
                 if (maxEvents <= 0) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "createTasksFromSearchQuery() - Event count limit reached, filter: {}",
+                            filter.getFilterInfo()));
                     tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                     updateTracker(tracker, filterProgressMonitor);
+                    return;
                 }
             }
         }
