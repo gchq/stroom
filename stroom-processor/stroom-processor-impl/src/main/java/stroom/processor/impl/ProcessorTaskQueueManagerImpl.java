@@ -261,6 +261,9 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
                         boolean usedProfile = false;
                         if (filter.getProfileName() != null) {
+                            // A filter with a profile is governed by that profile alone, so never fall back to
+                            // the non profile limits below, even if we fail to resolve the profile.
+                            usedProfile = true;
                             try {
                                 final ProfileResult profileResult = processorProfileCache
                                         .getProfile(nodeName, filter.getProfileName());
@@ -303,14 +306,15 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                     }
                                 }
 
-                                usedProfile = true;
-
                             } catch (final RuntimeException e) {
-                                throw new RuntimeException("Error getting processing profile for filter (filter=" +
-                                                           filter +
-                                                           ", profileName=" +
-                                                           filter.getProfileName() +
-                                                           ")", e);
+                                // We don't know what limits the profile would have imposed so assign no tasks
+                                // for this filter, but carry on assigning tasks for all the other filters.
+                                LOGGER.error(() -> "Error getting processing profile for filter (filter=" +
+                                                   filter +
+                                                   ", profileName=" +
+                                                   filter.getProfileName() +
+                                                   "), assigning no tasks for filter", e);
+                                maxFilterTasks = 0;
                             }
                         }
 
