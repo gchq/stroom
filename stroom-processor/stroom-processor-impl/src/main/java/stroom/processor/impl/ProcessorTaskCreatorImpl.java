@@ -428,7 +428,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                                               ", profileName=" +
                                                               filter.getProfileName() +
                                                               ")");
-                        maxTasks = Math.min(remaining, profileResult.maxClusterTasks()) - currentCreatedTasks;
+                        maxTasks = Math.min(remaining, profileResult.maxClusterThreads()) - currentCreatedTasks;
                         usedProfile = true;
 
                     } catch (final RuntimeException e) {

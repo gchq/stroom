@@ -153,15 +153,15 @@ public class ProcessorProfileCache implements Clearable {
                     }
                     // Check end time is after or equal.
                     if (!endTime.isBefore(zonedDateTime)) {
-                        int maxNodeTasks = Integer.MAX_VALUE;
+                        int maxNodeThreads = Integer.MAX_VALUE;
                         if (period.isLimitNodeThreads()) {
-                            maxNodeTasks = period.getMaxNodeThreads();
+                            maxNodeThreads = period.getMaxNodeThreads();
                         }
-                        int maxClusterTasks = Integer.MAX_VALUE;
+                        int maxClusterThreads = Integer.MAX_VALUE;
                         if (period.isLimitClusterThreads()) {
-                            maxClusterTasks = period.getMaxClusterThreads();
+                            maxClusterThreads = period.getMaxClusterThreads();
                         }
-                        return new ProfileResult(maxNodeTasks, maxClusterTasks);
+                        return new ProfileResult(maxNodeThreads, maxClusterThreads);
                     }
                 }
             }
@@ -178,7 +178,7 @@ public class ProcessorProfileCache implements Clearable {
                 .withNano(0);
     }
 
-    public record ProfileResult(int maxNodeTasks, int maxClusterTasks) {
+    public record ProfileResult(int maxNodeThreads, int maxClusterThreads) {
 
     }
 }

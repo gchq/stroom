@@ -356,6 +356,27 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     /**
+     * A per node task limit caps what the whole cluster can process just as much as an explicit cluster limit
+     * does, so a filter limited that way must not use up the queue budget with tasks it can't process yet.
+     */
+    @Test
+    void filterLimitedByItsProfileNodeCapDoesNotUseUpTheQueueBudget() {
+        final ProcessorFilter limited = createFilter(1, PROFILE);
+        final ProcessorFilter other = createFilter(2, null);
+        givenFilters(limited, other);
+        givenCreatedTasks(limited, new ProcessorConfig().getQueueSize());
+        givenCreatedTasks(other, 10);
+        // Five tasks per node and no cluster limit, so with one node only five can be processed at once.
+        when(processorProfileCache.getProfile(NODE, PROFILE))
+                .thenReturn(new ProfileResult(5, Integer.MAX_VALUE));
+
+        queueManager.exec();
+
+        // The lower priority filter was still considered rather than the budget being used up.
+        verify(processorTaskDao).findExistingCreatedTasks(anyLong(), eq(other.getId()), anyInt());
+    }
+
+    /**
      * The reported failure mode. A high priority filter that no node may process must not use up the queue and
      * stop a lower priority filter being queued.
      */
