@@ -41,6 +41,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
@@ -63,6 +64,7 @@ public class ArchiveStoreShard extends AbstractStoreShard {
     private static final long SYNC_CHECK_INTERVAL_MS = 1000;
 
     private final Path archiveBucketDir;
+    private final ReentrantLock syncLock = new ReentrantLock();
     private volatile long lastSyncCheckTimeMs = 0;
 
     public ArchiveStoreShard(final ByteBuffers byteBuffers,
@@ -139,6 +141,21 @@ public class ArchiveStoreShard extends AbstractStoreShard {
      * reader sees a half-open env.
      */
     private void syncFromArchiveIfRequired() {
+        final long now = System.currentTimeMillis();
+        if (db != null && now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
+            return;
+        }
+
+        syncLock.lock();
+        try {
+            syncFromArchiveUnderLock();
+        } finally {
+            syncLock.unlock();
+        }
+    }
+
+    private void syncFromArchiveUnderLock() {
+        // Re-check under the lock: another thread may have synced while we waited.
         final long now = System.currentTimeMillis();
         if (db != null && now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
             return;

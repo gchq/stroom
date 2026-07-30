@@ -44,6 +44,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 public class SharedFileStoreShard extends AbstractStoreShard {
@@ -51,6 +52,7 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileStoreShard.class);
 
     private static final long SYNC_CHECK_INTERVAL_MS = 1000;
+    private final ReentrantLock syncLock = new ReentrantLock();
     private volatile long lastSyncCheckTimeMs = 0;
 
     public SharedFileStoreShard(final ByteBuffers byteBuffers,
@@ -175,6 +177,21 @@ public class SharedFileStoreShard extends AbstractStoreShard {
             return;
         }
 
+        final long now = System.currentTimeMillis();
+        if (now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
+            return;
+        }
+
+        syncLock.lock();
+        try {
+            syncFromSharedStoreUnderLock();
+        } finally {
+            syncLock.unlock();
+        }
+    }
+
+    private void syncFromSharedStoreUnderLock() {
+        // Re-check under the lock: another thread may have synced while we waited.
         final long now = System.currentTimeMillis();
         if (now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
             return;
