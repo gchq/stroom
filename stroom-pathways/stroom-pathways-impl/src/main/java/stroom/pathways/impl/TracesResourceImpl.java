@@ -21,6 +21,8 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceHistogram;
+import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResource;
@@ -60,5 +62,10 @@ public class TracesResourceImpl implements TracesResource {
     @Override
     public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
         return tracesStoreProvider.get().getTraceOverview(request);
+    }
+
+    @Override
+    public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
+        return tracesStoreProvider.get().getTraceHistogram(request);
     }
 }

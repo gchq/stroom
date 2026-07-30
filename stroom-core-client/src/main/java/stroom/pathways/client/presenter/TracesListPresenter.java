@@ -25,6 +25,8 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.TraceHistogram;
+import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -51,11 +53,15 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.RowStyles;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -73,9 +79,12 @@ public class TracesListPresenter
     private static final long LEAK_ABSOLUTE_FLOOR_NANOS = 30L * 1_000_000_000L; // 30s
     private static final long LEAK_MULTIPLIER = 5L;
 
+    private static final int HISTOGRAM_BUCKETS = 80;
+
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final PagerView pagerView;
+    private final TraceHistogramWidget histogramWidget;
     private final MyDataGrid<TraceRoot> dataGrid;
     private final MultiSelectionModelImpl<TraceRoot> selectionModel;
     private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
@@ -96,6 +105,7 @@ public class TracesListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
+        this.histogramWidget = new TraceHistogramWidget(dateTimeFormatter);
 
         dataGrid = new MyDataGrid<>(this);
         pagerView.setDataWidget(dataGrid);
@@ -112,8 +122,36 @@ public class TracesListPresenter
             }
         }, this);
 
-        view.setDataView(pagerView);
+        // Data slot = histogram above the grid, so it sits between the quick-filter bar and the list.
+        final FlowPanel dataPanel = new FlowPanel();
+        dataPanel.addStyleName("dock-container-vertical");
+        dataPanel.addStyleName("max");
+        histogramWidget.addStyleName("dock-min");
+        dataPanel.add(histogramWidget);
+        final Widget pagerWidget = pagerView.asWidget();
+        pagerWidget.addStyleName("dock-max");
+        pagerWidget.addStyleName("overflow-hidden");
+        dataPanel.add(pagerWidget);
+        view.setDataView(new SimpleView(dataPanel));
         view.setUiHandlers(this);
+    }
+
+    private static final class SimpleView extends ViewImpl {
+
+        private final Widget widget;
+
+        SimpleView(final Widget widget) {
+            this.widget = widget;
+        }
+
+        @Override
+        public Widget asWidget() {
+            return widget;
+        }
+    }
+
+    public void setHistogramZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
+        histogramWidget.setZoomHandler(zoomHandler);
     }
 
     @Override
@@ -343,6 +381,7 @@ public class TracesListPresenter
 
 
     public void refresh() {
+        refreshHistogram();
         if (dataProvider == null) {
             dataProvider = new RestDataProvider<TraceRoot, ResultPage<TraceRoot>>(getEventBus()) {
                 @Override
@@ -376,6 +415,22 @@ public class TracesListPresenter
         } else {
             dataProvider.refresh();
         }
+    }
+
+    private void refreshHistogram() {
+        if (dataSourceRef == null) {
+            histogramWidget.setData(null);
+            return;
+        }
+        final TraceHistogramRequest request = new TraceHistogramRequest(
+                dataSourceRef, filter, timeRange, HISTOGRAM_BUCKETS);
+        restFactory
+                .create(TRACES_RESOURCE)
+                .method(res -> res.getTraceHistogram(request))
+                .onSuccess(histogramWidget::setData)
+                .onFailure(error -> histogramWidget.setData(null))
+                .taskMonitorFactory(pagerView)
+                .exec();
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

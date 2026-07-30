@@ -29,9 +29,11 @@ import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.shared.PlanBDoc;
+import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
 import stroom.query.client.view.TimeRangeSelector;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -89,6 +91,9 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
             listPresenter.setTimeRange(e.getValue());
             listPresenter.refresh();
         }));
+        listPresenter.setHistogramZoomHandler((fromMs, toMs) ->
+                timeRangeSelector.setValue(new TimeRange(
+                        null, ClientDateUtil.toISOString(fromMs), ClientDateUtil.toISOString(toMs)), true));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(e -> {
             final TraceRoot traceRoot = listPresenter.getSelectionModel().getSelected();
             if (traceRoot == null) {

@@ -20,6 +20,8 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceHistogram;
+import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResultPage;
@@ -49,6 +51,7 @@ public interface TracesRemoteQueryResource extends RestResource {
     String GET_TRACE_PATH = "/getTrace";
     String GET_SPANS_PATH = "/getSpans";
     String GET_TRACE_OVERVIEW_PATH = "/getTraceOverview";
+    String GET_TRACE_HISTOGRAM_PATH = "/getTraceHistogram";
 
     @POST
     @Path(GET_TRACES_PATH)
@@ -77,4 +80,11 @@ public interface TracesRemoteQueryResource extends RestResource {
             summary = "Gets a downsampled overview of a large trace from a remote Plan B store.",
             operationId = "tracesGetTraceOverview")
     TraceOverview getTraceOverview(GetTraceOverviewRequest request);
+
+    @POST
+    @Path(GET_TRACE_HISTOGRAM_PATH)
+    @Operation(
+            summary = "Gets a time histogram of trace counts from a remote Plan B store.",
+            operationId = "tracesGetTraceHistogram")
+    TraceHistogram getTraceHistogram(TraceHistogramRequest request);
 }

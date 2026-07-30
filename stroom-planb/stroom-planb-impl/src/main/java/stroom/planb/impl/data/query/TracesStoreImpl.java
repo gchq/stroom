@@ -26,6 +26,8 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceHistogram;
+import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;
@@ -45,6 +47,7 @@ import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.db.trace.TraceSecondaryIndex;
 import stroom.planb.impl.serde.trace.HexStringUtil;
+import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
@@ -923,6 +926,140 @@ public class TracesStoreImpl implements TracesStore {
             }
         }
         return new TraceOverview(new ArrayList<>(bySpanId.values()));
+    }
+
+    public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
+        final DocRef docRef = request.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+        if (doc == null) {
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
+        }
+        if (!shardManager.isSnapshotNode()) {
+            return getLocalTraceHistogram(request);
+        }
+        return queryStorageNode(
+                TracesRemoteQueryResource.GET_TRACE_HISTOGRAM_PATH, request, TraceHistogram.class);
+    }
+
+    // Counts traces per equal time-bucket over the requested window, fanning out across live shards +
+    // overlapping archive buckets and summing per-bucket counts. The window is capped to one archival-
+    // granularity bucket so it never overlaps more than 1-2 archive buckets; a wider or unbounded range
+    // returns an unavailable histogram without scanning.
+    public TraceHistogram getLocalTraceHistogram(final TraceHistogramRequest request) {
+        final DocRef docRef = request.getDataSourceRef();
+        final PlanBDocument doc = getPlanBDoc(docRef);
+        if (doc == null) {
+            LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
+            throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
+        }
+
+        final long maxWindowMs = maxHistogramWindowMs(doc);
+        final TimeFilter timeFilter = resolveTimeFilter(request.getTimeRange());
+        if (timeFilter == null || timeFilter.getTo() - timeFilter.getFrom() > maxWindowMs) {
+            return TraceHistogram.unavailable(maxWindowMs);
+        }
+
+        final long fromMs = timeFilter.getFrom();
+        final long toMs = timeFilter.getTo();
+        // Bucket by an integer width of at least 1ms so buckets never go sub-millisecond (which would
+        // make a bar's range un-representable as an ms window and break drill-down). The bucket count is
+        // capped so width * count still covers the window.
+        final int requestedBuckets = Math.max(1, request.getBucketCount());
+        final long span = Math.max(1L, toMs - fromMs);
+        final long bucketWidthMs = Math.max(1L, (span + requestedBuckets - 1) / requestedBuckets);
+        final int nBuckets = (int) Math.min(
+                (long) requestedBuckets, (span + bucketWidthMs - 1) / bucketWidthMs);
+        final Predicate<TraceRoot> filterPredicate = buildFilterPredicate(request.getFilter());
+
+        final long[] totals;
+        if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            final List<CompletableFuture<long[]>> futures = new ArrayList<>();
+            for (int i = 0; i < doc.getShardCount(); i++) {
+                final int shardIndex = i;
+                futures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return securityContext.asUserResult(userIdentity, () ->
+                                shardManager.get(doc.getName(), shardIndex, reader -> {
+                                    if (reader instanceof final TraceDb traceDb) {
+                                        return traceDb.histogram(
+                                                timeFilter, bucketWidthMs, nBuckets, filterPredicate);
+                                    }
+                                    throw new IllegalStateException("Unexpected value: " + reader);
+                                }));
+                    } catch (final Exception e) {
+                        LOGGER.error("Error histogramming shard " + shardIndex
+                                + " for doc " + doc.getName(), e);
+                        return null;
+                    }
+                }, executor));
+
+                for (final ArchiveShardRef ref : archiveShardLocator.findRelevantShards(
+                        doc, shardIndex, fromMs, toMs)) {
+                    futures.add(CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return securityContext.asUserResult(userIdentity, () ->
+                                    shardManager.getArchive(doc, shardIndex, ref, reader -> {
+                                        if (reader instanceof final TraceDb traceDb) {
+                                            return traceDb.histogram(
+                                                timeFilter, bucketWidthMs, nBuckets, filterPredicate);
+                                        }
+                                        throw new IllegalStateException("Unexpected value: " + reader);
+                                    }));
+                        } catch (final Exception e) {
+                            LOGGER.error("Error histogramming archive shard " + ref.dateLabel()
+                                    + " for doc " + doc.getName(), e);
+                            return null;
+                        }
+                    }, executor));
+                }
+            }
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            totals = new long[nBuckets];
+            for (final CompletableFuture<long[]> future : futures) {
+                try {
+                    final long[] counts = future.get();
+                    if (counts != null) {
+                        for (int b = 0; b < nBuckets && b < counts.length; b++) {
+                            totals[b] += counts[b];
+                        }
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error("Failed to collect histogram counts for doc " + doc.getName(), e);
+                }
+            }
+        } else {
+            totals = shardManager.get(docRef.getName(), reader -> {
+                if (reader instanceof final TraceDb traceDb) {
+                    return traceDb.histogram(timeFilter, bucketWidthMs, nBuckets, filterPredicate);
+                }
+                throw new IllegalStateException("Unexpected value: " + reader);
+            });
+        }
+
+        final List<Long> counts = new ArrayList<>(nBuckets);
+        for (int b = 0; b < nBuckets; b++) {
+            counts.add(totals[b]);
+        }
+        return new TraceHistogram(true, fromMs, toMs, bucketWidthMs, maxWindowMs, counts);
+    }
+
+    // Widest window the histogram will serve: one archival-granularity bucket (so at most 1-2 archive
+    // buckets are ever touched). Defaults to DAY when archival is not configured.
+    private static long maxHistogramWindowMs(final PlanBDocument doc) {
+        ArchivalGranularity granularity = ArchivalGranularity.DAY;
+        if (doc.getSettings() instanceof final TraceSettings ts
+                && ts.getSharedFileStore() != null
+                && ts.getSharedFileStore().getArchival() != null) {
+            granularity = ts.getSharedFileStore().getArchival().getGranularity();
+        }
+        return switch (granularity) {
+            case HOUR -> 60L * 60 * 1000;
+            case DAY -> 24L * 60 * 60 * 1000;
+            case WEEK -> 7L * 24 * 60 * 60 * 1000;
+        };
     }
 
     // Proxies a query to the first configured Plan B storage node (used by a snapshot node, which

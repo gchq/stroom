@@ -608,3 +608,37 @@
 .trace-row--error .dataGridCell * {
     color: var(--text-color--red);
 }
+
+/* ---- Trace histogram ---- */
+
+.trace-histogram {
+    position: relative;
+    height: 56px;
+    box-sizing: border-box;
+    padding: 4px 5px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.histogram-bar {
+    position: absolute;
+    bottom: 0;
+    min-height: 1px;
+    box-sizing: border-box;
+    border-right: 1px solid transparent;
+    background-clip: padding-box;
+    background-color: rgba(100, 181, 246, 0.85);
+    cursor: pointer;
+}
+
+.histogram-bar:hover {
+    background-color: rgba(144, 202, 249, 1);
+}
+
+.histogram-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+    font-size: 11px;
+}

@@ -1857,6 +1857,60 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
+    /**
+     * Counts traces per equal time-bucket over {@code timeFilter}'s window. Without a filter this is a
+     * key-only walk of the chronologically-ordered {@link TraceSecondaryIndex#START_TIME} index — the
+     * start time is decoded straight from the key ({@code secs[8] ∥ nanos[4]}), so no {@link TraceRoot}
+     * is deserialised. With a quick filter each candidate root is deserialised and tested (the START_TIME
+     * range already bounds the window, so only the quick-filter predicate is applied).
+     */
+    public long[] histogram(final TimeFilter timeFilter,
+                            final long bucketWidthMs,
+                            final int nBuckets,
+                            final Predicate<TraceRoot> filterPredicate) {
+        final long[] counts = new long[nBuckets];
+        final long fromMs = timeFilter.getFrom();
+        final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
+        env.read(readTxn -> {
+            try (final Stream<LmdbEntry> stream =
+                    LmdbStream.stream(readTxn, startTimeDbi, startTimeKeyRange(timeFilter))) {
+                if (filterPredicate == null) {
+                    stream.forEach(entry -> {
+                        final ByteBuffer keyBuf = entry.getKey().duplicate();
+                        final long secs = keyBuf.getLong();
+                        final int nanos = keyBuf.getInt();
+                        addToBucket(counts, secs * 1_000L + nanos / 1_000_000L, fromMs, bucketWidthMs, nBuckets);
+                    });
+                } else {
+                    stream.map(entry -> safeLookupTraceRoot(readTxn, entry))
+                            .filter(Objects::nonNull)
+                            .filter(filterPredicate)
+                            .forEach(root -> {
+                                final NanoTime start = root.getStartTime();
+                                if (start != null) {
+                                    addToBucket(counts, start.toEpochMillis(), fromMs, bucketWidthMs, nBuckets);
+                                }
+                            });
+                }
+            }
+            return null;
+        });
+        return counts;
+    }
+
+    // Buckets are integer milliseconds wide; the same width the client uses to place bars and build the
+    // drill window, so a bar's count equals the count returned when that bar is drilled into.
+    private static void addToBucket(final long[] counts, final long ms, final long fromMs,
+                                    final long bucketWidthMs, final int nBuckets) {
+        long bucket = (ms - fromMs) / bucketWidthMs;
+        if (bucket < 0) {
+            bucket = 0;
+        } else if (bucket >= nBuckets) {
+            bucket = nBuckets - 1;
+        }
+        counts[(int) bucket]++;
+    }
+
     // Contiguous START_TIME index range covering exactly the [from, to] millisecond window (see
     // countTracesInTimeRange for the key layout / bound rationale).
     private LmdbKeyRange startTimeKeyRange(final TimeFilter timeFilter) {
