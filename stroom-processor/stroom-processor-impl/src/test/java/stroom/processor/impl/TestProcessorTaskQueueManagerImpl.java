@@ -20,6 +20,7 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
+import stroom.processor.impl.ProcessorTaskDao.FilterTaskCounts;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
@@ -675,6 +676,44 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
 
         assertThat(fetchCount.get()).isGreaterThan(fetchesAfterFirstAssignment);
+    }
+
+    /**
+     * The node and cluster counts are needed together, so they must come from a single query rather than two
+     * reads taken at different moments, as the number of tasks being processed changes constantly.
+     */
+    @Test
+    void assignmentGetsTheNodeAndClusterCountsInOneQuery() {
+        final ProcessorFilter filter = createFilter(1, PROFILE);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(new ProfileResult(5, 8));
+        when(processorTaskDao.countTasksForFilter(eq(filter.getId()), eq(NODE), eq(TaskStatus.PROCESSING)))
+                .thenReturn(new FilterTaskCounts(2, 3));
+        queueManager.exec();
+
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 10);
+
+        // The node limit leaves 5-2=3 and the cluster limit leaves 8-3=5, so the node limit wins.
+        assertThat(assigned.getList()).hasSize(3);
+        verify(processorTaskDao, times(1))
+                .countTasksForFilter(eq(filter.getId()), eq(NODE), eq(TaskStatus.PROCESSING));
+    }
+
+    @Test
+    void assignmentAppliesTheClusterLimitWhenItIsTheLowerOfTheTwo() {
+        final ProcessorFilter filter = createFilter(1, PROFILE);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(new ProfileResult(8, 5));
+        when(processorTaskDao.countTasksForFilter(eq(filter.getId()), eq(NODE), eq(TaskStatus.PROCESSING)))
+                .thenReturn(new FilterTaskCounts(1, 3));
+        queueManager.exec();
+
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 10);
+
+        // The node limit leaves 8-1=7 but the cluster limit leaves only 5-3=2.
+        assertThat(assigned.getList()).hasSize(2);
     }
 
     /**

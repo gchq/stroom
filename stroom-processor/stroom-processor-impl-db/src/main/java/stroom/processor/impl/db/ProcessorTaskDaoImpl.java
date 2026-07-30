@@ -631,17 +631,33 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public int countTasksForFilter(final int filterId, final String nodeName, final TaskStatus status) {
+    public FilterTaskCounts countTasksForFilter(final int filterId,
+                                                final String nodeName,
+                                                final TaskStatus status) {
         final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
-        return JooqUtil.contextResult(
-                processorDbConnProvider, context ->
-                        context
-                                .selectCount()
-                                .from(PROCESSOR_TASK)
-                                .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
-                                .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
-                                .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
-                                .fetchOne(0, int.class));
+        return JooqUtil.contextResult(processorDbConnProvider, context -> {
+            // Count by node so that we get the node and cluster counts from a single consistent view. There is
+            // one row per node that has tasks for the filter, so at most one row per node in the cluster.
+            final Result<Record2<Integer, Integer>> result = context
+                    .select(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, DSL.count())
+                    .from(PROCESSOR_TASK)
+                    .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
+                    .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
+                    .groupBy(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
+                    .fetch();
+
+            int nodeCount = 0;
+            int clusterCount = 0;
+            for (final Record2<Integer, Integer> record : result) {
+                final int count = record.value2();
+                // Tasks with no node still count towards the cluster total.
+                clusterCount += count;
+                if (Objects.equals(nodeId, record.value1())) {
+                    nodeCount = count;
+                }
+            }
+            return new FilterTaskCounts(nodeCount, clusterCount);
+        });
     }
 
     private Result<Record> select(final DSLContext context,

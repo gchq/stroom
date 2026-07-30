@@ -22,6 +22,7 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
+import stroom.processor.impl.ProcessorTaskDao.FilterTaskCounts;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.ProcessorFilter;
@@ -289,30 +290,26 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                     maxFilterTasks = 0;
                                 }
 
-                                // If the max node tasks is constrained then figure out the remaining max filter
-                                // tasks.
-                                if (maxFilterTasks > 0) {
-                                    int maxNodeThreads = profileResult.maxNodeThreads();
-                                    if (maxNodeThreads < Integer.MAX_VALUE) {
-                                        final int currentNodeTasks = processorTaskDao.countTasksForFilter(
-                                                filter.getId(),
-                                                nodeName,
-                                                TaskStatus.PROCESSING);
-                                        maxNodeThreads = Math.max(0, maxNodeThreads - currentNodeTasks);
-                                        maxFilterTasks = Math.min(maxFilterTasks, maxNodeThreads);
-                                    }
-                                }
+                                // If either the node or cluster threads are constrained then figure out the
+                                // remaining max filter tasks. Both counts come from a single query so that
+                                // they are a consistent view of the same moment.
+                                if (maxFilterTasks > 0
+                                    && (profileResult.maxNodeThreads() < Integer.MAX_VALUE
+                                        || profileResult.maxClusterThreads() < Integer.MAX_VALUE)) {
+                                    final FilterTaskCounts counts = processorTaskDao.countTasksForFilter(
+                                            filter.getId(),
+                                            nodeName,
+                                            TaskStatus.PROCESSING);
 
-                                // If the max cluster tasks is constrained then figure out the remaining max filter
-                                // tasks.
-                                if (maxFilterTasks > 0) {
-                                    int maxClusterThreads = profileResult.maxClusterThreads();
-                                    if (maxClusterThreads < Integer.MAX_VALUE) {
-                                        final int currentClusterTasks = processorTaskDao.countTasksForFilter(
-                                                filter.getId(),
-                                                TaskStatus.PROCESSING);
-                                        maxClusterThreads = Math.max(0, maxClusterThreads - currentClusterTasks);
-                                        maxFilterTasks = Math.min(maxFilterTasks, maxClusterThreads);
+                                    if (profileResult.maxNodeThreads() < Integer.MAX_VALUE) {
+                                        final int remaining = Math.max(0,
+                                                profileResult.maxNodeThreads() - counts.nodeCount());
+                                        maxFilterTasks = Math.min(maxFilterTasks, remaining);
+                                    }
+                                    if (profileResult.maxClusterThreads() < Integer.MAX_VALUE) {
+                                        final int remaining = Math.max(0,
+                                                profileResult.maxClusterThreads() - counts.clusterCount());
+                                        maxFilterTasks = Math.min(maxFilterTasks, remaining);
                                     }
                                 }
 
