@@ -113,6 +113,21 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final int BATCH_SIZE = 1_000;
 
+    /**
+     * Another node or job can change a task while we are updating it, e.g. the master disowning tasks from a
+     * node it thinks has died. A reload and retry recovers from that, but if a few attempts haven't succeeded
+     * then more won't either.
+     */
+    private static final int MAX_TASK_STATUS_UPDATE_TRIES = 5;
+    /**
+     * How long to wait after losing a race to update a task, so that we don't spin on the database.
+     */
+    private static final long TASK_STATUS_UPDATE_CONTENTION_DELAY_MS = 50;
+    /**
+     * How long to wait after an error updating a task, which is likely to take longer to clear than a lost race.
+     */
+    private static final long TASK_STATUS_UPDATE_ERROR_DELAY_MS = 1_000;
+
     //    private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
 //    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
 //            new RecordToProcessorFilterMapper();
@@ -1057,22 +1072,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 result = updateProcessorTask(nodeId, updated);
 
             } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.warn(() -> LogUtil.message(
-                            "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
-                            status, e.getMessage(), processorTask), e);
-                }
+                // Reported below if we can't recover by reloading and trying again.
+                LOGGER.debug(() -> LogUtil.message(
+                        "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
+                        status, e.getMessage(), processorTask), e);
             }
 
             if (result == null) {
                 // Try this operation a few times.
                 RuntimeException lastError = null;
 
-                // Try and do this up to 100 times.
-                for (int tries = 0; tries < 100 && result == null; tries++) {
+                for (int tries = 0; tries < MAX_TASK_STATUS_UPDATE_TRIES && result == null; tries++) {
+                    final int attempt = tries + 1;
                     try {
-                        LOGGER.warn(() -> LogUtil.message(
+                        logTaskStatusRetry(attempt, () -> LogUtil.message(
                                 "changeTaskStatus({}) - Task has changed, attempting reload {}",
                                 status, processorTask));
 
@@ -1084,7 +1097,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             LOGGER.warn(() -> LogUtil.message(
                                     "changeTaskStatus({}) - Task does not exist, " +
                                     "task may have been physically deleted {}",
-                                    processorTask));
+                                    status, processorTask));
                             break;
                         } else if (TaskStatus.DELETED.equals(reloaded.getStatus())) {
                             LOGGER.warn(() -> LogUtil.message(
@@ -1093,7 +1106,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     processorTask));
                             break;
                         } else {
-                            LOGGER.warn(() -> LogUtil.message(
+                            logTaskStatusRetry(attempt, () -> LogUtil.message(
                                     "changeTaskStatus({}) - Re-loaded stream task {}",
                                     status,
                                     reloaded));
@@ -1106,16 +1119,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .build();
 
                             result = updateProcessorTask(nodeId, updated);
+
+                            if (result == null) {
+                                // Something changed the task again, so pause before trying once more rather
+                                // than spinning on the database.
+                                Thread.sleep(TASK_STATUS_UPDATE_CONTENTION_DELAY_MS);
+                            }
                         }
                     } catch (final RuntimeException e2) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.warn(() -> LogUtil.message(
-                                    "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
-                                    status, e2.getMessage(), processorTask), e2);
-                        }
+                        LOGGER.debug(() -> LogUtil.message(
+                                "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
+                                status, e2.getMessage(), processorTask), e2);
                         lastError = e2;
                         // Wait before trying this operation again.
-                        Thread.sleep(1000);
+                        Thread.sleep(TASK_STATUS_UPDATE_ERROR_DELAY_MS);
                     }
                 }
 
@@ -1131,6 +1148,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             Thread.currentThread().interrupt();
         }
         return result;
+    }
+
+    /**
+     * Recovering from a task that has been changed elsewhere is expected and normally succeeds first time, so
+     * only make a noise about it if the first attempt didn't work.
+     */
+    private void logTaskStatusRetry(final int attempt, final Supplier<String> message) {
+        if (attempt == 1) {
+            LOGGER.debug(message);
+        } else {
+            LOGGER.warn(message);
+        }
     }
 
     private ProcessorTask updateProcessorTask(final Integer nodeId,
