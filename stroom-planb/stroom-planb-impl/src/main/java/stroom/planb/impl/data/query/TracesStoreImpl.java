@@ -962,9 +962,6 @@ public class TracesStoreImpl implements TracesStore {
 
         final long fromMs = timeFilter.getFrom();
         final long toMs = timeFilter.getTo();
-        // Bucket by an integer width of at least 1ms so buckets never go sub-millisecond (which would
-        // make a bar's range un-representable as an ms window and break drill-down). The bucket count is
-        // capped so width * count still covers the window.
         final int requestedBuckets = Math.max(1, request.getBucketCount());
         final long span = Math.max(1L, toMs - fromMs);
         final long bucketWidthMs = Math.max(1L, (span + requestedBuckets - 1) / requestedBuckets);

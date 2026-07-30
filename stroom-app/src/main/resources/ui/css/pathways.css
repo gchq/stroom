@@ -613,10 +613,53 @@
 
 .trace-histogram {
     position: relative;
-    height: 56px;
+    height: 72px;
     box-sizing: border-box;
-    padding: 4px 5px 0;
+    padding: 4px 0 2px;
     border-bottom: 1px solid var(--border-color);
+    font-size: 8px;
+}
+
+.histogram-yaxis {
+    position: absolute;
+    left: var(--control__gap--horizontal);
+    top: 4px;
+    bottom: 18px;
+    width: 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    color: #888;
+    pointer-events: none;
+}
+
+.histogram-plot {
+    position: absolute;
+    left: calc(var(--control__gap--horizontal) + 46px);
+    right: var(--control__gap--horizontal);
+    top: 4px;
+    bottom: 18px;
+    border-left: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.histogram-xaxis {
+    position: absolute;
+    left: calc(var(--control__gap--horizontal) + 46px);
+    right: var(--control__gap--horizontal);
+    bottom: 2px;
+    height: 14px;
+    display: flex;
+    justify-content: space-between;
+    color: #888;
+    pointer-events: none;
+}
+
+.histogram-ylabel,
+.histogram-xlabel {
+    font-size: 11px;
+    line-height: 1;
 }
 
 .histogram-bar {
@@ -632,6 +675,10 @@
 
 .histogram-bar:hover {
     background-color: rgba(144, 202, 249, 1);
+}
+
+.histogram-plot--min .histogram-bar {
+    cursor: default;
 }
 
 .histogram-hint {

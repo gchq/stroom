@@ -1898,8 +1898,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return counts;
     }
 
-    // Buckets are integer milliseconds wide; the same width the client uses to place bars and build the
-    // drill window, so a bar's count equals the count returned when that bar is drilled into.
     private static void addToBucket(final long[] counts, final long ms, final long fromMs,
                                     final long bucketWidthMs, final int nBuckets) {
         long bucket = (ms - fromMs) / bucketWidthMs;

@@ -105,7 +105,7 @@ public class TracesListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
-        this.histogramWidget = new TraceHistogramWidget(dateTimeFormatter);
+        this.histogramWidget = new TraceHistogramWidget(dateTimeFormatter, HISTOGRAM_BUCKETS);
 
         dataGrid = new MyDataGrid<>(this);
         pagerView.setDataWidget(dataGrid);

@@ -18,6 +18,7 @@ package stroom.pathways.client.presenter;
 
 import stroom.pathways.shared.TraceHistogram;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.client.NumberUtil;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -38,18 +39,22 @@ import java.util.function.BiConsumer;
  */
 public class TraceHistogramWidget extends Composite {
 
+    private static final long MIN_BUCKET_WIDTH_MS = 2L;
+
     private final HTML panel = new HTML();
     private final DateTimeFormatter dateTimeFormatter;
+    private final int bucketCount;
     private TraceHistogram data;
     private BiConsumer<Long, Long> zoomHandler;
 
-    public TraceHistogramWidget(final DateTimeFormatter dateTimeFormatter) {
+    public TraceHistogramWidget(final DateTimeFormatter dateTimeFormatter, final int bucketCount) {
         this.dateTimeFormatter = dateTimeFormatter;
+        this.bucketCount = bucketCount;
         panel.addStyleName("trace-histogram");
         initWidget(panel);
 
         panel.addMouseDownHandler(e -> {
-            if (zoomHandler == null || data == null || !data.isAvailable()
+            if (zoomHandler == null || data == null || !data.isAvailable() || !drillable()
                     || !MouseUtil.isPrimary(e.getNativeEvent())) {
                 return;
             }
@@ -60,13 +65,16 @@ public class TraceHistogramWidget extends Composite {
                 final int index = parseIndex(bar.getAttribute("data-bucket-index"));
                 if (index >= 0) {
                     final long start = data.getFromMs() + (long) index * data.getBucketWidthMs();
-                    // Half-open: end at the last ms still inside this bucket, so drilling doesn't also
-                    // catch the next bucket's leading ms (the server buckets [start, start+width)).
                     final long end = Math.min(data.getToMs(), start + data.getBucketWidthMs() - 1);
                     zoomHandler.accept(start, end);
                 }
             }
         });
+    }
+
+    private boolean drillable() {
+        return data != null
+                && (data.getBucketWidthMs() + bucketCount - 1) / bucketCount >= MIN_BUCKET_WIDTH_MS;
     }
 
     public void setZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
@@ -92,24 +100,41 @@ public class TraceHistogramWidget extends Composite {
             }
         }
 
+        final long finalMax = max;
         final int n = counts.size();
         final double barWidthPct = 100D / n;
         final HtmlBuilder hb = new HtmlBuilder();
-        for (int i = 0; i < n; i++) {
-            final long count = counts.get(i) == null ? 0L : counts.get(i);
-            final double leftPct = i * barWidthPct;
-            final double heightPct = count * 100D / max;
-            final long start = data.getFromMs() + (long) i * data.getBucketWidthMs();
-            final long end = Math.min(data.getToMs(), start + data.getBucketWidthMs());
-            final String title = dateTimeFormatter.format(start) + " – "
-                    + dateTimeFormatter.format(end) + ": " + count;
-            hb.div("",
-                    Attribute.className("histogram-bar"),
-                    Attribute.title(title),
-                    new Attribute("data-bucket-index", String.valueOf(i)),
-                    Attribute.style("left: " + leftPct + "%; width: " + barWidthPct
-                            + "%; height: " + heightPct + "%;"));
-        }
+
+        hb.div(y -> {
+            y.div(NumberUtil.formatInt((int) finalMax), Attribute.className("histogram-ylabel"));
+            y.div("0", Attribute.className("histogram-ylabel"));
+        }, Attribute.className("histogram-yaxis"));
+
+        hb.div(plot -> {
+            for (int i = 0; i < n; i++) {
+                final long count = counts.get(i) == null ? 0L : counts.get(i);
+                final double leftPct = i * barWidthPct;
+                final double heightPct = count * 100D / finalMax;
+                final long start = data.getFromMs() + (long) i * data.getBucketWidthMs();
+                final long end = Math.min(data.getToMs(), start + data.getBucketWidthMs());
+                final String title = dateTimeFormatter.format(start) + " – "
+                        + dateTimeFormatter.format(end) + ": " + count;
+                plot.div("",
+                        Attribute.className("histogram-bar"),
+                        Attribute.title(title),
+                        new Attribute("data-bucket-index", String.valueOf(i)),
+                        Attribute.style("left: " + leftPct + "%; width: " + barWidthPct
+                                + "%; height: " + heightPct + "%;"));
+            }
+        }, Attribute.className(drillable() ? "histogram-plot" : "histogram-plot histogram-plot--min"));
+
+        hb.div(x -> {
+            x.div(dateTimeFormatter.format(data.getFromMs(), "HH:mm:ss.SSS"),
+                    Attribute.className("histogram-xlabel"));
+            x.div(dateTimeFormatter.format(data.getToMs(), "HH:mm:ss.SSS"),
+                    Attribute.className("histogram-xlabel"));
+        }, Attribute.className("histogram-xaxis"));
+
         panel.setHTML(hb.toSafeHtml());
     }
 
