@@ -226,6 +226,33 @@ class TestProcessorTaskQueueManagerImpl {
         verify(processorTaskDao, never()).findExistingCreatedTasks(anyLong(), eq(second.getId()), anyInt());
     }
 
+    /**
+     * The queue is deliberately overfilled and this is not a bug. Fetching tasks is expensive, so when we
+     * bother to fetch we take a whole batch even if that exceeds the remaining queue budget. The filters we
+     * overfill for are high priority and unbounded, so their tasks are the ones we want to process anyway and
+     * filling to the batch size beats fetching again shortly afterwards.
+     * <p>
+     * Note that the configured queue size is therefore a budget for deciding which filters to consider, not a
+     * cap on the size of the queue.
+     * </p>
+     */
+    @Test
+    void queueIsDeliberatelyOverfilledToAvoidFrequentFetches() {
+        final int queueSize = new ProcessorConfig().getQueueSize();
+        final ProcessorFilter first = createFilter(1, null);
+        final ProcessorFilter second = createFilter(2, null);
+        givenFilters(first, second);
+        // The first filter uses up part of the budget, leaving the second filter less than a whole batch.
+        givenCreatedTasks(first, 400);
+        givenCreatedTasks(second, queueSize);
+
+        queueManager.exec();
+
+        // The second filter was only asked for the remaining 600 but still queued a whole batch of 1000.
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(1400);
+        assertThat(queueManager.getTaskQueueSize()).isGreaterThan(queueSize);
+    }
+
     @Test
     void alreadyQueuedTasksAreNotQueuedAgain() {
         final ProcessorFilter filter = createFilter(1, null);
