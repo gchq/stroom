@@ -567,6 +567,34 @@ class TestAccountDaoImpl {
     }
 
     @Test
+    void anAccountCreatedWithABlankEmailHasNoEmail() {
+        // Not a presentational nicety: an empty string is a value under the unique index, so storing one
+        // would make the next account created without an address a duplicate of this one.
+        final String userId = createAccount(account -> account.setEmail(""));
+
+        assertThat(accountDao.get(userId).orElseThrow().getEmail()).isNull();
+    }
+
+    @Test
+    void anAccountCreatedWithAWhitespaceEmailHasNoEmail() {
+        final String userId = createAccount(account -> account.setEmail("   "));
+
+        assertThat(accountDao.get(userId).orElseThrow().getEmail()).isNull();
+    }
+
+    @Test
+    void clearingAnEmailAddressLeavesTheAccountWithNoEmail() {
+        // A change that mentions the email as blank is the administrator emptying the field, so the address
+        // does have to be written - as no address, rather than as an empty string.
+        final String userId = createAccount(account -> account.setEmail("someone@example.com"));
+
+        applyChange(userId, AccountChange.builder().email(""));
+
+        assertThat(accountDao.get(userId).orElseThrow().getEmail()).isNull();
+    }
+
+
+    @Test
     void changingAPasswordClearsAnOutstandingResetLink() {
         // A password change by any route must invalidate a pending reset link, which is what stops an
         // outstanding link working after the password has been changed some other way.
@@ -820,9 +848,14 @@ class TestAccountDaoImpl {
     @Test
     void anyNumberOfAccountsMayHaveNoEmailAddress() {
         // A unique index permits any number of nulls, which is what allows accounts with no email
-        // address, e.g. the seeded admin account.
+        // address, e.g. the seeded admin account. Blanks reach the column as nulls, so they must not be
+        // treated as accounts that share an address - by any of the routes an address can be left empty.
         createAccount(account -> account.setEmail(null));
-        createAccount(account -> account.setEmail(null));
+        createAccount(account -> account.setEmail(""));
+        createAccount(account -> account.setEmail("   "));
+        final String cleared = createAccount(account -> account.setEmail("someone@example.com"));
+
+        applyChange(cleared, AccountChange.builder().email(""));
     }
 
     @Test

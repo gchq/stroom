@@ -32,6 +32,18 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+<<<<<<< HEAD
+=======
+
+    implementation libs.guice
+    implementation libs.jakarta.inject
+    implementation libs.jakarta.validation.api
+    implementation libs.http.client
+    implementation libs.jgit
+    implementation libs.jgitssh
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+>>>>>>> 96f82d225b2fc6ac210c0960f2065c248a50d681
 
     implementation libs.guice
     implementation libs.jakarta.validation.api

@@ -19,6 +19,7 @@ package stroom.gitrepo.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
@@ -26,10 +27,14 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.gitrepo.shared.GitRepoResponse;
+import stroom.util.http.HttpClientUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
+import stroom.util.shared.http.HttpClientConfig;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -45,6 +50,19 @@ import java.util.Objects;
 class GitRepoResourceImpl implements GitRepoResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoResourceImpl.class);
+
+    /**
+     * Applies to the connect, request and read timeouts of a new configuration. Long enough that a slow
+     * server does not fail a fetch, short enough that an unreachable one does not hang a scheduled push.
+     * It bounds each wait, not the whole transfer, so a large clone is not affected.
+     */
+    private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
+            .builder()
+            .time(2)
+            .timeUnit(TimeUnit.MINUTES)
+            .build();
+
+    private volatile HttpClientConfig defaultHttpClientConfig;
 
     private final Provider<GitRepoStore> gitRepoStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -198,6 +216,20 @@ class GitRepoResourceImpl implements GitRepoResource {
         }
 
         return new GitRepoResponse(true, buf.toString());
+    }
+
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public HttpClientConfig getDefaultHttpClientConfig() {
+        // Reading the JVM's enabled ciphers and protocols means opening a socket, so hold on to the result.
+        // It cannot change while the process is running.
+        HttpClientConfig config = defaultHttpClientConfig;
+        if (config == null) {
+            config = HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
+            defaultHttpClientConfig = config;
+        }
+        return config;
     }
 
 }

@@ -16,6 +16,7 @@
 
 package stroom.gitrepo.impl;
 
+import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
@@ -35,7 +36,9 @@ import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.io.PathCreator;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -49,6 +52,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.TransportCommand;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -118,6 +122,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * Provides credential information
      */
     private final StoredSecrets storedSecrets;
+    private final HttpConfigResolver httpConfigResolver;
+    private final HttpClientProviderCache httpClientProviderCache;
 
     /**
      * System temporary directory for SSH home and SSH directories. Not used.
@@ -179,7 +185,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                      final Provider<GitRepoConfig> config,
                                      final PathCreator pathCreator,
                                      final GitRepoDao gitRepoDao,
-                                     final StoredSecrets storedSecrets) {
+                                     final StoredSecrets storedSecrets,
+                                     final HttpConfigResolver httpConfigResolver,
+                                     final HttpClientProviderCache httpClientProviderCache) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
@@ -187,6 +195,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         this.pathCreator = pathCreator;
         this.gitRepoDao = gitRepoDao;
         this.storedSecrets = storedSecrets;
+        this.httpConfigResolver = httpConfigResolver;
+        this.httpClientProviderCache = httpClientProviderCache;
     }
 
     /**
@@ -590,13 +600,20 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     }
 
     /**
-     * Returns the credentials to log into Git.
+     * Applies the document's credentials and its HTTP client configuration to a Git command.
+     * <p>
+     * Note that the transport callback is set whether or not the repository has credentials. A public
+     * repository on a server with a private CA presents nothing to authenticate with and still has to trust
+     * the certificate, so the TLS configuration cannot live inside the credentials branch below.
+     * </p>
      *
      * @param gitRepoDoc       Where we get the credential ID from. Must not be null.
      * @param transportCommand Where to put the credentials. Accepts any kind of TransportCommand.
      */
     private void setGitCreds(final GitRepoDoc gitRepoDoc, final TransportCommand<?, ?> transportCommand)
             throws IOException {
+        TransportConfigCallback sshCallback = null;
+
         if (gitRepoDoc.needsCredentials()) {
             final String credentialsId = gitRepoDoc.getCredentialName();
 
@@ -633,8 +650,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     }
                     case SSH_KEY -> {
                         if (storedSecret.secret() instanceof final SshKeySecret sshKeySecret) {
-                            transportCommand.setTransportConfigCallback(
-                                    new CredentialsJgitSshTransportCallback(storedSecret, sshKeySecret, tempDir));
+                            sshCallback = new CredentialsJgitSshTransportCallback(
+                                    storedSecret, sshKeySecret, tempDir);
                         }
                     }
                     default -> throw new IOException("Unknown type of credentials: " + credential.getCredentialType());
@@ -643,6 +660,26 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 throw new IOException("Error getting Git credentials: " + e.getMessage(), e);
             }
         }
+
+        // A TransportCommand holds only one transport callback, so SSH and HTTP have to share it.
+        transportCommand.setTransportConfigCallback(new GitRepoTransportConfigCallback(
+                sshCallback,
+                httpClientProviderCache,
+                resolveHttpClientConfiguration(gitRepoDoc)));
+    }
+
+    /**
+     * Resolves the document's HTTP client configuration, turning any key store names it holds into real key
+     * stores from the secret store.
+     *
+     * @return The configuration, or null if the document has none, in which case JGit's own HTTP stack is
+     * left in place - which is what every repository created before this setting existed will get.
+     */
+    private HttpClientConfiguration resolveHttpClientConfiguration(final GitRepoDoc gitRepoDoc) {
+        if (gitRepoDoc.getHttpClientConfiguration() == null) {
+            return null;
+        }
+        return httpConfigResolver.resolve(gitRepoDoc.getHttpClientConfiguration());
     }
 
     /**

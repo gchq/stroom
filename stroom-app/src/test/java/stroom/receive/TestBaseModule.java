@@ -62,6 +62,7 @@ import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
+import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
 import com.google.inject.AbstractModule;
@@ -81,6 +82,9 @@ public class TestBaseModule extends AbstractModule {
         install(new DocFinderModule());
         install(new FeedModule());
         install(new MockGitRepoModule());
+        // The Git repo storage service builds an HTTP client from the document's own configuration, so
+        // it needs the client cache even in tests that never touch Git.
+        install(new MockJerseyModule());
         install(new MockCredentialsDaoModule());
         install(new ImportExportModule());
         install(new MemoryPersistenceModule());

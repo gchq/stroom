@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 
 import static stroom.security.identity.db.jooq.tables.Account.ACCOUNT;
 
@@ -245,7 +244,7 @@ public class AccountDaoImpl implements AccountDao {
                     .set(ACCOUNT.UPDATE_TIME_MS, account.getUpdateTimeMs())
                     .set(ACCOUNT.UPDATE_USER, account.getUpdateUser())
                     .set(ACCOUNT.USER_ID, account.getUserId())
-                    .set(ACCOUNT.EMAIL, account.getEmail())
+                    .set(ACCOUNT.EMAIL, emailOrNull(account.getEmail()))
                     .set(ACCOUNT.PASSWORD_HASH, hashPassword(password))
                     .set(ACCOUNT.FIRST_NAME, account.getFirstName())
                     .set(ACCOUNT.LAST_NAME, account.getLastName())
@@ -497,7 +496,11 @@ public class AccountDaoImpl implements AccountDao {
         values.put(ACCOUNT.UPDATE_TIME_MS, updateTimeMs);
 
         putIfSpecified(values, ACCOUNT.USER_ID, change.getUserId());
-        putIfSpecified(values, ACCOUNT.EMAIL, change.getEmail());
+        // An email address the change does mention but leaves blank is an address the administrator has
+        // cleared, so it is written, but written as no address rather than as an empty string.
+        if (change.getEmail() != null) {
+            values.put(ACCOUNT.EMAIL, emailOrNull(change.getEmail()));
+        }
         putIfSpecified(values, ACCOUNT.FIRST_NAME, change.getFirstName());
         putIfSpecified(values, ACCOUNT.LAST_NAME, change.getLastName());
         putIfSpecified(values, ACCOUNT.COMMENTS, change.getComments());
@@ -522,9 +525,21 @@ public class AccountDaoImpl implements AccountDao {
         }
     }
 
+    /**
+     * A blank email address is no email address at all, and is stored as null. Stored as an empty string it
+     * would be a value like any other: the unique index on the column would then refuse the second account
+     * left without an address, where any number of them may have none. Every write of the column goes
+     * through here, so a blank one cannot reach the database whichever route it arrives by.
+     */
+    private static String emailOrNull(final String email) {
+        return NullSafe.isBlankString(email)
+                ? null
+                : email;
+    }
+
     private static void putIfSpecified(final Map<Field<?>, Object> values,
-                                     final Field<?> field,
-                                     final Object value) {
+                                       final Field<?> field,
+                                       final Object value) {
         // Null means the change does not mention this column. An empty string is a value, and will clear it.
         if (value != null) {
             values.put(field, value);
@@ -561,8 +576,7 @@ public class AccountDaoImpl implements AccountDao {
         //
         // Deliberately not stamped by UNLOCK. A lock has no bearing on whether an account is being used, so
         // unlocking one would otherwise extend the dormancy grace period for an unrelated reason.
-        if (change.hasAction(AccountAction.ENABLE)
-                || change.hasAction(AccountAction.REACTIVATE)) {
+        if (change.hasAction(AccountAction.ENABLE) || change.hasAction(AccountAction.REACTIVATE)) {
             values.put(ACCOUNT.REACTIVATED_MS, updateTimeMs);
         }
     }

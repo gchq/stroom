@@ -38,4 +38,9 @@ public interface GitRepoSettingsUiHandlers extends ChangeUiHandlers {
      * 'Check for updates' button event handler.
      */
     void onCheckForUpdates(TaskMonitorFactory taskMonitorFactory);
+
+    /**
+     * 'Set Http Client Config' button event handler. Opens the shared HTTP client editor.
+     */
+    void onSetHttpClientConfiguration();
 }

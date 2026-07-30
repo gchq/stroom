@@ -4120,6 +4120,19 @@ paths:
       summary: Check if any content has changed
       tags:
       - GitRepos
+  /gitRepo/v1/getDefaultHttpClientConfig:
+    post:
+      operationId: getGitRepoDefaultHttpClientConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpClientConfig"
+          description: default response
+      summary: Get default HTTP client configuration
+      tags:
+      - GitRepos
   /gitRepo/v1/pullFromGit:
     post:
       operationId: pullFromGit
@@ -14918,6 +14931,8 @@ components:
           type: string
         description:
           type: string
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
         name:
           type: string
         path:

@@ -44,8 +44,15 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -55,9 +62,27 @@ class AuthFlowResourceImpl implements AuthFlowResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthFlowResourceImpl.class);
 
-    // Cookie binding the OIDC flow to the initiating browser (login-CSRF / forced-login defence).
+    // Cookie binding the OIDC flow to the initiating browser (login-CSRF / forced-login defence). It holds
+    // the ids of the flows currently in flight for this browser, newest first, so that several tabs can each
+    // be part-way through a flow without clobbering one another's binding.
     private static final String STATE_COOKIE_NAME = "STROOM_OIDC_STATE";
     private static final int STATE_COOKIE_MAX_AGE_SECONDS = 600;
+    // Not a regex metacharacter, and outside the base64url alphabet the state ids are drawn from.
+    private static final String STATE_SEPARATOR = "~";
+    private static final int MAX_PENDING_STATES = 5;
+
+    // Where the user was heading when the flow began. This is a convenience, not a security decision - it is
+    // re-validated as same-origin before use, exactly as the 'redirect_uri' request parameter it came from
+    // is - so it deliberately outlives the state binding above. Losing the binding means the flow must be
+    // restarted; it does not mean we have to forget where the user was going.
+    private static final String TARGET_COOKIE_NAME = "STROOM_OIDC_TARGET";
+    private static final int TARGET_COOKIE_MAX_AGE_SECONDS = 3_600;
+
+    // Marks that we have already restarted a flow for this browser very recently. Stops a genuinely broken
+    // setup bouncing the browser between here and the IDP forever. Short lived, because a user who has to
+    // sign in again takes far longer than this, and that case should still be allowed to self-heal.
+    private static final String RETRY_COOKIE_NAME = "STROOM_OIDC_RETRY";
+    private static final int RETRY_COOKIE_MAX_AGE_SECONDS = 60;
 
     private final Provider<OpenIdManager> openIdManagerProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
@@ -84,6 +109,10 @@ class AuthFlowResourceImpl implements AuthFlowResource {
                                    final HttpServletRequest request,
                                    final HttpServletResponse response) {
         LOGGER.debug(() -> LogUtil.message("status() - postAuthRedirectUri: {}", postAuthRedirectUri));
+
+        // This response reports who the user is and, when they are not signed in, hands out a single-use
+        // state. Neither may be served from a cache to a later request.
+        response.setHeader("Cache-Control", "no-store");
 
         // Check existing session for a user identity.
         final HttpSession session = SessionUtil.getExistingSession(request);
@@ -156,7 +185,11 @@ class AuthFlowResourceImpl implements AuthFlowResource {
         // attacker cannot complete, in a victim's browser, a flow they began in their own, because the
         // victim's browser holds no matching cookie. Lax (not Strict) because the IdP returns via a
         // top-level cross-site GET, which a Strict cookie would not accompany.
-        setStateCookie(request, response, state.getId());
+        addPendingState(request, response, state.getId());
+
+        // Remember the destination separately, so an expired binding costs the user their place in the app
+        // but not their deep link.
+        setTargetCookie(request, response, effectiveRedirectUri);
 
         final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
         final OpenIdManager openIdManager = openIdManagerProvider.get();
@@ -180,15 +213,15 @@ class AuthFlowResourceImpl implements AuthFlowResource {
         Objects.requireNonNull(code, "Missing 'code' parameter");
         Objects.requireNonNull(stateId, "Missing 'state' parameter");
 
+        // This URL carries a single-use authorization code, so nothing about it may be cached.
+        response.setHeader("Cache-Control", "no-store");
+
         // Reject unless the state is bound to THIS browser (forced-login / login-CSRF defence): the
-        // incoming 'state' must match the SameSite=Lax cookie set when the flow began. Always clear the
-        // single-use binding cookie. Reported with the same generic message as an unknown state so it is
-        // not an oracle.
-        final String boundStateId = readStateCookie(request);
-        clearStateCookie(request, response);
-        if (boundStateId == null || !boundStateId.equals(stateId)) {
+        // incoming 'state' must match one of the pending ids in the SameSite=Lax cookie set when the flow
+        // began. This consumes only the matched id, leaving any other tab's in-flight flow bound.
+        if (!consumePendingState(request, response, stateId)) {
             LOGGER.warn(() -> LogUtil.message("callback() - state '{}' is not bound to this browser", stateId));
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown or expired state");
+            restartFlow(request, response);
             return;
         }
 
@@ -197,7 +230,7 @@ class AuthFlowResourceImpl implements AuthFlowResource {
 
         if (optionalState.isEmpty()) {
             LOGGER.warn(() -> LogUtil.message("callback() - Unknown or expired state: {}", stateId));
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown or expired state");
+            restartFlow(request, response);
             return;
         }
 
@@ -212,6 +245,9 @@ class AuthFlowResourceImpl implements AuthFlowResource {
                 LOGGER.debug(() -> LogUtil.message(
                         "callback() - Authentication successful, redirecting to: {}",
                         state.getInitiatingUri()));
+
+                // The flow completed, so drop the restart guard.
+                clearCookie(request, response, RETRY_COOKIE_NAME);
 
                 // Respond with an HTML page that uses meta-refresh to redirect to the
                 // initiating URI. This avoids issues with the browser caching the OIDC
@@ -237,24 +273,151 @@ class AuthFlowResourceImpl implements AuthFlowResource {
         }
     }
 
-    private void setStateCookie(final HttpServletRequest request,
-                                final HttpServletResponse response,
-                                final String stateId) {
-        response.addHeader("Set-Cookie",
-                buildStateCookieHeader(request, stateId, STATE_COOKIE_MAX_AGE_SECONDS));
+    /**
+     * Send the browser back to start a fresh flow rather than dead-ending on an error.
+     * <p>
+     * An expired or unrecognised state is far more often a user who took their time over the sign in form
+     * than it is an attack, and in both cases the right answer is the same: discard the code without
+     * redeeming it and begin again, bound to this browser. The login-CSRF defence is untouched by this -
+     * a code an attacker planted is still never exchanged - so all this changes is that a recoverable
+     * situation now recovers by itself instead of stranding the user on a 400.
+     */
+    private void restartFlow(final HttpServletRequest request,
+                             final HttpServletResponse response) throws IOException {
+        if (readCookie(request, RETRY_COOKIE_NAME) != null) {
+            // We restarted moments ago and are right back here, so restarting again would just loop.
+            LOGGER.warn("callback() - Flow was already restarted for this browser, giving up");
+            clearCookie(request, response, RETRY_COOKIE_NAME);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown or expired state");
+            return;
+        }
+
+        final URI publicRoot = uriFactoryProvider.get().publicUri("/");
+        final String target = resolveRestartTarget(request, publicRoot);
+        LOGGER.debug(() -> LogUtil.message("restartFlow() - Restarting the auth flow at: {}", target));
+
+        setCookie(request, response, RETRY_COOKIE_NAME, "1", RETRY_COOKIE_MAX_AGE_SECONDS);
+        response.sendRedirect(target);
     }
 
-    private void clearStateCookie(final HttpServletRequest request, final HttpServletResponse response) {
-        response.addHeader("Set-Cookie", buildStateCookieHeader(request, "", 0));
+    /**
+     * Where to send the browser to begin again. The remembered destination is request-derived, so it is
+     * re-validated as same-origin here just as it was when it arrived as a 'redirect_uri' parameter -
+     * anything else falls back to the application root.
+     */
+    private String resolveRestartTarget(final HttpServletRequest request, final URI publicRoot) {
+        final String target = decode(readCookie(request, TARGET_COOKIE_NAME));
+        return UrlUtils.isSameOrigin(target, publicRoot)
+                ? target
+                : publicRoot.toString();
     }
 
-    private String buildStateCookieHeader(final HttpServletRequest request,
-                                          final String value,
-                                          final int maxAgeSeconds) {
+    // --------------------------------------------------------------------------------
+    // Pending state bindings
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Record a newly created state as in flight for this browser, keeping the most recent
+     * {@link #MAX_PENDING_STATES}. Holding more than one means a second tab starting a flow no longer
+     * silently invalidates the first tab's.
+     */
+    private void addPendingState(final HttpServletRequest request,
+                                 final HttpServletResponse response,
+                                 final String stateId) {
+        final List<String> pending = new ArrayList<>();
+        pending.add(stateId);
+        for (final String existing : readPendingStates(request)) {
+            if (!existing.equals(stateId) && pending.size() < MAX_PENDING_STATES) {
+                pending.add(existing);
+            }
+        }
+        writePendingStates(request, response, pending);
+    }
+
+    /**
+     * Consume the binding for the given state, if this browser holds one.
+     * <p>
+     * Only the matched id is removed. Clearing the whole cookie would let one stale callback destroy the
+     * binding of a different, still valid flow. Rewriting the cookie does restart its {@code Max-Age}, but
+     * that extends nothing meaningful: the authoritative lifetime is the server side cache entry, which is
+     * written once and not refreshed.
+     *
+     * @return True if the state was bound to this browser.
+     */
+    private boolean consumePendingState(final HttpServletRequest request,
+                                        final HttpServletResponse response,
+                                        final String stateId) {
+        final List<String> pending = readPendingStates(request);
+        if (!pending.contains(stateId)) {
+            return false;
+        }
+        writePendingStates(request, response, pending.stream()
+                .filter(id -> !id.equals(stateId))
+                .toList());
+        return true;
+    }
+
+    private List<String> readPendingStates(final HttpServletRequest request) {
+        final String value = readCookie(request, STATE_COOKIE_NAME);
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(value.split(STATE_SEPARATOR))
+                .filter(id -> !id.isBlank())
+                .toList();
+    }
+
+    private void writePendingStates(final HttpServletRequest request,
+                                    final HttpServletResponse response,
+                                    final List<String> stateIds) {
+        if (stateIds.isEmpty()) {
+            clearCookie(request, response, STATE_COOKIE_NAME);
+        } else {
+            setCookie(request,
+                    response,
+                    STATE_COOKIE_NAME,
+                    String.join(STATE_SEPARATOR, stateIds),
+                    STATE_COOKIE_MAX_AGE_SECONDS);
+        }
+    }
+
+    private void setTargetCookie(final HttpServletRequest request,
+                                 final HttpServletResponse response,
+                                 final String target) {
+        // Percent encoded, as a URL may legitimately contain characters a cookie value may not.
+        setCookie(request,
+                response,
+                TARGET_COOKIE_NAME,
+                URLEncoder.encode(target, StandardCharsets.UTF_8),
+                TARGET_COOKIE_MAX_AGE_SECONDS);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Cookies
+    // --------------------------------------------------------------------------------
+
+    private void setCookie(final HttpServletRequest request,
+                           final HttpServletResponse response,
+                           final String name,
+                           final String value,
+                           final int maxAgeSeconds) {
+        response.addHeader("Set-Cookie", buildCookieHeader(request, name, value, maxAgeSeconds));
+    }
+
+    private void clearCookie(final HttpServletRequest request,
+                             final HttpServletResponse response,
+                             final String name) {
+        response.addHeader("Set-Cookie", buildCookieHeader(request, name, "", 0));
+    }
+
+    private String buildCookieHeader(final HttpServletRequest request,
+                                     final String name,
+                                     final String value,
+                                     final int maxAgeSeconds) {
         // SameSite=Lax so the cookie accompanies the IdP's top-level cross-site GET back to the callback,
         // HttpOnly so script cannot read it, and Secure only over HTTPS so it still works for local http.
         final StringBuilder sb = new StringBuilder()
-                .append(STATE_COOKIE_NAME).append('=').append(value)
+                .append(name).append('=').append(value)
                 .append("; Path=/")
                 .append("; Max-Age=").append(maxAgeSeconds)
                 .append("; HttpOnly")
@@ -265,15 +428,27 @@ class AuthFlowResourceImpl implements AuthFlowResource {
         return sb.toString();
     }
 
-    private String readStateCookie(final HttpServletRequest request) {
+    private String readCookie(final HttpServletRequest request, final String name) {
         final Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (final Cookie cookie : cookies) {
-                if (STATE_COOKIE_NAME.equals(cookie.getName())) {
+                if (name.equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }
         }
         return null;
+    }
+
+    private String decode(final String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(() -> LogUtil.message("decode() - Malformed cookie value: {}", value));
+            return null;
+        }
     }
 }
