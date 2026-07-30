@@ -109,6 +109,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * whether another request has already filled it.
      */
     private final AtomicLong fillCount = new AtomicLong();
+    /**
+     * Whether the last synchronous fill to complete added any tasks, so that a request that waited for it can
+     * tell whether there is any point filling again itself.
+     */
+    private volatile boolean lastFillAddedTasks = true;
     private final AtomicBoolean needToFillQueue = new AtomicBoolean();
     private volatile int lastQueueSizeForStats = -1;
 
@@ -266,11 +271,9 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         int filterTasksAssigned = 0;
                         int maxFilterTasks = count - assignedStreamTasks.size();
 
-                        boolean usedProfile = false;
+                        // A filter with a profile is governed by that profile alone, so we never fall back to
+                        // the non profile limits below, even if we fail to resolve the profile.
                         if (filter.getProfileName() != null) {
-                            // A filter with a profile is governed by that profile alone, so never fall back to
-                            // the non profile limits below, even if we fail to resolve the profile.
-                            usedProfile = true;
                             try {
                                 final ProfileResult profileResult = processorProfileCache
                                         .getProfile(nodeName, filter.getProfileName());
@@ -323,10 +326,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                                    "), assigning no tasks for filter", e);
                                 maxFilterTasks = 0;
                             }
-                        }
 
-                        // If we didn't manage to use a profile then continue with the non profile code.
-                        if (!usedProfile) {
+                        } else {
                             // Maximum number of tasks to assign for this filter. If the filter task limit is
                             // unbounded, assign as many tasks up to the specified `count`. Otherwise, only assign
                             // tasks up to the filter's configured limit.
@@ -421,7 +422,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             synchronized (this) {
                 if (fillCount.get() != fillCountBeforeWaiting) {
                     LOGGER.debug("fillTaskQueueSync() - Queue was filled by another request while we waited");
-                    return FillOutcome.FILLED_BY_ANOTHER;
+                    // If that fill found nothing to add then we won't either, so report it as our own empty
+                    // fill rather than making every waiting request repeat it.
+                    return lastFillAddedTasks
+                            ? FillOutcome.FILLED_BY_ANOTHER
+                            : FillOutcome.ADDED_NOTHING;
                 }
 
                 try {
@@ -431,12 +436,17 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             taskContextFactory.contextResult(
                                     "Fill task queue",
                                     taskContext -> queueNewTasks(taskContext, isEmptyReportRequired)).get());
+                    lastFillAddedTasks = added > 0;
                     return added > 0
                             ? FillOutcome.ADDED_TASKS
                             : FillOutcome.ADDED_NOTHING;
 
                 } catch (final RuntimeException e) {
+                    // Treat a failed fill as one that added tasks so that we try to assign again rather than
+                    // giving up, as the failure may well be transient.
+                    lastFillAddedTasks = true;
                     LOGGER.error(e::getMessage, e);
+                    return FillOutcome.FILLED_BY_ANOTHER;
                 } finally {
                     fillCount.incrementAndGet();
                 }
@@ -758,6 +768,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      *
      * @return The maximum number of tasks that can currently be assigned for the filter, 0 if no active node is
      * currently allowed to process tasks for it, or {@link Integer#MAX_VALUE} if there is no limit.
+     * @throws RuntimeException If the filter's profile can't be resolved, so that the caller can tell the
+     *                          difference between a profile that allows no tasks and one we know nothing about.
      */
     private int getMaxClusterTasks(final ProcessorFilter filter) {
         if (filter.getProfileName() == null) {
@@ -768,6 +780,9 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
         final Set<String> activeNodes;
         try {
+            // Deliberately the active nodes rather than all enabled ones, as there is no point queueing tasks
+            // for a node that isn't currently there to process them. The trade off is that a node dropping out
+            // briefly will release this filter's queued tasks, which are then queued again when it returns.
             activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
         } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
             // We can't tell which nodes are active so assume tasks can be queued rather than queueing nothing.
@@ -791,14 +806,14 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             return maxClusterTasks;
 
         } catch (final RuntimeException e) {
-            // Task assignment will refuse to assign tasks for this filter so don't queue any. Assignment
-            // reports this error so only debug log it here to avoid duplicating it on every queue fill.
-            LOGGER.debug(() -> "Error getting processing profile for filter (filter=" +
-                               filter +
-                               ", profileName=" +
-                               filter.getProfileName() +
-                               "), not queueing tasks for filter", e);
-            return 0;
+            // We can't tell whether tasks can be processed, which is not the same as knowing that they can't,
+            // so let this propagate. The caller then reports it and leaves the queue alone rather than
+            // releasing tasks because of what is most likely a configuration error.
+            throw new RuntimeException("Error getting processing profile for filter (filter=" +
+                                       filter +
+                                       ", profileName=" +
+                                       filter.getProfileName() +
+                                       ")", e);
         }
     }
 

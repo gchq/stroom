@@ -52,12 +52,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -113,6 +115,17 @@ class TestProcessorTaskQueueManagerImpl {
 
     private ProcessorTaskQueueManagerImpl queueManager;
 
+    /**
+     * Asynchronous queue fills are discarded by default so that tests only see the synchronous filling they
+     * are exercising. Call {@link #runAsyncFillsInline()} to exercise the asynchronous path instead.
+     */
+    private volatile Executor asyncFillExecutor = command -> {
+    };
+    /**
+     * The number of times we have been asked for created tasks, i.e. how many queue fills have done work.
+     */
+    private final AtomicInteger fetchCount = new AtomicInteger();
+
     private final AtomicLong taskIdSequence = new AtomicLong();
     /**
      * Every task we have created, by task id. The meta id of a task is the same as its task id.
@@ -142,19 +155,19 @@ class TestProcessorTaskQueueManagerImpl {
         }).when(securityContext).asProcessingUser(any(Runnable.class));
         when(securityContext.asProcessingUserResult(any(Supplier.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
-        // Never run the asynchronous queue fill, so that the tests only see the synchronous filling that they
-        // are exercising.
-        when(executorProvider.get(any())).thenReturn(command -> {
-        });
+        when(executorProvider.get(any())).thenReturn(command -> asyncFillExecutor.execute(command));
         when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE));
         when(processorTaskDao.releaseOwnedTasks(anyString())).thenReturn(0L);
 
         // Only CREATED tasks that we haven't already queued are available to queue.
         when(processorTaskDao.findExistingCreatedTasks(anyLong(), anyInt(), anyInt()))
-                .thenAnswer(invocation -> findCreatedTasks(
-                        invocation.getArgument(0),
-                        invocation.getArgument(1),
-                        invocation.getArgument(2)));
+                .thenAnswer(invocation -> {
+                    fetchCount.incrementAndGet();
+                    return findCreatedTasks(
+                            invocation.getArgument(0),
+                            invocation.getArgument(1),
+                            invocation.getArgument(2));
+                });
         // Queueing moves tasks from CREATED to QUEUED and returns them.
         when(processorTaskDao.queueTasks(anySet(), anyString())).thenAnswer(invocation -> {
             final Set<Long> ids = invocation.getArgument(0);
@@ -548,19 +561,19 @@ class TestProcessorTaskQueueManagerImpl {
 
         final CountDownLatch fillStarted = new CountDownLatch(1);
         final CountDownLatch releaseFill = new CountDownLatch(1);
-        final AtomicInteger fetchCount = new AtomicInteger();
-        when(processorTaskDao.findExistingCreatedTasks(anyLong(), anyInt(), anyInt()))
-                .thenAnswer(invocation -> {
-                    if (fetchCount.incrementAndGet() == 1) {
-                        // Hold the first fill open so that the second request has to wait for it.
-                        fillStarted.countDown();
-                        releaseFill.await(10, TimeUnit.SECONDS);
-                    }
-                    return findCreatedTasks(
-                            invocation.getArgument(0),
-                            invocation.getArgument(1),
-                            invocation.getArgument(2));
-                });
+        // Note that this must use doAnswer().when(), as when(mock.method()) would invoke the answer that is
+        // already registered and so consume the first fetch that we want to block on.
+        Mockito.doAnswer(invocation -> {
+            if (fetchCount.incrementAndGet() == 1) {
+                // Hold the first fill open so that the second request has to wait for it.
+                fillStarted.countDown();
+                releaseFill.await(10, TimeUnit.SECONDS);
+            }
+            return findCreatedTasks(
+                    invocation.getArgument(0),
+                    invocation.getArgument(1),
+                    invocation.getArgument(2));
+        }).when(processorTaskDao).findExistingCreatedTasks(anyLong(), anyInt(), anyInt());
 
         final ExecutorService executorService = Executors.newFixedThreadPool(2);
         try {
@@ -568,11 +581,14 @@ class TestProcessorTaskQueueManagerImpl {
                     queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5));
             assertThat(fillStarted.await(10, TimeUnit.SECONDS)).isTrue();
 
-            final Future<ProcessorTaskList> second = executorService.submit(() ->
-                    queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5));
-            // Give the second request time to reach the queue fill and wait on it, otherwise it might not get
-            // there until the first request has finished and the test would prove nothing.
-            Thread.sleep(200);
+            final AtomicReference<Thread> secondThread = new AtomicReference<>();
+            final Future<ProcessorTaskList> second = executorService.submit(() -> {
+                secondThread.set(Thread.currentThread());
+                return queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
+            });
+            // Wait until the second request is actually blocked waiting to fill the queue. Without this it
+            // might not get there until the first request has finished and the test would prove nothing.
+            assertThat(awaitBlocked(secondThread)).isEqualTo(Thread.State.BLOCKED);
             releaseFill.countDown();
 
             // Both requests get tasks, the second from the queue that the first filled.
@@ -583,6 +599,61 @@ class TestProcessorTaskQueueManagerImpl {
         }
 
         assertThat(fetchCount.get()).isEqualTo(1);
+    }
+
+    /**
+     * Wait for the supplied thread to become blocked on a monitor, i.e. waiting to fill the queue.
+     */
+    private Thread.State awaitBlocked(final AtomicReference<Thread> threadRef) throws InterruptedException {
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        Thread.State state = null;
+        while (System.nanoTime() < deadline) {
+            final Thread thread = threadRef.get();
+            if (thread != null) {
+                state = thread.getState();
+                if (Thread.State.BLOCKED == state) {
+                    return state;
+                }
+            }
+            Thread.sleep(1);
+        }
+        return state;
+    }
+
+    /**
+     * Assigning tasks kicks off an asynchronous fill so that the queue is topped up ready for the next request.
+     */
+    @Test
+    void assigningTasksTriggersAnAsynchronousQueueFill() {
+        runAsyncFillsInline();
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 20);
+        queueManager.exec();
+        final int fetchesBeforeAssigning = fetchCount.get();
+
+        queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
+
+        assertThat(fetchCount.get()).isGreaterThan(fetchesBeforeAssigning);
+    }
+
+    /**
+     * The asynchronous fill guards itself so that only one runs at a time. That guard has to be cleared once it
+     * finishes or the queue would never be filled asynchronously again.
+     */
+    @Test
+    void asynchronousQueueFillsCanRunMoreThanOnce() {
+        runAsyncFillsInline();
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 20);
+        queueManager.exec();
+
+        queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
+        final int fetchesAfterFirstAssignment = fetchCount.get();
+        queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
+
+        assertThat(fetchCount.get()).isGreaterThan(fetchesAfterFirstAssignment);
     }
 
     /**
@@ -614,6 +685,13 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     // --------------------------------------------------------------------------------
+
+    /**
+     * Run asynchronous queue fills on the calling thread so that a test can exercise them.
+     */
+    private void runAsyncFillsInline() {
+        asyncFillExecutor = Runnable::run;
+    }
 
     private List<ExistingCreatedTask> findCreatedTasks(final long lastTaskId,
                                                        final int filterId,

@@ -69,8 +69,15 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
 
     @Override
     public int update(final ProcessorFilterTracker processorFilterTracker) {
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
                 update(context, processorFilterTracker));
+
+        // Keep the supplied tracker in step with the DB so that it can be updated again without falling foul
+        // of the optimistic locking on version. Only done here, and not in the context variant below, as that
+        // may be part of a wider transaction that could still roll back.
+        processorFilterTracker.setVersion(processorFilterTracker.getVersion() + 1);
+
+        return count;
     }
 
     public int update(final DSLContext context,
@@ -99,10 +106,6 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
         if (count == 0) {
             throw new RuntimeException("Unable to update tracker with id = " + processorFilterTracker.getId());
         }
-
-        // Keep the supplied tracker in step with the DB so that it can be updated again without falling foul of
-        // the optimistic locking on version.
-        processorFilterTracker.setVersion(processorFilterTracker.getVersion() + 1);
 
         return count;
     }
