@@ -729,18 +729,25 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             LOGGER.error(e.getMessage(), e);
         }
 
-        // Release items from the queue that no longer have an enabled filter
-        info(taskContext, () -> "Releasing tasks for disabled filters");
+        // Release items from the queue that no longer have an enabled filter or whose profile no longer allows
+        // any tasks to be processed. This considers every queue, not just the filters we tried to queue tasks
+        // for, as the loop above stops once enough tasks are queued and so may never reach a filter whose
+        // profile has closed while busier filters are using up the queue budget.
+        info(taskContext, () -> "Releasing tasks for disabled filters and inactive profiles");
         final Set<ProcessorFilter> enabledFilterSet = new HashSet<>(filters);
         for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
             final ProcessorFilter filter = entry.getKey();
             final ProcessorTaskQueue queue = entry.getValue();
             if (!enabledFilterSet.contains(filter)) {
+                final int initialQueueSize = queue.size();
                 final DurationTimer durationTimer = DurationTimer.start();
                 final long count = releaseQueuedFilterTasks(filter);
-                final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(filter, queue.size());
+                final FilterProgressMonitor filterProgressMonitor =
+                        progressMonitor.logFilter(filter, initialQueueSize);
                 filterProgressMonitor.logPhase(Phase.RELEASE_TASKS_FOR_DISABLED_FILTERS, durationTimer, count);
                 filterProgressMonitor.complete();
+            } else if (filter.getProfileName() != null && queue.hasItems()) {
+                releaseTasksIfProfileInactive(filter, queue, progressMonitor);
             }
         }
 
@@ -755,6 +762,36 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
         LOGGER.trace("queueNewTasks() - Finished");
         return totalAdded;
+    }
+
+    /**
+     * Release the queued tasks for a filter whose profile no longer allows any tasks to be processed, so that
+     * they don't remain owned by this node and unable to be processed until the profile allows them again.
+     */
+    private void releaseTasksIfProfileInactive(final ProcessorFilter filter,
+                                               final ProcessorTaskQueue queue,
+                                               final ProgressMonitor progressMonitor) {
+        try {
+            if (getMaxConcurrentTasks(filter) <= 0) {
+                final int initialQueueSize = queue.size();
+                final DurationTimer durationTimer = DurationTimer.start();
+                final long released = releaseQueuedFilterTasks(filter);
+                final FilterProgressMonitor filterProgressMonitor =
+                        progressMonitor.logFilter(filter, initialQueueSize);
+                filterProgressMonitor.logPhase(Phase.RELEASE_TASKS_FOR_INACTIVE_PROFILES, durationTimer, released);
+                filterProgressMonitor.complete();
+                LOGGER.debug("releaseTasksIfProfileInactive() - No tasks can currently be assigned for {}, " +
+                             "released {} queued tasks", filter.getFilterInfo(), released);
+            }
+        } catch (final RuntimeException e) {
+            // We can't resolve the profile so we don't know whether the tasks can be processed, which is not
+            // the same as knowing that they can't, so leave the queue alone. Assignment reports this error.
+            LOGGER.debug(() -> "Error getting processing profile for filter (filter=" +
+                               filter +
+                               ", profileName=" +
+                               filter.getProfileName() +
+                               "), leaving queued tasks alone", e);
+        }
     }
 
     /**

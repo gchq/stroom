@@ -429,6 +429,38 @@ class TestProcessorTaskQueueManagerImpl {
         assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
     }
 
+    /**
+     * The queue fill stops considering filters once enough tasks are queued, so a filter whose profile closes
+     * while busier filters are using up the whole queue budget may never be considered again. Its queued tasks
+     * must still be released or they would be stuck until the busier filters go quiet.
+     */
+    @Test
+    void queuedTasksAreReleasedWhenTheProfileClosesEvenIfTheFillStopsEarly() {
+        final ProcessorFilter busy = createFilter(1, null);
+        final ProcessorFilter limited = createFilter(2, PROFILE);
+        givenFilters(busy, limited);
+        givenCreatedTasks(busy, 100);
+        final List<Long> limitedIds = givenCreatedTasks(limited, 10);
+
+        // The profile is open, so both filters get their tasks queued.
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
+        queueManager.exec();
+        assertThat(queuedTaskIds).containsAll(limitedIds);
+
+        // The profile closes, and the busy filter now has enough tasks to use up the whole queue budget so
+        // that the fill stops before the limited filter is considered.
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
+        givenCreatedTasks(busy, new ProcessorConfig().getQueueSize());
+        queueManager.exec();
+
+        // The fill really did stop before the limited filter, i.e. it was only ever fetched for once.
+        verify(processorTaskDao, times(1))
+                .findExistingCreatedTasks(anyLong(), eq(limited.getId()), anyInt());
+        // But its queued tasks have still been released.
+        assertThat(queuedTaskIds).doesNotContainAnyElementsOf(limitedIds);
+        verify(processorTaskDao).releaseTasks(anySet(), eq(TaskStatus.QUEUED));
+    }
+
     @Test
     void tasksAreReleasedWhenTheFilterIsNoLongerEnabled() {
         final ProcessorFilter filter = createFilter(1, null);
