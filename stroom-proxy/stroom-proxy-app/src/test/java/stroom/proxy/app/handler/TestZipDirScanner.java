@@ -18,6 +18,7 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.DirScannerConfig;
+import stroom.security.api.CommonSecurityContext;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.PathSnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
@@ -40,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +53,14 @@ class TestZipDirScanner {
 
     @Mock
     private ZipReceiver mockZipReceiver;
+    @Mock
+    private CommonSecurityContext mockSecurityContext;
+
+    /**
+     * Set for the duration of a {@link CommonSecurityContext#asProcessingUser(Runnable)} call
+     * so a test can assert what ran inside it.
+     */
+    private final AtomicBoolean inProcessingUser = new AtomicBoolean(false);
 
     @TempDir
     Path testDir;
@@ -59,6 +69,44 @@ class TestZipDirScanner {
     ArgumentCaptor<Path> zipFileCaptor;
     @Captor
     ArgumentCaptor<AttributeMap> attributeMapCaptor;
+
+    /**
+     * A file arriving on disk has no authenticated sender, so nothing establishes a user for
+     * the receipt check to run as. Receipt-check modes that consult feed status
+     * (FEED_STATUS, RECEIPT_POLICY, FEED_EXISTENCE) then fail with
+     * "No user is currently logged in" and the bundle is quarantined. The datafeed path
+     * already elevates to the processing user before filtering; this path must do the same.
+     */
+    @Test
+    void testScan_receiveRunsAsProcessingUser() {
+        final Path ingestDir = testDir.resolve("ingest");
+        final Path failureDir = testDir.resolve("failure");
+        final DirScannerConfig config = new DirScannerConfig(
+                List.of(ingestDir.toString()),
+                failureDir.toString(),
+                true,
+                StroomDuration.ofSeconds(1));
+
+        final ZipDirScanner zipDirScanner = createZipDirScanner(config);
+
+        final Path zipFile = ingestDir.resolve("file1.zip");
+        TestUtil.createFiles(zipFile);
+
+        final AtomicBoolean receiveSawProcessingUser = new AtomicBoolean(false);
+        Mockito.doAnswer(invocation -> {
+            receiveSawProcessingUser.set(inProcessingUser.get());
+            return null;
+        })
+                .when(mockZipReceiver)
+                .receive(Mockito.any(), Mockito.any());
+
+        zipDirScanner.scan();
+
+        Mockito.verify(mockZipReceiver).receive(Mockito.any(), Mockito.any());
+        assertThat(receiveSawProcessingUser)
+                .withFailMessage("receive() must be invoked as the processing user")
+                .isTrue();
+    }
 
     @Test
     void testScan() {
@@ -298,10 +346,27 @@ class TestZipDirScanner {
         final Path homeDir = testDir.resolve("home");
         final Path stroomTempDir = testDir.resolve("temp");
         final SimplePathCreator pathCreator = new SimplePathCreator(() -> homeDir, () -> stroomTempDir);
+
+        // Run the supplied work, recording that it ran inside the processing user scope.
+        Mockito.lenient()
+                .doAnswer(invocation -> {
+                    final Runnable runnable = invocation.getArgument(0);
+                    inProcessingUser.set(true);
+                    try {
+                        runnable.run();
+                    } finally {
+                        inProcessingUser.set(false);
+                    }
+                    return null;
+                })
+                .when(mockSecurityContext)
+                .asProcessingUser(Mockito.any());
+
         return new ZipDirScanner(
                 () -> config,
                 pathCreator,
                 mockZipReceiver,
-                new ProxyReceiptIdGenerator(() -> "test-node"));
+                new ProxyReceiptIdGenerator(() -> "test-node"),
+                mockSecurityContext);
     }
 }
