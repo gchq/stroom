@@ -675,6 +675,68 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     /**
+     * A request that needs the queue filled must not repeat a fill that an asynchronous fill has only just
+     * finished, as they do exactly the same work back to back.
+     */
+    @Test
+    void syncFillWaitsForAnAsynchronousFillRatherThanRepeatingIt() throws Exception {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 5);
+        queueManager.exec();
+
+        // Hold the next fill's fetch open so that we can get another request waiting on it.
+        final CountDownLatch fillStarted = new CountDownLatch(1);
+        final CountDownLatch releaseFill = new CountDownLatch(1);
+        Mockito.doAnswer(invocation -> {
+            if (fetchCount.incrementAndGet() == 2) {
+                fillStarted.countDown();
+                releaseFill.await(10, TimeUnit.SECONDS);
+            }
+            return findCreatedTasks(
+                    invocation.getArgument(0),
+                    invocation.getArgument(1),
+                    invocation.getArgument(2));
+        }).when(processorTaskDao).findExistingCreatedTasks(anyLong(), anyInt(), anyInt());
+
+        final ExecutorService asyncExecutor = Executors.newSingleThreadExecutor();
+        final ExecutorService requestExecutor = Executors.newSingleThreadExecutor();
+        try {
+            asyncFillExecutor = asyncExecutor;
+            // More created tasks for the asynchronous fill to queue.
+            final List<Long> newTaskIds = givenCreatedTasks(filter, 5);
+
+            // Taking the queued tasks kicks off an asynchronous fill, which blocks holding the fill monitor.
+            assertThat(queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5).getList()).hasSize(5);
+            assertThat(fillStarted.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Discard any further asynchronous fills so that the fetch count below is deterministic.
+            asyncFillExecutor = command -> {
+            };
+
+            // The next request finds the queue empty and waits to fill it.
+            final AtomicReference<Thread> requestThread = new AtomicReference<>();
+            final Future<ProcessorTaskList> assigned = requestExecutor.submit(() -> {
+                requestThread.set(Thread.currentThread());
+                return queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
+            });
+            assertThat(awaitBlocked(requestThread)).isEqualTo(Thread.State.BLOCKED);
+            releaseFill.countDown();
+
+            // It gets the tasks the asynchronous fill queued, without having filled the queue itself, i.e.
+            // there were only ever two fetches, one for the first fill and one for the asynchronous fill.
+            assertThat(assigned.get(10, TimeUnit.SECONDS).getList())
+                    .extracting(ProcessorTask::getId)
+                    .containsExactlyInAnyOrderElementsOf(newTaskIds);
+            assertThat(fetchCount.get()).isEqualTo(2);
+        } finally {
+            releaseFill.countDown();
+            asyncExecutor.shutdownNow();
+            requestExecutor.shutdownNow();
+        }
+    }
+
+    /**
      * Assigning tasks kicks off an asynchronous fill so that the queue is topped up ready for the next request.
      */
     @Test
@@ -807,17 +869,19 @@ class TestProcessorTaskQueueManagerImpl {
      * @return The ids of the tasks created, which are also their meta ids.
      */
     private List<Long> givenCreatedTasks(final ProcessorFilter filter, final int count) {
-        final List<Long> ids = taskIdsByFilter.computeIfAbsent(filter.getId(), k -> new ArrayList<>());
+        final List<Long> allIds = taskIdsByFilter.computeIfAbsent(filter.getId(), k -> new ArrayList<>());
+        final List<Long> newIds = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             final long id = taskIdSequence.incrementAndGet();
-            ids.add(id);
+            allIds.add(id);
+            newIds.add(id);
             tasksById.put(id, ProcessorTask.builder()
                     .id(id)
                     .metaId(id)
                     .processorFilter(filter)
                     .build());
         }
-        return ids;
+        return newIds;
     }
 
     private ProcessorFilter createFilter(final int id, final String profileName) {

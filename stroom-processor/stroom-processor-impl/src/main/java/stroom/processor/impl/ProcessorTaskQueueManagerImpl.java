@@ -106,13 +106,13 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap = new ConcurrentHashMap<>();
     private final AtomicBoolean fillingQueue = new AtomicBoolean();
     /**
-     * Incremented every time a synchronous fill completes so that a request waiting to fill the queue can tell
-     * whether another request has already filled it.
+     * Incremented every time the queue is filled, however the fill was requested, so that a request waiting to
+     * fill the queue can tell whether another fill has already happened.
      */
     private final AtomicLong fillCount = new AtomicLong();
     /**
-     * Whether the last synchronous fill to complete added any tasks, so that a request that waited for it can
-     * tell whether there is any point filling again itself.
+     * Whether the last fill to complete added any tasks, so that a request that waited for it can tell whether
+     * there is any point filling again itself.
      */
     private volatile boolean lastFillAddedTasks = true;
     private final AtomicBoolean needToFillQueue = new AtomicBoolean();
@@ -433,19 +433,15 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             taskContextFactory.contextResult(
                                     "Fill task queue",
                                     taskContext -> queueNewTasks(taskContext, isEmptyReportRequired)).get());
-                    lastFillAddedTasks = added > 0;
                     return added > 0
                             ? FillOutcome.ADDED_TASKS
                             : FillOutcome.ADDED_NOTHING;
 
                 } catch (final RuntimeException e) {
-                    // Treat a failed fill as one that added tasks so that we try to assign again rather than
-                    // giving up, as the failure may well be transient.
-                    lastFillAddedTasks = true;
+                    // The fill will have been recorded as one that added tasks, so we and any waiting requests
+                    // will try to assign again rather than giving up, as the failure may well be transient.
                     LOGGER.error(e::getMessage, e);
                     return FillOutcome.FILLED_BY_ANOTHER;
-                } finally {
-                    fillCount.incrementAndGet();
                 }
             }
         }
@@ -679,6 +675,27 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
     private synchronized int queueNewTasks(final TaskContext taskContext,
                                            final boolean isEmptyReportRequired) {
+        // Assume a fill that failed part way through added tasks so that requests waiting to fill the queue
+        // try to assign again rather than giving up, as the failure may well be transient.
+        boolean addedTasks = true;
+        try {
+            final int totalAdded = doQueueNewTasks(taskContext, isEmptyReportRequired);
+            addedTasks = totalAdded > 0;
+            return totalAdded;
+        } finally {
+            lastFillAddedTasks = addedTasks;
+            // Record that the queue has been filled, however the fill was requested, so that a request waiting
+            // to fill the queue synchronously can tell that it no longer needs to.
+            fillCount.incrementAndGet();
+        }
+    }
+
+    /**
+     * Only to be called via {@link #queueNewTasks(TaskContext, boolean)}, which synchronizes and records that
+     * the fill happened.
+     */
+    private int doQueueNewTasks(final TaskContext taskContext,
+                                final boolean isEmptyReportRequired) {
         LOGGER.trace("queueNewTasks() - Starting");
         int totalAdded = 0;
 
