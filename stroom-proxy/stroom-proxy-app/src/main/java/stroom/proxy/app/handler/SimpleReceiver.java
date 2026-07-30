@@ -29,7 +29,6 @@ import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.InputStreamUtils;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
-import stroom.security.api.CommonSecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -63,7 +62,6 @@ public class SimpleReceiver implements Receiver {
     private final ReceiveDataConfig receiveDataConfig;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
-    private final CommonSecurityContext commonSecurityContext;
     private final LogStream logStream;
     private final DropReceiver dropReceiver;
     private Consumer<Path> destination;
@@ -71,12 +69,10 @@ public class SimpleReceiver implements Receiver {
     @Inject
     public SimpleReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                           final DataDirProvider dataDirProvider,
-                          final CommonSecurityContext commonSecurityContext,
                           final LogStream logStream,
                           final DropReceiver dropReceiver,
                           final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
-        this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
         this.receiveDataConfig = receiveDataConfigProvider.get();
@@ -97,9 +93,12 @@ public class SimpleReceiver implements Receiver {
                         final AttributeMap attributeMap,
                         final String requestUri,
                         final InputStreamSupplier inputStreamSupplier) {
-//        commonSecurityContext.asProcessingUser(() -> {
         // Determine if the feed is allowed to receive data or if we should ignore it.
         // Throws an exception if we should reject.
+        // Callers must already be running as the processing user: filtering can consult feed status,
+        // which needs an identity, and no entry point's own user would carry the permission for it.
+        // Every entry point does this - see ProxyRequestHandler, ZipDirScanner and EventStore - so
+        // this must not elevate again here.
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
         final String receiptId = NullSafe.get(attributeMap, map -> map.get(StandardHeaderArguments.RECEIPT_ID));
         if (attributeMapFilter.filter(attributeMap)) {
@@ -108,7 +107,6 @@ public class SimpleReceiver implements Receiver {
             // Drop the data.
             dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);
         }
-//        });
     }
 
     private void doReceive(final Instant startTime,
