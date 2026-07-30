@@ -64,6 +64,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.BatchBindStep;
 import org.jooq.Condition;
@@ -172,7 +173,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorFeedCache processorFeedCache;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final ProcessorFilterCache processorFilterCache;
-    private final ProcessorConfig processorConfig;
+    private final Provider<ProcessorConfig> processorConfigProvider;
     private final ProcessorDbConnProvider processorDbConnProvider;
     //    private final ProcessorFilterMarshaller marshaller;
     private final DocRefInfoService docRefInfoService;
@@ -184,7 +185,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ProcessorFeedCache processorFeedCache,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorFilterCache processorFilterCache,
-                         final ProcessorConfig processorConfig,
+                         final Provider<ProcessorConfig> processorConfigProvider,
                          final ProcessorDbConnProvider processorDbConnProvider,
                          final ExpressionMapperFactory expressionMapperFactory,
                          final DocRefInfoService docRefInfoService) {
@@ -192,7 +193,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.processorFeedCache = processorFeedCache;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorFilterCache = processorFilterCache;
-        this.processorConfig = processorConfig;
+        this.processorConfigProvider = processorConfigProvider;
         this.processorDbConnProvider = processorDbConnProvider;
         this.docRefInfoService = docRefInfoService;
 
@@ -723,6 +724,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                              final Object[][] allBindValues) {
         BatchBindStep batchBindStep = null;
         int i = 0;
+        final int maxBatchSize = processorConfigProvider.get().getDatabaseMultiInsertMaxBatchSize();
 
         for (final Object[] bindValues : allBindValues) {
             i++;
@@ -739,7 +741,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             batchBindStep = batchBindStep.bind(bindValues);
 
             // Execute insert if we have reached batch size.
-            if (i >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
+            if (i >= maxBatchSize) {
                 executeInsert(batchBindStep, i);
                 i = 0;
                 batchBindStep = null;
