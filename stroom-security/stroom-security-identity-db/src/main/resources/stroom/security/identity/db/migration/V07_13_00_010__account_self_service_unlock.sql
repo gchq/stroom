@@ -27,7 +27,6 @@ CREATE PROCEDURE V07_13_00_010__account_self_service_unlock ()
 BEGIN
     DECLARE object_count integer;
     DECLARE duplicate_count integer;
-    DECLARE duplicate_emails text;
 
     -- The SHA-256 hash of the secret in the most recently issued password reset link for the account.
     -- The link is an opaque random string; only its hash is held here, so the link cannot be recovered
@@ -72,6 +71,12 @@ BEGIN
         ALTER TABLE account ADD COLUMN reset_email_requested_ms bigint DEFAULT NULL;
     END IF;
 
+    -- A blank email address is no email address at all, and is held as NULL. Held as an empty string it
+    -- would be a value like any other, so the second account left blank would clash with the first under
+    -- the unique index below, where any number of accounts may have no address. Earlier versions wrote
+    -- blanks through from the account screen, so normalise what is already stored before indexing it.
+    UPDATE account SET email = NULL WHERE TRIM(email) = '';
+
     -- 'Forgot password' finds the account to reset by its email address, so an address must identify at
     -- most one account. An account may still have no email address at all, in which case it simply
     -- cannot be reset by email; a UNIQUE index permits any number of NULLs.
@@ -83,10 +88,11 @@ BEGIN
     AND index_name = 'account_email_idx';
 
     IF object_count = 0 THEN
-        -- Adding the index would fail with a bare duplicate key error, naming only the first clash.
-        -- Check first so that the operator is told exactly which addresses to fix.
-        SELECT COUNT(1), GROUP_CONCAT(email SEPARATOR ', ')
-        INTO duplicate_count, duplicate_emails
+        -- Adding the index would fail with a bare duplicate key error, naming only the first clash, and
+        -- only after the columns above had been added. Check first so that the operator is told what is
+        -- wrong rather than being shown a key name.
+        SELECT COUNT(1)
+        INTO duplicate_count
         FROM (
             SELECT email
             FROM account
@@ -97,9 +103,8 @@ BEGIN
 
         IF duplicate_count > 0 THEN
             SET @message_text = CONCAT(
-                'Cannot make account.email unique because these email addresses are used by more than ',
-                'one account: ', duplicate_emails, '. Give each account a unique email address, or ',
-                'clear the email address of all but one, then start stroom again.');
+                'Cannot make account.email unique: ', duplicate_count,
+                ' email addresses are each used by more than one account');
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @message_text;
         END IF;
 
