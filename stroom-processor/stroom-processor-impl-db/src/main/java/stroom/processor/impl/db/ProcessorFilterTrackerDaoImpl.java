@@ -100,6 +100,10 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
             throw new RuntimeException("Unable to update tracker with id = " + processorFilterTracker.getId());
         }
 
+        // Keep the supplied tracker in step with the DB so that it can be updated again without falling foul of
+        // the optimistic locking on version.
+        processorFilterTracker.setVersion(processorFilterTracker.getVersion() + 1);
+
         return count;
     }
 }
