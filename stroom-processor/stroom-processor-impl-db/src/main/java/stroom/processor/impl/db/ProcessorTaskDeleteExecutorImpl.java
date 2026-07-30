@@ -36,6 +36,7 @@ import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
@@ -54,7 +55,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private static final String LOCK_NAME = "ProcessorTaskDeleteExecutor";
 
     private final ClusterLockService clusterLockService;
-    private final ProcessorConfig processorConfig;
+    private final Provider<ProcessorConfig> processorConfigProvider;
     private final ProcessorDao processorDao;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskDao processorTaskDao;
@@ -63,14 +64,14 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ClusterLockService clusterLockService,
-                                    final ProcessorConfig processorConfig,
+                                    final Provider<ProcessorConfig> processorConfigProvider,
                                     final ProcessorDao processorDao,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskDao processorTaskDao,
                                     final TaskContextFactory taskContextFactory,
                                     final DocumentPermissionService documentPermissionService) {
         this.clusterLockService = clusterLockService;
-        this.processorConfig = processorConfig;
+        this.processorConfigProvider = processorConfigProvider;
         this.processorDao = processorDao;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
@@ -98,7 +99,9 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 if (!Thread.currentThread().isInterrupted()) {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-                    final StroomDuration deleteAge = processorConfig.getDeleteAge();
+                    // Get the config each time we run so that changes to deleteAge take effect without
+                    // requiring a node restart.
+                    final StroomDuration deleteAge = processorConfigProvider.get().getDeleteAge();
 
                     if (!deleteAge.isZero()) {
                         final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);

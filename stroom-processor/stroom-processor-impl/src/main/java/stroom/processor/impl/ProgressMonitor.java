@@ -301,6 +301,7 @@ public class ProgressMonitor {
         FIND_META_FOR_FILTER("Find meta records matching filter"),
         INSERT_NEW_TASKS("Inserting new task records"),
         UPDATE_TRACKERS("Update trackers"),
+        RELEASE_TASKS_FOR_INACTIVE_PROFILES("Release tasks for inactive processing profiles"),
         RELEASE_TASKS_FOR_DISABLED_FILTERS("Release tasks for disabled filters");
 
         private final String phaseName;

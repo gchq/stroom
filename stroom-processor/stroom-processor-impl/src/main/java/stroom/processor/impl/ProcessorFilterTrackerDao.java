@@ -24,5 +24,13 @@ public interface ProcessorFilterTrackerDao {
 
     Optional<ProcessorFilterTracker> fetch(int id);
 
+    /**
+     * Update the tracker. Updates are subject to optimistic locking on version so the version of the supplied
+     * tracker is incremented to match the DB once the update is committed, allowing the same instance to be
+     * updated more than once.
+     *
+     * @param processorFilterTracker The tracker to update. Its version will be incremented on success.
+     * @return The number of rows updated.
+     */
     int update(ProcessorFilterTracker processorFilterTracker);
 }
