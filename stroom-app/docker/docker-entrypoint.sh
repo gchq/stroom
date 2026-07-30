@@ -17,38 +17,63 @@
 
 set -e
 
-# Re-set permission to the `stroom` user if current user is root
-# This avoids permission denied if the data volume is mounted by root
-#if [ "$1" = 'stroom' -a "$(id -u)" = '0' ]; then
+HEADERS_FILE="/stroom/logs/extra_headers.txt"
+# These should be set in the dockerfile, but just in case
+USER_ID="${USER_ID:-1000}"
+GROUP_ID="${GROUP_ID:-0}"
+
+add_to_headers() {
+    token="$1"
+    value="$2"
+    if [ -n "${value}" ]; then
+        echo "${token}:${value}" >> "${HEADERS_FILE}"
+    fi
+}
+
+create_headers_file() {
+    # This command works in alpine linux 3.8, but may be fragile and subject to change
+    # with different docker versions.
+    container_id=
+    if [ -f /proc/self/cgroup ]; then
+      container_id="$( \
+        grep -o -e "docker/.*" /proc/self/cgroup 2>/dev/null \
+          | head -n 1 \
+          | sed "s/docker\/\(.*\)/\\1/" \
+      )" || true
+    fi
+    container_id="${container_id:-}"
+
+    # Create the empty file
+    : > "${HEADERS_FILE}"
+
+    # Ensure anyone can read this file
+    chmod ugo+r "${HEADERS_FILE}"
+
+    # Write the details of the host of this container to the headers file
+    # for stroom-log-sender
+
+    # These two should be passed in as env vars at container run time
+    add_to_headers "OriginalHost" "${DOCKER_HOST_HOSTNAME:-}"
+    add_to_headers "OriginalIP" "${DOCKER_HOST_IP:-}"
+    # This env var should be automatcially set from the build arg at container creation time
+    add_to_headers "OriginalImageGitTag" "${GIT_TAG:-}"
+    add_to_headers "OriginalContainerId" "${container_id:-}"
+
+    echo "Dumping ${HEADERS_FILE} contents:"
+    echo "-------------------------------------------"
+    cat "${HEADERS_FILE}"
+    echo "-------------------------------------------"
+}
+
+create_headers_file
+
+# In case anyone tries to run the container as root drop down
 if [ "$(id -u)" = '0' ]; then
-    # shellcheck disable=SC1091
-    . /stroom/add_container_identity_headers.sh /stroom/logs/extra_headers.txt
-
-    # change ownership of docker volume directories
-    # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
-    # contain MANY files, resulting in a big delay on container start
-    chown stroom:stroom /stroom/content_pack_import
-    chown stroom:stroom /stroom/data_feed_identities
-    chown stroom:stroom /stroom/git_repo
-    chown stroom:stroom /stroom/lmdb
-    chown stroom:stroom /stroom/lmdb_library
-    chown stroom:stroom /stroom/logs
-    chown stroom:stroom /stroom/logs/extra_headers.txt
-    chown stroom:stroom /stroom/output
-    chown stroom:stroom /stroom/planb
-    chown stroom:stroom /stroom/reference_data
-    chown stroom:stroom /stroom/reference_staging_data
-    chown stroom:stroom /stroom/search_results
-    chown stroom:stroom /stroom/volumes
-
-    # This is a bit of a cludge to get round "Text file in use" errors
-    # See: https://github.com/moby/moby/issues/9547
-    # sync ensures all disk writes are persisted
-    sync
-
     #su-exec is the alpine equivalent of gosu
-    #runs all args as user stroom, rather than as root
-    exec su-exec stroom "$@"
+    #runs all args as user USER_ID:GROUP_ID, rather than as root
+    exec su-exec "$USER_ID:$GROUP_ID" "$@"
+else
+  # Already non-root so just crack on and run the cmd as is
+  exec "$@"
 fi
 
-exec "$@"
