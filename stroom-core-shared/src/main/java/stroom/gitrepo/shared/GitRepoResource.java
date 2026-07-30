@@ -19,6 +19,7 @@ package stroom.gitrepo.shared;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.http.HttpClientConfig;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -112,4 +113,15 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
             operationId = "areUpdatesAvailable")
     GitRepoResponse areUpdatesAvailable(
             @Parameter(description = "gitRepoDoc", required = true) GitRepoDoc gitRepoDoc);
+
+    /**
+     * @return A configuration to start from when a repository has none, so the screen shows the protocols
+     * and ciphers this JVM actually supports rather than an empty form.
+     */
+    @POST
+    @Path("/getDefaultHttpClientConfig")
+    @Operation(
+            summary = "Get default HTTP client configuration",
+            operationId = "getGitRepoDefaultHttpClientConfig")
+    HttpClientConfig getDefaultHttpClientConfig();
 }

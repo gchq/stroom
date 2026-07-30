@@ -25,7 +25,7 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
-import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
@@ -33,10 +33,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.http.HttpAuthConfiguration;
 import stroom.util.http.HttpClientConfiguration;
-import stroom.util.http.HttpProxyConfiguration;
-import stroom.util.http.HttpTlsConfiguration;
+import stroom.util.http.HttpClientUtil;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
@@ -44,13 +42,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.SsrfGuard;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
-import stroom.util.shared.http.HttpProxyConfig;
-import stroom.util.shared.http.HttpTlsConfig;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
-import stroom.util.time.SimpleDurationUtil;
 
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
@@ -73,12 +67,9 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 
 @Singleton
 public class AiServiceImpl implements AiService {
@@ -94,6 +85,7 @@ public class AiServiceImpl implements AiService {
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
+    private final HttpConfigResolver httpConfigResolver;
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
     private final SecurityContext securityContext;
     private final AiDao aiDao;
@@ -104,12 +96,14 @@ public class AiServiceImpl implements AiService {
     AiServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
                   final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                   final Provider<StoredSecrets> storedSecretsProvider,
+                  final HttpConfigResolver httpConfigResolver,
                   final Provider<HttpClientProviderCache> httpClientCacheProvider,
                   final SecurityContext securityContext,
                   final AiDao aiDao) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
+        this.httpConfigResolver = httpConfigResolver;
         this.httpClientCacheProvider = httpClientCacheProvider;
         this.securityContext = securityContext;
         this.aiDao = aiDao;
@@ -122,7 +116,7 @@ public class AiServiceImpl implements AiService {
             //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
 
-            final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+            final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
                     modelDoc,
                     OpenAIModelDoc::getHttpClientConfiguration,
                     getDefaultHttpClientConfig()));
@@ -273,7 +267,7 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
-        final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
                 getDefaultHttpClientConfig()));
@@ -314,96 +308,6 @@ public class AiServiceImpl implements AiService {
         getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
-    }
-
-    private HttpClientConfiguration convert(final HttpClientConfig config) {
-        Objects.requireNonNull(config, "Null HTTP client configuration");
-
-        return HttpClientConfiguration
-                .builder()
-                .timeout(SimpleDurationUtil.convertToStroomDuration(config.getTimeout()))
-                .connectionTimeout(SimpleDurationUtil.convertToStroomDuration(config.getConnectionTimeout()))
-                .connectionRequestTimeout(
-                        SimpleDurationUtil.convertToStroomDuration(config.getConnectionRequestTimeout()))
-                .timeToLive(SimpleDurationUtil.convertToStroomDuration(config.getTimeToLive()))
-                .cookiesEnabled(config.isCookiesEnabled())
-                .maxConnections(config.getMaxConnections())
-                .maxConnectionsPerRoute(config.getMaxConnectionsPerRoute())
-                .keepAlive(SimpleDurationUtil.convertToStroomDuration(config.getKeepAlive()))
-                .retries(config.getRetries())
-                .userAgent(config.getUserAgent())
-                .proxyConfiguration(convert(config.getProxy()))
-                .validateAfterInactivityPeriod(
-                        SimpleDurationUtil.convertToStroomDuration(config.getValidateAfterInactivityPeriod()))
-                .tlsConfiguration(convert(config.getTls()))
-                .build();
-    }
-
-    private HttpProxyConfiguration convert(final HttpProxyConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        return HttpProxyConfiguration
-                .builder()
-                .host(config.getHost())
-                .port(config.getPort())
-                .scheme(config.getScheme())
-                .auth(convert(config.getAuth()))
-                .nonProxyHosts(config.getNonProxyHosts())
-                .build();
-    }
-
-    private HttpAuthConfiguration convert(final HttpAuthConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        return HttpAuthConfiguration
-                .builder()
-                .username(config.getUsername())
-                .password(config.getPassword())
-                .authScheme(config.getAuthScheme())
-                .realm(config.getRealm())
-                .hostname(config.getHostname())
-                .domain(config.getDomain())
-                .credentialType(config.getCredentialType())
-                .build();
-    }
-
-    private HttpTlsConfiguration convert(final HttpTlsConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        final HttpTlsConfiguration.Builder builder = HttpTlsConfiguration.builder();
-        if (NullSafe.isNonBlankString(config.getKeyStoreName())) {
-            final KeyStore keyStore = storedSecretsProvider.get().getKeyStore(config.getKeyStoreName());
-            builder
-                    .keyStorePath(keyStore.keyStorePath())
-                    .keyStorePassword(keyStore.keyStorePassword())
-                    .keyStoreType(keyStore.keyStoreType())
-                    .keyStoreProvider(keyStore.keyStoreProvider());
-        }
-
-        if (NullSafe.isNonBlankString(config.getTrustStoreName())) {
-            final KeyStore trustStore = storedSecretsProvider.get().getKeyStore(config.getTrustStoreName());
-            builder
-                    .trustStorePath(trustStore.keyStorePath())
-                    .trustStorePassword(trustStore.keyStorePassword())
-                    .trustStoreType(trustStore.keyStoreType())
-                    .trustStoreProvider(trustStore.keyStoreProvider());
-        }
-
-        return builder
-                .protocol(config.getProtocol())
-                .provider(config.getProvider())
-                .trustSelfSignedCertificates(config.isTrustSelfSignedCertificates())
-                .verifyHostname(config.isVerifyHostname())
-                .supportedProtocols(config.getSupportedProtocols())
-                .supportedCiphers(config.getSupportedCiphers())
-                .certAlias(config.getCertAlias())
-                .build();
     }
 
     // ---------------------------------------------------------------------
@@ -564,26 +468,6 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientConfig createDefaultHttpClientConfig() {
-        HttpTlsConfig httpTlsConfig = null;
-        try (final SSLServerSocket sslServerSocket = ((SSLServerSocket) SSLServerSocketFactory.getDefault()
-                .createServerSocket())) {
-            final List<String> supportedCiphers = Arrays.stream(sslServerSocket.getEnabledCipherSuites()).toList();
-            final List<String> supportedProtocols = Arrays.stream(sslServerSocket.getEnabledProtocols()).toList();
-            httpTlsConfig = HttpTlsConfig
-                    .builder()
-                    .supportedCiphers(supportedCiphers)
-                    .supportedProtocols(supportedProtocols)
-                    .build();
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-
-        return HttpClientConfig
-                .builder()
-                .timeout(DEFAULT_TIMEOUT)
-                .connectionTimeout(DEFAULT_TIMEOUT)
-                .connectionRequestTimeout(DEFAULT_TIMEOUT)
-                .tlsConfiguration(httpTlsConfig)
-                .build();
+        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
     }
 }

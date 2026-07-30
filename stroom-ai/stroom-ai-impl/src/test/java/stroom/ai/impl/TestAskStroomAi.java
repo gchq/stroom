@@ -55,6 +55,7 @@ public class TestAskStroomAi {
                 null,
                 null,
                 null,
+                null,
                 null);
         final OpenAIModelDoc modelDoc = new OpenAIModelDoc(
                 UUID.randomUUID().toString(),

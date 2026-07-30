@@ -17,18 +17,64 @@
 package stroom.util.http;
 
 import stroom.util.cert.SSLConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.http.HttpClientConfig;
+import stroom.util.shared.http.HttpTlsConfig;
+import stroom.util.shared.time.SimpleDuration;
 
 import io.dropwizard.client.ssl.TlsConfiguration;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 
 public class HttpClientUtil {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpClientUtil.class);
+
     private HttpClientUtil() {
         // Ignore
+    }
+
+    /**
+     * Builds the configuration a screen should start from when a document has none of its own.
+     * <p>
+     * The supported ciphers and protocols are read from this JVM rather than hard coded, so what the user is
+     * offered is what will actually work here.
+     * </p>
+     *
+     * @param timeout The default to use for the three timeouts. Callers differ widely - a model may think
+     *                for minutes where a Git fetch should not - so there is no single sensible value.
+     */
+    public static HttpClientConfig createDefaultHttpClientConfig(final SimpleDuration timeout) {
+        HttpTlsConfig httpTlsConfig = null;
+        try (final SSLServerSocket sslServerSocket = ((SSLServerSocket) SSLServerSocketFactory.getDefault()
+                .createServerSocket())) {
+            final List<String> supportedCiphers = Arrays.stream(sslServerSocket.getEnabledCipherSuites()).toList();
+            final List<String> supportedProtocols = Arrays.stream(sslServerSocket.getEnabledProtocols()).toList();
+            httpTlsConfig = HttpTlsConfig
+                    .builder()
+                    .supportedCiphers(supportedCiphers)
+                    .supportedProtocols(supportedProtocols)
+                    .build();
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        return HttpClientConfig
+                .builder()
+                .timeout(timeout)
+                .connectionTimeout(timeout)
+                .connectionRequestTimeout(timeout)
+                .tlsConfiguration(httpTlsConfig)
+                .build();
     }
 
     public static TlsConfiguration getTlsConfiguration(final SSLConfig sslConfig) {
