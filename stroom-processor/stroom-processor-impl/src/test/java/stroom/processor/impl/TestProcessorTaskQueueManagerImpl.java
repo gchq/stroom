@@ -51,6 +51,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -63,6 +69,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -133,24 +140,21 @@ class TestProcessorTaskQueueManagerImpl {
             invocation.getArgument(0, Runnable.class).run();
             return null;
         }).when(securityContext).asProcessingUser(any(Runnable.class));
-        when(executorProvider.get(any())).thenReturn(Runnable::run);
+        when(securityContext.asProcessingUserResult(any(Supplier.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
+        // Never run the asynchronous queue fill, so that the tests only see the synchronous filling that they
+        // are exercising.
+        when(executorProvider.get(any())).thenReturn(command -> {
+        });
         when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE));
         when(processorTaskDao.releaseOwnedTasks(anyString())).thenReturn(0L);
 
         // Only CREATED tasks that we haven't already queued are available to queue.
         when(processorTaskDao.findExistingCreatedTasks(anyLong(), anyInt(), anyInt()))
-                .thenAnswer(invocation -> {
-                    final long lastTaskId = invocation.getArgument(0);
-                    final int filterId = invocation.getArgument(1);
-                    final int limit = invocation.getArgument(2);
-                    return taskIdsByFilter.getOrDefault(filterId, List.of())
-                            .stream()
-                            .filter(id -> id > lastTaskId)
-                            .filter(id -> !queuedTaskIds.contains(id))
-                            .limit(limit)
-                            .map(id -> new ExistingCreatedTask(id, id))
-                            .toList();
-                });
+                .thenAnswer(invocation -> findCreatedTasks(
+                        invocation.getArgument(0),
+                        invocation.getArgument(1),
+                        invocation.getArgument(2)));
         // Queueing moves tasks from CREATED to QUEUED and returns them.
         when(processorTaskDao.queueTasks(anySet(), anyString())).thenAnswer(invocation -> {
             final Set<Long> ids = invocation.getArgument(0);
@@ -498,6 +502,90 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     /**
+     * Assignment fills the queue itself when it is empty so that a node doesn't have to wait for its next poll
+     * to get any tasks.
+     */
+    @Test
+    void assignmentFillsTheQueueAndThenAssigns() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+
+        // Note that we have not filled the queue first, so assignment has to do it.
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 10);
+
+        assertThat(assigned.getList()).hasSize(10);
+    }
+
+    /**
+     * Filling the queue is synchronized across all assignment requests, so every node in the cluster queues up
+     * behind it. If a fill produces nothing then repeating it cannot help, and doing so once per node per
+     * attempt is what makes assignment take minutes on a large cluster.
+     */
+    @Test
+    void assignmentStopsFillingTheQueueOnceAFillProducesNothing() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        // There are no created tasks at all, so filling the queue can never produce anything.
+
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 10);
+
+        assertThat(assigned.getList()).isEmpty();
+        verify(processorTaskDao, times(1))
+                .findExistingCreatedTasks(anyLong(), eq(filter.getId()), anyInt());
+    }
+
+    /**
+     * Filling the queue is expensive and only one request needs to do it. The others must wait for it rather
+     * than perform their own redundant fill, but must not give up, as a node that is told there are no tasks
+     * won't ask again for some time.
+     */
+    @Test
+    void onlyOneRequestFillsTheQueueWhileTheOthersWait() throws Exception {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+
+        final CountDownLatch fillStarted = new CountDownLatch(1);
+        final CountDownLatch releaseFill = new CountDownLatch(1);
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(processorTaskDao.findExistingCreatedTasks(anyLong(), anyInt(), anyInt()))
+                .thenAnswer(invocation -> {
+                    if (fetchCount.incrementAndGet() == 1) {
+                        // Hold the first fill open so that the second request has to wait for it.
+                        fillStarted.countDown();
+                        releaseFill.await(10, TimeUnit.SECONDS);
+                    }
+                    return findCreatedTasks(
+                            invocation.getArgument(0),
+                            invocation.getArgument(1),
+                            invocation.getArgument(2));
+                });
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(2);
+        try {
+            final Future<ProcessorTaskList> first = executorService.submit(() ->
+                    queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5));
+            assertThat(fillStarted.await(10, TimeUnit.SECONDS)).isTrue();
+
+            final Future<ProcessorTaskList> second = executorService.submit(() ->
+                    queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5));
+            // Give the second request time to reach the queue fill and wait on it, otherwise it might not get
+            // there until the first request has finished and the test would prove nothing.
+            Thread.sleep(200);
+            releaseFill.countDown();
+
+            // Both requests get tasks, the second from the queue that the first filled.
+            assertThat(first.get(10, TimeUnit.SECONDS).getList()).hasSize(5);
+            assertThat(second.get(10, TimeUnit.SECONDS).getList()).hasSize(5);
+        } finally {
+            executorService.shutdownNow();
+        }
+
+        assertThat(fetchCount.get()).isEqualTo(1);
+    }
+
+    /**
      * Covers the assignment side of a bad profile. A filter whose profile cannot be resolved must not stop tasks
      * being assigned for the other filters.
      */
@@ -526,6 +614,18 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     // --------------------------------------------------------------------------------
+
+    private List<ExistingCreatedTask> findCreatedTasks(final long lastTaskId,
+                                                       final int filterId,
+                                                       final int limit) {
+        return taskIdsByFilter.getOrDefault(filterId, List.of())
+                .stream()
+                .filter(id -> id > lastTaskId)
+                .filter(id -> !queuedTaskIds.contains(id))
+                .limit(limit)
+                .map(id -> new ExistingCreatedTask(id, id))
+                .toList();
+    }
 
     private void givenFilters(final ProcessorFilter... filters) {
         when(prioritisedFilters.get()).thenReturn(List.of(filters));

@@ -69,6 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -103,6 +104,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      */
     private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap = new ConcurrentHashMap<>();
     private final AtomicBoolean fillingQueue = new AtomicBoolean();
+    /**
+     * Incremented every time a synchronous fill completes so that a request waiting to fill the queue can tell
+     * whether another request has already filled it.
+     */
+    private final AtomicLong fillCount = new AtomicLong();
     private final AtomicBoolean needToFillQueue = new AtomicBoolean();
     private volatile int lastQueueSizeForStats = -1;
 
@@ -219,6 +225,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
         final List<ProcessorTask> assignedStreamTasks = new ArrayList<>();
         final AtomicInteger attempt = new AtomicInteger();
+        boolean addedNothingToQueue = false;
         while (attempt.getAndIncrement() < MAX_ASSIGNMENT_ATTEMPTS) {
             try {
                 info(taskContext, () -> "Attempting task assignment " +
@@ -370,11 +377,20 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             // If we don't get any tasks then force synchronous queueing of tasks.
             if (allowTaskQueueFill) {
                 if (assignedStreamTasks.isEmpty()) {
+                    if (addedNothingToQueue) {
+                        // We filled the queue ourselves, found nothing to add, and still can't assign
+                        // anything, so trying again can't help.
+                        break;
+                    }
+
                     info(taskContext, () -> "Assigned " +
                                             assignedStreamTasks.size() +
                                             " tasks, filling queue synchronously");
-                    // Only want to see an empty progress report on the first attempt
-                    fillTaskQueueSync(attempt.get() <= 1); // Has already been incremented
+                    // Only want to see an empty progress report on the first attempt.
+                    // If another request filled the queue while we waited then we go round again to assign
+                    // the tasks it queued, and if the queue is empty again we will fill it ourselves.
+                    addedNothingToQueue =
+                            FillOutcome.ADDED_NOTHING == fillTaskQueueSync(attempt.get() <= 1);
                 } else {
                     // Kick off a queue fill.
                     info(taskContext, () -> "Assigned " +
@@ -391,21 +407,42 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
 
-    private void fillTaskQueueSync(final boolean isEmptyReportRequired) {
+    /**
+     * Fill the task queue, waiting for any fill that is already in progress rather than performing a redundant
+     * one. Filling is expensive and only one request needs to do it, but the others must wait for it rather
+     * than give up, as a node that is told there are no tasks won't ask again for some time.
+     */
+    private FillOutcome fillTaskQueueSync(final boolean isEmptyReportRequired) {
         if (allowTaskQueueFill) {
-            try {
-                LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue, isEmptyReportRequired: {}",
-                        isEmptyReportRequired);
-                securityContext.asProcessingUser(() ->
-                        taskContextFactory.context(
-                                "Fill task queue",
-                                taskContext -> queueNewTasks(taskContext, isEmptyReportRequired)).run());
+            // Remember how many fills have completed so we can tell whether another request filled the queue
+            // while we were waiting to fill it ourselves.
+            final long fillCountBeforeWaiting = fillCount.get();
 
-            } catch (final RuntimeException e) {
-                fillingQueue.set(false);
-                LOGGER.error(e::getMessage, e);
+            synchronized (this) {
+                if (fillCount.get() != fillCountBeforeWaiting) {
+                    LOGGER.debug("fillTaskQueueSync() - Queue was filled by another request while we waited");
+                    return FillOutcome.FILLED_BY_ANOTHER;
+                }
+
+                try {
+                    LOGGER.debug("fillTaskQueueSync() - Executing fillTaskQueue, isEmptyReportRequired: {}",
+                            isEmptyReportRequired);
+                    final int added = securityContext.asProcessingUserResult(() ->
+                            taskContextFactory.contextResult(
+                                    "Fill task queue",
+                                    taskContext -> queueNewTasks(taskContext, isEmptyReportRequired)).get());
+                    return added > 0
+                            ? FillOutcome.ADDED_TASKS
+                            : FillOutcome.ADDED_NOTHING;
+
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                } finally {
+                    fillCount.incrementAndGet();
+                }
             }
         }
+        return FillOutcome.ADDED_NOTHING;
     }
 
     private void fillTaskQueueAsync() {
@@ -998,5 +1035,28 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                 .addDetail("overallQueueSize", getTaskQueueSize())
                 .build();
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The outcome of trying to fill the task queue synchronously.
+     */
+    private enum FillOutcome {
+        /**
+         * We filled the queue and added tasks to it.
+         */
+        ADDED_TASKS,
+        /**
+         * We filled the queue but there were no tasks to add to it.
+         */
+        ADDED_NOTHING,
+        /**
+         * Another request filled the queue while we were waiting to, so we didn't fill it again.
+         */
+        FILLED_BY_ANOTHER
+    }
+
 }
 
