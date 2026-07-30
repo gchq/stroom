@@ -511,10 +511,14 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             final ProcessorFilterTracker loadedTracker = loadedFilter.getProcessorFilterTracker();
                             loadedTracker.setStatus(ProcessorFilterTrackerStatus.ERROR);
                             loadedTracker.setMessage(error);
-                            updateTracker(tracker, filterProgressMonitor);
+                            updateTracker(loadedTracker, filterProgressMonitor);
                         });
                     } catch (final RuntimeException e2) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.error(() -> LogUtil.message(
+                                "Error recording error against the tracker for filter: {} {} - {}",
+                                filter.getFilterInfo(),
+                                e2.getClass().getSimpleName(),
+                                e2.getMessage()), e2);
                     }
                 } finally {
                     filterProgressMonitor.complete();
