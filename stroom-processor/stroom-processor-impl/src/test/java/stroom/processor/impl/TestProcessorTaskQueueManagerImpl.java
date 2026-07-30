@@ -33,18 +33,21 @@ import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.shared.TaskId;
+import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,9 +67,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests the interaction between processing profiles and the filling of the task queue. Task assignment applies
- * processing profiles but queueing did not, so tasks that no node was allowed to process could be queued, using
- * up the queue and stopping tasks being queued for other filters.
+ * Tests the filling, assigning and releasing of the processor task queue.
+ * <p>
+ * The DAO is backed by a small in memory model rather than plain canned responses so that the CREATED to QUEUED
+ * to CREATED lifecycle of a task behaves as it does in the database, i.e. a queued task is no longer available
+ * to be queued again until it has been released.
+ * </p>
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -99,26 +105,67 @@ class TestProcessorTaskQueueManagerImpl {
     private InternalStatisticsReceiver internalStatisticsReceiver;
 
     private ProcessorTaskQueueManagerImpl queueManager;
-    private final AtomicLong taskId = new AtomicLong();
+
+    private final AtomicLong taskIdSequence = new AtomicLong();
+    /**
+     * Every task we have created, by task id. The meta id of a task is the same as its task id.
+     */
     private final Map<Long, ProcessorTask> tasksById = new HashMap<>();
+    /**
+     * The task ids that exist for each filter, in the order they were created.
+     */
+    private final Map<Integer, List<Long>> taskIdsByFilter = new HashMap<>();
+    /**
+     * The task ids that are currently QUEUED rather than CREATED.
+     */
+    private final Set<Long> queuedTaskIds = new HashSet<>();
+    /**
+     * Meta ids that are locked, so their tasks cannot be queued.
+     */
+    private final Set<Long> lockedMetaIds = new HashSet<>();
 
     @BeforeEach
     void setUp() throws Exception {
         when(nodeInfo.getThisNodeName()).thenReturn(NODE);
         when(securityContext.isProcessingUser()).thenReturn(true);
         // Run anything submitted as the processing user inline so the test is deterministic.
-        doRunInline();
+        Mockito.doAnswer(invocation -> {
+            invocation.getArgument(0, Runnable.class).run();
+            return null;
+        }).when(securityContext).asProcessingUser(any(Runnable.class));
         when(executorProvider.get(any())).thenReturn(Runnable::run);
         when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE));
-        when(metaService.findLockedMeta(any())).thenReturn(Collections.emptySet());
         when(processorTaskDao.releaseOwnedTasks(anyString())).thenReturn(0L);
-        // Queueing a set of task ids returns the matching tasks, as the real DAO does.
+
+        // Only CREATED tasks that we haven't already queued are available to queue.
+        when(processorTaskDao.findExistingCreatedTasks(anyLong(), anyInt(), anyInt()))
+                .thenAnswer(invocation -> {
+                    final long lastTaskId = invocation.getArgument(0);
+                    final int filterId = invocation.getArgument(1);
+                    final int limit = invocation.getArgument(2);
+                    return taskIdsByFilter.getOrDefault(filterId, List.of())
+                            .stream()
+                            .filter(id -> id > lastTaskId)
+                            .filter(id -> !queuedTaskIds.contains(id))
+                            .limit(limit)
+                            .map(id -> new ExistingCreatedTask(id, id))
+                            .toList();
+                });
+        // Queueing moves tasks from CREATED to QUEUED and returns them.
         when(processorTaskDao.queueTasks(anySet(), anyString())).thenAnswer(invocation -> {
             final Set<Long> ids = invocation.getArgument(0);
-            return ids.stream()
-                    .map(tasksById::get)
-                    .filter(java.util.Objects::nonNull)
-                    .toList();
+            queuedTaskIds.addAll(ids);
+            return ids.stream().sorted().map(tasksById::get).toList();
+        });
+        // Releasing moves tasks back to CREATED so they can be queued again.
+        when(processorTaskDao.releaseTasks(anySet(), any())).thenAnswer(invocation -> {
+            final Set<Long> ids = invocation.getArgument(0);
+            queuedTaskIds.removeAll(ids);
+            return ids.size();
+        });
+        when(metaService.findLockedMeta(any())).thenAnswer(invocation -> {
+            final Collection<Long> metaIds = invocation.getArgument(0);
+            return metaIds.stream().filter(lockedMetaIds::contains).collect(java.util.stream.Collectors.toSet());
         });
 
         queueManager = new ProcessorTaskQueueManagerImpl(
@@ -126,7 +173,7 @@ class TestProcessorTaskQueueManagerImpl {
                 executorProvider,
                 new TestTaskContextFactory(),
                 nodeInfo,
-                ProcessorConfig::new,
+                TestProcessorConfig::new,
                 () -> internalStatisticsReceiver,
                 metaService,
                 securityContext,
@@ -136,12 +183,9 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.startup();
     }
 
-    private void doRunInline() {
-        org.mockito.Mockito.doAnswer(invocation -> {
-            invocation.getArgument(0, Runnable.class).run();
-            return null;
-        }).when(securityContext).asProcessingUser(any(Runnable.class));
-    }
+    // --------------------------------------------------------------------------------
+    // Filling the queue
+    // --------------------------------------------------------------------------------
 
     @Test
     void filterWithNoProfileIsQueued() {
@@ -151,8 +195,52 @@ class TestProcessorTaskQueueManagerImpl {
 
         queueManager.exec();
 
-        verify(processorTaskDao).queueTasks(anySet(), eq(NODE));
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
     }
+
+    @Test
+    void tasksWithLockedMetaAreNotQueued() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        final List<Long> ids = givenCreatedTasks(filter, 10);
+        // Lock the meta for the first three tasks.
+        lockedMetaIds.addAll(ids.subList(0, 3));
+
+        queueManager.exec();
+
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(7);
+    }
+
+    @Test
+    void queueingStopsOnceTheConfiguredQueueSizeIsReached() {
+        // The first filter alone provides more than the configured queue size so the second is not considered.
+        final ProcessorFilter first = createFilter(1, null);
+        final ProcessorFilter second = createFilter(2, null);
+        givenFilters(first, second);
+        givenCreatedTasks(first, new ProcessorConfig().getQueueSize());
+        givenCreatedTasks(second, 10);
+
+        queueManager.exec();
+
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(new ProcessorConfig().getQueueSize());
+        verify(processorTaskDao, never()).findExistingCreatedTasks(anyLong(), eq(second.getId()), anyInt());
+    }
+
+    @Test
+    void alreadyQueuedTasksAreNotQueuedAgain() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+
+        queueManager.exec();
+        queueManager.exec();
+
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Filling the queue with processing profiles
+    // --------------------------------------------------------------------------------
 
     @Test
     void filterIsQueuedWhenItsProfileAllowsTasks() {
@@ -163,7 +251,7 @@ class TestProcessorTaskQueueManagerImpl {
 
         queueManager.exec();
 
-        verify(processorTaskDao).queueTasks(anySet(), eq(NODE));
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
     }
 
     @Test
@@ -204,7 +292,7 @@ class TestProcessorTaskQueueManagerImpl {
 
         queueManager.exec();
 
-        verify(processorTaskDao).queueTasks(anySet(), eq(NODE));
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
     }
 
     @Test
@@ -220,7 +308,7 @@ class TestProcessorTaskQueueManagerImpl {
 
         queueManager.exec();
 
-        verify(processorTaskDao).queueTasks(anySet(), eq(NODE));
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
     }
 
     /**
@@ -233,24 +321,27 @@ class TestProcessorTaskQueueManagerImpl {
         final ProcessorFilter allowed = createFilter(2, null);
         givenFilters(blocked, allowed);
         // Enough tasks for the blocked filter to fill the whole queue if it were allowed to.
-        givenCreatedTasks(blocked, 1000);
+        givenCreatedTasks(blocked, new ProcessorConfig().getQueueSize());
         givenCreatedTasks(allowed, 10);
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
 
         queueManager.exec();
 
-        // The blocked filter was skipped but the allowed filter was still queued.
         verify(processorTaskDao, never()).findExistingCreatedTasks(anyLong(), eq(blocked.getId()), anyInt());
-        verify(processorTaskDao).findExistingCreatedTasks(anyLong(), eq(allowed.getId()), anyInt());
         assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
     }
 
+    // --------------------------------------------------------------------------------
+    // Releasing tasks
+    // --------------------------------------------------------------------------------
+
     /**
-     * Covers moving from a period where a profile allows processing into one where it does not. The tasks we
-     * queued while it was allowed must be released rather than left owned by this node.
+     * Covers moving from a period where a profile allows processing into one where it does not, and back again.
+     * The tasks queued while it was allowed must be released rather than left owned by this node, and must
+     * become available to queue again once it is.
      */
     @Test
-    void queuedTasksAreReleasedWhenTheProfileStopsAllowingTasks() {
+    void queuedTasksAreReleasedAndRequeuedAsTheProfileChanges() {
         final ProcessorFilter filter = createFilter(1, PROFILE);
         givenFilters(filter);
         givenCreatedTasks(filter, 10);
@@ -260,17 +351,128 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.exec();
         assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
 
-        // Now move into a period where the profile allows nothing.
+        // Move into a period where the profile allows nothing.
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
+        queueManager.exec();
+        assertThat(queueManager.getTaskQueueSize()).isZero();
+        verify(processorTaskDao).releaseTasks(anySet(), eq(TaskStatus.QUEUED));
+
+        // Move back into a period where it allows them again.
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
+        queueManager.exec();
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+    }
+
+    @Test
+    void tasksAreReleasedWhenTheFilterIsNoLongerEnabled() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+
+        // The filter is no longer returned as an enabled filter.
+        givenFilters();
         queueManager.exec();
 
         assertThat(queueManager.getTaskQueueSize()).isZero();
         verify(processorTaskDao).releaseTasks(anySet(), eq(TaskStatus.QUEUED));
     }
 
+    @Test
+    void queuesAreClearedOnShutdown() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+
+        queueManager.shutdown();
+
+        assertThat(queueManager.getTaskQueueSize()).isZero();
+    }
+
+    // --------------------------------------------------------------------------------
+    // Assigning tasks
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void assignsNoMoreThanTheRequestedCount() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        queueManager.exec();
+
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 3);
+
+        assertThat(assigned.getList()).hasSize(3);
+    }
+
+    @Test
+    void taskIsOnlyAssignedOnce() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        queueManager.exec();
+
+        final List<Long> assigned = new ArrayList<>();
+        queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5)
+                .getList().forEach(task -> assigned.add(task.getId()));
+        queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5)
+                .getList().forEach(task -> assigned.add(task.getId()));
+
+        assertThat(assigned).hasSize(10);
+        assertThat(new HashSet<>(assigned)).hasSize(10);
+    }
+
+    @Test
+    void assignsHigherPriorityFilterTasksFirst() {
+        final ProcessorFilter high = createFilter(1, null);
+        final ProcessorFilter low = createFilter(2, null);
+        givenFilters(high, low);
+        givenCreatedTasks(high, 10);
+        givenCreatedTasks(low, 10);
+        queueManager.exec();
+
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
+
+        assertThat(assigned.getList()).hasSize(5);
+        assertThat(assigned.getList())
+                .allMatch(task -> high.getId().equals(task.getProcessorFilter().getId()));
+    }
+
+    @Test
+    void assignmentRespectsTheFilterProcessingTaskLimit() {
+        // The filter may only process 3 tasks at once and is already processing 1.
+        final ProcessorFilter filter = createFilter(1, null).copy().maxProcessingTasks(3).build();
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        when(processorTaskDao.countTasksForFilter(eq(filter.getId()), eq(TaskStatus.PROCESSING))).thenReturn(1);
+        queueManager.exec();
+
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 10);
+
+        assertThat(assigned.getList()).hasSize(2);
+    }
+
+    @Test
+    void noTasksAreAssignedWhenTheProfileAllowsNone() {
+        final ProcessorFilter filter = createFilter(1, PROFILE);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
+        queueManager.exec();
+
+        // The profile now allows nothing, so nothing may be assigned even though tasks are queued.
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 10);
+
+        assertThat(assigned.getList()).isEmpty();
+    }
+
     /**
-     * Covers the assignment side. A filter whose profile cannot be resolved must not stop tasks being assigned
-     * for the other filters.
+     * Covers the assignment side of a bad profile. A filter whose profile cannot be resolved must not stop tasks
+     * being assigned for the other filters.
      */
     @Test
     void badProfileDoesNotStopAssignmentForOtherFilters() {
@@ -289,8 +491,7 @@ class TestProcessorTaskQueueManagerImpl {
         when(processorProfileCache.getProfile(NODE, PROFILE))
                 .thenThrow(new RuntimeException("No such profile"));
 
-        final ProcessorTaskList assigned = queueManager.assignTasks(
-                TaskId.createTestTaskId(), NODE, 5);
+        final ProcessorTaskList assigned = queueManager.assignTasks(TaskId.createTestTaskId(), NODE, 5);
 
         assertThat(assigned.getList()).hasSize(5);
         assertThat(assigned.getList())
@@ -304,25 +505,41 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     /**
-     * Make the DAO behave as though the filter has the given number of unqueued CREATED tasks.
+     * Give the filter the supplied number of unqueued CREATED tasks.
+     *
+     * @return The ids of the tasks created, which are also their meta ids.
      */
-    private void givenCreatedTasks(final ProcessorFilter filter, final int count) {
-        final List<ExistingCreatedTask> existing = new ArrayList<>(count);
+    private List<Long> givenCreatedTasks(final ProcessorFilter filter, final int count) {
+        final List<Long> ids = taskIdsByFilter.computeIfAbsent(filter.getId(), k -> new ArrayList<>());
         for (int i = 0; i < count; i++) {
-            final long id = taskId.incrementAndGet();
-            existing.add(new ExistingCreatedTask(id, id));
+            final long id = taskIdSequence.incrementAndGet();
+            ids.add(id);
             tasksById.put(id, ProcessorTask.builder()
                     .id(id)
+                    .metaId(id)
                     .processorFilter(filter)
                     .build());
         }
-
-        // Return everything on the first page and nothing thereafter so that queueing terminates.
-        when(processorTaskDao.findExistingCreatedTasks(anyLong(), eq(filter.getId()), anyInt()))
-                .thenAnswer(invocation -> invocation.getArgument(0, Long.class) == 0L
-                        ? existing
-                        : Collections.emptyList());
+        return ids;
     }
+
+    private ProcessorFilter createFilter(final int id, final String profileName) {
+        return ProcessorFilter.builder()
+                .id(id)
+                .version(1)
+                .priority(10 - id)
+                .enabled(true)
+                .deleted(false)
+                .profileName(profileName)
+                .processor(Processor.builder()
+                        .id(id)
+                        .enabled(true)
+                        .deleted(false)
+                        .build())
+                .build();
+    }
+
+    // --------------------------------------------------------------------------------
 
     /**
      * {@link SimpleTaskContextFactory} supplies contexts with a null task id but task assignment sets the parent
@@ -343,19 +560,17 @@ class TestProcessorTaskQueueManagerImpl {
         }
     }
 
-    private ProcessorFilter createFilter(final int id, final String profileName) {
-        return ProcessorFilter.builder()
-                .id(id)
-                .version(1)
-                .priority(10 - id)
-                .enabled(true)
-                .deleted(false)
-                .profileName(profileName)
-                .processor(Processor.builder()
-                        .id(id)
-                        .enabled(true)
-                        .deleted(false)
-                        .build())
-                .build();
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Task assignment sleeps for this duration after a queue fill that adds nothing, which we don't want to do
+     * in a test.
+     */
+    private static class TestProcessorConfig extends ProcessorConfig {
+
+        @Override
+        public StroomDuration getWaitToQueueTasksDuration() {
+            return StroomDuration.ZERO;
+        }
     }
 }
