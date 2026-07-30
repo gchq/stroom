@@ -156,7 +156,7 @@ class TestProcessorTaskQueueManagerImpl {
         when(securityContext.asProcessingUserResult(any(Supplier.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
         when(executorProvider.get(any())).thenReturn(command -> asyncFillExecutor.execute(command));
-        when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE));
+        when(targetNodeSetFactory.getEnabledTargetNodeSet()).thenReturn(Set.of(NODE));
         when(processorTaskDao.releaseOwnedTasks(anyString())).thenReturn(0L);
 
         // Only CREATED tasks that we haven't already queued are available to queue.
@@ -325,13 +325,13 @@ class TestProcessorTaskQueueManagerImpl {
     }
 
     @Test
-    void filterIsQueuedWhenTheActiveNodesCannotBeDetermined() throws Exception {
+    void filterIsQueuedWhenTheEnabledNodesCannotBeDetermined() throws Exception {
         // We can't tell whether the profile allows processing so we should keep queueing rather than stop
         // queueing altogether.
         final ProcessorFilter filter = createFilter(1, PROFILE);
         givenFilters(filter);
         givenCreatedTasks(filter, 10);
-        when(targetNodeSetFactory.getEnabledActiveTargetNodeSet())
+        when(targetNodeSetFactory.getEnabledTargetNodeSet())
                 .thenThrow(new RuntimeException("No cluster state"));
 
         queueManager.exec();
@@ -341,12 +341,12 @@ class TestProcessorTaskQueueManagerImpl {
 
     @Test
     void filterIsQueuedWhenOnlySomeNodesAreInTheProfileNodeGroup() throws Exception {
-        // The profile's node group excludes the node doing the queueing but includes another active node, which
-        // can still process the tasks, so they must still be queued.
+        // The profile's node group excludes the node doing the queueing but includes another enabled node,
+        // which can still process the tasks, so they must still be queued.
         final ProcessorFilter filter = createFilter(1, PROFILE);
         givenFilters(filter);
         givenCreatedTasks(filter, 10);
-        when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE, OTHER_NODE));
+        when(targetNodeSetFactory.getEnabledTargetNodeSet()).thenReturn(Set.of(NODE, OTHER_NODE));
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
         when(processorProfileCache.getProfile(OTHER_NODE, PROFILE)).thenReturn(UNLIMITED);
 

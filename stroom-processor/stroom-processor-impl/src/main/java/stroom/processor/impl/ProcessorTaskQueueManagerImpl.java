@@ -766,8 +766,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * with tasks that no node is allowed to process, using up the queue and stopping us from queueing tasks for
      * other filters.
      *
-     * @return The maximum number of tasks that can currently be assigned for the filter, 0 if no active node is
-     * currently allowed to process tasks for it, or {@link Integer#MAX_VALUE} if there is no limit.
+     * @return The maximum number of tasks that can currently be assigned for the filter, 0 if no enabled node
+     * is currently allowed to process tasks for it, or {@link Integer#MAX_VALUE} if there is no limit.
      * @throws RuntimeException If the filter's profile can't be resolved, so that the caller can tell the
      *                          difference between a profile that allows no tasks and one we know nothing about.
      */
@@ -778,25 +778,25 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     : Integer.MAX_VALUE;
         }
 
-        final Set<String> activeNodes;
+        final Set<String> enabledNodes;
         try {
-            // Deliberately the active nodes rather than all enabled ones, as there is no point queueing tasks
-            // for a node that isn't currently there to process them. The trade off is that a node dropping out
-            // briefly will release this filter's queued tasks, which are then queued again when it returns.
-            activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+            // Deliberately all enabled nodes rather than just the currently active ones. A node that drops out
+            // briefly would otherwise make us release this filter's queued tasks and queue them all again when
+            // it returns.
+            enabledNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
         } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
-            // We can't tell which nodes are active so assume tasks can be queued rather than queueing nothing.
-            LOGGER.debug(() -> "Unable to get active nodes, assuming tasks can be queued for " +
+            // We can't tell which nodes are enabled so assume tasks can be queued rather than queueing nothing.
+            LOGGER.debug(() -> "Unable to get enabled nodes, assuming tasks can be queued for " +
                                filter.getFilterInfo(), e);
             return Integer.MAX_VALUE;
         }
 
         try {
             // A profile can stop all nodes processing tasks for the filter, e.g. when the current time is
-            // outside its processing periods or its node group is disabled, so see if any active node is
+            // outside its processing periods or its node group is disabled, so see if any enabled node is
             // currently allowed to process tasks for it.
             int maxClusterTasks = 0;
-            for (final String node : activeNodes) {
+            for (final String node : enabledNodes) {
                 final ProfileResult profileResult = processorProfileCache
                         .getProfile(node, filter.getProfileName());
                 if (profileResult.maxNodeTasks() > 0) {
