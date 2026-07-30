@@ -107,6 +107,8 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // The overview strip: each span is one row. When the whole result set fits at the fixed row stride
     // they're stacked at that stride (a single span is one thin bar); when it doesn't, the rows are
     // vertically compressed to fill the strip so none are clipped.
+    private static final int SPAN_INFO_MIN_WIDTH = 240;
+    private static final int WATERFALL_MIN_WIDTH = 240;
     private static final int OVERVIEW_STRIP_PX = 40;
     private static final int OVERVIEW_ROW_PX = 3;   // fixed row stride when the set fits
     private static final int OVERVIEW_BAR_PX = 2;   // bar height at the fixed stride
@@ -279,7 +281,9 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                 // Drag the panel's left edge: moving left widens it, right narrows it.
                 final int delta = startX - e.getClientX();
                 startX = e.getClientX();
-                spanInfoWidth = Math.max(240, Math.min(900, spanInfoWidth + delta));
+                final int max = Math.max(SPAN_INFO_MIN_WIDTH,
+                        panel.getElement().getClientWidth() - WATERFALL_MIN_WIDTH);
+                spanInfoWidth = Math.max(SPAN_INFO_MIN_WIDTH, Math.min(max, spanInfoWidth + delta));
                 refresh();
                 return;
             }

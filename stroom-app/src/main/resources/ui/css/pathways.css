@@ -453,6 +453,12 @@
     flex: 1;
 }
 
+.span-info-attr .docRefLinkText {
+    white-space: pre-wrap;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
 .span-info-key {
     color: #9aa0a6;
     flex-shrink: 0;
