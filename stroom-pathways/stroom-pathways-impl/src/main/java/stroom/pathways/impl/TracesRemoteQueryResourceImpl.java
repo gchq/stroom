@@ -36,40 +36,40 @@ import jakarta.inject.Singleton;
 @Singleton
 public class TracesRemoteQueryResourceImpl implements TracesRemoteQueryResource {
 
-    private final Provider<TracesStoreImpl> tracesQueryServiceProvider;
+    private final Provider<RestTracesStore> restTracesStoreProvider;
 
     @Inject
-    public TracesRemoteQueryResourceImpl(final Provider<TracesStoreImpl> tracesQueryServiceProvider) {
-        this.tracesQueryServiceProvider = tracesQueryServiceProvider;
+    public TracesRemoteQueryResourceImpl(final Provider<RestTracesStore> restTracesStoreProvider) {
+        this.restTracesStoreProvider = restTracesStoreProvider;
     }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public TracesResultPage getTraces(final FindTraceCriteria criteria) {
-        return tracesQueryServiceProvider.get().getLocalTraces(criteria);
+        return restTracesStoreProvider.get().findTraces(criteria);
     }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public Trace getTrace(final GetTraceRequest request) {
-        return tracesQueryServiceProvider.get().getLocalTrace(request);
+        return restTracesStoreProvider.get().getTrace(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public TraceSpanPage getSpans(final GetSpansRequest request) {
-        return tracesQueryServiceProvider.get().getLocalSpans(request);
+        return restTracesStoreProvider.get().getSpans(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
-        return tracesQueryServiceProvider.get().getLocalTraceOverview(request);
+        return restTracesStoreProvider.get().getTraceOverview(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
-        return tracesQueryServiceProvider.get().getLocalTraceHistogram(request);
+        return restTracesStoreProvider.get().getTraceHistogram(request);
     }
 }

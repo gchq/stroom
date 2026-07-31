@@ -36,11 +36,14 @@ import stroom.util.time.SimpleDurationUtil;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -74,8 +77,8 @@ public class SharedFileStoreShard extends AbstractStoreShard {
 
     /**
      * Idle when neither read nor write has touched this shard within
-     * {@code minTimeToKeepStoreShardEnv}. The local copy is then evicted (deleted) by
-     * {@link stroom.planb.impl.data.ShardManager} and re-synced from the shared store on next access.
+     * {@code minTimeToKeepStoreShardEnv}. The local copy is then evicted (deleted)
+     * and re-synced from the shared store on next access.
      */
     @Override
     public boolean isIdle() {
@@ -243,11 +246,9 @@ public class SharedFileStoreShard extends AbstractStoreShard {
                     FileUtil.deleteDir(syncTmpDir);
                     Files.createDirectories(syncTmpDir);
 
-                    // Copy data.mdb
                     final Path sharedDataFile = sharedShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
                     if (Files.exists(sharedDataFile)) {
-                        Files.copy(sharedDataFile, syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                                StandardCopyOption.REPLACE_EXISTING);
+                        interruptibleCopy(sharedDataFile, syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME));
                     }
 
                     final String v2 = readVersionIfPresent(sharedVersionFile);
@@ -300,6 +301,27 @@ public class SharedFileStoreShard extends AbstractStoreShard {
             throw new UncheckedIOException(e);
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
+        }
+    }
+
+    // Copies a (potentially large) file in chunks, checking the calling thread's interrupt flag between
+    // chunks and aborting with an InterruptedException if it is set. Lets a terminated query TaskContext
+    // stop a long shard copy-down promptly instead of waiting for the whole file to copy.
+    private static void interruptibleCopy(final Path source, final Path target)
+            throws IOException, InterruptedException {
+        try (final InputStream in = Files.newInputStream(source);
+                final OutputStream out = Files.newOutputStream(target,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE)) {
+            final byte[] buffer = new byte[1 << 20];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new InterruptedException("Interrupted while copying " + source);
+                }
+                out.write(buffer, 0, read);
+            }
         }
     }
 

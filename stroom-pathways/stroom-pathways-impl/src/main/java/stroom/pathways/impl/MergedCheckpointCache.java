@@ -28,10 +28,10 @@ import jakarta.inject.Singleton;
 import java.util.function.Supplier;
 
 /**
- * In-memory cache of merged (live + archive) DFS {@link CheckpointIndex}es for large split traces, so a
+ * In-memory cache of merged (shard + archive) DFS {@link CheckpointIndex}es for large split traces, so a
  * random-access / last-page request pages by offset cheaply instead of walking the whole merged tree
  * every time. Keyed by trace plus the versions of every contributing store, so it self-invalidates when
- * either the live shard or an archive bucket changes; bounded by a TTL and a maximum trace count.
+ * either the shard or an archive bucket changes; bounded by a TTL and a maximum trace count.
  */
 @Singleton
 public class MergedCheckpointCache {
