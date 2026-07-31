@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.planb.impl.data.query;
+package stroom.pathways.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;

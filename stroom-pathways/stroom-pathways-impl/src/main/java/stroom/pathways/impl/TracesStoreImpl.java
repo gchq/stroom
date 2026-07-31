@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.planb.impl.data.query;
+package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
@@ -928,6 +928,7 @@ public class TracesStoreImpl implements TracesStore {
         return new TraceOverview(new ArrayList<>(bySpanId.values()));
     }
 
+    @Override
     public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
         final DocRef docRef = request.getDataSourceRef();
         final PlanBDocument doc = getPlanBDoc(docRef);

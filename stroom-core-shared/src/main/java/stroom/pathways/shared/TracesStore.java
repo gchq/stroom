@@ -29,4 +29,6 @@ public interface TracesStore {
     TraceSpanPage getSpans(GetSpansRequest request);
 
     TraceOverview getTraceOverview(GetTraceOverviewRequest request);
+
+    TraceHistogram getTraceHistogram(TraceHistogramRequest request);
 }

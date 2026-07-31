@@ -23,7 +23,6 @@ import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.query.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.query.PlanBShardInfoServiceImpl;
-import stroom.planb.impl.data.query.TracesRemoteQueryResourceImpl;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.BatchDestination;
 import stroom.planb.impl.db.DefaultBatchDestination;
@@ -106,8 +105,7 @@ public class PlanBModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(PlanBDocResourceImpl.class)
                 .bind(FileTransferResourceImpl.class)
-                .bind(PlanBRemoteQueryResourceImpl.class)
-                .bind(TracesRemoteQueryResourceImpl.class);
+                .bind(PlanBRemoteQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StateSearchProvider.class);

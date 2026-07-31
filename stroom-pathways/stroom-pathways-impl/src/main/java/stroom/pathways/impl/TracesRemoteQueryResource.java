@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.planb.impl.data.query;
+package stroom.pathways.impl;
 
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;

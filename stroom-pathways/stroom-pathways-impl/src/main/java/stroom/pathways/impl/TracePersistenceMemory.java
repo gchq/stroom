@@ -20,6 +20,8 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceHistogram;
+import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TracePersistence;
 import stroom.pathways.shared.TraceSpanPage;
@@ -119,6 +121,11 @@ public class TracePersistenceMemory implements TracePersistence {
             traceBuilder.build().getParentSpanIdMap().values().forEach(spans::addAll);
         }
         return new TraceOverview(spans);
+    }
+
+    @Override
+    public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
+        return TraceHistogram.unavailable(0L);
     }
 
     // Flattens a trace to pre-order (tree) order, tagging each span with its depth. Roots are spans

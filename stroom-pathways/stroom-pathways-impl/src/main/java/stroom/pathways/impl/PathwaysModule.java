@@ -22,7 +22,6 @@ import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesStore;
 import stroom.planb.impl.PlanBDocumentTypes;
-import stroom.planb.impl.data.query.TracesStoreImpl;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
@@ -49,7 +48,8 @@ public class PathwaysModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(PathwaysResourceImpl.class)
                 .bind(TracesResourceImpl.class)
-                .bind(TracesDocResourceImpl.class);
+                .bind(TracesDocResourceImpl.class)
+                .bind(TracesRemoteQueryResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessPathways.class, builder -> builder
