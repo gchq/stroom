@@ -114,17 +114,18 @@ public class TraceHistogramWidget extends Composite {
             for (int i = 0; i < n; i++) {
                 final long count = counts.get(i) == null ? 0L : counts.get(i);
                 final double leftPct = i * barWidthPct;
-                final double heightPct = count * 100D / finalMax;
+                final double heightPct = count == 0 ? 0D : count * 100D / finalMax;
                 final long start = data.getFromMs() + (long) i * data.getBucketWidthMs();
                 final long end = Math.min(data.getToMs(), start + data.getBucketWidthMs());
                 final String title = dateTimeFormatter.format(start) + " – "
                         + dateTimeFormatter.format(end) + ": " + count;
+                final String minHeight = count > 0 ? " min-height: 3px;" : "";
                 plot.div("",
                         Attribute.className("histogram-bar"),
                         Attribute.title(title),
                         new Attribute("data-bucket-index", String.valueOf(i)),
                         Attribute.style("left: " + leftPct + "%; width: " + barWidthPct
-                                + "%; height: " + heightPct + "%;"));
+                                + "%; height: " + heightPct + "%;" + minHeight));
             }
         }, Attribute.className(drillable() ? "histogram-plot" : "histogram-plot histogram-plot--min"));
 

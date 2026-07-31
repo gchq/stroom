@@ -612,20 +612,20 @@
 /* ---- Trace histogram ---- */
 
 .trace-histogram {
-    position: relative;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: 1fr 14px;
+    column-gap: 4px;
     height: 72px;
     box-sizing: border-box;
-    padding: 4px 0 2px;
+    padding: 4px var(--control__gap--horizontal) 2px;
     border-bottom: 1px solid var(--border-color);
     font-size: 8px;
 }
 
 .histogram-yaxis {
-    position: absolute;
-    left: var(--control__gap--horizontal);
-    top: 4px;
-    bottom: 18px;
-    width: 42px;
+    grid-column: 1;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -635,23 +635,19 @@
 }
 
 .histogram-plot {
-    position: absolute;
-    left: calc(var(--control__gap--horizontal) + 46px);
-    right: var(--control__gap--horizontal);
-    top: 4px;
-    bottom: 18px;
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
     border-left: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
 }
 
 .histogram-xaxis {
-    position: absolute;
-    left: calc(var(--control__gap--horizontal) + 46px);
-    right: var(--control__gap--horizontal);
-    bottom: 2px;
-    height: 14px;
+    grid-column: 2;
+    grid-row: 2;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     color: #888;
     pointer-events: none;
 }
@@ -665,7 +661,6 @@
 .histogram-bar {
     position: absolute;
     bottom: 0;
-    min-height: 1px;
     box-sizing: border-box;
     border-right: 1px solid transparent;
     background-clip: padding-box;
@@ -682,10 +677,11 @@
 }
 
 .histogram-hint {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
     color: #888;
     font-size: 13px;
 }
