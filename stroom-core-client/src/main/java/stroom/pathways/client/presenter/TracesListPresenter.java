@@ -167,6 +167,7 @@ public class TracesListPresenter
 
         }));
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> refreshHistogram()));
     }
 
     public MultiSelectionModelImpl<TraceRoot> getSelectionModel() {
