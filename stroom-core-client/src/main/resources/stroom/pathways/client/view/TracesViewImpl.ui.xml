@@ -3,7 +3,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:ThinSplitLayoutPanel addStyleNames="max default-min-sizes">
-        <g:north size="400">
+        <g:north size="440">
             <g:SimplePanel ui:field="topWidget" addStyleNames="max"/>
         </g:north>
         <g:center>

@@ -616,7 +616,7 @@
     grid-template-columns: max-content 1fr;
     grid-template-rows: 1fr 14px;
     column-gap: 4px;
-    height: 72px;
+    height: 88px;
     box-sizing: border-box;
     padding: 4px var(--control__gap--horizontal) 2px;
     border-bottom: 1px solid var(--border-color);
