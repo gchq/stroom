@@ -17,6 +17,7 @@
 package stroom.planb.impl.data;
 
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.fs.ArchiveOperation;
 import stroom.planb.impl.fs.SharedFileStoreOperationContext;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
@@ -70,7 +71,7 @@ class TestArchiveOperation {
     @BeforeEach
     void setUp() throws IOException {
         publisher = mock(SharedFileStorePublisher.class);
-        archiveOperation = new ArchiveOperation(publisher);
+        archiveOperation = new ArchiveOperation(publisher, new StatePaths(tempDir.resolve("local_state")));
         sharedShardsDocDir = tempDir.resolve("shards").resolve("doc-uuid");
         Files.createDirectories(sharedShardsDocDir
                 .resolve(PlanBConstants.formatShardIndex(SHARD_INDEX)));

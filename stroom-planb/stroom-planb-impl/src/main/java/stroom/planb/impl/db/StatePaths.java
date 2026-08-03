@@ -47,6 +47,9 @@ public class StatePaths {
     private final Path snapshotDir;
     // Local read-only cached copies of shared-store archive buckets.
     private final Path localArchiveDir;
+    // Local staging for archival writes: dated delta envs, and the copied-down bucket a delta is
+    // merged into. Keeps all archival LMDB work off the shared mount.
+    private final Path archiveStagingDir;
 
     @Inject
     public StatePaths(final Provider<PlanBConfig> configProvider,
@@ -64,6 +67,7 @@ public class StatePaths {
         shardDir = rootDir.resolve(PlanBConstants.SHARDS_DIR_NAME);
         snapshotDir = rootDir.resolve(PlanBConstants.SNAPSHOTS_DIR_NAME);
         localArchiveDir = rootDir.resolve(PlanBConstants.ARCHIVE_CACHE_DIR_NAME);
+        archiveStagingDir = rootDir.resolve(PlanBConstants.ARCHIVE_STAGING_DIR_NAME);
     }
 
     public Path getRootDir() {
@@ -100,5 +104,9 @@ public class StatePaths {
 
     public Path getLocalArchiveDir() {
         return localArchiveDir;
+    }
+
+    public Path getArchiveStagingDir() {
+        return archiveStagingDir;
     }
 }

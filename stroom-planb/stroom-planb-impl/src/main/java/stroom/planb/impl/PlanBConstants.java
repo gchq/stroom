@@ -28,6 +28,11 @@ public final class PlanBConstants {
     // Local cache of read-only copies of shared-store archive buckets (distinct from the shared-store
     // ARCHIVE_DIR_NAME tree). Layout: archive_cache/<uuid>_<idx>_<dateLabel>/<generation>/.
     public static final String ARCHIVE_CACHE_DIR_NAME = "archive_cache";
+    // Local WRITE staging for archival: the dated delta envs produced by archiveOldData, and the
+    // copied-down bucket that a new batch is merged into. All LMDB work for archival happens here so
+    // that no env is ever opened on the shared mount. Distinct from ARCHIVE_CACHE_DIR_NAME, which is
+    // the read-side cache.
+    public static final String ARCHIVE_STAGING_DIR_NAME = "archive_staging";
     public static final String PROCESSING_DIR_NAME = "processing";
     public static final String TRASH_DIR_NAME = "trash";
 
@@ -40,6 +45,10 @@ public final class PlanBConstants {
     public static final String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
 
     public static final String DATA_FILE_NAME = "data.mdb";
+    // Transient name a merged archive data file is copied up under, before being renamed to
+    // DATA_FILE_NAME within the live bucket dir. Renaming within the dir means the bucket dir is
+    // never absent, so there is no window in which a bucket disappears from queries.
+    public static final String DATA_TMP_FILE_NAME = ".tmp_data.mdb";
     public static final String LOCK_FILE_NAME = "lock.mdb";
     public static final String MERGED_FILE_NAME = ".merged";
     public static final String VERSION_FILE_NAME = ".version";

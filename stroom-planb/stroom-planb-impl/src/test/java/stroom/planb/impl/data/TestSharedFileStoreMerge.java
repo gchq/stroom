@@ -232,7 +232,7 @@ class TestSharedFileStoreMerge {
         );
 
         final SharedFileStorePublisher publisher =
-                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY);
+                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, statePaths);
         final SharedFileStoreMergeProcessor mergeProcessor = new SharedFileStoreMergeProcessor(
                 clusterLockService,
                 BYTE_BUFFERS,
@@ -243,7 +243,7 @@ class TestSharedFileStoreMerge {
                 securityContext,
                 taskContextFactory,
                 planBDocCache,
-                Set.of(new RetentionOperation(), new ArchiveOperation(publisher))
+                Set.of(new RetentionOperation(), new ArchiveOperation(publisher, statePaths))
         );
 
         // Run the merge

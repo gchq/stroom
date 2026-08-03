@@ -17,6 +17,7 @@
 package stroom.planb.impl.fs;
 
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.ArchivalSettings;
 import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
@@ -33,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
@@ -56,10 +58,13 @@ public class ArchiveOperation implements SharedFileStoreOperation {
             new OperationMarker(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
 
     private final SharedFileStorePublisher publisher;
+    private final Path archiveStagingDir;
 
     @Inject
-    public ArchiveOperation(final SharedFileStorePublisher publisher) {
+    public ArchiveOperation(final SharedFileStorePublisher publisher,
+                            final StatePaths statePaths) {
         this.publisher = publisher;
+        this.archiveStagingDir = statePaths.getArchiveStagingDir();
     }
 
     // Runs after retention (priority 100) within a merge cycle.
@@ -97,7 +102,10 @@ public class ArchiveOperation implements SharedFileStoreOperation {
         LOGGER.info("Running archival for {} (every {}, next due {})",
                 ctx.lockName(), interval, SimpleDurationUtil.plus(Instant.now(), interval));
 
-        final Path localArchiveBase = Files.createTempDirectory("planb_archive_");
+        // Staged under the configured Plan B root rather than the JVM system temp dir: these are LMDB
+        // envs holding this run's archived data, and system temp is often small or tmpfs (i.e. RAM).
+        final Path localArchiveBase = Files.createDirectories(
+                archiveStagingDir.resolve("delta_" + UUID.randomUUID()));
         try {
             final long count = ctx.shard().archiveOldData(ctx.doc(), localArchiveBase);
 
@@ -119,11 +127,13 @@ public class ArchiveOperation implements SharedFileStoreOperation {
             LOGGER.info("Archiving {} date shard(s) for {}",
                     archiveShards.size(), ctx.lockName());
 
-            // Push each archive shard. If any push fails the data is already deleted
-            // from the main shard (pass 3 ran inside archiveOldData) and cannot be
-            // recovered automatically. We therefore log at ERROR, skip compact and
-            // recordRun so isDue() stays true and the operator is alerted, then
-            // rethrow so the caller's error handling can take over.
+            // Push each archive shard. archiveOldData's pass 3 has already deleted the archived rows,
+            // but only from the LOCAL merge shard — rethrowing makes SharedFileStoreMergeProcessor
+            // .mergeShard skip publisher.push and discard that local shard, so the shared holding shard
+            // keeps its data and the next cycle retries. Log at ERROR and skip compact/recordRun so
+            // isDue() stays true and the operator is alerted, then rethrow. A partial success (bucket A
+            // pushed, bucket B failed) re-pushes A next cycle, which is idempotent: span puts use
+            // MDB_NOOVERWRITE and archiveMergeComplete recomputes totalSpans from the actual count.
             IOException firstFailure = null;
             for (final StagedArchive archiveShard : archiveShards) {
                 try {
@@ -131,9 +141,9 @@ public class ArchiveOperation implements SharedFileStoreOperation {
                     LOGGER.info("Pushed archive shard {} for {}",
                             archiveShard.dateLabel(), ctx.lockName());
                 } catch (final IOException e) {
-                    LOGGER.error("Failed to push archive shard {} for {} — entries may have been " +
-                                 "deleted from the main shard but NOT persisted to the shared store. " +
-                                 "Manual recovery may be required.",
+                    LOGGER.error("Failed to push archive shard {} for {} — the merged shard will not be " +
+                                 "published, so the shared store keeps this data and archival will be " +
+                                 "retried on the next cycle.",
                             archiveShard.dateLabel(), ctx.lockName(), e);
                     if (firstFailure == null) {
                         firstFailure = e;
