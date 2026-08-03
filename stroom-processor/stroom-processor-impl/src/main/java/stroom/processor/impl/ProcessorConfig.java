@@ -195,7 +195,12 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                              "priority filters. This is a cluster wide total shared by all nodes, so it should " +
                              "comfortably exceed the number of tasks all nodes will ask for at once, i.e. the " +
                              "number of nodes multiplied by their Data Processing job task limit. Note also that " +
-                             "no further filters are considered once half this number is already queued.")
+                             "no further filters of a processing profile are considered once half this number is " +
+                             "already queued for that profile. It is applied separately to each processing " +
+                             "profile, and to the filters that have no profile, so that a busy profile can't fill " +
+                             "the queue and leave the nodes of another profile asking for work that is never " +
+                             "queued. The total number of queued tasks therefore grows with the number of " +
+                             "profiles in use.")
     public int getQueueSize() {
         return queueSize;
     }

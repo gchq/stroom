@@ -93,7 +93,7 @@ class TestProgressMonitor {
 
         final String str = progressMonitor
                 .getFullReport("SUMMARY",
-                        new QueueProcessTasksState(0, 0),
+                        new QueueProcessTasksState(List.of(), 0, 0),
                         showFilterDetail,
                         showSummaryPhaseDetail,
                         showFilterPhaseDetail);

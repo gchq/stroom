@@ -25,7 +25,8 @@ import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.impl.ProcessorTaskDao.FilterTaskCounts;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
-import stroom.processor.impl.db.jooq.tables.Processor;
+import stroom.processor.impl.ProgressMonitor.SkipReason;
+import stroom.processor.impl.QueueProcessTasksState.ProfileQueueState;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
@@ -709,8 +710,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         // Update the stream task store.
         final List<ProcessorFilter> filters = prioritisedFilters.get();
         final ProcessorConfig processorConfig = processorConfigProvider.get();
-        final QueueProcessTasksState queueProcessTasksState =
-                new QueueProcessTasksState(getTaskQueueSize(), processorConfig.getQueueSize());
+        // Each processing profile gets its own queueing budget, as do the filters that have no
+        // profile, so that a busy profile can't fill the queue on every pass and leave another
+        // profile's nodes asking for work that never gets queued.
+        final QueueProcessTasksState queueProcessTasksState = new QueueProcessTasksState(
+                filters, getTaskQueueSize(), processorConfig.getQueueSize());
         final ProgressMonitor progressMonitor = new ProgressMonitor(filters.size());
 
         final String nodeName = nodeInfo.getThisNodeName();
@@ -728,9 +732,16 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             filter,
                             k -> new ProcessorTaskQueue());
 
-                    // If we have enough tasks queued then stop trying to add more to the queues.
-                    if (!queueProcessTasksState.keepAddingTasks()) {
-                        break;
+                    // If we have enough tasks queued for this filter's profile then move on to the
+                    // next filter rather than stopping altogether, as another profile's nodes can't
+                    // process anything queued for this one. Only stop once every profile has enough
+                    // queued, so we don't needlessly consider the rest of the filters.
+                    final ProfileQueueState profileQueueState = queueProcessTasksState.getState(filter);
+                    if (!profileQueueState.keepAddingTasks()) {
+                        progressMonitor.logSkippedFilter(filter, SkipReason.QUEUE_FULL_FOR_PROFILE);
+                        if (queueProcessTasksState.isEveryQueueFull()) {
+                            break;
+                        }
 
                     } else {
                         totalAdded += queueTasksForFilter(
@@ -739,7 +750,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                 filter,
                                 progressMonitor,
                                 queue,
-                                queueProcessTasksState);
+                                profileQueueState);
                     }
                 }
             }
@@ -884,7 +895,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                     final ProcessorFilter filter,
                                     final ProgressMonitor progressMonitor,
                                     final ProcessorTaskQueue queue,
-                                    final QueueProcessTasksState queueProcessTasksState) {
+                                    final ProfileQueueState profileQueueState) {
         try {
             LOGGER.debug("queueTasksForFilter() - processorFilter {}", filter.getFilterInfo());
 
@@ -922,7 +933,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         nodeName,
                         filter,
                         queue,
-                        queueProcessTasksState,
+                        profileQueueState,
                         filterProgressMonitor,
                         maxConcurrentTasks);
                 filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
@@ -938,16 +949,16 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final String nodeName,
                                   final ProcessorFilter filter,
                                   final ProcessorTaskQueue queue,
-                                  final QueueProcessTasksState queueProcessTasksState,
+                                  final ProfileQueueState profileQueueState,
                                   final FilterProgressMonitor filterProgressMonitor,
                                   final int maxConcurrentTasks) {
         // Queue tasks for this filter.
         final int initialQueueSize = queue.size();
-        queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
+        profileQueueState.addCurrentlyQueuedTasks(initialQueueSize);
 
         int totalTasks = 0;
         int totalAddedTasks = 0;
-        int tasksToAdd = queueProcessTasksState.getRequiredTaskCount() - initialQueueSize;
+        int tasksToAdd = profileQueueState.getRequiredTaskCount() - initialQueueSize;
         final int batchSize = Math.max(BATCH_SIZE, tasksToAdd);
         long lastTaskId = 0;
 
@@ -1037,10 +1048,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             // If the number of tasks that can be processed at once is limited, either by the filter or by its
             // processing profile, then limit the number we report as being added to the queue otherwise we
             // might stop adding other tasks early.
-            queueProcessTasksState
+            profileQueueState
                     .addTotalQueuedTasks(Math.min(maxConcurrentTasks, initialQueueSize + totalAddedTasks));
         } else {
-            queueProcessTasksState.addTotalQueuedTasks(initialQueueSize + totalAddedTasks);
+            profileQueueState.addTotalQueuedTasks(initialQueueSize + totalAddedTasks);
         }
 
         return totalAddedTasks;

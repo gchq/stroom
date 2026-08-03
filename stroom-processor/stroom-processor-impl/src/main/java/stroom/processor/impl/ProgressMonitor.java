@@ -470,7 +470,11 @@ public class ProgressMonitor {
         /**
          * The task creation budget for this filter's processing profile has been used up
          */
-        BUDGET_REACHED("Task creation budget reached for this filter's processing profile");
+        BUDGET_REACHED("Task creation budget reached for this filter's processing profile"),
+        /**
+         * Enough tasks are already queued for this filter's processing profile
+         */
+        QUEUE_FULL_FOR_PROFILE("Enough tasks already queued for this filter's processing profile");
 
         private final String displayValue;
 
