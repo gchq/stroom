@@ -41,7 +41,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private static final int DEFAULT_MAX_SWEPT_STREAMS_PER_SESSION = 10;
     private static final int DEFAULT_MAX_RETAINED_FINGERPRINTS_PER_ELEMENT = 3;
     private static final int DEFAULT_FILTERED_SCAN_WINDOW = 50;
-    private static final boolean DEFAULT_SKELETON_SWEEP = false;
+    private static final boolean DEFAULT_SKELETON_SWEEP = true;
     private static final long DEFAULT_EAGER_MATERIALISATION_RECORDS = 5_000L;
     private static final int DEFAULT_PREFETCH_WINDOW = 10;
 

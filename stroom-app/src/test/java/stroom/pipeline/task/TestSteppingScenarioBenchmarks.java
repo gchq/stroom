@@ -44,6 +44,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.OutputState;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -111,6 +112,22 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
     private PipelineDataHolderFactory pipelineDataHolderFactory;
     @Inject
     private Store store;
+
+    /**
+     * These benchmarks measure the <b>full-sweep</b> mode's numbers (C's mid-sweep edit, D's ceiling, the
+     * scan's cost model over a full capture) - the fallback, since {@code stepping.skeletonSweep} became
+     * the default - so the class pins skeleton off. Legs that measure the skeleton set their own mapper,
+     * which replaces this pin.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(SteppingConfig.class, config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {
@@ -365,7 +382,8 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
                     new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
 
             for (final int window : windows) {
-                setConfigValueMapper(SteppingConfig.class, config -> config.withFilteredScanWindow(window));
+                setConfigValueMapper(SteppingConfig.class,
+                        config -> config.withSkeletonSweep(false).withFilteredScanWindow(window));
                 sessionUuid = timeFilteredScan(base, record0, sessionUuid, window, nearRecordNo, report);
                 sessionUuid = timeFilteredScan(base, record0, sessionUuid, window, recordCount, report);
             }

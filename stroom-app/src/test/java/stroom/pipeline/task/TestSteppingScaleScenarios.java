@@ -36,6 +36,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -85,6 +86,22 @@ class TestSteppingScaleScenarios extends TranslationTest {
     private PipelineDataHolderFactory pipelineDataHolderFactory;
     @Inject
     private Store store;
+
+    /**
+     * Scenarios B and C are about the <b>full-sweep</b> capture (mid-sweep edits, frontier waits) - the
+     * fallback mode, since {@code stepping.skeletonSweep} became the default - so the class pins skeleton
+     * off. The skeleton and eager tests set their own mapper, which replaces this pin.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {

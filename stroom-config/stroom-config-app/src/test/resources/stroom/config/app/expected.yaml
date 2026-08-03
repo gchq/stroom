@@ -755,7 +755,7 @@ appConfig:
       maxSweptStreamsPerSession: 10
       orphanMaxAge: "PT1H"
       prefetchWindow: 10
-      skeletonSweep: false
+      skeletonSweep: true
       storeSubDir: "stepping"
     xmlSchema:
       cache:

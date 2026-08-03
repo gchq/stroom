@@ -133,6 +133,10 @@ public class SteppingPresenter
     private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean busyTranslating;
+    // Whether the in-flight step is answering an applied step filter. A filtered step is a scan - the
+    // server materialises and tests records until one matches - so the progress message says "Searching"
+    // rather than "Stepping" to set the expectation of a wait proportional to where the next match is.
+    private boolean searching;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
     private final ButtonPanel leftButtons;
@@ -553,7 +557,7 @@ public class SteppingPresenter
             if (stepData != null) {
                 final SharedElementData elementData = stepData.getElementData(elementId.getId());
                 if (elementData != null) {
-                    final Indicators indicators = elementData.getIndicators();
+                    final Indicators indicators = displayIndicators(elementId, elementData);
 
                     // Update the error indicators for all panes
                     elementPresenter.setIndicators(indicators);
@@ -574,6 +578,28 @@ public class SteppingPresenter
         });
     }
 
+    /**
+     * The indicators to display for an element's panes: the ones its run raised, plus a note when the
+     * served record's counts are indicative - the record was produced on its own, so counting elements
+     * never saw the records before it (see {@link SharedElementData#isIndicativeCounts()}). The note has no
+     * location, so it appears in the element's console rather than as an editor gutter marker.
+     */
+    private Indicators displayIndicators(final ElementId elementId, final SharedElementData elementData) {
+        final Indicators indicators = elementData.getIndicators();
+        if (!elementData.isIndicativeCounts()) {
+            return indicators;
+        }
+        final Indicators combined = new Indicators();
+        if (indicators != null) {
+            combined.addAll(indicators);
+        }
+        combined.add(new StoredError(Severity.INFO, null, elementId,
+                "Counts are indicative: this record was produced on its own, so counting elements "
+                + "(e.g. the EventId added by IdEnrichmentFilter) did not see the records before it. "
+                + "Stepping from the start of the stream gives exact counts."));
+        return combined;
+    }
+
     private void clearIndicators(final ElementPresenter elementPresenter,
                                  final ElementId elementId) {
         elementPresenter.clearAllIndicators();
@@ -587,7 +613,7 @@ public class SteppingPresenter
         if (stepData != null) {
             final SharedElementData elementData = NullSafe.get(elementId, ElementId::getId, stepData::getElementData);
             if (elementData != null) {
-                final Indicators indicators = elementData.getIndicators();
+                final Indicators indicators = displayIndicators(elementId, elementData);
                 updateToggleConsoleBtnVisibility(indicators, elementId);
             } else {
                 updateToggleConsoleBtnVisibility(null, elementId);
@@ -878,7 +904,10 @@ public class SteppingPresenter
             requestBuilder.timeout(40L);
             requestBuilder.code(codeMap);
             requestBuilder.stepType(stepType);
-            requestBuilder.stepFilterMap(pipelineModel.getStepFilterMap());
+            final Map<String, SteppingFilterSettings> stepFilterMap = pipelineModel.getStepFilterMap();
+            requestBuilder.stepFilterMap(stepFilterMap);
+            searching = stepFilterMap != null && stepFilterMap.values().stream()
+                    .anyMatch(settings -> settings != null && settings.isFilterApplied());
 
             if (StepType.REFRESH.equals(stepType)) {
                 elementPresenterMap.values().stream()
@@ -903,7 +932,9 @@ public class SteppingPresenter
                     if (!response.isComplete()) {
                         if (busyTranslating) {
                             final StepLocation progressLocation = response.getProgressLocation();
-                            stepMessage.getElement().setInnerHTML("Stepping... " +
+                            stepMessage.getElement().setInnerHTML((searching
+                                                                          ? "Searching... "
+                                                                          : "Stepping... ") +
                                                                   getStepLocationText(progressLocation));
                             poll();
                         } else {

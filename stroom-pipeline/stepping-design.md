@@ -487,6 +487,10 @@ Assume a selection of three streams `[10, 20, 30]`, ten records each (0-based), 
 | `maxRetainedFingerprintsPerElement` | 3 | How many edits back a revert stays free |
 | `maxSessionIdleTime` | 10 min | Idle reap |
 | `orphanMaxAge` | 1 hour | Age before `cleanupOrphans` deletes a stranded dir |
+| `filteredScanWindow` | 50 | Records a filtered scan materialises per window (§ scenario F) |
+| `skeletonSweep` | on | First capture truncates at the parser boundary; the full sweep is the fallback |
+| `eagerMaterialisationRecords` | 5,000 | Streams at/below this materialise their whole extent on the first below-boundary demand |
+| `prefetchWindow` | 10 | Records an unfiltered navigation step materialises in its direction of travel |
 
 > **Adding a property?** Two generators must be re-run, or config tests fail:
 > ```
@@ -751,7 +755,7 @@ tests and benchmarks that follow are organised around them.
 | A | Refresh record 1M against a **completed** capture | a few ms | **Works** - measured at ~20ms incl. transport, vs ~670ms before §11 |
 | B | Step to record 1M while capture has reached 500k | wait for the frontier to pass 1M; keep everything captured so far; launch nothing new | **Works** - the resolver waits on the watermark; no second sweep |
 | C | Capture has reached 2M; the user edits the XSLT and refreshes | keep the 2M records of upstream capture; re-run only the edited element and below | **Works** - the capture runs on and only the edited element is materialised; nothing is re-parsed |
-| D | Jump straight to record 1M of a stream never swept | capture boundary IO only on the way; materialise below the boundary for that one record | **Built, behind config** - `stepping.skeletonSweep`, default off; the launch policy that turns it on by default for large streams is the remaining piece |
+| D | Jump straight to record 1M of a stream never swept | capture boundary IO only on the way; materialise below the boundary for that one record | **Built, the default** - `stepping.skeletonSweep` defaults on; the full sweep remains the fallback for boundary-less (reader/text) pipelines |
 
 **A** is the shipped §11 work: `TestSteppingMidPointBenchmark` measures it, `TestLiveReprocessOnEdit` pins the
 routing.
@@ -863,7 +867,7 @@ pinned:
   makes it the difference between "cannot step this stream" and "can" - a stronger claim than the 10x
   speed-up, and the reason D is scoped as it is.
 
-### The skeleton sweep — capture only down to the record boundary (built, behind `stepping.skeletonSweep`)
+### The skeleton sweep — capture only down to the record boundary (built, the default via `stepping.skeletonSweep`)
 
 Everything above assumes a sweep captures **every element's IO for every record**. For a 10M-record stream
 that is the dominant cost, and most of it is wasted: to answer "show me record 1,000,000" the only thing we
@@ -957,9 +961,13 @@ their keep:
 
 A step served behind the running backbone's frontier (scenario C machinery) is not delayed by any of this -
 promotion applies only once the backbone has completed, and records materialised early are skipped by the
-store's idempotent writes. Still to decide: turning `skeletonSweep` on by default, which is a test-churn and
-roll-out decision rather than an engineering one - every counter-asserting test encodes the full-sweep-first
-launch pattern.
+store's idempotent writes. **The default is now ON** (2026-08-03): a stream's first capture is the skeleton
+wherever a parser boundary exists, with the full sweep remaining the fallback (reader/text pipelines, and a
+completed backbone the planner cannot build on). The test churn resolved the other way round from the mode:
+classes that gate the full-sweep mode's behaviour (the golden corpus as recorded, scenarios B/C's mid-sweep
+edits, the benchmarks' full-sweep legs, the windowed scan over a full capture, counter replay's swept cases)
+now pin `skeletonSweep` off per class, while the remaining integration tests run - and therefore gate - the
+new default.
 
 **Measured** (see `TestSteppingScenarioBenchmarks.measureTheSkeletonSweepCeiling`, 4,000 records, sample
 event pipeline): the full-pipeline sweep took 3,829ms and the boundary-only truncation 397ms, so ~90% of
@@ -1139,9 +1147,9 @@ starts - the discipline that caught every real bug so far.
    `stepping.skeletonSweep` (default off)**: the existing `create(..., stopAfter)` head build truncates at
    the parser; `TestSkeletonSweptStepping` runs the whole golden corpus with the flag on (eager threshold
    zero, so the corpus gates the demand-shaped path); the eager policy is measured at parity with the full
-   sweep (see *The small-stream policy* above). Remaining from this stage: flipping the default on (a
-   roll-out/test-churn decision) - the counters marker, the caps decision and the shadow-diff harness are
-   all closed; see the decisions below and the §9 test table.*
+   sweep (see *The small-stream policy* above). **The default is now flipped on** (2026-08-03; see *The
+   small-stream policy* for how the test churn was resolved) - the counters marker, the caps decision and
+   the shadow-diff harness are all closed; see the decisions below and the §9 test table.*
 5. **Demand shaping.** Prefetch windows around the user's position; adaptive window growth for scenario F if
    it proves to matter. *Acceptance: walking NEXT over a skeleton-swept stream costs store-reads, not
    replays, after the first.* **The prefetch is built** (`stepping.prefetchWindow`, default 10): a
@@ -1151,12 +1159,13 @@ starts - the discipline that caught every real bug so far.
    widened; the post-edit inner loop pays for exactly the record it names. Measured
    (`measureWalkingASkeletonSweptStream`, 30 steps, 2026-07-29): cached floor 2.8ms/step (0 launches),
    skeleton with prefetch 4.8ms/step (3 launches - one per window), without 11.7ms/step (30 launches).
-   Remaining from this stage: the below-boundary error-indicator UX. The adaptive filtered window was
+   The below-boundary error-indicator UX is decided and built (see the decision below: the progressive
+   scan with live "Searching..." progress and terminate is the UX). The adaptive filtered window was
    measured (`measureTheFilteredScanWindowTradeOff` - which first exposed and then, fixed, validated the
    scan's launch discipline) and deliberately not built: the fixed window is fine at current scales, and
    the stateless growth rule to reach for if a real case appears is recorded under scenario F. The 5.3
    deletion audit is done - see the paragraph after the stages for what it removed and what it concluded
-   must stay.*
+   must stay. Nothing in the staged plan remains open.*
 
 Stages 1-3 need no new capture machinery and fix the worst live deficiency (C). Stage 4 is where the 10x
 first pass and the caps headroom arrive. Nothing in 1-3 is throwaway on the path to 4 - the frontier logic
@@ -1197,8 +1206,9 @@ audit cannot mistake it for accident.
   exactness is a property of the run that produced the bytes - the `EventId` is *inside the stored output* -
   and no amount of coverage arithmetic later can recover what the run did or did not restore. Pinned both
   ways in `TestSteppingCounterReplay`: the backbone materialisation serves EventId 1 marked, the full-sweep
-  and restored-replay counts serve unmarked. The UI marker itself is still to do - the wire now carries the
-  truth for it to render.
+  and restored-replay counts serve unmarked. The UI renders it (2026-08-03) as an INFO note in the element's
+  console (`SteppingPresenter.displayIndicators`): location-agnostic, so it reaches the log view and lights
+  the console toggle without inventing a gutter marker for a whole-record property.
 - **Eviction pinning - decided and built** (it was due before stage 3 widened concurrency): the retention LRU
   could evict a fingerprint still being written or read (§ scale scenarios, E). `StepDataStore.pin` returns a
   reference-counted `StorePin` over a set of `(element, fingerprint)` versions; the LRU evicts the eldest
@@ -1214,9 +1224,14 @@ audit cannot mistake it for accident.
   parser file - so weakening it "because backbones are cheap" would trade a disk saving for the exact heap
   exposure the cap exists to prevent. A stream past the record cap stays uncapturable in either mode, and
   says so.
-- **Below-boundary error indicators** (before stage 5 makes skeleton the default): "skip to error" on an
-  element that has not been materialised has nothing to read; the windowed scan answers it, but the UX of
-  "searching..." over a large stream wants deciding, not discovering.
+- **Below-boundary error indicators - decided: the progressive scan IS the UX, made legible.** "Skip to
+  error" on an element that has not been materialised is answered by the windowed scan, and the long-poll
+  already gives the client live progress (the scan's frontier location) and a working terminate button -
+  which is the right affordance for a wait whose length depends on where the next match is. What was
+  missing was legibility: the client now shows <b>"Searching... [stream:part:record]"</b> for any step
+  answering an applied filter (it is a scan, not one record's production) and keeps "Stepping..." for the
+  rest. No pre-scan warning and no scan cap: the stream caps already bound the worst case, and the fixed
+  scan's cost model (scenario F's numbers) makes the wait proportional and visible rather than pathological.
 
 ### Rejected: hot-swap the element mid-stream
 

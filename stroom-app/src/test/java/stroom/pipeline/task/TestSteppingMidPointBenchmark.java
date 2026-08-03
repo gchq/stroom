@@ -38,6 +38,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -110,6 +111,22 @@ class TestSteppingMidPointBenchmark extends TranslationTest {
     private PipelineDataHolderFactory pipelineDataHolderFactory;
     @Inject
     private Store store;
+
+    /**
+     * Scenario A's number is the full sweep's mid-point cost - the fallback mode, since
+     * {@code stepping.skeletonSweep} became the default - so the benchmark pins skeleton off to keep
+     * measuring the thing it was built to measure.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {

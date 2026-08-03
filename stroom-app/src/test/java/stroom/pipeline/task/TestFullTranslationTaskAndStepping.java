@@ -18,6 +18,7 @@ package stroom.pipeline.task;
 
 import stroom.test.common.StroomPipelineTestFileUtil;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -43,6 +44,23 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
             loadAllRefData();
             DONE_SETUP.set(true);
         }
+    }
+
+    /**
+     * The corpus was recorded by the old engine's whole-pipeline sweeps, so this class gates the
+     * <b>full-sweep</b> mode - the fallback, since {@code stepping.skeletonSweep} became the default. The
+     * skeleton-mode run of the same corpus is {@link TestSkeletonSweptStepping}, whose own mapper (a child
+     * {@code @BeforeEach} runs after this one) replaces this pin.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
     }
 
     @Override

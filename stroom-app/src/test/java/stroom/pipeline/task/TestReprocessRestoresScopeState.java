@@ -37,6 +37,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -117,6 +118,23 @@ class TestReprocessRestoresScopeState extends TranslationTest {
     private DocFinder docFinder;
     @Inject
     private XsltStore xsltStore;
+
+    /**
+     * The scope-restore is asserted over a <b>full-sweep</b> capture - the fallback mode, since
+     * {@code stepping.skeletonSweep} became the default (the test's setup assertion pins "the first step
+     * was one full sweep"). Scope restore under the skeleton is exercised by the state fixture and
+     * counter-replay tests, whose materialisations restore the same snapshots.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {

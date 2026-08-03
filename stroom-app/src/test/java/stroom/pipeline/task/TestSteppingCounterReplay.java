@@ -39,6 +39,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -84,6 +85,22 @@ class TestSteppingCounterReplay extends TranslationTest {
     private DocFinder docFinder;
     @Inject
     private XsltStore xsltStore;
+
+    /**
+     * The swept and restored-replay cases are <b>full-sweep</b> behaviour - the fallback mode, since
+     * {@code stepping.skeletonSweep} became the default - so the class pins skeleton off. The backbone
+     * case sets its own mapper, which replaces this pin.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {

@@ -37,6 +37,7 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -113,6 +114,22 @@ class TestFilteredStepAfterEdit extends TranslationTest {
      * exactly one. Guarded like the rest of the setup, it lets this class hold more than a single test.
      * {@code cleanupBetweenTests} is false, so the data it loads survives between them.
      */
+    /**
+     * The windowed scan here runs over a <b>full-sweep</b> capture - the fallback mode, since
+     * {@code stepping.skeletonSweep} became the default - so the class pins skeleton off. The prefetch
+     * mapper set mid-test replaces this pin, so it re-asserts skeleton off itself.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
+
     @BeforeEach
     void setup() {
         if (!DONE_SETUP.get()) {
@@ -177,7 +194,7 @@ class TestFilteredStepAfterEdit extends TranslationTest {
             // do and the launch-counter assertion below vacuous. (The with-prefetch interaction - a filtered
             // ask answered from records already in the store - is pinned at the end of this phase.)
             setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
-                    config -> config.withPrefetchWindow(1));
+                    config -> config.withSkeletonSweep(false).withPrefetchWindow(1));
 
             // Negative control. "Landed on record 2" only means "the filter made it skip" if the same step
             // without a filter lands on record 1. Without this, a test that asserts a landing proves nothing
