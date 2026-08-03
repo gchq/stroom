@@ -57,6 +57,11 @@ public class ArchiveOperation implements SharedFileStoreOperation {
     private static final OperationMarker MARKER =
             new OperationMarker(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
 
+    // Separate marker: the rooted-span phase runs every cycle, so it tracks its own "last ran" purely
+    // to know which traces have been merged since, independently of the lead-time archival schedule.
+    private static final OperationMarker SPAN_MARKER =
+            new OperationMarker(PlanBConstants.SPAN_ARCHIVAL_LAST_FILE_NAME);
+
     private final SharedFileStorePublisher publisher;
     private final Path archiveStagingDir;
 
@@ -93,77 +98,127 @@ public class ArchiveOperation implements SharedFileStoreOperation {
                 : null;
     }
 
+    /**
+     * Runs two phases with deliberately different cadences.
+     *
+     * <p><b>Every cycle:</b> archive the spans of rooted traces into their buckets, keeping each root
+     * behind as the accumulator for late spans. This is what makes the archive the queryable copy, so
+     * it must not wait out {@code checkInterval} — query freshness is this phase's cadence.
+     *
+     * <p><b>On {@code checkInterval}:</b> the original age-gated archival, which moves a root and its
+     * remaining spans out once the root has aged past the archival lead time.
+     */
     @Override
     public boolean run(final SharedFileStoreOperationContext ctx) throws IOException {
-        if (!isDue(ctx.doc(), ctx.sharedShardsDocDir(), ctx.shardIndex())) {
-            return false;
+        boolean modified = archiveRootedSpans(ctx);
+        if (isDue(ctx.doc(), ctx.sharedShardsDocDir(), ctx.shardIndex())) {
+            modified |= archiveAgedData(ctx);
         }
+        return modified;
+    }
+
+    private boolean archiveRootedSpans(final SharedFileStoreOperationContext ctx) throws IOException {
+        final Instant since = SPAN_MARKER.lastRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+        return withStagingDir(ctx, localArchiveBase -> {
+            final long count = ctx.shard().archiveRootedSpans(ctx.doc(), localArchiveBase, since);
+            if (count == 0) {
+                LOGGER.debug(() -> "No rooted spans to archive for " + ctx.lockName());
+                return false;
+            }
+            LOGGER.info("Archiving {} rooted span(s) for {}", count, ctx.lockName());
+            pushAll(ctx, localArchiveBase);
+            // Only recorded once every bucket pushed, so a failure re-sends the same traces next cycle
+            // rather than skipping them.
+            SPAN_MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+            return true;
+        });
+    }
+
+    private boolean archiveAgedData(final SharedFileStoreOperationContext ctx) throws IOException {
         final SimpleDuration interval = archival(ctx.doc()).getCheckInterval();
         LOGGER.info("Running archival for {} (every {}, next due {})",
                 ctx.lockName(), interval, SimpleDurationUtil.plus(Instant.now(), interval));
 
-        // Staged under the configured Plan B root rather than the JVM system temp dir: these are LMDB
-        // envs holding this run's archived data, and system temp is often small or tmpfs (i.e. RAM).
-        final Path localArchiveBase = Files.createDirectories(
-                archiveStagingDir.resolve("delta_" + UUID.randomUUID()));
-        try {
+        return withStagingDir(ctx, localArchiveBase -> {
             final long count = ctx.shard().archiveOldData(ctx.doc(), localArchiveBase);
-
             if (count == 0) {
                 LOGGER.debug(() -> "No data to archive for " + ctx.lockName());
                 MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
                 return false;
             }
-
-            // Collect the dated subdirs written by db.archiveOldData
-            final List<StagedArchive> archiveShards;
-            try (final Stream<Path> stream = Files.list(localArchiveBase)) {
-                archiveShards = stream
-                        .filter(Files::isDirectory)
-                        .map(dir -> new StagedArchive(dir.getFileName().toString(), dir))
-                        .toList();
-            }
-
-            LOGGER.info("Archiving {} date shard(s) for {}",
-                    archiveShards.size(), ctx.lockName());
-
-            // Push each archive shard. archiveOldData's pass 3 has already deleted the archived rows,
-            // but only from the LOCAL merge shard — rethrowing makes SharedFileStoreMergeProcessor
-            // .mergeShard skip publisher.push and discard that local shard, so the shared holding shard
-            // keeps its data and the next cycle retries. Log at ERROR and skip compact/recordRun so
-            // isDue() stays true and the operator is alerted, then rethrow. A partial success (bucket A
-            // pushed, bucket B failed) re-pushes A next cycle, which is idempotent: span puts use
-            // MDB_NOOVERWRITE and archiveMergeComplete recomputes totalSpans from the actual count.
-            IOException firstFailure = null;
-            for (final StagedArchive archiveShard : archiveShards) {
-                try {
-                    publisher.pushArchive(ctx.doc(), ctx.shardIndex(), archiveShard);
-                    LOGGER.info("Pushed archive shard {} for {}",
-                            archiveShard.dateLabel(), ctx.lockName());
-                } catch (final IOException e) {
-                    LOGGER.error("Failed to push archive shard {} for {} — the merged shard will not be " +
-                                 "published, so the shared store keeps this data and archival will be " +
-                                 "retried on the next cycle.",
-                            archiveShard.dateLabel(), ctx.lockName(), e);
-                    if (firstFailure == null) {
-                        firstFailure = e;
-                    }
-                }
-            }
-
-            if (firstFailure != null) {
-                throw firstFailure;
-            }
+            pushAll(ctx, localArchiveBase);
 
             LOGGER.info("Compacting main shard after archival for {}", ctx.lockName());
             ctx.shard().compact();
 
             MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
             return true;
+        });
+    }
 
-        } finally {
-            FileUtil.deleteDir(localArchiveBase);
+    /**
+     * Pushes every dated delta dir staged under {@code localArchiveBase} to its bucket.
+     *
+     * <p>The staged rows have already been deleted, but only from the LOCAL merge shard — rethrowing
+     * makes {@code SharedFileStoreMergeProcessor.mergeShard} skip {@code publisher.push} and discard
+     * that local shard, so the shared holding shard keeps its data and the next cycle retries. A
+     * partial success (bucket A pushed, bucket B failed) re-pushes A next cycle, which is idempotent:
+     * span puts use {@code MDB_NOOVERWRITE} and the bucket's root is recomputed from its own spans.
+     */
+    private void pushAll(final SharedFileStoreOperationContext ctx,
+                         final Path localArchiveBase) throws IOException {
+        final List<StagedArchive> archiveShards;
+        try (final Stream<Path> stream = Files.list(localArchiveBase)) {
+            archiveShards = stream
+                    .filter(Files::isDirectory)
+                    .map(dir -> new StagedArchive(dir.getFileName().toString(), dir))
+                    .toList();
+        }
+
+        LOGGER.info("Archiving {} date shard(s) for {}", archiveShards.size(), ctx.lockName());
+
+        IOException firstFailure = null;
+        for (final StagedArchive archiveShard : archiveShards) {
+            try {
+                publisher.pushArchive(ctx.doc(), ctx.shardIndex(), archiveShard);
+                LOGGER.info("Pushed archive shard {} for {}",
+                        archiveShard.dateLabel(), ctx.lockName());
+            } catch (final IOException e) {
+                LOGGER.error("Failed to push archive shard {} for {} — the merged shard will not be " +
+                             "published, so the shared store keeps this data and archival will be " +
+                             "retried on the next cycle.",
+                        archiveShard.dateLabel(), ctx.lockName(), e);
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+            }
+        }
+
+        if (firstFailure != null) {
+            throw firstFailure;
         }
     }
 
+    // Staged under the configured Plan B root rather than the JVM system temp dir: these are LMDB
+    // envs holding this run's archived data, and system temp is often small or tmpfs (i.e. RAM).
+    private boolean withStagingDir(final SharedFileStoreOperationContext ctx,
+                                   final StagingWork work) throws IOException {
+        final Path localArchiveBase = Files.createDirectories(
+                archiveStagingDir.resolve("delta_" + UUID.randomUUID()));
+        try {
+            return work.run(localArchiveBase);
+        } finally {
+            try {
+                FileUtil.deleteDir(localArchiveBase);
+            } catch (final Exception e) {
+                LOGGER.warn("Failed to clean up archive staging dir {} for {}: {}",
+                        localArchiveBase, ctx.lockName(), e.getMessage());
+            }
+        }
+    }
+
+    private interface StagingWork {
+
+        boolean run(Path localArchiveBase) throws IOException;
+    }
 }

@@ -205,7 +205,11 @@ public class SharedFileStorePublisher {
                 try (final Db<?, ?> db = PlanBDb.open(
                         doc, stagingDir, byteBuffers, byteBufferFactory, false)) {
                     db.merge(archiveShard.localDir());
-                    db.archiveMergeComplete();
+                    // Full rebuild rather than archiveMergeComplete's totalSpans-only patch: a trace's
+                    // spans now all land in its root's start-time bucket, so the bucket can derive an
+                    // authoritative root (depth, services, end time, counts) from its own span set.
+                    // merge() maintains the per-trace stats it needs and queues every touched trace.
+                    db.mergeComplete();
                 }
                 // Keep the archive layout as data.mdb + .version only: drop the lock file LMDB created
                 // locally during the merge (it is recreated on the next open).

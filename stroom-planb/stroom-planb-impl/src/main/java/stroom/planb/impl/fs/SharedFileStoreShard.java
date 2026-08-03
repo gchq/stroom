@@ -175,6 +175,49 @@ public class SharedFileStoreShard extends AbstractStoreShard {
         return count;
     }
 
+    /**
+     * Archives the spans of rooted traces into their buckets, keeping each root in the live shard as
+     * the accumulator for late spans. Runs every merge cycle (see
+     * {@link Db#archiveRootedSpans}), so unlike {@link #archiveOldData} it is not gated on the
+     * archival lead time — only on archival being configured at all, since without it there are no
+     * buckets to write to.
+     *
+     * @param archiveBaseDir local base dir; dated subdirs are created underneath
+     * @param since          when this last ran for this shard, or null if never
+     * @return count of spans removed from the live shard (0 if nothing to archive)
+     */
+    public long archiveRootedSpans(final PlanBDocument doc,
+                                   final Path archiveBaseDir,
+                                   final Instant since) throws IOException {
+        syncFromSharedStoreIfRequired();
+
+        final ArchivalSettings archival = doc.getSettings() instanceof final HasSharedFileStore s
+                && s.getSharedFileStore() != null
+                ? s.getSharedFileStore().getArchival() : null;
+        if (archival == null || !archival.isEnabled()) {
+            return 0;
+        }
+
+        Files.createDirectories(archiveBaseDir);
+
+        final long count;
+        try {
+            writeLock.lockInterruptibly();
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+        try {
+            count = db.archiveRootedSpans(archival.getGranularity(), archiveBaseDir, since);
+            if (count > 0) {
+                lastWriteTime = Instant.now();
+            }
+        } finally {
+            writeLock.unlock();
+        }
+
+        return count;
+    }
+
     private void syncFromSharedStoreIfRequired() {
         if (doc.getSharedPath() == null || shardIndex < 0) {
             return;

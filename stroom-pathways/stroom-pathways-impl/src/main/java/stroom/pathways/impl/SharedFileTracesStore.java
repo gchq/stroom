@@ -113,25 +113,19 @@ class SharedFileTracesStore extends AbstractTracesStore {
                 taskContext -> doGetTrace(request)).get();
     }
 
+    // Reads the trace from its archive bucket(s). The holding-area shard is never consulted: it holds
+    // each trace's root purely as an accumulator for late spans, and the bucket is the queryable copy.
+    // A trace that arrived since the last archival run therefore has no bucket yet and is not found.
     private Trace doGetTrace(final GetTraceRequest request) {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-
-        // Fast path: a trace that still has its root span is fully present (archival removes the root
-        // with the trace), so no archive is needed.
-        final Optional<Trace> shardTrace = readTrace(request);
-        if (shardTrace.isPresent() && shardTrace.get().root() != null) {
-            return shardTrace.get();
-        }
-
-        // Otherwise the trace may be split: its root archived while late spans remain in the shard (rootless
-        // fragment), or fully archived. Union the shard with every relevant archive bucket.
-        final List<Trace> sources = new ArrayList<>();
-        shardTrace.ifPresent(sources::add);
-
         final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
         final long fromMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MIN_VALUE;
         final long toMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MAX_VALUE;
         final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+
+        // Normally one bucket; still unioned so data left split by the older insert-time bucketing reads
+        // whole.
+        final List<Trace> sources = new ArrayList<>();
         for (final ArchiveShardRef ref : relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs)) {
             final Trace archived = getTraceFromArchive(ref, shardIndex, traceIdBytes, doc);
             if (archived != null) {
@@ -153,21 +147,15 @@ class SharedFileTracesStore extends AbstractTracesStore {
                 taskContext -> doGetSpans(request)).get();
     }
 
+    // Pages the span tree from the trace's archive bucket(s) only — see doGetTrace for why the
+    // holding-area shard is not consulted.
     private TraceSpanPage doGetSpans(final GetSpansRequest request) {
-        final GroupSelection groupSelection = request.getGroupSelection();
-        final TraceDb.SpanOpenTest openTest = openTest(groupSelection);
-        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final String docName = request.getDataSourceRef().getName();
-        if (hasRoot(docName, request.getTraceId(), traceIdBytes)) {
-            return rootedSpanPage(request, groupSelection, openTest);
-        }
-
-        // Split/archived: merge the shard with the relevant archive bucket(s).
+        final TraceDb.SpanOpenTest openTest = openTest(request.getGroupSelection());
         final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
         final long fromMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MIN_VALUE;
         final long toMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MAX_VALUE;
         final List<ArchiveShardRef> refs = relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs);
-        return mergedSpanPage(request, refs, openTest);
+        return archiveSpanPage(request, refs, openTest);
     }
 
     @Override
@@ -177,29 +165,25 @@ class SharedFileTracesStore extends AbstractTracesStore {
                 taskContext -> doGetTraceOverview(request)).get();
     }
 
+    // Reads the downsampled overview from the trace's archive bucket(s) only, deduped by spanId with
+    // first-write-wins — see doGetTrace for why the holding-area shard is not consulted.
     private TraceOverview doGetTraceOverview(final GetTraceOverviewRequest request) {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final String docName = request.getDataSourceRef().getName();
-        final Map<String, Span> bySpanId = readOverview(request);
+        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+        final Map<String, Span> bySpanId = new LinkedHashMap<>();
 
-        // A split/archived trace (root not in the shard) unions the shard overview with the relevant
-        // archive bucket(s), deduped by spanId; an unsplit trace reads the shard only.
-        if (!hasRoot(docName, request.getTraceId(), traceIdBytes)) {
-            final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
-            final List<ArchiveShardRef> refs = relevantArchiveShards(
-                    doc, request.getTraceId(), request.getFromMs(), request.getToMs());
-            final int shardIndex = archiveShardIndex(doc, request.getTraceId());
-            for (final ArchiveShardRef ref : refs) {
-                final List<Span> archived = shardManager.getArchive(doc, shardIndex, ref, reader -> {
-                    if (reader instanceof final TraceDb traceDb) {
-                        return traceDb.getOverviewSpans(
-                                traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars());
-                    }
-                    throw new IllegalStateException("Unexpected value: " + reader);
-                });
-                if (archived != null) {
-                    archived.forEach(s -> bySpanId.putIfAbsent(s.getSpanId(), s));
+        for (final ArchiveShardRef ref : relevantArchiveShards(
+                doc, request.getTraceId(), request.getFromMs(), request.getToMs())) {
+            final List<Span> archived = shardManager.getArchive(doc, shardIndex, ref, reader -> {
+                if (reader instanceof final TraceDb traceDb) {
+                    return traceDb.getOverviewSpans(
+                            traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars());
                 }
+                throw new IllegalStateException("Unexpected value: " + reader);
+            });
+            if (archived != null) {
+                archived.forEach(s -> bySpanId.putIfAbsent(s.getSpanId(), s));
             }
         }
         return new TraceOverview(new ArrayList<>(bySpanId.values()));

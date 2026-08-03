@@ -241,6 +241,31 @@ abstract class AbstractTracesStore implements TracesStore {
         return bySpanId;
     }
 
+    /**
+     * Pages a trace wholly from its archive bucket(s) — the queryable copy — with no contribution from
+     * the holding-area shard. Returns an empty page when the trace has no bucket yet, i.e. it arrived
+     * since the last archival run.
+     *
+     * <p>Normally there is exactly one bucket, because a trace's spans are all archived to its root's
+     * start-time bucket. Several are still merged when they occur, which covers data left split by the
+     * older insert-time bucketing.
+     */
+    protected TraceSpanPage archiveSpanPage(final GetSpansRequest request,
+                                            final List<ArchiveShardRef> refs,
+                                            final TraceDb.SpanOpenTest openTest) {
+        if (refs.isEmpty()) {
+            return new TraceSpanPage(List.of(), false, null, 0);
+        }
+        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
+        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+        final List<byte[]> cursorPath = decodeCursor(request.getCursor());
+        final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), refs)
+                + groupSelectionKey(request.getGroupSelection());
+        return openArchivesAndPage(doc, shardIndex, refs, 0, traceIdBytes, new ArrayList<>(),
+                cursorPath, request.getOffset(), request.getLimit(), cacheKey, openTest);
+    }
+
     // Recursively nests the getArchive callbacks (each holds the archive shard's read lock + a read txn)
     // to hold the shard + every relevant archive bucket open at once, then serves the page from the merged
     // pre-order DFS: by opaque cursor when one was supplied (cheap sequential next/prev), by offset via a

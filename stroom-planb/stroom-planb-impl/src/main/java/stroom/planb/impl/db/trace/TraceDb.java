@@ -1330,6 +1330,160 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
+     * Archives the spans of every <em>rooted</em> trace into that trace's bucket, keyed by the root's
+     * start time, and removes only the non-root spans from the holding area. The root span, the
+     * trace-roots entry, its stats and its merge-time entry all stay, so the holding area keeps
+     * accumulating late spans against a real root.
+     *
+     * <p>This is what makes the archive the queryable copy: unlike {@link #archiveOldData}, which waits
+     * for a root to age past the archival lead time, this runs every merge cycle, so a trace becomes
+     * whole in its bucket about one archival interval after it arrives.
+     *
+     * <p><b>The root span is copied, not moved.</b> The bucket needs it to rebuild a real (non-orphan)
+     * root of its own — the bucket's root is derived by {@code mergeComplete()} after
+     * {@code pushArchive} merges this delta in, never copied from here (see {@link #merge}'s
+     * {@code MDB_NOOVERWRITE} rationale). The holding area needs it too: without it
+     * {@link #buildRootFromStats} would find no root span, see other spans still present, and
+     * overwrite the real root with a synthesized orphan — which would break both the "has a real
+     * root" test used to route late spans and the archival age axis.
+     *
+     * <p><b>Selection.</b> A rooted trace is archived when it has non-root spans to send, or when it
+     * was merged since {@code since} (the last run of this operation). The second case covers a trace
+     * whose only span is its root, which would otherwise never be sent and so never be queryable. A
+     * null {@code since} (no marker yet) takes every rooted trace. Without this gate every bucket
+     * holding a live root would be rewritten every cycle, and a push costs O(bucket).
+     *
+     * @return the number of spans removed from the holding area.
+     */
+    @Override
+    public long archiveRootedSpans(final ArchivalGranularity granularity,
+                                   final Path archiveBaseDir,
+                                   final Instant since) {
+        // traceIdHex -> bucket label for every non-orphan root, labelled by the root's START time —
+        // the axis queries filter on and the same one archiveOldData uses, so a trace whose spans
+        // straddle a bucket boundary still lands whole in one bucket.
+        final Map<String, String> rootLabels = new HashMap<>();
+        // Rooted traces with at least one non-root span still here, i.e. with something to send.
+        final Set<String> withChildren = new HashSet<>();
+        // Rooted traces merged since the last run — catches the root-span-only trace.
+        final Set<String> mergedSince = new HashSet<>();
+
+        env.read(readTxn -> {
+            LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                final TraceRoot root = traceRootValueSerde.read(val.duplicate());
+                if (!root.isOrphan() && root.getStartTime() != null) {
+                    final byte[] traceIdBytes = new byte[key.remaining()];
+                    key.duplicate().get(traceIdBytes);
+                    rootLabels.put(HexStringUtil.encode(traceIdBytes), ArchivalGranularityUtil.label(
+                            granularity, NanoTimeUtil.toInstant(root.getStartTime())));
+                }
+            });
+            if (!rootLabels.isEmpty()) {
+                LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                    if (key.remaining() >= TRACE_ID_BYTES && !isRootKey(key)) {
+                        withChildren.add(traceIdHex(key));
+                    }
+                });
+                if (since != null) {
+                    final long sinceMs = since.toEpochMilli();
+                    LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
+                        final ByteBuffer keyBuf = key.duplicate();
+                        if (keyBuf.remaining() == Long.BYTES + TRACE_ID_BYTES
+                                && keyBuf.getLong() >= sinceMs) {
+                            final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+                            keyBuf.get(traceIdBytes);
+                            mergedSince.add(HexStringUtil.encode(traceIdBytes));
+                        }
+                    });
+                }
+            }
+            return null;
+        });
+
+        final Map<String, String> selected = new HashMap<>();
+        rootLabels.forEach((hex, label) -> {
+            if (since == null || withChildren.contains(hex) || mergedSince.contains(hex)) {
+                selected.put(hex, label);
+            }
+        });
+        if (selected.isEmpty()) {
+            return 0L;
+        }
+
+        // Write one delta env per bucket label, streaming the selected traces' spans (root span
+        // included) straight from the source index so peak memory stays O(labels), not O(spans).
+        for (final String label : new LinkedHashSet<>(selected.values())) {
+            final Path archiveDir = archiveBaseDir.resolve(label);
+            try {
+                Files.createDirectories(archiveDir);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            try (final TraceDb archiveDb =
+                         TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
+                archiveDb.env.write(archiveWriter -> {
+                    env.read(srcTxn -> {
+                        LmdbIterable.iterate(srcTxn, dbi, (key, val) -> {
+                            if (key.remaining() < TRACE_ID_BYTES
+                                    || !label.equals(selected.get(traceIdHex(key)))) {
+                                return;
+                            }
+                            final byte[] rawKey = new byte[key.remaining()];
+                            key.duplicate().get(rawKey);
+                            final byte[] rawVal = new byte[val.remaining()];
+                            val.duplicate().get(rawVal);
+                            putDirect(archiveDb.dbi, archiveWriter.getWriteTxn(), rawKey, rawVal);
+                            archiveWriter.tryCommit();
+                        });
+                        return null;
+                    });
+                    return null;
+                });
+                // Clone the UID / hash lookup tables so the delta's span values decode when merged.
+                copyLookupsTo(archiveDb);
+            }
+        }
+
+        // Delete the archived NON-ROOT spans from the holding area. Every retained span (including
+        // each selected trace's root span) has its lookups recorded so deleteUnused keeps them.
+        return env.write(writer -> {
+            final Count count = new Count();
+            env.read(readTxn -> {
+                LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                    if (key.remaining() >= TRACE_ID_BYTES
+                            && !isRootKey(key)
+                            && selected.containsKey(traceIdHex(key))) {
+                        dbi.delete(writer.getWriteTxn(), key);
+                        count.increment();
+                    } else {
+                        keyRecorder.recordUsed(writer, key);
+                        valueRecorder.recordUsed(writer, val);
+                    }
+                    writer.tryCommit();
+                });
+                return null;
+            });
+            writer.commit();
+
+            if (count.get() > 0 && !Thread.currentThread().isInterrupted()) {
+                env.read(readTxn -> {
+                    keyRecorder.deleteUnused(readTxn, writer);
+                    valueRecorder.deleteUnused(readTxn, writer);
+                    return null;
+                });
+            }
+            return count.get();
+        });
+    }
+
+    // Hex traceId from the leading 16 bytes of a span key.
+    private static String traceIdHex(final ByteBuffer key) {
+        final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+        key.duplicate().get(traceIdBytes);
+        return HexStringUtil.encode(traceIdBytes);
+    }
+
+    /**
      * The archive bucket label a span belongs to, or {@code null} if it should stay in
      * the live shard. Two rules, matching the retention model:
      * <ul>

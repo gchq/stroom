@@ -65,6 +65,19 @@ public interface Db<K, V> extends AutoCloseable {
         return 0L;
     }
 
+    /**
+     * Archives the spans of records that are already complete enough to query, keeping the record
+     * itself in the live store as an accumulator for late arrivals. Runs every merge cycle, unlike
+     * {@link #archiveOldData}, which waits out the archival lead time. {@code since} is when this last
+     * ran, used to skip records with nothing new to send; null means "no marker yet, take everything".
+     * Default: nothing to do.
+     */
+    default long archiveRootedSpans(final ArchivalGranularity granularity,
+                                    final Path archiveBaseDir,
+                                    final Instant since) {
+        return 0L;
+    }
+
     long condense(Instant condenseBefore);
 
     void compact(Path destination);
