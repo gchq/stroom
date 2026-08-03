@@ -21,12 +21,16 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorEditUiHandlers;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
+import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -42,6 +46,9 @@ public class ProcessorEditViewImpl
         extends ViewWithUiHandlers<ProcessorEditUiHandlers>
         implements ProcessorEditView {
 
+    private static final SimpleDuration DEFAULT_MAX_TASK_CREATION_DELAY =
+            new SimpleDuration(30, TimeUnit.SECONDS);
+
     private final Widget widget;
 
     @UiField
@@ -54,6 +61,10 @@ public class ProcessorEditViewImpl
     ValueSpinner maxProcessingTasks;
     @UiField
     SelectionBox<String> profile;
+    @UiField
+    CustomCheckBox maxTaskCreationDelayEnabled;
+    @UiField
+    DurationPicker maxTaskCreationDelay;
     @UiField
     CustomCheckBox export;
     @UiField
@@ -70,6 +81,9 @@ public class ProcessorEditViewImpl
         // Zero means unlimited so must remain reachable.
         maxProcessingTasks.setMin(ProcessorFilter.MIN_MAX_PROCESSING_TASKS);
         maxProcessingTasks.setMax(ProcessorFilter.MAX_MAX_PROCESSING_TASKS);
+        // Sub second delays make no sense here as task creation only runs periodically anyway.
+        maxTaskCreationDelay.setValue(DEFAULT_MAX_TASK_CREATION_DELAY);
+        updateEnabled();
     }
 
     @Override
@@ -118,6 +132,33 @@ public class ProcessorEditViewImpl
     @Override
     public SelectionBox<String> getProfile() {
         return profile;
+    }
+
+    @Override
+    public SimpleDuration getMaxTaskCreationDelay() {
+        if (maxTaskCreationDelayEnabled.getValue()) {
+            return maxTaskCreationDelay.getValue();
+        }
+        return null;
+    }
+
+    @Override
+    public void setMaxTaskCreationDelay(final SimpleDuration maxTaskCreationDelay) {
+        // A null delay means this filter just uses the cluster wide limit.
+        this.maxTaskCreationDelayEnabled.setValue(maxTaskCreationDelay != null);
+        this.maxTaskCreationDelay.setValue(Objects.requireNonNullElse(
+                maxTaskCreationDelay,
+                DEFAULT_MAX_TASK_CREATION_DELAY));
+        updateEnabled();
+    }
+
+    private void updateEnabled() {
+        maxTaskCreationDelay.setEnabled(maxTaskCreationDelayEnabled.getValue());
+    }
+
+    @UiHandler("maxTaskCreationDelayEnabled")
+    public void onMaxTaskCreationDelayEnabledChange(final ValueChangeEvent<Boolean> event) {
+        updateEnabled();
     }
 
     @Override

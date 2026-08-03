@@ -67,7 +67,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
-import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -336,6 +335,10 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() > 0) {
                             tracker.setLastPollMs(System.currentTimeMillis());
                             tracker.setLastPollTaskCount(0);
+                            // This isn't a poll that found nothing, it is a filter that has
+                            // finished, so don't let it look like the start of a run of non
+                            // producing polls if the tracker ever comes back to life.
+                            tracker.setNextPollMs(null);
                             updateTracker(tracker, null);
                         }
                         final SkipReason skipReason = ProcessorFilterTrackerStatus.COMPLETE.equals(tracker.getStatus())
@@ -374,27 +377,21 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private boolean checkTrackerTaskCount(final ProcessorFilter filter,
                                           final ProcessorFilterTracker tracker,
                                           final ProcessorConfig processorConfig) {
-        final Integer lastPollTaskCount = tracker.getLastPollTaskCount();
-        final Long lastPollMs = tracker.getLastPollMs();
-        final StroomDuration skipNonProducingFiltersDuration = processorConfig.getSkipNonProducingFiltersDuration();
-
-        if (lastPollTaskCount == null
-            || lastPollTaskCount > 0
-            || lastPollMs == null
-            || skipNonProducingFiltersDuration == null) {
+        final long nowMs = System.currentTimeMillis();
+        if (FilterPollBackoff.isPollDue(filter, tracker, processorConfig, nowMs)) {
             return true;
         } else {
-            final long timeSinceLastPollMs = System.currentTimeMillis() - lastPollMs;
-            final long skipNonProducingFiltersDurationMs = skipNonProducingFiltersDuration.toMillis();
-            if (timeSinceLastPollMs > skipNonProducingFiltersDurationMs) {
-                return true;
-            } else {
-                LOGGER.debug(() -> LogUtil.message(
-                        "checkTrackerTaskCount() - Skipping filter with no tasks on last poll, " +
-                        "timeSinceLastPollMs: {}, skipNonProducingFiltersDurationMs: {}, filter: {}",
-                        timeSinceLastPollMs, skipNonProducingFiltersDuration, filter.getFilterInfo()));
-                return false;
-            }
+            LOGGER.debug(() -> LogUtil.message(
+                    "checkTrackerTaskCount() - Skipping filter with no tasks on last poll, " +
+                    "lastPollMs: {}, nextPollMs: {}, timeUntilNextPollMs: {}, filter: {}",
+                    tracker.getLastPollMs(),
+                    tracker.getNextPollMs(),
+                    FilterPollBackoff.getDueMs(
+                            tracker,
+                            tracker.getLastPollMs(),
+                            processorConfig.getSkipNonProducingFiltersDuration().toMillis()) - nowMs,
+                    filter.getFilterInfo()));
+            return false;
         }
     }
 

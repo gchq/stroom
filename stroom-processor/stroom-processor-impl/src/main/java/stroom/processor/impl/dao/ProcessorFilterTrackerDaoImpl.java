@@ -101,6 +101,7 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
                 .set(PROCESSOR_FILTER_TRACKER.META_COUNT, processorFilterTracker.getMetaCount())
                 .set(PROCESSOR_FILTER_TRACKER.EVENT_COUNT, processorFilterTracker.getEventCount())
                 .set(PROCESSOR_FILTER_TRACKER.PREV_MAX_META_ID, processorFilterTracker.getPrevMaxMetaId())
+                .set(PROCESSOR_FILTER_TRACKER.NEXT_POLL_MS, processorFilterTracker.getNextPollMs())
                 .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTracker.getId()))
                 .and(PROCESSOR_FILTER_TRACKER.VERSION.eq(processorFilterTracker.getVersion()))
                 .execute();

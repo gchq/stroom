@@ -30,6 +30,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.ExistingCreatedTask;
+import stroom.processor.impl.FilterPollBackoff;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterCache;
 import stroom.processor.impl.ProcessorTaskDao;
@@ -530,6 +531,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     }
                 }
 
+                // Work out when to poll this filter again before we overwrite the state that the
+                // calculation is derived from. Filters that keep creating nothing get polled
+                // progressively less often.
+                tracker.setNextPollMs(FilterPollBackoff.calculateNextPollMs(
+                        filter,
+                        tracker,
+                        processorConfigProvider.get(),
+                        statusTimeMs,
+                        creationState.totalTasksCreated));
                 tracker.setLastPollMs(statusTimeMs);
                 tracker.setLastPollTaskCount(creationState.totalTasksCreated);
                 tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);

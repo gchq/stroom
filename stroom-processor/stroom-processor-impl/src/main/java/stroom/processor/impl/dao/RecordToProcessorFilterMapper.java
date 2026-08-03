@@ -19,6 +19,9 @@ package stroom.processor.impl.dao;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.SimpleDuration;
 
 import jakarta.inject.Provider;
 import org.jooq.Record;
@@ -28,6 +31,8 @@ import java.util.function.Function;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RecordToProcessorFilterMapper.class);
 
     private final QueryDataSerialiser queryDataSerialiser;
     private final Provider<UserRefLookup> userRefLookupProvider;
@@ -58,10 +63,25 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
                 .export(record.get(PROCESSOR_FILTER.EXPORT))
                 .minMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS))
                 .maxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS))
+                .maxTaskCreationDelay(parseMaxTaskCreationDelay(record.get(PROCESSOR_FILTER.MAX_TASK_CREATION_DELAY)))
                 .runAsUser(userRefLookupProvider
                         .get()
                         .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID), FindUserContext.RUN_AS)
                         .orElse(null))
                 .build();
+    }
+
+    private SimpleDuration parseMaxTaskCreationDelay(final String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return SimpleDuration.parse(value);
+        } catch (final RuntimeException e) {
+            // Don't make the whole filter unreadable because someone hand edited this value.
+            LOGGER.error(() -> "Unable to parse max task creation delay '" + value +
+                               "', the cluster wide maximum will be used instead", e);
+            return null;
+        }
     }
 }

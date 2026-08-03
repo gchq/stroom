@@ -126,6 +126,9 @@ public class ProcessorInfoBuilder {
                     filter.getMaxProcessingTasks() == 0
                             ? "Unlimited"
                             : String.valueOf(filter.getMaxProcessingTasks()));
+            if (filter.getMaxTaskCreationDelay() != null) {
+                tb.row("Max Task Creation Delay", filter.getMaxTaskCreationDelay().toLongString());
+            }
 
             final FeedDependencies feedDependencies = NullSafe.get(
                     filter,
@@ -159,6 +162,9 @@ public class ProcessorInfoBuilder {
                 tb.row("Last Poll Age", tracker.getLastPollAge());
                 tb.row(SafeHtmlUtil.from("Last Poll Task Count"),
                         SafeHtmlUtil.from(tracker.getLastPollTaskCount()));
+                // Only set while a filter is backing off from polls that created no tasks, so it
+                // explains a filter that looks like it is being ignored.
+                addRowDateString(tb, "Next Poll", tracker.getNextPollMs());
 
                 tb.row(SafeHtmlUtils.fromString("Min Stream Id"),
                         OpenLinkUtil.render(String.valueOf(tracker.getMinMetaId()), LinkType.STREAM));

@@ -220,6 +220,20 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
         return (Long) get(13);
     }
 
+    /**
+     * Setter for <code>stroom.processor_filter_tracker.next_poll_ms</code>.
+     */
+    public void setNextPollMs(Long value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_filter_tracker.next_poll_ms</code>.
+     */
+    public Long getNextPollMs() {
+        return (Long) get(14);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -243,7 +257,7 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
     /**
      * Create a detached, initialised ProcessorFilterTrackerRecord
      */
-    public ProcessorFilterTrackerRecord(Integer id, Integer version, Long minMetaId, Long minEventId, Long minMetaCreateMs, Long maxMetaCreateMs, Long metaCreateMs, Long lastPollMs, Integer lastPollTaskCount, String message, Long metaCount, Long eventCount, Byte status, Long prevMaxMetaId) {
+    public ProcessorFilterTrackerRecord(Integer id, Integer version, Long minMetaId, Long minEventId, Long minMetaCreateMs, Long maxMetaCreateMs, Long metaCreateMs, Long lastPollMs, Integer lastPollTaskCount, String message, Long metaCount, Long eventCount, Byte status, Long prevMaxMetaId, Long nextPollMs) {
         super(ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER);
 
         setId(id);
@@ -260,6 +274,7 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
         setEventCount(eventCount);
         setStatus(status);
         setPrevMaxMetaId(prevMaxMetaId);
+        setNextPollMs(nextPollMs);
         resetTouchedOnNotNull();
     }
 }

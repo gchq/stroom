@@ -827,6 +827,7 @@ appConfig:
       statisticsMode: "INTERNAL"
     queueSize: 1000
     skipNonProducingFiltersDuration: "PT10S"
+    skipNonProducingFiltersMaxDuration: "PT10M"
     taskCreationThreadCount: 5
     tasksToCreate: 1000
     useMaxMetaIdFromPreviousPoll: true

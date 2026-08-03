@@ -212,6 +212,7 @@ public class ProcessorFilterImportExportHandlerImpl
                             .export(processorFilter.isExport())
                             .minMetaCreateTimeMs(minMetaCreateTimeMs)
                             .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
+                            .maxTaskCreationDelay(processorFilter.getMaxTaskCreationDelay())
                             .build();
 
                     processorFilterService.importFilter(
@@ -238,6 +239,7 @@ public class ProcessorFilterImportExportHandlerImpl
                         ProcessorFilter::getPipelineName,
                         ProcessorFilter::getPriority,
                         ProcessorFilter::getMaxProcessingTasks,
+                        ProcessorFilter::getMaxTaskCreationDelay,
                         ProcessorFilter::isReprocess,
                         ProcessorFilter::isEnabled,
                         ProcessorFilter::getFilterInfo));

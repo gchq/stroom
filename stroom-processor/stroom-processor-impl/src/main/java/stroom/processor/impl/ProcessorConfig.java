@@ -66,6 +66,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     private final StroomDuration waitToQueueTasksDuration;
     private StroomDuration skipNonProducingFiltersDuration;
+    private StroomDuration skipNonProducingFiltersMaxDuration;
     private boolean useMaxMetaIdFromPreviousPoll;
 
     public ProcessorConfig() {
@@ -104,6 +105,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
+        skipNonProducingFiltersMaxDuration = StroomDuration.ofMinutes(10);
         useMaxMetaIdFromPreviousPoll = DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL;
     }
 
@@ -128,6 +130,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
                                    skipNonProducingFiltersDuration,
+                           @JsonProperty("skipNonProducingFiltersMaxDuration") final StroomDuration
+                                   skipNonProducingFiltersMaxDuration,
                            @JsonProperty("useMaxMetaIdFromPreviousPoll")
                                final Boolean useMaxMetaIdFromPreviousPoll) {
         this.dbConfig = dbConfig;
@@ -155,6 +159,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
+        this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
         this.useMaxMetaIdFromPreviousPoll = Objects.requireNonNullElse(
                 useMaxMetaIdFromPreviousPoll, DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL);
     }
@@ -257,13 +262,29 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
-                             "filters.")
+                             "filters. This is also the amount by which the wait increases after each successive " +
+                             "poll that creates no tasks, up to skipNonProducingFiltersMaxDuration.")
     public StroomDuration getSkipNonProducingFiltersDuration() {
         return skipNonProducingFiltersDuration;
     }
 
     public void setSkipNonProducingFiltersDuration(final StroomDuration skipNonProducingFiltersDuration) {
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
+    }
+
+    @JsonPropertyDescription("The longest we will wait before retrying task creation for a filter that keeps " +
+                             "creating no tasks. The wait starts at skipNonProducingFiltersDuration and grows by " +
+                             "that amount after each successive non producing poll until it reaches this value. " +
+                             "This bounds how long a filter that suddenly receives data will wait for its first " +
+                             "task, so raising it reduces the cost of polling idle filters at the expense of " +
+                             "latency. Individual filters can override this with their own maximum task creation " +
+                             "delay. Set to zero to poll non producing filters on every run.")
+    public StroomDuration getSkipNonProducingFiltersMaxDuration() {
+        return skipNonProducingFiltersMaxDuration;
+    }
+
+    public void setSkipNonProducingFiltersMaxDuration(final StroomDuration skipNonProducingFiltersMaxDuration) {
+        this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
     }
 
     @JsonPropertyDescription("Should task creation be bounded by the max meta id seen on the previous poll " +
