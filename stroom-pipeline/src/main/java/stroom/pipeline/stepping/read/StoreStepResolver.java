@@ -213,6 +213,10 @@ public class StoreStepResolver {
          * <p>
          * An empty collection yields an empty range for the same reason: nothing has been captured, so there
          * is nothing to serve.
+         * <p>
+         * No production callers yet, deliberately - substrate for the per-element stage decomposition
+         * (stepping-design.md §11), where a record is only servable once every stage has reached it.
+         * {@code TestCapturedRange} pins it.
          */
         static CapturedRange intersectionOf(final Collection<? extends CapturedRange> ranges) {
             final List<CapturedRange> contributors = List.copyOf(ranges);
@@ -245,6 +249,9 @@ public class StoreStepResolver {
          * where the stream ends gives the wrong answer - LAST would land mid-stream. The bounds therefore
          * come from the upstream element that really did capture the whole stream, while what is servable
          * comes from the materialised element itself.
+         * <p>
+         * No production callers yet, deliberately - substrate for the same stage decomposition as
+         * {@link #intersectionOf}. {@code TestCapturedRange} pins it.
          */
         static CapturedRange spanning(final CapturedRange bounds, final CapturedRange held) {
             return new CapturedRange() {

@@ -208,13 +208,6 @@ public class StreamSweep {
         return onDemandElementId != null;
     }
 
-    /**
-     * @return the element whose records this sweep materialises on demand, or null if it captures normally.
-     */
-    public String getOnDemandElementId() {
-        return onDemandElementId;
-    }
-
     public CaptureWatermark getWatermark() {
         return watermark;
     }

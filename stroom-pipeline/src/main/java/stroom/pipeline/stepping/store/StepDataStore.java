@@ -408,8 +408,10 @@ public class StepDataStore {
      * This is what lets a scan that materialises records progressively pick up where it left off without
      * anyone remembering where that was: the frontier is written in the store, so the next window simply
      * starts past it. State that would otherwise have to be carried between polls is read back instead.
+     * Consumers reach it as {@code first}/{@code last} on {@link #elementCoverage} - nothing calls it
+     * directly any more.
      */
-    public synchronized long getElementRecordBound(final long partIndex,
+    private synchronized long getElementRecordBound(final long partIndex,
                                                    final ElementId elementId,
                                                    final String fingerprint,
                                                    final boolean highest) {

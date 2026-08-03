@@ -670,7 +670,8 @@ user actually visits**, rather than sweeping it:
   resolved by **reading the frontier back out of the store**: the records already materialised for that
   element at that fingerprint say where the last window ended, so the next simply starts past them. The two
   sides meet at the store, exactly as everything else here does, and no state is carried between polls.
-  `StepDataStore.getElementRecordBound` is that query. Window size is `stepping.filteredScanWindow`,
+  The scanned element's `Coverage` (`first`/`last` at its fingerprint) is that query, backed inside the
+  store by `getElementRecordBound`. Window size is `stepping.filteredScanWindow`,
   defaulting to 50 - large enough that a typical "skip to the next error" lands in a poll or two, small enough
   that a filter matching nothing does not materialise the stream in one go. It is exposed as config because
   the right value depends on the pipeline, and tuning it should not need a rebuild.
@@ -1150,19 +1151,34 @@ starts - the discipline that caught every real bug so far.
    widened; the post-edit inner loop pays for exactly the record it names. Measured
    (`measureWalkingASkeletonSweptStream`, 30 steps, 2026-07-29): cached floor 2.8ms/step (0 launches),
    skeleton with prefetch 4.8ms/step (3 launches - one per window), without 11.7ms/step (30 launches).
-   Remaining from this stage: adaptive filtered-window growth if it proves to matter, the below-boundary
-   error-indicator UX, and the 5.3 deletion audit.*
+   Remaining from this stage: the below-boundary error-indicator UX. The adaptive filtered window was
+   measured (`measureTheFilteredScanWindowTradeOff` - which first exposed and then, fixed, validated the
+   scan's launch discipline) and deliberately not built: the fixed window is fine at current scales, and
+   the stateless growth rule to reach for if a real case appears is recorded under scenario F. The 5.3
+   deletion audit is done - see the paragraph after the stages for what it removed and what it concluded
+   must stay.*
 
 Stages 1-3 need no new capture machinery and fix the worst live deficiency (C). Stage 4 is where the 10x
 first pass and the caps headroom arrive. Nothing in 1-3 is throwaway on the path to 4 - the frontier logic
 and coverage-based reuse are exactly what a backbone-fed session runs on.
 
-The measure of the design's success is what it lets us **delete**: the materialisation identity cache and
-its filter-signature key, `RecordOrder` and the contiguity heuristics, `priorCompleteCapture`, the
-completeness gate as a decision input, the abandonment `removeIf`, and three of the four range vocabularies.
-Every one of those exists to patch a consequence of "one producer, whole pipeline, whole stream, all or
-nothing" - remove the premise and the patches go with it. If, at the end, they are still in the tree, the
-target has not actually been reached.
+The measure of the design's success is what it lets us **delete**, and the audit (2026-08-03) closed the
+list. Gone along the way: the materialisation identity cache and its filter-signature key (the store is the
+only cache), the step-keyed `SweepKey` fields, and the read side's four overlapping bound vocabularies,
+collapsed into `Coverage` (`CapturedRange` is its navigation view, not a sibling). The audit itself removed
+the last unconsumed surface: `StreamSweep.getOnDemandElementId` and `getElementRecordBound`'s public
+visibility (it now only backs `elementCoverage`). What stays, stays because the original list under-weighed
+one fact: the full sweep is not a residue of "one producer, whole pipeline, whole stream" but the
+**permanent fallback** - reader/text pipelines have no parser boundary to truncate at, and a completed
+backbone that cannot satisfy the planner must still be answerable. So `RecordOrder` (a sweep appends in
+order, a materialisation does not), `isContiguouslyWritten`, `hasCompleteElement`, and
+`priorCompleteCapture` (the gate that stops a truncated capture silently serving a short stream) are
+load-bearing in both modes; the abandonment `removeIf` in the session is stage 3's narrow rule, not the old
+broad one; and `RecordRange` (capture-side demand) with `StagePlanner.RecordSpan` (read-side demand) are
+the two ends of the capture/read boundary, not duplicates. Flipping `skeletonSweep` on changes which mode
+is the default; it orphans none of these. The kept substrate for §11 (`CapturedRecordFeed`,
+`StageGraphPlanner`, `CapturedRange.intersectionOf`/`spanning`) says so in its own javadoc, so a later
+audit cannot mistake it for accident.
 
 #### Open decisions, to make before the stage that needs them
 
