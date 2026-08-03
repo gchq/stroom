@@ -251,6 +251,82 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
     }
 
     /**
+     * Stage 5's acceptance: walking NEXT over a skeleton-swept stream should cost about what walking a fully
+     * captured stream costs (the cached floor), because the prefetch window turns most steps into store
+     * reads. Three walks of the same records: over a completed full sweep (the floor), over a skeleton
+     * stream with prefetch, and over a skeleton stream without (the launch-per-step ceiling). No asserts -
+     * the numbers are the point.
+     */
+    @Test
+    void measureWalkingASkeletonSweptStream() {
+        final int recordCount = GeneratedEventStream.configuredRecordCount(DEFAULT_RECORDS);
+        final int walk = 30;
+        final List<String> report = new ArrayList<>();
+        report.add(String.format("records=%,d, walk=%d", recordCount, walk));
+
+        // The cached floor: LAST completes a full sweep, then the walk is pure store reads.
+        walkAndReport(report, "full sweep (cached floor)  ", recordCount, walk, null);
+        // Skeleton, prefetch on (default window): most steps are store reads.
+        walkAndReport(report, "skeleton + prefetch        ", recordCount, walk,
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(0));
+        // Skeleton, prefetch off: a materialisation launch per step - what prefetch exists to avoid.
+        walkAndReport(report, "skeleton, no prefetch      ", recordCount, walk,
+                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(0)
+                        .withPrefetchWindow(1));
+
+        LOGGER.info(() -> "\n=== walking NEXT over a skeleton-swept stream ===\n"
+                          + String.join("\n", report) + "\n");
+    }
+
+    private void walkAndReport(final List<String> report,
+                               final String label,
+                               final int recordCount,
+                               final int walk,
+                               final java.util.function.UnaryOperator<
+                                       stroom.pipeline.stepping.store.SteppingConfig> configMapper) {
+        final long metaId = GeneratedEventStream.load(store, FEED, recordCount);
+        final PipelineStepRequest base = requestFor(metaId, feedPipeline());
+        if (configMapper != null) {
+            setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class, configMapper);
+        }
+        String sessionUuid = null;
+        try {
+            // FIRST establishes the session; for the floor run, LAST first so the sweep is complete and the
+            // walk measures pure store reads.
+            SteppingResult stepped;
+            if (configMapper == null) {
+                stepped = steppingService.step(base.copy().stepType(StepType.LAST).build());
+                sessionUuid = stepped.getSessionUuid();
+                stepped = steppingService.step(base.copy()
+                        .stepType(StepType.FIRST).sessionUuid(sessionUuid).build());
+            } else {
+                stepped = steppingService.step(base.copy().stepType(StepType.FIRST).build());
+            }
+            sessionUuid = stepped.getSessionUuid();
+            assertThat(stepped.isFoundRecord()).isTrue();
+
+            final long onDemandBefore = steppingService.getOnDemandLaunchCount();
+            final long start = System.currentTimeMillis();
+            for (int i = 0; i < walk; i++) {
+                stepped = steppingService.step(base.copy()
+                        .stepType(StepType.FORWARD)
+                        .stepLocation(stepped.getFoundLocation())
+                        .sessionUuid(sessionUuid)
+                        .build());
+                sessionUuid = stepped.getSessionUuid();
+                assertThat(stepped.isFoundRecord()).isTrue();
+            }
+            final long elapsed = System.currentTimeMillis() - start;
+            report.add(String.format("%s %,6dms  (%.1fms/step, %d launches)",
+                    label, elapsed, elapsed / (double) walk,
+                    steppingService.getOnDemandLaunchCount() - onDemandBefore));
+        } finally {
+            clearConfigValueMapper();
+            terminate(base, sessionUuid);
+        }
+    }
+
+    /**
      * Scenario D's ceiling. Sweeps the same stream twice in separate sessions: once through the full
      * pipeline, once through the boundary-only truncation. Both parse every record; only the second skips the
      * transforms and their capture.

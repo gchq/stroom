@@ -90,7 +90,7 @@ class TestFilteredScanWindow {
         // Only the config and the arguments matter to filteredWindowFor; nothing else is touched, so the rest
         // of the graph of collaborators is deliberately absent rather than mocked.
         final SteppingConfig config =
-                new SteppingConfig(null, null, null, null, null, null, window, null, null, null, null);
+                new SteppingConfig(null, null, null, null, null, null, window, null, null, null, null, null);
         return new SteppingService(
                 null, null, null, null, null, null, null, null, null, null,
                 () -> config,

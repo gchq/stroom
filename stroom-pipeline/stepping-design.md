@@ -1121,7 +1121,15 @@ starts - the discipline that caught every real bug so far.
    all closed; see the decisions below and the §9 test table.*
 5. **Demand shaping.** Prefetch windows around the user's position; adaptive window growth for scenario F if
    it proves to matter. *Acceptance: walking NEXT over a skeleton-swept stream costs store-reads, not
-   replays, after the first.*
+   replays, after the first.* **The prefetch is built** (`stepping.prefetchWindow`, default 10): a
+   navigation step's demand is widened in its direction of travel, clamped to the feed's contiguous
+   coverage so a window can never reach past the backbone's frontier, with the demanded record at the near
+   edge - served as soon as it commits, the rest materialising while the user reads it. A REFRESH is never
+   widened; the post-edit inner loop pays for exactly the record it names. Measured
+   (`measureWalkingASkeletonSweptStream`, 30 steps, 2026-07-29): cached floor 2.8ms/step (0 launches),
+   skeleton with prefetch 4.8ms/step (3 launches - one per window), without 11.7ms/step (30 launches).
+   Remaining from this stage: adaptive filtered-window growth if it proves to matter, the below-boundary
+   error-indicator UX, and the 5.3 deletion audit.*
 
 Stages 1-3 need no new capture machinery and fix the worst live deficiency (C). Stage 4 is where the 10x
 first pass and the caps headroom arrive. Nothing in 1-3 is throwaway on the path to 4 - the frontier logic

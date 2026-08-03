@@ -43,6 +43,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private static final int DEFAULT_FILTERED_SCAN_WINDOW = 50;
     private static final boolean DEFAULT_SKELETON_SWEEP = false;
     private static final long DEFAULT_EAGER_MATERIALISATION_RECORDS = 5_000L;
+    private static final int DEFAULT_PREFETCH_WINDOW = 10;
 
     private final String storeSubDir;
     private final long maxRecordsPerStream;
@@ -55,6 +56,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private final StroomDuration orphanMaxAge;
     private final boolean skeletonSweep;
     private final long eagerMaterialisationRecords;
+    private final int prefetchWindow;
 
     public SteppingConfig() {
         storeSubDir = DEFAULT_STORE_SUB_DIR;
@@ -68,6 +70,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         orphanMaxAge = StroomDuration.ofHours(1);
         skeletonSweep = DEFAULT_SKELETON_SWEEP;
         eagerMaterialisationRecords = DEFAULT_EAGER_MATERIALISATION_RECORDS;
+        prefetchWindow = DEFAULT_PREFETCH_WINDOW;
     }
 
     @SuppressWarnings("unused")
@@ -83,7 +86,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                           @JsonProperty("maxSessionIdleTime") final StroomDuration maxSessionIdleTime,
                           @JsonProperty("orphanMaxAge") final StroomDuration orphanMaxAge,
                           @JsonProperty("skeletonSweep") final Boolean skeletonSweep,
-                          @JsonProperty("eagerMaterialisationRecords") final Long eagerMaterialisationRecords) {
+                          @JsonProperty("eagerMaterialisationRecords") final Long eagerMaterialisationRecords,
+                          @JsonProperty("prefetchWindow") final Integer prefetchWindow) {
         this.storeSubDir = Objects.requireNonNullElse(storeSubDir, DEFAULT_STORE_SUB_DIR);
         this.maxRecordsPerStream = Objects.requireNonNullElse(maxRecordsPerStream, DEFAULT_MAX_RECORDS_PER_STREAM);
         this.maxBytesPerStream = Objects.requireNonNullElse(maxBytesPerStream, DEFAULT_MAX_BYTES_PER_STREAM);
@@ -98,6 +102,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, DEFAULT_SKELETON_SWEEP);
         this.eagerMaterialisationRecords = Objects.requireNonNullElse(
                 eagerMaterialisationRecords, DEFAULT_EAGER_MATERIALISATION_RECORDS);
+        this.prefetchWindow = Objects.requireNonNullElse(prefetchWindow, DEFAULT_PREFETCH_WINDOW);
     }
 
     /**
@@ -106,7 +111,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     private SteppingConfig(final SteppingConfig source,
                            final Integer maxRetainedFingerprintsPerElement,
                            final Boolean skeletonSweep,
-                           final Long eagerMaterialisationRecords) {
+                           final Long eagerMaterialisationRecords,
+                           final Integer prefetchWindow) {
         this.storeSubDir = source.storeSubDir;
         this.maxRecordsPerStream = source.maxRecordsPerStream;
         this.maxBytesPerStream = source.maxBytesPerStream;
@@ -120,6 +126,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, source.skeletonSweep);
         this.eagerMaterialisationRecords = Objects.requireNonNullElse(
                 eagerMaterialisationRecords, source.eagerMaterialisationRecords);
+        this.prefetchWindow = Objects.requireNonNullElse(prefetchWindow, source.prefetchWindow);
     }
 
     @JsonPropertyDescription("The sub-directory of the Stroom temp directory under which stepping session " +
@@ -200,16 +207,30 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         return eagerMaterialisationRecords;
     }
 
+    @JsonPropertyDescription("How many records an unfiltered navigation step materialises in its direction " +
+            "of travel on a skeleton-swept stream, so that stepping onward hits records the previous step " +
+            "already produced (a store read, no pipeline launch) rather than launching per record. The " +
+            "demanded record is produced first, so a larger window does not delay the step being served; it " +
+            "trades below-boundary work (~1ms per record on the sample pipeline) for fewer launches. " +
+            "Refreshes are never widened - a post-edit refresh materialises exactly the record it names.")
+    public int getPrefetchWindow() {
+        return prefetchWindow;
+    }
+
     public SteppingConfig withMaxRetainedFingerprintsPerElement(final int value) {
-        return new SteppingConfig(this, value, null, null);
+        return new SteppingConfig(this, value, null, null, null);
     }
 
     public SteppingConfig withSkeletonSweep(final boolean value) {
-        return new SteppingConfig(this, null, value, null);
+        return new SteppingConfig(this, null, value, null, null);
     }
 
     public SteppingConfig withEagerMaterialisationRecords(final long value) {
-        return new SteppingConfig(this, null, null, value);
+        return new SteppingConfig(this, null, null, value, null);
+    }
+
+    public SteppingConfig withPrefetchWindow(final int value) {
+        return new SteppingConfig(this, null, null, null, value);
     }
 
     @Override
@@ -226,6 +247,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                 ", orphanMaxAge=" + orphanMaxAge +
                 ", skeletonSweep=" + skeletonSweep +
                 ", eagerMaterialisationRecords=" + eagerMaterialisationRecords +
+                ", prefetchWindow=" + prefetchWindow +
                 '}';
     }
 }

@@ -411,10 +411,15 @@ class TestSteppingScaleScenarios extends TranslationTest {
         final PipelineStepRequest base = requestFor(metaId);
 
         // Threshold below the stream size: this is the LARGE-stream shape, where cost must follow what the
-        // user looks at - per-record materialisation, never the whole extent. (Its small-stream sibling
+        // user looks at - demand-shaped materialisation, never the whole extent. (Its small-stream sibling
         // below is the negative control: same steps, threshold above the size, one eager pass instead.)
+        // Prefetch window pinned to 3 so the walk proves BOTH halves of demand shaping: a step materialises
+        // a window in its direction of travel, and the steps inside that window are store reads that launch
+        // NOTHING - walking six records costs exactly two launches, not six.
         setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
-                config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(100));
+                config -> config.withSkeletonSweep(true)
+                        .withEagerMaterialisationRecords(100)
+                        .withPrefetchWindow(3));
         String sessionUuid = null;
         try {
             final long backbones = steppingService.getBackboneLaunchCount();
@@ -428,23 +433,28 @@ class TestSteppingScaleScenarios extends TranslationTest {
                     .as("with the below-boundary element served - which only a materialisation can supply")
                     .isNotNull();
 
-            final SteppingResult second = steppingService.step(base.copy()
-                    .stepType(StepType.FORWARD)
-                    .stepLocation(first.getFoundLocation())
-                    .sessionUuid(sessionUuid)
-                    .build());
-            sessionUuid = second.getSessionUuid();
-            assertThat(second.isFoundRecord()).as("FORWARD resolved").isTrue();
-            assertThat(second.getFoundLocation().getRecordIndex())
-                    .isEqualTo(first.getFoundLocation().getRecordIndex() + 1);
+            // Walk five more records: two sit in FIRST's prefetch window (store reads), the sixth record
+            // opens the next window, whose remaining records are store reads again.
+            SteppingResult stepped = first;
+            for (int i = 0; i < 5; i++) {
+                stepped = steppingService.step(base.copy()
+                        .stepType(StepType.FORWARD)
+                        .stepLocation(stepped.getFoundLocation())
+                        .sessionUuid(sessionUuid)
+                        .build());
+                sessionUuid = stepped.getSessionUuid();
+                assertThat(stepped.isFoundRecord()).as("FORWARD " + (i + 1) + " resolved").isTrue();
+            }
+            assertThat(stepped.getFoundLocation().getRecordIndex())
+                    .isEqualTo(first.getFoundLocation().getRecordIndex() + 5);
 
             assertThat(steppingService.getBackboneLaunchCount())
                     .as("one backbone captured the stream's shape").isEqualTo(backbones + 1);
             assertThat(steppingService.getFullSweepLaunchCount())
                     .as("and the whole pipeline was never swept").isEqualTo(fullSweeps);
             assertThat(steppingService.getOnDemandLaunchCount())
-                    .as("each visited record was materialised below the boundary")
-                    .isGreaterThanOrEqualTo(onDemand + 2);
+                    .as("six records walked = two prefetch windows of three, NOT six launches")
+                    .isEqualTo(onDemand + 2);
         } finally {
             clearConfigValueMapper();
             terminate(base, sessionUuid);

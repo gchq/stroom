@@ -172,6 +172,13 @@ class TestFilteredStepAfterEdit extends TranslationTest {
             // record 1 would mean the scan treated an unmaterialised record as a match.
             final StepLocation record0 = new StepLocation(found.getMetaId(), found.getPartIndex(), 0);
 
+            // Prefetch off for this phase: the stream is only ten records, so the unfiltered control's
+            // default prefetch window would materialise all of them - leaving the filtered scan nothing to
+            // do and the launch-counter assertion below vacuous. (The with-prefetch interaction - a filtered
+            // ask answered from records already in the store - is pinned at the end of this phase.)
+            setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                    config -> config.withPrefetchWindow(1));
+
             // Negative control. "Landed on record 2" only means "the filter made it skip" if the same step
             // without a filter lands on record 1. Without this, a test that asserts a landing proves nothing
             // about filtering - it could be asserting ordinary forward navigation.
@@ -220,7 +227,28 @@ class TestFilteredStepAfterEdit extends TranslationTest {
             assertThat(served.getOutput())
                     .as("the served output actually satisfies the filter it was selected by")
                     .contains("<Hit>3</Hit>");
+
+            // The other mechanism, now that the records ARE materialised: asking the same filtered question
+            // again is answered from the store - filters evaluated at read time - launching nothing. This is
+            // the store-as-cache half the scan half above deliberately switched off prefetch to expose.
+            final long onDemandAfterScan = steppingService.getOnDemandLaunchCount();
+            final SteppingResult repeated = steppingService.step(base.copy()
+                    .stepType(StepType.FORWARD)
+                    .stepLocation(record0)
+                    .sessionUuid(last.getSessionUuid())
+                    .code(Map.of(FILTERED_ELEMENT_ID, PROBE_XSLT))
+                    .stepFilterMap(Map.of(FILTERED_ELEMENT_ID,
+                            new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
+                    .build());
+            assertThat(repeated.isFoundRecord()).isTrue();
+            assertThat(repeated.getFoundLocation().getRecordIndex())
+                    .as("the repeated filtered ask lands on the same match")
+                    .isEqualTo(FIRST_HIT_INDEX);
+            assertThat(steppingService.getOnDemandLaunchCount())
+                    .as("served from the store, launching nothing")
+                    .isEqualTo(onDemandAfterScan);
         } finally {
+            clearConfigValueMapper();
             terminate(base, last);
         }
     }

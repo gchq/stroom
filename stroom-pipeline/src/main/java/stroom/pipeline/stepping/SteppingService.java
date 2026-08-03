@@ -395,9 +395,57 @@ public class SteppingService {
                                          final boolean extentFinal) {
         final StepLocation located = onDemandTargetFor(request, graph, decision, store, metaId, extentFinal);
         if (located != null) {
-            return RecordRange.of(located);
+            return prefetched(request.getStepType(), located, decision, store, fingerprints);
         }
         return filteredWindowFor(request, graph, decision, store, fingerprints, metaId);
+    }
+
+    /**
+     * Widen a navigation step's demand to a window in its direction of travel, so the next few steps hit
+     * records this one already materialised - a store read, no launch - instead of launching per record.
+     * <p>
+     * The demanded record stays at the near edge of the window, and the replay produces records in
+     * ascending order, so for FORWARD/FIRST the step is served as soon as its own record commits and the
+     * rest materialise while the user reads it. BACKWARD/LAST extend downward, so the demanded record
+     * commits last - a few milliseconds of below-boundary work per extra record, well under the launch
+     * overhead the window saves.
+     * <p>
+     * Two hard edges. A REFRESH is never widened: it is the post-edit inner loop, and it materialises
+     * exactly the record it names. And the window is clamped to the <b>feed's contiguous coverage</b> from
+     * the target - the replay reads each record's input from the feed's stored output and fails loudly on a
+     * gap, so a window must never reach past the backbone's frontier or across a hole punched by an earlier
+     * on-demand materialisation... the hole's records are ALREADY materialised, which is exactly when the
+     * window has nothing left to buy.
+     */
+    private RecordRange prefetched(final StepType stepType,
+                                   final StepLocation target,
+                                   final Decision decision,
+                                   final StepDataStore store,
+                                   final ElementFingerprints fingerprints) {
+        final int window = steppingConfigProvider.get().getPrefetchWindow();
+        final String feedFingerprint = decision.feedElementId() == null
+                ? null
+                : fingerprints.getCumulativeFingerprint(decision.feedElementId());
+        if (window <= 1 || stepType == StepType.REFRESH || feedFingerprint == null) {
+            return RecordRange.of(target);
+        }
+        final Coverage feed = store.elementCoverage(
+                new ElementId(decision.feedElementId()), feedFingerprint, () -> false);
+        final boolean forward = stepType == StepType.FORWARD || stepType == StepType.FIRST;
+        long start = target.getRecordIndex();
+        long end = target.getRecordIndex();
+        for (int i = 1; i < window; i++) {
+            final long candidate = forward ? end + 1 : start - 1;
+            if (candidate < 0 || !feed.holds(target.getPartIndex(), candidate)) {
+                break;
+            }
+            if (forward) {
+                end = candidate;
+            } else {
+                start = candidate;
+            }
+        }
+        return new RecordRange(target.getPartIndex(), start, end);
     }
 
     /**
