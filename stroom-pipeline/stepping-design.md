@@ -579,6 +579,14 @@ concurrency to reproduce; the overlap window only makes them likelier. See
   built for the concurrent-stage decomposition that §11 records as set aside, and are kept because the
   direction that replaced it needs them; their javadoc says so. (`StagePlanner` *does* have a caller now —
   `ReprocessPlanner` — so do not go looking for a missing one.)
+- **A `UNIQUE` XPath filter is order-sensitive, and backward scans run in the other order.** The filter
+  accumulates the values it has seen *in the order records are evaluated* (`SAXEventRecorder`, match type
+  `UNIQUE`), and the old engine always evaluated ascending — the pipeline only runs forward — even for a
+  BACKWARD step. `StoreStepResolver.scanBackward` evaluates descending, so `UNIQUE` + BACKWARD/LAST can
+  pick a different record than the old engine would have. A known, accepted divergence from the phase-2
+  audit (the golden corpus has no `UNIQUE` + backward sequence to pin either behaviour); if it ever
+  matters, the fix is to evaluate order-sensitive filters ascending over `[stream start, ref)` and take
+  the last match, at the cost of a scan proportional to the reference position.
 
 ---
 
