@@ -35,5 +35,14 @@
                         helpText="How archive shards are time-bucketed: Hour, Day, or Week.">
             <i:SelectionBox ui:field="archivalGranularity" addStyleNames="allow-focus"/>
         </form:FormGroup>
+        <form:FormGroup ui:field="rootCutOffPanel"
+                        identity="rootCutOffPanel"
+                        label="Keep Trace Root For"
+                        helpText="How long a trace's root is kept in the live store after the root finished, once its spans have been archived. In effect this is the late-span tolerance: a span arriving within this period still joins its trace, while one arriving later becomes an orphan. Nothing is moved when it expires - the archive already holds the trace, so the root is simply removed. Must be at least one minute and shorter than the retention duration.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="rootCutOff"/>
+                <i:SelectionBox ui:field="rootCutOffTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

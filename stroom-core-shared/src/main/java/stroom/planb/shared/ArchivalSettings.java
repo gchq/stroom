@@ -35,7 +35,7 @@ import java.util.Objects;
  * before being moved to an archive shard. The retention duration must be
  * greater than this value.
  */
-@JsonPropertyOrder({"enabled", "duration", "checkInterval", "granularity"})
+@JsonPropertyOrder({"enabled", "duration", "checkInterval", "granularity", "rootCutOff"})
 @JsonInclude(Include.NON_NULL)
 public class ArchivalSettings extends DurationSetting {
 
@@ -44,25 +44,53 @@ public class ArchivalSettings extends DurationSetting {
             .timeUnit(TimeUnit.DAYS)
             .build();
 
+    /**
+     * Long enough to be a useful late-span window, and comfortably clear of the 10s grace period the
+     * pathways processor needs to find a trace's root in the live store before it is evicted.
+     */
+    private static final SimpleDuration DEFAULT_ROOT_CUT_OFF = SimpleDuration.builder()
+            .time(10)
+            .timeUnit(TimeUnit.MINUTES)
+            .build();
+
     @JsonProperty
     private final ArchivalGranularity granularity;
+
+    @JsonProperty
+    private final SimpleDuration rootCutOff;
 
     @JsonCreator
     public ArchivalSettings(
             @JsonProperty("enabled") final boolean enabled,
             @JsonProperty("duration") final SimpleDuration duration,
             @JsonProperty("checkInterval") final SimpleDuration checkInterval,
-            @JsonProperty("granularity") final ArchivalGranularity granularity) {
+            @JsonProperty("granularity") final ArchivalGranularity granularity,
+            @JsonProperty("rootCutOff") final SimpleDuration rootCutOff) {
         super(enabled, Objects.requireNonNullElse(duration, DEFAULT_LEAD_TIME), checkInterval);
         if (getDuration().getTime() <= 0) {
             throw new IllegalArgumentException(
                     "ArchivalSettings duration must be positive, got: " + getDuration());
         }
         this.granularity = Objects.requireNonNullElse(granularity, ArchivalGranularity.DAY);
+        this.rootCutOff = Objects.requireNonNullElse(rootCutOff, DEFAULT_ROOT_CUT_OFF);
     }
 
     public ArchivalGranularity getGranularity() {
         return granularity;
+    }
+
+    /**
+     * How long a trace's root is kept in the live store after the root itself finished, once the
+     * trace's spans have been archived. In effect this is the late-span tolerance: a span arriving
+     * within it still finds a real root and so still joins its trace in the right archive bucket, while
+     * one arriving after it becomes an orphan. Shorter reclaims the live store sooner; longer tolerates
+     * more trailing activity.
+     *
+     * <p>This is not an archival lead time — nothing is moved when it expires. The archive already holds
+     * the trace, so the root is simply evicted.
+     */
+    public SimpleDuration getRootCutOff() {
+        return rootCutOff;
     }
 
     @Override
@@ -77,12 +105,13 @@ public class ArchivalSettings extends DurationSetting {
             return false;
         }
         final ArchivalSettings that = (ArchivalSettings) o;
-        return Objects.equals(granularity, that.granularity);
+        return Objects.equals(granularity, that.granularity)
+               && Objects.equals(rootCutOff, that.rootCutOff);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), granularity);
+        return Objects.hash(super.hashCode(), granularity, rootCutOff);
     }
 
     @Override
@@ -90,6 +119,7 @@ public class ArchivalSettings extends DurationSetting {
         return "ArchivalSettings{" +
                super.toString() +
                ", granularity=" + granularity +
+               ", rootCutOff=" + rootCutOff +
                '}';
     }
 
@@ -99,6 +129,7 @@ public class ArchivalSettings extends DurationSetting {
         private SimpleDuration duration;
         private SimpleDuration checkInterval;
         private ArchivalGranularity granularity;
+        private SimpleDuration rootCutOff;
 
         public Builder() {
         }
@@ -109,6 +140,7 @@ public class ArchivalSettings extends DurationSetting {
                 this.duration = settings.getDuration();
                 this.checkInterval = settings.getCheckInterval();
                 this.granularity = settings.granularity;
+                this.rootCutOff = settings.rootCutOff;
             }
         }
 
@@ -132,8 +164,13 @@ public class ArchivalSettings extends DurationSetting {
             return this;
         }
 
+        public Builder rootCutOff(final SimpleDuration rootCutOff) {
+            this.rootCutOff = rootCutOff;
+            return this;
+        }
+
         public ArchivalSettings build() {
-            return new ArchivalSettings(enabled, duration, checkInterval, granularity);
+            return new ArchivalSettings(enabled, duration, checkInterval, granularity, rootCutOff);
         }
     }
 }

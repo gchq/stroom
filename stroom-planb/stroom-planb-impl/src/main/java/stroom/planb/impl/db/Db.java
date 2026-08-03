@@ -78,6 +78,15 @@ public interface Db<K, V> extends AutoCloseable {
         return 0L;
     }
 
+    /**
+     * Evicts records whose spans have already been archived and which are now too old to gain more, so
+     * the live store stops holding what only existed to accumulate against. Nothing is moved — the
+     * archive already holds the data. Default: nothing to do.
+     */
+    default long evictArchivedRoots(final Instant evictBefore) {
+        return 0L;
+    }
+
     long condense(Instant condenseBefore);
 
     void compact(Path destination);

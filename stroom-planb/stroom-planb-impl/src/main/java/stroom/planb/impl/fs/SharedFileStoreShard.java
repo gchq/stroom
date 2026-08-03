@@ -218,6 +218,43 @@ public class SharedFileStoreShard extends AbstractStoreShard {
         return count;
     }
 
+    /**
+     * Evicts trace roots that are past the configured root cut-off, once their spans have been archived.
+     * Runs every merge cycle — the cut-off is short by design, so waiting out {@code checkInterval} would
+     * let the live store grow well beyond it.
+     *
+     * @return count of entries removed from the live shard (0 if nothing to evict)
+     */
+    public long evictArchivedRoots(final PlanBDocument doc) {
+        syncFromSharedStoreIfRequired();
+
+        final ArchivalSettings archival = doc.getSettings() instanceof final HasSharedFileStore s
+                && s.getSharedFileStore() != null
+                ? s.getSharedFileStore().getArchival() : null;
+        if (archival == null || !archival.isEnabled() || archival.getRootCutOff() == null) {
+            return 0;
+        }
+
+        final Instant evictBefore = SimpleDurationUtil.minus(Instant.now(), archival.getRootCutOff());
+
+        final long count;
+        try {
+            writeLock.lockInterruptibly();
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+        try {
+            count = db.evictArchivedRoots(evictBefore);
+            if (count > 0) {
+                lastWriteTime = Instant.now();
+            }
+        } finally {
+            writeLock.unlock();
+        }
+
+        return count;
+    }
+
     private void syncFromSharedStoreIfRequired() {
         if (doc.getSharedPath() == null || shardIndex < 0) {
             return;

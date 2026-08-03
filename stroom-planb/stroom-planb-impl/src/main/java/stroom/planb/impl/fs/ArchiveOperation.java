@@ -105,16 +105,32 @@ public class ArchiveOperation implements SharedFileStoreOperation {
      * behind as the accumulator for late spans. This is what makes the archive the queryable copy, so
      * it must not wait out {@code checkInterval} — query freshness is this phase's cadence.
      *
+     * <p><b>Every cycle:</b> evict roots past the root cut-off, whose spans are already archived. The
+     * cut-off is short by design, so this cannot wait out {@code checkInterval} either.
+     *
      * <p><b>On {@code checkInterval}:</b> the original age-gated archival, which moves a root and its
-     * remaining spans out once the root has aged past the archival lead time.
+     * remaining spans out once the root has aged past the archival lead time. In practice eviction wins
+     * that race for any trace the rooted-span phase has handled, since the cut-off is far shorter than
+     * the lead time; this phase still covers orphan spans, which have no root to derive a bucket from.
      */
     @Override
     public boolean run(final SharedFileStoreOperationContext ctx) throws IOException {
         boolean modified = archiveRootedSpans(ctx);
+        modified |= evictArchivedRoots(ctx);
         if (isDue(ctx.doc(), ctx.sharedShardsDocDir(), ctx.shardIndex())) {
             modified |= archiveAgedData(ctx);
         }
         return modified;
+    }
+
+    private boolean evictArchivedRoots(final SharedFileStoreOperationContext ctx) {
+        final long count = ctx.shard().evictArchivedRoots(ctx.doc());
+        if (count == 0) {
+            LOGGER.debug(() -> "No trace roots to evict for " + ctx.lockName());
+            return false;
+        }
+        LOGGER.info("Evicted {} archived trace root entr(ies) for {}", count, ctx.lockName());
+        return true;
     }
 
     private boolean archiveRootedSpans(final SharedFileStoreOperationContext ctx) throws IOException {

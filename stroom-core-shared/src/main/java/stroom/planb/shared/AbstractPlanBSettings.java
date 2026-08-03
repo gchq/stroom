@@ -64,6 +64,9 @@ public abstract sealed class AbstractPlanBSettings permits
     // 10 GiB
     public static final long DEFAULT_MAX_STORE_SIZE = 10737418240L;
 
+    /** See {@code rootCutOffError} — must stay clear of the pathways processor's grace period. */
+    private static final long MIN_ROOT_CUT_OFF_MS = 60_000L;
+
     @JsonProperty
     private final Long maxStoreSize;
     @JsonProperty
@@ -125,7 +128,43 @@ public abstract sealed class AbstractPlanBSettings permits
         if (checkIntervalError != null) {
             return checkIntervalError;
         }
-        return archiveAgeError(settings);
+        final String archiveAgeError = archiveAgeError(settings);
+        if (archiveAgeError != null) {
+            return archiveAgeError;
+        }
+        return rootCutOffError(settings);
+    }
+
+    /**
+     * The root cut-off has to sit between two hard floors and ceilings. Below roughly a minute it can
+     * evict a trace's root before the pathways processor has had its (10 second) grace period to find
+     * it in the live store, silently dropping the trace from pathway analysis. Above the retention
+     * period it can never be reached, because retention deletes the root first.
+     */
+    private static String rootCutOffError(final AbstractPlanBSettings settings) {
+        final ArchivalSettings archival = settings instanceof final HasSharedFileStore s
+                                          && s.getSharedFileStore() != null
+                ? s.getSharedFileStore().getArchival()
+                : null;
+        if (archival == null) {
+            return null;
+        }
+        final SimpleDuration cutOff = archival.getRootCutOff();
+        if (cutOff == null) {
+            return null;
+        }
+        if (cutOff.getApproxMillis() < MIN_ROOT_CUT_OFF_MS) {
+            return "'Keep Trace Root For' (" + cutOff.toLongString() + ") must be at least one minute, "
+                   + "otherwise a trace's root can be evicted before pathway processing has seen it.";
+        }
+        final RetentionSettings retention = settings.getRetention();
+        if (retention != null && retention.isEnabled() && retention.getDuration() != null
+                && cutOff.getApproxMillis() >= retention.getDuration().getApproxMillis()) {
+            return "'Keep Trace Root For' (" + cutOff.toLongString() + ") must be shorter than "
+                   + "'Retain For' (" + retention.getDuration().toLongString() + "), otherwise retention "
+                   + "removes the trace root before the cut-off is ever reached.";
+        }
+        return null;
     }
 
     private static String archiveAgeError(final AbstractPlanBSettings settings) {

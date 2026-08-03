@@ -52,6 +52,12 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
     SelectionBox<TimeUnit> archivalCheckIntervalTimeUnit;
     @UiField
     SelectionBox<ArchivalGranularity> archivalGranularity;
+    @UiField
+    FormGroup rootCutOffPanel;
+    @UiField
+    ValueSpinner rootCutOff;
+    @UiField
+    SelectionBox<TimeUnit> rootCutOffTimeUnit;
 
     private boolean readOnly;
     private boolean hasSharedPath;
@@ -84,6 +90,15 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         archivalGranularity.addItem(ArchivalGranularity.DAY);
         archivalGranularity.addItem(ArchivalGranularity.WEEK);
         archivalGranularity.setValue(ArchivalGranularity.DAY);
+
+        rootCutOff.setMin(1);
+        rootCutOff.setMax(9999);
+        rootCutOff.setValue(10);
+
+        rootCutOffTimeUnit.addItem(TimeUnit.MINUTES);
+        rootCutOffTimeUnit.addItem(TimeUnit.HOURS);
+        rootCutOffTimeUnit.addItem(TimeUnit.DAYS);
+        rootCutOffTimeUnit.setValue(TimeUnit.MINUTES);
     }
 
     @Override
@@ -104,6 +119,10 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
                         .timeUnit(archivalCheckIntervalTimeUnit.getValue())
                         .build())
                 .granularity(archivalGranularity.getValue())
+                .rootCutOff(SimpleDuration.builder()
+                        .time(rootCutOff.getValue())
+                        .timeUnit(rootCutOffTimeUnit.getValue())
+                        .build())
                 .build();
     }
 
@@ -131,6 +150,13 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
                 settings.getGranularity() != null
                         ? settings.getGranularity()
                         : ArchivalGranularity.DAY);
+        if (settings.getRootCutOff() != null) {
+            this.rootCutOff.setValue(settings.getRootCutOff().getTime());
+            this.rootCutOffTimeUnit.setValue(settings.getRootCutOff().getTimeUnit());
+        } else {
+            this.rootCutOff.setValue(10L);
+            this.rootCutOffTimeUnit.setValue(TimeUnit.MINUTES);
+        }
         updateStates();
     }
 
@@ -146,11 +172,14 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         final boolean on = archivalEnabled.getValue();
         archivalLeadTimePanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
         archivalCheckIntervalPanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
+        rootCutOffPanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
         archivalAge.setEnabled(editable && on);
         archivalTimeUnit.setEnabled(editable && on);
         archivalCheckInterval.setEnabled(editable && on);
         archivalCheckIntervalTimeUnit.setEnabled(editable && on);
         archivalGranularity.setEnabled(editable && on);
+        rootCutOff.setEnabled(editable && on);
+        rootCutOffTimeUnit.setEnabled(editable && on);
     }
 
     @Override

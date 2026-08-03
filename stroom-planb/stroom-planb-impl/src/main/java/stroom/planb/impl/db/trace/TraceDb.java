@@ -1484,6 +1484,117 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
+     * Evicts trace roots whose own end time is older than {@code evictBefore}, having first archived
+     * their spans. Nothing is moved: {@link #archiveRootedSpans} has already put the trace in its
+     * bucket, and the bucket derives its own authoritative root, so the copy here is redundant once the
+     * trace can no longer gain late spans.
+     *
+     * <p>Removes the trace-roots entry, its value-addressed secondary index entries, its root span(s),
+     * its per-trace stats and its merge-time entries — everything the holding area was keeping purely to
+     * accumulate against.
+     *
+     * <p><b>Never evicts a root that still has non-root spans here</b>, even when it is past the
+     * cut-off. Unarchived children mean archival has not caught up for that trace, and evicting the root
+     * would strand them: the next merge would find no real root, synthesize an orphan, and the spans
+     * would age out to a bucket chosen by their own insert time rather than the trace's.
+     *
+     * <p>Ages on the root's own end time via {@link #archivalAgeAxis}, not on last activity, so a leaky
+     * trace whose background threads keep emitting is still bounded.
+     *
+     * @return the number of entries removed.
+     */
+    public long evictArchivedRoots(final Instant evictBefore) {
+        final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(evictBefore);
+        // traceIdHex -> the stored root, kept because deleting its index entries needs the OLD values.
+        final Map<String, TraceRoot> evicting = new HashMap<>();
+        // Traces whose children have not been archived yet, so must not be evicted.
+        final Set<String> withChildren = new HashSet<>();
+
+        env.read(readTxn -> {
+            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                if (key.remaining() >= TRACE_ID_BYTES && !isRootKey(key)) {
+                    withChildren.add(traceIdHex(key));
+                }
+            });
+            LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
+                final TraceRoot root = traceRootValueSerde.read(val.duplicate());
+                final NanoTime ageAxis = archivalAgeAxis(root);
+                if (root.isOrphan() || ageAxis == null || !ageAxis.isBefore(nanoTimeBefore)) {
+                    return;
+                }
+                final byte[] traceIdBytes = new byte[key.remaining()];
+                key.duplicate().get(traceIdBytes);
+                final String hex = HexStringUtil.encode(traceIdBytes);
+                if (!withChildren.contains(hex)) {
+                    evicting.put(hex, root);
+                }
+            });
+            return null;
+        });
+
+        if (evicting.isEmpty()) {
+            return 0L;
+        }
+
+        return env.write(writer -> {
+            final Count count = new Count();
+            env.read(readTxn -> {
+                // Root spans of evicted traces go; every retained span has its lookups recorded so the
+                // deleteUnused below only drops entries nothing references any more.
+                LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                    if (key.remaining() >= TRACE_ID_BYTES
+                            && isRootKey(key)
+                            && evicting.containsKey(traceIdHex(key))) {
+                        dbi.delete(writer.getWriteTxn(), key);
+                        count.increment();
+                    } else {
+                        keyRecorder.recordUsed(writer, key);
+                        valueRecorder.recordUsed(writer, val);
+                    }
+                    writer.tryCommit();
+                });
+
+                for (final Map.Entry<String, TraceRoot> entry : evicting.entrySet()) {
+                    final byte[] traceIdBytes = HexStringUtil.decode(entry.getKey());
+                    byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+                        traceRootsDbi.delete(writer.getWriteTxn(), keyBuf);
+                    });
+                    deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, entry.getValue());
+                    deleteStatsOf(readTxn, writer, traceIdBytes);
+                    count.increment();
+                    writer.tryCommit();
+                }
+
+                // Merge-time entries for evicted roots. Key: mergeTimeMs[8] ∥ traceId[16].
+                LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
+                    final ByteBuffer keyBuf = key.duplicate();
+                    if (keyBuf.remaining() != Long.BYTES + TRACE_ID_BYTES) {
+                        return;
+                    }
+                    keyBuf.getLong(); // skip mergeTimeMs prefix
+                    final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+                    keyBuf.get(traceIdBytes);
+                    if (evicting.containsKey(HexStringUtil.encode(traceIdBytes))) {
+                        traceRootsMergeTimeDbi.delete(writer.getWriteTxn(), key);
+                        writer.tryCommit();
+                    }
+                });
+                return null;
+            });
+            writer.commit();
+
+            if (count.get() > 0 && !Thread.currentThread().isInterrupted()) {
+                env.read(readTxn -> {
+                    keyRecorder.deleteUnused(readTxn, writer);
+                    valueRecorder.deleteUnused(readTxn, writer);
+                    return null;
+                });
+            }
+            return count.get();
+        });
+    }
+
+    /**
      * The archive bucket label a span belongs to, or {@code null} if it should stay in
      * the live shard. Two rules, matching the retention model:
      * <ul>
