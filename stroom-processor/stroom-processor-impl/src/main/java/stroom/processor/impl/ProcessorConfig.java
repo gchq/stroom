@@ -42,6 +42,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private static final boolean DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT = true;
     private static final int DEFAULT_TASK_CREATION_THREAD_COUNT = 5;
     private static final int DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE = 500;
+    private static final boolean DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL = true;
 
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;
@@ -65,6 +66,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     private final StroomDuration waitToQueueTasksDuration;
     private StroomDuration skipNonProducingFiltersDuration;
+    private boolean useMaxMetaIdFromPreviousPoll;
 
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
@@ -102,6 +104,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
+        useMaxMetaIdFromPreviousPoll = DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL;
     }
 
     @SuppressWarnings("unused")
@@ -124,7 +127,9 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
-                                   skipNonProducingFiltersDuration) {
+                                   skipNonProducingFiltersDuration,
+                           @JsonProperty("useMaxMetaIdFromPreviousPoll")
+                               final Boolean useMaxMetaIdFromPreviousPoll) {
         this.dbConfig = dbConfig;
         this.assignTasks =
                 Objects.requireNonNullElse(assignTasks, DEFAULT_ASSIGN_TASKS);
@@ -150,6 +155,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
+        this.useMaxMetaIdFromPreviousPoll = Objects.requireNonNullElse(
+                useMaxMetaIdFromPreviousPoll, DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL);
     }
 
     @Override
@@ -259,6 +266,22 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
     }
 
+    @JsonPropertyDescription("Should task creation be bounded by the max meta id seen on the previous poll " +
+                             "rather than the current max meta id? The database allocates meta ids at insert " +
+                             "time but only makes the rows visible at commit time, so a max id read now may " +
+                             "sit above a meta that is still in flight. Using the previous poll's value gives " +
+                             "such a meta a full poll interval to become visible before task creation moves " +
+                             "past it, at the cost of up to one poll interval of extra latency before a new " +
+                             "stream gets a task. Setting this to false bounds task creation with the current " +
+                             "max meta id instead, which risks a stream silently never being processed.")
+    public boolean isUseMaxMetaIdFromPreviousPoll() {
+        return useMaxMetaIdFromPreviousPoll;
+    }
+
+    public void setUseMaxMetaIdFromPreviousPoll(final boolean useMaxMetaIdFromPreviousPoll) {
+        this.useMaxMetaIdFromPreviousPoll = useMaxMetaIdFromPreviousPoll;
+    }
+
     @Override
     public String toString() {
         return "ProcessorConfig{" +
@@ -278,6 +301,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
+               ", useMaxMetaIdFromPreviousPoll=" + useMaxMetaIdFromPreviousPoll +
                '}';
     }
 }

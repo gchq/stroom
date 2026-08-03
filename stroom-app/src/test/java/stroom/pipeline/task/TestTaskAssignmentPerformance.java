@@ -134,6 +134,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         assertThat(processorTaskDao.find(new ExpressionCriteria()).size()).isZero();
         final ProcessorConfig processorConfig = processorConfigProvider.get();
         processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        processorConfig.setUseMaxMetaIdFromPreviousPoll(false);
         prioritisedFilters.clear();
 
         // Manually create tasks.
@@ -159,6 +160,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         LOGGER.info("Creating tasks");
         assertThat(processorTaskDao.find(new ExpressionCriteria()).size()).isZero();
         processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        processorConfigProvider.get().setUseMaxMetaIdFromPreviousPoll(false);
         prioritisedFilters.clear();
 
         try (final ScheduledExecutorService scheduledExecutorService =

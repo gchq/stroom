@@ -46,6 +46,7 @@ class RecordToProcessorFilterTrackerMapper implements Function<Record, Processor
         processorFilterTracker.setMessage(record.get(PROCESSOR_FILTER_TRACKER.MESSAGE));
         processorFilterTracker.setMetaCount(record.get(PROCESSOR_FILTER_TRACKER.META_COUNT));
         processorFilterTracker.setEventCount(record.get(PROCESSOR_FILTER_TRACKER.EVENT_COUNT));
+        processorFilterTracker.setPrevMaxMetaId(record.get(PROCESSOR_FILTER_TRACKER.PREV_MAX_META_ID));
         return processorFilterTracker;
     }
 }

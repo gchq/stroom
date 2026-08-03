@@ -17379,6 +17379,9 @@ components:
         minMetaId:
           type: integer
           format: int64
+        prevMaxMetaId:
+          type: integer
+          format: int64
         status:
           type: string
           enum:

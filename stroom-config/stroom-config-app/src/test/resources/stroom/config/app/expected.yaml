@@ -829,6 +829,7 @@ appConfig:
     skipNonProducingFiltersDuration: "PT10S"
     taskCreationThreadCount: 5
     tasksToCreate: 1000
+    useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"
   properties:
     db:

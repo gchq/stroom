@@ -4,10 +4,10 @@
 package stroom.processor.impl.db.jooq.tables.records;
 
 
+import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
+
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 
 
 /**
@@ -206,6 +206,20 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
         return (Byte) get(12);
     }
 
+    /**
+     * Setter for <code>stroom.processor_filter_tracker.prev_max_meta_id</code>.
+     */
+    public void setPrevMaxMetaId(Long value) {
+        set(13, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_filter_tracker.prev_max_meta_id</code>.
+     */
+    public Long getPrevMaxMetaId() {
+        return (Long) get(13);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -229,7 +243,7 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
     /**
      * Create a detached, initialised ProcessorFilterTrackerRecord
      */
-    public ProcessorFilterTrackerRecord(Integer id, Integer version, Long minMetaId, Long minEventId, Long minMetaCreateMs, Long maxMetaCreateMs, Long metaCreateMs, Long lastPollMs, Integer lastPollTaskCount, String message, Long metaCount, Long eventCount, Byte status) {
+    public ProcessorFilterTrackerRecord(Integer id, Integer version, Long minMetaId, Long minEventId, Long minMetaCreateMs, Long maxMetaCreateMs, Long metaCreateMs, Long lastPollMs, Integer lastPollTaskCount, String message, Long metaCount, Long eventCount, Byte status, Long prevMaxMetaId) {
         super(ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER);
 
         setId(id);
@@ -245,6 +259,7 @@ public class ProcessorFilterTrackerRecord extends UpdatableRecordImpl<ProcessorF
         setMetaCount(metaCount);
         setEventCount(eventCount);
         setStatus(status);
+        setPrevMaxMetaId(prevMaxMetaId);
         resetTouchedOnNotNull();
     }
 }

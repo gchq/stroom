@@ -79,6 +79,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -547,7 +548,13 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         LOGGER.debug("createTasksFromCriteria() - requiredTasks: {}, filter: {}", maxTasks, filter);
 
         // This will contain locked and unlocked streams
-        final long maxMetaId = getMaxMetaId(filter);
+        final OptionalLong optMaxMetaId = getEffectiveMaxMetaId(
+                filter, tracker, filterProgressMonitor, getMaxMetaId(filter));
+        if (optMaxMetaId.isEmpty()) {
+            // We have only just established the max meta id for this filter, so wait for the next poll.
+            return;
+        }
+        final long maxMetaId = optMaxMetaId.getAsLong();
 
         final DurationTimer durationTimer = DurationTimer.start();
         final List<Meta> metaList = runSelectMetaQuery(
@@ -582,6 +589,50 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         createdTasks,
                         filter.getFilterInfo()));
         totalTasksCreated.add(createdTasks);
+    }
+
+    /**
+     * Get the max meta id to bound task creation with. The DB allocates meta ids at insert time but only
+     * makes the rows visible at commit time, so the current max id can sit above a meta that is still in
+     * flight. If we bound task creation with the current max then the tracker moves past the in flight
+     * meta and it is silently never processed, so instead we bound with the max id seen on the previous
+     * poll, by which time anything below it will have committed or rolled back.
+     *
+     * @param currentMaxMetaId The max meta id as at this poll.
+     * @return The max meta id to use, or empty if this poll must be abandoned because we have only just
+     * established the tracker state that subsequent polls will use.
+     */
+    private OptionalLong getEffectiveMaxMetaId(final ProcessorFilter filter,
+                                               final ProcessorFilterTracker tracker,
+                                               final FilterProgressMonitor filterProgressMonitor,
+                                               final long currentMaxMetaId) {
+        if (!processorConfigProvider.get().isUseMaxMetaIdFromPreviousPoll()) {
+            return OptionalLong.of(currentMaxMetaId);
+        }
+
+        final Long prevMaxMetaId = tracker.getPrevMaxMetaId();
+        tracker.setPrevMaxMetaId(currentMaxMetaId);
+
+        if (prevMaxMetaId == null) {
+            // There is no previous max id to bound task creation with, e.g. this is the first poll for a
+            // new filter, or the first poll after an upgrade or a tracker reset. Record the current max
+            // for the next poll to use and create nothing this time round. We can't fall back to the
+            // current max as that is exactly the unsafe read we are avoiding, and we can't bound with
+            // zero as createNewTasks() would then wind the tracker back to the start of the meta table.
+            LOGGER.debug(() -> LogUtil.message(
+                    "getEffectiveMaxMetaId() - Establishing max meta id {} for filter: {}",
+                    currentMaxMetaId, filter.getFilterInfo()));
+            updateTracker(tracker, filterProgressMonitor);
+            return OptionalLong.empty();
+        }
+
+        // The current max can be lower than the previous one, e.g. feed dependencies can move the
+        // effective max backwards, so bound with whichever of the two allows the least.
+        final long maxMetaId = Math.min(prevMaxMetaId, currentMaxMetaId);
+        LOGGER.trace(() -> LogUtil.message(
+                "getEffectiveMaxMetaId() - maxMetaId: {}, prevMaxMetaId: {}, currentMaxMetaId: {}, filter: {}",
+                maxMetaId, prevMaxMetaId, currentMaxMetaId, filter.getFilterInfo()));
+        return OptionalLong.of(maxMetaId);
     }
 
     private long getMaxMetaId(final ProcessorFilter filter) {
@@ -638,7 +689,6 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                             final LongAdder totalTasksCreated) {
         final AtomicInteger totalTasks = new AtomicInteger();
         final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
-        final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
         long maxStreams = maxTasks;
         LOGGER.debug("Creating search query tasks maxStreams: {}, filer: {}", maxStreams, filter);
         long maxEvents = 1000000;
@@ -706,7 +756,21 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 .params(getParams(queryData))
                 .build();
 
-        final Long maxMetaId = metaService.getMaxId();
+        final OptionalLong optMaxMetaId = getEffectiveMaxMetaId(
+                filter,
+                tracker,
+                filterProgressMonitor,
+                Objects.requireNonNullElse(metaService.getMaxId(), 0L));
+        if (optMaxMetaId.isEmpty()) {
+            // We have only just established the max meta id for this filter, so wait for the next poll.
+            return;
+        }
+        final long maxMetaId = optMaxMetaId.getAsLong();
+
+        // Bound the search with the same max meta id that the tracker will be moved on to. Without this the
+        // search would find events in streams above the max and the tracker would jump to the last of those,
+        // skipping any meta in between that was still in flight when we read the max.
+        final EventRef maxEvent = new EventRef(maxMetaId, Long.MAX_VALUE);
 
         final BiConsumer<EventRefs, Throwable> consumer = (eventRefs, throwable) -> {
             LOGGER.debug(() -> LogUtil.message(

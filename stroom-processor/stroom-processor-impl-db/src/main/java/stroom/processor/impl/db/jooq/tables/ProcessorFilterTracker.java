@@ -4,7 +4,9 @@
 package stroom.processor.impl.db.jooq.tables;
 
 
-import java.util.Collection;
+import stroom.processor.impl.db.jooq.Keys;
+import stroom.processor.impl.db.jooq.Stroom;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -24,9 +26,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.processor.impl.db.jooq.Keys;
-import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
+import java.util.Collection;
 
 
 /**
@@ -117,6 +117,11 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
      * The column <code>stroom.processor_filter_tracker.status</code>.
      */
     public final TableField<ProcessorFilterTrackerRecord, Byte> STATUS = createField(DSL.name("status"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+
+    /**
+     * The column <code>stroom.processor_filter_tracker.prev_max_meta_id</code>.
+     */
+    public final TableField<ProcessorFilterTrackerRecord, Long> PREV_MAX_META_ID = createField(DSL.name("prev_max_meta_id"), SQLDataType.BIGINT, this, "");
 
     private ProcessorFilterTracker(Name alias, Table<ProcessorFilterTrackerRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
