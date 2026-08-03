@@ -32,11 +32,27 @@ import java.nio.file.Path;
 
 public class PlanBDb {
 
+    /** Opens a queryable store. See the six-arg overload for stores that are only written and merged. */
     public static Db<?, ?> open(final PlanBDocument doc,
                                 final Path targetPath,
                                 final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,
                                 final boolean readOnly) {
+        return open(doc, targetPath, byteBuffers, byteBufferFactory, readOnly, true);
+    }
+
+    /**
+     * @param queryable whether this env needs the structures that only sorted/filtered queries use.
+     *                  Currently only {@code TRACE} stores have any (their secondary sort indexes);
+     *                  every other type ignores it. Must be consistent for every open of a given env —
+     *                  see {@link stroom.planb.impl.db.trace.TraceDb#create}.
+     */
+    public static Db<?, ?> open(final PlanBDocument doc,
+                                final Path targetPath,
+                                final ByteBuffers byteBuffers,
+                                final ByteBufferFactory byteBufferFactory,
+                                final boolean readOnly,
+                                final boolean queryable) {
         switch (doc.getStateType()) {
             case STATE -> {
                 return StateDb.create(
@@ -93,7 +109,8 @@ public class PlanBDb {
                         byteBuffers,
                         byteBufferFactory,
                         doc,
-                        readOnly);
+                        readOnly,
+                        queryable);
             }
 
             default -> throw new RuntimeException("Unexpected Plan B store type: " + doc.getStateType());

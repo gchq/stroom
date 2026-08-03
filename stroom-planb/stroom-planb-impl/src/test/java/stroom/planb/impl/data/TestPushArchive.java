@@ -190,6 +190,18 @@ class TestPushArchive {
         assertThat(bucketDir()).doesNotExist();
     }
 
+    /**
+     * A staged batch is always merged rather than copied up verbatim, so a brand-new bucket still gets
+     * its derived trace roots and sort indexes and is queryable from the first push. Publishing the batch
+     * as-is would leave spans no query could find.
+     */
+    @Test
+    void firstPush_producesAQueryableBucket() throws IOException {
+        publisher.pushArchive(doc, SHARD_INDEX, stagedBatch("batch1", TRACE_A));
+
+        assertThat(archivedTraceIds()).containsExactly(TRACE_A);
+    }
+
     // -----------------------------------------------------------------------
     // Failure leaves the live bucket intact
     // -----------------------------------------------------------------------
@@ -203,9 +215,7 @@ class TestPushArchive {
         publisher.pushArchive(doc, SHARD_INDEX, stagedBatch("batch1", TRACE_A));
         final String versionBefore = Files.readString(bucketDir().resolve(PlanBConstants.VERSION_FILE_NAME));
 
-        // Merging from a dir with no LMDB env fails once a bucket already exists.
-        final Path broken = Files.createDirectories(tempDir.resolve("broken"));
-        assertThatThrownBy(() -> publisher.pushArchive(doc, SHARD_INDEX, new StagedArchive(DAY_LABEL, broken)))
+        assertThatThrownBy(() -> publisher.pushArchive(doc, SHARD_INDEX, corruptBatch("broken1")))
                 .isInstanceOf(Exception.class);
 
         assertThat(Files.readString(bucketDir().resolve(PlanBConstants.VERSION_FILE_NAME)))
@@ -257,8 +267,7 @@ class TestPushArchive {
     void staging_isEmptyAfterAFailedPush() throws IOException {
         publisher.pushArchive(doc, SHARD_INDEX, stagedBatch("batch1", TRACE_A));
 
-        final Path broken = Files.createDirectories(tempDir.resolve("broken"));
-        assertThatThrownBy(() -> publisher.pushArchive(doc, SHARD_INDEX, new StagedArchive(DAY_LABEL, broken)))
+        assertThatThrownBy(() -> publisher.pushArchive(doc, SHARD_INDEX, corruptBatch("broken2")))
                 .isInstanceOf(Exception.class);
 
         assertThat(listNames(stagingDir())).isEmpty();
@@ -294,6 +303,16 @@ class TestPushArchive {
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(SHARD_INDEX))
                 .resolve(DAY_LABEL);
+    }
+
+    /**
+     * A staged batch whose data.mdb is present but is not an LMDB file, so opening it to merge fails
+     * cleanly. An empty dir would not do: that is a no-op, not a failure.
+     */
+    private StagedArchive corruptBatch(final String dirName) throws IOException {
+        final Path dir = Files.createDirectories(tempDir.resolve(dirName));
+        Files.writeString(dir.resolve(PlanBConstants.DATA_FILE_NAME), "not an lmdb file");
+        return new StagedArchive(DAY_LABEL, dir);
     }
 
     /** Builds a local single-trace archive batch env, as archiveOldData would produce. */

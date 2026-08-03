@@ -98,6 +98,16 @@ public class SharedFileStoreShard extends AbstractStoreShard {
         syncFromSharedStoreIfRequired();
     }
 
+    /**
+     * A shared-file-store shard is a holding area, not a query target — queries read the archive buckets.
+     * So it carries none of the query-only structures a store can have (for traces, the secondary sort
+     * indexes), which would otherwise be maintained for every span merged and never read.
+     */
+    @Override
+    protected boolean isQueryable() {
+        return false;
+    }
+
     @Override
     public void merge(final Path sourceDir) {
         syncFromSharedStoreIfRequired();

@@ -189,37 +189,39 @@ public class SharedFileStorePublisher {
         Files.createDirectories(stagingDir);
 
         try {
-            final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
-            final boolean mergeIntoExisting =
-                    Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))
-                            && Files.exists(existingData);
-
-            final Path dataToPublish;
-            if (mergeIntoExisting) {
-                // Copy the existing bucket DOWN, then merge the new batch into that local copy at the
-                // LMDB level (union of both sets of entries).
-                LOGGER.info("Merging new archive batch into existing archive shard {}",
-                        archiveShardDir);
-                dataToPublish = stagingDir.resolve(PlanBConstants.DATA_FILE_NAME);
-                Files.copy(existingData, dataToPublish, StandardCopyOption.REPLACE_EXISTING);
-                try (final Db<?, ?> db = PlanBDb.open(
-                        doc, stagingDir, byteBuffers, byteBufferFactory, false)) {
-                    db.merge(archiveShard.localDir());
-                    // Full rebuild rather than archiveMergeComplete's totalSpans-only patch: a trace's
-                    // spans now all land in its root's start-time bucket, so the bucket can derive an
-                    // authoritative root (depth, services, end time, counts) from its own span set.
-                    // merge() maintains the per-trace stats it needs and queues every touched trace.
-                    db.mergeComplete();
-                }
-                // Keep the archive layout as data.mdb + .version only: drop the lock file LMDB created
-                // locally during the merge (it is recreated on the next open).
-                Files.deleteIfExists(stagingDir.resolve(PlanBConstants.LOCK_FILE_NAME));
-            } else {
-                // First (or only) bucket for this date — publish the new batch's data file as-is.
-                dataToPublish = archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME);
+            if (!Files.exists(archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME))) {
+                LOGGER.warn("Staged archive {} has no data file, nothing to push", archiveShard.localDir());
+                return;
             }
 
-            publishBucketData(dataToPublish, archiveShardDir, uid);
+            final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
+            final Path stagingData = stagingDir.resolve(PlanBConstants.DATA_FILE_NAME);
+            if (Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))
+                    && Files.exists(existingData)) {
+                // Seed the staging env with the existing bucket, copied DOWN, so the new batch unions
+                // with it rather than replacing it.
+                LOGGER.info("Merging new archive batch into existing archive shard {}", archiveShardDir);
+                Files.copy(existingData, stagingData, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Always merge, even into an empty staging env for a brand-new bucket, rather than copying the
+            // staged batch up verbatim. The batch holds spans only — its roots and sort indexes are
+            // derived, not carried — so publishing it as-is would leave a bucket with spans that no query
+            // could find, and without the index DBIs a read-only query open needs.
+            try (final Db<?, ?> db = PlanBDb.open(
+                    doc, stagingDir, byteBuffers, byteBufferFactory, false, true)) {
+                db.merge(archiveShard.localDir());
+                // Full rebuild rather than archiveMergeComplete's totalSpans-only patch: a trace's spans
+                // now all land in its root's start-time bucket, so the bucket can derive an authoritative
+                // root (depth, services, end time, counts) from its own span set. merge() maintains the
+                // per-trace stats it needs and queues every touched trace.
+                db.mergeComplete();
+            }
+            // Keep the archive layout as data.mdb + .version only: drop the lock file LMDB created
+            // locally during the merge (it is recreated on the next open).
+            Files.deleteIfExists(stagingDir.resolve(PlanBConstants.LOCK_FILE_NAME));
+
+            publishBucketData(stagingData, archiveShardDir, uid);
         } finally {
             // Swallow cleanup failures so they cannot mask an in-flight exception from the push. A
             // leftover staging dir is harmless: the next startup clears the whole staging root.

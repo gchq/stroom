@@ -187,6 +187,15 @@ public abstract class AbstractStoreShard implements Shard {
         return false;
     }
 
+    /**
+     * Whether this shard is read by queries, and so needs the query-only structures a store can carry
+     * (for traces, the secondary sort indexes). Shards that only accumulate and get merged/published
+     * override this to {@code false} so those structures are neither built nor maintained.
+     */
+    protected boolean isQueryable() {
+        return true;
+    }
+
     @Override
     public boolean isIdle() {
         // Store shards are long-lived and don't need idle cleanup.
@@ -466,7 +475,8 @@ public abstract class AbstractStoreShard implements Shard {
         if (db == null) {
             if (Files.exists(shardDir)) {
                 LOGGER.info(() -> "Opening local shard for '" + doc.asDocRef() + "' (shardIndex: " + shardIndex + ")");
-                db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory, isReadOnly());
+                db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory,
+                        isReadOnly(), isQueryable());
             } else {
                 final String message = "Local Plan B shard directory not found for '" + doc.asDocRef() + "'";
                 LOGGER.error(() -> message);

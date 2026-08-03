@@ -258,7 +258,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     final TraceSettings settings,
                     final KeySerde<SpanKey> keySerde,
                     final Serde<SpanValue> valueSerde,
-                    final HashClashCommitRunnable hashClashCommitRunnable) {
+                    final HashClashCommitRunnable hashClashCommitRunnable,
+                    final boolean hasSecondaryIndexes) {
         super(env,
                 byteBuffers,
                 doc,
@@ -285,11 +286,17 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         traceServiceNamesDbi = env.openDbi("trace-service-names", DbiFlags.MDB_CREATE);
         traceDfsCheckpointsDbi = env.openDbi("trace-dfs-checkpoints", DbiFlags.MDB_CREATE);
 
-        // Open one DBI per secondary sort index, keyed by the index definition.
+        // One DBI per secondary sort index, keyed by the index definition — but only for a store that is
+        // actually queried. They exist solely to serve sorted/filtered findTraces, so in a store that is
+        // only ever written and merged (a holding-area shard, a stream writer env, an archival delta)
+        // maintaining them is pure write amplification. Left empty there, which makes the write helpers
+        // no-ops; see hasSecondaryIndexes on TraceDb.create for why this must be consistent per env.
         final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> indexDbis =
                 new EnumMap<>(TraceSecondaryIndex.class);
-        for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
-            indexDbis.put(index, env.openDbi(index.dbiName(), DbiFlags.MDB_CREATE));
+        if (hasSecondaryIndexes) {
+            for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
+                indexDbis.put(index, env.openDbi(index.dbiName(), DbiFlags.MDB_CREATE));
+            }
         }
         secondaryIndexDbis = indexDbis;
 
@@ -299,11 +306,32 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 //        updateTimeSerde = new MillisecondTimeSerde();
     }
 
+    /** Opens a queryable store — i.e. with the secondary sort indexes. */
     public static TraceDb create(final Path path,
                                  final ByteBuffers byteBuffers,
                                  final ByteBufferFactory byteBufferFactory,
                                  final PlanBDocument doc,
                                  final boolean readOnly) {
+        return create(path, byteBuffers, byteBufferFactory, doc, readOnly, true);
+    }
+
+    /**
+     * @param hasSecondaryIndexes whether this env carries the secondary sort indexes that sorted
+     *                            {@code findTraces} needs. Pass {@code false} for a store that is only
+     *                            written and merged, never queried, to avoid maintaining them.
+     *                            <p><b>Must be consistent for every open of a given env.</b> On a
+     *                            read-only env, asking for a DBI the env does not contain throws, so a
+     *                            store written without indexes cannot later be opened read-only with
+     *                            them. Reading with {@code false} is always safe, which is why
+     *                            {@link #merge} opens its source that way regardless of how it was
+     *                            written.
+     */
+    public static TraceDb create(final Path path,
+                                 final ByteBuffers byteBuffers,
+                                 final ByteBufferFactory byteBufferFactory,
+                                 final PlanBDocument doc,
+                                 final boolean readOnly,
+                                 final boolean hasSecondaryIndexes) {
         final TraceSettings settings;
         if (doc.getSettings() instanceof final TraceSettings traceSettings) {
             settings = traceSettings;
@@ -329,7 +357,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     settings,
                     keySerde,
                     valueSerde,
-                    hashClashCommitRunnable);
+                    hashClashCommitRunnable,
+                    hasSecondaryIndexes);
         } catch (final RuntimeException e) {
             // Close the env if we get any exceptions to prevent them staying open.
             try {
@@ -357,6 +386,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private void writeSecondaryIndexes(final Txn<ByteBuffer> writeTxn,
                                        final byte[] traceIdBytes,
                                        final TraceRoot root) {
+        if (secondaryIndexDbis.isEmpty()) {
+            return;
+        }
         for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
             final Dbi<ByteBuffer> indexDbi = secondaryIndexDbis.get(index);
             byteBuffers.useBytes(index.key(root, traceIdBytes), buf -> {
@@ -373,6 +405,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private void deleteSecondaryIndexes(final Txn<ByteBuffer> writeTxn,
                                         final byte[] traceIdBytes,
                                         final TraceRoot oldRoot) {
+        if (secondaryIndexDbis.isEmpty()) {
+            return;
+        }
         for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
             final Dbi<ByteBuffer> indexDbi = secondaryIndexDbis.get(index);
             byteBuffers.useBytes(index.key(oldRoot, traceIdBytes), buf -> {
@@ -636,6 +671,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                         final byte[] traceIdBytes,
                                         final TraceRoot oldRoot,
                                         final TraceRoot newRoot) {
+        if (secondaryIndexDbis.isEmpty()) {
+            return;
+        }
         for (final TraceSecondaryIndex index : TraceSecondaryIndex.values()) {
             final byte[] oldKey = index.key(oldRoot, traceIdBytes);
             final byte[] newKey = index.key(newRoot, traceIdBytes);
@@ -721,7 +759,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final TraceDb sourceDb = TraceDb.create(source, byteBuffers, byteBufferFactory, doc, true)) {
+            // Sources are opened WITHOUT secondary indexes: merge only reads their span and trace-roots
+            // DBIs, and reading that way works whether or not the source was written with indexes — which
+            // matters because a read-only open cannot ask for a DBI the env lacks.
+            try (final TraceDb sourceDb =
+                         TraceDb.create(source, byteBuffers, byteBufferFactory, doc, true, false)) {
                 // Validate that the source DB has the same schema.
                 validateSchema(schemaInfo, sourceDb.getSchemaInfo());
 
@@ -1181,6 +1223,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
+            // Indexed, unlike the holding shard this is written from. A delta's index cost is one write
+            // per archived root, not per span, and keeping it queryable means a staged batch can be read
+            // back and verified in isolation.
             try (final TraceDb archiveDb =
                          TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
                 archiveDb.env.write(archiveWriter -> {
@@ -1419,6 +1464,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
+            // Indexed, unlike the holding shard this is written from. A delta's index cost is one write
+            // per archived root, not per span, and keeping it queryable means a staged batch can be read
+            // back and verified in isolation.
             try (final TraceDb archiveDb =
                          TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
                 archiveDb.env.write(archiveWriter -> {
@@ -1474,6 +1522,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             }
             return count.get();
         });
+    }
+
+    // Fail loudly rather than with an NPE if a sorted/indexed read is ever attempted against a store
+    // opened without the secondary indexes (a holding-area shard, writer env or archival delta).
+    private void requireSecondaryIndexes(final String operation) {
+        if (secondaryIndexDbis.isEmpty()) {
+            throw new IllegalStateException("Cannot " + operation
+                    + ": this trace store was opened without secondary sort indexes, so it is not "
+                    + "queryable. Query the archive buckets instead.");
+        }
     }
 
     // Hex traceId from the leading 16 bytes of a span key.
@@ -1927,6 +1985,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 indexDbi = traceRootsDbi;
             } else {
                 // Any secondary-indexed field; TRACE_START and unknowns fall back to start-time.
+                requireSecondaryIndexes("sort trace roots by " + sortField);
                 final TraceSecondaryIndex index = TraceSecondaryIndex.forField(sortField);
                 indexDbi = secondaryIndexDbis.get(
                         index != null ? index : TraceSecondaryIndex.START_TIME);
@@ -2090,6 +2149,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * even though {@link #matchesTimeRange} would pass them; null start times are abnormal.
      */
     private long countTracesInTimeRange(final Txn<ByteBuffer> readTxn, final TimeFilter timeFilter) {
+        requireSecondaryIndexes("count traces in a time range");
         final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
         try (final Stream<LmdbEntry> stream =
                 LmdbStream.stream(readTxn, startTimeDbi, startTimeKeyRange(timeFilter))) {
@@ -2105,6 +2165,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * live shard + archive buckets, where summing per-store totals would double-count split traces.
      */
     public Set<String> windowTraceIds(final TimeFilter timeFilter) {
+        requireSecondaryIndexes("list traceIds in a time window");
         return env.read(readTxn -> {
             final Set<String> ids = new HashSet<>();
             final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
@@ -2133,6 +2194,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                             final long bucketWidthMs,
                             final int nBuckets,
                             final Predicate<TraceRoot> filterPredicate) {
+        requireSecondaryIndexes("histogram traces");
         final long[] counts = new long[nBuckets];
         final long fromMs = timeFilter.getFrom();
         final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);

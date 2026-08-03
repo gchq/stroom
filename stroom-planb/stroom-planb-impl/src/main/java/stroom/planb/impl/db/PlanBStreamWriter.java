@@ -183,8 +183,11 @@ public class PlanBStreamWriter implements AutoCloseable {
                 : restDestination;
         final Path localWriterDir = getLmdbEnvDir(doc, shardIndex);
         // Open the native LMDB environment last; WriterInstance closes it
-        // immediately if the subsequent createWriter() call fails.
-        final Db<?, ?> lmdb = PlanBDb.open(doc, localWriterDir, byteBuffers, byteBufferFactory, false);
+        // immediately if the subsequent createWriter() call fails. Not queryable: a per-stream writer env
+        // is only ever written here and then merged elsewhere, so it skips the query-only structures a
+        // store can carry (for traces, the secondary sort indexes).
+        final Db<?, ?> lmdb = PlanBDb.open(
+                doc, localWriterDir, byteBuffers, byteBufferFactory, false, false);
         return new WriterInstance(lmdb, synchroniseMerge, localWriterDir, destination);
     }
 
