@@ -530,6 +530,57 @@ class TestSteppingSession {
     }
 
     @Test
+    void testACompletedMaterialisationWithNoMatchRePlansRatherThanCrossing(@TempDir final Path dir) {
+        // The windowed filtered scan: each launch materialises one window of records and completes. A
+        // window with no match says nothing about the rest of the stream, so the resolver must ask the
+        // launcher for the next window - crossing into the next stream would step over records no scan
+        // has evaluated, and they would never be reachable again.
+        final StepDataStore store = new StepDataStore(dir.resolve("10"), new SteppingConfig());
+        // Records 1 and 2 (the first window) do not satisfy an output NOT_EMPTY filter; record 3 (the
+        // second window) does.
+        for (int r = 1; r <= 3; r++) {
+            store.putRecord(new StepLocation(10L, 0, r), List.of(new StepDataStore.ElementRecord(
+                    E1, FP,
+                    new CapturedElementData(null, CapturedData.text("r" + r), false, false, r == 3, null))));
+        }
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L, 20L),
+                (metaId, request, fp, priorSweeps, running) -> {
+                    assertThat(metaId).as("the resolver re-plans this stream, it does not cross").isEqualTo(10L);
+                    final StreamSweep window = new StreamSweep(10L, store);
+                    window.setOnDemand("e1");
+                    if (launches.incrementAndGet() == 1) {
+                        window.recordCaptured(new StepLocation(10L, 0, 1));
+                        window.recordCaptured(new StepLocation(10L, 0, 2));
+                    } else {
+                        window.recordCaptured(new StepLocation(10L, 0, 3));
+                    }
+                    window.markFullyCaptured();
+                    return window;
+                },
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+
+        final PipelineStepRequest request = PipelineStepRequest.builder()
+                .stepType(StepType.FORWARD)
+                .stepLocation(new StepLocation(10L, 0, 0))
+                .stepFilterMap(Map.of("e1",
+                        new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
+                .build();
+        final SessionStepResult result = resolver.resolve(session, request, FINGERPRINTS, 5_000);
+
+        assertThat(result.foundLocation())
+                .as("the match in the second window is found in THIS stream")
+                .isEqualTo(new StepLocation(10L, 0, 3));
+        assertThat(launches.get()).as("one launch per window").isEqualTo(2);
+    }
+
+    @Test
     void testForwardCrossesToNextStream(@TempDir final Path dir) {
         final AtomicInteger launches = new AtomicInteger();
         final Map<Long, StreamSweep> sweeps = Map.of(

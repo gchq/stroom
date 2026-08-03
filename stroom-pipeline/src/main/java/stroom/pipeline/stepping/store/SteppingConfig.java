@@ -112,7 +112,8 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
                            final Integer maxRetainedFingerprintsPerElement,
                            final Boolean skeletonSweep,
                            final Long eagerMaterialisationRecords,
-                           final Integer prefetchWindow) {
+                           final Integer prefetchWindow,
+                           final Integer filteredScanWindow) {
         this.storeSubDir = source.storeSubDir;
         this.maxRecordsPerStream = source.maxRecordsPerStream;
         this.maxBytesPerStream = source.maxBytesPerStream;
@@ -120,7 +121,7 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
         this.maxSweptStreamsPerSession = source.maxSweptStreamsPerSession;
         this.maxRetainedFingerprintsPerElement = Objects.requireNonNullElse(
                 maxRetainedFingerprintsPerElement, source.maxRetainedFingerprintsPerElement);
-        this.filteredScanWindow = source.filteredScanWindow;
+        this.filteredScanWindow = Objects.requireNonNullElse(filteredScanWindow, source.filteredScanWindow);
         this.maxSessionIdleTime = source.maxSessionIdleTime;
         this.orphanMaxAge = source.orphanMaxAge;
         this.skeletonSweep = Objects.requireNonNullElse(skeletonSweep, source.skeletonSweep);
@@ -218,19 +219,23 @@ public class SteppingConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     public SteppingConfig withMaxRetainedFingerprintsPerElement(final int value) {
-        return new SteppingConfig(this, value, null, null, null);
+        return new SteppingConfig(this, value, null, null, null, null);
     }
 
     public SteppingConfig withSkeletonSweep(final boolean value) {
-        return new SteppingConfig(this, null, value, null, null);
+        return new SteppingConfig(this, null, value, null, null, null);
     }
 
     public SteppingConfig withEagerMaterialisationRecords(final long value) {
-        return new SteppingConfig(this, null, null, value, null);
+        return new SteppingConfig(this, null, null, value, null, null);
     }
 
     public SteppingConfig withPrefetchWindow(final int value) {
-        return new SteppingConfig(this, null, null, null, value);
+        return new SteppingConfig(this, null, null, null, value, null);
+    }
+
+    public SteppingConfig withFilteredScanWindow(final int value) {
+        return new SteppingConfig(this, null, null, null, null, value);
     }
 
     @Override

@@ -519,7 +519,7 @@ on clean shutdown.
 | `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction and the pins that override it, the per-record scope snapshot. |
 | `TestRecordScopeStateSerializer` / `TestTaskScopeMap` | The scope snapshot's framing (null/empty/awkward keys and values, >64KB) and the snapshot/restore/clear the stepping path relies on. |
 | `TestStreamSweep` | The progress signal: no lost wakeups, interrupt semantics, terminate handshake. |
-| `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour, and the narrow abandonment rule (a downstream edit keeps the running capture; a parser edit does not) with the wait handle it makes possible. |
+| `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour, and the narrow abandonment rule (a downstream edit keeps the running capture; a parser edit does not) with the wait handle it makes possible. Also that a completed materialisation with no match re-plans in its own stream rather than crossing - the rule that keeps a windowed scan in-stream. |
 | `TestElementFingerprinter` | Sensitivity and stability — a wrong fingerprint serves stale IO or never reuses. |
 | `TestFilteredStepAfterEdit` (stroom-app) | Filtered navigation after an edit, end to end: the windowed scan is entered (launch counter), lands on genuine matches for FORWARD **and** the awkward FIRST/LAST ends, with unfiltered controls and a no-re-sweep assertion. Its control found the filters-missing-from-the-sweep-key bug. |
 | `TestFilteredScanWindow` | The scan window's arithmetic (inclusive ends, clamping, direction reversal, frontier resume, null when dry) and that the size genuinely comes from `filteredScanWindow` - the config default equals the old constant, so only a test that varies it can tell wiring from residue. |
@@ -528,7 +528,7 @@ on clean shutdown.
 | `TestSteppingContextLookup` (stroom-app) | Context reference data (`stroom:lookup` against the stream's own context child stream) survives a single-record replay. Negative control: nulling `ReprocessDriver`'s one `setInputStreamProvider` call fails exactly this. |
 | `TestSteppingCounterReplay` (stroom-app) | A replayed record keeps the `EventId` the sweep gave it. Negative control: disabling the restore fails `expected: 6L but was: 1L`. |
 | `TestSweepAndReplaySharingAStore` | A sweep and a replay writing the same store: holes in the shared state file and in a shared-fingerprint element file must not trip the in-order check, both writers stay readable, and a pure sweep still rejects out-of-order appends. |
-| `TestSteppingScaleScenarios` (stroom-app) | Scenarios B, C and D by launch counters - C in three parts (edit behind the frontier, edit ahead of it, edit-then-step), D as the skeleton mechanism (one backbone, N materialisations, zero full sweeps, below-boundary pane served). The acceptance tests for build-order stages 1-4. Also that a filtered scan advances across windows. |
+| `TestSteppingScaleScenarios` (stroom-app) | Scenarios B, C and D by launch counters - C in three parts (edit behind the frontier, edit ahead of it, edit-then-step), D as the skeleton mechanism (one backbone, N materialisations, zero full sweeps, below-boundary pane served). The acceptance tests for build-order stages 1-4. Also the filtered windowed scan's launch discipline: one launch per window crossed (plus at most one completion-boundary race), and a near match served from the first window's materialisation, in one launch, while its producer still runs. |
 | `TestSteppingMidPointBenchmark`, `TestSteppingScenarioBenchmarks` (stroom-app) | The scenario numbers (A; C and D's ceiling). No timing assertions - correctness asserted, wall-clock logged for a human. |
 | `TestCaptureWatermark`, `TestCapturedRecordFeed`, `TestCapturedRange`, `TestStageGraphPlanner` | The substrate built for the set-aside stage decomposition and kept for the direction in §11: that every way a producer stops wakes its waiters, that a consumer follows a producer without hanging, that a record is only servable once every contributor has reached it, and where a pipeline may be cut. Liveness tests here assert the wake is **prompt** (a short join against a long await) — asserting only the return value passes even with the signal deleted. |
 
@@ -675,6 +675,23 @@ user actually visits**, rather than sweeping it:
   that a filter matching nothing does not materialise the stream in one go. It is exposed as config because
   the right value depends on the pipeline, and tuning it should not need a rebuild.
 
+  **The scan's launch loop needed two rules the first build missed.** The benchmark meant to size the window
+  (`measureTheFilteredScanWindowTradeOff`) found the loop itself broken: a hit at record 5 cost the same
+  ~600 launches as a hit at record 4,000. Two compounding causes. The resolver recomputes the window from
+  the committed frontier on every wakeup, so the asked window slides a few records past the in-flight
+  producer's demand - and attaching required the producer to cover the *whole* recomputed window, so no
+  recomputation ever attached and every wakeup launched a new overlapping reprocess, roughly one per record
+  signalled, each re-running records the store already held. And each iteration's scan is bounded by the
+  coverage of the sweep that iteration was handed - a freshly launched one, so empty - which made the
+  accumulated materialisation invisible: a match inside the first window went unserved while the scan crept
+  the whole stream. The two rules that fix it: a step **attaches to a running producer on overlap** - a
+  producer making *any* of the asked records is worth waiting on, and the next poll plans the remainder
+  from the advanced frontier - and the resolver reads a **completed materialisation's "no match" as
+  "re-plan", never as "no match in this stream"**; only a whole-stream sweep's completion is authority to
+  cross into the next stream. The second rule also closes a hole where a sweep completing with empty
+  coverage could cross streams over records no scan had evaluated - the suspected mechanism of the
+  once-seen golden-corpus flake in `TestSkeletonSweptStepping.testFileToLocationReference`.
+
   **Verified end to end** by `TestFilteredStepAfterEdit`: under an edit and a `NOT_EMPTY` filter, a `FORWARD`
   from record 0 skips the two non-matching records, lands on record 3, and serves output that genuinely
   matches - with an unfiltered control step asserting the same navigation lands on record 1, so the skip is
@@ -688,17 +705,15 @@ user actually visits**, rather than sweeping it:
   which is asserted rather than assumed: landing correctly is not enough on its own, because a fallback to a
   full sweep would give the same answer at the cost this engine exists to remove.
 
-  That control found a real defect. An on-demand sweep is cached against the step that produced it, and the
-  key was `stepType + ":" + stepLocation`. But an unfiltered `FORWARD` materialises one record while a
-  filtered one has to scan a window - same type, same location, different records needed. The filtered step
-  was handed the unfiltered step's sweep, found only that one record to scan, and reported *no matching
-  record* on a stream that had one. The filters are therefore part of the step's identity and now form part
-  of the key. That signature is built field by field: `XPathFilter.toString` includes the `uniqueValues` it
-  accumulates *as the step runs*, so a key derived from it would mutate under its own cache entry. Only
-  effectively-applied filters contribute, so opening an empty filter pane does not discard a sweep, and the
-  stream-keyed entry for full sweeps stays filter-free - a full sweep captures every record whatever the
-  filter, and re-sweeping because the user typed in the filter box is precisely what this engine exists to
-  stop.
+  That control found a real defect in the design as first built. An on-demand sweep was then cached against
+  the step that produced it, keyed `stepType + ":" + stepLocation` - but an unfiltered `FORWARD`
+  materialises one record while a filtered one has to scan a window: same key, different records needed. The
+  filtered step was handed the unfiltered step's sweep, found only that one record to scan, and reported *no
+  matching record* on a stream that had one. Filters were folded into the key as a first fix; the durable
+  fix was deleting the step-keyed cache altogether. The store is the only cache of materialised records - a
+  demand is answered by what the store holds - and the session tracks just which producers are *running*, so
+  a step attaches to one rather than double-launching. A cache whose key must encode "what the step meant"
+  was a bug factory the store-as-cache model does not have.
 
   The earlier reasoning, kept because the rejected options still apply: Everything on-demand so far fits the
   existing shape - one launch decision per step, then a scan of what it produced. A progressive scan is a
@@ -822,10 +837,17 @@ pinned:
   Pinned in `TestStepDataStore` (with a negative control: an unpinned version still evicts).
 - **F - the filter that matches nothing.** The degenerate end of filtered navigation: on a swept stream it
   is one pass over the store; after an edit it is the windowed scan, which visits everything in
-  `filteredScanWindow`-sized steps - correct, bounded per poll, and slow at scale by design (a 10M-record
-  stream at the default 50/window is 200k polls). If this ever matters in practice the window wants to grow
-  adaptively, not the scan redesigned. Ends by refusal: `maxSweptStreamsPerSession` stops it marching
-  through a whole selection.
+  `filteredScanWindow`-sized steps - correct, bounded per poll, and slow at scale by design.
+  `measureTheSkeletonSweepCeiling`'s sibling `measureTheFilteredScanWindowTradeOff` put numbers on it (4,000
+  records, match at the last record): launches are exactly span/window - 400/80/20/4 at window
+  10/50/200/1,000 - at ~13ms of launch overhead each, so 5.8s/1.2s/0.8s/0.6s of scan; a near match costs
+  one launch and tens of ms at *every* window size, because the demanded records commit first and the rest
+  of the window materialises after the step is served. So a larger window costs latency nothing and only
+  spends background work; what would still hurt is a genuinely long no-match scan (a 1M-record stream at
+  the default is 20k launches, ~4 minutes of launch overhead alone), and if that ever matters in practice
+  the window wants to *grow with the distance already scanned* - a stateless rule, read from the same
+  frontier the window already starts from - not the scan redesigned. Ends by refusal:
+  `maxSweptStreamsPerSession` stops it marching through a whole selection.
 - **G - multi-part streams.** A part boundary is invisible to the user (§11: navigation crosses parts;
   `neighbourOf` in `SteppingService`), and every store structure is per-part. Any new capture mode must keep
   both properties - a skeleton sweep captures boundary IO *per part* like everything else.

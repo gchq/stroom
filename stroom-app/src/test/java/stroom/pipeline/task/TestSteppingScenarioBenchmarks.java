@@ -31,14 +31,17 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.SteppingService;
+import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.OutputState;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -232,7 +235,7 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
         // Backbone + eager whole-extent materialisation (skeleton on, threshold at the stream size).
         final long eagerMetaId = GeneratedEventStream.load(store, FEED, recordCount);
         final PipelineStepRequest eagerBase = requestFor(eagerMetaId, feedPipeline());
-        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+        setConfigValueMapper(SteppingConfig.class,
                 config -> config.withSkeletonSweep(true).withEagerMaterialisationRecords(recordCount));
         sessionUuid = null;
         try {
@@ -282,12 +285,11 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
                                final String label,
                                final int recordCount,
                                final int walk,
-                               final java.util.function.UnaryOperator<
-                                       stroom.pipeline.stepping.store.SteppingConfig> configMapper) {
+                               final java.util.function.UnaryOperator<SteppingConfig> configMapper) {
         final long metaId = GeneratedEventStream.load(store, FEED, recordCount);
         final PipelineStepRequest base = requestFor(metaId, feedPipeline());
         if (configMapper != null) {
-            setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class, configMapper);
+            setConfigValueMapper(SteppingConfig.class, configMapper);
         }
         String sessionUuid = null;
         try {
@@ -324,6 +326,104 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
             clearConfigValueMapper();
             terminate(base, sessionUuid);
         }
+    }
+
+    /**
+     * Stage 5's open question - the "adaptive filtered window": is the fixed {@code filteredScanWindow}
+     * leaving enough on the table to be worth replacing with a window that grows as a scan comes up empty?
+     * <p>
+     * The trade is one-dimensional. Each window is one materialisation launch, so a <b>small</b> window pays
+     * the launch overhead many times over on the way to a distant match, while a <b>large</b> window
+     * materialises records a near match never needed (~1ms each of below-boundary work). This measures both
+     * ends - a hit at record-no 5 and a hit at the last record - at several fixed sizes over the same
+     * stream. If the default's numbers sit close to the best size at both ends, an adaptive window has
+     * nothing to buy and stays unbuilt; if each end wants a different size, growth is worth building.
+     * <p>
+     * Every run's probe bakes the window size and hit record into the code, so every run scans under its own
+     * fingerprint - a run finding a previous run's materialised records would measure store reads, not
+     * scanning.
+     */
+    @Test
+    void measureTheFilteredScanWindowTradeOff() {
+        final int recordCount = GeneratedEventStream.configuredRecordCount(DEFAULT_RECORDS);
+        final long metaId = GeneratedEventStream.load(store, FEED, recordCount);
+        final PipelineStepRequest base = requestFor(metaId, feedPipeline());
+        final int[] windows = {10, 50, 200, 1_000};
+        final long nearRecordNo = 5;
+
+        final List<String> report = new ArrayList<>();
+        report.add(String.format("records=%,d, default window=%d",
+                recordCount, new SteppingConfig().getFilteredScanWindow()));
+        String sessionUuid = null;
+        try {
+            // Complete the capture first: the scan under test materialises the EDITED element from the
+            // parser feed already in the store, which is the shape the window exists for.
+            final SteppingResult last = steppingService.step(base.copy().stepType(StepType.LAST).build());
+            sessionUuid = last.getSessionUuid();
+            assertThat(last.isFoundRecord()).as("LAST completed the sweep").isTrue();
+            final StepLocation record0 =
+                    new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
+
+            for (final int window : windows) {
+                setConfigValueMapper(SteppingConfig.class, config -> config.withFilteredScanWindow(window));
+                sessionUuid = timeFilteredScan(base, record0, sessionUuid, window, nearRecordNo, report);
+                sessionUuid = timeFilteredScan(base, record0, sessionUuid, window, recordCount, report);
+            }
+        } finally {
+            clearConfigValueMapper();
+            terminate(base, sessionUuid);
+            LOGGER.info(() -> "\n=== the filtered-scan window trade-off (adaptive-window decision) ===\n"
+                              + String.join("\n", report) + "\n");
+        }
+    }
+
+    /**
+     * One filtered FORWARD from record 0 whose only match is at {@code hitRecordNo}, timed, with the
+     * on-demand launches it took. The filter is output NOT_EMPTY against a probe that emits a child element
+     * only for the hit record, so the scan must materialise its way to the hit to find it.
+     */
+    private String timeFilteredScan(final PipelineStepRequest base,
+                                    final StepLocation record0,
+                                    final String sessionUuid,
+                                    final int window,
+                                    final long hitRecordNo,
+                                    final List<String> report) {
+        final String probeXslt = """
+                <?xml version="1.0" encoding="UTF-8" ?>
+                <xsl:stylesheet version="2.0"
+                                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                                xmlns:stroom="stroom">
+                  <xsl:template match="/">
+                    <!-- window %d -->
+                    <Probe>
+                      <xsl:if test="number(stroom:record-no()) = %d">
+                        <Hit><xsl:value-of select="stroom:record-no()"/></Hit>
+                      </xsl:if>
+                    </Probe>
+                  </xsl:template>
+                </xsl:stylesheet>
+                """.formatted(window, hitRecordNo);
+
+        final long onDemandBefore = steppingService.getOnDemandLaunchCount();
+        final long start = System.currentTimeMillis();
+        final SteppingResult found = steppingService.step(base.copy()
+                .stepType(StepType.FORWARD)
+                .stepLocation(record0)
+                .sessionUuid(sessionUuid)
+                .code(Map.of(EDITED_ELEMENT_ID, probeXslt))
+                .stepFilterMap(Map.of(EDITED_ELEMENT_ID,
+                        new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
+                .build());
+        final long elapsed = System.currentTimeMillis() - start;
+        assertThat(found.isFoundRecord())
+                .as("the scan found the hit at record-no " + hitRecordNo).isTrue();
+        assertThat(found.getFoundLocation().getRecordIndex())
+                .as("record-no %d is index %d", hitRecordNo, hitRecordNo - 1)
+                .isEqualTo(hitRecordNo - 1);
+        report.add(String.format("window %,5d  hit @%,5d  %,7dms  (%3d launches)",
+                window, hitRecordNo, elapsed,
+                steppingService.getOnDemandLaunchCount() - onDemandBefore));
+        return found.getSessionUuid();
     }
 
     /**

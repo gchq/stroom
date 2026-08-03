@@ -343,7 +343,13 @@ class TestSteppingScaleScenarios extends TranslationTest {
      * first-window sweep back from the cache, read "fully captured, no match" and gave up - the scan could
      * never advance past window one. The store-as-cache model fixes it structurally: each iteration
      * recomputes its window from the frontier, the finished window is satisfied from the store, and only
-     * the next one launches. The launch counter pins the mechanism: at least two materialisations.
+     * the next one launches. The launch counter pins the mechanism: one materialisation per window, so two
+     * for a hit in the second window - plus at most one boundary race, because the resolver plans before it
+     * scans, so a match committing just as its window's producer finishes can see one further window
+     * launched before the scan that finds it. The tight bound is what pins the attach rule - a window
+     * recomputed mid-fill overlaps the running producer's demand and must wait on it, not launch an
+     * overlapping copy (which is what happened when attaching required the producer to cover the whole
+     * recomputed window: one launch per wakeup, hundreds per scan).
      */
     @Test
     void aFilteredScanAdvancesAcrossWindows() {
@@ -391,8 +397,67 @@ class TestSteppingScaleScenarios extends TranslationTest {
             assertThat(found.getFoundLocation().getRecordIndex())
                     .as("record-no 100 is index 99 - past the 50-record first window").isEqualTo(99);
             assertThat(steppingService.getOnDemandLaunchCount() - onDemandBefore)
-                    .as("which took at least two windows of materialisation")
-                    .isGreaterThanOrEqualTo(2);
+                    .as("one launch per window crossed, plus at most one boundary race")
+                    .isBetween(2L, 3L);
+        } finally {
+            terminate(base, sessionUuid);
+        }
+    }
+
+    /**
+     * The other half of the windowed scan's cost model: a match <b>inside</b> the first window is served as
+     * soon as its record materialises - while the window's producer is still running - for one launch,
+     * with no whole-stream creep. Before the overlap-attach and completed-materialisation-re-plan fixes,
+     * the scan crept the entire stream whatever the hit position (each wakeup launched a new overlapping
+     * window, and each iteration's scan was bounded by the just-launched sweep's own empty coverage), so a
+     * hit at record-no 3 cost the same ~600 launches as a hit at the last record.
+     */
+    @Test
+    void aFilteredScanServesANearMatchWithOneLaunch() {
+        final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
+        final PipelineStepRequest base = requestFor(metaId);
+        final String probeXslt = """
+                <?xml version="1.0" encoding="UTF-8" ?>
+                <xsl:stylesheet version="2.0"
+                                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                                xmlns:stroom="stroom">
+                  <xsl:template match="/">
+                    <Probe>
+                      <xsl:if test="number(stroom:record-no()) = 3">
+                        <Hit><xsl:value-of select="stroom:record-no()"/></Hit>
+                      </xsl:if>
+                    </Probe>
+                  </xsl:template>
+                </xsl:stylesheet>
+                """;
+
+        String sessionUuid = null;
+        try {
+            final SteppingResult last = steppingService.step(base.copy().stepType(StepType.LAST).build());
+            sessionUuid = last.getSessionUuid();
+            assertThat(last.isFoundRecord()).as("LAST completed the sweep").isTrue();
+            final StepLocation record0 =
+                    new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
+
+            final long onDemandBefore = steppingService.getOnDemandLaunchCount();
+
+            final SteppingResult found = steppingService.step(base.copy()
+                    .stepType(StepType.FORWARD)
+                    .stepLocation(record0)
+                    .sessionUuid(sessionUuid)
+                    .code(Map.of(EDITED_ELEMENT_ID, probeXslt))
+                    .stepFilterMap(Map.of(EDITED_ELEMENT_ID, new stroom.pipeline.shared.stepping
+                            .SteppingFilterSettings(null, stroom.util.shared.OutputState.NOT_EMPTY,
+                            java.util.List.of())))
+                    .build());
+            sessionUuid = found.getSessionUuid();
+
+            assertThat(found.isFoundRecord()).as("the scan found the near match").isTrue();
+            assertThat(found.getFoundLocation().getRecordIndex())
+                    .as("record-no 3 is index 2 - inside the first window").isEqualTo(2);
+            assertThat(steppingService.getOnDemandLaunchCount() - onDemandBefore)
+                    .as("served from the first window's materialisation, one launch")
+                    .isEqualTo(1);
         } finally {
             terminate(base, sessionUuid);
         }

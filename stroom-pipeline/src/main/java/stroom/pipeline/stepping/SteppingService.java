@@ -753,7 +753,7 @@ public class SteppingService {
                             return withStreamMetadata(satisfied, priorSweeps);
                         }
                         for (final StreamSweep producer : running) {
-                            if (producer.isOnDemand() && covers(producer.getDemand(), range)) {
+                            if (producer.isOnDemand() && overlaps(producer.getDemand(), range)) {
                                 return producer;
                             }
                         }
@@ -1001,11 +1001,20 @@ public class SteppingService {
      * @return true if a producer's demand contains every record of the asked range - same part, asked range
      * within the demanded one.
      */
-    private boolean covers(final RecordRange demand, final RecordRange asked) {
+    /**
+     * A running producer is worth waiting on if it is producing <b>any</b> of the asked records, not only
+     * all of them. A filtered scan recomputes its window from the committed frontier on every wakeup, so
+     * the asked window slides a few records past the in-flight producer's demand each time; requiring full
+     * coverage here meant no recomputation ever attached, and every wakeup launched a new overlapping
+     * reprocess - one per record signalled, hundreds over one scan, each re-running records the store
+     * already held. Attaching on overlap lets the producer finish its window; the next poll then plans the
+     * remainder from the advanced frontier, and only that remainder is ever launched.
+     */
+    private boolean overlaps(final RecordRange demand, final RecordRange asked) {
         return demand != null
                && demand.partIndex() == asked.partIndex()
-               && demand.firstRecord() <= asked.firstRecord()
-               && demand.lastRecord() >= asked.lastRecord();
+               && demand.firstRecord() <= asked.lastRecord()
+               && demand.lastRecord() >= asked.firstRecord();
     }
 
     /**
@@ -1051,6 +1060,8 @@ public class SteppingService {
                                         final ElementFingerprints fingerprints,
                                         final RecordRange onDemandRange) {
         // The reprocess reads the feed's output from, and writes the reprocessed chunks to, the same store.
+        LOGGER.debug(() -> "launchReprocess() - stream " + metaId + ", start " + startElementId
+                           + ", range " + onDemandRange);
         final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
         if (onDemandRange != null) {
             // Materialising one record rather than capturing the stream: what this sweep can answer is

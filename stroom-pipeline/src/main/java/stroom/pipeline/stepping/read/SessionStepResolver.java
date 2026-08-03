@@ -163,6 +163,16 @@ public class SessionStepResolver {
                 continue;
             }
 
+            if (sweep.isOnDemand() && sweep.isFullyCaptured()) {
+                // A completed materialisation produced only the records it was asked for; finding no match
+                // among them says nothing about the rest of the stream. Re-plan: the next pass launches the
+                // next window of a filtered scan (or, once the scan has exhausted the stream, the
+                // whole-stream reprocess whose completion IS the authority to conclude "no match here").
+                // Reading this sweep's completion as the end of the stream would cross over records no scan
+                // has evaluated - they would never be reachable again.
+                continue;
+            }
+
             if (!sweep.isFullyCaptured()) {
                 // The target record may still be captured in this stream; wait for progress.
                 final long remaining = deadline - System.currentTimeMillis();
