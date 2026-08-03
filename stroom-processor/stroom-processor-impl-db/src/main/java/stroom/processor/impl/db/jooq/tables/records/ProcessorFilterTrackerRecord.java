@@ -4,10 +4,10 @@
 package stroom.processor.impl.db.jooq.tables.records;
 
 
-import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 
 
 /**
