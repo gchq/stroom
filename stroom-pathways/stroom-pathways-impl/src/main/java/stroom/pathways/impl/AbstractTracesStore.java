@@ -337,9 +337,12 @@ abstract class AbstractTracesStore implements TracesStore {
         return new TraceSpanPage(rows, more, nextCursor, totalSpans);
     }
 
-    // Cache key for a split trace's merged checkpoint index: identifies the trace and the versions of
-    // every contributing store (shard + archive buckets), so the entry self-invalidates when any of
-    // them changes.
+    // Cache key for a trace's merged checkpoint index: identifies the trace and the versions of every
+    // contributing archive bucket, so the entry self-invalidates when any of them changes.
+    //
+    // Deliberately does NOT include the holding shard's version. Spans are read from buckets only, and
+    // the shard is republished every merge cycle, so folding its version in here would discard every
+    // cached checkpoint index once a minute for no reason.
     private String checkpointCacheKey(final PlanBDocument doc,
                                       final int shardIndex,
                                       final String traceId,
@@ -347,22 +350,11 @@ abstract class AbstractTracesStore implements TracesStore {
         final StringBuilder sb = new StringBuilder()
                 .append(doc == null ? "" : doc.getUuid()).append('_')
                 .append(shardIndex).append('_')
-                .append(traceId).append("|shard=")
-                .append(shardVersion(doc, shardIndex));
+                .append(traceId);
         for (final ArchiveShardRef ref : refs) {
             sb.append(";arch=").append(ref.dateLabel()).append('=').append(readVersion(ref.dir()));
         }
         return sb.toString();
-    }
-
-    private String shardVersion(final PlanBDocument doc, final int shardIndex) {
-        if (doc == null || doc.getSharedPath() == null || shardIndex < 0) {
-            return "";
-        }
-        return readVersion(Path.of(doc.getSharedPath())
-                .resolve(PlanBConstants.SHARDS_DIR_NAME)
-                .resolve(doc.getUuid())
-                .resolve(String.format("%04d", shardIndex)));
     }
 
     private static String readVersion(final Path dir) {

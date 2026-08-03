@@ -38,7 +38,6 @@ import stroom.planb.impl.db.trace.TraceSecondaryIndex;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TraceSettings;
-import stroom.query.api.GroupSelection;
 import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.security.api.SecurityContext;
@@ -61,31 +60,29 @@ import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 
 /**
- * Query implementation for a shared-filesystem trace store ({@code SharedFileStoreShard}). Every node reads the
- * shared mount directly, fanning out across shards + overlapping archive buckets and merging. Long scans are
- * cancellable: each operation runs inside a {@link TaskContext} and each per-shard/per-archive task is a
- * {@link TaskContextFactory#childContextResult child context}, so terminating the query interrupts the scan
- * threads.
+ * Query implementation for a shared-filesystem trace store ({@code SharedFileStoreShard}).
+ *
+ * <p><b>Reads archive buckets only.</b> The holding-area shards are never queried: they hold each trace's
+ * root purely as an accumulator for late spans, while the bucket — labelled by the root's start time —
+ * is the queryable copy. Because a trace's root therefore lives in exactly one bucket, per-bucket totals
+ * sum to an exact count, and none of the shard/archive reconciliation this class used to need survives.
+ *
+ * <p>Long scans are cancellable: each operation runs inside a {@link TaskContext} and each per-bucket task
+ * is a {@link TaskContextFactory#childContextResult child context}, so terminating the query interrupts
+ * the scan threads.
  */
 @Singleton
 class SharedFileTracesStore extends AbstractTracesStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileTracesStore.class);
-
-    // Exact distinct-trace counting only runs when the window overlaps at most this many archive buckets
-    // (~one archival-granularity period straddles two buckets); a wider window keeps the approximate "?".
-    private static final int MAX_EXACT_COUNT_BUCKETS = 2;
 
     private final SecurityContext securityContext;
     private final Executor executor;
@@ -209,20 +206,20 @@ class SharedFileTracesStore extends AbstractTracesStore {
         final TaskContext parentContext = taskContextFactory.current();
         final List<CompletableFuture<TracesResultPage>> futures = new ArrayList<>();
 
-        // Bound per-shard results to (offset + length): each shard sorts by the same
+        // Bound per-bucket results to (offset + length): each bucket sorts by the same
         // secondary index and returns at most this many rows, so the global merge of
-        // N shards has at most N×(offset+length) rows to sort — far fewer than all rows.
+        // N buckets has at most N×(offset+length) rows to sort — far fewer than all rows.
         final int callerOffset = criteria.getPageRequest() != null
                 ? criteria.getPageRequest().getOffset() : 0;
         final int callerLength = criteria.getPageRequest() != null
                 ? criteria.getPageRequest().getLength() : Integer.MAX_VALUE;
         // Guard against integer overflow when offset + length > MAX_VALUE.
-        final int shardPageSize = callerLength == Integer.MAX_VALUE
+        final int storePageSize = callerLength == Integer.MAX_VALUE
                 ? Integer.MAX_VALUE
                 : callerOffset + callerLength;
 
-        final FindTraceCriteria shardCriteria = new FindTraceCriteria(
-                new PageRequest(0, shardPageSize),
+        final FindTraceCriteria storeCriteria = new FindTraceCriteria(
+                new PageRequest(0, storePageSize),
                 criteria.getSortList(),
                 criteria.getDataSourceRef(),
                 criteria.getFilter(),
@@ -230,135 +227,43 @@ class SharedFileTracesStore extends AbstractTracesStore {
                 criteria.getTemporalOrderingTolerance(),
                 criteria.getTimeRange());
 
-        // Resolve the time filter once for archive fan-out.
         final TimeFilter timeFilter = resolveTimeFilter(criteria.getTimeRange());
         validateTimeRangeLimit(doc, timeFilter);
 
+        // Fan out over archive buckets only — the holding-area shards are never queried. An absent time
+        // range means unbounded, which enumerates every bucket rather than returning nothing.
+        final long fromMs = timeFilter != null ? timeFilter.getFrom() : Long.MIN_VALUE;
+        final long toMs = timeFilter != null ? timeFilter.getTo() : Long.MAX_VALUE;
         for (int i = 0; i < doc.getShardCount(); i++) {
             final int shardIndex = i;
-            futures.add(CompletableFuture.supplyAsync(
-                    taskContextFactory.childContextResult(parentContext,
-                            "Query trace shard " + shardIndex, ctx -> {
-                                try {
-                                    return securityContext.asUserResult(userIdentity, () ->
-                                            shardManager.get(doc.getName(), shardIndex, reader -> {
-                                                if (reader instanceof final TraceDb traceDb) {
-                                                    return traceDb.findTraces(
-                                                            shardCriteria, filterPredicate);
-                                                }
-                                                throw new IllegalStateException("Unexpected value: " + reader);
-                                            }));
-                                } catch (final Exception e) {
-                                    LOGGER.error("Error querying shard " + shardIndex
-                                            + " for doc " + doc.getName(), e);
-                                    return null;
-                                }
-                            }), executor));
-        }
-
-        // --- Archive shard fan-out ---
-        // Distinct archive bucket time-labels overlapping the window, used to decide whether an exact
-        // distinct-trace count is cheap enough (see MAX_EXACT_COUNT_BUCKETS).
-        final Set<String> archiveLabels = new HashSet<>();
-        if (timeFilter != null) {
-            for (int i = 0; i < doc.getShardCount(); i++) {
-                final int shardIndex = i;
-                final List<ArchiveShardRef> archiveRefs = archiveShardLocator.findRelevantShards(
-                        doc, shardIndex,
-                        timeFilter.getFrom(), timeFilter.getTo());
-                for (final ArchiveShardRef ref : archiveRefs) {
-                    archiveLabels.add(ref.dateLabel());
-                    futures.add(CompletableFuture.supplyAsync(
-                            taskContextFactory.childContextResult(parentContext,
-                                    "Query trace archive " + ref.dateLabel(), ctx -> {
-                                        try {
-                                            return securityContext.asUserResult(userIdentity,
-                                                    () -> queryArchive(ref, shardIndex,
-                                                            shardCriteria, doc, filterPredicate));
-                                        } catch (final Exception e) {
-                                            LOGGER.error("Error querying archive shard " + ref.dateLabel() +
-                                                    " for doc " + doc.getName(), e);
-                                            return null;
-                                        }
-                                    }), executor));
-                }
-            }
-        }
-
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        final TracesResultPage merged = mergeAndPaginate(futures, criteria);
-
-        // The summed/deduped total above is only approximate when a split trace is double-counted
-        // across shard + archive. When the window overlaps few enough archive buckets, replace it with
-        // an exact distinct-trace count (union of traceIds across the stores).
-        if (timeFilter != null
-                && NullSafe.isBlankString(criteria.getFilter())
-                && !archiveLabels.isEmpty()
-                && archiveLabels.size() <= MAX_EXACT_COUNT_BUCKETS) {
-            // With a quick filter active the exact distinct-count path (windowTraceIds) is key-only and
-            // can't apply the filter, so fall back to the summed filter-aware per-shard totals instead.
-            final long exactTotal = countDistinctTraces(doc, timeFilter, userIdentity);
-            final PageResponse pr = merged.getPageResponse();
-            return new TracesResultPage(merged.getValues(),
-                    new PageResponse(pr.getOffset(), pr.getLength(), exactTotal, true));
-        }
-        return merged;
-    }
-
-    // Exact count of distinct traces with a start time in the window, unioning traceIds across every
-    // shard + relevant archive bucket (key-only START_TIME scans). Dedupes split traces (archived real
-    // root + orphan) that the per-store summed total double-counts.
-    private long countDistinctTraces(final PlanBDocument doc,
-                                     final TimeFilter timeFilter,
-                                     final UserIdentity userIdentity) {
-        final TaskContext parentContext = taskContextFactory.current();
-        final List<CompletableFuture<Set<String>>> futures = new ArrayList<>();
-        for (int i = 0; i < doc.getShardCount(); i++) {
-            final int shardIndex = i;
-            futures.add(CompletableFuture.supplyAsync(
-                    taskContextFactory.childContextResult(parentContext,
-                            "Count trace shard " + shardIndex, ctx ->
-                            securityContext.asUserResult(userIdentity, () ->
-                                    shardManager.get(doc.getName(), shardIndex, reader -> {
-                                        if (reader instanceof final TraceDb traceDb) {
-                                            return traceDb.windowTraceIds(timeFilter);
-                                        }
-                                        throw new IllegalStateException("Unexpected value: " + reader);
-                                    }))), executor));
             for (final ArchiveShardRef ref : archiveShardLocator.findRelevantShards(
-                    doc, shardIndex, timeFilter.getFrom(), timeFilter.getTo())) {
+                    doc, shardIndex, fromMs, toMs)) {
                 futures.add(CompletableFuture.supplyAsync(
                         taskContextFactory.childContextResult(parentContext,
-                                "Count trace archive " + ref.dateLabel(), ctx ->
-                                securityContext.asUserResult(userIdentity, () ->
-                                        shardManager.getArchive(doc, shardIndex, ref, reader -> {
-                                            if (reader instanceof final TraceDb traceDb) {
-                                                return traceDb.windowTraceIds(timeFilter);
-                                            }
-                                            throw new IllegalStateException("Unexpected value: " + reader);
-                                        }))), executor));
+                                "Query trace archive " + ref.dateLabel(), ctx -> {
+                                    try {
+                                        return securityContext.asUserResult(userIdentity,
+                                                () -> queryArchive(ref, shardIndex,
+                                                        storeCriteria, doc, filterPredicate));
+                                    } catch (final Exception e) {
+                                        LOGGER.error("Error querying archive shard " + ref.dateLabel() +
+                                                " for doc " + doc.getName(), e);
+                                        return null;
+                                    }
+                                }), executor));
             }
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        final Set<String> distinct = new HashSet<>();
-        for (final CompletableFuture<Set<String>> future : futures) {
-            try {
-                final Set<String> ids = future.get();
-                if (ids != null) {
-                    distinct.addAll(ids);
-                }
-            } catch (final Exception e) {
-                LOGGER.error("Failed to collect window traceIds for doc " + doc.getName(), e);
-            }
-        }
-        return distinct.size();
+        // A trace's root now lives in exactly one bucket, so summing per-bucket totals is exact and the
+        // old distinct-count repair pass is gone.
+        return mergeAndPaginate(futures, criteria);
     }
 
     /**
-     * Collects results from completed futures (per-shard or per-node), merges all
-     * {@link TraceRoot} values, sorts by {@code startTime} descending (most recent first)
-     * with {@code traceId} as a stable tiebreaker, then applies the caller's page request.
+     * Collects results from the completed per-bucket futures, merges all {@link TraceRoot} values, sorts
+     * by {@code startTime} descending (most recent first) with {@code traceId} as a stable tiebreaker,
+     * then applies the caller's page request.
      */
     private TracesResultPage mergeAndPaginate(
             final List<CompletableFuture<TracesResultPage>> futures,
@@ -387,11 +292,12 @@ class SharedFileTracesStore extends AbstractTracesStore {
             }
         }
 
-        // Dedupe by traceId across shard + archive stores. A trace whose root has aged out to an
-        // archive appears twice — as the archived real-root row AND as the synthesized orphan
-        // row. Keep one row per traceId, preferring the real root (see preferred(...)). Done on the
-        // full collected set (not post-pagination) because the two rows carry different start times
-        // and so sort to different, non-adjacent positions.
+        // Dedupe by traceId across buckets. Current routing puts a trace's whole root in one bucket, so
+        // this normally finds nothing — but data left split by the older insert-time bucketing can still
+        // show a traceId twice, as the real-root row in the root's start-time bucket AND a synthesized
+        // orphan row in whichever bucket its stray spans landed. Keep one row per traceId, preferring
+        // the real root (see preferred(...)). Done on the full collected set (not post-pagination)
+        // because the two rows carry different start times and so sort to non-adjacent positions.
         final Map<String, TraceRoot> byTraceId = new LinkedHashMap<>();
         for (final TraceRoot root : allTraceRoots) {
             byTraceId.merge(root.getTraceId(), root, SharedFileTracesStore::preferred);
@@ -492,8 +398,8 @@ class SharedFileTracesStore extends AbstractTracesStore {
                 taskContext -> doGetTraceHistogram(request)).get();
     }
 
-    // Counts traces per equal time-bucket over the requested window, fanning out across shards +
-    // overlapping archive buckets and summing per-bucket counts.
+    // Counts traces per equal time-bucket over the requested window, fanning out across the
+    // overlapping archive buckets and summing their per-bucket counts.
     private TraceHistogram doGetTraceHistogram(final TraceHistogramRequest request) {
         final DocRef docRef = request.getDataSourceRef();
         final PlanBDocument doc = getPlanBDoc(docRef);
@@ -518,25 +424,6 @@ class SharedFileTracesStore extends AbstractTracesStore {
         final List<CompletableFuture<long[]>> futures = new ArrayList<>();
         for (int i = 0; i < doc.getShardCount(); i++) {
             final int shardIndex = i;
-            futures.add(CompletableFuture.supplyAsync(
-                    taskContextFactory.childContextResult(parentContext,
-                            "Histogram trace shard " + shardIndex, ctx -> {
-                                try {
-                                    return securityContext.asUserResult(userIdentity, () ->
-                                            shardManager.get(doc.getName(), shardIndex, reader -> {
-                                                if (reader instanceof final TraceDb traceDb) {
-                                                    return traceDb.histogram(timeFilter,
-                                                            bucketWidthMs, nBuckets, filterPredicate);
-                                                }
-                                                throw new IllegalStateException("Unexpected value: " + reader);
-                                            }));
-                                } catch (final Exception e) {
-                                    LOGGER.error("Error histogramming shard " + shardIndex
-                                            + " for doc " + doc.getName(), e);
-                                    return null;
-                                }
-                            }), executor));
-
             for (final ArchiveShardRef ref : archiveShardLocator.findRelevantShards(
                     doc, shardIndex, fromMs, toMs)) {
                 futures.add(CompletableFuture.supplyAsync(
