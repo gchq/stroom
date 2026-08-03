@@ -16,6 +16,9 @@
 
 package stroom.planb.impl.db;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
@@ -25,13 +28,14 @@ import java.util.function.Consumer;
 
 public class LmdbWriter implements AutoCloseable {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbWriter.class);
+
     private final Env<ByteBuffer> env;
     private final ReentrantLock dbCommitLock;
     private final Consumer<Txn<ByteBuffer>> commitListener;
     private final ReentrantLock writeTxnLock;
     private Txn<ByteBuffer> writeTxn;
     private int changeCount = 0;
-    private boolean aborted;
 
     public LmdbWriter(final Env<ByteBuffer> env,
                       final ReentrantLock dbCommitLock,
@@ -56,10 +60,6 @@ public class LmdbWriter implements AutoCloseable {
      * each iteration rather than hoisting it.</p>
      */
     public Txn<ByteBuffer> getWriteTxn() {
-        if (aborted) {
-            throw new IllegalStateException(
-                    "This writer was aborted after a failed write and cannot accept more work");
-        }
         if (writeTxn == null) {
             writeTxn = env.txnWrite();
         }
@@ -77,6 +77,7 @@ public class LmdbWriter implements AutoCloseable {
         changeCount++;
     }
 
+
     public boolean shouldCommit() {
         return changeCount > 10000;
     }
@@ -86,11 +87,17 @@ public class LmdbWriter implements AutoCloseable {
      * has failed, e.g. with MDB_MAP_FULL, the txn is flagged MDB_TXN_ERROR and every subsequent
      * use of it fails with MDB_BAD_TXN. Committing such a txn therefore throws from the listener's
      * own put and masks the original cause, so callers must abort instead.
+     *
+     * <p>Every record buffered since the last commit is lost, so the count is logged rather than
+     * discarded silently. The writer stays usable: the next {@link #getWriteTxn()} opens a fresh
+     * txn, so one rejected record does not stop the rest of the stream being written.
      */
     public void abort() {
         dbCommitLock.lock();
         try {
-            aborted = true;
+            if (changeCount > 0) {
+                LOGGER.error("Discarding {} buffered records after a failed write", changeCount);
+            }
             if (writeTxn != null) {
                 try {
                     writeTxn.close();
@@ -130,11 +137,7 @@ public class LmdbWriter implements AutoCloseable {
     @Override
     public void close() {
         try {
-            if (aborted) {
-                abort();
-            } else {
-                commit();
-            }
+            commit();
         } finally {
             writeTxnLock.unlock();
         }

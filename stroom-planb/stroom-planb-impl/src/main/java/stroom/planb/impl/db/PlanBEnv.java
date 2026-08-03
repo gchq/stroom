@@ -28,6 +28,7 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.EnvInfo;
+import org.lmdbjava.LmdbException;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
@@ -132,16 +133,25 @@ public class PlanBEnv implements AutoCloseable {
     }
 
     /**
-     * Runs one operation against a writer that the caller holds across many operations, aborting it
-     * on failure. Such a writer must not be left to commit on close: its txn is already dead, so
-     * committing runs the commit listener on it and reports that secondary failure instead of the
-     * real cause.
+     * Runs one operation against a writer that the caller holds across many operations.
+     *
+     * <p>Only an {@link LmdbException} aborts the txn. LMDB flags a txn MDB_TXN_ERROR once one of
+     * its own operations fails, e.g. with MDB_MAP_FULL, and every later use of it then fails with
+     * MDB_BAD_TXN — so committing such a txn on close throws from the commit listener and reports
+     * that secondary failure instead of the real cause.
+     *
+     * <p>Any other failure leaves the txn healthy and must not discard it. A serde that overflows a
+     * fixed-width buffer has written nothing to LMDB, and aborting would throw away every record
+     * buffered since the last commit because one record was malformed. Those propagate to the
+     * caller, which rejects the single record and carries on.
      */
     public final void writeWith(final LmdbWriter writer, final Runnable operation) {
         try {
             operation.run();
         } catch (final Throwable e) {
-            fail(writer, e);
+            if (e instanceof LmdbException) {
+                fail(writer, e);
+            }
             throw e;
         }
     }
