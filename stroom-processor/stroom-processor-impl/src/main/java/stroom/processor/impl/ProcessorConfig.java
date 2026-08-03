@@ -201,7 +201,11 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @Min(1)
-    @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
+    @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued. " +
+                             "This is applied separately to each processing profile, and to the filters that have " +
+                             "no profile, so that a busy profile can't use up a whole task creation run and leave " +
+                             "the nodes of another profile with nothing they are allowed to process. The total " +
+                             "number of tasks created in a run therefore grows with the number of profiles in use. " +
                              "Note that the number of tasks created may be greater than this number as each task " +
                              "creation thread will " +
                              "try and create the same number of tasks.")

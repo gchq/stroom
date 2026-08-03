@@ -54,12 +54,21 @@ public class ProgressMonitor {
     private final List<SkippedFilter> skippedFilters = Collections.synchronizedList(new ArrayList<>());
     private final List<ErroredFilter> erroredFilters = Collections.synchronizedList(new ArrayList<>());
 
+    private final List<String> summaryLines = Collections.synchronizedList(new ArrayList<>());
+
     private final int totalFilterCount;
     private final DurationTimer totalDuration;
 
     public ProgressMonitor(final int totalFilterCount) {
         this.totalDuration = DurationTimer.start();
         this.totalFilterCount = totalFilterCount;
+    }
+
+    /**
+     * Adds a caller supplied line to the summary section of the report.
+     */
+    public void addSummaryLine(final String line) {
+        summaryLines.add(line);
     }
 
     public void report(final String title,
@@ -122,6 +131,10 @@ public class ProgressMonitor {
             sb.append("Total time: ");
             sb.append(totalDuration.get());
             sb.append("\n");
+            summaryLines.forEach(line -> {
+                sb.append(line);
+                sb.append("\n");
+            });
             if (queueProcessTasksState != null) {
                 queueProcessTasksState.report(sb);
             } else {
@@ -453,7 +466,11 @@ public class ProgressMonitor {
         /**
          * The tracker is in a error state
          */
-        TRACKER_ERROR("The tracker is in a error state");
+        TRACKER_ERROR("The tracker is in a error state"),
+        /**
+         * The task creation budget for this filter's processing profile has been used up
+         */
+        BUDGET_REACHED("Task creation budget reached for this filter's processing profile");
 
         private final String displayValue;
 
