@@ -17,9 +17,11 @@
 package stroom.processor.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.processor.impl.db.jooq.tables.ProcessorTask;
+import stroom.processor.impl.ProgressMonitor;
+import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.datasource.QueryField;
@@ -32,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -378,6 +381,65 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void testTrackerDoesNotMoveBackwards() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+
+        // A poll that creates no tasks moves the tracker on to just past the max meta id it was given.
+        assertThat(pollWithNoTasks(processorFilter1a, 99L).getMinMetaId())
+                .isEqualTo(100);
+
+        // Simulate a filter that has part processed the events within a stream.
+        final ProcessorFilterTracker tracker = fetchTracker(processorFilter1a);
+        tracker.setMinEventId(5L);
+        processorFilterTrackerDao.update(tracker);
+
+        // A poll bounded by a lower max meta id must leave the tracker alone. Winding it back would
+        // re-scan meta we have already created tasks for, and there is no unique constraint on
+        // (filter, meta) to stop the duplicates.
+        ProcessorFilterTracker result = pollWithNoTasks(processorFilter1a, 49L);
+        assertThat(result.getMinMetaId()).isEqualTo(100);
+        assertThat(result.getMinEventId()).isEqualTo(5);
+
+        // The same max meta id is not greater either, so it must not reset the event position within
+        // the stream we are part way through.
+        result = pollWithNoTasks(processorFilter1a, 99L);
+        assertThat(result.getMinMetaId()).isEqualTo(100);
+        assertThat(result.getMinEventId()).isEqualTo(5);
+
+        // A higher max meta id still moves the tracker on, and starts the new stream from its first event.
+        result = pollWithNoTasks(processorFilter1a, 149L);
+        assertThat(result.getMinMetaId()).isEqualTo(150);
+        assertThat(result.getMinEventId()).isZero();
+    }
+
+    /**
+     * Create tasks for a filter that has no meta to create tasks for, returning the persisted tracker.
+     */
+    private ProcessorFilterTracker pollWithNoTasks(final ProcessorFilter filter,
+                                                   final long maxMetaId) {
+        final FilterProgressMonitor filterProgressMonitor = new ProgressMonitor(1)
+                .logFilter(filter, 0);
+        // Re-fetch the tracker as each poll would, so that its version matches the DB.
+        final int createdTasks = processorTaskDao.createNewTasks(
+                filter,
+                fetchTracker(filter),
+                filterProgressMonitor,
+                System.currentTimeMillis(),
+                Map.of(),
+                maxMetaId,
+                false);
+        assertThat(createdTasks).isZero();
+        return fetchTracker(filter);
+    }
+
+    private ProcessorFilterTracker fetchTracker(final ProcessorFilter filter) {
+        return processorFilterTrackerDao
+                .fetch(filter.getProcessorFilterTracker().getId())
+                .orElseThrow();
     }
 
     @Test

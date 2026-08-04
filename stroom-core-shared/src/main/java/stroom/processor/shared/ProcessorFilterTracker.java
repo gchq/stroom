@@ -78,6 +78,24 @@ public class ProcessorFilterTracker implements HasIntegerId {
     @JsonProperty
     private Long eventCount;
 
+    /**
+     * The max meta id seen on the previous task creation poll. Task creation is bounded by this
+     * rather than the live max meta id so that a meta row that was inserted but not yet committed
+     * when the max was read has a full poll interval to become visible before this tracker moves
+     * past it. Null until a poll has established a value.
+     */
+    @JsonProperty
+    private Long prevMaxMetaId;
+
+    /**
+     * The earliest time that task creation should poll this filter again. It is only set when a
+     * poll creates no tasks, and each successive non producing poll pushes it further out, up to
+     * a maximum, so that filters with nothing to do are polled less often. Null means poll on the
+     * next task creation run.
+     */
+    @JsonProperty
+    private Long nextPollMs;
+
     public ProcessorFilterTracker() {
     }
 
@@ -94,7 +112,9 @@ public class ProcessorFilterTracker implements HasIntegerId {
                                   @JsonProperty("status") final ProcessorFilterTrackerStatus status,
                                   @JsonProperty("message") final String message,
                                   @JsonProperty("metaCount") final Long metaCount,
-                                  @JsonProperty("eventCount") final Long eventCount) {
+                                  @JsonProperty("eventCount") final Long eventCount,
+                                  @JsonProperty("prevMaxMetaId") final Long prevMaxMetaId,
+                                  @JsonProperty("nextPollMs") final Long nextPollMs) {
         this.id = id;
         this.version = version;
         this.minMetaId = minMetaId;
@@ -108,6 +128,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
         this.message = message;
         this.metaCount = metaCount;
         this.eventCount = eventCount;
+        this.prevMaxMetaId = prevMaxMetaId;
+        this.nextPollMs = nextPollMs;
     }
 
     @Override
@@ -223,6 +245,22 @@ public class ProcessorFilterTracker implements HasIntegerId {
         this.eventCount = eventCount;
     }
 
+    public Long getPrevMaxMetaId() {
+        return prevMaxMetaId;
+    }
+
+    public void setPrevMaxMetaId(final Long prevMaxMetaId) {
+        this.prevMaxMetaId = prevMaxMetaId;
+    }
+
+    public Long getNextPollMs() {
+        return nextPollMs;
+    }
+
+    public void setNextPollMs(final Long nextPollMs) {
+        this.nextPollMs = nextPollMs;
+    }
+
     /**
      * For UI use only to see current progress. Not used to influence task
      * creation.
@@ -256,6 +294,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
                 ", message='" + message + '\'' +
                 ", metaCount=" + metaCount +
                 ", eventCount=" + eventCount +
+                ", prevMaxMetaId=" + prevMaxMetaId +
+                ", nextPollMs=" + nextPollMs +
                 '}';
     }
 
@@ -299,6 +339,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
         private String message;
         private Long metaCount;
         private Long eventCount;
+        private Long prevMaxMetaId;
+        private Long nextPollMs;
 
         public Builder() {
         }
@@ -317,6 +359,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
             this.message = tracker.message;
             this.metaCount = tracker.metaCount;
             this.eventCount = tracker.eventCount;
+            this.prevMaxMetaId = tracker.prevMaxMetaId;
+            this.nextPollMs = tracker.nextPollMs;
         }
 
         public Builder id(final Integer id) {
@@ -384,6 +428,16 @@ public class ProcessorFilterTracker implements HasIntegerId {
             return self();
         }
 
+        public Builder prevMaxMetaId(final Long prevMaxMetaId) {
+            this.prevMaxMetaId = prevMaxMetaId;
+            return self();
+        }
+
+        public Builder nextPollMs(final Long nextPollMs) {
+            this.nextPollMs = nextPollMs;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -404,7 +458,9 @@ public class ProcessorFilterTracker implements HasIntegerId {
                     status,
                     message,
                     metaCount,
-                    eventCount);
+                    eventCount,
+                    prevMaxMetaId,
+                    nextPollMs);
         }
     }
 }
