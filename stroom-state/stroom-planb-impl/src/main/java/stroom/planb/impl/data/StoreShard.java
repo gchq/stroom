@@ -92,7 +92,7 @@ class StoreShard implements Shard {
     // Time of the last failed snapshot creation, and the number of consecutive failures. Both are only mutated
     // while holding writeLock and are reset when a snapshot is successfully created.
     private volatile Instant lastSnapshotFailureTime;
-    private volatile AtomicInteger snapshotFailureCount;
+    private final AtomicInteger snapshotFailureCount = new AtomicInteger();
 
     public StoreShard(final ByteBuffers byteBuffers,
                       final ByteBufferFactory byteBufferFactory,
