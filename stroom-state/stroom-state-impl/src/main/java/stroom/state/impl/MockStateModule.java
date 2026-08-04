@@ -22,11 +22,9 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.xsltfunctions.StateLookup;
 import stroom.query.language.functions.StateFetcher;
-import stroom.query.language.functions.StateProvider;
 import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateFetcherImpl;
 import stroom.state.impl.pipeline.StateLookupImpl;
-import stroom.state.impl.pipeline.StateProviderImpl;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -42,7 +40,7 @@ public class MockStateModule extends AbstractModule {
         install(new StateElementModule());
 
         bind(StateLookup.class).to(StateLookupImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
+        // No Scylla backed StateProvider, to match StateModule. See gh-5692.
         bind(StateFetcher.class).to(StateFetcherImpl.class);
 
 //        // Services
