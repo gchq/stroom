@@ -345,19 +345,25 @@ class StoreShard implements Shard {
                     if (isNewSnapshotRequired()) {
                         // TODO : Possibly create windowed snapshots.
                         final Instant lastWriteTime = this.lastWriteTime;
-                        try {
-                            // Get the snapshot file.
-                            Files.createDirectories(snapshotDir);
-                            final Path tmpFile = getSnapshotTmp();
-                            final Path zipFile = getSnapshotZip();
-                            createZip(tmpFile, lastWriteTime);
-                            Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
-                        } finally {
-                            this.lastSnapshotTime = lastWriteTime;
-                        }
+
+                        // Get the snapshot file.
+                        Files.createDirectories(snapshotDir);
+                        final Path tmpFile = getSnapshotTmp();
+                        final Path zipFile = getSnapshotZip();
+                        createZip(tmpFile, lastWriteTime);
+                        Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
+
+                        // Only record the snapshot time once we have actually created a snapshot. If this is
+                        // recorded even when creation fails then this shard believes it has a current snapshot
+                        // that doesn't exist on disk, and as lastWriteTime only advances when data is written,
+                        // a shard that receives no further writes would never retry. See gh-5689.
+                        this.lastSnapshotTime = lastWriteTime;
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
+                    // Swallowed so one bad shard doesn't stop snapshots being created for the others. The
+                    // snapshot time is left unset so this will be retried on the next run.
+                    LOGGER.error(() -> LogUtil.message("Error creating snapshot for {}: {}",
+                            doc.asDocRef(), e.getMessage()), e);
                 } finally {
                     writeLock.unlock();
                 }

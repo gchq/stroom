@@ -43,6 +43,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Singleton
 public class ShardManager {
@@ -98,8 +100,39 @@ public class ShardManager {
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get();
 
-        // Delete any existing snapshots that might have been left behind from the last use of Stroom.
-        FileUtil.deleteDir(statePaths.getSnapshotDir());
+        // Delete any snapshots fetched from other nodes that might have been left behind from the last use of
+        // Stroom.
+        deleteFetchedSnapshots(statePaths.getSnapshotDir());
+    }
+
+    /**
+     * Delete snapshots that this node previously fetched from the nodes that store the shards.
+     * <p>
+     * Fetched snapshots are unpacked by {@link SnapshotShard} into a dir per fetch,
+     * i.e. {@code snapshots/<doc uuid>/<fetch time>/}, so only sub dirs are deleted here. A node that stores
+     * shards publishes its snapshot as a file, i.e. {@code snapshots/<doc uuid>/snapshot.zip}, and deleting that
+     * would leave the shard with nothing to serve until a new snapshot was created, which may never happen if the
+     * shard receives no further writes. See gh-5689.
+     */
+    // Package private for testing.
+    static void deleteFetchedSnapshots(final Path snapshotDir) {
+        if (!Files.isDirectory(snapshotDir)) {
+            return;
+        }
+
+        try (final Stream<Path> docDirs = Files.list(snapshotDir)) {
+            docDirs.filter(Files::isDirectory).forEach(docDir -> {
+                try (final Stream<Path> fetchDirs = Files.list(docDir)) {
+                    fetchDirs.filter(Files::isDirectory).forEach(FileUtil::deleteDir);
+                } catch (final IOException e) {
+                    LOGGER.error(() -> LogUtil.message("Error deleting fetched snapshots in '{}': {}",
+                            FileUtil.getCanonicalPath(docDir), e.getMessage()), e);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(() -> LogUtil.message("Error listing snapshot dir '{}': {}",
+                    FileUtil.getCanonicalPath(snapshotDir), e.getMessage()), e);
+        }
     }
 
     public boolean isSnapshotNode() {
