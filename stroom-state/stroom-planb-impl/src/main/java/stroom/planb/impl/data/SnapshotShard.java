@@ -48,6 +48,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Thread-safe snapshot shard that automatically rotates snapshots every 10 minutes (default).
@@ -119,7 +120,12 @@ class SnapshotShard implements Shard {
                 dbFactory));
     }
 
-    private SnapshotInstance getSnapshotInstance() {
+    /**
+     * @param awaitFetchIfUnusable Whether to wait for an in flight fetch when we have no usable snapshot.
+     *                             Reads want to wait, as the alternative is failing the caller. Diagnostics
+     *                             don't, as they just report whatever state we are in. See gh-5689.
+     */
+    private SnapshotInstance getSnapshotInstance(final boolean awaitFetchIfUnusable) {
         final SnapshotInstance instance = snapshotRef.get();
         if (instance == null) {
             throw new ShardClosedException();
@@ -129,7 +135,7 @@ class SnapshotShard implements Shard {
         if (instance.getExpiryTime().isBefore(Instant.now())) {
             final CompletableFuture<Void> rotation = startRotation();
 
-            if (instance.hasFetchException()) {
+            if (awaitFetchIfUnusable && instance.hasFetchException()) {
                 // We have no usable snapshot, so returning now guarantees this read fails with the cached
                 // fetch exception, and every other read does the same until the retry interval elapses. As
                 // failing here just fails the caller anyway, wait for the in flight fetch instead so we can
@@ -308,14 +314,23 @@ class SnapshotShard implements Shard {
 
     @Override
     public String getInfo() {
-        return tryGet(SnapshotInstance::getInfo);
+        // Still triggers a rotation if the snapshot has expired, but never waits for it. This renders the
+        // shard info listing, so waiting would stall the listing for the retry interval for every shard that
+        // can't fetch, and unlike a read there is nothing to gain by waiting as we can report the state we
+        // already have. See gh-5689.
+        return tryGet(SnapshotInstance::getInfo, () -> getSnapshotInstance(false));
     }
 
     private <R> R tryGet(final Function<SnapshotInstance, R> function) {
+        return tryGet(function, () -> getSnapshotInstance(true));
+    }
+
+    private <R> R tryGet(final Function<SnapshotInstance, R> function,
+                         final Supplier<SnapshotInstance> instanceSupplier) {
         Exception lastException = null;
         for (int attempts = 0; attempts < MAX_ATTEMPTS; attempts++) {
             try {
-                final SnapshotInstance instance = getSnapshotInstance();
+                final SnapshotInstance instance = instanceSupplier.get();
                 final R result = function.apply(instance);
                 lastAccessTime = Instant.now();
                 return result;
@@ -517,7 +532,13 @@ class SnapshotShard implements Shard {
         public String getInfo() {
             return guard.acquire(() -> {
                 if (db == null) {
-                    return "No data (fetch exception)";
+                    // Report why there is no data rather than a bland placeholder that leaves a broken shard
+                    // looking benign in the shard info listing. Must not throw, as the caller drops the shard
+                    // from the listing if it does, so a failing shard would disappear from the view rather
+                    // than showing its problem. See gh-5689.
+                    return fetchException != null
+                            ? "No data. Snapshot fetch failed: " + fetchException.getMessage()
+                            : "No data. Snapshot database is not available.";
                 }
                 return db.getInfoString();
             });

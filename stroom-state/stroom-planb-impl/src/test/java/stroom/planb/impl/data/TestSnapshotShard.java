@@ -1250,4 +1250,65 @@ class TestSnapshotShard {
         assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("fetch failed");
         assertThat(fetchCount.get()).isEqualTo(1);
     }
+
+    /**
+     * The shard info listing must show why a shard has no data. A bland placeholder leaves a broken shard
+     * looking benign. See gh-5689.
+     */
+    @Test
+    void testGetInfoReportsFetchFailure() {
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenThrow(new RuntimeException("404 Not Found - No snapshot has been created yet"));
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThat(shard.getInfo()).contains("No snapshot has been created yet");
+    }
+
+    /**
+     * getInfo() renders a listing, so it must not wait for an in flight fetch. It may still trigger one, but
+     * waiting would stall the listing for the retry interval for every failing shard. See gh-5689.
+     */
+    @Test
+    void testGetInfoDoesNotWaitForAFetch() {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    ThreadUtil.sleep(5_000);
+                    throw new RuntimeException("fetch failed");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // The instance is expired, as the fetch took far longer than the retry interval to fail, so a read
+        // here would wait for the rotation it triggers. getInfo() must report what we have and return.
+        final long startMs = System.currentTimeMillis();
+        assertThat(shard.getInfo()).contains("fetch failed");
+        final long durationMs = System.currentTimeMillis() - startMs;
+
+        assertThat(durationMs).isLessThan(2_000);
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(1);
+    }
 }
