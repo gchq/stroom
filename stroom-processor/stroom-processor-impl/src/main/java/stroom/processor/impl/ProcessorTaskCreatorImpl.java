@@ -113,6 +113,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
     private final ProcessorProfileCache processorProfileCache;
+    private final FilterFetchBackoff filterFetchBackoff;
 
     /**
      * Our filter cache
@@ -131,7 +132,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
                              final PrioritisedFilters prioritisedFilters,
-                             final ProcessorProfileCache processorProfileCache) {
+                             final ProcessorProfileCache processorProfileCache,
+                             final FilterFetchBackoff filterFetchBackoff) {
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
@@ -144,6 +146,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         this.clusterLockService = clusterLockService;
         this.prioritisedFilters = prioritisedFilters;
         this.processorProfileCache = processorProfileCache;
+        this.filterFetchBackoff = filterFetchBackoff;
     }
 
     @Override
@@ -182,6 +185,11 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final ProgressMonitor progressMonitor = new ProgressMonitor(filters.size());
 
         parentTaskContext.info(() -> "Creating tasks for " + filters.size() + " filters");
+
+        // Don't remember filters we are no longer considering, e.g. disabled or deleted ones. The
+        // queue fill prunes too, but only on the master node, and creation runs on whichever node
+        // wins the cluster lock.
+        filterFetchBackoff.retainAll(filters);
 
         // Each processing profile gets its own budget for how many tasks to create, as do the
         // filters that have no profile, so that a busy profile can't use up the whole run and
@@ -596,7 +604,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             map.put(meta, null);
         }
 
-        final int createdTasks = processorTaskDao.createNewTasks(
+        final int createdTasks = createTasks(
                 filter,
                 tracker,
                 filterProgressMonitor,
@@ -611,6 +619,44 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         createdTasks,
                         filter.getFilterInfo()));
         budgetUsed.add(createdTasks);
+    }
+
+    /**
+     * Create tasks for a filter and, if any were created, tell the queue fill that this filter now
+     * has something to queue.
+     * <p>
+     * Task creation runs on whichever node wins the cluster lock, so the queue fill only hears about
+     * it when that node is also the master node that fills the queue, which is always the case on a
+     * single node install. It is a best effort shortcut rather than the mechanism; when creation
+     * happens elsewhere {@link ProcessorConfig#getSkipEmptyFilterFetchDuration()} bounds how long
+     * the new tasks sit unqueued.
+     * </p>
+     */
+    private int createTasks(final ProcessorFilter filter,
+                            final ProcessorFilterTracker tracker,
+                            final FilterProgressMonitor filterProgressMonitor,
+                            final long metaQueryTime,
+                            final Map<Meta, InclusiveRanges> metaMap,
+                            final Long maxMetaId,
+                            final boolean reachedLimit) {
+        final int createdTasks = processorTaskDao.createNewTasks(
+                filter,
+                tracker,
+                filterProgressMonitor,
+                metaQueryTime,
+                metaMap,
+                maxMetaId,
+                reachedLimit);
+
+        if (createdTasks > 0) {
+            // This must happen AFTER createNewTasks() has committed: the backoff pairs a fill's
+            // empty fetch with the creation version it read beforehand, so recording the creation
+            // while the tasks were still invisible would let a concurrent fill find nothing, match
+            // the already incremented version and back the filter off just as the tasks appear.
+            filterFetchBackoff.recordTasksCreated(filter);
+        }
+
+        return createdTasks;
     }
 
     /**
@@ -824,7 +870,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             durationTimer,
                             map.size());
 
-                    final int createdTasks = processorTaskDao.createNewTasks(
+                    final int createdTasks = createTasks(
                             filter,
                             tracker,
                             filterProgressMonitor,

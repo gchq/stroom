@@ -115,13 +115,8 @@ public class FilterFetchBackoff {
 
     /**
      * Record that task creation has just created tasks for this filter, so there is something to
-     * queue however recently we looked and found nothing.
-     * <p>
-     * Task creation runs on whichever node wins the cluster lock, so this only tells us anything
-     * when that node is also the master node that fills the queue. It is a best effort shortcut
-     * rather than the mechanism; when creation happens elsewhere the wait bounds how long the new
-     * tasks sit unqueued.
-     * </p>
+     * queue however recently we looked and found nothing. Must only be called once the tasks have
+     * been committed, otherwise a concurrent fill can find nothing and still back the filter off.
      */
     public void recordTasksCreated(final ProcessorFilter filter) {
         getState(filter).recordTasksCreated();

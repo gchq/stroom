@@ -119,7 +119,8 @@ class TestProcessorTaskCreatorImpl {
                 securityContext,
                 clusterLockService,
                 prioritisedFilters,
-                processorProfileCache);
+                processorProfileCache,
+                new FilterFetchBackoff());
     }
 
     // --------------------------------------------------------------------------------
