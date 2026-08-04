@@ -32,6 +32,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -53,7 +54,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Singleton
@@ -71,6 +74,8 @@ public class ShardManager {
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
+    // Serialises creation of a given shard without holding a lock on the shard map while we do it.
+    private final StripedLock creationLocks = new StripedLock();
     private final NodeInfo nodeInfo;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
@@ -314,7 +319,7 @@ public class ShardManager {
             return shard.get(function);
         } catch (final SnapshotShard.ShardClosedException e) {
             // The shard was evicted by cleanup between our lookup and use.
-            // Retry once — computeIfAbsent will create a fresh shard.
+            // Retry once — we will create a fresh shard.
             LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
@@ -330,18 +335,56 @@ public class ShardManager {
             LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
             throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
         }
-        return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
+        return getOrCreateShard(doc.getUuid(), () -> createShard(doc));
     }
 
     public Shard getShardForDocUuid(final String docUuid) throws DocumentNotFoundException {
-        return shardMap.computeIfAbsent(docUuid, k -> {
-            final PlanBDoc doc = planBDocStore.readDocument(DocRef.builder().type(PlanBDoc.TYPE).uuid(k).build());
+        return getOrCreateShard(docUuid, () -> {
+            final PlanBDoc doc = planBDocStore.readDocument(
+                    DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build());
             if (doc == null) {
                 LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
                 throw new DocumentNotFoundException(DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build());
             }
             return createShard(doc);
         });
+    }
+
+    /**
+     * Get the shard for a doc, creating it if we don't already have it.
+     * <p>
+     * Creating a shard is slow. On a snapshot node it fetches the snapshot from another node over HTTP, with no
+     * client side timeout, and unzips it. This must not be done inside
+     * {@link java.util.concurrent.ConcurrentHashMap#computeIfAbsent} because the mapping function runs while
+     * holding the lock for the bin the key hashes to, so one slow fetch stalls lookups of unrelated shards that
+     * happen to hash to the same bin. See gh-5689.
+     * <p>
+     * Creation instead happens outside the map, serialised by a striped lock so that concurrent callers for the
+     * same shard wait rather than both building one. Serialising matters more than it might seem: if we let them
+     * race and discarded the loser we would have to release the discarded shard, and releasing a
+     * {@link StoreShard} means calling delete() on it, which deletes the shard data itself.
+     */
+    private Shard getOrCreateShard(final String docUuid, final Supplier<Shard> creator) {
+        final Shard existing = shardMap.get(docUuid);
+        if (existing != null) {
+            return existing;
+        }
+
+        final Lock lock = creationLocks.getLockForKey(docUuid);
+        lock.lock();
+        try {
+            // Another thread may have created it while we were waiting for the lock.
+            final Shard created = shardMap.get(docUuid);
+            if (created != null) {
+                return created;
+            }
+
+            final Shard shard = creator.get();
+            shardMap.put(docUuid, shard);
+            return shard;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private Shard createShard(final PlanBDoc doc) {
