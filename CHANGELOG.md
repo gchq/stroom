@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5689** : Fix issue where snapshots were not found.
+
+* Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
+
+* Bug **#5689** : Stop the Plan B startup cleanup deleting snapshots published by a node that stores shards, and stop a failed snapshot creation being recorded as a success, which could leave a shard that receives no further writes unable to publish a snapshot again.
+
+* Bug **#5689** : Rework the Plan B snapshot serving strategy. Slightly stale snapshot data is now served, bounded by `minTimeToKeepSnapshotEnv`, while a refresh happens in the background. Reads with no servable snapshot block on a fetch when it may succeed, e.g. the first fetch, and fail fast when one has recently failed. A NOT_MODIFIED response now counts as confirmation that data is current rather than being treated as a fetch failure, and the first fetch no longer happens during shard creation.
+
+
 ## [v7.13-beta.9] - 2026-07-30
 
 * Bug **#5669** : Fix `HttpClientConfigConverter` not mapping `verifyHostname`, which prevented TLS hostname verification being disabled on HTTP clients.

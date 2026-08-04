@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.query.language.functions;
+package stroom.planb.impl.data;
 
-public interface StateFetcher {
+/**
+ * Thrown when a snapshot has been requested from a node that stores the shard but that node has no snapshot to
+ * give. This is an expected, and usually transient, condition, e.g. the snapshot creation job has not yet run for
+ * a newly written shard, so it is reported separately from genuine snapshot failures.
+ */
+public class SnapshotNotFoundException extends RuntimeException {
 
-    Val getState(String map, String key, long effectiveTimeMs);
+    public SnapshotNotFoundException(final String message) {
+        super(message);
+    }
 }
