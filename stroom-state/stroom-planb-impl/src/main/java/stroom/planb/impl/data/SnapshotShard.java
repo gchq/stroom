@@ -259,7 +259,10 @@ class SnapshotShard implements Shard {
                 LockSupport.parkNanos(1);
             } catch (final Exception e) {
                 // Propagate other exceptions immediately
-                throw new RuntimeException("Unexpected error during snapshot access", e);
+                throw new RuntimeException("Error during snapshot access for '" +
+                                           doc.asDocRef() +
+                                           "': " +
+                                           e.getMessage(), e);
             }
         }
         throw new RuntimeException("Failed to acquire snapshot after " + MAX_ATTEMPTS + " attempts", lastException);
@@ -355,7 +358,9 @@ class SnapshotShard implements Shard {
 
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
-                fetchException = new RuntimeException(e);
+                // Keep the message rather than just wrapping, otherwise the reason is reduced to the cause's
+                // toString() every time this cached exception is rethrown by get().
+                fetchException = new RuntimeException(e.getMessage(), e);
                 // If we have an exception then we will want to retry getting a snapshot so expire soon.
                 expiryTime = createTime.plus(configProvider.get().getSnapshotRetryFetchInterval());
             }

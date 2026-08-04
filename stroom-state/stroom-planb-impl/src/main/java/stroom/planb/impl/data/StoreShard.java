@@ -33,6 +33,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.SimpleDurationUtil;
@@ -322,8 +323,14 @@ class StoreShard implements Shard {
         }
 
         // Do we have a snapshot
-        if (!Files.exists(getSnapshotZip())) {
-            throw new RuntimeException("Snapshot not found");
+        final Path snapshotZip = getSnapshotZip();
+        if (!Files.exists(snapshotZip)) {
+            throw new SnapshotNotFoundException(LogUtil.message(
+                    "No snapshot has been created yet for {}. Expected '{}'. lastSnapshotTime={}, lastWriteTime={}",
+                    doc.asDocRef(),
+                    FileUtil.getCanonicalPath(snapshotZip),
+                    lastSnapshotTime,
+                    lastWriteTime));
         }
     }
 
