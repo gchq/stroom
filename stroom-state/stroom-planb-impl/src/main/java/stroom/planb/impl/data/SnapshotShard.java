@@ -25,6 +25,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.util.concurrent.Guard;
 import stroom.util.concurrent.Guard.TryAgainException;
 import stroom.util.concurrent.StripedGuard;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -38,8 +39,10 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
@@ -80,7 +83,9 @@ class SnapshotShard implements Shard {
     private final Executor executor;
 
     private final AtomicReference<SnapshotInstance> snapshotRef;
-    private final AtomicBoolean rotating = new AtomicBoolean();
+    // The rotation currently in flight, if any, so that readers with no usable snapshot can wait for it rather
+    // than each failing with the cached fetch exception.
+    private final AtomicReference<CompletableFuture<Void>> rotationRef = new AtomicReference<>();
     private volatile Instant lastAccessTime = Instant.now();
 
     public SnapshotShard(final ByteBuffers byteBuffers,
@@ -118,23 +123,27 @@ class SnapshotShard implements Shard {
             throw new ShardClosedException();
         }
 
-        // If the current instance has expired then asynchronously try to get a new snapshot.
+        // If the current instance has expired then try to get a new snapshot.
         if (instance.getExpiryTime().isBefore(Instant.now())) {
-            if (rotating.compareAndSet(false, true)) {
-                CompletableFuture
-                        .runAsync(this::rotate, executor)
-                        .whenComplete((ignoredResult, ignoredThrowable) ->
-                                rotating.set(false));
+            final CompletableFuture<Void> rotation = startRotation();
+
+            if (instance.hasFetchException()) {
+                // We have no usable snapshot, so returning now guarantees this read fails with the cached
+                // fetch exception, and every other read does the same until the retry interval elapses. As
+                // failing here just fails the caller anyway, wait for the in flight fetch instead so we can
+                // use it if it succeeds. Bounded, so a slow or unresponsive node can't block readers
+                // indefinitely. See gh-5689.
+                awaitRotation(rotation);
             }
 
-            // Re-read after triggering rotation to get latest reference. Getting the ref again is virtually pointless
-            // but here it is...
+            // Re-read after triggering rotation to get latest reference.
             //
-            // Rotation is async so is very unlikely to have changed the reference, however there is also
-            // another possible but similarly unlikely scenario where delete() has nullified the ref.
+            // For a healthy snapshot rotation is async so is very unlikely to have changed the reference, but
+            // where we waited above it will have done if the fetch succeeded. There is also the possibility
+            // that delete() has nullified the ref.
             //
-            // In either case the returned instance is protected by the Guard even if the reference ends up being stale
-            // after it is returned.
+            // In either case the returned instance is protected by the Guard even if the reference ends up being
+            // stale after it is returned.
             final SnapshotInstance latest = snapshotRef.get();
             if (latest == null) {
                 throw new ShardClosedException();
@@ -143,6 +152,52 @@ class SnapshotShard implements Shard {
         }
 
         return instance;
+    }
+
+    /**
+     * Start a rotation if one isn't already running, returning the in flight rotation either way so callers can
+     * wait for it. Completes normally whether or not the fetch succeeded, as {@link #rotate()} handles its own
+     * errors.
+     */
+    private CompletableFuture<Void> startRotation() {
+        final CompletableFuture<Void> inFlight = rotationRef.get();
+        if (inFlight != null) {
+            return inFlight;
+        }
+
+        final CompletableFuture<Void> created = new CompletableFuture<>();
+        if (!rotationRef.compareAndSet(null, created)) {
+            // Someone else started one first, so wait on theirs. If they have already finished then there is
+            // nothing to wait for.
+            final CompletableFuture<Void> other = rotationRef.get();
+            return other != null
+                    ? other
+                    : CompletableFuture.completedFuture(null);
+        }
+
+        CompletableFuture
+                .runAsync(this::rotate, executor)
+                .whenComplete((ignoredResult, ignoredThrowable) -> {
+                    // Clear before completing so a waiter that wakes and finds the snapshot still unusable
+                    // starts a fresh rotation rather than joining this completed one.
+                    rotationRef.set(null);
+                    created.complete(null);
+                });
+        return created;
+    }
+
+    private void awaitRotation(final CompletableFuture<Void> rotation) {
+        final Duration timeout = configProvider.get().getSnapshotRetryFetchInterval().getDuration();
+        try {
+            rotation.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw UncheckedInterruptedException.create(e);
+        } catch (final TimeoutException e) {
+            LOGGER.debug(() -> "Timed out after " + timeout + " waiting for a snapshot for '" + doc.asDocRef() + "'");
+        } catch (final ExecutionException e) {
+            LOGGER.debug(() -> "Error waiting for a snapshot for '" + doc.asDocRef() + "': " + e.getMessage(), e);
+        }
     }
 
     private void rotate() {
@@ -174,13 +229,26 @@ class SnapshotShard implements Shard {
                 // If the new snapshot had problems fetching then keep using the current one and extend
                 // its expiry time so we don't keep fetching.
                 if (newInstance.hasFetchException()) {
-                    // Extend the expiry time of the current instance so we don't just keep infinitely retrying
-                    // to update this snapshot.
-                    currentInstance.extendExpiry(
-                            configProvider.get().getSnapshotRetryFetchInterval().getDuration());
+                    if (currentInstance.hasFetchException()) {
+                        // Neither instance can serve reads, so swap the new one in regardless. Its fetch
+                        // exception describes the most recent attempt, which is what we want readers to report
+                        // rather than a stale error from the first failure, and its expiry time already
+                        // provides the retry interval. See gh-5689.
+                        if (snapshotRef.compareAndSet(currentInstance, newInstance)) {
+                            currentInstance.destroy();
+                        } else {
+                            LOGGER.debug("Snapshot rotation aborted — shard was closed during fetch");
+                            newInstance.destroy();
+                        }
+                    } else {
+                        // We still have a usable snapshot, so keep serving it and extend its expiry time so we
+                        // don't just keep infinitely retrying to update this snapshot.
+                        currentInstance.extendExpiry(
+                                configProvider.get().getSnapshotRetryFetchInterval().getDuration());
 
-                    // Clean up the abandoned instance's directory and guard to prevent resource leaks.
-                    newInstance.destroy();
+                        // Clean up the abandoned instance's directory and guard to prevent resource leaks.
+                        newInstance.destroy();
+                    }
                 } else {
                     // Atomically swap: only succeeds if nobody else has changed the reference
                     // (i.e., delete() hasn't set it to null).

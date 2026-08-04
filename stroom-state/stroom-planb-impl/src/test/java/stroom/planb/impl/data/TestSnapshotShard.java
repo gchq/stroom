@@ -998,4 +998,124 @@ class TestSnapshotShard {
         // Some reads should have succeeded before delete
         assertThat(successCount.get()).isGreaterThan(0);
     }
+
+    /**
+     * When the initial fetch fails there is no usable snapshot, so every read fails with the cached fetch
+     * exception until the retry interval elapses. Once the remote node can supply a snapshot again a read
+     * should get it rather than replaying the cached failure. See gh-5689.
+     */
+    @Test
+    void testFailedFetchRecoversOnNextRead() throws Exception {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicBoolean fail = new AtomicBoolean(true);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fail.get()) {
+                        throw new RuntimeException("404 Not Found - No snapshot has been created yet");
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // The initial fetch failed so reads fail.
+        assertThatThrownBy(() -> shard.get(db -> "read")).isInstanceOf(RuntimeException.class);
+
+        // The remote node can now supply a snapshot.
+        fail.set(false);
+        Thread.sleep(100);
+
+        // The read waits for the retry rather than replaying the cached failure.
+        final String result = shard.get(db -> "read");
+        assertThat(result).isEqualTo("read");
+    }
+
+    /**
+     * A read that has to wait must report the most recent failure, not a stale one from the first attempt.
+     */
+    @Test
+    void testRepeatedFailureReportsLatestError() throws Exception {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    throw new RuntimeException("failure " + fetchCount.incrementAndGet());
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("failure 1");
+
+        Thread.sleep(100);
+
+        assertThatThrownBy(() -> shard.get(db -> "read"))
+                .hasMessageContaining("failure")
+                .hasMessageNotContaining("failure 1");
+    }
+
+    /**
+     * A healthy snapshot must keep serving reads when a rotation fails, rather than the failure replacing it.
+     */
+    @Test
+    void testFailedRotationKeepsServingExistingSnapshot() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicBoolean fail = new AtomicBoolean(false);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fail.get()) {
+                        throw new RuntimeException("fetch failed");
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+
+        // Rotations from now on fail, but we already have a usable snapshot.
+        fail.set(true);
+        for (int i = 0; i < 5; i++) {
+            Thread.sleep(60);
+            final String result = shard.get(db -> "read");
+            assertThat(result).isEqualTo("read");
+        }
+    }
 }
