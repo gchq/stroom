@@ -16,17 +16,86 @@
 
 package stroom.planb.impl.data;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.db.StatePaths;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.StateType;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class TestStoreShard {
 
     private static final Duration LIFESPAN = Duration.ofMinutes(10);
+
+    /**
+     * Creating a snapshot must not throw, as it is called from the merge path as well as the scheduled job, so an
+     * escaping exception would fail data merging for the shard. See gh-5689.
+     */
+    @Test
+    void createSnapshotSucceeds(@TempDir final Path tempDir) {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBDoc doc = PlanBDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .stateType(StateType.STATE)
+                .settings(new StateSettings.Builder().build())
+                .build();
+        final StoreShard shard = createShard(statePaths, doc);
+
+        assertThatNoException().isThrownBy(shard::createSnapshot);
+
+        assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).exists();
+    }
+
+    /**
+     * A second call should be a no op rather than re-zipping, as a snapshot already exists for the current
+     * write time.
+     */
+    @Test
+    void createSnapshotIsNotRepeatedWithoutWrites(@TempDir final Path tempDir) {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBDoc doc = PlanBDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .stateType(StateType.STATE)
+                .settings(new StateSettings.Builder().build())
+                .build();
+        final StoreShard shard = createShard(statePaths, doc);
+
+        shard.createSnapshot();
+        final Path zip = statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip");
+        assertThat(zip).exists();
+
+        assertThatNoException().isThrownBy(shard::createSnapshot);
+        assertThat(zip).exists();
+    }
+
+    private StoreShard createShard(final StatePaths statePaths, final PlanBDoc doc) {
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final PlanBConfig config = PlanBConfig.builder().build();
+        return new StoreShard(
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                doc);
+    }
 
     /**
      * Snapshot creation re-zips the whole shard while holding the write lock, so a shard that always fails must
