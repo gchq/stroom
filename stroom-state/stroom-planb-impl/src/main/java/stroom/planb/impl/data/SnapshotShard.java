@@ -232,8 +232,17 @@ class SnapshotShard implements Shard {
                     if (currentInstance.hasFetchException()) {
                         // Neither instance can serve reads, so swap the new one in regardless. Its fetch
                         // exception describes the most recent attempt, which is what we want readers to report
-                        // rather than a stale error from the first failure, and its expiry time already
-                        // provides the retry interval. See gh-5689.
+                        // rather than a stale error from the first failure. See gh-5689.
+                        //
+                        // Extend from now rather than relying on the expiry the instance was built with, which
+                        // is relative to the time the fetch started. A fetch that takes longer to fail than the
+                        // retry interval would otherwise produce an instance that is already expired when it is
+                        // published, so the next read would rotate again immediately and we would fetch
+                        // continuously. There is no client side timeout on the fetch, so a slow or hanging node
+                        // makes that a real possibility.
+                        newInstance.extendExpiry(
+                                configProvider.get().getSnapshotRetryFetchInterval().getDuration());
+
                         if (snapshotRef.compareAndSet(currentInstance, newInstance)) {
                             currentInstance.destroy();
                         } else {
