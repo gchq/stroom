@@ -34,7 +34,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -44,9 +43,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -235,10 +237,41 @@ public class ShardManager {
         }
     }
 
-    public void checkSnapshotStatus(final SnapshotRequest request) {
+    /**
+     * Check that we can supply a snapshot for the request and open it ready for streaming.
+     * <p>
+     * The snapshot is opened here, rather than the path being resolved again once streaming has started, so that
+     * everything that can fail does so while the response status can still reflect it. Holding the file open also
+     * means a snapshot rotation can't take it away mid transfer. See gh-5689.
+     *
+     * @return The snapshot, which the caller must close.
+     */
+    public InputStream openSnapshot(final SnapshotRequest request) {
         try {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
+
+            // Lets the shard reject the request, e.g. because the client already has the latest snapshot, or
+            // because no snapshot has been created yet.
             shard.checkSnapshotStatus(request);
+
+            if (!(shard instanceof final StoreShard storeShard)) {
+                throw new SnapshotNotFoundException(LogUtil.message(
+                        "This node does not store the shard for {} so cannot supply a snapshot",
+                        request.getPlanBDocRef()));
+            }
+
+            final Path path = storeShard.getSnapshotZip();
+            try {
+                return new BufferedInputStream(Files.newInputStream(path));
+            } catch (final NoSuchFileException e) {
+                throw new SnapshotNotFoundException(LogUtil.message(
+                        "Snapshot for {} no longer exists at '{}'",
+                        request.getPlanBDocRef(), FileUtil.getCanonicalPath(path)));
+            } catch (final IOException e) {
+                throw new UncheckedIOException(LogUtil.message(
+                        "Error opening snapshot for {} at '{}': {}",
+                        request.getPlanBDocRef(), FileUtil.getCanonicalPath(path), e.getMessage()), e);
+            }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Debug checking snapshot status: {} {}",
                     request.getPlanBDocRef(), e.getMessage()), e);
@@ -290,27 +323,6 @@ public class ShardManager {
                 LOGGER.error(e::getMessage, e);
             }
         });
-    }
-
-    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
-        try {
-            final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
-            if (shard instanceof final StoreShard storeShard) {
-                try {
-                    final Path path = storeShard.getSnapshotZip();
-                    if (Files.exists(path)) {
-                        StreamUtil.streamToStream(Files.newInputStream(path), outputStream);
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error(() -> LogUtil.message("Error fetching snapshot: {} {}",
-                            request.getPlanBDocRef(), e.getMessage()), e);
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error fetching snapshot: {} {}",
-                    request.getPlanBDocRef(), e.getMessage()), e);
-            throw e;
-        }
     }
 
     public <R> R get(final String mapName, final Function<Db<?, ?>, R> function) {
