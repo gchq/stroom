@@ -202,7 +202,9 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
-        // Initial fetch
+        // Initial fetch happens on the first read, not construction.
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
         assertThat(fetchCount.get()).isEqualTo(1);
 
         // When: We wait for expiry and trigger a read
@@ -247,6 +249,9 @@ class TestSnapshotShard {
                 doc,
                 DB_FACTORY,
                 executorService);
+
+        // Initial fetch happens on the first read.
+        shard.get(db -> "read");
 
         // When: We expire the snapshot and trigger multiple reads
         Thread.sleep(150);
@@ -835,6 +840,9 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
+        // Initial fetch happens on the first read.
+        shard.get(db -> "read");
+
         // When: We wait for expiry, trigger rotation, then delete mid-rotation
         Thread.sleep(150);
         shard.getInfo(); // triggers async rotation
@@ -1213,25 +1221,20 @@ class TestSnapshotShard {
     }
 
     /**
-     * There is no client side timeout on a fetch, so an attempt can take longer to fail than the retry
-     * interval. The expiry has to be timed from when the attempt failed, not from when it started, or the
-     * instance is already expired when published and the next read fetches again immediately, retrying
-     * continuously instead of at the configured interval. See gh-5689.
+     * A fetch that fails must not be retried until the retry interval has elapsed, however many reads
+     * arrive. The first read triggers the fetch and waits for it, the rest fail fast. See gh-5689.
      */
     @Test
-    void testSlowFailingFetchIsNotBornExpired() {
+    void testFailedFetchIsNotRetriedWithinRetryWindow() {
         config = config
                 .copy()
-                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(3))
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(10))
                 .build();
 
         final AtomicInteger fetchCount = new AtomicInteger();
         when(fileTransferClient.fetchSnapshot(any(), any(), any()))
                 .thenAnswer(inv -> {
                     fetchCount.incrementAndGet();
-                    // Take longer to fail than the retry interval. The read that follows then has the whole
-                    // retry interval to happen in, so the assertion isn't sensitive to scheduling jitter.
-                    ThreadUtil.sleep(4_000);
                     throw new RuntimeException("fetch failed");
                 });
 
@@ -1245,10 +1248,187 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
-        // The initial fetch failed, so this read reports that failure. It must not trigger another fetch, as
-        // the retry interval has not elapsed since the attempt failed.
-        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("fetch failed");
+        for (int i = 0; i < 5; i++) {
+            assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("fetch failed");
+        }
         assertThat(fetchCount.get()).isEqualTo(1);
+    }
+
+    /**
+     * A fetch can hang indefinitely, as there is no client side timeout. The first read waits the bounded
+     * retry interval then fails, and subsequent reads must fail fast rather than each waiting a full
+     * interval against the same hung fetch. See gh-5689.
+     */
+    @Test
+    void testHungFetchDoesNotBlockEveryRead() {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    ThreadUtil.sleep(60_000);
+                    throw new RuntimeException("hung");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // The first read waits the bounded interval then times out.
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("Timed out");
+
+        // Subsequent reads fail fast rather than each waiting the interval.
+        for (int i = 0; i < 3; i++) {
+            final long startMs = System.currentTimeMillis();
+            assertThatThrownBy(() -> shard.get(db -> "read")).isInstanceOf(RuntimeException.class);
+            assertThat(System.currentTimeMillis() - startMs).isLessThan(1_000);
+        }
+        assertThat(fetchCount.get()).isEqualTo(1);
+    }
+
+    /**
+     * NOT_MODIFIED from the store node means the data we hold is current. It must be treated as a successful
+     * confirmation that resets staleness, not as a fetch failure, or an unchanged store would age out of
+     * servability despite being perfectly correct. See gh-5689.
+     */
+    @Test
+    void testNotModifiedConfirmsSnapshotIsCurrent() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(400))
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fetchCount.incrementAndGet() == 1) {
+                        return Instant.now();
+                    }
+                    throw new NotModifiedException();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+
+        // Keep reading well past the staleness bound measured from the original fetch. The NOT_MODIFIED
+        // responses keep confirming the data is current, so it must keep being served.
+        final Instant end = Instant.now().plusMillis(1_000);
+        while (Instant.now().isBefore(end)) {
+            final String result = shard.get(db -> "read");
+            assertThat(result).isEqualTo("read");
+            Thread.sleep(50);
+        }
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    /**
+     * Data past the staleness bound must not be served, but with no recent failed attempt, e.g. after a long
+     * idle gap, a read must not fail either. It behaves like a first fetch: block on a refresh and serve the
+     * result. See gh-5689.
+     */
+    @Test
+    void testTooStaleReadBlocksAndRefreshesLikeFirstFetch() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(200))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+        assertThat(fetchCount.get()).isEqualTo(1);
+
+        // Idle past the staleness bound. No reads means no refreshes and no failures.
+        Thread.sleep(400);
+
+        // The data is too stale to serve but nothing has failed, so the read blocks on a refresh.
+        final String refreshed = shard.get(db -> "read");
+        assertThat(refreshed).isEqualTo("read");
+        assertThat(fetchCount.get()).isEqualTo(2);
+    }
+
+    /**
+     * While refreshes fail, data within the staleness bound keeps being served without blocking, and data
+     * beyond it errors rather than being served very stale. See gh-5689.
+     */
+    @Test
+    void testStalenessBoundStopsServingEventually() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(300))
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fetchCount.incrementAndGet() == 1) {
+                        return Instant.now();
+                    }
+                    throw new RuntimeException("node down");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+
+        // Within the bound reads keep being served despite failing refreshes.
+        Thread.sleep(100);
+        final String stale = shard.get(db -> "read");
+        assertThat(stale).isEqualTo("read");
+
+        // Beyond the bound reads error rather than serve very stale data.
+        Thread.sleep(400);
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("node down");
     }
 
     /**
@@ -1270,6 +1450,8 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
+        // Trigger the fetch via a read, which fails, then getInfo must show why.
+        assertThatThrownBy(() -> shard.get(db -> "read")).isInstanceOf(RuntimeException.class);
         assertThat(shard.getInfo()).contains("No snapshot has been created yet");
     }
 
@@ -1278,7 +1460,7 @@ class TestSnapshotShard {
      * waiting would stall the listing for the retry interval for every failing shard. See gh-5689.
      */
     @Test
-    void testGetInfoDoesNotWaitForAFetch() {
+    void testGetInfoDoesNotWaitForAFetch() throws Exception {
         config = config
                 .copy()
                 .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
@@ -1302,13 +1484,14 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
-        // The instance is expired, as the fetch took far longer than the retry interval to fail, so a read
-        // here would wait for the rotation it triggers. getInfo() must report what we have and return.
+        // getInfo() must trigger the fetch but report the state we are in and return, rather than wait
+        // the retry interval for the in flight fetch.
         final long startMs = System.currentTimeMillis();
-        assertThat(shard.getInfo()).contains("fetch failed");
+        assertThat(shard.getInfo()).contains("No data");
         final long durationMs = System.currentTimeMillis() - startMs;
 
         assertThat(durationMs).isLessThan(2_000);
-        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(1);
+        Thread.sleep(200);
+        assertThat(fetchCount.get()).isEqualTo(1);
     }
 }
