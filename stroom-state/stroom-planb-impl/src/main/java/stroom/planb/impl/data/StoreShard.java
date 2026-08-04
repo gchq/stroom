@@ -370,7 +370,7 @@ class StoreShard implements Shard {
                         // a shard that receives no further writes would never retry. See gh-5689.
                         this.lastSnapshotTime = lastWriteTime;
                         this.lastSnapshotFailureTime = null;
-                        this.snapshotFailureCount = 0;
+                        this.snapshotFailureCount.set(0);
                     }
                 } catch (final Exception e) {
                     // Swallowed so one bad shard doesn't stop snapshots being created for the others. Record the
