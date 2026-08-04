@@ -233,6 +233,20 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             continue;
                         }
 
+                        // The filter list is cached with its trackers attached, so we can tell that
+                        // a filter is still backing off from polls that created nothing without the
+                        // database fetch that createTasksForFilter does. The cached tracker can be a
+                        // few seconds out of date, which at worst delays a filter coming out of
+                        // backoff by one run, so the authoritative check still happens against the
+                        // freshly loaded filter.
+                        if (!FilterPollBackoff.isPollDue(filter,
+                                filter.getProcessorFilterTracker(),
+                                processorConfig,
+                                System.currentTimeMillis())) {
+                            progressMonitor.logSkippedFilter(filter, SkipReason.ZERO_TASKS_ON_LAST_POLL);
+                            continue;
+                        }
+
                         try {
                             createTasksForFilter(
                                     parentTaskContext,

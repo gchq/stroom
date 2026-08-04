@@ -30,6 +30,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.ExistingCreatedTask;
+import stroom.processor.impl.FilterFetchBackoff;
 import stroom.processor.impl.FilterPollBackoff;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterCache;
@@ -176,6 +177,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final ProcessorFilterCache processorFilterCache;
     private final Provider<ProcessorConfig> processorConfigProvider;
+    private final FilterFetchBackoff filterFetchBackoff;
     private final ProcessorDbConnProvider processorDbConnProvider;
     //    private final ProcessorFilterMarshaller marshaller;
     private final DocFinder docFinder;
@@ -188,6 +190,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorFilterCache processorFilterCache,
                          final Provider<ProcessorConfig> processorConfigProvider,
+                         final FilterFetchBackoff filterFetchBackoff,
                          final ProcessorDbConnProvider processorDbConnProvider,
                          final ExpressionMapperFactory expressionMapperFactory,
                          final DocFinder docFinder) {
@@ -196,6 +199,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorFilterCache = processorFilterCache;
         this.processorConfigProvider = processorConfigProvider;
+        this.filterFetchBackoff = filterFetchBackoff;
         this.processorDbConnProvider = processorDbConnProvider;
         this.docFinder = docFinder;
 
@@ -569,6 +573,17 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             return 0;
+        }
+
+        if (creationState.totalTasksCreated > 0) {
+            // If this node is also the master node then its next queue fill can look for these
+            // tasks straight away rather than waiting out any backoff from having found none
+            // before. This must happen AFTER the transaction has committed: the backoff pairs a
+            // fill's empty fetch with the creation version it read beforehand, so recording the
+            // creation while the tasks were still invisible would let a concurrent fill find
+            // nothing, match the already-incremented version and back the filter off just as the
+            // tasks appear. See FilterFetchBackoff.
+            filterFetchBackoff.recordTasksCreated(filter);
         }
 
         return creationState.totalTasksCreated;

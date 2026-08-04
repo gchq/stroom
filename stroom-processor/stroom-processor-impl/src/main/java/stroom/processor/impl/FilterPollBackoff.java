@@ -56,6 +56,11 @@ public final class FilterPollBackoff {
                                     final ProcessorFilterTracker tracker,
                                     final ProcessorConfig processorConfig,
                                     final long nowMs) {
+        if (tracker == null) {
+            // We know nothing about previous polls, so poll it.
+            return true;
+        }
+
         final Integer lastPollTaskCount = tracker.getLastPollTaskCount();
         final Long lastPollMs = tracker.getLastPollMs();
         final StroomDuration skipNonProducingFiltersDuration =

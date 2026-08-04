@@ -67,6 +67,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private final StroomDuration waitToQueueTasksDuration;
     private StroomDuration skipNonProducingFiltersDuration;
     private StroomDuration skipNonProducingFiltersMaxDuration;
+    private StroomDuration skipEmptyFilterFetchDuration;
     private boolean useMaxMetaIdFromPreviousPoll;
 
     public ProcessorConfig() {
@@ -105,7 +106,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
-        skipNonProducingFiltersMaxDuration = StroomDuration.ofMinutes(10);
+        skipNonProducingFiltersMaxDuration = StroomDuration.ofMinutes(1);
+        skipEmptyFilterFetchDuration = StroomDuration.ofSeconds(10);
         useMaxMetaIdFromPreviousPoll = DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL;
     }
 
@@ -132,6 +134,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                                    skipNonProducingFiltersDuration,
                            @JsonProperty("skipNonProducingFiltersMaxDuration") final StroomDuration
                                    skipNonProducingFiltersMaxDuration,
+                           @JsonProperty("skipEmptyFilterFetchDuration") final StroomDuration
+                                   skipEmptyFilterFetchDuration,
                            @JsonProperty("useMaxMetaIdFromPreviousPoll")
                                final Boolean useMaxMetaIdFromPreviousPoll) {
         this.dbConfig = dbConfig;
@@ -160,6 +164,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
         this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
+        this.skipEmptyFilterFetchDuration = skipEmptyFilterFetchDuration;
         this.useMaxMetaIdFromPreviousPoll = Objects.requireNonNullElse(
                 useMaxMetaIdFromPreviousPoll, DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL);
     }
@@ -294,6 +299,20 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     public void setSkipNonProducingFiltersMaxDuration(final StroomDuration skipNonProducingFiltersMaxDuration) {
         this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
+    }
+
+    @JsonPropertyDescription("How long to leave a filter alone after looking for created tasks to queue for it " +
+                             "and finding none. The queue is filled after every task assignment, and a fill only " +
+                             "stops early once every processing profile has enough tasks queued, which a profile " +
+                             "with nothing to do never does, so without this every fill would query for every " +
+                             "filter that has no work. This bounds how long tasks created for an idle filter wait " +
+                             "before being queued. Set to zero to look for tasks for every filter on every fill.")
+    public StroomDuration getSkipEmptyFilterFetchDuration() {
+        return skipEmptyFilterFetchDuration;
+    }
+
+    public void setSkipEmptyFilterFetchDuration(final StroomDuration skipEmptyFilterFetchDuration) {
+        this.skipEmptyFilterFetchDuration = skipEmptyFilterFetchDuration;
     }
 
     @JsonPropertyDescription("Should task creation be bounded by the max meta id seen on the previous poll " +

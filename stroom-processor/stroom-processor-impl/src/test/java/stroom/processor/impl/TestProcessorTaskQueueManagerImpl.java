@@ -91,6 +91,7 @@ class TestProcessorTaskQueueManagerImpl {
     private static final String NODE = "node1";
     private static final String OTHER_NODE = "node2";
     private static final String PROFILE = "profile1";
+    private static final String OTHER_PROFILE = "profile2";
     private static final ProfileResult UNLIMITED =
             new ProfileResult(Integer.MAX_VALUE, Integer.MAX_VALUE);
     private static final ProfileResult NONE = new ProfileResult(0, 0);
@@ -115,6 +116,9 @@ class TestProcessorTaskQueueManagerImpl {
     private InternalStatisticsReceiver internalStatisticsReceiver;
 
     private ProcessorTaskQueueManagerImpl queueManager;
+
+    private final TestProcessorConfig processorConfig = new TestProcessorConfig();
+    private final FilterFetchBackoff filterFetchBackoff = new FilterFetchBackoff();
 
     /**
      * Asynchronous queue fills are discarded by default so that tests only see the synchronous filling they
@@ -191,13 +195,14 @@ class TestProcessorTaskQueueManagerImpl {
                 executorProvider,
                 new TestTaskContextFactory(),
                 nodeInfo,
-                TestProcessorConfig::new,
+                () -> processorConfig,
                 () -> internalStatisticsReceiver,
                 metaService,
                 securityContext,
                 targetNodeSetFactory,
                 prioritisedFilters,
-                processorProfileCache);
+                processorProfileCache,
+                filterFetchBackoff);
         queueManager.startup();
     }
 
@@ -269,6 +274,90 @@ class TestProcessorTaskQueueManagerImpl {
         // The second filter was only asked for the remaining 600 but still queued a whole batch of 1000.
         assertThat(queueManager.getTaskQueueSize()).isEqualTo(1400);
         assertThat(queueManager.getTaskQueueSize()).isGreaterThan(queueSize);
+    }
+
+    @Test
+    void busyProfileDoesNotStopAnotherProfilesFiltersBeingQueued() {
+        // The first filter alone provides more than the configured queue size, but its tasks are no use to the
+        // nodes of the second filter's profile, so the second filter must still be considered.
+        final int queueSize = processorConfig.getQueueSize();
+        final ProcessorFilter busy = createFilter(1, PROFILE);
+        final ProcessorFilter other = createFilter(2, OTHER_PROFILE);
+        givenFilters(busy, other);
+        givenCreatedTasks(busy, queueSize);
+        givenCreatedTasks(other, 10);
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
+        when(processorProfileCache.getProfile(NODE, OTHER_PROFILE)).thenReturn(UNLIMITED);
+
+        queueManager.exec();
+
+        verify(processorTaskDao).findExistingCreatedTasks(anyLong(), eq(other.getId()), anyInt());
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(queueSize + 10);
+    }
+
+    /**
+     * Note that the fill stopping altogether once every profile has enough queued is not observable here, as a
+     * filter of a satisfied profile is passed over either way. {@link TestQueueProcessTasksState} covers when
+     * that happens.
+     */
+    @Test
+    void furtherFiltersOfAProfileAreNotConsideredOnceItHasEnoughTasks() {
+        final int queueSize = processorConfig.getQueueSize();
+        final ProcessorFilter first = createFilter(1, PROFILE);
+        final ProcessorFilter second = createFilter(2, OTHER_PROFILE);
+        final ProcessorFilter third = createFilter(3, PROFILE);
+        givenFilters(first, second, third);
+        givenCreatedTasks(first, queueSize);
+        givenCreatedTasks(second, queueSize);
+        givenCreatedTasks(third, 10);
+        when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
+        when(processorProfileCache.getProfile(NODE, OTHER_PROFILE)).thenReturn(UNLIMITED);
+
+        queueManager.exec();
+
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(queueSize * 2);
+        verify(processorTaskDao, never()).findExistingCreatedTasks(anyLong(), eq(third.getId()), anyInt());
+    }
+
+    /**
+     * A profile with nothing to do never has enough tasks queued, so the fill never stops early because of it.
+     * Without backing off we would ask the database for every one of its filters on every fill, and fills run
+     * more or less back to back.
+     */
+    @Test
+    void filterWithNoCreatedTasksIsNotAskedAboutAgainStraightAway() {
+        final ProcessorFilter empty = createFilter(1, null);
+        givenFilters(empty);
+
+        queueManager.exec();
+        queueManager.exec();
+
+        verify(processorTaskDao, times(1)).findExistingCreatedTasks(anyLong(), eq(empty.getId()), anyInt());
+    }
+
+    @Test
+    void emptyFilterIsAskedAboutEveryTimeWhenBackingOffIsTurnedOff() {
+        processorConfig.setSkipEmptyFilterFetchDuration(StroomDuration.ZERO);
+        final ProcessorFilter empty = createFilter(1, null);
+        givenFilters(empty);
+
+        queueManager.exec();
+        queueManager.exec();
+
+        verify(processorTaskDao, times(2)).findExistingCreatedTasks(anyLong(), eq(empty.getId()), anyInt());
+    }
+
+    @Test
+    void filterThatHadTasksIsAskedAboutAgainOnTheNextFill() {
+        // Only filters we looked at and found nothing for are backed off.
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+
+        queueManager.exec();
+        queueManager.exec();
+
+        verify(processorTaskDao, times(2)).findExistingCreatedTasks(anyLong(), eq(filter.getId()), anyInt());
     }
 
     @Test
@@ -760,6 +849,9 @@ class TestProcessorTaskQueueManagerImpl {
     @Test
     void asynchronousQueueFillsCanRunMoreThanOnce() {
         runAsyncFillsInline();
+        // We can only see that a fill ran by the work it does, and the second fill would otherwise find the
+        // filter backed off from the first fill finding nothing left to queue for it.
+        processorConfig.setSkipEmptyFilterFetchDuration(StroomDuration.ZERO);
         final ProcessorFilter filter = createFilter(1, null);
         givenFilters(filter);
         givenCreatedTasks(filter, 20);

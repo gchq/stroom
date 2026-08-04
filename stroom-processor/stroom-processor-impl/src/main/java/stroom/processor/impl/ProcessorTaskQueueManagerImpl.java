@@ -51,6 +51,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -99,6 +100,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final PrioritisedFilters prioritisedFilters;
     private final ProcessorProfileCache processorProfileCache;
+    private final FilterFetchBackoff filterFetchBackoff;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -140,7 +142,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final SecurityContext securityContext,
                                   final TargetNodeSetFactory targetNodeSetFactory,
                                   final PrioritisedFilters prioritisedFilters,
-                                  final ProcessorProfileCache processorProfileCache) {
+                                  final ProcessorProfileCache processorProfileCache,
+                                  final FilterFetchBackoff filterFetchBackoff) {
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
@@ -151,6 +154,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.prioritisedFilters = prioritisedFilters;
         this.processorProfileCache = processorProfileCache;
+        this.filterFetchBackoff = filterFetchBackoff;
 
         executor = executorProvider.get(THREAD_POOL);
     }
@@ -722,16 +726,18 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             throw new NullPointerException("Node is null");
         }
 
+        // Don't remember filters we are no longer considering, e.g. disabled or deleted ones.
+        filterFetchBackoff.retainAll(filters);
+
         // Now fill the stream task store with tasks for each filter.
         // The aim is to create N tasks in total where N is processorConfig.getQueueSize
         // Also need to ensure each filter queue has no more than N in it.
         try {
             if (processorConfig.isFillTaskQueue()) {
-                for (final ProcessorFilter filter : filters) {
-                    final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
-                            filter,
-                            k -> new ProcessorTaskQueue());
+                final StroomDuration skipEmptyFilterFetchDuration =
+                        processorConfig.getSkipEmptyFilterFetchDuration();
 
+                for (final ProcessorFilter filter : filters) {
                     // If we have enough tasks queued for this filter's profile then move on to the
                     // next filter rather than stopping altogether, as another profile's nodes can't
                     // process anything queued for this one. Only stop once every profile has enough
@@ -743,14 +749,24 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             break;
                         }
 
+                    } else if (!filterFetchBackoff.isFetchDue(filter, skipEmptyFilterFetchDuration)) {
+                        // We looked for tasks for this filter recently and there were none. A
+                        // profile with nothing to do never has enough tasks queued, so without this
+                        // every fill would query for every one of its filters.
+                        progressMonitor.logSkippedFilter(filter, SkipReason.NO_TASKS_ON_LAST_FETCH);
+
                     } else {
+                        final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
+                                filter,
+                                k -> new ProcessorTaskQueue());
                         totalAdded += queueTasksForFilter(
                                 taskContext,
                                 nodeName,
                                 filter,
                                 progressMonitor,
                                 queue,
-                                profileQueueState);
+                                profileQueueState,
+                                skipEmptyFilterFetchDuration);
                     }
                 }
             }
@@ -895,7 +911,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                     final ProcessorFilter filter,
                                     final ProgressMonitor progressMonitor,
                                     final ProcessorTaskQueue queue,
-                                    final ProfileQueueState profileQueueState) {
+                                    final ProfileQueueState profileQueueState,
+                                    final StroomDuration skipEmptyFilterFetchDuration) {
         try {
             LOGGER.debug("queueTasksForFilter() - processorFilter {}", filter.getFilterInfo());
 
@@ -935,7 +952,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         queue,
                         profileQueueState,
                         filterProgressMonitor,
-                        maxConcurrentTasks);
+                        maxConcurrentTasks,
+                        skipEmptyFilterFetchDuration);
                 filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
                 return count;
             }
@@ -951,7 +969,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final ProcessorTaskQueue queue,
                                   final ProfileQueueState profileQueueState,
                                   final FilterProgressMonitor filterProgressMonitor,
-                                  final int maxConcurrentTasks) {
+                                  final int maxConcurrentTasks,
+                                  final StroomDuration skipEmptyFilterFetchDuration) {
         // Queue tasks for this filter.
         final int initialQueueSize = queue.size();
         profileQueueState.addCurrentlyQueuedTasks(initialQueueSize);
@@ -961,12 +980,20 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         int tasksToAdd = profileQueueState.getRequiredTaskCount() - initialQueueSize;
         final int batchSize = Math.max(BATCH_SIZE, tasksToAdd);
         long lastTaskId = 0;
+        // Only what we learn from actually looking tells us whether to look again soon. A filter
+        // whose queue is already full hasn't been looked at, so it must not be backed off, or it
+        // wouldn't be refilled promptly once its queue drains.
+        boolean fetched = false;
+        // Read before we look so that we can tell whether task creation has produced anything for
+        // this filter while we were looking, in which case finding nothing means nothing.
+        final long creationVersion = filterFetchBackoff.getCreationVersion(filter);
 
         try {
             // Keep adding tasks until we have reached the requested number.
             while (tasksToAdd > 0) {
 
                 // Look for any existing tasks we have created.
+                fetched = true;
                 DurationTimer durationTimer = DurationTimer.start();
                 final List<ExistingCreatedTask> existingCreatedTasks = processorTaskDao
                         .findExistingCreatedTasks(lastTaskId, filter.getId(), batchSize);
@@ -1038,6 +1065,16 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             if (totalAddedTasks > 0) {
                 filterProgressMonitor.add(totalAddedTasks);
                 LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", totalAddedTasks);
+            }
+
+            if (fetched) {
+                if (totalTasks == 0) {
+                    // There is nothing created for this filter, so leave it alone for a while
+                    // rather than asking again on every fill.
+                    filterFetchBackoff.recordEmptyFetch(filter, skipEmptyFilterFetchDuration, creationVersion);
+                } else {
+                    filterFetchBackoff.recordFetchedTasks(filter);
+                }
             }
 
         } catch (final RuntimeException e) {
