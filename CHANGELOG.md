@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.12] - 2026-08-04
+
+* Bug : Checkstyle.
+
+
 ## [v7.12.11] - 2026-08-04
 
 * Bug **#5689** : Fix issue where snapshots were not found.
@@ -2215,7 +2220,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.12...HEAD
+[v7.12.12]: https://github.com/gchq/stroom/compare/v7.12.11...v7.12.12
 [v7.12.11]: https://github.com/gchq/stroom/compare/v7.12.10...v7.12.11
 [v7.12.10]: https://github.com/gchq/stroom/compare/v7.12.9...v7.12.10
 [v7.12.9]: https://github.com/gchq/stroom/compare/v7.12.8...v7.12.9
