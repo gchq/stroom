@@ -59,7 +59,7 @@ public class PlanBModule extends AbstractModule {
         install(new PlanBElementModule());
 
         bind(PlanBLookup.class).to(PlanBLookupImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
+        bind(StateProvider.class).to(StateProviderImpl.class);
 
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);

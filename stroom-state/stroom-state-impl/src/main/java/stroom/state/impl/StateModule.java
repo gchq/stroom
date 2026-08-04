@@ -49,9 +49,6 @@ public class StateModule extends AbstractModule {
         install(new StateElementModule());
 
         bind(StateLookup.class).to(StateLookupImpl.class);
-        // The Scylla backed StateProvider is deliberately not bound. StateFetcherImpl stops at the first
-        // provider that returns a non null value and a ValErr counts as a value, so a Scylla provider that
-        // can't find a StateDoc for the map name masks the Plan B provider that can. See gh-5692.
         bind(StateFetcher.class).to(StateFetcherImpl.class);
 
         // Caches

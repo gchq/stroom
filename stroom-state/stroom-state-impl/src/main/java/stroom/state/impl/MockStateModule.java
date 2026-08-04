@@ -40,7 +40,6 @@ public class MockStateModule extends AbstractModule {
         install(new StateElementModule());
 
         bind(StateLookup.class).to(StateLookupImpl.class);
-        // No Scylla backed StateProvider, to match StateModule. See gh-5692.
         bind(StateFetcher.class).to(StateFetcherImpl.class);
 
 //        // Services

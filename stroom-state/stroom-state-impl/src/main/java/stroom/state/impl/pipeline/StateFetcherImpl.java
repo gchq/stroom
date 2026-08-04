@@ -18,31 +18,26 @@ package stroom.state.impl.pipeline;
 
 import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
-import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValNull;
 
 import jakarta.inject.Inject;
 
-import java.util.Set;
-
 public class StateFetcherImpl implements StateFetcher {
 
-    private final Set<StateProvider> providers;
+    private final StateProvider provider;
 
     @Inject
-    public StateFetcherImpl(final Set<StateProvider> providers) {
-        this.providers = providers;
+    public StateFetcherImpl(final StateProvider provider) {
+        // A single provider, deliberately. This used to iterate a Set<StateProvider> returning the first non
+        // null value, but a ValErr counted as a value, so one provider's failure could mask another provider's
+        // data, see gh-5692. With a plain binding a second provider is a duplicate binding error at startup
+        // rather than a silent precedence problem.
+        this.provider = provider;
     }
 
     @Override
     public Val getState(final String map, final String key, final long effectiveTimeMs) {
-        for (final StateProvider provider : providers) {
-            final Val val = provider.getState(map, key, effectiveTimeMs);
-            if (val != null && !Type.NULL.equals(val.type())) {
-                return val;
-            }
-        }
-        return ValNull.INSTANCE;
+        // The provider contract is that this is never null, see StateProvider.getState.
+        return provider.getState(map, key, effectiveTimeMs);
     }
 }
