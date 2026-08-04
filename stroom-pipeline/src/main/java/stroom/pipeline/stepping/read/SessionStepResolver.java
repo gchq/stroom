@@ -232,6 +232,7 @@ public class SessionStepResolver {
             case REFRESH -> refStream;
         };
     }
+
     /**
      * Fold a stream's startup indicators into the step data for a record. The live path merges these into
      * the element data it is about to return; here the data has been read back from the store, so the

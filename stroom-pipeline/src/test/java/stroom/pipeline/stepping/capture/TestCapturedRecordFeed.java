@@ -64,7 +64,8 @@ class TestCapturedRecordFeed {
         return feed(parent, () -> false);
     }
 
-    private CapturedRecordFeed feed(final CaptureWatermark parent, final java.util.function.BooleanSupplier terminated) {
+    private CapturedRecordFeed feed(final CaptureWatermark parent,
+                                    final java.util.function.BooleanSupplier terminated) {
         return new CapturedRecordFeed(parent, META_ID, terminated, POLL_MS);
     }
 

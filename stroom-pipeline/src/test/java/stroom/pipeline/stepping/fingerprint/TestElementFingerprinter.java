@@ -175,14 +175,16 @@ class TestElementFingerprinter {
         // Capture the writer's IO under config A's fingerprint.
         final String fpA = fingerprint(baseChain().build(), Collections.emptyMap())
                 .getCumulativeFingerprint(WRITER);
-        store.putElementData(loc, writerId, fpA, new CapturedElementData(CapturedData.text("in"), CapturedData.text("outputForA"), false, false, true, null));
+        store.putElementData(loc, writerId, fpA, new CapturedElementData(
+                CapturedData.text("in"), CapturedData.text("outputForA"), false, false, true, null));
 
         // Edit the xslt -> the writer's cumulative fingerprint changes; capture new IO under it.
         final String fpB = fingerprint(baseChain().addProperty(
                         new PipelineProperty(XSLT, "xslt", new PipelinePropertyValue("XSLT_B"))).build(),
                 Collections.emptyMap()).getCumulativeFingerprint(WRITER);
         assertThat(fpB).isNotEqualTo(fpA);
-        store.putElementData(loc, writerId, fpB, new CapturedElementData(CapturedData.text("in"), CapturedData.text("outputForB"), false, false, true, null));
+        store.putElementData(loc, writerId, fpB, new CapturedElementData(
+                CapturedData.text("in"), CapturedData.text("outputForB"), false, false, true, null));
 
         // Revert to config A: the recomputed fingerprint matches fpA and the original IO is still present.
         final String fpReverted = fingerprint(baseChain().build(), Collections.emptyMap())

@@ -18,13 +18,13 @@ package stroom.pipeline.filter;
 
 import stroom.meta.shared.Meta;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.stepping.capture.SteppingCounter;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.IdEnrichmentExpectedIds;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.stepping.capture.SteppingCounter;
 import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

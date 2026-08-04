@@ -17,9 +17,9 @@
 package stroom.pipeline.stepping.session;
 
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.SessionStepResolver;

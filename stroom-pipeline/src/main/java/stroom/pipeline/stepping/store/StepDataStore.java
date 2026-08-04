@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
@@ -81,7 +82,7 @@ public class StepDataStore {
     private final Map<Long, Long> partMinRecordIndex = new HashMap<>();
     private final Map<Long, Long> partMaxRecordIndex = new HashMap<>();
     // Per-element LRU of retained fingerprints (access-ordered; eldest first) for version eviction.
-    private final Map<String, LinkedHashMap<String, Boolean>> elementFingerprintLru = new HashMap<>();
+    private final Map<String, SequencedMap<String, Boolean>> elementFingerprintLru = new HashMap<>();
     // Versions currently in use, reference counted - see pin(). A pinned version is not evictable however
     // old it is, because "least recently used" is a guess at what nobody wants and a running producer or an
     // in-flight read is proof to the contrary.
@@ -670,7 +671,7 @@ public class StepDataStore {
     public synchronized void evictElement(final ElementId elementId, final String fingerprint) {
         checkNotDeleted();
         removeFingerprintFiles(elementId, fingerprint);
-        final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.get(elementId.getId());
+        final SequencedMap<String, Boolean> lru = elementFingerprintLru.get(elementId.getId());
         if (lru != null) {
             lru.remove(fingerprint);
             if (lru.isEmpty()) {
@@ -762,7 +763,7 @@ public class StepDataStore {
         // unpinned one is evicted - which is what makes reverting an edit free only while the prior version
         // is still retained. Versions something is using are pinned (see pin()) and skipped, so the limit
         // bounds the retained HISTORY rather than capping what may be in use at once.
-        final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.get(elementId.getId());
+        final SequencedMap<String, Boolean> lru = elementFingerprintLru.get(elementId.getId());
 
         // Always retain at least the fingerprint we just touched; a misconfigured 0/negative retain
         // limit must not delete the data being written.
@@ -791,7 +792,7 @@ public class StepDataStore {
      * touched, or null if there is no such version to give up.
      */
     private String eldestEvictable(final ElementId elementId,
-                                   final LinkedHashMap<String, Boolean> lru,
+                                   final SequencedMap<String, Boolean> lru,
                                    final String touched) {
         // Access-ordered, so this walks eldest-first.
         for (final String candidate : lru.keySet()) {

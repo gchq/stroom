@@ -104,7 +104,7 @@ class TestSkeletonShadowDiff extends TranslationTest {
     }
 
     @Test
-    void aSkeletonSweptStreamServesByteIdenticalRecordsAtDepth() {
+    void skeletonSweptStreamServesByteIdenticalRecordsAtDepth() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);

@@ -30,8 +30,8 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.query.api.ExpressionOperator;
@@ -118,7 +118,7 @@ class TestSteppingCounterReplay extends TranslationTest {
     }
 
     @Test
-    void aReplayedRecordKeepsTheEventIdTheSweepGaveIt() {
+    void replayedRecordKeepsTheEventIdTheSweepGaveIt() {
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final String editedXslt = xsltTextFor(pipelineDoc, EDITED_ELEMENT_ID);
@@ -203,7 +203,7 @@ class TestSteppingCounterReplay extends TranslationTest {
      * This pins both halves - the wrong-but-declared value, and the marker that declares it.
      */
     @Test
-    void aRecordMaterialisedOverABackboneIsMarkedIndicative() {
+    void recordMaterialisedOverABackboneIsMarkedIndicative() {
         final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, FEED).getFirst();
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 

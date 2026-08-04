@@ -49,7 +49,8 @@ import java.util.function.BooleanSupplier;
  * <b>No callers yet, deliberately.</b> This was built for a decomposition into concurrent per-element stages,
  * which {@code stepping-design.md} §11 records as considered and set aside - the prize turned out to be
  * pipeline parallelism rather than less work. It is kept because the direction that replaced it, materialising
- * an edited element on demand per record, needs the same answer: a filtered navigation off the current step has to materialise records
+ * an edited element on demand per record, needs the same answer: a filtered navigation off the current
+ * step has to materialise records
  * in the direction of travel until one matches, consuming them as they appear exactly like this.
  */
 public class CapturedRecordFeed {

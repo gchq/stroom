@@ -28,12 +28,12 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Element;
-import stroom.pipeline.filter.SAXRecordDetector;
 import stroom.pipeline.factory.PipelineDataHolder;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.factory.PipelineFactory.MidPipeline;
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
+import stroom.pipeline.filter.SAXRecordDetector;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
@@ -59,8 +59,6 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 
 import jakarta.inject.Inject;
-
-import java.util.function.BooleanSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -68,9 +66,10 @@ import org.xml.sax.ContentHandler;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.Set;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 /**
  * Re-runs an edited element and its downstream from <b>stored upstream output</b> (SAX events) rather than

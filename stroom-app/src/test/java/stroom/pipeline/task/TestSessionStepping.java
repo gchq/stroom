@@ -133,7 +133,7 @@ class TestSessionStepping extends TranslationTest {
 
             int compared = 0;
             boolean crossedStreams = false;
-            long firstMetaId = stepped.getFoundLocation().getMetaId();
+            final long firstMetaId = stepped.getFoundLocation().getMetaId();
 
             while (stepped.isFoundRecord()) {
                 final StepLocation loc = stepped.getFoundLocation();
@@ -142,7 +142,8 @@ class TestSessionStepping extends TranslationTest {
                 }
 
                 final SessionStepResult refreshed = resolver.resolve(
-                        session, baseRequest.copy().stepType(StepType.REFRESH).stepLocation(loc).build(), fingerprints, TIMEOUT_MS);
+                        session, baseRequest.copy().stepType(StepType.REFRESH).stepLocation(loc).build(),
+                        fingerprints, TIMEOUT_MS);
                 assertThat(refreshed.foundRecord()).as("session has record at " + loc).isTrue();
                 assertThat(refreshed.foundLocation()).isEqualTo(loc);
                 assertElementIoMatches(feedName, loc, stepped.getStepData(), refreshed.stepData());
@@ -153,7 +154,8 @@ class TestSessionStepping extends TranslationTest {
                 stepSessionUuid = nextStepped.getSessionUuid();
                 if (nextStepped.isFoundRecord()) {
                     final SessionStepResult sessionForward = resolver.resolve(
-                            session, baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build(), fingerprints, TIMEOUT_MS);
+                            session, baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build(),
+                            fingerprints, TIMEOUT_MS);
                     assertThat(sessionForward.foundLocation())
                             .as("session FORWARD from " + loc + " for " + feedName)
                             .isEqualTo(nextStepped.getFoundLocation());

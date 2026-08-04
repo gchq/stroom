@@ -438,7 +438,8 @@ class TestStepDataStore {
     void testPutRecordIsAllOrNothingOnCapFailure(@TempDir final Path tempDir) {
         // A record-size cap that the second element's IO exceeds; the whole record must be rejected so the
         // first element is NOT left committed (no torn record).
-        final SteppingConfig config = new SteppingConfig(null, null, null, 60L, null, null, null, null, null, null, null, null);
+        final SteppingConfig config = new SteppingConfig(
+                null, null, null, 60L, null, null, null, null, null, null, null, null);
         final StepDataStore store = newStore(tempDir, config);
 
         assertThatThrownBy(() -> store.putRecord(loc(0, 0), List.of(

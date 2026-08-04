@@ -74,7 +74,8 @@ class TestStoreStepResolver {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         for (long part = 0; part <= 1; part++) {
             for (int r = 0; r < 2; r++) {
-                store.putElementData(new StepLocation(META, part, r), new ElementId(E1), "fp1", ed("p" + part + "r" + r, true));
+                store.putElementData(new StepLocation(META, part, r), new ElementId(E1), "fp1",
+                        ed("p" + part + "r" + r, true));
             }
         }
         return store;
@@ -208,7 +209,8 @@ class TestStoreStepResolver {
 
     @Test
     void testFirst(@TempDir final Path tempDir) {
-        final ResolvedStep step = resolver.resolve(singlePart(tempDir, 5), META, fingerprints, req(StepType.FIRST, null, null))
+        final ResolvedStep step = resolver
+                .resolve(singlePart(tempDir, 5), META, fingerprints, req(StepType.FIRST, null, null))
                 .orElseThrow();
         assertThat(step.foundLocation()).isEqualTo(loc(0, 0));
         assertThat(step.stepData().getElementMap().get(E1).getOutput()).isEqualTo("e1r0");
@@ -219,7 +221,8 @@ class TestStoreStepResolver {
 
     @Test
     void testLast(@TempDir final Path tempDir) {
-        final ResolvedStep step = resolver.resolve(singlePart(tempDir, 5), META, fingerprints, req(StepType.LAST, null, null))
+        final ResolvedStep step = resolver
+                .resolve(singlePart(tempDir, 5), META, fingerprints, req(StepType.LAST, null, null))
                 .orElseThrow();
         assertThat(step.foundLocation()).isEqualTo(loc(0, 4));
         assertThat(step.stepData().getElementMap().get(E1).getOutput()).isEqualTo("e1r4");
@@ -293,7 +296,8 @@ class TestStoreStepResolver {
     @Test
     void testAssembleContainsOnlyElementsWithData(@TempDir final Path tempDir) {
         final StepDataStore store = singlePart(tempDir, 3);
-        final Optional<ResolvedStep> step = resolver.resolve(store, META, fingerprints, req(StepType.FIRST, null, null));
+        final Optional<ResolvedStep> step =
+                resolver.resolve(store, META, fingerprints, req(StepType.FIRST, null, null));
         assertThat(step).isPresent();
         assertThat(step.get().stepData().getElementMap()).containsOnlyKeys(E1, E2);
     }

@@ -17,29 +17,27 @@
 package stroom.pipeline.stepping.read;
 
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.xml.event.EventListSerializer;
 import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
-
-import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
-
-import java.io.StringReader;
-import javax.xml.parsers.SAXParserFactory;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import javax.xml.parsers.SAXParserFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

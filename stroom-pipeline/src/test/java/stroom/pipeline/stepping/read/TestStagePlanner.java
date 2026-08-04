@@ -61,7 +61,10 @@ class TestStagePlanner {
     /**
      * Populate the store with a chunk for each element at the given fingerprints (record 0).
      */
-    private StepDataStore storeWith(final Path tempDir, final String parserFp, final String xsltFp, final String writerFp) {
+    private StepDataStore storeWith(final Path tempDir,
+                                    final String parserFp,
+                                    final String xsltFp,
+                                    final String writerFp) {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         store.putElementData(new StepLocation(META, 0, 0), new ElementId("parser"), parserFp, ed());
         store.putElementData(new StepLocation(META, 0, 0), new ElementId("xslt"), xsltFp, ed());

@@ -28,8 +28,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.query.api.ExpressionOperator;
@@ -129,7 +129,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
      * away.
      */
     @Test
-    void aStepAheadOfTheCaptureFrontierWaitsForTheSweepItAlreadyHas() {
+    void stepAheadOfTheCaptureFrontierWaitsForTheSweepItAlreadyHas() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final PipelineStepRequest base = requestFor(metaId);
 
@@ -387,7 +387,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
      * recomputed window: one launch per wakeup, hundreds per scan).
      */
     @Test
-    void aFilteredScanAdvancesAcrossWindows() {
+    void filteredScanAdvancesAcrossWindows() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final PipelineStepRequest base = requestFor(metaId);
         final String probeXslt = """
@@ -448,7 +448,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
      * hit at record-no 3 cost the same ~600 launches as a hit at the last record.
      */
     @Test
-    void aFilteredScanServesANearMatchWithOneLaunch() {
+    void filteredScanServesANearMatchWithOneLaunch() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final PipelineStepRequest base = requestFor(metaId);
         final String probeXslt = """
@@ -506,7 +506,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
      * could never supply.
      */
     @Test
-    void aSkeletonSweptStreamServesStepsWithoutAFullSweep() {
+    void skeletonSweptStreamServesStepsWithoutAFullSweep() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final PipelineStepRequest base = requestFor(metaId);
 
@@ -574,7 +574,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
      * racy for a counter test).
      */
     @Test
-    void aSmallSkeletonStreamIsMaterialisedEagerlyExactlyOnce() {
+    void smallSkeletonStreamIsMaterialisedEagerlyExactlyOnce() {
         final long metaId = GeneratedEventStream.load(store, FEED, RECORD_COUNT);
         final PipelineStepRequest base = requestFor(metaId);
         final String xsltText = xsltTextFor(EDITED_ELEMENT_ID);

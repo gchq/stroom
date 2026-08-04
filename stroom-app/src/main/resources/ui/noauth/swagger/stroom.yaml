@@ -3245,6 +3245,27 @@ paths:
       summary: Delete explorer items
       tags:
       - Explorer (v2)
+  /explorer/v2/fetchDeleteConfirmation:
+    post:
+      operationId: fetchExplorerDeleteConfirmation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteConfirmationRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteConfirmation"
+          description: default response
+      summary: Fetch the information needed to confirm a delete (contained items and
+        dependants)
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchDocRefs:
     post:
       operationId: fetchExplorerDocRefs
@@ -11929,6 +11950,38 @@ components:
           - DELETE
         annotationIdentity:
           $ref: "#/components/schemas/AnnotationIdentity"
+    DeleteConfirmation:
+      type: object
+      properties:
+        childItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
+        childItemsTruncated:
+          type: boolean
+        childTypeCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        hasHiddenChildItems:
+          type: boolean
+        hasHiddenDependants:
+          type: boolean
+        totalChildCount:
+          type: integer
+          format: int32
+        visibleDependants:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
+    DeleteConfirmationRequest:
+      type: object
+      properties:
+        docRefs:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -12678,6 +12731,8 @@ components:
           type: string
         rerankModelRef:
           $ref: "#/components/schemas/DocRef"
+        rerankScoreFieldSuffix:
+          type: string
         rerankScoreMinimum:
           type: number
           format: float
@@ -12729,6 +12784,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         fldName:
           type: string
         fldType:
@@ -12747,6 +12803,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         nativeType:
@@ -14888,6 +14945,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -15531,6 +15589,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -17301,6 +17360,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         name:
           type: string
         queryable:
@@ -19020,6 +19080,10 @@ components:
           type: boolean
         formatOutput:
           type: boolean
+        hasOutput:
+          type: boolean
+        indicativeCounts:
+          type: boolean
         indicators:
           $ref: "#/components/schemas/Indicators"
         input:
@@ -19253,6 +19317,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         multiValued:

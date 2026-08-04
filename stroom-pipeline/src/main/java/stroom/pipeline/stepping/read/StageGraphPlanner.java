@@ -17,8 +17,8 @@
 package stroom.pipeline.stepping.read;
 
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
-import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 import stroom.pipeline.stepping.read.StagePlanner.PlannerElement;
+import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +49,8 @@ import java.util.Set;
  * <b>No callers yet, deliberately.</b> This was built for a decomposition into concurrent per-element stages,
  * which {@code stepping-design.md} §11 records as considered and set aside - the prize turned out to be
  * pipeline parallelism rather than less work. It is kept because the direction that replaced it, materialising
- * an edited element on demand per record, needs the same answer: where a pipeline can legitimately be cut, and which elements have
+ * an edited element on demand per record, needs the same answer: where a pipeline can legitimately be
+ * cut, and which elements have
  * to travel together because their input cannot be replayed out of the store.
  */
 public final class StageGraphPlanner {

@@ -26,9 +26,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -66,7 +66,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * must be cast before arithmetic. Left uncast, {@code mod} is a static type error, the stylesheet fails to
  * compile, and {@code XsltFilter} - which keeps {@code passThrough} on while stepping - silently forwards its
  * input unchanged. That looks exactly like a working filter matching everything, so the
- * first phase of {@code aFilteredStepAfterAnEditLandsOnAMatch} pins the probe's application before any
+ * first phase of {@code filteredStepAfterAnEditLandsOnAMatch} pins the probe's application before any
  * filtering is asserted.
  */
 class TestFilteredStepAfterEdit extends TranslationTest {
@@ -150,11 +150,11 @@ class TestFilteredStepAfterEdit extends TranslationTest {
      * The fixture's own guard. A filter test built on a probe that is not actually running would pass for the
      * wrong reason - pass-through output is non-empty for every record, so a NOT_EMPTY filter would "match"
      * everywhere and any landing looks like a hit. So: prove the probe transforms, prove it compiled cleanly,
-     * and prove it discriminates between records, before {@link #aFilteredStepAfterAnEditLandsOnAMatch()}
+     * and prove it discriminates between records, before {@link #filteredStepAfterAnEditLandsOnAMatch()}
      * relies on any of that.
      */
     @Test
-    void aFilteredStepAfterAnEditLandsOnAMatch() {
+    void filteredStepAfterAnEditLandsOnAMatch() {
         final PipelineStepRequest base = baseRequest();
         SteppingResult last = null;
         try {

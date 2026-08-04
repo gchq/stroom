@@ -17,8 +17,8 @@
 package stroom.pipeline.stepping.read;
 
 import stroom.pipeline.filter.PersistedXPathFilterMatcher;
-import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.stepping.store.CapturedElementData;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
