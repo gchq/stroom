@@ -100,8 +100,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty
-    @JsonPropertyDescription("How long should we keep a snapshot shard before cleaning it up " +
-                             "due to inactivity. Should be at least twice minTimeToKeepSnapshots.")
+    @JsonPropertyDescription("How long snapshot data remains useful. This bounds both how stale a snapshot " +
+                             "may be and still be served, measured from when the store node last confirmed " +
+                             "it was current, and how long an inactive snapshot shard is kept before being " +
+                             "cleaned up. Should be at least twice minTimeToKeepSnapshots.")
     public StroomDuration getMinTimeToKeepSnapshotEnv() {
         return minTimeToKeepSnapshotEnv;
     }

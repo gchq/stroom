@@ -16,11 +16,14 @@
 
 package stroom.planb.impl.data;
 
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -31,6 +34,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 @AutoLogged(OperationType.UNLOGGED)
@@ -50,34 +54,74 @@ public class FileTransferResourceImpl implements FileTransferResource {
     public Response fetchSnapshot(final SnapshotRequest request) {
         LOGGER.debug(() -> "Snapshot request: " + request);
         try {
-            // Check the status before we start streaming snapshot data as it is hard to capture meaningful errors mid
-            // stream.
-            fileTransferServiceProvider.get().checkSnapshotStatus(request);
+            // Open the snapshot before we commit to a response status, as it is hard to capture meaningful errors
+            // mid stream. Anything that can fail must fail now, otherwise the client gets a successful response
+            // with an empty or truncated body. See gh-5689.
+            final InputStream snapshot = fileTransferServiceProvider.get().openSnapshot(request);
 
-            // Stream the snapshot content to the client as ZIP data
-            final StreamingOutput streamingOutput = output -> {
+            // We now own an open snapshot. The streaming output takes over responsibility for closing it, but
+            // only once we have successfully handed it to the response, so anything that fails in between has
+            // to close it here or the file is leaked.
+            try {
+                // Stream the snapshot content to the client as ZIP data
+                final StreamingOutput streamingOutput = output -> {
+                    try (snapshot) {
+                        StreamUtil.streamToStream(snapshot, output);
+                    } catch (final Exception e) {
+                        // The status has already been sent so we can't report this to the client as an error.
+                        // Log it and let it abort the response, rather than quietly supplying a truncated
+                        // snapshot.
+                        LOGGER.error(() -> "Error streaming snapshot: " + request + " " + e.getMessage(), e);
+                        throw e;
+                    }
+                };
+
+                LOGGER.debug(() -> "Sending snapshot: " + request);
+                return Response
+                        .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
+                        .build();
+
+            } catch (final Throwable t) {
                 try {
-                    fileTransferServiceProvider.get().fetchSnapshot(request, output);
-                } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw e;
+                    snapshot.close();
+                } catch (final IOException e) {
+                    t.addSuppressed(e);
                 }
-            };
-
-            LOGGER.debug(() -> "Sending snapshot: " + request);
-            return Response
-                    .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
-                    .build();
+                throw t;
+            }
         } catch (final NotModifiedException e) {
             LOGGER.debug(() -> "Snapshot not modified: " + request + " " + e.getMessage(), e);
-            throw new WebApplicationException(e.getMessage(), Status.NOT_MODIFIED);
+            throw error(Status.NOT_MODIFIED, e);
         } catch (final PermissionException e) {
-            LOGGER.error(() -> "Snapshot permission exception : " + request + " " + e.getMessage(), e);
-            throw new WebApplicationException(e.getMessage(), Status.UNAUTHORIZED);
+            LOGGER.error(() -> "Snapshot permission exception: " + request + " " + e.getMessage(), e);
+            throw error(Status.UNAUTHORIZED, e);
+        } catch (final SnapshotNotFoundException | DocumentNotFoundException e) {
+            // Expected, and usually transient, so log without a stack trace but do log it, as this is the only
+            // place the reason is known.
+            LOGGER.warn(() -> "Unable to supply snapshot: " + request + " " + e.getMessage());
+            LOGGER.debug(e::getMessage, e);
+            throw error(Status.NOT_FOUND, e);
         } catch (final Exception e) {
-            LOGGER.debug(() -> "Snapshot not found: " + request + " " + e.getMessage(), e);
-            throw new WebApplicationException(e.getMessage(), Status.NOT_FOUND);
+            // Anything else is a real failure and must not be reported to the client as a 404.
+            LOGGER.error(() -> "Error supplying snapshot: " + request + " " + e.getMessage(), e);
+            throw error(Status.INTERNAL_SERVER_ERROR, e);
         }
+    }
+
+    /**
+     * Build a {@link WebApplicationException} that carries the reason in the response body. Note that the status
+     * reason phrase alone is not enough, as the client can only ever see the generic phrase for the status code,
+     * e.g. 'Not Found', which tells it nothing about what actually went wrong.
+     */
+    private WebApplicationException error(final Status status, final Exception e) {
+        final String message = NullSafe.isBlankString(e.getMessage())
+                ? e.getClass().getSimpleName()
+                : e.getMessage().trim();
+        return new WebApplicationException(Response
+                .status(status)
+                .entity(message)
+                .type(MediaType.TEXT_PLAIN)
+                .build());
     }
 
     @AutoLogged(OperationType.UNLOGGED)

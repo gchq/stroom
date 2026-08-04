@@ -32,8 +32,8 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -43,8 +43,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.io.OutputStream;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +56,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @Singleton
 public class ShardManager {
@@ -69,6 +76,8 @@ public class ShardManager {
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
+    // Serialises creation of a given shard without holding a lock on the shard map while we do it.
+    private final StripedLock creationLocks = new StripedLock();
     private final NodeInfo nodeInfo;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
@@ -98,8 +107,39 @@ public class ShardManager {
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get();
 
-        // Delete any existing snapshots that might have been left behind from the last use of Stroom.
-        FileUtil.deleteDir(statePaths.getSnapshotDir());
+        // Delete any snapshots fetched from other nodes that might have been left behind from the last use of
+        // Stroom.
+        deleteFetchedSnapshots(statePaths.getSnapshotDir());
+    }
+
+    /**
+     * Delete snapshots that this node previously fetched from the nodes that store the shards.
+     * <p>
+     * Fetched snapshots are unpacked by {@link SnapshotShard} into a dir per fetch,
+     * i.e. {@code snapshots/<doc uuid>/<fetch time>/}, so only sub dirs are deleted here. A node that stores
+     * shards publishes its snapshot as a file, i.e. {@code snapshots/<doc uuid>/snapshot.zip}, and deleting that
+     * would leave the shard with nothing to serve until a new snapshot was created, which may never happen if the
+     * shard receives no further writes. See gh-5689.
+     */
+    // Package private for testing.
+    static void deleteFetchedSnapshots(final Path snapshotDir) {
+        if (!Files.isDirectory(snapshotDir)) {
+            return;
+        }
+
+        try (final Stream<Path> docDirs = Files.list(snapshotDir)) {
+            docDirs.filter(Files::isDirectory).forEach(docDir -> {
+                try (final Stream<Path> fetchDirs = Files.list(docDir)) {
+                    fetchDirs.filter(Files::isDirectory).forEach(FileUtil::deleteDir);
+                } catch (final IOException e) {
+                    LOGGER.error(() -> LogUtil.message("Error deleting fetched snapshots in '{}': {}",
+                            FileUtil.getCanonicalPath(docDir), e.getMessage()), e);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(() -> LogUtil.message("Error listing snapshot dir '{}': {}",
+                    FileUtil.getCanonicalPath(snapshotDir), e.getMessage()), e);
+        }
     }
 
     public boolean isSnapshotNode() {
@@ -197,10 +237,41 @@ public class ShardManager {
         }
     }
 
-    public void checkSnapshotStatus(final SnapshotRequest request) {
+    /**
+     * Check that we can supply a snapshot for the request and open it ready for streaming.
+     * <p>
+     * The snapshot is opened here, rather than the path being resolved again once streaming has started, so that
+     * everything that can fail does so while the response status can still reflect it. Holding the file open also
+     * means a snapshot rotation can't take it away mid transfer. See gh-5689.
+     *
+     * @return The snapshot, which the caller must close.
+     */
+    public InputStream openSnapshot(final SnapshotRequest request) {
         try {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
+
+            // Lets the shard reject the request, e.g. because the client already has the latest snapshot, or
+            // because no snapshot has been created yet.
             shard.checkSnapshotStatus(request);
+
+            if (!(shard instanceof final StoreShard storeShard)) {
+                throw new SnapshotNotFoundException(LogUtil.message(
+                        "This node does not store the shard for {} so cannot supply a snapshot",
+                        request.getPlanBDocRef()));
+            }
+
+            final Path path = storeShard.getSnapshotZip();
+            try {
+                return new BufferedInputStream(Files.newInputStream(path));
+            } catch (final NoSuchFileException e) {
+                throw new SnapshotNotFoundException(LogUtil.message(
+                        "Snapshot for {} no longer exists at '{}'",
+                        request.getPlanBDocRef(), FileUtil.getCanonicalPath(path)));
+            } catch (final IOException e) {
+                throw new UncheckedIOException(LogUtil.message(
+                        "Error opening snapshot for {} at '{}': {}",
+                        request.getPlanBDocRef(), FileUtil.getCanonicalPath(path), e.getMessage()), e);
+            }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Debug checking snapshot status: {} {}",
                     request.getPlanBDocRef(), e.getMessage()), e);
@@ -254,34 +325,13 @@ public class ShardManager {
         });
     }
 
-    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
-        try {
-            final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
-            if (shard instanceof final StoreShard storeShard) {
-                try {
-                    final Path path = storeShard.getSnapshotZip();
-                    if (Files.exists(path)) {
-                        StreamUtil.streamToStream(Files.newInputStream(path), outputStream);
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error(() -> LogUtil.message("Error fetching snapshot: {} {}",
-                            request.getPlanBDocRef(), e.getMessage()), e);
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error fetching snapshot: {} {}",
-                    request.getPlanBDocRef(), e.getMessage()), e);
-            throw e;
-        }
-    }
-
     public <R> R get(final String mapName, final Function<Db<?, ?>, R> function) {
         try {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
         } catch (final SnapshotShard.ShardClosedException e) {
             // The shard was evicted by cleanup between our lookup and use.
-            // Retry once — computeIfAbsent will create a fresh shard.
+            // Retry once — we will create a fresh shard.
             LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
@@ -297,18 +347,56 @@ public class ShardManager {
             LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
             throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
         }
-        return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
+        return getOrCreateShard(doc.getUuid(), () -> createShard(doc));
     }
 
     public Shard getShardForDocUuid(final String docUuid) throws DocumentNotFoundException {
-        return shardMap.computeIfAbsent(docUuid, k -> {
-            final PlanBDoc doc = planBDocStore.readDocument(DocRef.builder().type(PlanBDoc.TYPE).uuid(k).build());
+        return getOrCreateShard(docUuid, () -> {
+            final PlanBDoc doc = planBDocStore.readDocument(
+                    DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build());
             if (doc == null) {
                 LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
                 throw new DocumentNotFoundException(DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build());
             }
             return createShard(doc);
         });
+    }
+
+    /**
+     * Get the shard for a doc, creating it if we don't already have it.
+     * <p>
+     * Creating a shard is slow. On a snapshot node it fetches the snapshot from another node over HTTP, with no
+     * client side timeout, and unzips it. This must not be done inside
+     * {@link java.util.concurrent.ConcurrentHashMap#computeIfAbsent} because the mapping function runs while
+     * holding the lock for the bin the key hashes to, so one slow fetch stalls lookups of unrelated shards that
+     * happen to hash to the same bin. See gh-5689.
+     * <p>
+     * Creation instead happens outside the map, serialised by a striped lock so that concurrent callers for the
+     * same shard wait rather than both building one. Serialising matters more than it might seem: if we let them
+     * race and discarded the loser we would have to release the discarded shard, and releasing a
+     * {@link StoreShard} means calling delete() on it, which deletes the shard data itself.
+     */
+    private Shard getOrCreateShard(final String docUuid, final Supplier<Shard> creator) {
+        final Shard existing = shardMap.get(docUuid);
+        if (existing != null) {
+            return existing;
+        }
+
+        final Lock lock = creationLocks.getLockForKey(docUuid);
+        lock.lock();
+        try {
+            // Another thread may have created it while we were waiting for the lock.
+            final Shard created = shardMap.get(docUuid);
+            if (created != null) {
+                return created;
+            }
+
+            final Shard shard = creator.get();
+            shardMap.put(docUuid, shard);
+            return shard;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private Shard createShard(final PlanBDoc doc) {
