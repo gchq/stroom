@@ -54,6 +54,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -66,6 +67,12 @@ class StoreShard implements Shard {
 
     private static final String DATA_FILE_NAME = "data.mdb";
     private static final String COMPACTED_DIR_NAME = "compacted";
+
+    /**
+     * Caps the linear growth of the delay between snapshot creation retries, as a multiple of the snapshot
+     * lifespan. At the default 10 minute lifespan this caps retries at one per hour.
+     */
+    private static final int MAX_SNAPSHOT_RETRY_MULTIPLIER = 6;
 
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
@@ -82,6 +89,10 @@ class StoreShard implements Shard {
     private volatile Db<?, ?> db;
     private volatile Instant lastWriteTime;
     private volatile Instant lastSnapshotTime;
+    // Time of the last failed snapshot creation, and the number of consecutive failures. Both are only mutated
+    // while holding writeLock and are reset when a snapshot is successfully created.
+    private volatile Instant lastSnapshotFailureTime;
+    private volatile AtomicInteger snapshotFailureCount;
 
     public StoreShard(final ByteBuffers byteBuffers,
                       final ByteBufferFactory byteBufferFactory,
@@ -358,12 +369,21 @@ class StoreShard implements Shard {
                         // that doesn't exist on disk, and as lastWriteTime only advances when data is written,
                         // a shard that receives no further writes would never retry. See gh-5689.
                         this.lastSnapshotTime = lastWriteTime;
+                        this.lastSnapshotFailureTime = null;
+                        this.snapshotFailureCount = 0;
                     }
                 } catch (final Exception e) {
-                    // Swallowed so one bad shard doesn't stop snapshots being created for the others. The
-                    // snapshot time is left unset so this will be retried on the next run.
-                    LOGGER.error(() -> LogUtil.message("Error creating snapshot for {}: {}",
-                            doc.asDocRef(), e.getMessage()), e);
+                    // Swallowed so one bad shard doesn't stop snapshots being created for the others. Record the
+                    // failure so we back off rather than re-zipping the whole shard on every run, as creation is
+                    // expensive and holds the write lock. Mutated under writeLock.
+                    this.snapshotFailureCount.incrementAndGet();
+                    this.lastSnapshotFailureTime = Instant.now();
+                    LOGGER.error(() -> LogUtil.message(
+                            "Error creating snapshot for {}, consecutive failures: {}, next attempt after {}: {}",
+                            doc.asDocRef(),
+                            snapshotFailureCount,
+                            getSnapshotRetryDelay(),
+                            e.getMessage()), e);
                 } finally {
                     writeLock.unlock();
                 }
@@ -386,12 +406,35 @@ class StoreShard implements Shard {
             return false;
         }
 
+        // Back off after a failed attempt. Without this a shard that always fails to create a snapshot, e.g.
+        // because the disk is full, would re-zip the whole shard on every run of the snapshot creation job.
+        final Instant lastSnapshotFailureTime = this.lastSnapshotFailureTime;
+        if (lastSnapshotFailureTime != null &&
+            Instant.now().isBefore(lastSnapshotFailureTime.plus(getSnapshotRetryDelay()))) {
+            return false;
+        }
+
         final Instant lastWriteTime = this.lastWriteTime;
         final Instant lastSnapshotTime = this.lastSnapshotTime;
 
         return lastSnapshotTime == null ||
                (lastSnapshotTime.isBefore(lastWriteTime) &&
                 lastSnapshotTime.plus(getSnapshotLifespan()).isBefore(Instant.now()));
+    }
+
+    private Duration getSnapshotRetryDelay() {
+        return getSnapshotRetryDelay(getSnapshotLifespan(), snapshotFailureCount.get());
+    }
+
+    /**
+     * How long to wait after a failed snapshot creation before trying again. The delay grows linearly with the
+     * number of consecutive failures, up to a cap, so a persistently failing shard is retried occasionally
+     * rather than on every run of the snapshot creation job.
+     */
+    // Package private for testing.
+    static Duration getSnapshotRetryDelay(final Duration snapshotLifespan, final int failureCount) {
+        final int multiplier = Math.min(Math.max(failureCount, 1), MAX_SNAPSHOT_RETRY_MULTIPLIER);
+        return snapshotLifespan.multipliedBy(multiplier);
     }
 
     private Duration getSnapshotLifespan() {
