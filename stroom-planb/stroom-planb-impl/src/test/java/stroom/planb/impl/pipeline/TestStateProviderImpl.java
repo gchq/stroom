@@ -106,7 +106,7 @@ class TestStateProviderImpl {
 
 
     /**
-     * The StateProvider contract is that getState never returns null, which StateFetcherImpl relies on. A
+     * The StateProvider contract is that getState never returns null, which the getState() expression function relies on. A
      * null from the query service must surface as ValNull, not null.
      */
     @Test

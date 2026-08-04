@@ -23,10 +23,8 @@ import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.FileTransferClientImpl;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
-import stroom.planb.impl.pipeline.StateFetcherImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
-import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -44,7 +42,6 @@ public class MockPlanBModule extends AbstractModule {
         // A single StateProvider binding, deliberately, so a second provider is a duplicate binding error
         // at startup rather than a silent precedence problem. See gh-5692.
         bind(StateProvider.class).to(StateProviderImpl.class);
-        bind(StateFetcher.class).to(StateFetcherImpl.class);
 
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);
