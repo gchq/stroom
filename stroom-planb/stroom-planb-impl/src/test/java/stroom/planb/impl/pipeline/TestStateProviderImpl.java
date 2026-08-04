@@ -82,7 +82,7 @@ class TestStateProviderImpl {
     }
 
     @Test
-    void aWorkingSnapshotReturnsTheValue() {
+    void workingSnapshotReturnsTheValue() {
         when(planBDocCache.get(any())).thenReturn(doc());
         when(planBQueryService.getVal(any(GetRequest.class))).thenReturn(ValString.create("value"));
 
@@ -96,7 +96,7 @@ class TestStateProviderImpl {
      * A missing state doc is not an error, it just means this provider has no value for the map.
      */
     @Test
-    void aMissingStateDocIsNotAnError() {
+    void missingStateDocIsNotAnError() {
         when(planBDocCache.get(any())).thenReturn(null);
 
         final Val val = stateProvider.getState("myMap", "key", 0L);
@@ -110,7 +110,7 @@ class TestStateProviderImpl {
      * null from the query service must surface as ValNull, not null.
      */
     @Test
-    void aNullValueIsReportedAsValNull() {
+    void nullValueIsReportedAsValNull() {
         when(planBDocCache.get(any())).thenReturn(doc());
         when(planBQueryService.getVal(any(GetRequest.class))).thenReturn(null);
 
