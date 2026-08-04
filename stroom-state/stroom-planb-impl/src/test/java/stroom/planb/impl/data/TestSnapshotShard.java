@@ -1211,4 +1211,43 @@ class TestSnapshotShard {
                 .hasMessageContaining("node1")
                 .hasMessageContaining("node2");
     }
+
+    /**
+     * There is no client side timeout on a fetch, so an attempt can take longer to fail than the retry
+     * interval. The expiry has to be timed from when the attempt failed, not from when it started, or the
+     * instance is already expired when published and the next read fetches again immediately, retrying
+     * continuously instead of at the configured interval. See gh-5689.
+     */
+    @Test
+    void testSlowFailingFetchIsNotBornExpired() {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(3))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    // Take longer to fail than the retry interval. The read that follows then has the whole
+                    // retry interval to happen in, so the assertion isn't sensitive to scheduling jitter.
+                    ThreadUtil.sleep(4_000);
+                    throw new RuntimeException("fetch failed");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // The initial fetch failed, so this read reports that failure. It must not trigger another fetch, as
+        // the retry interval has not elapsed since the attempt failed.
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("fetch failed");
+        assertThat(fetchCount.get()).isEqualTo(1);
+    }
 }

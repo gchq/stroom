@@ -234,17 +234,8 @@ class SnapshotShard implements Shard {
                     if (currentInstance.hasFetchException()) {
                         // Neither instance can serve reads, so swap the new one in regardless. Its fetch
                         // exception describes the most recent attempt, which is what we want readers to report
-                        // rather than a stale error from the first failure. See gh-5689.
-                        //
-                        // Extend from now rather than relying on the expiry the instance was built with, which
-                        // is relative to the time the fetch started. A fetch that takes longer to fail than the
-                        // retry interval would otherwise produce an instance that is already expired when it is
-                        // published, so the next read would rotate again immediately and we would fetch
-                        // continuously. There is no client side timeout on the fetch, so a slow or hanging node
-                        // makes that a real possibility.
-                        newInstance.extendExpiry(
-                                configProvider.get().getSnapshotRetryFetchInterval().getDuration());
-
+                        // rather than a stale error from the first failure. Its expiry already provides the
+                        // retry interval, timed from when its fetch failed. See gh-5689.
                         if (snapshotRef.compareAndSet(currentInstance, newInstance)) {
                             currentInstance.destroy();
                         } else {
@@ -423,8 +414,12 @@ class SnapshotShard implements Shard {
                         currentSnapshotTime = fileTransferClient.fetchSnapshot(node, request, dbDir);
                         // Remember that we successfully fetched.
                         fetchComplete = true;
-                        // Determine how long we will keep this snapshot.
-                        expiryTime = createTime.plus(configProvider.get().getMinTimeToKeepSnapshots().getDuration());
+                        // Determine how long we will keep this snapshot. Timed from now, i.e. when the snapshot
+                        // became usable, rather than from createTime, which is when the fetch started. A fetch
+                        // that takes longer than the interval would otherwise produce an instance that is
+                        // already expired when it is published. See gh-5689.
+                        expiryTime = Instant.now()
+                                .plus(configProvider.get().getMinTimeToKeepSnapshots().getDuration());
                         // Exit for loop.
                         break;
 
@@ -467,8 +462,14 @@ class SnapshotShard implements Shard {
                 // Keep the message rather than just wrapping, otherwise the reason is reduced to the cause's
                 // toString() every time this cached exception is rethrown by get().
                 fetchException = new RuntimeException(e.getMessage(), e);
-                // If we have an exception then we will want to retry getting a snapshot so expire soon.
-                expiryTime = createTime.plus(configProvider.get().getSnapshotRetryFetchInterval());
+                // If we have an exception then we will want to retry getting a snapshot so expire soon. Timed
+                // from now, i.e. when the attempt failed, rather than from createTime, which is when it
+                // started. There is no client side timeout on the fetch, so an attempt can easily take longer
+                // to fail than the retry interval, which would produce an instance that is already expired
+                // when it is published. The next read would then fetch again immediately and we would retry
+                // continuously rather than at the configured interval. See gh-5689.
+                expiryTime = Instant.now()
+                        .plus(configProvider.get().getSnapshotRetryFetchInterval().getDuration());
             }
 
             this.currentSnapshotTime = currentSnapshotTime;
