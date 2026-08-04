@@ -17,6 +17,7 @@
 package stroom.planb.impl.data;
 
 import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.node.api.NodeCallException;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -27,6 +28,7 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.zip.ZipUtil;
@@ -45,6 +47,10 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -240,26 +246,55 @@ public class FileTransferClientImpl implements FileTransferClient {
                                  final SnapshotRequest request,
                                  final Path snapshotDir) {
         return securityContext.asProcessingUserResult(() -> {
+            String url = null;
             try {
                 LOGGER.info(() -> "Fetching snapshot from '" +
                                   nodeName +
                                   "' for '" +
                                   request.getPlanBDocRef() +
                                   "'");
-                final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                                   + ResourcePaths.buildAuthenticatedApiPath(
+                url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                      + ResourcePaths.buildAuthenticatedApiPath(
                         FileTransferResource.BASE_PATH,
                         FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
                 final WebTarget webTarget = webTargetFactory.create(url);
                 return fetchSnapshot(webTarget, request, snapshotDir);
             } catch (final Exception e) {
+                // Distinguish 'we couldn't reach this node' from 'this node answered and told us no'. Only the
+                // former is worth trying another node for, as every configured node holds a copy of the same
+                // data, so an answer from one is the answer from all. See gh-5689.
+                if (isUnreachable(e)) {
+                    throw new NodeCallException(nodeName, url, e);
+                }
+
                 throw new RuntimeException("Error fetching snapshot from '" +
                                            nodeName +
                                            "' for '" +
                                            request.getPlanBDocRef() +
-                                           "'", e);
+                                           "': " +
+                                           e.getMessage(), e);
             }
         });
+    }
+
+    /**
+     * Is this failure the node being unreachable, rather than the node answering with an error? Only transport
+     * level failures count, so a response of any status, including a server error, is treated as an answer.
+     */
+    private static boolean isUnreachable(final Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof ConnectException
+                || current instanceof UnknownHostException
+                || current instanceof NoRouteToHostException
+                || current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause() == current
+                    ? null
+                    : current.getCause();
+        }
+        return false;
     }
 
     Instant fetchSnapshot(final WebTarget webTarget,
@@ -269,11 +304,13 @@ public class FileTransferClientImpl implements FileTransferClient {
                 .request(MediaType.APPLICATION_OCTET_STREAM)
                 .post(Entity.json(request))) {
             if (response.getStatus() == Status.NOT_MODIFIED.getStatusCode()) {
-                throw new NotModifiedException(response.getStatusInfo().getReasonPhrase());
+                throw new NotModifiedException(describeError(response));
             } else if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
-                throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
+                throw new PermissionException(null, describeError(response));
+            } else if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                throw new SnapshotNotFoundException(describeError(response));
             } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+                throw new RuntimeException(describeError(response));
             }
 
             try (final InputStream stream = (InputStream) response.getEntity()) {
@@ -284,5 +321,29 @@ public class FileTransferClientImpl implements FileTransferClient {
             final String info = Files.readString(snapshotDir.resolve(Shard.SNAPSHOT_INFO_FILE_NAME));
             return Instant.parse(info);
         }
+    }
+
+    /**
+     * Describe an error response. The remote end puts the reason in the response body because the status reason
+     * phrase is just the generic text for the status code, e.g. 'Not Found', which says nothing about the cause.
+     */
+    private String describeError(final Response response) {
+        final int status = response.getStatus();
+        final String reasonPhrase = response.getStatusInfo().getReasonPhrase();
+
+        String body = null;
+        try {
+            if (response.hasEntity()) {
+                body = response.readEntity(String.class);
+            }
+        } catch (final Exception e) {
+            // Never let a failure to read the error body mask the error itself.
+            LOGGER.debug(() -> "Unable to read error response body: " + e.getMessage(), e);
+        }
+
+        if (NullSafe.isBlankString(body)) {
+            return status + " " + reasonPhrase;
+        }
+        return status + " " + reasonPhrase + " - " + body.trim();
     }
 }

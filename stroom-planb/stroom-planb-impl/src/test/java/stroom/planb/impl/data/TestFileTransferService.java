@@ -28,6 +28,7 @@ import jakarta.ws.rs.client.WebTarget;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -148,7 +149,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                 .doAnswer(invocation -> {
                     final SnapshotRequest request = invocation.getArgument(0);
 
-                    // If we already have a snapshot for the current write time then don't create a snapshot and just
+                    // If we already have a snapshot for the current write time then don't supply one and just
                     // return an error.
                     if (request.getCurrentSnapshotTime() != null &&
                         Objects.equals(lastWriteTime.toEpochMilli(), request.getCurrentSnapshotTime())) {
@@ -157,23 +158,10 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
 
                     assertThat(request.getPlanBDocRef()).isEqualTo(planBDocRef);
                     assertThat(request.getEffectiveTime()).isEqualTo(requestTime);
-                    return null;
+                    return Files.newInputStream(zipFile);
                 })
-                .when(fileTransferService).checkSnapshotStatus(
+                .when(fileTransferService).openSnapshot(
                         Mockito.any(SnapshotRequest.class));
-        Mockito
-                .doAnswer(invocation -> {
-                    final SnapshotRequest request = invocation.getArgument(0);
-                    final OutputStream outputStream = invocation.getArgument(1);
-
-                    assertThat(request.getPlanBDocRef()).isEqualTo(planBDocRef);
-                    assertThat(request.getEffectiveTime()).isEqualTo(requestTime);
-                    outputStream.write(Files.readAllBytes(zipFile));
-                    return null;
-                })
-                .when(fileTransferService).fetchSnapshot(
-                        Mockito.any(SnapshotRequest.class),
-                        Mockito.any(OutputStream.class));
 
         final SnapshotRequest request = new SnapshotRequest(planBDocRef, requestTime, null);
         final WebTarget webTarget = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
@@ -200,5 +188,59 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
     @Override
     public String getResourceBasePath() {
         return FileTransferResource.BASE_PATH;
+    }
+
+    /**
+     * A missing snapshot must be reported as an error status, not as a successful response with an empty body.
+     * The status is committed before streaming starts, so anything that can fail has to fail before that. The
+     * client would otherwise unzip nothing and fail later with a confusing error about a missing info file.
+     * See gh-5689.
+     */
+    @Test
+    void testMissingSnapshotIsNotReportedAsSuccess(@TempDir final Path tempDir) {
+        Mockito
+                .doThrow(new SnapshotNotFoundException("No snapshot has been created yet for MyMAP"))
+                .when(fileTransferService).openSnapshot(Mockito.any(SnapshotRequest.class));
+
+        final DocRef planBDocRef = DocRef.builder().type(PlanBDoc.TYPE).uuid("test-uuid").name("MyMAP").build();
+        final SnapshotRequest request = new SnapshotRequest(planBDocRef, 0L, null);
+        final WebTarget webTarget = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
+
+        assertThatThrownBy(() -> fileTransferClient().fetchSnapshot(webTarget, request, tempDir))
+                .isInstanceOf(SnapshotNotFoundException.class)
+                .hasMessageContaining("404")
+                .hasMessageContaining("No snapshot has been created yet");
+    }
+
+    /**
+     * A genuine failure must not be reported as a 404, which would be indistinguishable from there simply being
+     * no snapshot yet.
+     */
+    @Test
+    void testUnexpectedFailureIsReportedAsServerError(@TempDir final Path tempDir) {
+        Mockito
+                .doThrow(new RuntimeException("Disk exploded"))
+                .when(fileTransferService).openSnapshot(Mockito.any(SnapshotRequest.class));
+
+        final DocRef planBDocRef = DocRef.builder().type(PlanBDoc.TYPE).uuid("test-uuid").name("MyMAP").build();
+        final SnapshotRequest request = new SnapshotRequest(planBDocRef, 0L, null);
+        final WebTarget webTarget = getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
+
+        assertThatThrownBy(() -> fileTransferClient().fetchSnapshot(webTarget, request, tempDir))
+                .isNotInstanceOf(SnapshotNotFoundException.class)
+                .hasMessageContaining("500")
+                .hasMessageContaining("Disk exploded");
+    }
+
+    private FileTransferClientImpl fileTransferClient() {
+        return new FileTransferClientImpl(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                executorProvider);
     }
 }

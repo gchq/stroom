@@ -58,7 +58,9 @@ public class PlanBModule extends AbstractModule {
         install(new PlanBElementModule());
 
         bind(PlanBLookup.class).to(PlanBLookupImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
+        // A single StateProvider binding, deliberately, so a second provider is a duplicate binding error
+        // at startup rather than a silent precedence problem. See gh-5692.
+        bind(StateProvider.class).to(StateProviderImpl.class);
         bind(StateFetcher.class).to(StateFetcherImpl.class);
 
         // Caches
