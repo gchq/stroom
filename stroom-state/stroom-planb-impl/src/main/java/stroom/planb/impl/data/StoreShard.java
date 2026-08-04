@@ -400,9 +400,13 @@ class StoreShard implements Shard {
                 AbstractPlanBSettings::getSnapshotSettings,
                 new SnapshotSettings());
 
+        // Another node only fetches a snapshot if snapshots are used for at least one of lookup, get or query,
+        // so if none of them use snapshots there is no point spending the time and I/O creating one. Note that
+        // the query condition was previously not negated, which meant a store that used snapshots only for
+        // query never had one created, so those queries always failed to find a snapshot. See gh-5689.
         if (!snapshotSettings.isUseSnapshotsForLookup() &&
             !snapshotSettings.isUseSnapshotsForGet() &&
-            snapshotSettings.isUseSnapshotsForQuery()) {
+            !snapshotSettings.isUseSnapshotsForQuery()) {
             return false;
         }
 

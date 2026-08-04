@@ -22,6 +22,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
 
@@ -48,13 +49,7 @@ class TestStoreShard {
     @Test
     void createSnapshotSucceeds(@TempDir final Path tempDir) {
         final StatePaths statePaths = new StatePaths(tempDir);
-        final PlanBDoc doc = PlanBDoc
-                .builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("test")
-                .stateType(StateType.STATE)
-                .settings(new StateSettings.Builder().build())
-                .build();
+        final PlanBDoc doc = createDoc(new SnapshotSettings(true, false, false));
         final StoreShard shard = createShard(statePaths, doc);
 
         assertThatNoException().isThrownBy(shard::createSnapshot);
@@ -69,13 +64,7 @@ class TestStoreShard {
     @Test
     void createSnapshotIsNotRepeatedWithoutWrites(@TempDir final Path tempDir) {
         final StatePaths statePaths = new StatePaths(tempDir);
-        final PlanBDoc doc = PlanBDoc
-                .builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("test")
-                .stateType(StateType.STATE)
-                .settings(new StateSettings.Builder().build())
-                .build();
+        final PlanBDoc doc = createDoc(new SnapshotSettings(true, false, false));
         final StoreShard shard = createShard(statePaths, doc);
 
         shard.createSnapshot();
@@ -84,6 +73,45 @@ class TestStoreShard {
 
         assertThatNoException().isThrownBy(shard::createSnapshot);
         assertThat(zip).exists();
+    }
+
+    /**
+     * A store that uses snapshots only for query must still have snapshots created for it. This condition was
+     * previously not negated, so such a store never published a snapshot. See gh-5689.
+     */
+    @Test
+    void createSnapshotWhenOnlyUsedForQuery(@TempDir final Path tempDir) {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBDoc doc = createDoc(new SnapshotSettings(false, false, true));
+        final StoreShard shard = createShard(statePaths, doc);
+
+        shard.createSnapshot();
+
+        assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).exists();
+    }
+
+    /**
+     * Nothing will ever fetch a snapshot for a store that uses them for nothing, so don't spend the I/O.
+     */
+    @Test
+    void noSnapshotWhenSnapshotsAreNotUsed(@TempDir final Path tempDir) {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBDoc doc = createDoc(new SnapshotSettings(false, false, false));
+        final StoreShard shard = createShard(statePaths, doc);
+
+        shard.createSnapshot();
+
+        assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).doesNotExist();
+    }
+
+    private PlanBDoc createDoc(final SnapshotSettings snapshotSettings) {
+        return PlanBDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .stateType(StateType.STATE)
+                .settings(new StateSettings.Builder().snapshotSettings(snapshotSettings).build())
+                .build();
     }
 
     private StoreShard createShard(final StatePaths statePaths, final PlanBDoc doc) {
