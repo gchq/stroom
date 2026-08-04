@@ -18,6 +18,7 @@ package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.node.api.NodeCallException;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.StatePaths;
@@ -38,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -407,25 +409,52 @@ class SnapshotShard implements Shard {
 
                 // Go and get a snapshot.
                 boolean fetchComplete = false;
+                NodeCallException lastUnreachable = null;
                 final SnapshotRequest request = new SnapshotRequest(
                         doc.asDocRef(),
                         0L,
                         NullSafe.get(previousSnapshotTime, Instant::toEpochMilli));
-                for (final String node : configProvider.get().getNodeList()) {
+                final List<String> nodes = NullSafe.list(configProvider.get().getNodeList());
+                for (final String node : nodes) {
                     LOGGER.info(() -> "Fetching shard for '" + doc.asDocRef() + "'");
 
-                    // Fetch snapshot.
-                    currentSnapshotTime = fileTransferClient.fetchSnapshot(node, request, dbDir);
-                    // Remember that we successfully fetched.
-                    fetchComplete = true;
-                    // Determine how long we will keep this snapshot.
-                    expiryTime = createTime.plus(configProvider.get().getMinTimeToKeepSnapshots().getDuration());
-                    // Exit for loop.
-                    break;
+                    try {
+                        // Fetch snapshot.
+                        currentSnapshotTime = fileTransferClient.fetchSnapshot(node, request, dbDir);
+                        // Remember that we successfully fetched.
+                        fetchComplete = true;
+                        // Determine how long we will keep this snapshot.
+                        expiryTime = createTime.plus(configProvider.get().getMinTimeToKeepSnapshots().getDuration());
+                        // Exit for loop.
+                        break;
+
+                    } catch (final NodeCallException e) {
+                        // We couldn't reach this node, so try the next one. Every configured node is sent a copy
+                        // of all the data, so any of them can supply the snapshot.
+                        //
+                        // Note that we deliberately only fail over when a node is unreachable. If a node answers,
+                        // its answer stands, even if that answer is an error. A missing snapshot, a not modified
+                        // response or a permission failure are not specific to the node we asked, so asking
+                        // another would just hide the problem behind a slower, noisier failure. See gh-5689.
+                        LOGGER.warn(() -> "Unable to reach node '" + node + "' for '" + doc.asDocRef() +
+                                          "', trying next node: " + e.getMessage());
+                        LOGGER.debug(e::getMessage, e);
+                        lastUnreachable = e;
+
+                        // Discard anything a partial fetch may have left behind before trying another node.
+                        FileUtil.deleteDir(dbDir);
+                        Files.createDirectories(dbDir);
+                    }
                 }
 
                 if (!fetchComplete) {
-                    throw new RuntimeException("Unable to get snapshot shard for '" + doc.asDocRef() + "'");
+                    if (lastUnreachable != null) {
+                        throw new RuntimeException("Unable to reach any Plan B node for '" + doc.asDocRef() +
+                                                   "', tried " + nodes + ": " + lastUnreachable.getMessage(),
+                                lastUnreachable);
+                    }
+                    throw new RuntimeException("Unable to get snapshot shard for '" + doc.asDocRef() +
+                                               "' as no Plan B nodes are configured");
                 }
 
                 // Eagerly open the DB now that the snapshot is fetched.

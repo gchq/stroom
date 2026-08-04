@@ -17,6 +17,7 @@
 package stroom.planb.impl.data;
 
 import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.node.api.NodeCallException;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -46,6 +47,10 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -241,19 +246,27 @@ public class FileTransferClientImpl implements FileTransferClient {
                                  final SnapshotRequest request,
                                  final Path snapshotDir) {
         return securityContext.asProcessingUserResult(() -> {
+            String url = null;
             try {
                 LOGGER.info(() -> "Fetching snapshot from '" +
                                   nodeName +
                                   "' for '" +
                                   request.getPlanBDocRef() +
                                   "'");
-                final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                                   + ResourcePaths.buildAuthenticatedApiPath(
+                url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                      + ResourcePaths.buildAuthenticatedApiPath(
                         FileTransferResource.BASE_PATH,
                         FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
                 final WebTarget webTarget = webTargetFactory.create(url);
                 return fetchSnapshot(webTarget, request, snapshotDir);
             } catch (final Exception e) {
+                // Distinguish 'we couldn't reach this node' from 'this node answered and told us no'. Only the
+                // former is worth trying another node for, as every configured node holds a copy of the same
+                // data, so an answer from one is the answer from all. See gh-5689.
+                if (isUnreachable(e)) {
+                    throw new NodeCallException(nodeName, url, e);
+                }
+
                 throw new RuntimeException("Error fetching snapshot from '" +
                                            nodeName +
                                            "' for '" +
@@ -262,6 +275,26 @@ public class FileTransferClientImpl implements FileTransferClient {
                                            e.getMessage(), e);
             }
         });
+    }
+
+    /**
+     * Is this failure the node being unreachable, rather than the node answering with an error? Only transport
+     * level failures count, so a response of any status, including a server error, is treated as an answer.
+     */
+    private static boolean isUnreachable(final Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof ConnectException
+                || current instanceof UnknownHostException
+                || current instanceof NoRouteToHostException
+                || current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause() == current
+                    ? null
+                    : current.getCause();
+        }
+        return false;
     }
 
     Instant fetchSnapshot(final WebTarget webTarget,

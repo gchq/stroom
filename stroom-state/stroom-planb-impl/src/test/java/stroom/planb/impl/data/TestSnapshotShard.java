@@ -20,6 +20,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.node.api.NodeCallException;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.data.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
@@ -884,7 +885,7 @@ class TestSnapshotShard {
 
         // Then: Subsequent reads should fail immediately (not after 100 retries)
         final long start = System.nanoTime();
-        assertThatThrownBy(() -> shard.getInfo())
+        assertThatThrownBy(shard::getInfo)
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("closed");
         final long elapsed = System.nanoTime() - start;
@@ -1117,5 +1118,97 @@ class TestSnapshotShard {
             final String result = shard.get(db -> "read");
             assertThat(result).isEqualTo("read");
         }
+    }
+
+    /**
+     * Every configured node is sent a copy of all the data, so if a node can't be reached another can supply
+     * the snapshot. See gh-5689.
+     */
+    @Test
+    void testFailsOverWhenNodeUnreachable() {
+        config = config.copy().nodeList(List.of("node1", "node2")).build();
+
+        final List<String> tried = Collections.synchronizedList(new ArrayList<>());
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final String node = inv.getArgument(0);
+                    tried.add(node);
+                    if ("node1".equals(node)) {
+                        throw new NodeCallException(node, "http://node1", "Connection refused");
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String result = shard.get(db -> "read");
+        assertThat(result).isEqualTo("read");
+        assertThat(tried).containsExactly("node1", "node2");
+    }
+
+    /**
+     * A node that answers has given us the answer for the whole cluster, so we must not ask another node and
+     * hide the real reason behind a slower, noisier failure.
+     */
+    @Test
+    void testDoesNotFailOverWhenNodeAnswersWithError() {
+        config = config.copy().nodeList(List.of("node1", "node2")).build();
+
+        final List<String> tried = Collections.synchronizedList(new ArrayList<>());
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    tried.add(inv.getArgument(0));
+                    throw new SnapshotNotFoundException("404 Not Found - No snapshot has been created yet");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThatThrownBy(() -> shard.get(db -> "read"))
+                .hasMessageContaining("No snapshot has been created yet");
+        assertThat(tried).containsExactly("node1");
+    }
+
+    /**
+     * If no node can be reached the failure should name what was tried rather than reporting only the last node.
+     */
+    @Test
+    void testAllNodesUnreachableReportsNodesTried() {
+        config = config.copy().nodeList(List.of("node1", "node2")).build();
+
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final String node = inv.getArgument(0);
+                    throw new NodeCallException(node, "http://" + node, "Connection refused");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThatThrownBy(() -> shard.get(db -> "read"))
+                .hasMessageContaining("node1")
+                .hasMessageContaining("node2");
     }
 }
