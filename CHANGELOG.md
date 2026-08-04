@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.11] - 2026-08-04
+
+* Bug **#5689** : Fix issue where snapshots were not found.
+
+* Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
+
+* Bug **#5689** : Stop the Plan B startup cleanup deleting snapshots published by a node that stores shards, and stop a failed snapshot creation being recorded as a success, which could leave a shard that receives no further writes unable to publish a snapshot again.
+
+* Bug **#5689** : Rework the Plan B snapshot serving strategy. Slightly stale snapshot data is now served, bounded by `minTimeToKeepSnapshotEnv`, while a refresh happens in the background. Reads with no servable snapshot block on a fetch when it may succeed, e.g. the first fetch, and fail fast when one has recently failed. A NOT_MODIFIED response now counts as confirmation that data is current rather than being treated as a fetch failure, and the first fetch no longer happens during shard creation.
+
+
 ## [v7.12.10] - 2026-07-16
 
 * Bug **#5665** : Change the basis for time variable replacement from now() to the meta create time when the stream store uses S3. The S3Appender still used now(). Also fix a bug with use of pipeline scoped objects outside of pipeline scope.
@@ -2204,7 +2215,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.11...HEAD
+[v7.12.11]: https://github.com/gchq/stroom/compare/v7.12.10...v7.12.11
 [v7.12.10]: https://github.com/gchq/stroom/compare/v7.12.9...v7.12.10
 [v7.12.9]: https://github.com/gchq/stroom/compare/v7.12.8...v7.12.9
 [v7.12.8]: https://github.com/gchq/stroom/compare/v7.12.7...v7.12.8
