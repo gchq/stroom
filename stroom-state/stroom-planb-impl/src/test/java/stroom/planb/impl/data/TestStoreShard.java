@@ -31,6 +31,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
@@ -102,6 +104,29 @@ class TestStoreShard {
         shard.createSnapshot();
 
         assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).doesNotExist();
+    }
+
+    /**
+     * A part written snapshot is about the size of the shard itself, and a full disk is the most likely reason
+     * for creation to keep failing, so leaving it behind would hold on to the space that caused the failure.
+     * See gh-5689.
+     */
+    @Test
+    void failedSnapshotCreationLeavesNoPartWrittenFile(@TempDir final Path tempDir) throws IOException {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBDoc doc = createDoc(new SnapshotSettings(true, false, false));
+        final StoreShard shard = createShard(statePaths, doc);
+
+        // Make the final move fail by putting a non empty dir where the snapshot zip needs to go. The zip is
+        // still written to the temp file first, so this exercises a failure after the temp file exists.
+        final Path snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        final Path zip = snapshotDir.resolve("snapshot.zip");
+        Files.createDirectories(zip);
+        Files.writeString(zip.resolve("occupied"), "occupied");
+
+        shard.createSnapshot();
+
+        assertThat(snapshotDir.resolve("snapshot.tmp")).doesNotExist();
     }
 
     private PlanBDoc createDoc(final SnapshotSettings snapshotSettings) {

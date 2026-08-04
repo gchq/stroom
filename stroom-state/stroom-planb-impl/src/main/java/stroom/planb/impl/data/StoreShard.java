@@ -384,6 +384,11 @@ class StoreShard implements Shard {
                             snapshotFailureCount,
                             getSnapshotRetryDelay(),
                             e.getMessage()), e);
+
+                    // Don't leave a part written snapshot behind. It is about the size of the shard, and a full
+                    // disk is the most likely reason for creation to fail repeatedly, so keeping it would hold
+                    // on to the space that caused the failure. See gh-5689.
+                    deleteSnapshotTmp();
                 } finally {
                     writeLock.unlock();
                 }
@@ -451,6 +456,20 @@ class StoreShard implements Shard {
 
     public Path getSnapshotTmp() {
         return snapshotDir.resolve("snapshot.tmp");
+    }
+
+    /**
+     * Delete any part written snapshot left behind by a failed attempt. Must not throw, as it is called while
+     * handling a failure that we are deliberately swallowing.
+     */
+    private void deleteSnapshotTmp() {
+        final Path tmpFile = getSnapshotTmp();
+        try {
+            Files.deleteIfExists(tmpFile);
+        } catch (final Exception e) {
+            LOGGER.error(() -> LogUtil.message("Error deleting part written snapshot '{}': {}",
+                    FileUtil.getCanonicalPath(tmpFile), e.getMessage()), e);
+        }
     }
 
     public Path getSnapshotZip() {
