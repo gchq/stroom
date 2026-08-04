@@ -27,11 +27,9 @@ import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.language.functions.StateFetcher;
-import stroom.query.language.functions.StateProvider;
 import stroom.state.impl.pipeline.StateElementModule;
 import stroom.state.impl.pipeline.StateFetcherImpl;
 import stroom.state.impl.pipeline.StateLookupImpl;
-import stroom.state.impl.pipeline.StateProviderImpl;
 import stroom.state.shared.ScyllaDbDoc;
 import stroom.state.shared.StateDoc;
 import stroom.util.RunnableWrapper;
@@ -51,7 +49,9 @@ public class StateModule extends AbstractModule {
         install(new StateElementModule());
 
         bind(StateLookup.class).to(StateLookupImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
+        // The Scylla backed StateProvider is deliberately not bound. StateFetcherImpl stops at the first
+        // provider that returns a non null value and a ValErr counts as a value, so a Scylla provider that
+        // can't find a StateDoc for the map name masks the Plan B provider that can. See gh-5692.
         bind(StateFetcher.class).to(StateFetcherImpl.class);
 
         // Caches
