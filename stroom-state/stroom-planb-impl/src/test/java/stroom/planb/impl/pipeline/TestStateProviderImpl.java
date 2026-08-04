@@ -104,6 +104,22 @@ class TestStateProviderImpl {
         assertThat(val.type()).isEqualTo(Type.NULL);
     }
 
+
+    /**
+     * The StateProvider contract is that getState never returns null, which StateFetcherImpl relies on. A
+     * null from the query service must surface as ValNull, not null.
+     */
+    @Test
+    void aNullValueIsReportedAsValNull() {
+        when(planBDocCache.get(any())).thenReturn(doc());
+        when(planBQueryService.getVal(any(GetRequest.class))).thenReturn(null);
+
+        final Val val = stateProvider.getState("myMap", "key", 0L);
+
+        assertThat(val).isNotNull();
+        assertThat(val.type()).isEqualTo(Type.NULL);
+    }
+
     private PlanBDoc doc() {
         return PlanBDoc.builder().uuid(UUID.randomUUID().toString()).name("myMap").build();
     }
