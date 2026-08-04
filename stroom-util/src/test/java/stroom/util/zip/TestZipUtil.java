@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.ByteArrayInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -91,7 +91,7 @@ class TestZipUtil {
 
         // It will create the target dir and all child dirs
         Assertions.assertThat(subDir)
-                        .doesNotExist();
+                .doesNotExist();
         ZipUtil.unzip(zipFile, subDir);
 
         dumpDirContents(dir);
