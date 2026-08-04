@@ -23,11 +23,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
@@ -47,13 +47,15 @@ public class SteppingSessionRegistry {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SteppingSessionRegistry.class);
 
-    private final SteppingConfig config;
+    // A Provider, not the object: config is live (the UI can change it, and tests override it per class),
+    // and this is a singleton - injecting the object directly would freeze whatever the value was at startup.
+    private final Provider<SteppingConfig> configProvider;
 
     private final ConcurrentMap<Key, SteppingSession> sessions = new ConcurrentHashMap<>();
 
     @Inject
-    public SteppingSessionRegistry(final SteppingConfig config) {
-        this.config = config;
+    public SteppingSessionRegistry(final Provider<SteppingConfig> configProvider) {
+        this.configProvider = configProvider;
     }
 
     /**
@@ -108,7 +110,7 @@ public class SteppingSessionRegistry {
      * data on disk, so leaving abandoned ones around is not free.
      */
     public void reapIdle() {
-        final Instant oldest = Instant.now().minus(config.getMaxSessionIdleTime().getDuration());
+        final Instant oldest = Instant.now().minus(configProvider.get().getMaxSessionIdleTime().getDuration());
         sessions.forEach((key, session) -> {
             if (session.getLastAccessTime().isBefore(oldest)) {
                 LOGGER.debug(() -> "Reaping idle stepping session: " + key);
@@ -123,10 +125,6 @@ public class SteppingSessionRegistry {
             // close() terminates the session's sweeps and deletes its captured data.
             session.close();
         }
-    }
-
-    Map<Key, SteppingSession> getSessions() {
-        return Map.copyOf(sessions);
     }
 
     // --------------------------------------------------------------------------------

@@ -205,19 +205,6 @@ class TestStepDataStore {
         assertThat(store.getElementData(loc(0, 100), E1, FP_A)).isEmpty();
     }
 
-    @Test
-    void testSweepsStillMustWriteInOrder(@TempDir final Path tempDir) {
-        // The check is not gone, just scoped. It catches a record detector mis-keying records during a
-        // sweep, which would otherwise silently mis-address every later record - a real bug it has caught
-        // before - so the default path must still refuse.
-        final StepDataStore store = newStore(tempDir, new SteppingConfig());
-        store.putRecord(loc(0, 0), List.of(rec(E1, FP_A, "out0")));
-
-        assertThatThrownBy(() -> store.putRecord(loc(0, 7), List.of(rec(E1, FP_A, "out7"))))
-                .as("a sweep writing out of order still fails loudly")
-                .isInstanceOf(StepDataStoreException.class)
-                .hasMessageContaining("expected index 1 but got 7");
-    }
 
     @Test
     void testAnOnDemandWriteCanFollowASweep(@TempDir final Path tempDir) {
@@ -374,14 +361,6 @@ class TestStepDataStore {
         assertThat(store.getElementData(loc(1, 0), E1, FP_A)).map(CapturedElementData::outputText).contains("c");
     }
 
-    @Test
-    void testOutOfOrderAppendThrows(@TempDir final Path tempDir) {
-        final StepDataStore store = newStore(tempDir, new SteppingConfig());
-        store.putElementData(loc(0, 0), E1, FP_A, data("a", "a"));
-        assertThatThrownBy(() -> store.putElementData(loc(0, 2), E1, FP_A, data("c", "c")))
-                .isInstanceOf(StepDataStoreException.class)
-                .hasMessageContaining("in order");
-    }
 
     @Test
     void testMaxRecordSizeExceededThrows(@TempDir final Path tempDir) {
@@ -592,10 +571,14 @@ class TestStepDataStore {
             // FP_B was not pinned, so it was evicted as usual - the limit still bites where it can.
             assertThat(store.hasElement(E1, FP_B)).isFalse();
             assertThat(store.hasElement(E1, FP_C)).isTrue();
-            // Read last: a read is an access, so under a limit of 1 it makes FP_A the most recent and
-            // retires FP_C. Asserting FP_C above rather than below is deliberate.
             assertThat(store.getElementData(loc(0, 0), E1, FP_A))
                     .map(CapturedElementData::outputText).contains("a");
+            // A read refreshes recency but never deletes: under the old read-evicts semantics the read of
+            // FP_A just above would have retired FP_C (limit 1, FP_A pinned) - so this assert is the
+            // negative control for "eviction is enforced only on writes".
+            assertThat(store.hasElement(E1, FP_C))
+                    .as("a read never evicts a sibling version")
+                    .isTrue();
         }
 
         // Released: FP_A is ordinary history again and the next write retires it.

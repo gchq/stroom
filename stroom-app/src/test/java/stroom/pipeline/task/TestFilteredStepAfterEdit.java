@@ -65,8 +65,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code stroom:record-no()} returns a <b>string</b> ({@code RecordNo} declares {@code OPTIONAL_STRING}), so it
  * must be cast before arithmetic. Left uncast, {@code mod} is a static type error, the stylesheet fails to
  * compile, and {@code XsltFilter} - which keeps {@code passThrough} on while stepping - silently forwards its
- * input unchanged. That looks exactly like a working filter matching everything, so
- * {@link #theProbeXsltIsActuallyApplied()} pins it down before any filtering is asserted.
+ * input unchanged. That looks exactly like a working filter matching everything, so the
+ * first phase of {@code aFilteredStepAfterAnEditLandsOnAMatch} pins the probe's application before any
+ * filtering is asserted.
  */
 class TestFilteredStepAfterEdit extends TranslationTest {
 
@@ -109,12 +110,6 @@ class TestFilteredStepAfterEdit extends TranslationTest {
     private DocFinder docFinder;
 
     /**
-     * {@code testTranslationTask} belongs here rather than in a test body because it can only run <b>once</b>
-     * per class: a second call finds the processor tasks the first one queued and fails asserting there is
-     * exactly one. Guarded like the rest of the setup, it lets this class hold more than a single test.
-     * {@code cleanupBetweenTests} is false, so the data it loads survives between them.
-     */
-    /**
      * The windowed scan here runs over a <b>full-sweep</b> capture - the fallback mode, since
      * {@code stepping.skeletonSweep} became the default - so the class pins skeleton off. The prefetch
      * mapper set mid-test replaces this pin, so it re-asserts skeleton off itself.
@@ -130,6 +125,12 @@ class TestFilteredStepAfterEdit extends TranslationTest {
         clearConfigValueMapper();
     }
 
+    /**
+     * {@code testTranslationTask} belongs here rather than in a test body because it can only run <b>once</b>
+     * per class: a second call finds the processor tasks the first one queued and fails asserting there is
+     * exactly one. Guarded like the rest of the setup, it lets this class hold more than a single test.
+     * {@code cleanupBetweenTests} is false, so the data it loads survives between them.
+     */
     @BeforeEach
     void setup() {
         if (!DONE_SETUP.get()) {
@@ -309,6 +310,8 @@ class TestFilteredStepAfterEdit extends TranslationTest {
             assertThat(lastIndex).as("unfiltered LAST is the end of the stream").isEqualTo(9);
 
             final long fullSweepsBefore = steppingService.getFullSweepLaunchCount();
+            final long reprocessesBefore = steppingService.getReprocessLaunchCount();
+            final long onDemandBefore = steppingService.getOnDemandLaunchCount();
 
             // FIRST must skip forwards over the two leading non-matches.
             final SteppingResult filteredFirst = steppingService.step(pinned.copy()
@@ -351,6 +354,12 @@ class TestFilteredStepAfterEdit extends TranslationTest {
             assertThat(steppingService.getFullSweepLaunchCount())
                     .as("filtered FIRST and LAST were answered without sweeping the stream again")
                     .isEqualTo(fullSweepsBefore);
+            // And every launch they did make was a BOUNDED materialisation: a whole-stream reprocess
+            // increments the reprocess counter without the on-demand one, so equality of the two deltas
+            // pins the window discipline for the awkward ends too.
+            assertThat(steppingService.getReprocessLaunchCount() - reprocessesBefore)
+                    .as("no whole-stream reprocess hid behind the launch counters")
+                    .isEqualTo(steppingService.getOnDemandLaunchCount() - onDemandBefore);
         } finally {
             terminate(base, probe);
             terminate(base, session);

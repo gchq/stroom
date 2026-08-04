@@ -48,14 +48,13 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.RecordScopeState;
 import stroom.pipeline.stepping.store.StepDataStore;
-import stroom.pipeline.stepping.store.StorePin;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.xml.event.SaxEventReader;
 import stroom.pipeline.xsltfunctions.TaskScopeMap;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 
@@ -69,13 +68,15 @@ import org.xml.sax.ContentHandler;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.Set;
 import java.util.Optional;
 
 /**
  * Re-runs an edited element and its downstream from <b>stored upstream output</b> (SAX events) rather than
  * from the raw source, so an edit no longer pays the cost of re-running the pipeline above the edit. This is
- * the "split" half of stepping: the producer of the still-designed async model.
+ * the "split" half of stepping, and the producer behind every on-demand materialisation and whole-stream
+ * reprocess the launch policy plans.
  * <p>
  * It builds a pipeline rooted at the start element via {@link PipelineFactory#createFrom}, then, for every
  * record the source store holds, fires that record's stored input events straight into the mid-pipeline
@@ -111,6 +112,7 @@ public class ReprocessDriver {
     // See SteppingService.abandonSweep: a superseded reprocess is stopped by a flag, not an interrupt.
     private BooleanSupplier terminateCheck = () -> false;
     private LoggingErrorReceiver loggingErrorReceiver;
+    private final SweepRun sweepRun;
 
     @Inject
     ReprocessDriver(final Store streamStore,
@@ -145,32 +147,20 @@ public class ReprocessDriver {
         this.pipelineContext = pipelineContext;
         this.securityContext = securityContext;
         this.taskScopeMap = taskScopeMap;
+        this.sweepRun = new SweepRun(securityContext, currentUserHolder, errorReceiverProxy, controller);
     }
 
     /**
      * Reprocess {@code startElementId} and its downstream for one stream, feeding it each record's stored
-     * output of {@code feedElementId} (the reusable upstream element immediately above the start element) and
+     * output of {@code upstreamElementId} (the reusable upstream element immediately above the start element) and
      * capturing the reprocessed IO into {@code targetSweep}'s store. The feed's output is the start element's
      * input, and it is read under the feed's own (unchanged) fingerprint - which is why an edit that re-keys
      * the start element does not have to re-run the pipeline above the feed. Every exit path signals the
      * sweep, as readers block on it.
-     */
-    public void reprocess(final TaskContext taskContext,
-                          final PipelineStepRequest request,
-                          final long metaId,
-                          final String startElementId,
-                          final String feedElementId,
-                          final StepDataStore sourceStore,
-                          final StreamSweep targetSweep,
-                          final ElementFingerprints fingerprints,
-                          final MidPipelineScope scope) {
-        reprocess(taskContext, request, metaId, startElementId, feedElementId, sourceStore, targetSweep,
-                fingerprints, scope, null);
-    }
-
-    /**
-     * Reprocess a <b>single record</b> rather than the whole stream: read that record's stored upstream
-     * output, fire it through the edited element, capture the result, stop.
+     * <p>
+     * A null {@code onDemandRange} reprocesses the whole stream; a non-null one materialises a <b>bounded
+     * range</b> instead: read those records' stored upstream output, fire it through the edited element,
+     * capture the result, stop.
      * <p>
      * This is what makes an edit cheap wherever the user happens to be. Re-running the element over the whole
      * stream costs time proportional to how deep the record is - measured at roughly half a second at record
@@ -183,71 +173,39 @@ public class ReprocessDriver {
                           final PipelineStepRequest request,
                           final long metaId,
                           final String startElementId,
-                          final String feedElementId,
+                          final String upstreamElementId,
                           final StepDataStore sourceStore,
                           final StreamSweep targetSweep,
                           final ElementFingerprints fingerprints,
                           final MidPipelineScope scope,
                           final RecordRange onDemandRange) {
         this.taskContext = taskContext;
-        targetSweep.setTaskContext(taskContext);
-        if (targetSweep.isTerminateRequested()) {
-            targetSweep.markError(new RuntimeException(
-                    "Stepping reprocess of stream " + metaId + " was terminated before it started"));
-            return;
-        }
-
-        // Claim both ends for as long as this runs: the feed's versions, which are read record by record,
-        // and the reprocessed element's, which are written the same way. An edit made while this is in
-        // flight adds fingerprints to the same elements, and without the claim the retention LRU could
-        // reclaim either end mid-reprocess - the feed reading back as "never captured", or the file being
-        // written deleted underneath the writer. (Usually the same store on both sides; pins are reference
-        // counted, so claiming it twice is exactly as safe as claiming it once.)
-        try (final StorePin sourcePin = sourceStore.pin(fingerprints.getCumulativeFingerprints());
-                final StorePin targetPin = targetSweep.getStore().pin(fingerprints.getCumulativeFingerprints())) {
-            securityContext.secure(AppPermission.STEPPING_PERMISSION, () ->
-                    securityContext.useAsRead(() -> {
-                        currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
-                        loggingErrorReceiver = new LoggingErrorReceiver();
-                        errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
-
-                        controller.setRequest(request);
-                        controller.setTaskContext(taskContext);
-                        // Abandoned (superseded) reprocesses are stopped by flag, not interrupt.
-                        this.terminateCheck = targetSweep::isTerminateRequested;
-                        controller.setTerminateCheck(targetSweep::isTerminateRequested);
-                        controller.setCaptureTarget(
-                                targetSweep.getStore(), fingerprints, targetSweep::recordCaptured);
-
-                        try {
-                            reprocessStream(request, metaId, startElementId, feedElementId, sourceStore,
-                                    fingerprints, scope, onDemandRange);
-                        } catch (final RuntimeException e) {
-                            LOGGER.debug(e.getMessage(), e);
-                            targetSweep.markError(e);
-                            return;
-                        }
-                        // Only a reprocess that ran to the end may be reported complete. A terminated one
-                        // (session closed, task cancelled) reprocessed only part of the stream, so mark it
-                        // errored - otherwise a reader treats a truncated store as the whole stream and
-                        // navigates silently past the un-reprocessed records. Same guard as StreamCaptureDriver.
-                        if (taskContext.isTerminated() || targetSweep.isTerminateRequested()) {
-                            targetSweep.markError(new RuntimeException(
-                                    "Stepping reprocess of stream " + metaId + " was terminated"));
-                        } else {
-                            targetSweep.markFullyCaptured();
-                        }
-                    }));
-        } catch (final Throwable t) {
-            targetSweep.markError(t);
-            throw t;
-        }
+        // Abandoned (superseded) reprocesses are stopped by flag, not interrupt.
+        this.terminateCheck = targetSweep::isTerminateRequested;
+        // Pin both ends: the upstream feed's versions are read record by record while the reprocessed
+        // element's are written (usually the same store; pins are reference counted, so claiming it twice
+        // is exactly as safe as claiming it once).
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        sweepRun.execute(taskContext, request, targetSweep, fingerprints,
+                List.of(sourceStore, targetSweep.getStore()),
+                "Stepping reprocess", null,
+                receiver -> loggingErrorReceiver = receiver,
+                () -> {
+                    try {
+                        reprocessStream(request, metaId, startElementId, upstreamElementId, sourceStore,
+                                fingerprints, scope, onDemandRange);
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        failure.set(e);
+                    }
+                },
+                failure::get);
     }
 
     private void reprocessStream(final PipelineStepRequest request,
                                  final long metaId,
                                  final String startElementId,
-                                 final String feedElementId,
+                                 final String upstreamElementId,
                                  final StepDataStore sourceStore,
                                  final ElementFingerprints fingerprints,
                                  final MidPipelineScope scope,
@@ -280,9 +238,9 @@ public class ReprocessDriver {
             final MidPipeline midPipeline = buildMidPipeline(request, feedName, startElementId, scope);
             final Element entryElement = midPipeline.entry();
             final ContentHandler entryHandler = (ContentHandler) entryElement;
-            final ElementId feedId = new ElementId(feedElementId);
+            final ElementId upstreamId = new ElementId(upstreamElementId);
             // Read the feed's OUTPUT (= the start element's input) under the feed's own, unchanged fingerprint.
-            final String feedFingerprint = fingerprints.getCumulativeFingerprint(feedElementId);
+            final String upstreamFingerprint = fingerprints.getCumulativeFingerprint(upstreamElementId);
 
             final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
             locationFactory.setLocationFactory(streamLocationFactory);
@@ -311,12 +269,12 @@ public class ReprocessDriver {
                     if (partIndex <= maxPartIndex) {
                         try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
                             metaHolder.setInputStreamProvider(inputStreamProvider);
-                            fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
-                                    feedFingerprint, onDemandRange);
+                            fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, upstreamId,
+                                    upstreamFingerprint, onDemandRange);
                         }
                     } else {
-                        fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, feedId,
-                                feedFingerprint, onDemandRange);
+                        fireRecords(entryElement, entryHandler, sourceStore, metaId, partIndex, upstreamId,
+                                upstreamFingerprint, onDemandRange);
                     }
                 }
             } finally {
@@ -332,8 +290,8 @@ public class ReprocessDriver {
                              final StepDataStore sourceStore,
                              final long metaId,
                              final long partIndex,
-                             final ElementId feedId,
-                             final String feedFingerprint,
+                             final ElementId upstreamId,
+                             final String upstreamFingerprint,
                              final RecordRange onDemandRange) {
         final long first = onDemandRange != null
                 ? onDemandRange.firstRecord()
@@ -341,7 +299,7 @@ public class ReprocessDriver {
         final long last = onDemandRange != null
                 ? onDemandRange.lastRecord()
                 : sourceStore.getLastRecordIndex(partIndex);
-        if (first < 0 || last < 0 || feedFingerprint == null) {
+        if (first < 0 || last < 0 || upstreamFingerprint == null) {
             return;
         }
 
@@ -351,7 +309,7 @@ public class ReprocessDriver {
         try {
             for (long recordIndex = first; recordIndex <= last; recordIndex++) {
                 final StepLocation loc = new StepLocation(metaId, partIndex, recordIndex);
-                final byte[] inputEvents = sourceStore.getElementData(loc, feedId, feedFingerprint)
+                final byte[] inputEvents = sourceStore.getElementData(loc, upstreamId, upstreamFingerprint)
                         .map(CapturedElementData::output)
                         .filter(data -> data != null && data.isSaxEvents())
                         .map(CapturedData::data)
@@ -363,7 +321,7 @@ public class ReprocessDriver {
                 // catches a mis-planned reprocess whose feed produces text rather than events.
                 if (inputEvents == null) {
                     throw ProcessException.create("Reprocess of stream " + metaId + " has no replayable SAX "
-                            + "output for feed " + feedId + " at " + loc);
+                            + "output for feed " + upstreamId + " at " + loc);
                 }
                 // Feed the per-record source location the original sweep captured back into the holder, so
                 // downstream location functions (stroom:record-no/source/line-from...) report the
@@ -387,17 +345,6 @@ public class ReprocessDriver {
         }
     }
 
-    /**
-     * A contiguous run of records within one part, to be materialised on demand. One record is the
-     * edit-then-refresh case; a longer run is a window scanned for a filter match.
-     */
-    public record RecordRange(long partIndex, long firstRecord, long lastRecord) {
-
-        public static RecordRange of(final StepLocation location) {
-            return new RecordRange(location.getPartIndex(), location.getRecordIndex(),
-                    location.getRecordIndex());
-        }
-    }
 
     /**
      * The counting elements whose counts this run cannot make exact, so their captured IO must be marked

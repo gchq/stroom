@@ -122,7 +122,7 @@ public class CapturedRecordFeed {
             // Sampled BEFORE anything below reads the captured range, so that a record arriving between the
             // read and the wait at the bottom of this loop still counts as progress and does not sleep.
             final long version = parent.getVersion();
-            final boolean parentStopped = parent.isFullyCaptured();
+            final boolean parentStopped = parent.hasEnded();
             final List<Long> parts = parent.getCapturedPartIndices();
 
             if (openPart == null) {

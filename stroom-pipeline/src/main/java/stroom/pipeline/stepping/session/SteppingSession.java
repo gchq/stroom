@@ -117,7 +117,7 @@ public class SteppingSession {
             // A finished materialisation leaves the registry: its results live in the store, which is the
             // only cache of them - the launcher answers a repeated demand from the store's coverage, so
             // holding a dead producer here would add nothing and keep its error (if any) alive.
-            running.values().forEach(list -> list.removeIf(StreamSweep::isFullyCaptured));
+            running.values().forEach(list -> list.removeIf(StreamSweep::hasEnded));
             running.values().removeIf(List::isEmpty);
 
             // An in-flight capture of this stream is abandoned ONLY if the new configuration invalidates
@@ -131,7 +131,7 @@ public class SteppingSession {
             // instead of re-capturing.
             sweeps.entrySet().removeIf(entry -> {
                 if (entry.getKey().metaId() == metaId
-                    && !entry.getValue().isFullyCaptured()
+                    && !entry.getValue().hasEnded()
                     && !stillProduces(entry.getValue(), fingerprints)) {
                     onTerminateSweep.accept(entry.getValue());
                     return true;
@@ -185,7 +185,7 @@ public class SteppingSession {
                 sweeps.put(new SweepKey(metaId, sweep.getCacheKey()), sweep);
                 return StreamSweep.waitingOn(sweep);
             } else if (sweep.isOnDemand()) {
-                if (!sweep.isFullyCaptured()) {
+                if (!sweep.hasEnded()) {
                     running.computeIfAbsent(streamKey, k -> new ArrayList<>()).add(sweep);
                 }
             } else {
@@ -258,7 +258,7 @@ public class SteppingSession {
         return streamIdList;
     }
 
-    public Collection<StreamSweep> getActiveSweeps() {
+    public Collection<StreamSweep> getOwnedSweeps() {
         synchronized (lifecycleLock) {
             final List<StreamSweep> all = new ArrayList<>(sweeps.values());
             running.values().forEach(all::addAll);
@@ -324,11 +324,6 @@ public class SteppingSession {
     /**
      * Identifies a sweep by the stream it captured and the fingerprint signature it captured under, so that
      * an edit starts a new sweep while the pre-edit one stays available for a revert.
-     */
-    /**
-     * Identifies a cached sweep. {@code onDemandRecord} is null for a sweep that captured a stream, and the
-     * record index for one that materialised a single record - those are only interchangeable for the record
-     * they actually hold.
      */
     private record SweepKey(long metaId, String signature) {
 

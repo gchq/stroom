@@ -64,7 +64,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code STEPPING_BENCHMARK_RECORDS=20000}.
  * <ul>
  *   <li><b>C</b> - what an edit issued <b>mid-sweep</b> costs against the same edit issued after the sweep
- *   completes. Today the mid-sweep edit abandons the partial capture and re-sweeps, so its cost includes
+ *   completes. Before the lifetime-decoupling work the mid-sweep edit abandoned the partial capture and
+ *   re-swept, so its cost included
  *   re-parsing everything already captured; the post-completion edit is the on-demand replay at a few tens of
  *   ms. The gap between the two numbers is what the lifetime-decoupling work would recover, and after that
  *   work the first number should fall to roughly the second - this benchmark is the before/after gauge.</li>
@@ -171,7 +172,8 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
             report.add(String.format("FIRST (sweep starts)            %,6dms", System.currentTimeMillis() - start));
             final long partIndex = first.getFoundLocation().getPartIndex();
 
-            // The mid-sweep edit - scenario C's number. Today this abandons the partial capture and
+            // The mid-sweep edit - scenario C's number. Before the decoupling work this abandoned the
+            // partial capture and
             // re-parses from record 0 under the new signature.
             final long sweepsBefore = steppingService.getFullSweepLaunchCount();
             start = System.currentTimeMillis();
@@ -450,6 +452,8 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
      * transforms and their capture.
      */
     @Test
+    @org.junit.jupiter.api.Disabled("Historic decision gauge - the skeleton sweep is built and default-on; "
+            + "run manually if the ceiling ever needs re-measuring")
     void measureTheSkeletonSweepCeiling() {
         final int recordCount = GeneratedEventStream.configuredRecordCount(DEFAULT_RECORDS);
         final long metaId = GeneratedEventStream.load(store, FEED, recordCount);

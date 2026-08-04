@@ -51,18 +51,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  * about <b>which mechanism answered</b> (the launch counters), not about wall-clock.
  * <p>
  * Scenario A (refresh against a completed capture) is covered by {@code TestLiveReprocessOnEdit} and measured
- * by {@code TestSteppingMidPointBenchmark}. This class holds B and C:
+ * by {@code TestSteppingMidPointBenchmark}. This class holds:
  * <ul>
- *   <li><b>B</b> - a step ahead of the capture frontier waits for the sweep it already has, rather than
- *   launching another or discarding anything. Passes today.</li>
- *   <li><b>C</b> - an edit issued while the sweep is mid-flight keeps the partial upstream capture, whether
- *   the record it asks about is behind the capture frontier or still ahead of it. Two tests, one per half;
- *   they are the acceptance tests for the lifetime-decoupling work.</li>
+ *   <li><b>B</b> - a step ahead of the capture frontier waits for the sweep it already has, launching and
+ *   discarding nothing.</li>
+ *   <li><b>C</b>, three shapes - an edit mid-sweep keeps the partial upstream capture: refresh behind the
+ *   frontier, refresh ahead of it, and edit-then-navigate.</li>
+ *   <li>The filtered windowed scan's launch discipline (across windows, and a near match in one launch).</li>
+ *   <li><b>D</b> - the skeleton mechanism (backbone + on-demand + prefetch arithmetic) and the eager
+ *   small-stream promotion with its never-promote-an-edit rule.</li>
  * </ul>
  * <p>
- * Both use a generated stream big enough that the sweep is still running when the second step is issued - the
- * step calls are milliseconds apart and the sweep takes seconds, so the "mid-flight" precondition holds by a
- * wide margin rather than by luck.
+ * The mid-flight scenarios use a generated stream big enough that the sweep is normally still running when
+ * the second step is issued. On a machine fast enough to finish the sweep first they degenerate gracefully
+ * into their completed-capture cousins - the launch-counter assertions still hold; only the timing
+ * comparison (which gates itself on the sweep having demonstrably waited) goes quiet.
  */
 class TestSteppingScaleScenarios extends TranslationTest {
 
@@ -263,6 +266,15 @@ class TestSteppingScaleScenarios extends TranslationTest {
 
             assertThat(edited.isFoundRecord()).as("the edited refresh resolved").isTrue();
             assertThat(edited.getFoundLocation().getRecordIndex()).isEqualTo(RECORD_COUNT / 2);
+            // The step must have been served the EDITED element's pane, not resolved from the reused
+            // upstream range alone - without this, a resolver that answered before the reprocess wrote
+            // its element would pass every other assertion here.
+            final stroom.pipeline.shared.SharedElementData editedPane =
+                    edited.getStepData().getElementData(EDITED_ELEMENT_ID);
+            assertThat(editedPane).as("the edited element's pane was served").isNotNull();
+            // Airtight: a startup-indicator-only entry has null IO; only the reprocess writing the element
+            // produces output.
+            assertThat(editedPane.getOutput()).as("with real reprocessed output").isNotNull();
 
             assertThat(steppingService.getFullSweepLaunchCount())
                     .as("the partial upstream capture was kept - the edit must not re-sweep from record 0")
@@ -342,10 +354,16 @@ class TestSteppingScaleScenarios extends TranslationTest {
             assertThat(steppingService.getFullSweepLaunchCount())
                     .as("and it waited for the running capture rather than starting one")
                     .isEqualTo(fullSweeps);
-            assertThat(steppedMs)
-                    .as("the step was served from the frontier, not by waiting for the capture "
-                        + "(step %dms vs LAST %dms)", steppedMs, lastMs)
-                    .isLessThan(lastMs);
+            // Self-calibrating, but only while the capture was genuinely still running when LAST was
+            // issued. On a machine fast enough to finish the 4k sweep first, LAST is near-instant and the
+            // comparison inverts for reasons that say nothing about the mechanism - so it only applies
+            // when LAST demonstrably waited. The launch counters above pin the mechanism either way.
+            if (lastMs > 1_000) {
+                assertThat(steppedMs)
+                        .as("the step was served from the frontier, not by waiting for the capture "
+                            + "(step %dms vs LAST %dms)", steppedMs, lastMs)
+                        .isLessThan(lastMs);
+            }
         } finally {
             terminate(base, sessionUuid);
         }

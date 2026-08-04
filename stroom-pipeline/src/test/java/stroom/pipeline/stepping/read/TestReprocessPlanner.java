@@ -22,6 +22,7 @@ import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
 import stroom.pipeline.stepping.read.StagePlanner.PlannerElement;
 import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.shared.ElementId;
@@ -95,11 +96,11 @@ class TestReprocessPlanner {
         final StepDataStore store = truncatedStore(tempDir, 6);
 
         final Decision d = planner.plan(elements, parentsOf, store, fingerprints("p1", "x2", "w2"),
-                new StagePlanner.RecordSpan(0, 2, 2));
+                new RecordRange(0, 2, 2));
 
         assertThat(d.fullSweep()).isFalse();
         assertThat(d.startElementId()).isEqualTo("xslt");
-        assertThat(d.feedElementId()).isEqualTo("parser");
+        assertThat(d.upstreamElementId()).isEqualTo("parser");
     }
 
     @Test
@@ -109,7 +110,7 @@ class TestReprocessPlanner {
         final StepDataStore store = truncatedStore(tempDir, 6);
 
         final Decision d = planner.plan(elements, parentsOf, store, fingerprints("p1", "x2", "w2"),
-                new StagePlanner.RecordSpan(0, 8, 8));
+                new RecordRange(0, 8, 8));
 
         assertThat(d.fullSweep()).isTrue();
     }
@@ -137,7 +138,7 @@ class TestReprocessPlanner {
 
         assertThat(d.fullSweep()).isFalse();
         assertThat(d.startElementId()).isEqualTo("xslt");
-        assertThat(d.feedElementId()).isEqualTo("parser");
+        assertThat(d.upstreamElementId()).isEqualTo("parser");
     }
 
     @Test
@@ -147,7 +148,7 @@ class TestReprocessPlanner {
 
         assertThat(d.fullSweep()).isFalse();
         assertThat(d.startElementId()).isEqualTo("writer");
-        assertThat(d.feedElementId()).isEqualTo("xslt");
+        assertThat(d.upstreamElementId()).isEqualTo("xslt");
     }
 
     @Test

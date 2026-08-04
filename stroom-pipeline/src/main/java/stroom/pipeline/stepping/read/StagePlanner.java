@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.read;
 
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.Coverage;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.util.shared.ElementId;
 
@@ -71,7 +72,7 @@ public class StagePlanner {
     public StagePlan plan(final List<PlannerElement> elements,
                           final StepDataStore store,
                           final ElementFingerprints current,
-                          final RecordSpan span) {
+                          final RecordRange span) {
         final Set<String> reuse = new LinkedHashSet<>();
         final Set<String> reprocess = new LinkedHashSet<>();
         boolean boundaryChanged = false;
@@ -114,7 +115,7 @@ public class StagePlanner {
     private boolean covers(final StepDataStore store,
                            final ElementId elementId,
                            final String fingerprint,
-                           final RecordSpan span) {
+                           final RecordRange span) {
         if (span == null) {
             return store.hasCompleteElement(elementId, fingerprint);
         }
@@ -132,12 +133,6 @@ public class StagePlanner {
         return true;
     }
 
-    /**
-     * The records a step is about: a contiguous run within one part. What a REFRESH (one record) or a
-     * windowed scan (a window of them) asks the plan to cover.
-     */
-    public record RecordSpan(long partIndex, long firstRecord, long lastRecord) {
-    }
 
     /**
      * An element for planning: its id and whether it sits at or above the record-boundary (Source,

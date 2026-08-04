@@ -45,6 +45,7 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -125,6 +126,23 @@ class TestSteppingContextLookup extends TranslationTest {
     private StoreCreationTool storeCreationTool;
     @Inject
     private Store store;
+
+    /**
+     * The "swept truth" this class compares a single-record replay against must be produced by
+     * {@code StreamCaptureDriver}'s whole-pipeline sweep - since {@code stepping.skeletonSweep} became the
+     * default, an unpinned run would produce it via an eager materialisation through
+     * {@code ReprocessDriver}, the very component under test comparing against itself.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {

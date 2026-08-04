@@ -45,13 +45,8 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
-import stroom.pipeline.stepping.read.SessionStepResolver;
-import stroom.pipeline.stepping.read.StoreStepResolver;
-import stroom.pipeline.stepping.store.StepDataStore;
-import stroom.pipeline.stepping.store.StorePin;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.ElementId;
@@ -64,6 +59,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,7 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@link SteppingController}, and runs every part of it through, so that every record's per-element IO
  * lands in the sweep's store.
  * <p>
- * Runs on a sweep thread, and is the producer half of the async model - {@link SessionStepResolver} is
+ * Runs on a sweep thread, and is the producer half of the async model - {@code SessionStepResolver} is
  * blocked on the {@link StreamSweep} this fills. That gives it one hard obligation: <b>every way out must
  * signal the sweep</b>, and only a capture that reached the end of the stream without failing may signal
  * success. A truncated stream that looks complete makes a step navigate straight past the records that were
@@ -100,6 +96,7 @@ public class StreamCaptureDriver {
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final PipelineContext pipelineContext;
     private final SecurityContext securityContext;
+    private final SweepRun sweepRun;
 
     private TaskContext taskContext;
     private Set<String> stopAfter = Set.of();
@@ -107,10 +104,7 @@ public class StreamCaptureDriver {
     private Pipeline pipeline;
     private LoggingErrorReceiver loggingErrorReceiver;
     // elementId => Indicators
-    private Map<ElementId, Indicators> startProcessIndicatorMap = Collections.emptyMap();
     private PipelineStepRequest request;
-    // The fingerprints keying the captured IO, exposed so a caller can read the chunks back.
-    private ElementFingerprints captureFingerprints;
     // A reader only ever sees the sweep's complete/error signal, so a capture must remember its first
     // failure and turn it into markError - otherwise a truncated stream is indistinguishable from a fully
     // captured one, and a step would silently navigate past the end of it into the next stream.
@@ -149,29 +143,18 @@ public class StreamCaptureDriver {
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.pipelineContext = pipelineContext;
         this.securityContext = securityContext;
+        this.sweepRun = new SweepRun(securityContext, currentUserHolder, errorReceiverProxy, controller);
     }
 
     /**
      * Run one whole stream through the pipeline in capture mode, persisting every record's per-element IO
      * into the sweep's store. This does no step navigation and never exits early: it captures the lot, and
-     * the requested step is served afterwards by reading the store back ({@link StoreStepResolver}).
+     * the requested step is served afterwards by reading the store back ({@code StoreStepResolver}).
      * <p>
      * Runs on a sweep thread. Every exit path must signal the {@link StreamSweep} - readers block on it -
      * so a failure marks the sweep errored rather than letting it look like a clean, complete capture of a
-     * stream that is actually truncated.
-     */
-    public void capture(final TaskContext taskContext,
-                            final PipelineStepRequest request,
-                            final long metaId,
-                            final StreamSweep streamSweep,
-                            final ElementFingerprints fingerprints) {
-        capture(taskContext, request, metaId, streamSweep, fingerprints, Set.of());
-    }
-
-    /**
-     * As {@link #capture(TaskContext, PipelineStepRequest, long, StreamSweep, ElementFingerprints)}, but the
-     * pipeline is built only as far as {@code stopAfter} - so this captures the head stage of the pipeline
-     * rather than all of it, leaving the elements below to be run as their own stages.
+     * stream that is actually truncated. With a non-empty {@code stopAfter} the pipeline is built only that
+     * far - capturing the head stage (a backbone) rather than all of it.
      */
     public void capture(final TaskContext taskContext,
                             final PipelineStepRequest request,
@@ -182,42 +165,14 @@ public class StreamCaptureDriver {
         this.stopAfter = stopAfter;
         this.taskContext = taskContext;
         this.request = request;
-        this.captureFingerprints = fingerprints;
         this.captureFailure = null;
         this.captureSweep = streamSweep;
 
-        // Publish the task context BEFORE reading the terminate flag. The session sets that flag before
-        // reading the context, so whichever of us runs second sees the other's write and the sweep cannot
-        // start after its session has already been closed.
-        streamSweep.setTaskContext(taskContext);
-        if (streamSweep.isTerminateRequested()) {
-            streamSweep.markError(new RuntimeException(
-                    "Stepping capture of stream " + metaId + " was terminated before it started"));
-            return;
-        }
-
-        taskContext.info(() -> "Capturing stepping data");
-        final StepDataStore store = streamSweep.getStore();
-
-        // Claim the versions this capture is about to write for as long as it runs. Without this an edit -
-        // or three - made while the capture is still going can push its own fingerprints out of the
-        // retention window, deleting the files it is writing to underneath it.
-        try (final StorePin pin = store.pin(fingerprints.getCumulativeFingerprints())) {
-            securityContext.secure(AppPermission.STEPPING_PERMISSION, () -> {
-                securityContext.useAsRead(() -> {
-                    currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
-
-                    loggingErrorReceiver = new LoggingErrorReceiver();
-                    errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
-
-                    controller.setRequest(request);
-                    controller.setTaskContext(taskContext);
-                    // A superseded sweep is abandoned by flag rather than interrupt, so the controller has
-                    // to watch the flag to stop at the next record.
-                    controller.setTerminateCheck(streamSweep::isTerminateRequested);
-                    // Capture mode: persist each record atomically and advance the sweep's progress signal.
-                    controller.setCaptureTarget(store, fingerprints, streamSweep::recordCaptured);
-
+        sweepRun.execute(taskContext, request, streamSweep, fingerprints,
+                List.of(streamSweep.getStore()),
+                "Stepping capture", "Capturing stepping data",
+                receiver -> loggingErrorReceiver = receiver,
+                () -> {
                     try (final Source source = streamStore.openSource(metaId)) {
                         if (source != null) {
                             captureStream(source, request.getChildStreamType());
@@ -225,31 +180,12 @@ public class StreamCaptureDriver {
                     } catch (final IOException | RuntimeException e) {
                         error(e);
                     }
-
                     if (lastFeedName != null && pipeline != null) {
                         pipeline.endProcessing();
                         lastFeedName = null;
                     }
-                });
-            });
-
-            // Only a capture that ran to the end of the stream without failing may be reported as complete:
-            // a reader treats "complete" as "every record this stream will ever have is now in the store",
-            // and will happily navigate past the end of a truncated stream into the next one.
-            if (captureFailure != null) {
-                streamSweep.markError(captureFailure);
-            } else if (taskContext.isTerminated() || streamSweep.isTerminateRequested()) {
-                streamSweep.markError(new RuntimeException(
-                        "Stepping capture of stream " + metaId + " was terminated"));
-            } else {
-                streamSweep.markFullyCaptured();
-            }
-        } catch (final Throwable t) {
-            // Throwable, not RuntimeException: an Error here (OOM is plausible on a large stream) would
-            // otherwise leave the sweep neither complete nor errored, hanging every reader on it.
-            streamSweep.markError(t);
-            throw t;
-        }
+                },
+                () -> captureFailure);
     }
 
     private void captureStream(final Source source, final String childDataType) {
@@ -275,7 +211,7 @@ public class StreamCaptureDriver {
         }
         try {
             pipeline.startProcessing();
-            startProcessIndicatorMap = getErrorReceiverIndicatorsMap();
+            final Map<ElementId, Indicators> startProcessIndicatorMap = getErrorReceiverIndicatorsMap();
             // These belong to the stream, not to a record, so a step served from the store later has no
             // other way to find them.
             captureSweep.setStartProcessIndicators(startProcessIndicatorMap);
@@ -314,13 +250,6 @@ public class StreamCaptureDriver {
         } catch (final IOException | RuntimeException e) {
             error(e);
         }
-    }
-
-    /**
-     * @return the fingerprints used to key the captured IO (available after {@link #capture}).
-     */
-    public ElementFingerprints getCaptureFingerprints() {
-        return captureFingerprints;
     }
 
     private void createPipeline(final SteppingController controller, final String feedName) {

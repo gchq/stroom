@@ -42,6 +42,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -142,6 +143,23 @@ class TestSteppingStateFixture extends TranslationTest {
     private XsltStore xsltStore;
     @Inject
     private Store store;
+
+    /**
+     * The fixture's whole point is a baseline produced by a plain <b>full sweep</b> - since
+     * {@code stepping.skeletonSweep} became the default, an unpinned run would serve the FIRST step from a
+     * backbone plus a materialisation through {@code ReprocessDriver}, the very re-run path other tests
+     * compare against this baseline. Pin the fallback so the baseline stays independent.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
+    }
 
     @BeforeEach
     void setup() {

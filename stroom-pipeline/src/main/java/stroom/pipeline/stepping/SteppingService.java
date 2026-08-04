@@ -24,25 +24,24 @@ import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.capture.ReprocessDriver;
 import stroom.pipeline.stepping.capture.StreamCaptureDriver;
-import stroom.pipeline.stepping.capture.ReprocessDriver.RecordRange;
 import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.ReprocessPlanner;
 import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
 import stroom.pipeline.stepping.read.SessionStepResolver;
-import stroom.pipeline.stepping.read.StagePlanner;
 import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
+import stroom.pipeline.stepping.read.StepDemandPlanner;
 import stroom.pipeline.stepping.read.SteppableElements;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder;
 import stroom.pipeline.stepping.read.SteppingGraphBuilder.Graph;
 import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.pipeline.stepping.session.SteppingSessionRegistry;
 import stroom.pipeline.stepping.store.Coverage;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreManager;
 import stroom.pipeline.stepping.store.SteppingConfig;
@@ -64,13 +63,16 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * The way in to stepping: the client's poll lands here.
@@ -109,16 +111,16 @@ public class SteppingService {
     private final SteppableElements steppableElements;
     private final SteppingResultMapper resultMapper = new SteppingResultMapper();
     private final ReprocessPlanner reprocessPlanner = new ReprocessPlanner();
-    // How each stream fill was served: a reprocess of just the changed elements, or a full sweep from source.
-    // Observable so callers (and tests) can confirm an edit reused upstream rather than re-running it.
-    private final java.util.concurrent.atomic.AtomicLong onDemandLaunches =
-            new java.util.concurrent.atomic.AtomicLong();
-    private final java.util.concurrent.atomic.AtomicLong reprocessLaunches =
-            new java.util.concurrent.atomic.AtomicLong();
-    private final java.util.concurrent.atomic.AtomicLong fullSweepLaunches =
-            new java.util.concurrent.atomic.AtomicLong();
-    private final java.util.concurrent.atomic.AtomicLong backboneLaunches =
-            new java.util.concurrent.atomic.AtomicLong();
+    private final StepDemandPlanner demandPlanner;
+    // How each stream fill was served, observable so callers (and tests) can confirm an edit reused
+    // upstream rather than re-running it. Four counters, NOT disjoint: reprocessLaunches counts every
+    // launched reprocess (whole-stream and ranged alike), and onDemandLaunches counts the subset that
+    // materialised a bounded range of records. fullSweepLaunches and backboneLaunches count captures
+    // from source (whole pipeline vs truncated at the record boundary).
+    private final AtomicLong onDemandLaunches = new AtomicLong();
+    private final AtomicLong reprocessLaunches = new AtomicLong();
+    private final AtomicLong fullSweepLaunches = new AtomicLong();
+    private final AtomicLong backboneLaunches = new AtomicLong();
 
     @Inject
     public SteppingService(final TaskContextFactory taskContextFactory,
@@ -146,6 +148,7 @@ public class SteppingService {
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
         this.steppingConfigProvider = steppingConfigProvider;
+        this.demandPlanner = new StepDemandPlanner(steppingConfigProvider);
         this.sessionStepResolver = sessionStepResolver;
         this.sessionRegistry = sessionRegistry;
         this.steppableElements = steppableElements;
@@ -175,19 +178,8 @@ public class SteppingService {
         try {
             final ElementFingerprints fingerprints = computeFingerprints(request);
             final StreamSweep sweep = launchSweep(sessionId, request, metaId, fingerprints, stopAfter);
-            // Synchronous variant: wait for the whole stream to be captured. A timed-out wait must not be
-            // mistaken for a complete capture - the sweep is still writing to the store we would return.
-            if (!sweep.awaitFullyCaptured(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
-                final TaskContext taskContext = sweep.getTaskContext();
-                sweep.requestTerminate();
-                if (taskContext != null) {
-                    taskManager.terminate(taskContext.getTaskId());
-                }
-                throw new RuntimeException("Timed out waiting for stepping capture of stream " + metaId);
-            }
-            if (sweep.getError() != null) {
-                throw new RuntimeException("Stepping capture failed", sweep.getError());
-            }
+            // Synchronous variant: wait for the whole stream to be captured.
+            awaitProducer(sweep, request.getTimeout(), "Stepping capture", metaId);
             return new SteppingCaptureResult(sessionId, sweep.getStore(), fingerprints);
         } catch (final RuntimeException e) {
             // Don't leak the store (open channels + temp dir) if capture failed part way through.
@@ -199,17 +191,17 @@ public class SteppingService {
     /**
      * Re-run {@code startElementId} and its downstream from {@code sourceStore}'s stored upstream output,
      * capturing the reprocessed IO into a fresh store, and return it. Synchronous, like {@link #capture}:
-     * the caller owns the returned session and must {@link #deleteCaptureSession} it. This is the entry to
-     * the split - re-running only the edited stage rather than the whole pipeline - and is currently exercised
-     * by the reprocess de-risk test; {@link #step} does not use it yet.
+     * the caller owns the returned session and must {@link #deleteCaptureSession} it. This is the
+     * synchronous test entry to the split - re-running only the edited stage rather than the whole
+     * pipeline; {@link #step} reaches the same machinery through {@code launchReprocess}.
      */
     public SteppingCaptureResult reprocess(final PipelineStepRequest request,
                                            final long metaId,
                                            final String startElementId,
-                                           final String feedElementId,
+                                           final String upstreamElementId,
                                            final StepDataStore sourceStore,
                                            final ElementFingerprints fingerprints) {
-        return reprocess(request, metaId, startElementId, feedElementId, sourceStore, fingerprints,
+        return reprocess(request, metaId, startElementId, upstreamElementId, sourceStore, fingerprints,
                 MidPipelineScope.ELEMENT_AND_DESCENDANTS);
     }
 
@@ -221,11 +213,11 @@ public class SteppingService {
     public SteppingCaptureResult reprocess(final PipelineStepRequest request,
                                            final long metaId,
                                            final String startElementId,
-                                           final String feedElementId,
+                                           final String upstreamElementId,
                                            final StepDataStore sourceStore,
                                            final ElementFingerprints fingerprints,
                                            final MidPipelineScope scope) {
-        return reprocess(request, metaId, startElementId, feedElementId, sourceStore, fingerprints, scope,
+        return reprocess(request, metaId, startElementId, upstreamElementId, sourceStore, fingerprints, scope,
                 (RecordRange) null);
     }
 
@@ -236,7 +228,7 @@ public class SteppingService {
     public SteppingCaptureResult reprocess(final PipelineStepRequest request,
                                            final long metaId,
                                            final String startElementId,
-                                           final String feedElementId,
+                                           final String upstreamElementId,
                                            final StepDataStore sourceStore,
                                            final ElementFingerprints fingerprints,
                                            final MidPipelineScope scope,
@@ -245,40 +237,69 @@ public class SteppingService {
         try {
             final StepDataStore targetStore = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
             final StreamSweep sweep = new StreamSweep(metaId, targetStore, fingerprints);
-            final Executor executor = executorProvider.get(THREAD_POOL);
-            try {
-                CompletableFuture
-                        .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
-                                reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
-                                        startElementId, feedElementId, sourceStore, sweep, fingerprints,
-                                        scope, onDemandRange)), executor)
-                        .whenComplete((unused, t) -> {
-                            if (t != null) {
-                                sweep.markError(t);
-                            } else if (!sweep.isFullyCaptured()) {
-                                sweep.markError(new RuntimeException(
-                                        "Stepping reprocess of stream " + metaId + " ended without completing"));
-                            }
-                        });
-            } catch (final RuntimeException e) {
-                sweep.markError(e);
-            }
-
-            if (!sweep.awaitFullyCaptured(request.getTimeout() == null ? Long.MAX_VALUE : request.getTimeout())) {
-                final TaskContext taskContext = sweep.getTaskContext();
-                sweep.requestTerminate();
-                if (taskContext != null) {
-                    taskManager.terminate(taskContext.getTaskId());
-                }
-                throw new RuntimeException("Timed out waiting for stepping reprocess of stream " + metaId);
-            }
-            if (sweep.getError() != null) {
-                throw new RuntimeException("Stepping reprocess failed", sweep.getError());
-            }
+            runProducer("Stepping reprocess", metaId, sweep, taskContext ->
+                    reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
+                            startElementId, upstreamElementId, sourceStore, sweep, fingerprints,
+                            scope, onDemandRange));
+            awaitProducer(sweep, request.getTimeout(), "Stepping reprocess", metaId);
             return new SteppingCaptureResult(sessionId, targetStore, fingerprints);
         } catch (final RuntimeException e) {
             deleteCaptureSession(sessionId);
             throw e;
+        }
+    }
+
+    /**
+     * Run a producer's work asynchronously, guaranteeing the sweep is signalled however the task ends. A
+     * reader blocks on the sweep until it signals, so <b>every way the task can end must signal</b>. The
+     * driver handles its own failures, but anything it cannot catch (an Error, or a failure constructing
+     * the handler/task context) would otherwise leave the sweep neither complete nor errored, hanging every
+     * reader until its deadline - forever, for an unbounded await. The {@code whenComplete} backstop and
+     * the rejected-execution catch cover those paths.
+     */
+    private void runProducer(final String taskName,
+                             final long metaId,
+                             final StreamSweep sweep,
+                             final Consumer<TaskContext> work) {
+        final Executor executor = executorProvider.get(THREAD_POOL);
+        try {
+            CompletableFuture
+                    .runAsync(taskContextFactory.context(taskName, work), executor)
+                    .whenComplete((unused, t) -> {
+                        if (t != null) {
+                            sweep.markError(t);
+                        } else if (!sweep.hasEnded()) {
+                            sweep.markError(new RuntimeException(
+                                    taskName + " of stream " + metaId + " ended without completing"));
+                        }
+                    });
+        } catch (final RuntimeException e) {
+            // e.g. the executor rejected the task - nothing will ever run to signal the sweep.
+            sweep.markError(e);
+        }
+    }
+
+    /**
+     * Synchronously wait for a producer to finish, terminating it on timeout. A timed-out wait must not be
+     * mistaken for a complete capture - the sweep is still writing to the store the caller would return.
+     */
+    private void awaitProducer(final StreamSweep sweep,
+                               final Long timeout,
+                               final String what,
+                               final long metaId) {
+        if (!sweep.awaitEnd(timeout == null ? Long.MAX_VALUE : timeout)) {
+            // Flag first, context second - the producer publishes its context before reading the flag, so
+            // whichever of us runs second sees the other's write (the same load-bearing ordering as
+            // terminateSweep; reversed, a still-queued task could start against a deleted store).
+            sweep.requestTerminate();
+            final TaskContext taskContext = sweep.getTaskContext();
+            if (taskContext != null) {
+                taskManager.terminate(taskContext.getTaskId());
+            }
+            throw new RuntimeException("Timed out waiting for " + what + " of stream " + metaId);
+        }
+        if (sweep.getError() != null) {
+            throw new RuntimeException(what + " failed", sweep.getError());
         }
     }
 
@@ -304,29 +325,9 @@ public class SteppingService {
                                    final Set<String> stopAfter) {
         final StepDataStore store = stepDataStoreManager.getOrCreateStore(sessionId, metaId);
         final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
-        final Executor executor = executorProvider.get(THREAD_POOL);
-        try {
-            CompletableFuture
-                    .runAsync(taskContextFactory.context("Stepping capture", taskContext ->
-                            streamCaptureDriverProvider.get().capture(
-                                    taskContext, request, metaId, sweep, fingerprints, stopAfter)), executor)
-                    // A reader blocks on this sweep until it signals, so every way the task can end must
-                    // signal. The driver handles its own failures, but anything it cannot catch (an Error,
-                    // or a failure constructing the handler/task context) would otherwise leave the sweep
-                    // neither complete nor errored, hanging every reader until its deadline - forever, for
-                    // an unbounded await. This is the backstop for those paths.
-                    .whenComplete((unused, t) -> {
-                        if (t != null) {
-                            sweep.markError(t);
-                        } else if (!sweep.isFullyCaptured()) {
-                            sweep.markError(new RuntimeException(
-                                    "Stepping capture of stream " + metaId + " ended without completing"));
-                        }
-                    });
-        } catch (final RuntimeException e) {
-            // e.g. the executor rejected the task - nothing will ever run to signal the sweep.
-            sweep.markError(e);
-        }
+        runProducer("Stepping capture", metaId, sweep, taskContext ->
+                streamCaptureDriverProvider.get().capture(
+                        taskContext, request, metaId, sweep, fingerprints, stopAfter));
         return sweep;
     }
 
@@ -360,321 +361,38 @@ public class SteppingService {
                 sessionId,
                 streamIds,
                 (metaId, sweepRequest, sweepFingerprints, priorSweeps, running) ->
-                        launchFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorSweeps, running),
+                        producerFor(sessionId, sweepRequest, metaId, sweepFingerprints, priorSweeps, running),
                 this::closeSession,
                 this::abandonSweep,
                 steppingConfigProvider.get().getMaxSweptStreamsPerSession());
     }
 
-    /**
-     * Decide how to fill a stream's sweep: reprocess just the changed elements from stored upstream output
-     * when an edit allows it, otherwise sweep the whole stream from source.
-     * <p>
-     * Reprocess needs a prior fully-captured sweep (so the upstream chunks are complete) and a plan that is
-     * the clean single-edit case ({@link ReprocessPlanner}); everything else falls back to a full sweep, which
-     * is the normal once-per-stream capture and always correct.
-     */
-    /**
-     * Decide whether this step can be answered by materialising the <b>one record</b> it is about, rather
-     * than re-running the edited element over the whole stream.
-     * <p>
-     * The step's record has to be knowable ({@link #demandedRecordFor}), and no filter may sit on the edited
-     * element or below it: deciding whether a record matches such a filter means running the element to find
-     * out, so the target cannot be known in advance and records have to be worked through in order instead
-     * (the windowed scan). A filter on an element <i>above</i> the edit is no obstacle at all - its output is
-     * already in the store under an unchanged fingerprint, so it is evaluated by reading.
-     *
-     * @return the records to materialise, or null to reprocess the whole stream as before.
-     */
-    private RecordRange onDemandRangeFor(final PipelineStepRequest request,
-                                         final Graph graph,
-                                         final Decision decision,
-                                         final StepDataStore store,
-                                         final ElementFingerprints fingerprints,
-                                         final long metaId,
-                                         final boolean extentFinal) {
-        final StepLocation located = onDemandTargetFor(request, graph, decision, store, metaId, extentFinal);
-        if (located != null) {
-            return prefetched(request.getStepType(), located, decision, store, fingerprints);
-        }
-        return filteredWindowFor(request, graph, decision, store, fingerprints, metaId);
-    }
 
     /**
-     * Widen a navigation step's demand to a window in its direction of travel, so the next few steps hit
-     * records this one already materialised - a store read, no launch - instead of launching per record.
-     * <p>
-     * The demanded record stays at the near edge of the window, and the replay produces records in
-     * ascending order, so for FORWARD/FIRST the step is served as soon as its own record commits and the
-     * rest materialise while the user reads it. BACKWARD/LAST extend downward, so the demanded record
-     * commits last - a few milliseconds of below-boundary work per extra record, well under the launch
-     * overhead the window saves.
-     * <p>
-     * Two hard edges. A REFRESH is never widened: it is the post-edit inner loop, and it materialises
-     * exactly the record it names. And the window is clamped to the <b>feed's contiguous coverage</b> from
-     * the target - the replay reads each record's input from the feed's stored output and fails loudly on a
-     * gap, so a window must never reach past the backbone's frontier or across a hole punched by an earlier
-     * on-demand materialisation... the hole's records are ALREADY materialised, which is exactly when the
-     * window has nothing left to buy.
+     * The producer that will serve this step - launching one only when nothing cheaper answers. The ladder,
+     * in order: everything the step demands is already in the store (a signalled no-op sweep); a plan
+     * against captured upstream (a reprocess of just the changed elements - materialising a bounded range
+     * where the step's records can be named, or attaching to a running producer already making them);
+     * waiting on the frontier of a capture already in flight; a skeleton backbone; and finally a capture
+     * from source - the once-per-stream sweep that is always correct. Despite living behind
+     * {@link SteppingSession.SweepLauncher}, most calls launch nothing.
      */
-    private RecordRange prefetched(final StepType stepType,
-                                   final StepLocation target,
-                                   final Decision decision,
-                                   final StepDataStore store,
-                                   final ElementFingerprints fingerprints) {
-        final int window = steppingConfigProvider.get().getPrefetchWindow();
-        final String feedFingerprint = decision.feedElementId() == null
-                ? null
-                : fingerprints.getCumulativeFingerprint(decision.feedElementId());
-        if (window <= 1 || stepType == StepType.REFRESH || feedFingerprint == null) {
-            return RecordRange.of(target);
-        }
-        final Coverage feed = store.elementCoverage(
-                new ElementId(decision.feedElementId()), feedFingerprint, () -> false);
-        final boolean forward = stepType == StepType.FORWARD || stepType == StepType.FIRST;
-        long start = target.getRecordIndex();
-        long end = target.getRecordIndex();
-        for (int i = 1; i < window; i++) {
-            final long candidate = forward ? end + 1 : start - 1;
-            if (candidate < 0 || !feed.holds(target.getPartIndex(), candidate)) {
-                break;
-            }
-            if (forward) {
-                end = candidate;
-            } else {
-                start = candidate;
-            }
-        }
-        return new RecordRange(target.getPartIndex(), start, end);
-    }
-
-    /**
-     * The next run of records to materialise for a <b>filtered</b> step, or null to reprocess the stream.
-     * <p>
-     * A filter makes "the next record" mean "the next one that matches", which cannot be known without
-     * running records to find out. So rather than materialise one record, materialise a window of them in the
-     * direction of travel and let the resolver scan it; if nothing in the window matches, the client's next
-     * poll asks again and the window moves on.
-     * <p>
-     * Where the next window starts is <b>read back from the store</b> rather than remembered: the records
-     * already materialised for this element at this fingerprint are the frontier, so the window simply starts
-     * past them. That is what keeps this on one side of the {@code capture/}-{@code read/} line - the two
-     * sides meet at the store, as everything else here does, instead of one driving the other round a loop.
-     */
-    // Package-private rather than private so a test can drive it directly. Its output is a range, which is
-    // otherwise only visible through what a whole step happens to materialise - and the window size defaults
-    // to the value it had as a constant, so a test that went through step() would pass whether or not the
-    // size is really read from config.
-    RecordRange filteredWindowFor(final PipelineStepRequest request,
-                                  final Graph graph,
-                                  final Decision decision,
-                                  final StepDataStore store,
-                                  final ElementFingerprints fingerprints,
-                                  final long metaId) {
-        final StepType stepType = request.getStepType();
-        final boolean forward = stepType == StepType.FORWARD || stepType == StepType.FIRST;
-        final boolean backward = stepType == StepType.BACKWARD || stepType == StepType.LAST;
-        if (!forward && !backward) {
-            return null;
-        }
-        final String fingerprint = fingerprints.getCumulativeFingerprint(decision.startElementId());
-        if (fingerprint == null) {
-            return null;
-        }
-        final StepLocation ref = request.getStepLocation();
-        // Two coverages frame the scan: the stream's records say where a scan may reach, and the scanned
-        // element's own coverage says where the last window ended - the frontier read back from the store
-        // rather than remembered between polls.
-        final Coverage stream = store.recordCoverage(() -> false);
-        final Coverage scanned = store.elementCoverage(
-                new ElementId(decision.startElementId()), fingerprint, () -> false);
-        // A step that names no record starts at the end of the stream it is walking from.
-        final List<Long> parts = stream.parts();
-        if (parts.isEmpty()) {
-            return null;
-        }
-        final long part = ref != null && ref.getMetaId() == metaId
-                ? ref.getPartIndex()
-                : (forward ? parts.getFirst() : parts.getLast());
-        final long streamFirst = stream.first(part);
-        final long streamLast = stream.last(part);
-        if (streamFirst < 0 || streamLast < 0) {
-            return null;
-        }
-
-        final long frontier = forward ? scanned.last(part) : scanned.first(part);
-        final long start;
-        if (frontier >= 0) {
-            // Carry on from where an earlier window of this same scan finished.
-            start = forward ? frontier + 1 : frontier - 1;
-        } else if (ref != null && ref.getMetaId() == metaId && ref.getPartIndex() == part
-                   && (stepType == StepType.FORWARD || stepType == StepType.BACKWARD)) {
-            start = forward ? ref.getRecordIndex() + 1 : ref.getRecordIndex() - 1;
-        } else {
-            start = forward ? streamFirst : streamLast;
-        }
-        if (start < streamFirst || start > streamLast) {
-            // The scan has run out of stream; the whole-stream path handles crossing to the next one.
-            return null;
-        }
-
-        final int window = steppingConfigProvider.get().getFilteredScanWindow();
-        final long end = forward
-                ? Math.min(streamLast, start + window - 1)
-                : Math.max(streamFirst, start - window + 1);
-        return forward
-                ? new RecordRange(part, start, end)
-                : new RecordRange(part, end, start);
-    }
-
-    private StepLocation onDemandTargetFor(final PipelineStepRequest request,
-                                           final Graph graph,
-                                           final Decision decision,
-                                           final StepDataStore store,
-                                           final long metaId,
-                                           final boolean extentFinal) {
-        if (isFilteredAtOrBelow(request, graph, decision.startElementId())) {
-            return null;
-        }
-        return demandedRecordFor(request, metaId, store, extentFinal);
-    }
-
-    /**
-     * The single record this step is about, if that can be worked out from what has already been captured.
-     * <p>
-     * A REFRESH names its record outright. Navigation does not - it has to be derived - but deriving it is
-     * simple arithmetic on the captured record coverage, and that arithmetic is just as valid against a
-     * capture still in flight as against a finished one: the record after the one the user is looking at is
-     * the record after it, whether or not the stream beyond has been captured yet. That is what lets an edit
-     * followed by a step (rather than a refresh) be answered by materialising one record instead of capturing
-     * the stream a second time.
-     * <p>
-     * Two kinds of step cannot be answered this way:
-     * <ul>
-     *   <li><b>Filtered</b> - a filter makes "the next record" mean "the next one that <i>matches</i>", which
-     *   cannot be known without running records to find out. The windowed scan (see {@link #filteredWindowFor})
-     *   answers those, and it needs the whole-stream path first.</li>
-     *   <li><b>LAST against a capture still running</b> - it asks where the stream <i>ends</i>, and the last
-     *   record captured so far is merely the last so far. Answering from it would land mid-stream.</li>
-     * </ul>
-     *
-     * @param extentFinal whether the captured extent is the whole stream, which is what LAST needs.
-     * @return the record, or null if this step's demand cannot be named yet.
-     */
-    private StepLocation demandedRecordFor(final PipelineStepRequest request,
-                                           final long metaId,
-                                           final StepDataStore store,
-                                           final boolean extentFinal) {
-        final StepType stepType = request.getStepType();
-        final StepLocation ref = request.getStepLocation();
-        if (stepType == StepType.REFRESH) {
-            // A reference to another stream's record is not a demand on this one; the resolver only ever
-            // refreshes the stream the reference is in, so this is a guard rather than a case.
-            return (ref != null && ref.getMetaId() == metaId) ? ref : null;
-        }
-        if (isAnyFilterApplied(request)) {
-            return null;
-        }
-        final Coverage stream = store.recordCoverage(() -> extentFinal);
-        final List<Long> parts = stream.parts();
-        if (parts.isEmpty()) {
-            return null;
-        }
-        return switch (stepType) {
-            case FIRST -> locationIn(metaId, stream, parts.getFirst(), true);
-            case LAST -> extentFinal ? locationIn(metaId, stream, parts.getLast(), false) : null;
-            case FORWARD, BACKWARD -> neighbourOf(metaId, stream, ref, stepType == StepType.FORWARD);
-            default -> null;
-        };
-    }
-
-    private StepLocation locationIn(final long metaId,
-                                    final Coverage stream,
-                                    final long partIndex,
-                                    final boolean first) {
-        final long record = first ? stream.first(partIndex) : stream.last(partIndex);
-        return record < 0 ? null : new StepLocation(metaId, partIndex, record);
-    }
-
-    /**
-     * @return the record either side of {@code ref}, continuing into the neighbouring <b>part</b> when it
-     * runs off the end of its own. Null once the stream itself runs out: crossing to another stream is the
-     * resolver's job - the next stream may not even be swept yet - and it needs the whole-stream path.
-     */
-    private StepLocation neighbourOf(final long metaId,
-                                     final Coverage stream,
-                                     final StepLocation ref,
-                                     final boolean forward) {
-        if (ref == null || ref.getMetaId() != metaId) {
-            return null;
-        }
-        final long part = ref.getPartIndex();
-        final long candidate = ref.getRecordIndex() + (forward ? 1 : -1);
-        // Bounds, not holds(): the question is whether the record EXISTS in the stream - a hole punched by
-        // an earlier on-demand materialisation is still a legitimate record to step to and materialise.
-        if (candidate >= stream.first(part) && candidate <= stream.last(part)) {
-            return new StepLocation(metaId, part, candidate);
-        }
-
-        // Off the end of this part. A multi-part stream is one stream to the user, so stepping should carry
-        // on into the next part rather than drop to reprocessing the whole stream to do it.
-        final List<Long> parts = stream.parts();
-        final int index = parts.indexOf(part);
-        if (index < 0) {
-            return null;
-        }
-        final int neighbourIndex = forward ? index + 1 : index - 1;
-        if (neighbourIndex < 0 || neighbourIndex >= parts.size()) {
-            return null;
-        }
-        return locationIn(metaId, stream, parts.get(neighbourIndex), forward);
-    }
-
-    private boolean isAnyFilterApplied(final PipelineStepRequest request) {
-        return request.getStepFilterMap() != null
-               && request.getStepFilterMap().values().stream()
-                       .anyMatch(settings -> settings != null && settings.isFilterApplied());
-    }
-
-    private boolean isFilteredAtOrBelow(final PipelineStepRequest request,
-                                        final Graph graph,
-                                        final String startElementId) {
-        if (request.getStepFilterMap() == null || request.getStepFilterMap().isEmpty()) {
-            return false;
-        }
-        final Set<String> atOrBelow = new HashSet<>();
-        collectAtOrBelow(graph, startElementId, atOrBelow);
-        return atOrBelow.stream()
-                .map(request::getStepFilterSettings)
-                .anyMatch(settings -> settings != null && settings.isFilterApplied());
-    }
-
-    private void collectAtOrBelow(final Graph graph, final String elementId, final Set<String> collected) {
-        if (!collected.add(elementId)) {
-            return;
-        }
-        graph.parentsOf().forEach((child, parents) -> {
-            if (parents.contains(elementId)) {
-                collectAtOrBelow(graph, child, collected);
-            }
-        });
-    }
-
-    private StreamSweep launchFor(final String sessionId,
+    private StreamSweep producerFor(final String sessionId,
                                   final PipelineStepRequest request,
                                   final long metaId,
                                   final ElementFingerprints fingerprints,
                                   final List<StreamSweep> priorSweeps,
                                   final List<StreamSweep> running) {
-        // True only if a prior sweep of this stream captured it in full WITHOUT error, so its upstream chunks
-        // are complete and a whole-stream reprocess from them is safe. An errored sweep is also "fully
-        // captured" (markError stops readers waiting) but its store is truncated, so it must NOT count -
-        // reprocessing from it would silently serve a short stream.
+        // True only if a prior sweep of this stream ran to the end WITHOUT error. Under the skeleton
+        // default that is normally a completed BACKBONE (boundary IO only) - what makes a reprocess from it
+        // safe is the planner's per-element completeness check (StagePlanner.covers), not whole-pipeline
+        // capture. An errored sweep also "ends" (markError stops readers waiting) but its store is
+        // truncated, so it must NOT count - reprocessing from it would silently serve a short stream.
         final boolean priorCompleteCapture = priorSweeps.stream().anyMatch(StreamSweep::isSuccessfullyCaptured);
         // A capture of this stream that is still running. Its records are arriving as we speak, so a step
         // whose demand it has not reached yet can wait on it instead of launching a second capture.
         final StreamSweep liveProducer = priorSweeps.stream()
-                .filter(prior -> !prior.isFullyCaptured())
+                .filter(prior -> !prior.hasEnded())
                 .findFirst()
                 .orElse(null);
 
@@ -701,8 +419,8 @@ public class SteppingService {
             // running (scenario C) instead of costing a full re-sweep.
             final StepLocation demanded = priorCompleteCapture
                     ? null
-                    : demandedRecordFor(request, metaId, store, false);
-            final StagePlanner.RecordSpan span = spanFor(demanded);
+                    : demandPlanner.demandedRecordFor(request, metaId, store, false);
+            final RecordRange span = demanded == null ? null : RecordRange.of(demanded);
             if (priorCompleteCapture || span != null) {
                 final Decision decision =
                         reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store, fingerprints, span);
@@ -712,11 +430,11 @@ public class SteppingService {
                     // resolver just needs a sweep signalling the records so it navigates them as usual.
                     // Signalled for the record the DEMAND named, not for the request's reference location -
                     // navigation demands the record next to its reference, and FIRST has no reference at all.
-                    return withStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded)),
+                    return applyStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded)),
                             priorSweeps);
                 }
                 if (!decision.fullSweep()) {
-                    RecordRange range = onDemandRangeFor(request, graph, decision, store, fingerprints,
+                    RecordRange range = demandPlanner.onDemandRangeFor(request, graph, decision, store, fingerprints,
                             metaId, priorCompleteCapture);
                     // A plan made against a span is only good for materialising that span. If the range
                     // computation declined (e.g. the step turned out to need whole-stream work), a
@@ -736,7 +454,7 @@ public class SteppingService {
                     // fast.
                     if (range != null && span == null
                         && shouldMaterialiseEagerly(store, fingerprints, priorSweeps)) {
-                        LOGGER.debug(() -> "launchFor() - small stream, materialising the whole extent");
+                        LOGGER.debug(() -> "producerFor() - small stream, materialising the whole extent");
                         range = null;
                     }
                     if (range != null) {
@@ -750,7 +468,7 @@ public class SteppingService {
                                 satisfiedFromStore(metaId, store, decision.startElementId(),
                                         fingerprints, range);
                         if (satisfied != null) {
-                            return withStreamMetadata(satisfied, priorSweeps);
+                            return applyStreamMetadata(satisfied, priorSweeps);
                         }
                         for (final StreamSweep producer : running) {
                             if (producer.isOnDemand() && overlaps(producer.getDemand(), range)) {
@@ -760,9 +478,9 @@ public class SteppingService {
                     }
                     reprocessLaunches.incrementAndGet();
                     final StreamSweep sweep = launchReprocess(request, metaId, decision.startElementId(),
-                            decision.feedElementId(), store, fingerprints, range);
+                            decision.upstreamElementId(), store, fingerprints, range);
                     sweep.setDemand(range);
-                    return withStreamMetadata(sweep, priorSweeps);
+                    return applyStreamMetadata(sweep, priorSweeps);
                 }
             }
             // Nothing could be planned - either the step's demand cannot be named until more has been
@@ -827,9 +545,9 @@ public class SteppingService {
      * stream, so they are taken from a capture of it: preferably a complete one, else whatever capture is
      * running. Without this, every record served from a materialisation reports its part unsegmented.
      */
-    private StreamSweep withStreamMetadata(final StreamSweep sweep, final List<StreamSweep> priorSweeps) {
+    private StreamSweep applyStreamMetadata(final StreamSweep sweep, final List<StreamSweep> priorSweeps) {
         priorSweeps.stream()
-                .max(java.util.Comparator.comparing(StreamSweep::isSuccessfullyCaptured))
+                .max(Comparator.comparing(StreamSweep::isSuccessfullyCaptured))
                 .ifPresent(sweep::copyStreamMetadataFrom);
         return sweep;
     }
@@ -861,7 +579,7 @@ public class SteppingService {
                 .findFirst()
                 .orElse(null);
         if (existing != null) {
-            return existing.isFullyCaptured() ? null : StreamSweep.waitingOn(existing);
+            return existing.hasEnded() ? null : StreamSweep.waitingOn(existing);
         }
         backboneLaunches.incrementAndGet();
         LOGGER.debug(() -> "backboneFor() - launching skeleton capture of stream " + metaId
@@ -889,17 +607,7 @@ public class SteppingService {
             // sorting nulls throws.
             return null;
         }
-        return "backbone:" + boundaryFingerprints.stream().sorted().collect(java.util.stream.Collectors.joining("+"));
-    }
-
-    /**
-     * The one-record span a demand names, or null if it named none.
-     */
-    private StagePlanner.RecordSpan spanFor(final StepLocation demanded) {
-        return demanded == null
-                ? null
-                : new StagePlanner.RecordSpan(
-                        demanded.getPartIndex(), demanded.getRecordIndex(), demanded.getRecordIndex());
+        return "backbone:" + boundaryFingerprints.stream().sorted().collect(Collectors.joining("+"));
     }
 
     /**
@@ -930,7 +638,7 @@ public class SteppingService {
                                         final Graph graph,
                                         final StepDataStore store,
                                         final ElementFingerprints fingerprints) {
-        if (liveProducer == null || isAnyFilterApplied(request)) {
+        if (liveProducer == null || demandPlanner.isAnyFilterApplied(request)) {
             return null;
         }
         // The frontier: the furthest record the capture has signalled, in the furthest part it has reached.
@@ -946,11 +654,11 @@ public class SteppingService {
             return null;
         }
         final Decision atFrontier = reprocessPlanner.plan(graph.elements(), graph.parentsOf(), store,
-                fingerprints, new StagePlanner.RecordSpan(part, frontier, frontier));
+                fingerprints, new RecordRange(part, frontier, frontier));
         if (atFrontier.fullSweep()) {
             return null;
         }
-        LOGGER.debug(() -> "launchFor() - waiting for the capture already running past " + part + ":" + frontier);
+        LOGGER.debug(() -> "waitForFrontier() - waiting for the capture already running past " + part + ":" + frontier);
         return StreamSweep.waitingOn(liveProducer);
     }
 
@@ -977,7 +685,6 @@ public class SteppingService {
                 return null;
             }
         }
-        //
         return signalledSweep(metaId, store, range);
     }
 
@@ -988,7 +695,7 @@ public class SteppingService {
      */
     private StreamSweep signalledSweep(final long metaId, final StepDataStore store, final RecordRange range) {
         final StreamSweep sweep = new StreamSweep(metaId, store);
-        sweep.setOnDemand("(already materialised)");
+        sweep.markOnDemand();
         sweep.setDemand(range);
         for (long record = range.firstRecord(); record <= range.lastRecord(); record++) {
             sweep.recordCaptured(new StepLocation(metaId, range.partIndex(), record));
@@ -997,10 +704,6 @@ public class SteppingService {
         return sweep;
     }
 
-    /**
-     * @return true if a producer's demand contains every record of the asked range - same part, asked range
-     * within the demanded one.
-     */
     /**
      * A running producer is worth waiting on if it is producing <b>any</b> of the asked records, not only
      * all of them. A filtered scan recomputes its window from the committed frontier on every wakeup, so
@@ -1018,16 +721,18 @@ public class SteppingService {
     }
 
     /**
-     * @return the number of stream fills served by reprocessing just the changed elements (edit reuse).
-     */
-    /**
-     * @return how many steps were answered by materialising a single record rather than re-running the
-     * edited element over the whole stream. For metrics and tests.
+     * @return how many launches materialised a <b>bounded range</b> of records rather than re-running over
+     * the whole stream. A subset of {@link #getReprocessLaunchCount}. For metrics and tests.
      */
     public long getOnDemandLaunchCount() {
         return onDemandLaunches.get();
     }
 
+    /**
+     * @return how many reprocesses were launched - stream fills that re-ran only the changed elements from
+     * stored upstream output (edit reuse), whole-stream and ranged alike. Includes every launch counted by
+     * {@link #getOnDemandLaunchCount}. For metrics and tests.
+     */
     public long getReprocessLaunchCount() {
         return reprocessLaunches.get();
     }
@@ -1048,14 +753,14 @@ public class SteppingService {
 
     /**
      * Launch an asynchronous reprocess of just the changed elements into the stream's existing store, feeding
-     * them {@code feedElementId}'s already-captured output. The reprocessed chunks land under their new
+     * them {@code upstreamElementId}'s already-captured output. The reprocessed chunks land under their new
      * fingerprints alongside the reused upstream ones, so a later step reads both from the one store. As with
      * {@link #launchSweep}, every way the task can end signals the sweep.
      */
     private StreamSweep launchReprocess(final PipelineStepRequest request,
                                         final long metaId,
                                         final String startElementId,
-                                        final String feedElementId,
+                                        final String upstreamElementId,
                                         final StepDataStore store,
                                         final ElementFingerprints fingerprints,
                                         final RecordRange onDemandRange) {
@@ -1064,34 +769,20 @@ public class SteppingService {
                            + ", range " + onDemandRange);
         final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
         if (onDemandRange != null) {
-            // Materialising one record rather than capturing the stream: what this sweep can answer is
-            // decided by what the store holds, not by a contiguous range.
-            sweep.setOnDemand(startElementId);
+            // Materialising a bounded range rather than capturing the stream: what this sweep can answer
+            // is decided by what the store holds, not by a contiguous range.
+            sweep.markOnDemand();
             onDemandLaunches.incrementAndGet();
         }
-        final Executor executor = executorProvider.get(THREAD_POOL);
-        try {
-            CompletableFuture
-                    .runAsync(taskContextFactory.context("Stepping reprocess", taskContext ->
-                            reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
-                                    startElementId, feedElementId, store, sweep, fingerprints,
-                                    MidPipelineScope.ELEMENT_AND_DESCENDANTS, onDemandRange)), executor)
-                    .whenComplete((unused, t) -> {
-                        if (t != null) {
-                            sweep.markError(t);
-                        } else if (!sweep.isFullyCaptured()) {
-                            sweep.markError(new RuntimeException(
-                                    "Stepping reprocess of stream " + metaId + " ended without completing"));
-                        }
-                    });
-        } catch (final RuntimeException e) {
-            sweep.markError(e);
-        }
+        runProducer("Stepping reprocess", metaId, sweep, taskContext ->
+                reprocessDriverProvider.get().reprocess(taskContext, request, metaId,
+                        startElementId, upstreamElementId, store, sweep, fingerprints,
+                        MidPipelineScope.ELEMENT_AND_DESCENDANTS, onDemandRange));
         return sweep;
     }
 
     private void closeSession(final SteppingSession session) {
-        session.getActiveSweeps().forEach(this::terminateSweep);
+        session.getOwnedSweeps().forEach(this::terminateSweep);
         deleteCaptureSession(session.getSessionId());
     }
 

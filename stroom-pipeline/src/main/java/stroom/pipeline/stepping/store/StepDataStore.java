@@ -18,7 +18,6 @@ package stroom.pipeline.stepping.store;
 
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.stepping.capture.StreamSweep;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -61,7 +60,7 @@ import java.util.function.BooleanSupplier;
  * All public methods synchronize on the instance, so a stream's capture and the reads serving steps from
  * it are serialized (a large read briefly blocks capture). A read/write or per-file lock would be the
  * next step if capture latency ever matters. A record index beyond what has been written reads back as
- * {@link Optional#empty()} rather than failing - {@link StreamSweep}'s progress signal is how a reader
+ * {@link Optional#empty()} rather than failing - {@code StreamSweep}'s progress signal is how a reader
  * waits for a record instead of guessing.
  */
 public class StepDataStore {
@@ -102,7 +101,9 @@ public class StepDataStore {
 
     /**
      * Persist one element's IO for one record. Records for a given (part, element, fingerprint) must be
-     * appended in ascending record-index order starting at 0.
+     * appended in ascending record-index order starting at the part's base index, which may be non-zero
+     * (reader/text record detectors are 1-based). A test seam: production writes go through
+     * {@code putRecord}.
      */
     public synchronized void putElementData(final StepLocation location,
                                             final ElementId elementId,
@@ -152,7 +153,7 @@ public class StepDataStore {
         totalBytes += bytes.length;
         partMinRecordIndex.merge(location.getPartIndex(), recordIndex, Math::min);
         partMaxRecordIndex.merge(location.getPartIndex(), recordIndex, Math::max);
-        touchFingerprint(elementId, fingerprint);
+        enforceRetention(elementId, fingerprint);
     }
 
     /**
@@ -337,7 +338,7 @@ public class StepDataStore {
                 file.markOutOfBandWrite();
             }
             totalBytes += write.bytes().length;
-            touchFingerprint(write.elementId(), write.fingerprint());
+            enforceRetention(write.elementId(), write.fingerprint());
         }
         if (stateFile != null) {
             stateFile.append(recordIndex, stateBytes);
@@ -594,7 +595,7 @@ public class StepDataStore {
 
     /**
      * @return the distinct element ids that have any captured IO in this store (across parts and
-     * fingerprints). Empty before the first sweep; used to derive the steppable element set for reprocess
+     * fingerprints). Empty before the first sweep; unioned into the pipeline-derived steppable set for reprocess
      * planning without re-deriving it from element roles.
      */
     public synchronized Set<String> getCapturedElementIds() {
@@ -743,15 +744,25 @@ public class StepDataStore {
         });
     }
 
+    /**
+     * Refresh a version's recency in the retention LRU. Reads call this too - a version being read is a
+     * version worth keeping - but a read never deletes anything: eviction is enforced only on writes
+     * ({@link #enforceRetention}), so a get can never remove a sibling version's files as a side effect.
+     */
     private void touchFingerprint(final ElementId elementId, final String fingerprint) {
+        elementFingerprintLru.computeIfAbsent(
+                        elementId.getId(),
+                        k -> new LinkedHashMap<String, Boolean>(16, 0.75f, true))
+                .put(fingerprint, Boolean.TRUE);
+    }
+
+    private void enforceRetention(final ElementId elementId, final String fingerprint) {
+        touchFingerprint(elementId, fingerprint);
         // An element edited repeatedly accumulates a fingerprint per distinct version, and the oldest
         // unpinned one is evicted - which is what makes reverting an edit free only while the prior version
         // is still retained. Versions something is using are pinned (see pin()) and skipped, so the limit
         // bounds the retained HISTORY rather than capping what may be in use at once.
-        final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.computeIfAbsent(
-                elementId.getId(),
-                k -> new LinkedHashMap<>(16, 0.75f, true));
-        lru.put(fingerprint, Boolean.TRUE);
+        final LinkedHashMap<String, Boolean> lru = elementFingerprintLru.get(elementId.getId());
 
         // Always retain at least the fingerprint we just touched; a misconfigured 0/negative retain
         // limit must not delete the data being written.

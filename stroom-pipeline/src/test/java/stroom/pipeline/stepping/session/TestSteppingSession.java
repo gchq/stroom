@@ -16,10 +16,6 @@
 
 package stroom.pipeline.stepping.session;
 
-import stroom.pipeline.shared.Rec;
-import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.XPathFilter;
-import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -106,7 +102,7 @@ class TestSteppingSession {
     }
 
     @Test
-    void testEnsureStreamSweptIsLazyAndCached() {
+    void testSweepForIsLazyAndCached() {
         final AtomicInteger launches = new AtomicInteger();
         final StreamSweep s10 = new StreamSweep(10L, null);
         final SteppingSession session = session(List.of(10L, 20L), Map.of(10L, s10), launches);
@@ -114,7 +110,7 @@ class TestSteppingSession {
         assertThat(session.sweepFor(10L, req(StepType.FIRST, null), FINGERPRINTS)).isSameAs(s10);
         assertThat(session.sweepFor(10L, req(StepType.FIRST, null), FINGERPRINTS)).isSameAs(s10);
         assertThat(launches.get()).isEqualTo(1);
-        assertThat(session.getActiveSweeps()).containsExactly(s10);
+        assertThat(session.getOwnedSweeps()).containsExactly(s10);
     }
 
     // --- materialisations: a registry of running producers, not a cache -------------------------
@@ -140,7 +136,7 @@ class TestSteppingSession {
                     launchCount.incrementAndGet();
                     runningSeen.add(running);
                     final StreamSweep sweep = new StreamSweep(metaId, null);
-                    sweep.setOnDemand("e1");
+                    sweep.markOnDemand();
                     if (completeOnLaunch) {
                         sweep.markFullyCaptured();
                     }
@@ -217,7 +213,7 @@ class TestSteppingSession {
                     launches.incrementAndGet();
                     runningSeen.add(running);
                     final StreamSweep sweep = new StreamSweep(metaId, null);
-                    sweep.setOnDemand("e1");
+                    sweep.markOnDemand();
                     return sweep;
                 },
                 s -> {
@@ -362,7 +358,7 @@ class TestSteppingSession {
         assertThat(launches.get()).as("no step lookup ever hits the backbone's cache entry").isEqualTo(2);
         assertThat(priorSeen.get(1)).as("but the session owns it and offers it as prior work")
                 .containsExactly(backbone);
-        assertThat(session.getActiveSweeps()).as("and will terminate it on close").containsExactly(backbone);
+        assertThat(session.getOwnedSweeps()).as("and will terminate it on close").containsExactly(backbone);
     }
 
     @Test
@@ -417,7 +413,7 @@ class TestSteppingSession {
         assertThat(first.isWaitHandle()).isTrue();
         assertThat(launches.get()).as("the launcher was consulted both times").isEqualTo(2);
         assertThat(second).isNotSameAs(first);
-        assertThat(session.getActiveSweeps()).as("a handle owns nothing, so there is nothing to terminate")
+        assertThat(session.getOwnedSweeps()).as("a handle owns nothing, so there is nothing to terminate")
                 .isEmpty();
     }
 
@@ -431,9 +427,9 @@ class TestSteppingSession {
         assertThat(handle.coverage().isExtentFinal()).isFalse();
         // ...but the producer's progress is exactly what it is for.
         assertThat(handle.getVersion()).isEqualTo(producer.getVersion());
-        assertThat(handle.isFullyCaptured()).isFalse();
+        assertThat(handle.hasEnded()).isFalse();
         producer.markFullyCaptured();
-        assertThat(handle.isFullyCaptured()).isTrue();
+        assertThat(handle.hasEnded()).isTrue();
     }
 
     @Test
@@ -490,7 +486,7 @@ class TestSteppingSession {
     }
 
     @Test
-    void testActiveSweepsIncludeRunningMaterialisations() {
+    void testOwnedSweepsIncludeRunningMaterialisations() {
         // Terminate must reach every producer; a materialisation missing from this list would keep running
         // after the session closed.
         final AtomicInteger launches = new AtomicInteger();
@@ -498,7 +494,7 @@ class TestSteppingSession {
 
         final StreamSweep materialisation = session.sweepFor(10L, onDemandReq(), FINGERPRINTS);
 
-        assertThat(session.getActiveSweeps()).contains(materialisation);
+        assertThat(session.getOwnedSweeps()).contains(materialisation);
     }
 
     @Test
@@ -520,7 +516,10 @@ class TestSteppingSession {
                 20L, sweptStream(dir, 20L, 2, true));
         final SteppingSession session = session(List.of(10L, 20L), sweeps, launches);
 
-        final SessionStepResult result = resolver.resolve(session, req(StepType.FIRST, null), FINGERPRINTS, 5_000);
+        // Long.MAX_VALUE means "wait as long as it takes" - a wrapped (overflowed) deadline would land in
+        // the past and abandon every step immediately, so this doubles as the saturation pin.
+        final SessionStepResult result =
+                resolver.resolve(session, req(StepType.FIRST, null), FINGERPRINTS, Long.MAX_VALUE);
         assertThat(result.foundRecord()).isTrue();
         assertThat(result.complete()).isTrue();
         assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 0));
@@ -550,7 +549,7 @@ class TestSteppingSession {
                 (metaId, request, fp, priorSweeps, running) -> {
                     assertThat(metaId).as("the resolver re-plans this stream, it does not cross").isEqualTo(10L);
                     final StreamSweep window = new StreamSweep(10L, store);
-                    window.setOnDemand("e1");
+                    window.markOnDemand();
                     if (launches.incrementAndGet() == 1) {
                         window.recordCaptured(new StepLocation(10L, 0, 1));
                         window.recordCaptured(new StepLocation(10L, 0, 2));
@@ -722,6 +721,54 @@ class TestSteppingSession {
     }
 
     @Test
+    void testBackwardIgnoresAReferenceToAStreamOutsideTheSession(@TempDir final Path dir) {
+        // The reference comes from the client, so it is untrusted input: a BACKWARD carrying a stream id
+        // outside the session's candidate list must fall back to the last stream, not honour the ref.
+        final Map<Long, StreamSweep> sweeps = Map.of(
+                10L, sweptStream(dir, 10L, 3, true),
+                20L, sweptStream(dir, 20L, 2, true));
+        final SteppingSession session = session(List.of(10L, 20L), sweeps, new AtomicInteger());
+
+        final SessionStepResult result = resolver.resolve(
+                session, req(StepType.BACKWARD, new StepLocation(99L, 0, 1)), FINGERPRINTS, 5_000);
+        assertThat(result.foundLocation())
+                .as("fell back to the last stream's last record")
+                .isEqualTo(new StepLocation(20L, 0, 1));
+    }
+
+    @Test
+    void testAnUnproductiveLauncherEndsAtTheDeadlineWithoutCrossing(@TempDir final Path dir) {
+        // A completed on-demand sweep makes the resolver re-plan rather than cross; if the launcher never
+        // makes progress (returns an empty, completed materialisation every time), the only exit is the
+        // deadline. This pins that the loop TERMINATES there with an honest "incomplete" - not a hang, and
+        // never a bogus crossing that would read "my empty window" as "no match in this stream".
+        final StepDataStore store = new StepDataStore(dir.resolve("10"), new SteppingConfig());
+        final AtomicInteger launches = new AtomicInteger();
+        final SteppingSession session = new SteppingSession(
+                "session",
+                List.of(10L, 20L),
+                (metaId, request, fp, priorSweeps, running) -> {
+                    assertThat(metaId).as("never crosses into the next stream").isEqualTo(10L);
+                    launches.incrementAndGet();
+                    final StreamSweep sweep = new StreamSweep(10L, store);
+                    sweep.markOnDemand();
+                    sweep.markFullyCaptured();
+                    return sweep;
+                },
+                s -> {
+                },
+                sweep -> {
+                },
+                new SteppingConfig().getMaxSweptStreamsPerSession());
+
+        final SessionStepResult result = resolver.resolve(
+                session, req(StepType.FORWARD, new StepLocation(10L, 0, 0)), FINGERPRINTS, 600);
+        assertThat(result.foundRecord()).isFalse();
+        assertThat(result.complete()).as("ended as incomplete at the deadline, not by concluding").isFalse();
+        assertThat(launches.get()).as("it kept re-planning until the deadline").isGreaterThan(1);
+    }
+
+    @Test
     void testForwardIgnoresAReferenceToAStreamOutsideTheSession(@TempDir final Path dir) {
         // The reference location comes from the client. Honouring a stream outside the session's (permission
         // filtered) list would sweep data the session was never scoped to; the live path resets FORWARD to
@@ -737,7 +784,7 @@ class TestSteppingSession {
         assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 0));
         // The out-of-session stream was never swept.
         assertThat(launches.get()).isEqualTo(1);
-        assertThat(session.getActiveSweeps()).containsExactly(sweeps.get(10L));
+        assertThat(session.getOwnedSweeps()).containsExactly(sweeps.get(10L));
     }
 
     @Test
@@ -836,12 +883,12 @@ class TestSteppingSession {
         }
 
         @Override
-        public boolean isFullyCaptured() {
+        public boolean hasEnded() {
             if (!fired) {
                 fired = true;
                 onFirstIsComplete.accept(this);
             }
-            return super.isFullyCaptured();
+            return super.hasEnded();
         }
     }
 }

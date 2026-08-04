@@ -28,7 +28,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
 import stroom.pipeline.stepping.SteppingService;
-import stroom.pipeline.stepping.capture.ReprocessDriver.RecordRange;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.SteppingService.SteppingCaptureResult;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.CapturedElementData;
@@ -175,6 +175,7 @@ class TestReprocessFromStore extends TranslationTest {
                     sourceStore.getElementData(midLocation, startId, fingerprint).orElse(null);
             final CapturedElementData replayedMid =
                     onDemandStore.getElementData(midLocation, startId, fingerprint).orElse(null);
+            assertThat(sweptMid).as("the sweep captured the mid record").isNotNull();
             assertThat(replayedMid).as("the record was materialised at its own index, not as record 0")
                     .isNotNull();
             assertThat(Arrays.equals(replayedMid.output().data(), sweptMid.output().data()))

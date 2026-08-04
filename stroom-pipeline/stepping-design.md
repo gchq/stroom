@@ -5,6 +5,31 @@ How stepping works, from the browser down to the bytes on disk.
 Read this before changing anything under `stroom.pipeline.stepping`. It explains the layers, why the
 async behaviour is shaped the way it is, and what will bite you if you assume it works the obvious way.
 
+**How to read this document.** First visit: §1 (the problem, and the guarantees R1-R11 every trade-off
+answers to), then §2 (the layers, the capture/read seam - the one structural rule - and the vocabulary),
+then §3-§4 (fingerprints and the store - why reuse needs no invalidation logic). That is the model; §5-§7
+then show the machinery and a step actually happening - noting that §6-§7's walkthroughs are written
+against the full-sweep fallback for clarity, and §11's opening describes the launch ladder the skeleton
+DEFAULT actually runs. Before changing code, read §5 and §10 (traps) - they exist because the obvious
+simplifications are wrong. §8-§9 are reference: look up, don't read through. §11 holds the current capture
+modes, the scenarios (A-H) the design is graded against, the decisions taken, and - clearly marked - the
+build history; read its opening and scenario table, and go deeper only when you need to know *why*
+something is shaped as it is.
+
+| § | Section | Read it as |
+|---|---|---|
+| 1 | The problem, and the guarantees | Orientation |
+| 2 | Layers, seam, vocabulary | The structural rule + glossary |
+| 3 | Fingerprints | Why reuse is automatic |
+| 4 | The store | Bytes, framing, retention |
+| 5 | The async model | The concurrency rules (load-bearing) |
+| 6 | Control flow, end to end | One step, hop by hop |
+| 7 | Worked examples | Step semantics (full-sweep-mode walkthroughs) |
+| 8 | Configuration | Reference |
+| 9 | Tests | Reference - what guards what |
+| 10 | Traps | Read before changing anything |
+| 11 | Capture modes, scenarios, decisions, history | The default engine + how it got here |
+
 ---
 
 ## 1. The problem this solves
@@ -87,15 +112,17 @@ stroom.pipeline.stepping/
   fingerprint/  what makes a chunk key      ElementFingerprinter, ElementFingerprints
   store/        bytes on disk               StepDataStore, ElementSegmentFile, StepDataStoreManager,
                                             StepDataStoreException, SteppingConfig,
+                                            Coverage, RecordRange, StorePin,
                                             CapturedElementData, CapturedData,
                                             CapturedElementDataSerializer, CapturedElementDataMapper,
                                             SourceLocationSerializer, RecordScopeState,
                                             RecordScopeStateSerializer
-  capture/      the write side              StreamCaptureDriver, ReprocessDriver, StreamSweep,
+  capture/      the write side              StreamCaptureDriver, ReprocessDriver, SweepRun, StreamSweep,
                                             CaptureWatermark, CapturedRecordFeed,
-                                            SteppingController, ElementMonitor, Recorder, RecordDetector,
-                                            SteppingFilter
-  read/         the read side               SessionStepResolver, StoreStepResolver,
+                                            SteppingController, SteppingCounter, ElementMonitor,
+                                            Recorder, RecordDetector, SteppingFilter
+  read/         the read side               SessionStepResolver, StoreStepResolver, StepDemandPlanner,
+                                            SteppableElements,
                                             PersistedFilterEvaluator, StagePlanner, ReprocessPlanner,
                                             SteppingGraphBuilder, StageGraphPlanner
   session/      what a user is stepping     SteppingSession, SteppingSessionRegistry
@@ -104,8 +131,10 @@ stroom.pipeline.stepping/
                                             PipelineSteppingModule
 ```
 
-`capture/` and `read/` never call each other. They meet at `store/` and at the `CaptureWatermark` progress
-signal, and that is the seam the whole design rests on.
+`capture/` and `read/` never call each other. They meet at `store/`, at the `CaptureWatermark` progress
+signal, and at the read-facing surface of the `StreamSweep` the session hands the resolver (its coverage,
+error, per-stream metadata and mode marks - never its capture machinery). That seam is what the whole
+design rests on.
 
 ```mermaid
 flowchart TB
@@ -159,7 +188,8 @@ flowchart TB
 ```
 
 **The one-line summary:** the write side fills a store asynchronously; the read side waits for and reads
-from that store. They meet only at `StepDataStore` and at the sweep's `CaptureWatermark`.
+from that store. They meet at `StepDataStore`, at the sweep's `CaptureWatermark`, and at the sweep's
+read-facing surface (coverage, error, per-stream metadata, mode marks).
 
 ### Layer responsibilities
 
@@ -169,7 +199,7 @@ One class, one job:
 |---|---|---|
 | Client | `SteppingPresenter` | The durable session id; long-polls until a step resolves |
 | REST | `SteppingResourceImpl` | Transport only |
-| Service | `SteppingService` | The way in: permission check, fingerprints, stream list, orchestration |
+| Service | `SteppingService` | The way in: permission check, fingerprints, stream list, launch policy |
 | Service | `SteppingSessionRegistry` | Sessions keyed by `(user, id)`; self-heal; idle reap; terminate |
 | Service | `SteppingResultMapper` | Domain result → wire `SteppingResult` |
 | Service | `SteppingPipelineLookup` | The screen's pre-step lookups; touches no session, store or sweep |
@@ -177,21 +207,68 @@ One class, one job:
 | Read | `SessionStepResolver` | Waiting, crossing streams, merging stream metadata |
 | Read | `StoreStepResolver` | Pure: navigation and filtering over one store. No async |
 | Read | `PersistedFilterEvaluator` | Filter matching against captured IO |
+| Read | `StepDemandPlanner` | The arithmetic of what a step demands: its record, its window, a filtered scan's next window |
 | Write | `StreamCaptureDriver` | Runs the pipeline once per stream, capturing every record |
 | Write | `ReprocessDriver` | Re-runs an edited element and its downstream from stored upstream output |
 | Write | `StreamSweep` | One stream's capture in flight: its store, its per-stream metadata, its task handle |
 | Write | `CaptureWatermark` | How far a producer has got, and how a reader waits for it. Held by the sweep |
 | Write | `SteppingController` | The framework's per-record callback; persists every element's IO |
+| Write | `SweepRun` | The run harness both drivers share: context/terminate handshake, pins, security, terminal marks |
 | Storage | `StepDataStore` | Per-element files for one stream, addressed by record index |
 | Storage | `ElementSegmentFile` | One element's file format: appended bytes + offset index |
 | Storage | `StepDataStoreManager` | Session directories; orphan cleanup |
+| Storage | `Coverage` | The one read-side question: which records are held, and is the extent final |
+| Storage | `RecordRange` | A contiguous run of records within one part - the records a step is about |
+| Storage | `StorePin` | Reference-counted claims that make versions unevictable while read or written |
 | Keys | `ElementFingerprinter` | The fingerprints that make reuse work |
 
-`SteppingService` no longer keys sessions, reaps them, or builds the wire result — those are the three rows
-below it. What it still does is the sequence: check permission, compute fingerprints, resolve the stream
-list *as the requesting user*, get a session, resolve the step, map the answer.
+`SteppingService` no longer keys sessions, reaps them, builds the wire result, or computes demands — those
+live in the rows around it. What it keeps is the sequence (check permission, compute fingerprints, resolve
+the stream list *as the requesting user*, get a session, resolve the step, map the answer) plus the launch
+policy: deciding, per step, whether a producer must be launched at all, and which kind (`producerFor`).
 
 ---
+
+### Vocabulary
+
+One line per term, with the owning class - everything else in this document leans on these:
+
+- **Sweep** (`StreamSweep`) - one asynchronous producer filling a stream's store. Five kinds share the
+  class: *full sweep*, *backbone*, *materialisation*, *wait handle*, *signalled* - see the taxonomy table
+  in §11.
+- **Capture** - running the pipeline (whole or truncated) over a stream, persisting per-record IO.
+- **Backbone / skeleton** - a capture truncated at the record boundary (the parser): stream shape and
+  parser IO only, everything below materialised on demand. The default first pass (`stepping.skeletonSweep`).
+- **Materialisation** - an on-demand reprocess of a *bounded range* of records for the elements a step
+  needs, fed from stored upstream output (`ReprocessDriver`).
+- **Reprocess** - re-running an edited element and its downstream from stored upstream output; whole-stream
+  or ranged (a materialisation is the ranged kind).
+- **Fingerprint** (`ElementFingerprinter`) - per element: *own* (its config+code) and *cumulative* (own +
+  everything upstream). Keys every stored chunk.
+- **Signature** (`ElementFingerprints.getSignature`) - one hash over ALL cumulative fingerprints: the
+  identity of a whole configuration. Sessions cache sweeps by `(stream, signature)`; abandonment compares
+  individual *fingerprints* - that difference is scenario C.
+- **Frontier / watermark** (`CaptureWatermark`) - the highest record a producer has committed and
+  signalled; read from the watermark while it runs, or back out of the store between polls.
+- **Coverage** (`store/Coverage`) - the one read-side question: which records are held, and is the extent
+  final. `CapturedRange` is its navigation view.
+- **Demand** (`store/RecordRange`) - the contiguous run of records a step is about.
+- **Window** - a demand widened: the *prefetch* window around unfiltered navigation, or the *filtered-scan*
+  window a filter is evaluated over (`StepDemandPlanner`).
+- **Eager promotion** - on a small skeleton-swept stream, promoting a demand to the whole extent so later
+  steps are store reads (`stepping.eagerMaterialisationRecords`).
+- **Wait handle** (`StreamSweep.waitingOn`) - a sweep that serves nothing of its own and only carries
+  another producer's progress signal.
+- **Pin** (`StorePin`) - a reference-counted claim making fingerprint versions unevictable while read or
+  written.
+- **Session** (`SteppingSession`) - the durable owner of one user's stream selection: sweep cache,
+  lifecycle, lazy sweeping.
+- **Store-as-cache** - the rule that materialised records live only in the store; nothing caches them by
+  step identity.
+- **Indicative counts** - counter values served from a run that never saw the preceding records, marked as
+  such on the wire (`CapturedElementData.indicativeCounts`).
+- **Record-index base** - per-part record indices are NOT always 0-based (reader/text detectors are
+  1-based); the store preserves the detector's numbering.
 
 ## 3. Fingerprints — why reuse is automatic
 
@@ -243,6 +320,13 @@ It is also **idempotent**: an `(element, fingerprint, record)` already present i
 means same config and code, hence identical output. This is what lets a stream be re-swept after an edit —
 the edited element and its downstream get new keys and are written, while untouched elements are left
 alone. Without it, a re-sweep would trip the in-order append check on the very first unchanged element.
+
+**Retention.** Each element keeps at most `maxRetainedFingerprintsPerElement` fingerprint versions on
+disk, LRU-evicted - which is what makes reverting an edit free only while the prior version is still
+retained. Eviction is enforced on *writes* only (a read refreshes recency but never deletes), and a
+version something is using is pinned (`StepDataStore.pin`, reference-counted): the limit gives way to a
+pin rather than deleting data under a producer or a mid-scan reader. Scenario E in §11 walks the race this
+prevents.
 
 ---
 
@@ -302,6 +386,16 @@ sweep is **complete** and the range is final.
 > *down* over not-yet-captured records, read each absent record as "no match", and landed on record 0.
 > Both directions are now bounded. See `TestSteppingSession#testBackwardFromARecordTheSweepHasNotReached…`.
 
+Two more rules joined this asymmetry when materialisation became the default path
+(`SessionStepResolver.resolve`):
+
+- **A completed materialisation's "no match" means re-plan, never cross.** It produced only the records it
+  was asked for; its completion says nothing about the rest of the stream. Only a whole-stream sweep's
+  completion is authority to cross. (`sweep.isOnDemand() && sweep.hasEnded()` → `continue`.)
+- **Filtered FIRST/LAST scan from the store's origin, not the served window's edge** - records below a
+  mid-stream window that the store already holds must be evaluated, not skipped
+  (`StoreStepResolver.storeOrigin`).
+
 ### Lazy sweeping
 
 `SteppingSession.sweepFor(metaId, request, fingerprints)` launches a sweep for a stream **only when a step
@@ -325,6 +419,10 @@ channels and a temp dir forever. Always go through the session.
 ---
 
 ## 6. Control flow — a step, end to end
+
+> The sequence below shows the full-sweep launch for clarity. Under the skeleton default the *launch* hop
+> differs - a backbone plus an on-demand materialisation, decided by the ladder at the top of §11 - while
+> everything from the resolver onwards is identical.
 
 ```mermaid
 sequenceDiagram
@@ -396,6 +494,10 @@ the response and adopted by the client. A step never fails because a session exp
 
 Assume a selection of three streams `[10, 20, 30]`, ten records each (0-based), and a session already open.
 
+> Written against the **full-sweep fallback** so each example isolates one behaviour. Under the skeleton
+> default the first capture is a backbone and below-boundary panes arrive by materialisation (§11's launch
+> ladder); the resolver-side behaviour each example shows is unchanged.
+
 ### FIRST
 1. `initialStream` → `firstStreamId()` = 10.
 2. `sweepFor(10, ...)` → launches a sweep. Streams 20 and 30 are **not** touched.
@@ -423,13 +525,13 @@ Assume a selection of three streams `[10, 20, 30]`, ten records each (0-based), 
 ### BACKWARD from (20,0,0)
 1. `prev(20,0,0)` → `0 == getFirstRecordIndex` → no earlier part → empty.
 2. Stream complete → `prevStreamId(20)` = 10 → request rewritten as **LAST**.
-3. LAST needs the true last record, so it `awaitFullyCaptured`s stream 10 before resolving.
+3. LAST needs the true last record, so it `awaitEnd`s stream 10 before resolving.
 4. Result: `(10,0,9)`.
 
 ### LAST
 1. `initialStream` → `lastStreamId()` = 30.
 2. LAST cannot be answered from a partial capture — the last record is not known until the sweep finishes —
-   so it `awaitFullyCaptured`s, then resolves `lastRecord`.
+   so it `awaitEnd`s, then resolves `lastRecord`.
 3. Result: `(30,0,9)`. This is the one step type that always waits for a whole stream.
 
 ### REFRESH at (20,0,3)
@@ -448,9 +550,13 @@ Assume a selection of three streams `[10, 20, 30]`, ten records each (0-based), 
 ### Edit an XSLT, then REFRESH
 1. The presenter sends the edited `code`; fingerprints change for that element **and everything below it**.
 2. `sweepFor(metaId, request, fingerprints)` keys on `(metaId, signature)` → a miss. A sweep still running
-   under the *old* signature is terminated **and dropped from the cache** — a terminated sweep is an errored
-   one, and keeping it would make the revert below serve that error. Completed sweeps are kept.
-3. `launchFor` asks `ReprocessPlanner` (fed by `SteppingGraphBuilder`) what changed. A single edited element
+   under the *old* signature is abandoned **only if the edit invalidates everything it is producing**
+   (`stillProduces`: no shared cumulative fingerprint - a parser edit). An XSLT edit leaves every element
+   above it untouched, so a running capture is **kept**: it is producing the very feed the edited element
+   will be replayed from (scenario C). When one *is* abandoned it is dropped from the cache too - a
+   terminated sweep is an errored one, and keeping it would make the revert below serve that error.
+   Completed sweeps are always kept.
+3. `producerFor` asks `ReprocessPlanner` (fed by `SteppingGraphBuilder`) what changed. A single edited element
    whose one upstream neighbour is reusable is the fast path: `launchReprocess` runs `ReprocessDriver` over
    the **edited element and its downstream only**, fed from the parent's stored output under its unchanged
    fingerprint. **The pipeline above the edit is not re-run.** Anything else — first sweep, a change at or
@@ -514,7 +620,7 @@ on clean shutdown.
 | `TestFullTranslationTaskAndStepping` (stroom-app) | **The acceptance gate.** Scripted step sequences over ~11 real feeds, diffed against the committed `~STEPPING~…{input,output}.out` golden corpus. This corpus was produced by the *old* engine, so it is the only thing pinning the rebuild to the original behaviour. `TranslationTest.step` carries the session id across steps, exactly as the UI does. |
 | `TestSkeletonSweptStepping` (stroom-app) | **The skeleton acceptance gate**: the whole golden corpus again with `stepping.skeletonSweep` on. R1 says the mode must be invisible in what is served; this is what says so, for every feed type (including the boundary-less reader/text feeds, which must fall back untouched) and every step type. |
 | `TestSteppingSessionLifecycle` | Lazy sweep (only stepped streams get a dir) and close deleting the session dir. Has its own class: its sibling shares a database, and `testTranslationTask` adds streams each run. |
-| `TestSessionStepping` | Cross-stream FORWARD/LAST agreement between `resolveSession` and `step()`. |
+| `TestSessionStepping` | Cross-stream FORWARD/LAST agreement between `SessionStepResolver.resolve` and `step()`, with the step side threading its session id as the UI does. |
 | `TestChunkedCapture` | The synchronous `capture()` entry point agrees with the session path, over four feed types including a reader/text pipeline. |
 | `TestReprocessFromStore` (stroom-app) | The load-bearing de-risk: re-running an interior element from its stored input, **without** re-running the parser above it, is byte-identical to the full sweep over a real feed. Also covers `ELEMENT_ONLY` and the `stopAfter` head build. |
 | `TestLiveReprocessOnEdit` (stroom-app) | That an edit actually routes to a reprocess rather than a second full sweep, and that the reprocessed output is served for an early record — the readiness gate. |
@@ -522,15 +628,22 @@ on clean shutdown.
 | `TestReprocessRestoresScopeState` (stroom-app) | That shared scope survives the split: an upstream `stroom:put` is still visible to a `stroom:get` below an edit, even though the reprocess never re-runs the put. Builds the two-XSLT topology it needs on an in-memory copy of the pipeline, so no sample pipeline is disturbed. Verified to fail (empty probe) with the restore removed. |
 | `TestStepDataStore` | Base-index awareness, atomicity, idempotency, caps, LRU eviction and the pins that override it, the per-record scope snapshot. |
 | `TestRecordScopeStateSerializer` / `TestTaskScopeMap` | The scope snapshot's framing (null/empty/awkward keys and values, >64KB) and the snapshot/restore/clear the stepping path relies on. |
-| `TestStreamSweep` | The progress signal: no lost wakeups, interrupt semantics, terminate handshake. |
+| `TestStreamSweep` | The sweep-level slice the watermark cannot see: interrupt semantics, terminate visibility, first-error-wins. Wake promptness lives in `TestCaptureWatermark`. |
+| `TestSweepRun` | The drivers' shared terminal-state discipline: a recorded body failure or an `Error` can never masquerade as a complete capture; terminate-before-start; pin release. |
+| `TestSteppingSessionRegistry` | Session keying: self-heal, replace-and-close on a changed selection, per-user isolation, and the idle reap reading LIVE config (the Provider-not-object pin). |
+| `TestStepDemandPlanner` | The demand arithmetic in isolation: REFRESH never widened, windows clamped at feed holes, backward widening, LAST needs a final extent, cross-part neighbours. |
+| `TestStoreStepResolver` / `TestCapturedRange` / `TestCoverage` | Per-stream navigation and the coverage/range vocabulary: wait-vs-absent, sparse holds, part crossing gates, the intersection/spanning substrate. |
+| `TestStagePlanner` / `TestReprocessPlanner` | Reuse planning: span-aware coverage demands, the truncated-store trap, the satisfied third state. |
+| `TestPersistedFilterEvaluator` / `TestSteppingGraphBuilder` | Read-time filter semantics over captured IO; the steppable graph's nearest-steppable-ancestor links. |
+| `TestElementSegmentFileSparse` / `TestElementSegmentFileInterrupts` | File-level pins the store's monitor hides: gap reads, out-of-band extents, interrupt-killed channels reopening without data loss. |
+| `TestStepDataStoreManager` / `TestSteppingControllerTermination` / `TestCapturedElementData` / serializer tests / `TestEventListSerializer` / `TestEventReplayFidelity` | Store lifecycle and formats: orphan cleanup, controller stop-at-record, the captured-form round trips, and byte-identical SAX replay. |
 | `TestSteppingSession` | Lazy launch, cross-stream nav, the stale-scan race, the BACKWARD-ahead-of-sweep bug, close/cap behaviour, and the narrow abandonment rule (a downstream edit keeps the running capture; a parser edit does not) with the wait handle it makes possible. Also that a completed materialisation with no match re-plans in its own stream rather than crossing - the rule that keeps a windowed scan in-stream. |
 | `TestElementFingerprinter` | Sensitivity and stability — a wrong fingerprint serves stale IO or never reuses. |
 | `TestFilteredStepAfterEdit` (stroom-app) | Filtered navigation after an edit, end to end: the windowed scan is entered (launch counter), lands on genuine matches for FORWARD **and** the awkward FIRST/LAST ends, with unfiltered controls and a no-re-sweep assertion. Its control found the filters-missing-from-the-sweep-key bug. |
 | `TestFilteredScanWindow` | The scan window's arithmetic (inclusive ends, clamping, direction reversal, frontier resume, null when dry) and that the size genuinely comes from `filteredScanWindow` - the config default equals the old constant, so only a test that varies it can tell wiring from residue. |
 | `TestSkeletonShadowDiff` (stroom-app) | The depth half of the shadow diff: a skeleton-swept generated stream serves byte-identical element IO to a synchronous whole-pipeline capture, for a head walk and for records materialised in isolation deep in the stream. Bounded coverage, logged. |
-| `TestSteppingCounterReplay` (stroom-app) | Both halves of the counters decision: a replay with a snapshot to restore keeps the swept `EventId` (and is not marked); a record materialised over a backbone - no snapshots ever written - serves the honest wrong count **marked indicative**. |
+| `TestSteppingCounterReplay` (stroom-app) | Both halves of the counters decision: a replay with a snapshot to restore keeps the swept `EventId` (and is not marked); a record materialised over a backbone - no snapshots ever written - serves the honest wrong count **marked indicative**. Negative control: disabling the restore fails `expected: 6L but was: 1L`. |
 | `TestSteppingContextLookup` (stroom-app) | Context reference data (`stroom:lookup` against the stream's own context child stream) survives a single-record replay. Negative control: nulling `ReprocessDriver`'s one `setInputStreamProvider` call fails exactly this. |
-| `TestSteppingCounterReplay` (stroom-app) | A replayed record keeps the `EventId` the sweep gave it. Negative control: disabling the restore fails `expected: 6L but was: 1L`. |
 | `TestSweepAndReplaySharingAStore` | A sweep and a replay writing the same store: holes in the shared state file and in a shared-fingerprint element file must not trip the in-order check, both writers stay readable, and a pure sweep still rejects out-of-order appends. |
 | `TestSteppingScaleScenarios` (stroom-app) | Scenarios B, C and D by launch counters - C in three parts (edit behind the frontier, edit ahead of it, edit-then-step), D as the skeleton mechanism (one backbone, N materialisations, zero full sweeps, below-boundary pane served). The acceptance tests for build-order stages 1-4. Also the filtered windowed scan's launch discipline: one launch per window crossed (plus at most one completion-boundary race), and a near match served from the first window's materialisation, in one launch, while its producer still runs. |
 | `TestSteppingMidPointBenchmark`, `TestSteppingScenarioBenchmarks` (stroom-app) | The scenario numbers (A; C and D's ceiling). No timing assertions - correctness asserted, wall-clock logged for a human. |
@@ -590,23 +703,81 @@ concurrency to reproduce; the overlap window only makes them likelier. See
 
 ---
 
-## 11. Direction — from "re-run less" to "re-run one record"
+## 11. The capture modes — how the default engine works, the scenarios, and how it got here
 
 The store holds every element's per-record input and output. That is not merely a cache of results, it is
 *the stepping state*: an edited element's input for record N is its upstream element's stored output for
 record N, already present under an unchanged fingerprint. Everything here follows from that one fact.
 
-**The first half is shipped.** Editing an XSLT used to re-sweep the whole stream — O(N) per *edit*, versus the
-old O(N) per *step* — re-executing the parser and every upstream XSLT for nothing. Feeding the changed element
-and its downstream from stored upstream output instead removed that cost; see *Build order* step 3 below,
-which describes the live path.
+> **What is present tense here and what is history.** The skeleton/backbone mode, on-demand
+> materialisation, the windowed filtered scan, prefetch, eager promotion, counters marking and pinning are
+> all **built and default**; this section opens with how they fit together, then the scenarios the design
+> is graded against, then the decisions taken, then - clearly marked - the build history.
 
-**The second half is not.** What remains is that an edit still re-runs the changed element and its downstream
-over the **whole stream**, when the user is looking at one record and wants to see one record. That is the
-cost this direction now attacks, and the sections below record how the target changed: away from decomposing
-the pipeline into concurrent stages (considered, substrate built, set aside — the prize turned out to be only
-pipeline parallelism) and towards materialising the edited element lazily, per record, for the records the
-user actually visits.
+### The launch ladder — what `SteppingService.producerFor` decides
+
+Every step needs a producer for the stream it targets. The ladder tries the cheapest answer first; most
+calls launch nothing:
+
+```mermaid
+flowchart TD
+    A[step demands records of stream M] --> B{store has any captured elements?}
+    B -- no --> SK{skeletonSweep on and a parser boundary derivable?}
+    B -- yes --> P[ReprocessPlanner.plan against the demanded span]
+    P -- satisfied --> SIG[SIGNALLED sweep - store already holds it, launch nothing]
+    P -- reprocessable --> R{range computable? - StepDemandPlanner}
+    R -- store holds the whole range --> SAT[satisfied from store - signalled]
+    R -- a running on-demand producer overlaps it --> ATT[ATTACH to that producer]
+    R -- small stream, backbone complete, unedited --> EAGER[promote to whole extent, reprocess once]
+    R -- else --> REP[launchReprocess - MATERIALISATION of the range]
+    P -- full sweep needed --> W{a live producer still running?}
+    W -- yes, unfiltered step --> WH[WAIT HANDLE on its frontier - waitForFrontier]
+    W -- no --> SK
+    SK -- yes --> BB[backboneFor - BACKBONE, truncated at the boundary]
+    SK -- no --> FS[launchSweep - FULL SWEEP from source]
+```
+
+`StepDemandPlanner` (in `read/`) computes what the ladder consumes: which single record a step is about
+(`demandedRecordFor` - REFRESH names it; navigation derives it from coverage; LAST needs a final extent;
+filters make it unknowable), how far to widen it (`prefetched` - never for REFRESH, clamped at feed
+holes), and where a filtered scan's next window starts (`filteredWindowFor` - the first record from the
+scan's origin not already held). It is pure coverage arithmetic - no launching, no waiting - which is why
+it lives on the read side and is unit-testable without a pipeline.
+
+### The five kinds of sweep
+
+One class, five roles - what confuses a reader of `SteppingSession`'s cache is that they differ only in
+policy:
+
+| Kind | Launched by | Cached under | Coverage means | Servable? | Ends when |
+|---|---|---|---|---|---|
+| Full sweep | `launchSweep` | `(stream, signature)` | whole-pipeline capture to the frontier | yes | completion / abandonment / close |
+| Backbone | `backboneFor` | `(stream, "backbone:"+boundary fps)` | boundary IO only | **never** directly (blank panes below) | boundary edit / close |
+| Materialisation | `launchReprocess` | **not cached** - the store is the cache; tracked only while running | its demanded range under new fingerprints | yes, within its range | range done |
+| Wait handle | `waitForFrontier` / `backboneFor` | never | deliberately empty - carries only the producer's signal | no - resolver re-plans each wake | producer ends |
+| Signalled | `signalledSweep` | never | the already-stored records the demand named | yes | born complete |
+
+### The filtered windowed scan, as it works now
+
+1. `filteredWindowFor` computes the next window: from the scan's origin (the reference, or the end being
+   walked from), the first record the edited element does not already hold, widened to
+   `filteredScanWindow`.
+2. The ladder serves it: fully held → signalled; a running producer overlaps → attach; else
+   `launchReprocess` materialises it.
+3. The resolver scans and evaluates - filtered FIRST/LAST from the store's origin, so held records below
+   the window are never skipped - and a completed window with no match re-plans (never crosses).
+4. Windows exhaust the stream → the whole-stream path takes over, and only its completion can conclude
+   "no match here".
+
+---
+
+**Both halves are shipped.** Editing an XSLT used to re-sweep the whole stream — O(N) per *edit* — and then,
+once reprocess-from-stored-output removed that, still re-ran the edited element over the whole stream to
+answer a question about one record. Today an edit materialises only the records the user visits, and the
+first capture of a stream is itself truncated at the record boundary (the skeleton default). The sections
+below record how the target changed along the way: away from decomposing the pipeline into concurrent
+stages (considered, substrate built, set aside — the prize turned out to be only pipeline parallelism) and
+towards the lazy, per-record materialisation that now runs.
 
 ### Considered and set aside: elements as independent concurrent stages
 
@@ -631,7 +802,7 @@ lock contention under N writers, pool exhaustion, and deadlock risk in the live 
 that trade before the benefit had been measured. Live ingest was never in scope either way; this is all
 stepping-specific.
 
-### Direction: materialise the edited element on demand, per record
+### On-demand materialisation — the rationale, and the road there
 
 The transformative case is not parallelism, it is **not doing the work at all**. When an XSLT is edited, what
 the user wants is to see the effect *on the record they are looking at*, now. That record's input is already
@@ -642,7 +813,7 @@ So the direction is to materialise the edited element's output **lazily, per rec
 user actually visits**, rather than sweeping it:
 
 - **REFRESH — SHIPPED.** Exactly one record's work, so editing an XSLT and refreshing is effectively instant
-  however far into the stream the user is. `SteppingService.onDemandTargetFor` routes a REFRESH that names a
+  however far into the stream the user is. `StepDemandPlanner.onDemandTargetFor` routes a REFRESH that names a
   record to `ReprocessDriver`'s single-record path, which reads that record's stored upstream output, fires it
   through the edited element and captures the result. Measured over 2,000 records: a mid-stream edit went from
   ~670ms to ~21ms and an end-of-stream edit from ~1,120ms to ~20ms, against a 7ms floor for a refresh that
@@ -728,14 +899,6 @@ user actually visits**, rather than sweeping it:
   a step attaches to one rather than double-launching. A cache whose key must encode "what the step meant"
   was a bug factory the store-as-cache model does not have.
 
-  The earlier reasoning, kept because the rejected options still apply: Everything on-demand so far fits the
-  existing shape - one launch decision per step, then a scan of what it produced. A progressive scan is a
-  *loop* between materialising and filter-matching, and those sit on opposite sides of the `capture/` and
-  `read/` boundary that the whole design rests on. The tractable form is probably to materialise a bounded
-  window ahead in the direction of travel and let the existing long-poll drive successive windows: that keeps
-  the layering, terminates, and shows progress between polls. It needs per-session state for where the last
-  window ended, and a window size to configure. Until then a filtered step after an edit is correct, just no
-  faster than it was.
 - **A filter on an unchanged upstream element does not force anything.** Its chunks are present under an
   unchanged fingerprint, so `PersistedFilterEvaluator` evaluates it straight from the store and navigation
   stays a single record. The cost is driven by *where* the filter sits relative to the edit, not by whether a
@@ -743,7 +906,7 @@ user actually visits**, rather than sweeping it:
 
 **Counters were not a prerequisite, and are now done anyway.** A single-record replay used to leave
 `IdEnrichmentFilter` reporting 1 rather than its swept value. That is now captured per record and restored on
-replay (see *Element-local counters* above); `TestSteppingCounterReplay` pins it, and disabling the restore
+replay (see *Element-local counters*, under the build history below); `TestSteppingCounterReplay` pins it, and disabling the restore
 makes it fail with `expected: 6L but was: 1L`.
 
 The per-record shared scope, by contrast, *is* load-bearing and is already done: the source location snapshot
@@ -780,11 +943,11 @@ reuse gate was `hasCompleteElement`, all records or nothing. The captured chunks
 worth two million records of parsing; every reuse decision was all-or-nothing on completeness, so they were
 worth exactly nothing. **Lifetime decoupling** removed all three:
 
-1. **Reuse is a span, not a boolean** (`StagePlanner.RecordSpan`, `Coverage`): a step about one record asks
+1. **Reuse is a span, not a boolean** (`RecordRange`, `Coverage`): a step about one record asks
    only whether the feed *holds that record*, which an element captured up to a frontier legitimately does.
    `hasCompleteElement` survives only for whole-stream reprocesses. A REFRESH names its record outright; a
    step *derives* one - "the record after this one", "the first record" - and that arithmetic
-   (`SteppingService.demandedRecordFor`) is as valid against a capture in flight as against a finished one,
+   (`StepDemandPlanner.demandedRecordFor`) is as valid against a capture in flight as against a finished one,
    which is what stops an edit-then-step being answered the expensive way. The two demands that genuinely
    cannot be derived from a partial capture stay on the whole-stream path: **LAST**, which asks where the
    stream *ends*, and anything **filtered**, where "the next record" means "the next one that matches".
@@ -862,7 +1025,7 @@ pinned:
   frontier the window already starts from - not the scan redesigned. Ends by refusal:
   `maxSweptStreamsPerSession` stops it marching through a whole selection.
 - **G - multi-part streams.** A part boundary is invisible to the user (§11: navigation crosses parts;
-  `neighbourOf` in `SteppingService`), and every store structure is per-part. Any new capture mode must keep
+  `neighbourOf` in `StepDemandPlanner`), and every store structure is per-part. Any new capture mode must keep
   both properties - a skeleton sweep captures boundary IO *per part* like everything else.
 - **H - many streams, lazily.** Selections are lists; only stepped streams are swept (R9). Crossing into a
   stream not yet swept starts its sweep then; a filtered scan crossing streams is F times H and is where the
@@ -882,7 +1045,7 @@ that is the dominant cost, and most of it is wasted: to answer "show me record 1
 need from records 1..999,999 is *where they are*. Their XSLT output is computed, serialised and written, and
 then never looked at.
 
-The proposal is a second sweep mode that captures only the elements **at or above the record boundary** — the
+The mode captures only the elements **at or above the record boundary** — the
 parser and the splitter that decides where a record starts and ends — and materialises everything below it on
 demand, per record, using the replay path that already exists. Stepping to record 1,000,000 becomes: parse
 forward capturing boundary IO only, then run the downstream elements for that one record.
@@ -941,11 +1104,12 @@ form. Pinned both ways in `TestStoreStepResolver`.
   machinery exists; a skeleton sweep just makes it the normal case rather than the post-edit case.
 - **"Skip to next error" below the boundary** becomes a scan for the same reason: an element that never ran
   recorded no indicators.
-- **Counters below the boundary never advance.** The capture-and-restore added for `SteppingCounter` has
-  nothing to restore, because the counting element did not run during the sweep. Either the inaccuracy comes
-  back for skeleton-swept streams, or such counts have to be *derived* from the record index rather than
-  captured — which happens to be right for `IdEnrichmentFilter` when there is one event per record, and wrong
-  in general. This needs deciding before the mode is built, not after.
+- **Counters below the boundary never advance during the backbone.** The capture-and-restore added for
+  `SteppingCounter` has nothing to restore, because the counting element did not run during the sweep. This
+  was decided before the mode shipped (see *Counters under the backbone - decided and built* below): counts
+  are exact where the producing run counted from the stream start or restored a snapshot, and otherwise
+  served **marked indicative** - never derived from the record index, which is right only when every record
+  yields exactly one event.
 - **Walking many consecutive records** costs a replay each (a few ms) instead of a lookup. Probably fine, and
   the obvious mitigation is to materialise a window around the visited record — again the machinery the
   filtered scan already has.
@@ -984,7 +1148,7 @@ The earlier worry - that transforms might be a small fraction and the idea not w
 they are nine-tenths of it. One sample pipeline is one data point; the ratio should be re-taken on a
 heavyweight production pipeline before the win is quoted, but the direction is not in doubt.
 
-#### What had to change first — both DONE
+#### History: what had to change first — both DONE
 
 Two things blocked on-demand materialisation, both in the parts of the store it was least comfortable to
 disturb; both are now in:
@@ -997,16 +1161,9 @@ disturb; both are now in:
    atomicity invariant - a torn record is never visible - survived the change.
 2. **"Complete" and LAST come from upstream. — DONE.** The resolver takes stream shape from the unchanged
    upstream element's range rather than from full capture of everything; `CapturedRange` gained
-   `contains(record)` and `spanning(bounds, held)` so a sparse element answers "do you hold record N"
+   `holds(record)` (and, as pinned substrate, `spanning(bounds, held)` - the shipped bounds-from-upstream
+   path is `StepDataStore.recordCoverage`) so a sparse element answers "do you hold record N"
    honestly while bounds still come from the element that swept.
-
-#### Measure before building
-
-The deciding number is **wall-clock of a full edited-element-plus-downstream reprocess against stream length**,
-on a realistic pipeline. If a typical stream reprocesses in a few hundred milliseconds this is not worth the
-store change; if long streams take tens of seconds, on-demand replay is decisive. The same measurement shows
-where the filtered-scan degenerate cases start to hurt. The sample feeds are too small to answer it — it needs
-a real pipeline and a realistically sized stream.
 
 #### What exists, and how it serves this
 
@@ -1093,7 +1250,7 @@ parity, and then goes - with it goes `priorCompleteCapture`, the completeness ga
 and the abandonment `removeIf` whose keying has already produced two real bugs.
 
 And **one vocabulary serves both producers.** Today four overlapping abstractions answer the same question -
-watermark versions, `CapturedRange` (first/last/contains/spanning/intersection), the files' extent maps,
+watermark versions, `CapturedRange` (first/last/holds/spanning/intersection), the files' extent maps,
 `getElementRecordBound` - because each was added where a bug surfaced. The target names it once:
 **coverage** - per `(element, fingerprint, part)`: *which records are held, and is the extent final?* -
 with a change signal for waiters. Containment, bounds, frontier, scan resume, and R2's every-pane
@@ -1125,7 +1282,7 @@ intersection are all queries on coverage; `CapturedRange` becomes its read view 
 | G | multi-part | backbone is per-part like every store structure |
 | H | many streams | one backbone per *stepped* stream, lazily, as now |
 
-#### Build order, staged to ship
+#### History: the staged plan, as shipped
 
 Each stage is independently useful, keeps every existing test green, and has its acceptance named before it
 starts - the discipline that caught every real bug so far.
@@ -1191,13 +1348,14 @@ backbone that cannot satisfy the planner must still be answerable. So `RecordOrd
 order, a materialisation does not), `isContiguouslyWritten`, `hasCompleteElement`, and
 `priorCompleteCapture` (the gate that stops a truncated capture silently serving a short stream) are
 load-bearing in both modes; the abandonment `removeIf` in the session is stage 3's narrow rule, not the old
-broad one; and `RecordRange` (capture-side demand) with `StagePlanner.RecordSpan` (read-side demand) are
-the two ends of the capture/read boundary, not duplicates. Flipping `skeletonSweep` on changes which mode
+broad one; and `RecordRange` - once two structurally identical types, one per side - now lives once in `store/`
+beside `Coverage`, because both sides of the capture/read boundary speak it and the store is where they
+meet. Flipping `skeletonSweep` on changes which mode
 is the default; it orphans none of these. The kept substrate for §11 (`CapturedRecordFeed`,
 `StageGraphPlanner`, `CapturedRange.intersectionOf`/`spanning`) says so in its own javadoc, so a later
 audit cannot mistake it for accident.
 
-#### Open decisions, to make before the stage that needs them
+#### Decisions taken — all decided and built; kept for the reasoning
 
 - **Counters under the backbone - decided and built.** A record's `EventId` counts events in the
   *translation output* of every record before it, so for a record whose predecessors were never materialised
@@ -1249,7 +1407,7 @@ the invariant that a fingerprint-keyed file is one config throughout. The appare
 upstream) collapses anyway, because backfilling the earlier records means re-running the changed element from
 its input, i.e. the same replay-from-stored-upstream as below.
 
-### Build order — how the shipped half was landed
+### History: how the shipped half was landed — the MECHANISMS here remain current
 
 (Historical - the staged order for the *future* work lives in *Target: one durable backbone* above.)
 
@@ -1382,7 +1540,7 @@ snapshot:
   split), leans on capturing them where they are still live rather than snapshotting at the recorder. Not for
   now; documented so the choice is deliberate.
 
-**3. Split the processing. — LIVE.** On an edit, `SteppingService.launchFor` asks `ReprocessPlanner` (fed by
+**3. Split the processing. — LIVE.** On an edit, `SteppingService.producerFor` asks `ReprocessPlanner` (fed by
 `SteppingGraphBuilder`, which derives the steppable graph from the store's captured elements plus the pipeline
 links) whether the change is the clean single-edit case; if so it runs `ReprocessDriver` into the session's
 existing store, reusing the upstream chunks, instead of a full sweep. Anything else — first sweep, a change at
@@ -1409,7 +1567,7 @@ covered by parity with `StreamCaptureDriver` rather than by a test.
 
 Because a reprocess writes into a store that already holds the reused upstream at the full record range, the
 resolver must not treat a record as ready just because the reused upstream is there: `SessionStepResolver`
-navigates within the reprocess *sweep's own* captured range (`StreamSweep.getCapturedFirst/LastRecordIndex`,
+navigates within the reprocess *sweep's own* captured range (`StreamSweep.coverage()`,
 passed to `StoreStepResolver` as a `CapturedRange`), so a step waits for the reprocess to write the changed
 element before landing on it. For a full sweep the sweep range equals the store range, so this changes nothing.
 
@@ -1476,6 +1634,3 @@ Only XML stages go through `SAXEventRecorder`; `ReaderRecorder` (reader/text inp
 chain is `ContentHandler`-only, no `LexicalHandler` anywhere — so that is not a replay regression, but the
 locator and namespace-placement drift of the old text form were (step 1 removes them for the event-backed
 sides).
-
-`StagePlanner` (in `read/`) is the reuse/reprocess decision logic for this direction, and is why it has no
-production callers yet.

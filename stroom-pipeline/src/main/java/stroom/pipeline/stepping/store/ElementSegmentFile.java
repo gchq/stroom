@@ -72,7 +72,7 @@ final class ElementSegmentFile {
      * @return an open channel, reopening it if an interrupt closed it underneath us.
      * <p>
      * Reopening is safe because everything positional lives in memory - {@code size} is the append position
-     * and {@code endOffsets} the record index - so a fresh channel resumes exactly where the old one left
+     * and {@code extents} the record index - so a fresh channel resumes exactly where the old one left
      * off. It deliberately does <b>not</b> reopen for a thread that is itself interrupted: that thread is
      * being asked to stop, so it should fail and unwind rather than resurrect the channel only for the JDK
      * to close it again on the next call.
@@ -190,7 +190,8 @@ final class ElementSegmentFile {
     }
 
     /**
-     * @return true if the given record index falls within the range written to this file.
+     * @return true if this exact record is held in this file - what is actually here, not what the
+     * min/max range implies (a sparse file has holes inside its range).
      */
     boolean contains(final long recordIndex) {
         // Asks what is actually here, not what the range implies - a file with holes has records inside its

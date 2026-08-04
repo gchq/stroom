@@ -54,10 +54,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * than an argument.
  * <p>
  * The scenario is the one users are in: a stream of thousands of records, sitting on a record somewhere in
- * the middle, editing an XSLT and refreshing to see the effect. Today each edit re-keys the element's
- * fingerprint and the whole of that element plus its downstream is re-run over the <b>entire stream</b> to
- * answer a question about <b>one record</b>. The design direction (see {@code stepping-design.md} §11) is to
- * materialise only the record being looked at; the gap this test prints is exactly what that would recover.
+ * the middle, editing an XSLT and refreshing to see the effect. Under the pinned <b>fallback</b> (full-sweep) mode
+ * measured here, an edit re-keys the element's fingerprint and the element plus its downstream is re-run
+ * over the stream up to the record being looked at; the skeleton default (built - see
+ * {@code stepping-design.md} §11) materialises only that record, and the gap this test prints is what that
+ * saves in fallback mode.
  * <p>
  * Three numbers are reported, and it is the ratios between them that matter:
  * <ul>

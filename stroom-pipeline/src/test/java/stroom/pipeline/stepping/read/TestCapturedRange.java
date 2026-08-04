@@ -53,7 +53,7 @@ class TestCapturedRange {
             }
 
             @Override
-            public boolean contains(final long partIndex, final long recordIndex) {
+            public boolean holds(final long partIndex, final long recordIndex) {
                 return partIndex == 0 && records.contains(recordIndex);
             }
         };
@@ -64,12 +64,12 @@ class TestCapturedRange {
         // Anything captured contiguously answers from its bounds, which is every sweep.
         final CapturedRange range = range(2, 6);
 
-        assertThat(range.contains(0, 2)).isTrue();
-        assertThat(range.contains(0, 4)).isTrue();
-        assertThat(range.contains(0, 6)).isTrue();
-        assertThat(range.contains(0, 1)).isFalse();
-        assertThat(range.contains(0, 7)).isFalse();
-        assertThat(range.contains(1, 4)).as("a part with nothing holds nothing").isFalse();
+        assertThat(range.holds(0, 2)).isTrue();
+        assertThat(range.holds(0, 4)).isTrue();
+        assertThat(range.holds(0, 6)).isTrue();
+        assertThat(range.holds(0, 1)).isFalse();
+        assertThat(range.holds(0, 7)).isFalse();
+        assertThat(range.holds(1, 4)).as("a part with nothing holds nothing").isFalse();
     }
 
     @Test
@@ -78,8 +78,8 @@ class TestCapturedRange {
         // never materialised, and serving it would show the user a blank pane.
         final CapturedRange sparse = holding(0, 100, 0L, 50L, 100L);
 
-        assertThat(sparse.contains(0, 50)).isTrue();
-        assertThat(sparse.contains(0, 51)).as("inside the span, but not held").isFalse();
+        assertThat(sparse.holds(0, 50)).isTrue();
+        assertThat(sparse.holds(0, 51)).as("inside the span, but not held").isFalse();
         assertThat(sparse.last(0)).as("the span still reaches the end").isEqualTo(100);
     }
 
@@ -93,9 +93,9 @@ class TestCapturedRange {
 
         assertThat(combined.first(0)).as("bounds come from upstream").isEqualTo(0);
         assertThat(combined.last(0)).as("so LAST does not land mid-stream").isEqualTo(999);
-        assertThat(combined.contains(0, 50)).as("only what was materialised is servable").isTrue();
-        assertThat(combined.contains(0, 51)).isFalse();
-        assertThat(combined.contains(0, 999)).isFalse();
+        assertThat(combined.holds(0, 50)).as("only what was materialised is servable").isTrue();
+        assertThat(combined.holds(0, 51)).isFalse();
+        assertThat(combined.holds(0, 999)).isFalse();
     }
 
     @Test
@@ -105,14 +105,14 @@ class TestCapturedRange {
         final CapturedRange b = holding(0, 10, 2L, 3L, 4L);
         final CapturedRange intersection = CapturedRange.intersectionOf(List.of(a, b));
 
-        assertThat(intersection.contains(0, 2)).isTrue();
-        assertThat(intersection.contains(0, 1)).as("only one of them holds it").isFalse();
-        assertThat(intersection.contains(0, 4)).isFalse();
+        assertThat(intersection.holds(0, 2)).isTrue();
+        assertThat(intersection.holds(0, 1)).as("only one of them holds it").isFalse();
+        assertThat(intersection.holds(0, 4)).isFalse();
     }
 
     @Test
     void testAnEmptyIntersectionHoldsNothing() {
-        assertThat(CapturedRange.intersectionOf(List.of()).contains(0, 0)).isFalse();
+        assertThat(CapturedRange.intersectionOf(List.of()).holds(0, 0)).isFalse();
     }
 
     @Test

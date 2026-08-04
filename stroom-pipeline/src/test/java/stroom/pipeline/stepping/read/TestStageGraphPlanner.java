@@ -55,9 +55,9 @@ class TestStageGraphPlanner {
 
         // The head reads the raw stream; everything else is fed from the element above it.
         assertThat(plan.stages().getFirst().isHead()).isTrue();
-        assertThat(plan.stages().get(1).feedElementId()).isEqualTo("combinedParser");
-        assertThat(plan.stages().get(2).feedElementId()).isEqualTo("translationFilter");
-        assertThat(plan.stages().get(3).feedElementId()).isEqualTo("schemaFilter");
+        assertThat(plan.stages().get(1).upstreamElementId()).isEqualTo("combinedParser");
+        assertThat(plan.stages().get(2).upstreamElementId()).isEqualTo("translationFilter");
+        assertThat(plan.stages().get(3).upstreamElementId()).isEqualTo("schemaFilter");
 
         // The text tail cannot be cut, so the final stage carries the appender with it.
         assertThat(plan.stages().getLast().elementIds()).containsExactly("xmlWriter", "streamAppender");

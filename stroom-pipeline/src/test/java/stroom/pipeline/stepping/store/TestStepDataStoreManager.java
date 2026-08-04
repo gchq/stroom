@@ -37,7 +37,7 @@ class TestStepDataStoreManager {
 
     private StepDataStoreManager newManager(final Path tempDir) {
         final TempDirProvider tempDirProvider = () -> tempDir;
-        return new StepDataStoreManager(tempDirProvider, new SteppingConfig());
+        return new StepDataStoreManager(tempDirProvider, SteppingConfig::new);
     }
 
     private CapturedElementData data(final String value) {

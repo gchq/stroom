@@ -230,8 +230,8 @@ class TestCoverage {
 
         assertThat(view.first(0)).isEqualTo(coverage.first(0));
         assertThat(view.last(0)).isEqualTo(coverage.last(0));
-        assertThat(view.contains(0, 2)).isTrue();
-        assertThat(view.contains(0, 4)).as("the hole survives the view - no bounds-based default").isFalse();
-        assertThat(view.contains(0, 7)).isTrue();
+        assertThat(view.holds(0, 2)).isTrue();
+        assertThat(view.holds(0, 4)).as("the hole survives the view - no bounds-based default").isFalse();
+        assertThat(view.holds(0, 7)).isTrue();
     }
 }

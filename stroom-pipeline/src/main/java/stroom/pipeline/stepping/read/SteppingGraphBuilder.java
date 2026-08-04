@@ -30,9 +30,11 @@ import java.util.Set;
 
 /**
  * Builds the <b>steppable</b> element graph a reprocess decision needs, from the merged {@link PipelineData}
- * plus the set of elements that actually have captured IO (from the store). Only steppable elements are
- * captured, so that set <em>is</em> the steppable set - deriving it from the store avoids re-deriving it from
- * element roles, and is exact.
+ * plus the steppable element ids - derived from the pipeline's element roles (see
+ * {@code SteppableElements}), unioned with whatever the store has captured, so an element type the registry
+ * cannot classify but which was captured anyway is still planned for. (Deriving the set from the store
+ * alone was the original design, and is wrong for a capture truncated at the record boundary: a backbone
+ * captures nothing below the parser, and the planner would see nothing there to run.)
  * <p>
  * Non-steppable intermediates are skipped: a steppable element's parents are its <em>nearest steppable
  * ancestors</em>, matching how {@code PipelineFactory} links a stepping pipeline (it recurses through
@@ -46,7 +48,7 @@ public final class SteppingGraphBuilder {
 
     /**
      * @param data         the merged pipeline data (elements + links).
-     * @param steppableIds the element ids that have captured IO (the steppable set).
+     * @param steppableIds the steppable element ids (pipeline-derived, unioned with the store's).
      * @return the steppable elements (with boundary flags) and the nearest-steppable-ancestor map.
      */
     public static Graph build(final PipelineData data, final Set<String> steppableIds) {

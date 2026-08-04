@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping.store;
 
-import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -24,6 +23,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  * <p>
  * {@link #getOrCreateStore} must not run concurrently with {@link #deleteSession} for the same session id
  * - a create racing a delete could re-create a store in a just-removed map (leaking its channels) or
- * write into a directory being deleted. {@link SteppingSession} owns session lifecycle and serialises
+ * write into a directory being deleted. {@code SteppingSession} owns session lifecycle and serialises
  * creation against teardown under its own lock, so callers must go through it rather than creating stores
  * for a session directly.
  */
@@ -52,16 +52,18 @@ public class StepDataStoreManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StepDataStoreManager.class);
 
     private final TempDirProvider tempDirProvider;
-    private final SteppingConfig config;
+    // A Provider, not the object: config is live (the UI can change it, and tests override it per class),
+    // and this is a singleton - injecting the object directly would freeze whatever the value was at startup.
+    private final Provider<SteppingConfig> configProvider;
 
     // sessionId -> (metaId -> store)
     private final Map<String, Map<Long, StepDataStore>> sessions = new ConcurrentHashMap<>();
 
     @Inject
     public StepDataStoreManager(final TempDirProvider tempDirProvider,
-                                final SteppingConfig config) {
+                                final Provider<SteppingConfig> configProvider) {
         this.tempDirProvider = tempDirProvider;
-        this.config = config;
+        this.configProvider = configProvider;
     }
 
     /**
@@ -73,7 +75,7 @@ public class StepDataStoreManager {
         return streamStores.computeIfAbsent(metaId, id -> {
             final Path streamDir = getSessionDir(sessionId).resolve(Long.toString(id));
             FileUtil.mkdirs(streamDir);
-            return new StepDataStore(streamDir, config);
+            return new StepDataStore(streamDir, configProvider.get());
         });
     }
 
@@ -107,7 +109,7 @@ public class StepDataStoreManager {
      */
     public void cleanupOrphans() {
         final Path baseDir = getBaseDir();
-        final Instant oldest = Instant.now().minus(config.getOrphanMaxAge().getDuration());
+        final Instant oldest = Instant.now().minus(configProvider.get().getOrphanMaxAge().getDuration());
 
         try (final Stream<Path> children = Files.list(baseDir)) {
             children.filter(Files::isDirectory).forEach(dir -> {
@@ -145,7 +147,7 @@ public class StepDataStoreManager {
      * @return the base directory under which all session directories are created.
      */
     public Path getBaseDir() {
-        final Path baseDir = tempDirProvider.get().resolve(config.getStoreSubDir());
+        final Path baseDir = tempDirProvider.get().resolve(configProvider.get().getStoreSubDir());
         FileUtil.mkdirs(baseDir);
         return baseDir;
     }

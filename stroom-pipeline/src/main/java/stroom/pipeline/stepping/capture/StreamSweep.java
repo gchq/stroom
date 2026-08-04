@@ -19,6 +19,7 @@ package stroom.pipeline.stepping.capture;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.store.Coverage;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
@@ -29,19 +30,26 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The asynchronous capture of a single stream: it owns the stream's {@link StepDataStore}, the
- * {@link CaptureWatermark} that says how far the capture has got, and the task handle its session uses to
- * terminate it. It also remembers the per-stream facts a step result needs that belong to no single record.
+ * One asynchronous producer filling a single stream's {@link StepDataStore}: it owns the store handle, the
+ * {@link CaptureWatermark} that says how far it has got, and the task handle its session uses to terminate
+ * it. It also remembers the per-stream facts a step result needs that belong to no single record.
  * <p>
- * Progress and terminal state live in the watermark - see {@link CaptureWatermark} for the rule that every way
- * a producer can stop must wake its waiters. The methods here delegate, so callers that only care about
- * progress can hold the watermark instead of the whole sweep.
+ * One class, four roles, distinguished by how it was made: a <b>full capture</b> of the stream (the plain
+ * constructors); a <b>backbone</b> - a capture truncated at the record boundary, marked with a
+ * {@link #setCacheKey cache key} so no step lookup is ever served from it directly; an <b>on-demand
+ * materialisation</b> ({@link #markOnDemand}) producing only its {@link #setDemand demanded} records; and a
+ * <b>wait handle</b> ({@link #waitingOn}) on a producer somebody else launched, serving nothing of its own.
+ * The session and resolver branch on these marks - what may be cached, what may be crossed from, what is
+ * merely waited on.
+ * <p>
+ * Progress and terminal state live in the watermark - see {@link CaptureWatermark} for the rule that every
+ * way a producer can stop must wake its waiters.
  */
 public class StreamSweep {
 
     /**
      * Holds nothing, ever. The extent is deliberately NOT final: a wait handle's whole purpose is that more is
-     * coming, and its producer's own {@link #isFullyCaptured()} is what says when that stops being true.
+     * coming, and its producer's own {@link #hasEnded()} is what says when that stops being true.
      */
     private static final Coverage EMPTY_COVERAGE = new Coverage() {
         @Override
@@ -82,12 +90,12 @@ public class StreamSweep {
     // Non-null for a sweep the session must own and keep but never serve a step from directly - a backbone,
     // cached under this key instead of the step's fingerprint signature so no step lookup can ever hit it.
     private volatile String cacheKey;
-    private volatile ReprocessDriver.RecordRange demand;
+    private volatile RecordRange demand;
 
     // Non-null when this sweep materialises individual records of one element on demand rather than
     // capturing the stream. Such a sweep holds only the records the user has actually visited, so what it
     // can answer is a question about the store rather than about a contiguous range.
-    private volatile String onDemandElementId;
+    private volatile boolean onDemand;
 
     // Set when the async capture task is launched, so the owning session can terminate it on close.
     private volatile TaskContext taskContext;
@@ -129,7 +137,8 @@ public class StreamSweep {
      * This is how a step whose records are still ahead of a running capture's frontier waits for the work
      * already in flight instead of launching a second capture of the same stream. Its {@link #coverage()} is
      * deliberately empty: the producer is capturing under a different configuration to the one this step is
-     * being served under, so nothing it has written is servable here - only its <i>progress</i> is of interest.
+     * being served under, or is a backbone truncated at the record boundary - either way, nothing it has
+     * written is servable as a whole step here; only its <i>progress</i> is of interest.
      * Serving from the producer's own coverage would show the user a record with the edited element's pane
      * blank, which is precisely the half-truth the store's fingerprint keying exists to prevent.
      * <p>
@@ -180,15 +189,13 @@ public class StreamSweep {
     }
 
     /**
-     * @return how far this sweep has got. A consumer that follows this sweep's progress needs only this, not
-     * the sweep itself.
+     * Mark this as an on-demand materialisation - a producer of specific demanded records (or a completed
+     * signaller of records already in the store), not a capture of the stream. A completed materialisation
+     * says nothing about the rest of the stream, which is why the resolver re-plans rather than crossing
+     * when one comes back empty. See {@code stepping-design.md} §11.
      */
-    /**
-     * Mark this as materialising records of {@code elementId} on demand. See
-     * {@code stepping-design.md} §11.
-     */
-    public void setOnDemand(final String elementId) {
-        this.onDemandElementId = elementId;
+    public void markOnDemand() {
+        this.onDemand = true;
     }
 
     /**
@@ -196,20 +203,16 @@ public class StreamSweep {
      * producer already making the records it wants instead of double-launching - the store cannot answer
      * that, because the records are precisely the ones not written yet.
      */
-    public void setDemand(final ReprocessDriver.RecordRange demand) {
+    public void setDemand(final RecordRange demand) {
         this.demand = demand;
     }
 
-    public ReprocessDriver.RecordRange getDemand() {
+    public RecordRange getDemand() {
         return demand;
     }
 
     public boolean isOnDemand() {
-        return onDemandElementId != null;
-    }
-
-    public CaptureWatermark getWatermark() {
-        return watermark;
+        return onDemand;
     }
 
     /**
@@ -217,20 +220,6 @@ public class StreamSweep {
      */
     public void recordCaptured(final StepLocation location) {
         watermark.recordCaptured(location);
-    }
-
-    /**
-     * @return the first (lowest) record index this sweep has captured for the part, or -1 if none yet.
-     */
-    public long getCapturedFirstRecordIndex(final long partIndex) {
-        return watermark.getCapturedFirstRecordIndex(partIndex);
-    }
-
-    /**
-     * @return the last (highest) record index this sweep has captured for the part, or -1 if none yet.
-     */
-    public long getCapturedLastRecordIndex(final long partIndex) {
-        return watermark.getCapturedLastRecordIndex(partIndex);
     }
 
     /**
@@ -271,7 +260,7 @@ public class StreamSweep {
 
             @Override
             public boolean isExtentFinal() {
-                return watermark.isFullyCaptured();
+                return watermark.hasEnded();
             }
         };
     }
@@ -288,14 +277,14 @@ public class StreamSweep {
         return watermark.getVersion();
     }
 
-    public boolean isFullyCaptured() {
-        return watermark.isFullyCaptured();
+    public boolean hasEnded() {
+        return watermark.hasEnded();
     }
 
     /**
      * @return true only if this sweep captured the whole stream <b>without error</b>. See
      * {@link CaptureWatermark#isSuccessfullyCaptured()} - a caller deciding whether the captured chunks can be
-     * reused (e.g. to reprocess from them) must use this rather than {@link #isFullyCaptured()}.
+     * reused (e.g. to reprocess from them) must use this rather than {@link #hasEnded()}.
      */
     public boolean isSuccessfullyCaptured() {
         return watermark.isSuccessfullyCaptured();
@@ -325,8 +314,8 @@ public class StreamSweep {
      *
      * @return true if the capture finished, false on timeout.
      */
-    public boolean awaitFullyCaptured(final long timeoutMs) {
-        return watermark.awaitFullyCaptured(timeoutMs);
+    public boolean awaitEnd(final long timeoutMs) {
+        return watermark.awaitEnd(timeoutMs);
     }
 
     void setTaskContext(final TaskContext taskContext) {

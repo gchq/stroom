@@ -43,61 +43,19 @@ class TestStreamSweep {
         sweep.recordCaptured(loc(0));
         assertThat(sweep.getVersion()).isGreaterThan(v0);
         assertThat(sweep.getLastCapturedLocation()).isEqualTo(loc(0));
-        assertThat(sweep.isFullyCaptured()).isFalse();
+        assertThat(sweep.hasEnded()).isFalse();
     }
 
-    @Test
-    void testAwaitReturnsWhenVersionAlreadyAdvanced() {
-        // A record captured between reading the version and awaiting must not be missed (no lost wake-up).
-        final StreamSweep sweep = newSweep();
-        final long known = sweep.getVersion();
-        sweep.recordCaptured(loc(0));
-        assertThat(sweep.awaitChangeSince(known, 5_000)).isTrue();
-    }
 
-    @Test
-    void testAwaitWakesOnRecordFromAnotherThread() throws InterruptedException {
-        final StreamSweep sweep = newSweep();
-        final long known = sweep.getVersion();
-        final Thread producer = new Thread(() -> {
-            sleep(50);
-            sweep.recordCaptured(loc(0));
-        });
-        producer.start();
-        final boolean signalled = sweep.awaitChangeSince(known, 5_000);
-        producer.join();
-        assertThat(signalled).isTrue();
-        assertThat(sweep.getVersion()).isGreaterThan(known);
-    }
 
-    @Test
-    void testAwaitWakesOnComplete() throws InterruptedException {
-        final StreamSweep sweep = newSweep();
-        final long known = sweep.getVersion();
-        final Thread producer = new Thread(() -> {
-            sleep(50);
-            sweep.markFullyCaptured();
-        });
-        producer.start();
-        assertThat(sweep.awaitChangeSince(known, 5_000)).isTrue();
-        producer.join();
-        assertThat(sweep.isFullyCaptured()).isTrue();
-    }
 
-    @Test
-    void testAwaitTimesOut() {
-        final StreamSweep sweep = newSweep();
-        // Nothing happens, so the wait must return false once the timeout elapses.
-        assertThat(sweep.awaitChangeSince(sweep.getVersion(), 100)).isFalse();
-        assertThat(sweep.isFullyCaptured()).isFalse();
-    }
 
     @Test
     void testMarkErrorSetsErrorAndCompletes() {
         final StreamSweep sweep = newSweep();
         final RuntimeException boom = new RuntimeException("boom");
         sweep.markError(boom);
-        assertThat(sweep.isFullyCaptured()).isTrue();
+        assertThat(sweep.hasEnded()).isTrue();
         assertThat(sweep.getError()).isSameAs(boom);
         // A subsequent error does not overwrite the first.
         sweep.markError(new RuntimeException("second"));
@@ -136,7 +94,7 @@ class TestStreamSweep {
         final StreamSweep sweep = newSweep();
         final AtomicBoolean completed = new AtomicBoolean(true);
 
-        final Thread waiter = new Thread(() -> completed.set(sweep.awaitFullyCaptured(30_000)));
+        final Thread waiter = new Thread(() -> completed.set(sweep.awaitEnd(30_000)));
         waiter.start();
         sleep(100);
         waiter.interrupt();

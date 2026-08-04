@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -109,14 +110,13 @@ class TestSweepAndReplaySharingAStore {
         put(store, 50, "fpB", StepDataStore.RecordOrder.ON_DEMAND);
         put(store, 1, "fpA", StepDataStore.RecordOrder.SEQUENTIAL);
 
-        assertThat(store, 0, "fpA");
-        assertThat(store, 1, "fpA");
-        assertThat(store, 50, "fpB");
+        assertReadable(store, 0, "fpA");
+        assertReadable(store, 1, "fpA");
+        assertReadable(store, 50, "fpB");
     }
 
-    private void assertThat(final StepDataStore store, final long recordIndex, final String fingerprint) {
-        org.assertj.core.api.Assertions
-                .assertThat(store.getElementData(new StepLocation(META_ID, 0, recordIndex), E1, fingerprint))
+    private void assertReadable(final StepDataStore store, final long recordIndex, final String fingerprint) {
+        assertThat(store.getElementData(new StepLocation(META_ID, 0, recordIndex), E1, fingerprint))
                 .as("record " + recordIndex + " under " + fingerprint + " is readable")
                 .isPresent();
     }

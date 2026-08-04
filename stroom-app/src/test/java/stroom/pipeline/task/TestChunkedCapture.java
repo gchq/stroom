@@ -185,11 +185,16 @@ class TestChunkedCapture extends TranslationTest {
                 stepped = steppingService.step(baseRequest.copy()
                         .stepType(StepType.FORWARD)
                         .stepLocation(loc)
+                        // Carry the session id, as the UI does - dropping it would self-heal into a fresh
+                        // session and silently re-capture the stream for every single record.
+                        .sessionUuid(stepped.getSessionUuid())
                         .build());
             }
             assertThat(compared).as("compared at least one record for " + feedName).isGreaterThan(0);
         } finally {
             steppingService.deleteCaptureSession(capture.sessionId());
+            steppingService.terminateStepping(
+                    baseRequest.copy().sessionUuid(first.getSessionUuid()).build());
         }
     }
 

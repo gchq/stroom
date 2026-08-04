@@ -32,6 +32,12 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 
+/**
+ * Watches one steppable element during capture: holds its input/output {@link Recorder}s and its
+ * {@link SteppingFilter}, and renders the element's per-record IO into the store form
+ * ({@link stroom.pipeline.stepping.store.CapturedElementData}), preserving the flag semantics the wire
+ * format relies on.
+ */
 public class ElementMonitor {
 
     private final ElementId elementId;

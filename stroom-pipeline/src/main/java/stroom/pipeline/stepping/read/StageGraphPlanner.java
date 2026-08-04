@@ -61,7 +61,7 @@ public final class StageGraphPlanner {
      * One independently runnable run of elements.
      *
      * @param startElementId  the element the stage is built from.
-     * @param feedElementId   the upstream element whose captured output feeds it, or null for the head stage,
+     * @param upstreamElementId   the upstream element whose captured output feeds it, or null for the head stage,
      *                        which reads the raw stream instead.
      * @param scope           for a mid-pipeline stage, the {@link MidPipelineScope} to build it with. For the
      *                        head stage - built from {@code Source} instead - it says whether the build runs
@@ -70,12 +70,12 @@ public final class StageGraphPlanner {
      * @param elementIds      every element this stage runs and captures, in order.
      */
     public record Stage(String startElementId,
-                        String feedElementId,
+                        String upstreamElementId,
                         MidPipelineScope scope,
                         List<String> elementIds) {
 
         public boolean isHead() {
-            return feedElementId == null;
+            return upstreamElementId == null;
         }
     }
 

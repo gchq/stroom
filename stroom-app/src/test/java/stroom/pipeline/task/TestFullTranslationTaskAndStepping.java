@@ -33,6 +33,10 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
+    // A ThreadLocal where every sibling uses a static AtomicBoolean: this is the only setup flag shared
+    // across two classes (TestSkeletonSweptStepping extends this one). It relies on the harness running
+    // each class on its own worker thread; if both ever shared a thread the subclass would skip setup and
+    // fail loudly on missing data (StroomIntegrationTest also throws on an uncleaned test change).
     private static final ThreadLocal<Boolean> DONE_SETUP = ThreadLocal.withInitial(() -> false);
 
     @BeforeEach

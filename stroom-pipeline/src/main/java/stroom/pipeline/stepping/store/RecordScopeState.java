@@ -27,7 +27,7 @@ import java.util.Map;
  * cannot be stored as part of any element's IO chunk.
  * <p>
  * It is captured once per record and held in the store's per-part state slot, un-fingerprinted, because it is
- * a property of the run rather than of one element's configuration. Two things live here:
+ * a property of the run rather than of one element's configuration. Three things live here:
  * <ul>
  *   <li>{@code sourceLocation} - the per-record {@link SourceLocation} the {@code LocationHolder} computed
  *   from the parser {@code Locator}, giving the served step its source highlight and letting a reprocess

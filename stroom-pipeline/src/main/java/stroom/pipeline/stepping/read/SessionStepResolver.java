@@ -95,15 +95,20 @@ public class SessionStepResolver {
         }
         long currentStream = initial.getAsLong();
         boolean crossed = false;
+        boolean firstPass = true;
         StreamSweep lastSweep = null;
 
         while (true) {
-            if (System.currentTimeMillis() >= deadline) {
+            // The first pass always runs - planning is what LAUNCHES the producer, so a caller with a
+            // zero/absent timeout must still make progress (and often resolves outright from the store);
+            // without this exemption such a caller polls forever and nothing is ever launched.
+            if (!firstPass && System.currentTimeMillis() >= deadline) {
                 // Report how far the sweep got, so the UI's progress indicator keeps advancing rather than
                 // blanking out when a step's budget expires mid-sweep.
                 return SessionStepResult.incomplete(
                         lastSweep == null ? null : lastSweep.getLastCapturedLocation());
             }
+            firstPass = false;
             final StreamSweep sweep = session.sweepFor(currentStream, request, fingerprints);
             lastSweep = sweep;
             final long version = sweep.getVersion();
@@ -118,9 +123,9 @@ public class SessionStepResolver {
                     : request;
 
             // LAST needs the stream fully captured to know the true last record.
-            if (streamRequest.getStepType() == StepType.LAST && !sweep.isFullyCaptured()) {
+            if (streamRequest.getStepType() == StepType.LAST && !sweep.hasEnded()) {
                 final long remaining = deadline - System.currentTimeMillis();
-                if (remaining <= 0 || !sweep.awaitFullyCaptured(remaining)) {
+                if (remaining <= 0 || !sweep.awaitEnd(remaining)) {
                     return SessionStepResult.incomplete(sweep.getLastCapturedLocation());
                 }
                 continue;
@@ -155,7 +160,7 @@ public class SessionStepResolver {
                 return SessionStepResult.error(message != null ? message : "Stepping capture error");
             }
 
-            if (sweep.isWaitHandle() && sweep.isFullyCaptured()) {
+            if (sweep.isWaitHandle() && sweep.hasEnded()) {
                 // We were waiting on a capture launched under a different configuration and it has now
                 // finished. Its records are in the store, so the next pass plans this step against them.
                 // Concluding "nothing in this stream" here would be reading a handle that never served
@@ -163,7 +168,7 @@ public class SessionStepResolver {
                 continue;
             }
 
-            if (sweep.isOnDemand() && sweep.isFullyCaptured()) {
+            if (sweep.isOnDemand() && sweep.hasEnded()) {
                 // A completed materialisation produced only the records it was asked for; finding no match
                 // among them says nothing about the rest of the stream. Re-plan: the next pass launches the
                 // next window of a filtered scan (or, once the scan has exhausted the stream, the
@@ -173,7 +178,7 @@ public class SessionStepResolver {
                 continue;
             }
 
-            if (!sweep.isFullyCaptured()) {
+            if (!sweep.hasEnded()) {
                 // The target record may still be captured in this stream; wait for progress.
                 final long remaining = deadline - System.currentTimeMillis();
                 if (remaining <= 0 || !sweep.awaitChangeSince(version, remaining)) {
@@ -266,6 +271,7 @@ public class SessionStepResolver {
      * @param stepData         the assembled per-element data (when found).
      * @param progressLocation the furthest-captured record while still sweeping (for progress display).
      * @param generalError     a capture error message, if the sweep failed.
+     * @param segmentedData    whether the found record's part holds segmented data.
      */
     public record SessionStepResult(boolean foundRecord,
                                     boolean complete,
@@ -292,4 +298,5 @@ public class SessionStepResolver {
         static SessionStepResult error(final String message) {
             return new SessionStepResult(false, true, null, null, null, message, false);
         }
-    }}
+    }
+}

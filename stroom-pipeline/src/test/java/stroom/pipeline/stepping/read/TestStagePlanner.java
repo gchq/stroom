@@ -22,6 +22,7 @@ import stroom.pipeline.stepping.read.StagePlanner.PlannerElement;
 import stroom.pipeline.stepping.read.StagePlanner.StagePlan;
 import stroom.pipeline.stepping.store.CapturedData;
 import stroom.pipeline.stepping.store.CapturedElementData;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.shared.ElementId;
@@ -97,7 +98,7 @@ class TestStagePlanner {
         final StepDataStore store = storeWithPartialXslt(tempDir, 0, 6);
 
         final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
-                new StagePlanner.RecordSpan(0, 2, 5));
+                new RecordRange(0, 2, 5));
 
         assertThat(plan.reuse()).contains("xslt");
         assertThat(plan.fullRecapture()).isFalse();
@@ -110,7 +111,7 @@ class TestStagePlanner {
         final StepDataStore store = storeWithPartialXslt(tempDir, 0, 6);
 
         final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
-                new StagePlanner.RecordSpan(0, 5, 8));
+                new RecordRange(0, 5, 8));
 
         assertThat(plan.reuse()).doesNotContain("xslt");
         assertThat(plan.reprocess()).contains("xslt");
@@ -132,7 +133,7 @@ class TestStagePlanner {
         }
 
         final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
-                new StagePlanner.RecordSpan(0, 2, 5));
+                new RecordRange(0, 2, 5));
 
         assertThat(plan.reuse()).as("records 3 and 4 are holes").doesNotContain("xslt");
     }
@@ -142,7 +143,7 @@ class TestStagePlanner {
         final StepDataStore store = storeWithPartialXslt(tempDir, 0, 9);
 
         final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
-                new StagePlanner.RecordSpan(1, 0, 1));
+                new RecordRange(1, 0, 1));
 
         assertThat(plan.reuse()).doesNotContain("xslt");
     }
@@ -153,7 +154,7 @@ class TestStagePlanner {
         final StepDataStore store = storeWithPartialXslt(tempDir, 0, 9);
 
         final StagePlan plan = planner.plan(elements, store, fingerprints("p1", "x1", "w1"),
-                new StagePlanner.RecordSpan(0, 5, 4));
+                new RecordRange(0, 5, 4));
 
         assertThat(plan.reuse()).isEmpty();
     }

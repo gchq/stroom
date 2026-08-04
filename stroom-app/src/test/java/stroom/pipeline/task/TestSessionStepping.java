@@ -121,10 +121,14 @@ class TestSessionStepping extends TranslationTest {
 
         final ElementFingerprints fingerprints = steppingService.computeFingerprints(baseRequest);
         final SteppingSession session = steppingService.createSession(baseRequest);
+        String stepSessionUuid = null;
         try {
             // Walk the whole feed forward via step() and, at every record, check the session resolve
             // (REFRESH at the same location, and FORWARD to the next) agrees.
+            // The step() oracle carries its session id, as the UI does - dropping it would self-heal
+            // into a fresh session and silently re-capture the stream on every call.
             SteppingResult stepped = steppingService.step(baseRequest.copy().stepType(StepType.FIRST).build());
+            stepSessionUuid = stepped.getSessionUuid();
             assertThat(stepped.isFoundRecord()).as("FIRST for " + feedName).isTrue();
 
             int compared = 0;
@@ -144,8 +148,9 @@ class TestSessionStepping extends TranslationTest {
                 assertElementIoMatches(feedName, loc, stepped.getStepData(), refreshed.stepData());
                 compared++;
 
-                final SteppingResult nextStepped = steppingService.step(
-                        baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build());
+                final SteppingResult nextStepped = steppingService.step(baseRequest.copy()
+                        .stepType(StepType.FORWARD).stepLocation(loc).sessionUuid(stepSessionUuid).build());
+                stepSessionUuid = nextStepped.getSessionUuid();
                 if (nextStepped.isFoundRecord()) {
                     final SessionStepResult sessionForward = resolver.resolve(
                             session, baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build(), fingerprints, TIMEOUT_MS);
@@ -160,14 +165,23 @@ class TestSessionStepping extends TranslationTest {
             assertThat(crossedStreams).as("feed " + feedName + " should span multiple streams").isTrue();
 
             // LAST across streams must agree too.
-            final SteppingResult steppedLast = steppingService.step(baseRequest.copy().stepType(StepType.LAST).build());
+            final SteppingResult steppedLast = steppingService.step(
+                    baseRequest.copy().stepType(StepType.LAST).sessionUuid(stepSessionUuid).build());
+            stepSessionUuid = steppedLast.getSessionUuid();
             final SessionStepResult sessionLast = resolver.resolve(
                     session, baseRequest.copy().stepType(StepType.LAST).build(), fingerprints, TIMEOUT_MS);
             assertThat(sessionLast.foundLocation())
                     .as("session LAST for " + feedName)
                     .isEqualTo(steppedLast.getFoundLocation());
         } finally {
-            session.close();
+            try {
+                session.close();
+            } finally {
+                if (stepSessionUuid != null) {
+                    steppingService.terminateStepping(
+                            baseRequest.copy().sessionUuid(stepSessionUuid).build());
+                }
+            }
         }
     }
 

@@ -171,6 +171,42 @@ class TestStoreStepResolver {
     }
 
     @Test
+    void testAFilteredFirstScansFromTheStoresOriginNotTheServedRangesEdge(@TempDir final Path tempDir) {
+        // The serving range may be a window materialised mid-stream; records below it that the store
+        // already holds must still be evaluated. Starting the scan at the range's first record would skip
+        // a genuine earlier match - the poisoned-frontier bug's serving half. e2 has output on EVEN
+        // records, so the first genuine match is record 0 - below the served window.
+        final StepDataStore store = singlePart(tempDir, 6);
+        final PipelineStepRequest filtered = PipelineStepRequest.builder()
+                .stepType(StepType.FIRST)
+                .stepFilterMap(Map.of(E2,
+                        new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
+                .build();
+        // A served range covering only records 3..5, as a mid-stream window sweep's coverage would.
+        final StoreStepResolver.CapturedRange window = new StoreStepResolver.CapturedRange() {
+            @Override
+            public long first(final long partIndex) {
+                return 3;
+            }
+
+            @Override
+            public long last(final long partIndex) {
+                return 5;
+            }
+
+            @Override
+            public boolean holds(final long partIndex, final long recordIndex) {
+                return recordIndex >= 3 && recordIndex <= 5;
+            }
+        };
+
+        assertThat(resolver.resolve(store, META, fingerprints, filtered, window))
+                .map(ResolvedStep::foundLocation)
+                .as("the held match below the served range is found, not skipped")
+                .contains(new StepLocation(META, 0, 0));
+    }
+
+    @Test
     void testFirst(@TempDir final Path tempDir) {
         final ResolvedStep step = resolver.resolve(singlePart(tempDir, 5), META, fingerprints, req(StepType.FIRST, null, null))
                 .orElseThrow();

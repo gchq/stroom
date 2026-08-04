@@ -159,15 +159,11 @@ public class SteppingController {
         this.taskContext = taskContext;
     }
 
-    public StepLocation getProgressLocation() {
-        return progressLocation;
-    }
-
     /**
-     * Called by the step detector to tell us that we have reached the end of a
+     * Called by the record detector to tell us that we have reached the end of a
      * record.
      *
-     * @return True if the step detector should terminate stepping.
+     * @return True if the record detector should terminate stepping.
      */
     public boolean endRecord(final long currentRecordIndex) {
         // Get the current stream number.
@@ -224,11 +220,6 @@ public class SteppingController {
     }
 
     /**
-     * Persist each monitored element's IO for this record to the store, keyed by the element's cumulative
-     * fingerprint - the key that makes the IO reusable until that element, or something upstream of it,
-     * changes.
-     */
-    /**
      * Every counting element's running total, as it stands now - after the whole record has been processed.
      * A replay of the <em>next</em> record reads this back, so what is stored is deliberately "the count
      * before record N+1" rather than anything about this record in isolation.
@@ -258,6 +249,11 @@ public class SteppingController {
         this.indicativeCountElementIds = elementIds == null ? Set.of() : elementIds;
     }
 
+    /**
+     * Persist each monitored element's IO for this record to the store, keyed by the element's cumulative
+     * fingerprint - the key that makes the IO reusable until that element, or something upstream of it,
+     * changes.
+     */
     private void captureRecord(final StepLocation location,
                                final TextRange highlight,
                                final SourceLocation sourceLocation) {
@@ -316,11 +312,6 @@ public class SteppingController {
 
 
     /**
-     * Supply the check that says this capture is no longer wanted. Kept separate from the task context
-     * because abandoning a superseded sweep deliberately does not interrupt it - see
-     * {@code SteppingService.abandonSweep}.
-     */
-    /**
      * Say how this capture produces records. Defaults to {@code SEQUENTIAL}; only a replay that materialises
      * individual records needs to change it.
      */
@@ -328,6 +319,11 @@ public class SteppingController {
         this.recordOrder = recordOrder == null ? StepDataStore.RecordOrder.SEQUENTIAL : recordOrder;
     }
 
+    /**
+     * Supply the check that says this capture is no longer wanted. Kept separate from the task context
+     * because abandoning a superseded sweep deliberately does not interrupt it - see
+     * {@code SteppingService.abandonSweep}.
+     */
     public void setTerminateCheck(final BooleanSupplier terminateCheck) {
         this.terminateCheck = terminateCheck == null ? () -> false : terminateCheck;
     }

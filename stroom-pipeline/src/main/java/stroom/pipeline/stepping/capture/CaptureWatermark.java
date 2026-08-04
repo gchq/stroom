@@ -153,7 +153,7 @@ public class CaptureWatermark {
         }
     }
 
-    public boolean isFullyCaptured() {
+    public boolean hasEnded() {
         lock.lock();
         try {
             return fullyCaptured;
@@ -164,7 +164,7 @@ public class CaptureWatermark {
 
     /**
      * @return true only if everything was captured <b>without error</b>. {@link #markError} also sets
-     * {@code fullyCaptured} (so readers stop waiting), so {@link #isFullyCaptured()} alone does not mean the
+     * {@code fullyCaptured} (so readers stop waiting), so {@link #hasEnded()} alone does not mean the
      * store holds the complete record stream - a caller deciding whether the captured chunks can be reused
      * (e.g. to reprocess from them) must use this.
      */
@@ -217,7 +217,7 @@ public class CaptureWatermark {
             Thread.currentThread().interrupt();
             // No progress was observed. Reporting progress here would send the caller round its resolve loop
             // again, where the still-set interrupt flag makes the next await throw immediately - spinning a
-            // full store re-scan until its deadline. Consistent with awaitFullyCaptured, which returns the flag.
+            // full store re-scan until its deadline. Consistent with awaitEnd, which returns the flag.
             return false;
         } finally {
             lock.unlock();
@@ -229,7 +229,7 @@ public class CaptureWatermark {
      *
      * @return true if it stopped, false on timeout.
      */
-    public boolean awaitFullyCaptured(final long timeoutMs) {
+    public boolean awaitEnd(final long timeoutMs) {
         lock.lock();
         try {
             long remainingNanos = TimeUnit.MILLISECONDS.toNanos(Math.max(0, timeoutMs));

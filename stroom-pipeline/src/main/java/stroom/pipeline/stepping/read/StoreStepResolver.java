@@ -40,19 +40,20 @@ import java.util.Optional;
 /**
  * Resolves a step (FIRST/FORWARD/BACKWARD/LAST/REFRESH, with optional filters) against <b>one stream's</b>
  * captured data - by lookup and scan, with no pipeline reprocessing. This is what makes stepping cheap: the
- * pipeline runs once per stream to fill the store, not once per keypress.
+ * pipeline (or its backbone) runs once per stream to fill the store, not once per keypress.
  * <p>
  * Deliberately pure and synchronous. It knows a {@link StepDataStore} and nothing else - no sessions, no
  * sweeps, no waiting, no threads - so it can be reasoned about and tested on its own. Waiting for a record
  * that has not been captured yet, and walking into neighbouring streams, are
  * {@link SessionStepResolver}'s job.
  * <p>
- * A record that is not in the store reads back as absent rather than as "no such record": the store holds a
- * contiguous range per part, so {@link #next}/{@link #prev} refuse to step outside it and return empty,
- * which the caller must interpret as "not captured yet" unless the stream is known to be fully captured.
+ * A record that is not in the store reads back as absent rather than as "no such record": a sweep's range
+ * is contiguous per part (materialised coverage may be sparse and is answered record by record), so
+ * {@link #next}/{@link #prev} refuse to step outside the served range and return empty, which the caller
+ * must interpret as "not captured yet" unless the stream is known to be fully captured.
  * <p>
- * Records are ordered by (partIndex, recordIndex). Filtering mirrors {@code SteppingController.endRecord}:
- * a record matches if no filters are applied, or if any applied element's filter matches (see
+ * Records are ordered by (partIndex, recordIndex). Filtering keeps the legacy live-stepping rule: a record
+ * matches if no filters are applied, or if any applied element's filter matches (see
  * {@link PersistedFilterEvaluator}).
  */
 public class StoreStepResolver {
@@ -98,17 +99,26 @@ public class StoreStepResolver {
         final StepLocation ref = (requestRef != null && requestRef.getMetaId() == metaId) ? requestRef : null;
 
         final Optional<StepLocation> target = switch (stepType) {
-            case FIRST -> scanForward(store, parts, metaId, firstRecord(parts, metaId, range), request,
-                    fingerprints, range);
-            case LAST -> scanBackward(store, parts, metaId, lastRecord(parts, metaId, range), request,
-                    fingerprints, range);
+            // Filtered FIRST/LAST scan from the STORE's true origin, not the served range's edge: the
+            // range may be a window materialised mid-stream, and the records between the stream's origin
+            // and it - already held from earlier windows or other materialisations - must be evaluated,
+            // not skipped. The loose bound in next()/prev() reads them straight from the store. Unfiltered
+            // FIRST/LAST keep the range's edge: their answer IS the served range's first/last record.
+            case FIRST -> scan(store, parts, metaId,
+                    anyFilterApplied(request) ? storeOrigin(parts, metaId, store, true)
+                            : firstRecord(parts, metaId, range),
+                    request, fingerprints, range, true);
+            case LAST -> scan(store, parts, metaId,
+                    anyFilterApplied(request) ? storeOrigin(parts, metaId, store, false)
+                            : lastRecord(parts, metaId, range),
+                    request, fingerprints, range, false);
             case FORWARD -> {
                 final StepLocation start = ref == null
                         ? firstRecord(parts, metaId, range)
                         : next(store, parts, metaId, ref, range).orElse(null);
                 yield start == null
                         ? Optional.empty()
-                        : scanForward(store, parts, metaId, start, request, fingerprints, range);
+                        : scan(store, parts, metaId, start, request, fingerprints, range, true);
             }
             case BACKWARD -> {
                 final StepLocation start = ref == null
@@ -116,7 +126,7 @@ public class StoreStepResolver {
                         : prev(store, parts, metaId, ref, range).orElse(null);
                 yield start == null
                         ? Optional.empty()
-                        : scanBackward(store, parts, metaId, start, request, fingerprints, range);
+                        : scan(store, parts, metaId, start, request, fingerprints, range, false);
             }
             case REFRESH -> (ref != null && exists(parts, ref, range))
                     ? Optional.of(new StepLocation(metaId, ref.getPartIndex(), ref.getRecordIndex()))
@@ -152,7 +162,7 @@ public class StoreStepResolver {
          * order: an element that holds only the records the user has visited has gaps inside its own span.
          * The default answers from the bounds, which is right for anything captured contiguously.
          */
-        default boolean contains(final long partIndex, final long recordIndex) {
+        default boolean holds(final long partIndex, final long recordIndex) {
             final long first = first(partIndex);
             final long last = last(partIndex);
             return first >= 0 && last >= 0 && recordIndex >= first && recordIndex <= last;
@@ -176,7 +186,7 @@ public class StoreStepResolver {
                 }
 
                 @Override
-                public boolean contains(final long partIndex, final long recordIndex) {
+                public boolean holds(final long partIndex, final long recordIndex) {
                     return coverage.holds(partIndex, recordIndex);
                 }
             };
@@ -185,7 +195,7 @@ public class StoreStepResolver {
         /**
          * The whole store's range. Correct while a single producer writes every element of a record together,
          * which is what a full sweep does. Bounds-only on purpose: the synchronous single-producer path this
-         * serves has no holes, and answering {@code contains} from the bounds is what its callers always got.
+         * serves has no holes, and answering {@code holds} from the bounds is what its callers always got.
          */
         static CapturedRange of(final StepDataStore store) {
             return new CapturedRange() {
@@ -232,11 +242,11 @@ public class StoreStepResolver {
                 }
 
                 @Override
-                public boolean contains(final long partIndex, final long recordIndex) {
+                public boolean holds(final long partIndex, final long recordIndex) {
                     // Every contributor must hold it, not merely span it - one that has a hole here cannot
                     // show its pane, and a record served with a blank pane is the failure this prevents.
                     return !contributors.isEmpty()
-                           && contributors.stream().allMatch(r -> r.contains(partIndex, recordIndex));
+                           && contributors.stream().allMatch(r -> r.holds(partIndex, recordIndex));
                 }
             };
         }
@@ -266,8 +276,8 @@ public class StoreStepResolver {
                 }
 
                 @Override
-                public boolean contains(final long partIndex, final long recordIndex) {
-                    return held.contains(partIndex, recordIndex);
+                public boolean holds(final long partIndex, final long recordIndex) {
+                    return held.holds(partIndex, recordIndex);
                 }
             };
         }
@@ -300,43 +310,30 @@ public class StoreStepResolver {
 
     // --- scanning -------------------------------------------------------------------------------
 
-    private Optional<StepLocation> scanForward(final StepDataStore store,
-                                               final List<Long> parts,
-                                               final long metaId,
-                                               final StepLocation start,
-                                               final PipelineStepRequest request,
-                                               final ElementFingerprints fingerprints,
-                                               final CapturedRange range) {
+    private Optional<StepLocation> scan(final StepDataStore store,
+                                        final List<Long> parts,
+                                        final long metaId,
+                                        final StepLocation start,
+                                        final PipelineStepRequest request,
+                                        final ElementFingerprints fingerprints,
+                                        final CapturedRange range,
+                                        final boolean forward) {
         StepLocation loc = start;
         while (loc != null) {
             if (matches(store, loc, request, fingerprints)) {
                 return Optional.of(loc);
             }
-            loc = next(store, parts, metaId, loc, range).orElse(null);
-        }
-        return Optional.empty();
-    }
-
-    private Optional<StepLocation> scanBackward(final StepDataStore store,
-                                                final List<Long> parts,
-                                                final long metaId,
-                                                final StepLocation start,
-                                                final PipelineStepRequest request,
-                                                final ElementFingerprints fingerprints,
-                                                final CapturedRange range) {
-        StepLocation loc = start;
-        while (loc != null) {
-            if (matches(store, loc, request, fingerprints)) {
-                return Optional.of(loc);
-            }
-            loc = prev(store, parts, metaId, loc, range).orElse(null);
+            loc = (forward
+                    ? next(store, parts, metaId, loc, range)
+                    : prev(store, parts, metaId, loc, range))
+                    .orElse(null);
         }
         return Optional.empty();
     }
 
     /**
-     * Mirrors {@code SteppingController.endRecord}: found if no filters are applied, or any applied
-     * element's filter matches this record.
+     * The legacy live-stepping match rule: found if no filters are applied, or any applied element's filter
+     * matches this record.
      */
     private boolean matches(final StepDataStore store,
                             final StepLocation loc,
@@ -367,6 +364,25 @@ public class StoreStepResolver {
     }
 
     // --- navigation over (part, record) ---------------------------------------------------------
+
+    private boolean anyFilterApplied(final PipelineStepRequest request) {
+        return NullSafe.hasEntries(request.getStepFilterMap())
+               && request.getStepFilterMap().values().stream()
+                       .anyMatch(settings -> settings != null && settings.isFilterApplied());
+    }
+
+    /**
+     * The stream's own first (or last) captured record per the store - the origin a filtered scan walks
+     * from, whatever sub-range the serving sweep happens to cover.
+     */
+    private StepLocation storeOrigin(final List<Long> parts,
+                                     final long metaId,
+                                     final StepDataStore store,
+                                     final boolean first) {
+        final long part = first ? parts.getFirst() : parts.getLast();
+        final long record = first ? store.getFirstRecordIndex(part) : store.getLastRecordIndex(part);
+        return record < 0 ? null : new StepLocation(metaId, part, record);
+    }
 
     private StepLocation firstRecord(final List<Long> parts, final long metaId, final CapturedRange range) {
         // The first part that has captured records; a part with none yet (first == -1) is skipped.
@@ -488,7 +504,7 @@ public class StoreStepResolver {
 
     private boolean exists(final List<Long> parts, final StepLocation loc, final CapturedRange range) {
         return parts.contains(loc.getPartIndex())
-               && range.contains(loc.getPartIndex(), loc.getRecordIndex());
+               && range.holds(loc.getPartIndex(), loc.getRecordIndex());
     }
 
     // --- assembly -------------------------------------------------------------------------------

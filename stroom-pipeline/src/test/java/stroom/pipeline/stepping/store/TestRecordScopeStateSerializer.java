@@ -75,9 +75,13 @@ class TestRecordScopeStateSerializer {
                 new RecordScopeState(location(), Map.of("k", "v"), Map.of("e", 3L)));
         final byte[] withoutCounters = RecordScopeStateSerializer.toBytes(
                 new RecordScopeState(location(), Map.of("k", "v")));
+        // Genuinely old bytes: today's serialiser writes an explicit absent-map marker (one int) even
+        // for null counts, so dropping that trailing int reproduces the pre-counter format and forces
+        // fromBytes down its "nothing more to read" branch.
+        final byte[] truncated = java.util.Arrays.copyOf(
+                withoutCounters, withoutCounters.length - Integer.BYTES);
         // The old form is a strict prefix of the new one, which is what makes the append safe.
-        final byte[] truncated = java.util.Arrays.copyOf(withoutCounters, withoutCounters.length);
-        assertThat(withCounters.length).isGreaterThan(truncated.length);
+        assertThat(java.util.Arrays.copyOf(withCounters, truncated.length)).isEqualTo(truncated);
 
         final RecordScopeState old = RecordScopeStateSerializer.fromBytes(truncated);
         assertThat(old.sourceLocation()).isEqualTo(location());

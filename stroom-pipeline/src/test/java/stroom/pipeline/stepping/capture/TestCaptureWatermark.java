@@ -96,7 +96,7 @@ class TestCaptureWatermark {
 
         assertThat(observeFromAnotherThread(
                 () -> watermark.markError(new RuntimeException("producer died")),
-                () -> watermark.awaitFullyCaptured(AWAIT_TIMEOUT_MS))).isTrue();
+                () -> watermark.awaitEnd(AWAIT_TIMEOUT_MS))).isTrue();
     }
 
     @Test
@@ -106,7 +106,7 @@ class TestCaptureWatermark {
         final CaptureWatermark watermark = new CaptureWatermark();
         watermark.markError(new RuntimeException("boom"));
 
-        assertThat(watermark.isFullyCaptured()).as("stopped producing").isTrue();
+        assertThat(watermark.hasEnded()).as("stopped producing").isTrue();
         assertThat(watermark.isSuccessfullyCaptured()).as("but not usable").isFalse();
     }
 
@@ -137,7 +137,7 @@ class TestCaptureWatermark {
         final CaptureWatermark watermark = new CaptureWatermark();
 
         assertThat(watermark.awaitChangeSince(watermark.getVersion(), 10)).isFalse();
-        assertThat(watermark.awaitFullyCaptured(10)).isFalse();
+        assertThat(watermark.awaitEnd(10)).isFalse();
     }
 
     @Test

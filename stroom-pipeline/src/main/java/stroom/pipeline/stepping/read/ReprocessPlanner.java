@@ -19,6 +19,7 @@ package stroom.pipeline.stepping.read;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.StagePlanner.PlannerElement;
 import stroom.pipeline.stepping.read.StagePlanner.StagePlan;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.store.StepDataStore;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public class ReprocessPlanner {
                          final Map<String, List<String>> parentsOf,
                          final StepDataStore store,
                          final ElementFingerprints current,
-                         final StagePlanner.RecordSpan span) {
+                         final RecordRange span) {
         final StagePlan plan = stagePlanner.plan(elements, store, current, span);
         if (plan.fullRecapture() || plan.reuse().isEmpty()) {
             // First sweep or boundary change - capture the whole stream from source.
@@ -98,10 +99,11 @@ public class ReprocessPlanner {
     }
 
     /**
-     * Either a full sweep, or a reprocess of {@code startElementId} fed from {@code feedElementId}'s stored
-     * output. When {@link #fullSweep()} is true the element ids are null.
+     * One of three answers: a full sweep, a reprocess of {@code startElementId} fed from
+     * {@code upstreamElementId}'s stored output, or already {@link #satisfied()} - everything the step demands
+     * is in the store and nothing need run. The element ids are null unless a reprocess was planned.
      */
-    public record Decision(boolean fullSweep, boolean satisfied, String startElementId, String feedElementId) {
+    public record Decision(boolean fullSweep, boolean satisfied, String startElementId, String upstreamElementId) {
 
         public static Decision full() {
             return new Decision(true, false, null, null);
@@ -115,8 +117,8 @@ public class ReprocessPlanner {
             return new Decision(false, true, null, null);
         }
 
-        public static Decision reprocess(final String startElementId, final String feedElementId) {
-            return new Decision(false, false, startElementId, feedElementId);
+        public static Decision reprocess(final String startElementId, final String upstreamElementId) {
+            return new Decision(false, false, startElementId, upstreamElementId);
         }
     }
 }

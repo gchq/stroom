@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping;
+package stroom.pipeline.stepping.read;
 
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.capture.ReprocessDriver.RecordRange;
+import stroom.pipeline.stepping.store.RecordRange;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.ReprocessPlanner.Decision;
 import stroom.pipeline.stepping.store.CapturedData;
@@ -86,33 +86,40 @@ class TestFilteredScanWindow {
                 CapturedData.text("in"), CapturedData.text(output), false, false, true, null);
     }
 
-    private SteppingService serviceWithWindow(final int window) {
-        // Only the config and the arguments matter to filteredWindowFor; nothing else is touched, so the rest
-        // of the graph of collaborators is deliberately absent rather than mocked.
-        final SteppingConfig config =
-                new SteppingConfig(null, null, null, null, null, null, window, null, null, null, null, null);
-        return new SteppingService(
-                null, null, null, null, null, null, null, null, null, null,
-                () -> config,
-                null, null, null);
+    private StepDemandPlanner plannerWithWindow(final int window) {
+        final SteppingConfig config = new SteppingConfig().withFilteredScanWindow(window);
+        return new StepDemandPlanner(() -> config);
     }
 
-    private RecordRange window(final SteppingService service,
+    private RecordRange window(final StepDemandPlanner planner,
                                final StepDataStore store,
                                final StepType stepType,
                                final Long fromRecord) {
-        return service.filteredWindowFor(
+        return planner.filteredWindowFor(
                 PipelineStepRequest.builder()
                         .stepType(stepType)
                         .stepLocation(fromRecord == null
                                 ? null
                                 : new StepLocation(META_ID, PART, fromRecord))
                         .build(),
-                null,
                 DECISION,
                 store,
                 FINGERPRINTS,
                 META_ID);
+    }
+
+    @Test
+    void testTheWindowStartsAtTheFirstGapNotPastAForeignMaterialisation(@TempDir final Path tempDir) {
+        // A post-edit REFRESH (or a prefetch window) materialises records under the SAME fingerprint the
+        // scan reads its frontier from. The window must start at the first record the element does not
+        // hold FROM THE SCAN'S ORIGIN - starting past the foreign materialisation would leave the records
+        // before it unmaterialised, and the resolver would read them as non-matches: a silently wrong
+        // filtered landing.
+        final StepDataStore store = storeWith(tempDir, 1_000, 50);
+
+        assertThat(window(plannerWithWindow(10), store, StepType.FORWARD, 0L))
+                .as("record 50 is held (a REFRESH left it); the scan still starts at record 1")
+                .isEqualTo(new RecordRange(PART, 1, 10));
     }
 
     @Test
@@ -121,8 +128,8 @@ class TestFilteredScanWindow {
         // distances. If the size were still a constant, both would return the same range.
         final StepDataStore store = storeWith(tempDir, 1_000);
 
-        final RecordRange small = window(serviceWithWindow(10), store, StepType.FORWARD, 0L);
-        final RecordRange large = window(serviceWithWindow(200), store, StepType.FORWARD, 0L);
+        final RecordRange small = window(plannerWithWindow(10), store, StepType.FORWARD, 0L);
+        final RecordRange large = window(plannerWithWindow(200), store, StepType.FORWARD, 0L);
 
         assertThat(small).isEqualTo(new RecordRange(PART, 1, 10));
         assertThat(large).isEqualTo(new RecordRange(PART, 1, 200));
@@ -133,9 +140,7 @@ class TestFilteredScanWindow {
         // Promoting a constant to config must not change behaviour for anyone who does not set it.
         final StepDataStore store = storeWith(tempDir, 1_000);
 
-        assertThat(window(new SteppingService(
-                        null, null, null, null, null, null, null, null, null, null,
-                        SteppingConfig::new, null, null, null),
+        assertThat(window(new StepDemandPlanner(SteppingConfig::new),
                 store, StepType.FORWARD, 0L))
                 .as("the default window is still 50 records")
                 .isEqualTo(new RecordRange(PART, 1, 50));
@@ -147,7 +152,7 @@ class TestFilteredScanWindow {
         // exist. Ends are inclusive, so a 20-record stream scanned from record 0 ends at 19.
         final StepDataStore store = storeWith(tempDir, 20);
 
-        assertThat(window(serviceWithWindow(500), store, StepType.FORWARD, 0L))
+        assertThat(window(plannerWithWindow(500), store, StepType.FORWARD, 0L))
                 .isEqualTo(new RecordRange(PART, 1, 19));
     }
 
@@ -157,7 +162,7 @@ class TestFilteredScanWindow {
         // the scan from needing session state, and what stops it re-scanning the window it just did.
         final StepDataStore store = storeWith(tempDir, 1_000, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
-        assertThat(window(serviceWithWindow(10), store, StepType.FORWARD, 0L))
+        assertThat(window(plannerWithWindow(10), store, StepType.FORWARD, 0L))
                 .as("carries on from record 10, not from the step's reference record")
                 .isEqualTo(new RecordRange(PART, 11, 20));
     }
@@ -168,7 +173,7 @@ class TestFilteredScanWindow {
         // range would instead be handed to the driver as work.
         final StepDataStore store = storeWith(tempDir, 5, 1, 2, 3, 4);
 
-        assertThat(window(serviceWithWindow(10), store, StepType.FORWARD, 0L))
+        assertThat(window(plannerWithWindow(10), store, StepType.FORWARD, 0L))
                 .as("every record past the reference is already materialised")
                 .isNull();
     }
@@ -179,7 +184,7 @@ class TestFilteredScanWindow {
         // the START that moves, so an off-by-one here silently scans the wrong records.
         final StepDataStore store = storeWith(tempDir, 1_000);
 
-        assertThat(window(serviceWithWindow(10), store, StepType.BACKWARD, 100L))
+        assertThat(window(plannerWithWindow(10), store, StepType.BACKWARD, 100L))
                 .isEqualTo(new RecordRange(PART, 90, 99));
     }
 
@@ -187,14 +192,14 @@ class TestFilteredScanWindow {
     void testABackwardScanIsClampedToTheStartOfTheStream(@TempDir final Path tempDir) {
         final StepDataStore store = storeWith(tempDir, 1_000);
 
-        assertThat(window(serviceWithWindow(50), store, StepType.BACKWARD, 5L))
+        assertThat(window(plannerWithWindow(50), store, StepType.BACKWARD, 5L))
                 .isEqualTo(new RecordRange(PART, 0, 4));
     }
 
     @Test
     void testAStepThatNamesNoRecordScansFromTheEndItStartsAt(@TempDir final Path tempDir) {
         final StepDataStore store = storeWith(tempDir, 1_000);
-        final SteppingService service = serviceWithWindow(10);
+        final StepDemandPlanner service = plannerWithWindow(10);
 
         assertThat(window(service, store, StepType.FIRST, null))
                 .as("FIRST scans forwards from the start of the stream")
@@ -209,6 +214,6 @@ class TestFilteredScanWindow {
         // REFRESH names the record it wants, so there is nothing to search for and no window to open.
         final StepDataStore store = storeWith(tempDir, 1_000);
 
-        assertThat(window(serviceWithWindow(10), store, StepType.REFRESH, 100L)).isNull();
+        assertThat(window(plannerWithWindow(10), store, StepType.REFRESH, 100L)).isNull();
     }
 }
