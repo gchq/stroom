@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public abstract class AbstractDb<K, V> implements Db<K, V> {
@@ -60,6 +62,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
     protected final Dbi<ByteBuffer> dbi;
     protected final Dbi<ByteBuffer> infoDbi;
     protected final SchemaInfo schemaInfo;
+    private final String instanceUuid;
 
     public AbstractDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
@@ -87,15 +90,30 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         });
 
         if (!env.isReadOnly()) {
-            env.write(writer -> {
+            this.instanceUuid = env.write(writer -> {
+                // Mint an id that uniquely identifies this LMDB instance, once, when the instance is first
+                // created. Part shards carry it wherever they are copied, so it identifies a merge source
+                // across replays. See docs/merge-idempotency-design.md.
+                final String uuid = readInfoString(writer.getWriteTxn(), InfoKey.INSTANCE_UUID)
+                        .orElseGet(() -> {
+                            final String newUuid = UUID.randomUUID().toString();
+                            writeInfoString(writer.getWriteTxn(), InfoKey.INSTANCE_UUID, newUuid);
+                            return newUuid;
+                        });
+
                 // Write schema.
                 writeSchema(writer, schema);
 
                 // Read and set the hash clash count.
                 hashClashCommitRunnable.setHashClashes(readHashClashes(writer.getWriteTxn()));
+
+                return uuid;
             });
             hashClashCommitRunnable.setRunnable(txn ->
                     writeHashClashes(txn, hashClashCommitRunnable.getHashClashes()));
+        } else {
+            this.instanceUuid = env.read(txn ->
+                    readInfoString(txn, InfoKey.INSTANCE_UUID)).orElse(null);
         }
 
         this.putFlags = overwrite
@@ -209,6 +227,45 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
     }
 
 
+    private OptionalLong readInfoLong(final Txn<ByteBuffer> txn,
+                                      final InfoKey infoKey) {
+        OptionalLong result = OptionalLong.empty();
+        try {
+            final ByteBuffer valueBuffer = infoDbi.get(txn, infoKey.getByteBuffer());
+            if (valueBuffer != null) {
+                result = OptionalLong.of(valueBuffer.getLong());
+            }
+        } catch (final Exception e) {
+            debug(e);
+        }
+        return result;
+    }
+
+    private void writeInfoLong(final Txn<ByteBuffer> txn,
+                               final InfoKey infoKey,
+                               final long value) {
+        byteBuffers.useLong(value, byteBuffer -> {
+            infoDbi.put(txn, infoKey.getByteBuffer(), byteBuffer);
+        });
+    }
+
+    @Override
+    public final String getInstanceUuid() {
+        return instanceUuid;
+    }
+
+    @Override
+    public final void writeSourceMetaId(final long metaId) {
+        env.write(writer -> {
+            writeInfoLong(writer.getWriteTxn(), InfoKey.SOURCE_META_ID, metaId);
+        });
+    }
+
+    @Override
+    public final OptionalLong getSourceMetaId() {
+        return env.read(txn -> readInfoLong(txn, InfoKey.SOURCE_META_ID));
+    }
+
     private int readHashClashes(final Txn<ByteBuffer> txn) {
         int hashClashes = -1;
         try {
@@ -233,7 +290,9 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         SCHEMA_VERSION(0),
         HASH_CLASHES(1),
         KEY_SCHEMA(2),
-        VALUE_SCHEMA(3);
+        VALUE_SCHEMA(3),
+        INSTANCE_UUID(4),
+        SOURCE_META_ID(5);
 
         private final byte primitiveValue;
         private final ByteBuffer byteBuffer;
