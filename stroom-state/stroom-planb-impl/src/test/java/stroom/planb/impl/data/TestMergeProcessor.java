@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -136,7 +137,8 @@ class TestMergeProcessor {
      * consumer are merged after a restart. See gh-5696.
      */
     @Test
-    void interruptedMergeKeepsDataAndStopsConsumer(@TempDir final Path tempDir) throws IOException {
+    void interruptedMergeKeepsDataAndStopsConsumer(@TempDir final Path tempDir)
+            throws IOException, InterruptedException {
         final StatePaths statePaths = new StatePaths(tempDir);
         final Path queuedDir1 = createQueuedDir(statePaths, 1);
         final Path queuedDir2 = createQueuedDir(statePaths, 2);
@@ -144,12 +146,21 @@ class TestMergeProcessor {
         final List<Path> merged = new CopyOnWriteArrayList<>();
         final AtomicInteger mergeAttempts = new AtomicInteger();
         final AtomicBoolean interrupting = new AtomicBoolean(true);
+        final CountDownLatch firstMergeStarted = new CountDownLatch(1);
+        final CountDownLatch releaseFirstMerge = new CountDownLatch(1);
         final ShardManager shardManager = Mockito.mock(ShardManager.class);
         final Shard shard = Mockito.mock(Shard.class);
         Mockito.when(shardManager.getShardForDocUuid(DOC_UUID)).thenReturn(shard);
         Mockito.doAnswer(invocation -> {
             mergeAttempts.incrementAndGet();
             if (interrupting.get()) {
+                // Hold the merge in progress until the test releases it. The merge job restarts any
+                // consumer that has already died, so the interruption must not happen until the job's
+                // restart sweep has run, else the sweep may legitimately restart the consumer and a
+                // second merge attempt is made. Holding the first merge open until merge() has returned
+                // makes the timing deterministic.
+                firstMergeStarted.countDown();
+                releaseFirstMerge.await(10, TimeUnit.SECONDS);
                 throw new UncheckedInterruptedException(new InterruptedException("Interrupted at shutdown"));
             }
             merged.add(invocation.getArgument(0));
@@ -159,9 +170,13 @@ class TestMergeProcessor {
         final MergeProcessor mergeProcessor = createMergeProcessor(statePaths, shardManager);
         mergeProcessor.merge();
 
+        // merge() has returned, so its consumer restart sweep has completed while the consumer was still
+        // alive. Now let the first merge fail.
+        assertThat(firstMergeStarted.await(10, TimeUnit.SECONDS)).isTrue();
+        releaseFirstMerge.countDown();
+
         // The first merge is interrupted. The consumer must stop rather than churn through the rest of the
         // queue, and the interrupted dir must remain on disk.
-        waitUntil(() -> mergeAttempts.get() > 0, "first merge attempt");
         waitQuietPeriod();
         assertThat(merged).isEmpty();
         assertThat(mergeAttempts).hasValue(1);
