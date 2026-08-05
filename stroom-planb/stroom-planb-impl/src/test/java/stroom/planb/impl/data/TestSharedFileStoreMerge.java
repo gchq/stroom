@@ -143,6 +143,11 @@ class TestSharedFileStoreMerge {
         executor = Runnable::run;
         when(executorProvider.get()).thenReturn(executor);
 
+        // SharedFileStoreMergeProcessor.merge passes this straight to childContext, and the childContext
+        // stub below matches with any(TaskContext.class), which does not match null. Left unstubbed the
+        // stub misses, childContext returns null, and the merge dies with an NPE inside runAsync.
+        when(taskContextFactory.current()).thenReturn(Mockito.mock(TaskContext.class));
+
         // Setup TaskContextFactory stubbing to just run the runnable
         doAnswer(invocation -> {
             final Consumer<TaskContext> consumer = invocation.getArgument(1);

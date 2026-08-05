@@ -891,9 +891,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> implements TraceArch
                     // totalSpans/services and (safety-valve aside) exact depth, plus the
                     // latest insert time as lastActivityMs (informational only — shown in the UI
                     // "Last Activity" column; retention/archival now age by the root's own end
-                    // time, not activity), without materialising the whole trace. Empty ⇒ no
-                    // root span present (a traceId whose only spans are orphans) ⇒ no queryable
-                    // root, so skip.
+                    // time, not activity), without materialising the whole trace. Empty ⇒ the
+                    // trace has no live span at all ⇒ nothing to describe, so skip. A trace with
+                    // spans but no ROOT span is not empty: it gets a flagged orphan root, which is
+                    // what makes an archived orphan listable.
                     final Optional<TraceRoot> optRebuilt =
                             buildRootFromStats(writeTxn, traceIdBytes);
                     if (optRebuilt.isEmpty()) {
@@ -1061,7 +1062,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> implements TraceArch
      * (bucketed by the root's start time), then deletes them from the live environment.
      *
      * <p><b>Why start time, not merge/insert time.</b> Queries filter traces on
-     * the root's start time, and {@link stroom.planb.impl.data.ArchiveShardLocator}
+     * the root's start time, and {@link stroom.planb.impl.data.archive.ArchiveShardLocator}
      * selects which archives to open by comparing the query time range against the
      * archive's date-label bucket. For that selection to be accurate the bucket
      * label must be derived from the same axis the query uses — the trace start
@@ -1081,11 +1082,17 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> implements TraceArch
      * <p><b>Orphan spans.</b> A span whose traceId has no root span in this shard — the root
      * never arrived, or (with age-based gating) it was archived/deleted while the child
      * remained, leaving a traceId whose only remaining spans are orphans (its root has been
-     * removed). Such spans can never form a queryable trace and are swept separately: those
-     * older than {@code archiveBefore} by insert time are archived into a bucket labelled by
-     * their insert time and then deleted, keeping the live shard bounded even when no retention
-     * policy is configured. They produce no trace-root index entry; note that
-     * {@code getTrace(traceId)} cannot currently assemble such a trace as it requires a root.
+     * removed). They are swept separately: those older than {@code archiveBefore} by insert time
+     * are archived into a bucket labelled by their insert time and then deleted, keeping the live
+     * shard bounded even when no retention policy is configured. This is the only route an orphan
+     * has — {@link #archiveRootedSpans} skips it for want of a real root — so its visibility is
+     * delayed by the whole archival lead time, unlike a rooted trace's.
+     *
+     * <p>The bucket this writes carries no trace-root entry for an orphan, but the published bucket
+     * ends up with one anyway: {@code SharedFileStorePublisher.pushArchive} merges this delta in and
+     * calls {@link #mergeComplete}, which synthesizes the flagged orphan root. So an archived orphan
+     * <em>is</em> listed by {@link #findTraces} and assembled by {@link #getTrace} — the latter
+     * builds from a span prefix scan and never needs a root.
      *
      * <p>Three passes:
      * <ol>
