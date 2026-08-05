@@ -66,7 +66,6 @@ import org.xml.sax.SAXException;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -597,14 +596,14 @@ public class PlanBFilter extends AbstractXMLFilter {
             fastInfosetEndDocument();
             type = Type.XML;
         } else {
-            // Simple string value
+            // Simple string value. The staging stream is only used for XML values; string values are
+            // served from currentStringValue so are not staged.
             final String value = contentBuffer.toString();
             if (NullSafe.isBlankString(value)) {
                 type = Type.NULL;
             } else {
                 type = Type.STRING;
                 currentStringValue = value;
-                stagingValueOutputStream.write(value.getBytes(StandardCharsets.UTF_8));
             }
         }
     }
@@ -867,8 +866,9 @@ public class PlanBFilter extends AbstractXMLFilter {
                     sessionBuilder.end(time.plus(timeout));
                 }
 
-                LOGGER.trace("Putting session {} into table {}", sessionBuilder.build(), mapName);
-                catchLmdbError(() -> writer.addSession(doc, sessionBuilder.build()));
+                final Session session = sessionBuilder.build();
+                LOGGER.trace("Putting session {} into table {}", session, mapName);
+                catchLmdbError(() -> writer.addSession(doc, session));
             }
         }
     }
@@ -936,8 +936,6 @@ public class PlanBFilter extends AbstractXMLFilter {
             } catch (final RuntimeException e) {
                 log(Severity.ERROR, e.getMessage(), e);
             }
-
-            currentValue = null;
         }
     }
 
