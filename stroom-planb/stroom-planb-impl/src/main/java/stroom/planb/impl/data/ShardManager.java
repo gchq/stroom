@@ -33,6 +33,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.concurrent.StripedLock;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -50,6 +51,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -202,6 +205,33 @@ public class ShardManager {
             LOGGER.error(e::getMessage, e);
             throw e;
         }
+    }
+
+    /**
+     * Delete old merge status records from additive store shards. Only shards whose doc passes the
+     * quiescence test are pruned: a status record may only be deleted once no replayable copy of any merge
+     * source can still exist for that doc. See docs/merge-idempotency-design.md.
+     */
+    public void deleteOldMergeStatus(final Predicate<String> docUuidQuiescent,
+                                     final Instant deleteBefore) {
+        shardMap.forEach((docUuid, shard) -> {
+            try {
+                if (docUuidQuiescent.test(docUuid)) {
+                    final long count = shard.deleteOldMergeStatus(deleteBefore);
+                    if (count > 0) {
+                        LOGGER.info(() -> LogUtil.message("Deleted {} old merge status records for: {}",
+                                count, NullSafe.get(shard.getDoc(), PlanBDoc::getName)));
+                    }
+                }
+            } catch (final UncheckedInterruptedException e) {
+                // We are being terminated, e.g. at shutdown. Stop rather than churn through the remaining
+                // shards logging an error for each.
+                LOGGER.debug(e::getMessage, e);
+                throw e;
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
     }
 
     public void compactAll() {

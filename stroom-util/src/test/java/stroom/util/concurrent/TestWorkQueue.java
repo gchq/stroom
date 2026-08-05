@@ -20,12 +20,17 @@ import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -127,5 +132,184 @@ class TestWorkQueue {
                 .isEqualTo(availableProcessors);
         assertThat(cnt.longValue())
                 .isEqualTo(itemCount);
+    }
+
+    @Test
+    void execAfterJoin() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(2);
+        final WorkQueue workQueue = new WorkQueue(executor, 2, 10);
+        final int itemCount = 10;
+        final CountDownLatch completionLatch = new CountDownLatch(itemCount);
+
+        for (int i = 0; i < itemCount; i++) {
+            workQueue.exec(completionLatch::countDown);
+        }
+
+        completionLatch.await();
+        workQueue.join();
+
+        // Attempting to exec after join should throw an IllegalStateException
+        final Runnable noOp = () -> {
+        };
+        Assertions.assertThatThrownBy(() -> workQueue.exec(noOp))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void joinAfterNoTasks() {
+        final Executor executor = Executors.newFixedThreadPool(2);
+        final WorkQueue workQueue = new WorkQueue(executor, 2, 10);
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+
+        workQueue.join();
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+
+        // Attempting to exec after join should throw an IllegalStateException
+        final Runnable noOp = () -> {
+        };
+        Assertions.assertThatThrownBy(() -> workQueue.exec(noOp))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void taskCount() throws InterruptedException {
+        final int threadCount = 2;
+        final Executor executor = Executors.newFixedThreadPool(threadCount);
+        final WorkQueue workQueue = new WorkQueue(executor, threadCount, 10);
+        final int itemCount = 10;
+        final CountDownLatch takenLatch = new CountDownLatch(threadCount);
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch completionLatch = new CountDownLatch(itemCount);
+        final AtomicInteger execCount = new AtomicInteger();
+
+        for (int i = 0; i < itemCount; i++) {
+            workQueue.exec(() -> {
+                takenLatch.countDown();
+                try {
+                    startLatch.await();
+                } catch (final InterruptedException e) {
+                    throw new UncheckedInterruptedException(e);
+                }
+
+                execCount.incrementAndGet();
+                completionLatch.countDown();
+            });
+        }
+
+        // Two worker threads will have taken two items of the queue
+        takenLatch.await();
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(itemCount - threadCount);
+
+        startLatch.countDown();
+        completionLatch.await();
+        workQueue.join();
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+        Assertions.assertThat(execCount).hasValue(itemCount);
+    }
+
+    @Test
+    void taskCount2() throws InterruptedException {
+        final int threadCount = 2;
+        final Executor executor = Executors.newFixedThreadPool(threadCount);
+        final WorkQueue workQueue = new WorkQueue(executor, threadCount, 10);
+        final int itemCount = 10;
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch takenLatch = new CountDownLatch(threadCount);
+        final CountDownLatch completionLatch = new CountDownLatch(itemCount);
+        final AtomicInteger execCount = new AtomicInteger();
+
+        for (int i = 0; i < itemCount; i++) {
+            workQueue.exec(() -> {
+                takenLatch.countDown();
+                try {
+                    startLatch.await();
+                } catch (final InterruptedException e) {
+                    throw new UncheckedInterruptedException(e);
+                }
+
+                execCount.incrementAndGet();
+                completionLatch.countDown();
+            });
+        }
+
+        // Two worker threads will have taken two items of the queue
+        takenLatch.await();
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(itemCount - threadCount);
+
+        final Executor delayedExecutor = CompletableFuture.delayedExecutor(500,
+                TimeUnit.MILLISECONDS,
+                Executors.newSingleThreadScheduledExecutor());
+
+        // Make the tasks start after we call join
+        CompletableFuture.runAsync(startLatch::countDown, delayedExecutor);
+
+        workQueue.join();
+
+        completionLatch.await();
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+        Assertions.assertThat(execCount).hasValue(itemCount);
+    }
+
+    /**
+     * A runnable that throws {@link UncheckedInterruptedException} signals that the worker thread is being
+     * terminated, e.g. at shutdown. The worker must stop consuming rather than churn through the rest of the
+     * queue, and must not treat the interruption as an error.
+     */
+    @Test
+    void interruptedRunnableStopsWorker() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(1);
+        final WorkQueue workQueue = new WorkQueue(executor, 1, 10);
+        final CountDownLatch startedLatch = new CountDownLatch(1);
+        final AtomicInteger execCount = new AtomicInteger();
+
+        workQueue.exec(() -> {
+            startedLatch.countDown();
+            throw new UncheckedInterruptedException(new InterruptedException("Interrupted at shutdown"));
+        });
+        workQueue.exec(execCount::incrementAndGet);
+        workQueue.exec(execCount::incrementAndGet);
+
+        startedLatch.await();
+        workQueue.join();
+
+        Assertions.assertThat(execCount).hasValue(0);
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(2);
+    }
+
+    /**
+     * A worker interrupted while waiting for work completes its future exceptionally. Callers of join()
+     * expect an {@link UncheckedInterruptedException} in that case, not the CompletionException that
+     * {@link CompletableFuture#join()} wraps it in, so they can treat an interrupted work queue as expected
+     * at shutdown rather than as an error.
+     */
+    @Test
+    void joinThrowsUncheckedInterruptedWhenWorkerInterrupted() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(1);
+        final WorkQueue workQueue = new WorkQueue(executor, 1, 10);
+        final CountDownLatch startedLatch = new CountDownLatch(1);
+        final AtomicReference<Thread> workerThread = new AtomicReference<>();
+
+        workQueue.exec(() -> {
+            workerThread.set(Thread.currentThread());
+            startedLatch.countDown();
+        });
+        startedLatch.await();
+
+        // Wait for the worker to block waiting for more work, then interrupt it.
+        final Instant timeout = Instant.now().plusSeconds(10);
+        while (workerThread.get().getState() != Thread.State.WAITING) {
+            if (Instant.now().isAfter(timeout)) {
+                throw new AssertionError("Timed out waiting for the worker to block waiting for work");
+            }
+            TimeUnit.MILLISECONDS.sleep(1);
+        }
+        workerThread.get().interrupt();
+
+        Assertions.assertThatThrownBy(workQueue::join)
+                .isInstanceOf(UncheckedInterruptedException.class);
     }
 }

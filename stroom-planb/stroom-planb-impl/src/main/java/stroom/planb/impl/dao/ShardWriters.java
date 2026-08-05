@@ -271,17 +271,21 @@ public class ShardWriters {
         }
 
         private WriterInstance getWriter(final PlanBDoc doc) {
-            return writers.computeIfAbsent(doc, k ->
-                    new WriterInstance(PlanBDb.open(doc,
-                            getLmdbEnvDir(k),
-                            byteBuffers,
-                            byteBufferFactory,
-                            false),
-                            NullSafe.getOrElse(
-                                    doc,
-                                    PlanBDoc::getSettings,
-                                    AbstractPlanBSettings::getSynchroniseMerge,
-                                    false)));
+            return writers.computeIfAbsent(doc, k -> {
+                final Db<?, ?> db = PlanBDb.open(doc,
+                        getLmdbEnvDir(k),
+                        byteBuffers,
+                        byteBufferFactory,
+                        false);
+                // Record the stream this part shard is written from, for provenance.
+                db.writeSourceMetaId(meta.getId());
+                return new WriterInstance(db,
+                        NullSafe.getOrElse(
+                                doc,
+                                PlanBDoc::getSettings,
+                                AbstractPlanBSettings::getSynchroniseMerge,
+                                false));
+            });
         }
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {

@@ -25,6 +25,7 @@ import stroom.planb.impl.dao.AbstractDb;
 import stroom.planb.impl.dao.Count;
 import stroom.planb.impl.dao.HashClashCommitRunnable;
 import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.MergeStatusDb;
 import stroom.planb.impl.dao.PlanBEnv;
 import stroom.planb.impl.dao.SchemaInfo;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
@@ -90,6 +91,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
     private final TemporalKeySerde keySerde;
     private final UsedLookupsRecorder keyRecorder;
     private final CountValuesSerde<Metric> valuesSerde;
+    private final MergeStatusDb mergeStatusDb;
 
     private MetricDb(final PlanBEnv env,
                      final ByteBuffers byteBuffers,
@@ -112,6 +114,11 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
         this.keySerde = keySerde;
         this.valuesSerde = valuesSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
+        // Metric merges sum count and sum fields so must track per source merge status to stop a rerun of
+        // a merge double counting. Sources are opened read only and never need the status db.
+        this.mergeStatusDb = env.isReadOnly()
+                ? null
+                : new MergeStatusDb(env, byteBuffers);
     }
 
     public static MetricDb create(final Path path,
@@ -237,32 +244,58 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            try (final MetricDb sourceDb = MetricDb.create(source, byteBuffers, doc, true)) {
-                // Validate that the source DB has the same schema.
-                validateSchema(schemaInfo, sourceDb.getSchemaInfo());
+            try {
+                try (final MetricDb sourceDb = MetricDb.create(source, byteBuffers, doc, true)) {
+                    // Validate that the source DB has the same schema.
+                    validateSchema(schemaInfo, sourceDb.getSchemaInfo());
 
-                // Merge.
-                sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, (key, val) -> {
-                        final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
-                        final TemporalKey temporalKey = sourceDb.keySerde.read(readTxn, key);
-                        keySerde.write(writeTxn, temporalKey, keyByteBuffer -> {
-                            final ByteBuffer existingValueByteBuffer = dbi.get(writeTxn, keyByteBuffer);
-                            if (existingValueByteBuffer == null) {
-                                dbi.put(writeTxn, keyByteBuffer, val);
-                            } else {
-                                valuesSerde.merge(val, existingValueByteBuffer, valueByteBuffer ->
-                                        dbi.put(writeTxn, keyByteBuffer, valueByteBuffer));
-                            }
+                    // Metric merges sum count and sum fields so applying the same source twice double
+                    // counts. Track per source progress so a rerun of a fully merged source is skipped and
+                    // an interrupted merge resumes exactly after its last commit.
+                    // See docs/merge-idempotency-design.md.
+                    final MergeStatusDb.MergeTracker tracker =
+                            mergeStatusDb.startMerge(writer, sourceDb.getInstanceUuid());
+                    if (!tracker.isAlreadyComplete()) {
+                        // Merge.
+                        sourceDb.env.read(readTxn -> {
+                            sourceDb.iterate(readTxn, tracker.wrap((key, val) -> {
+                                final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
+                                final TemporalKey temporalKey = sourceDb.keySerde.read(readTxn, key);
+                                keySerde.write(writeTxn, temporalKey, keyByteBuffer -> {
+                                    final ByteBuffer existingValueByteBuffer = dbi.get(writeTxn, keyByteBuffer);
+                                    if (existingValueByteBuffer == null) {
+                                        dbi.put(writeTxn, keyByteBuffer, val);
+                                    } else {
+                                        valuesSerde.merge(val, existingValueByteBuffer, valueByteBuffer ->
+                                                dbi.put(writeTxn, keyByteBuffer, valueByteBuffer));
+                                    }
+                                });
+                            }));
+                            return null;
                         });
-                    });
-                    return null;
-                });
+                        tracker.complete();
+                    }
+                }
+            } catch (final Throwable t) {
+                // Discard anything uncommitted so the shard is left exactly at the last batch commit, whose
+                // progress cursor matches. Without this LmdbWriter.close() would commit the partial work of
+                // the failed merge with no record of it, which is what a rerun would then double count.
+                // Throwable rather than RuntimeException as an Error part way through a merge must not
+                // publish partial work either.
+                writer.abort();
+                throw t;
             }
         });
 
         // Delete source now we have merged.
         FileUtil.deleteDir(source);
+    }
+
+    @Override
+    public long deleteOldMergeStatus(final Instant deleteBefore) {
+        return env.write(writer -> {
+            return mergeStatusDb.deleteOldStatus(writer, deleteBefore);
+        });
     }
 
     @Override
