@@ -1,8 +1,8 @@
 # Plan B merge idempotency for additive stores
 
-Status: proposed design. The identity groundwork (`InfoKey.INSTANCE_UUID` minted in `AbstractDb`,
-`InfoKey.SOURCE_META_ID` written by `ShardWriters`) is implemented; the merge status DBI and merge
-algorithm changes are not.
+Status: implemented (`MergeStatusDb`, `LmdbWriter.abort()`, merge reworks in `HistogramDb`/`MetricDb`,
+quiescence gated pruning driven from `MergeProcessor.maintainShards`). Notable deviations from the
+original proposal are listed at the end.
 Related issue: [gh-5696](https://github.com/gchq/stroom/issues/5696) (follow-on work).
 
 ## Problem
@@ -174,9 +174,30 @@ same source may still surface afterwards, and it must find the `COMPLETE` record
 * Pruning: gated correctly (no prune while a stranded dir exists on disk or staging is non-empty), prunes
   only past retention, `IN_PROGRESS` survives normal retention.
 
+## Implementation deviations from the proposal above
+
+* **Abort on failure.** Additive merges previously ran as one transaction that `LmdbWriter.close()`
+  committed even when the merge threw part way through — that commit-on-failure was the whole partial
+  merge problem. `LmdbWriter.abort()` was added and additive merges abort on any exception, so commits
+  only happen at deliberate points (each batch, with its cursor, and completion). A corollary: a legacy
+  source with no instance UUID is merged as a single un-batched transaction with abort on failure, which
+  is already exact, just unbounded in transaction size.
+* **Batch commits were added, not moved.** The additive merges had no incremental commits; the ~10k
+  change threshold batching (via `LmdbWriter.shouldCommit()`) was introduced along with the cursor, so
+  big sources now also get bounded transactions.
+* **Resume is an equality scan.** Rather than comparing keys against the cursor under LMDB's unsigned
+  lexicographic order, the resumed merge skips entries until it sees the exact cursor key then merges the
+  rest. Iteration order over the immutable source is identical on every run, so this is exact and avoids
+  depending on a hand rolled comparator.
+* **One retention for both states.** `IN_PROGRESS` records are pruned on the same retention as
+  `COMPLETE` ones rather than a larger backstop. The quiescence gate carries the correctness burden: any
+  on-disk copy blocks pruning regardless of age, and the only post-quiescence resurrection route (a
+  sender retry of an unacknowledged part) has a horizon of minutes, far inside the retention.
+* **No `maxDbs` bump was needed** — the additive stores already allowed 20 DBIs. `merge_status_db` is
+  only opened on writable envs, as read only source opens never need it and could not create it.
+
 ## Open questions
 
-* Retention defaults, and whether they need to be per-doc or global config.
 * Whether idempotent stores should also consult the marker to skip whole re-merges as a performance
   optimisation (correctness does not require it).
 * Typical additive source sizes in production, to sanity-check batch threshold and cursor overhead.

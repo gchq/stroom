@@ -16,17 +16,20 @@
 
 package stroom.planb.impl.data;
 
+import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.StatePaths;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -42,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -179,13 +183,49 @@ class TestMergeProcessor {
         assertThat(queuedDir1).doesNotExist();
     }
 
+    /**
+     * Merge status records may only be pruned while no replayable copy of any merge source exists,
+     * i.e. the staging store is drained and the doc's merge queue holds no dirs on disk.
+     * See docs/merge-idempotency-design.md.
+     */
+    @Test
+    void mergeStatusPruningIsGatedOnQuiescence(@TempDir final Path tempDir) throws IOException {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final ShardManager shardManager = Mockito.mock(ShardManager.class);
+        final MergeProcessor mergeProcessor = createMergeProcessor(statePaths, shardManager);
+
+        mergeProcessor.maintainShards();
+
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<Predicate<String>> quiescenceCaptor = ArgumentCaptor.forClass(Predicate.class);
+        Mockito.verify(shardManager)
+                .deleteOldMergeStatus(quiescenceCaptor.capture(), Mockito.any(Instant.class));
+        final Predicate<String> quiescent = quiescenceCaptor.getValue();
+
+        // Nothing on disk for the doc: pruning is allowed.
+        assertThat(quiescent.test(DOC_UUID)).isTrue();
+
+        // A dir on the doc's merge queue blocks pruning, even though no in-memory queue is consuming it.
+        createQueuedDir(statePaths, 1);
+        assertThat(quiescent.test(DOC_UUID)).isFalse();
+        FileUtil.deleteDir(statePaths.getMergingDir().resolve(DOC_UUID));
+        assertThat(quiescent.test(DOC_UUID)).isTrue();
+
+        // A zip waiting in the staging store blocks pruning for all docs.
+        final Path stagedZip = statePaths.getStagingDir().resolve("0").resolve("001.zip");
+        Files.createDirectories(stagedZip.getParent());
+        Files.writeString(stagedZip, "zip");
+        assertThat(quiescent.test(DOC_UUID)).isFalse();
+    }
+
     private MergeProcessor createMergeProcessor(final StatePaths statePaths, final ShardManager shardManager) {
         return new MergeProcessor(
                 statePaths,
                 MockSecurityContext.getInstance(),
                 new SimpleTaskContextFactory(),
                 shardManager,
-                executorProvider);
+                executorProvider,
+                PlanBConfig::new);
     }
 
     /**

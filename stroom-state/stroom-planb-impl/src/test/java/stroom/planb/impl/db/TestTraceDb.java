@@ -180,7 +180,8 @@ public class TestTraceDb {
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager,
-                executorProvider);
+                executorProvider,
+                () -> planBConfig);
 
         final int threads = 10;
 

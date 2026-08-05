@@ -81,4 +81,15 @@ public interface Db<K, V> extends AutoCloseable {
      * @return The id of the stream this instance was written from, if it was recorded.
      */
     OptionalLong getSourceMetaId();
+
+    /**
+     * Delete old merge status records. Only additive stores (histogram and metric) track merge status; the
+     * default is a no-op. The caller must ensure that no replayable copy of any source still exists before
+     * pruning. See docs/merge-idempotency-design.md.
+     *
+     * @return The number of records deleted.
+     */
+    default long deleteOldMergeStatus(final Instant deleteBefore) {
+        return 0;
+    }
 }

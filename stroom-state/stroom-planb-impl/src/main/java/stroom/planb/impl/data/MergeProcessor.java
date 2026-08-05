@@ -17,6 +17,7 @@
 package stroom.planb.impl.data;
 
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
@@ -29,15 +30,18 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.StringIdUtil;
+import stroom.util.time.StroomDuration;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -66,6 +70,7 @@ public class MergeProcessor {
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
     private final Executor executor;
+    private final Provider<PlanBConfig> configProvider;
     private final AtomicBoolean resumedQueues = new AtomicBoolean();
     private volatile boolean merging;
 
@@ -74,12 +79,14 @@ public class MergeProcessor {
                           final SecurityContext securityContext,
                           final TaskContextFactory taskContextFactory,
                           final ShardManager shardManager,
-                          final ExecutorProvider executorProvider) {
+                          final ExecutorProvider executorProvider,
+                          final Provider<PlanBConfig> configProvider) {
         this.receiveStore = new SequentialFileStore(statePaths.getStagingDir());
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.shardManager = shardManager;
         this.executor = executorProvider.get();
+        this.configProvider = configProvider;
 
         // The contents of the merging dir MUST survive a restart. Data is moved here from the staging store
         // when it is queued for merge and the staged zip is then deleted, so once queued this is the only
@@ -195,7 +202,49 @@ public class MergeProcessor {
 
     public void maintainShards() {
         securityContext.asProcessingUser(() ->
-                taskContextFactory.context(MAINTAIN_TASK_NAME, shardManager::condenseAll).run());
+                taskContextFactory.context(MAINTAIN_TASK_NAME, taskContext -> {
+                    shardManager.condenseAll(taskContext);
+                    deleteOldMergeStatus();
+                }).run());
+    }
+
+    /**
+     * Prune old merge status records from additive store shards. A record may only be pruned once no
+     * replayable copy of its source can still exist, so each doc must pass the quiescence test at the time
+     * of pruning. The age retention guards the residual race between the test and the prune.
+     */
+    private void deleteOldMergeStatus() {
+        final StroomDuration retention = NullSafe.getOrElse(
+                configProvider.get(),
+                PlanBConfig::getMergeStatusRetention,
+                StroomDuration.ofDays(30));
+        final Instant deleteBefore = Instant.now().minus(retention.getDuration());
+        shardManager.deleteOldMergeStatus(this::isQuiescent, deleteBefore);
+    }
+
+    /**
+     * Determine whether any replayable copy of a merge source could still exist for a doc. Replay comes
+     * from staged zips (re-unzipped on restart if their delete never happened) or from dirs on the doc's
+     * merge queue (re-consumed on restart). Sender retries of unacknowledged parts arrive through staging
+     * so are covered by the same test.
+     */
+    private boolean isQuiescent(final String docUuid) {
+        try {
+            // The staging store must be fully drained.
+            if (receiveStore.getMinStoreId() != -1) {
+                return false;
+            }
+
+            // No dirs may remain on disk in the doc's merge queue. This must be a filesystem check rather
+            // than asking the in-memory queue: a dir whose merge failed is skipped past by the queue
+            // consumer, so the queue looks empty while a replayable copy remains on disk for the next boot.
+            final Path uuidDir = mergingDir.resolve(docUuid);
+            return !Files.isDirectory(uuidDir) || DirUtil.getMaxDirId(uuidDir) == 0;
+        } catch (final RuntimeException e) {
+            // If in doubt, don't prune.
+            LOGGER.debug(e::getMessage, e);
+            return false;
+        }
     }
 
     public void mergeCurrent() {
