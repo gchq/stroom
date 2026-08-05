@@ -17,13 +17,13 @@
 package stroom.planb.impl.data;
 
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.queue.Dir;
 import stroom.planb.impl.data.queue.DirQueue;
 import stroom.planb.impl.data.queue.SequentialFile;
 import stroom.planb.impl.data.queue.SequentialFileStore;
 import stroom.planb.impl.data.shard.Shard;
 import stroom.planb.impl.data.shard.ShardManager;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileDescriptor;
 import stroom.planb.impl.rest.FileInfo;
 import stroom.planb.shared.PlanBDoc;
@@ -74,23 +74,23 @@ public class MergeProcessor {
     private volatile boolean merging;
 
     @Inject
-    public MergeProcessor(final StatePaths statePaths,
+    public MergeProcessor(final PlanBPaths planBPaths,
                           final SecurityContext securityContext,
                           final TaskContextFactory taskContextFactory,
                           final ShardManager shardManager,
                           final ExecutorProvider executorProvider) {
-        this.receiveStore = new SequentialFileStore(statePaths.getStagingDir());
+        this.receiveStore = new SequentialFileStore(planBPaths.getStagingDir());
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.shardManager = shardManager;
         this.executor = executorProvider.get();
 
-        mergingDir = statePaths.getMergingDir();
+        mergingDir = planBPaths.getMergingDir();
         FileUtil.ensureDirExists(mergingDir);
         if (!FileUtil.deleteContents(mergingDir)) {
             throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
         }
-        unzipDir = statePaths.getUnzipDir();
+        unzipDir = planBPaths.getUnzipDir();
         FileUtil.ensureDirExists(unzipDir);
         if (!FileUtil.deleteContents(unzipDir)) {
             throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(unzipDir));

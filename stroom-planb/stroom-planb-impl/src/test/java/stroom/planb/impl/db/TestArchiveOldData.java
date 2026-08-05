@@ -23,8 +23,8 @@ import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.value.SpanKV;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
@@ -411,7 +411,7 @@ class TestArchiveOldData {
 
         // pushArchive does not use NodeInfo, so null is fine here.
         final SharedFileStorePublisher publisher = new SharedFileStorePublisher(
-                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new StatePaths(tempDir.resolve("local_state")));
+                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new PlanBPaths(tempDir.resolve("local_state")));
         publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch1));
         publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch2)); // must MERGE
 

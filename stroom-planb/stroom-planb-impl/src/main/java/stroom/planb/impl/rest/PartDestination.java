@@ -16,9 +16,9 @@
 
 package stroom.planb.impl.rest;
 
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.queue.SequentialFileStore;
-import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -50,13 +50,13 @@ public class PartDestination {
 
     @Inject
     public PartDestination(final SecurityContext securityContext,
-                           final StatePaths statePaths,
+                           final PlanBPaths planBPaths,
                            final Provider<MergeProcessor> mergeProcessorProvider) {
         this.securityContext = securityContext;
         this.mergeProcessorProvider = mergeProcessorProvider;
 
         // Create the receive directory.
-        receiveDir = statePaths.getReceiveDir();
+        receiveDir = planBPaths.getReceiveDir();
         FileUtil.ensureDirExists(receiveDir);
         if (!FileUtil.deleteContents(receiveDir)) {
             throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(receiveDir));

@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.TracesDoc;
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.EntityServiceException;
@@ -57,7 +57,7 @@ class TestTracesDocStore {
     @Mock
     private ClusterLockService clusterLockService;
 
-    private StatePaths statePaths;
+    private PlanBPaths planBPaths;
     private TracesDocStoreImpl storeImpl;
 
     @BeforeEach
@@ -65,8 +65,8 @@ class TestTracesDocStore {
         MockitoAnnotations.openMocks(this);
         doReturn(store).when(storeFactory).createStore(any(), any(), any(), any());
 
-        statePaths = new StatePaths(tempDir.resolve("local_state"));
-        final Provider<StatePaths> statePathsProvider = () -> statePaths;
+        planBPaths = new PlanBPaths(tempDir.resolve("local_state"));
+        final Provider<PlanBPaths> planBPathsProvider = () -> planBPaths;
         final Provider<ClusterLockService> lockServiceProvider = () -> clusterLockService;
 
         storeImpl = new TracesDocStoreImpl(
@@ -191,7 +191,7 @@ class TestTracesDocStore {
 
         // Create a local shard file — this should NOT block a shard count change
         // because shard count is a shared-file-store concern; local data is irrelevant.
-        final Path shardDir = statePaths.getShardDir();
+        final Path shardDir = planBPaths.getShardDir();
         Files.createDirectories(shardDir);
         Files.createFile(shardDir.resolve(uuid + "_some_shard_data"));
 

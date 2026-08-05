@@ -17,7 +17,7 @@
 package stroom.planb.impl.data;
 
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.PlanBPaths;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -43,9 +43,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * entry and crashes with {@code SIGSEGV / SEGV_MAPERR}.
  *
  * <h2>Fix</h2>
- * {@link ShardManager#createStoreShard} now uses {@code statePaths.getMergingDir()}
+ * {@link ShardManager#createStoreShard} now uses {@code planBPaths.getMergingDir()}
  * as the base for the merge shard's working directory rather than
- * {@code statePaths.getShardDir()}. The two environments therefore never
+ * {@code planBPaths.getShardDir()}. The two environments therefore never
  * share a directory and consequently never share {@code lock.mdb}.
  */
 class TestMergeShardIsolation {
@@ -54,7 +54,7 @@ class TestMergeShardIsolation {
      * The core invariant: the merge base directory ({@code mergingDir}) must
      * be a different path from the long-lived query shard directory ({@code shardDir}).
      *
-     * <p>{@link ShardManager#createStoreShard} passes {@code statePaths.getMergingDir()}
+     * <p>{@link ShardManager#createStoreShard} passes {@code planBPaths.getMergingDir()}
      * as {@code shardBaseDir} to the {@link StoreShard} 7-arg constructor. The resulting
      * shard dir is {@code mergingDir/<uuid>_<shardIndex>}.  The query shard (created via
      * the public 6-arg constructor) resolves to {@code shardDir/<uuid>_<shardIndex>}.
@@ -62,11 +62,11 @@ class TestMergeShardIsolation {
      */
     @Test
     void mergingDir_and_shardDir_areDistinctPaths(@TempDir final Path tempDir) {
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths planBPaths = new PlanBPaths(tempDir);
 
-        assertThat(statePaths.getMergingDir())
+        assertThat(planBPaths.getMergingDir())
                 .as("mergingDir must be a different path from shardDir")
-                .isNotEqualTo(statePaths.getShardDir());
+                .isNotEqualTo(planBPaths.getShardDir());
     }
 
     /**
@@ -77,12 +77,12 @@ class TestMergeShardIsolation {
      */
     @Test
     void mergeShardPath_doesNotConflictWithQueryShardPath(@TempDir final Path tempDir) {
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths planBPaths = new PlanBPaths(tempDir);
         final String docUuid = UUID.randomUUID().toString();
         final String suffix = docUuid + "_" + 0;
 
-        final Path mergeShardPath = statePaths.getMergingDir().resolve(suffix);
-        final Path queryShardPath = statePaths.getShardDir().resolve(suffix);
+        final Path mergeShardPath = planBPaths.getMergingDir().resolve(suffix);
+        final Path queryShardPath = planBPaths.getShardDir().resolve(suffix);
 
         assertThat(mergeShardPath)
                 .as("merge shard path must differ from query shard path for the same doc/index")
@@ -90,20 +90,20 @@ class TestMergeShardIsolation {
 
         assertThat(mergeShardPath.toAbsolutePath().toString())
                 .as("merge shard path must be under mergingDir")
-                .startsWith(statePaths.getMergingDir().toAbsolutePath().toString());
+                .startsWith(planBPaths.getMergingDir().toAbsolutePath().toString());
 
         assertThat(mergeShardPath.toAbsolutePath().toString())
                 .as("merge shard path must NOT be under shardDir")
-                .doesNotStartWith(statePaths.getShardDir().toAbsolutePath().toString());
+                .doesNotStartWith(planBPaths.getShardDir().toAbsolutePath().toString());
     }
 
     /**
-     * Verifies that {@link StatePaths} uses separate directory names for
+     * Verifies that {@link PlanBPaths} uses separate directory names for
      * {@code mergingDir} and {@code shardDir} as specified by
      * {@link PlanBConstants}.
      */
     @Test
-    void statePaths_mergingDirAndShardDir_useDistinctConstants(@TempDir final Path tempDir) {
+    void planBPaths_mergingDirAndShardDir_useDistinctConstants(@TempDir final Path tempDir) {
         assertThat(PlanBConstants.MERGING_DIR_NAME)
                 .as("MERGING_DIR_NAME must differ from SHARDS_DIR_NAME")
                 .isNotEqualTo(PlanBConstants.SHARDS_DIR_NAME);

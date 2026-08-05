@@ -21,10 +21,10 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.PlanBEnv.Usage;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.HasCondenseSettings;
@@ -77,19 +77,19 @@ public abstract class AbstractStoreShard implements Shard {
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,
                        final Provider<PlanBConfig> configProvider,
-                       final StatePaths statePaths,
+                       final PlanBPaths planBPaths,
                        final PlanBDocument doc) {
-        this(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, -1);
+        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, -1);
     }
 
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,
                        final Provider<PlanBConfig> configProvider,
-                       final StatePaths statePaths,
+                       final PlanBPaths planBPaths,
                        final PlanBDocument doc,
                        final int shardIndex) {
-        this(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
-                statePaths.getShardDir());
+        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex,
+                planBPaths.getShardDir());
     }
 
     /**
@@ -109,11 +109,11 @@ public abstract class AbstractStoreShard implements Shard {
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,
                        final Provider<PlanBConfig> configProvider,
-                       final StatePaths statePaths,
+                       final PlanBPaths planBPaths,
                        final PlanBDocument doc,
                        final int shardIndex,
                        final Path shardBaseDir) {
-        this(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex, shardBaseDir, null);
+        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex, shardBaseDir, null);
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class AbstractStoreShard implements Shard {
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,
                        final Provider<PlanBConfig> configProvider,
-                       final StatePaths statePaths,
+                       final PlanBPaths planBPaths,
                        final PlanBDocument doc,
                        final int shardIndex,
                        final Path shardBaseDir,
@@ -434,6 +434,36 @@ public abstract class AbstractStoreShard implements Shard {
             }
         } catch (final InterruptedException e2) {
             throw UncheckedInterruptedException.create(e2);
+        }
+    }
+
+    /**
+     * Write-side counterpart to {@link #get(Function)}: hands the open {@link Db} to the caller under the
+     * write lock, stamping {@code lastWriteTime} and running {@link #afterMutation()} afterwards.
+     *
+     * <p>Exists so a mutation that only applies to one store type does not need its own named method
+     * here. Store-type-specific callers test the {@code Db} for the capability interface they need — as
+     * {@code SnapshotCapable} callers already do — instead of this class growing vocabulary from a single
+     * type. Subclasses whose local copy must be refreshed first override it (see
+     * {@code SharedFileStoreShard}).
+     */
+    public <R> R writeWithDb(final Function<Db<?, ?>, R> function) {
+        try {
+            writeLock.lockInterruptibly();
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+        try {
+            if (db == null) {
+                // Closed by an idle eviction between lookup and use — ShardManager retries.
+                throw new ShardClosedException();
+            }
+            final R result = function.apply(db);
+            lastWriteTime = Instant.now();
+            afterMutation();
+            return result;
+        } finally {
+            writeLock.unlock();
         }
     }
 

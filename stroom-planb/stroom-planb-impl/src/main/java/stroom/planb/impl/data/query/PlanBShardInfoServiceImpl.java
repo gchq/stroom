@@ -29,9 +29,9 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.shard.Shard;
 import stroom.planb.impl.data.shard.ShardManager;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.query.api.Column;
@@ -104,7 +104,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
     private final Provider<NodeInfo> nodeInfoProvider;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final StatePaths statePaths;
+    private final PlanBPaths planBPaths;
     private final PlanBDocStore planBDocStore;
     private final ShardManager shardManager;
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
@@ -119,7 +119,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                                      final Provider<NodeInfo> nodeInfoProvider,
                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                                      final ExpressionPredicateFactory expressionPredicateFactory,
-                                     final StatePaths statePaths,
+                                     final PlanBPaths planBPaths,
                                      final PlanBDocStore planBDocStore,
                                      final ShardManager shardManager,
                                      final ExecutorProvider executorProvider,
@@ -133,7 +133,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         this.nodeInfoProvider = nodeInfoProvider;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.statePaths = statePaths;
+        this.planBPaths = planBPaths;
         this.planBDocStore = planBDocStore;
         this.shardManager = shardManager;
         this.executor = executorProvider.get();
@@ -286,7 +286,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         final Map<String, Optional<PlanBDoc>> map = new HashMap<>();
 
         // Add snapshots
-        final Path snapshotDir = statePaths.getSnapshotDir();
+        final Path snapshotDir = planBPaths.getSnapshotDir();
         if (Files.isDirectory(snapshotDir)) {
             try (final Stream<Path> stream = Files.list(snapshotDir)) {
                 stream.forEach(snapshotParent -> {
@@ -322,7 +322,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         }
 
         // Add shards
-        final Path shardDir = statePaths.getShardDir();
+        final Path shardDir = planBPaths.getShardDir();
         if (Files.isDirectory(shardDir)) {
             try (final Stream<Path> stream = Files.list(shardDir)) {
                 stream.forEach(shard -> {

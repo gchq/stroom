@@ -20,10 +20,10 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.AbstractStoreShard;
 import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
@@ -70,12 +70,12 @@ public class ArchiveStoreShard extends AbstractStoreShard {
     public ArchiveStoreShard(final ByteBuffers byteBuffers,
                              final ByteBufferFactory byteBufferFactory,
                              final Provider<PlanBConfig> configProvider,
-                             final StatePaths statePaths,
+                             final PlanBPaths planBPaths,
                              final PlanBDocument doc,
                              final int shardIndex,
                              final ArchiveShardRef ref) {
         super(byteBuffers, byteBufferFactory, configProvider, doc, shardIndex,
-                statePaths.getLocalArchiveDir()
+                planBPaths.getArchiveCacheDir()
                         .resolve(doc.getUuid() + "_" + shardIndex + "_" + ref.dateLabel())
                         .resolve(newGeneration()),
                 false); // deferred open — read-only env can't open until data.mdb is copied in

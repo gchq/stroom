@@ -25,6 +25,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.data.value.State;
@@ -220,7 +221,7 @@ class TestStateDb {
 
     @Test
     void testFullProcess(@TempDir final Path rootDir) {
-        final StatePaths statePaths = new StatePaths(rootDir);
+        final PlanBPaths planBPaths = new PlanBPaths(rootDir);
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final DocFinder docFinder = Mockito.mock(DocFinder.class);
         final PlanBDoc doc = PlanBDoc
@@ -249,13 +250,13 @@ class TestStateDb {
                 planBDocStore,
                 null,
                 () -> planBConfig,
-                statePaths,
+                planBPaths,
                 null,
                 new SimpleTaskContextFactory(),
                 executorProvider,
                 null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
-                statePaths,
+                planBPaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager,
@@ -278,7 +279,7 @@ class TestStateDb {
 
         // Read merged
         try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
+                planBPaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
                 DOC,
                 true)) {
@@ -291,7 +292,7 @@ class TestStateDb {
 
         // Read compacted
         try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
+                planBPaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
                 DOC,
                 true)) {
@@ -304,7 +305,7 @@ class TestStateDb {
 
         // Read after deletion
         try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
+                planBPaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
                 DOC,
                 true)) {
@@ -319,7 +320,7 @@ class TestStateDb {
 
         // Read compacted
         try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
+                planBPaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
                 DOC,
                 true)) {

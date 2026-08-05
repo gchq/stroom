@@ -22,8 +22,8 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.db.PlanBEnv.Usage;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDocument;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
@@ -80,7 +80,7 @@ public class SharedFileStoreMergeProcessor {
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
     private final Provider<PlanBConfig> configProvider;
-    private final StatePaths statePaths;
+    private final PlanBPaths planBPaths;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ExecutorService mergeExecutor;
@@ -93,7 +93,7 @@ public class SharedFileStoreMergeProcessor {
                                          final ByteBuffers byteBuffers,
                                          final ByteBufferFactory byteBufferFactory,
                                          final Provider<PlanBConfig> configProvider,
-                                         final StatePaths statePaths,
+                                         final PlanBPaths planBPaths,
                                          final SharedFileStorePublisher publisher,
                                          final SecurityContext securityContext,
                                          final TaskContextFactory taskContextFactory,
@@ -103,7 +103,7 @@ public class SharedFileStoreMergeProcessor {
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
-        this.statePaths = statePaths;
+        this.planBPaths = planBPaths;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.mergeExecutor = createMergeExecutor(configProvider.get().getShardMergeThreadCount());
@@ -230,8 +230,8 @@ public class SharedFileStoreMergeProcessor {
                 // Open the shard. This may sync a fresh copy of the shard down from the
                 // shared store to local disk (see SharedFileStoreShard.syncFromSharedStore).
                 final SharedFileStoreShard shard = new SharedFileStoreShard(
-                        byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
-                        statePaths.getMergingDir());
+                        byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex,
+                        planBPaths.getMergingDir());
 
                 try {
                     final MergeResult mergeResult = mergeAllBatches(shard, completeBatchDirs);

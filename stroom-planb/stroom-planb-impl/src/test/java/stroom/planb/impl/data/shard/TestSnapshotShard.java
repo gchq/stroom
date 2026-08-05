@@ -21,11 +21,11 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.shard.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv.Usage;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
@@ -95,7 +95,7 @@ class TestSnapshotShard {
     private FileTransferClient fileTransferClient;
 
     private PlanBConfig config;
-    private StatePaths statePaths;
+    private PlanBPaths planBPaths;
     private PlanBDoc doc;
     private AutoCloseable mocks;
 
@@ -122,7 +122,7 @@ class TestSnapshotShard {
                 .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
                 .build();
 
-        statePaths = new StatePaths(tempDir);
+        planBPaths = new PlanBPaths(tempDir);
         doc = PlanBDoc.builder().uuid("test-uuid").name("test-shard").build();
     }
 
@@ -144,7 +144,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -198,7 +198,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -244,7 +244,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -298,7 +298,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -403,7 +403,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -429,7 +429,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -462,7 +462,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -488,7 +488,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -516,7 +516,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -546,7 +546,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -643,7 +643,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -690,7 +690,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -703,7 +703,7 @@ class TestSnapshotShard {
 
         // Then: The snapshot dir should NOT accumulate abandoned directories.
         // Count the directories under the snapshot/uuid path.
-        final Path snapshotUuidDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        final Path snapshotUuidDir = planBPaths.getSnapshotDir().resolve(doc.getUuid());
         if (Files.exists(snapshotUuidDir)) {
             try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
                 final long dirCount = dirs.count();
@@ -842,7 +842,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -865,7 +865,7 @@ class TestSnapshotShard {
 
         // Then: No directories should be leaked — the rotation's new instance should
         // be destroyed because the CAS will fail (snapshotRef is null).
-        final Path snapshotUuidDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        final Path snapshotUuidDir = planBPaths.getSnapshotDir().resolve(doc.getUuid());
         if (Files.exists(snapshotUuidDir)) {
             try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
                 final long dirCount = dirs.count();
@@ -884,7 +884,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -926,7 +926,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,
@@ -957,7 +957,7 @@ class TestSnapshotShard {
                 byteBuffers,
                 byteBufferFactory,
                 () -> config,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 DB_FACTORY,

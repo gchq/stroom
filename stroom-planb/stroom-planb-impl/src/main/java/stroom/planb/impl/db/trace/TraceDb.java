@@ -113,7 +113,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
+public class TraceDb extends AbstractDb<SpanKey, SpanValue> implements TraceArchiveCapable {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
     /**
@@ -925,36 +925,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    /**
-     * Refresh archived roots' {@code totalSpans} from the per-trace span counter for the traces the
-     * just-completed archival merge touched. The counter is seeded to the exact count when a bucket is
-     * created ({@link #archiveOldData}) and maintained by {@code recordNewSpan} during each re-merge, so a
-     * bucket created under this code keeps an exact Total Spans as it grows across cycles — the stored root
-     * value would otherwise go stale (frozen at first archival).
-     *
-     * <p>Forward-only: buckets created before this maintenance were never seeded, so their counter reflects
-     * only spans merged in since; such traces are not retroactively corrected. Also counts only THIS
-     * bucket, so a trace spanning multiple date buckets is under-counted by its other buckets (rare — a
-     * trace longer than the archival granularity).
-     */
-    @Override
-    public void archiveMergeComplete() {
-        if (pendingRootRebuilds.isEmpty()) {
-            return;
-        }
-        final List<String> hexes = new ArrayList<>(pendingRootRebuilds);
-        pendingRootRebuilds.clear();
-        env.write(writer -> {
-            for (final String hex : hexes) {
-                final Txn<ByteBuffer> txn = writer.getWriteTxn();
-                final byte[] tid = HexStringUtil.decode(hex);
-                setRootTotalSpans(txn, tid, (int) readStats(txn, tid).spanCount());
-                writer.tryCommit();
-            }
-            return null;
-        });
-    }
-
     // Key-only prefix count of the span DBI for a traceId (no value reads).
     private long countSpansForTrace(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
         final long[] count = {0L};
@@ -1392,26 +1362,30 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * overwrite the real root with a synthesized orphan — which would break both the "has a real
      * root" test used to route late spans and the archival age axis.
      *
-     * <p><b>Selection.</b> A rooted trace is archived when it has non-root spans to send, or when it
-     * was merged since {@code since} (the last run of this operation). The second case covers a trace
-     * whose only span is its root, which would otherwise never be sent and so never be queryable. A
-     * null {@code since} (no marker yet) takes every rooted trace. Without this gate every bucket
-     * holding a live root would be rewritten every cycle, and a push costs O(bucket).
+     * <p><b>Selection is every rooted trace</b>, whether or not it has spans still to send. Re-sending an
+     * already-archived trace is a no-op — span puts use {@code MDB_NOOVERWRITE} and the bucket's root is
+     * recomputed from its own spans — whereas selecting only traces that still have children would
+     * silently lose a single-span trace: with no children it would never be sent, and it then satisfies
+     * every {@link #evictArchivedRoots} condition and is deleted having never been archived. Selecting
+     * everything stays bounded because a root only lives here until the cut-off, so at most one or two
+     * start-time buckets are ever in play, and an already-archived trace's delta is just its root span.
      *
      * @return the number of spans removed from the holding area.
      */
     @Override
     public long archiveRootedSpans(final ArchivalGranularity granularity,
-                                   final Path archiveBaseDir,
-                                   final Instant since) {
+                                   final Path archiveBaseDir) {
         // traceIdHex -> bucket label for every non-orphan root, labelled by the root's START time —
         // the axis queries filter on and the same one archiveOldData uses, so a trace whose spans
         // straddle a bucket boundary still lands whole in one bucket.
-        final Map<String, String> rootLabels = new HashMap<>();
-        // Rooted traces with at least one non-root span still here, i.e. with something to send.
-        final Set<String> withChildren = new HashSet<>();
-        // Rooted traces merged since the last run — catches the root-span-only trace.
-        final Set<String> mergedSince = new HashSet<>();
+        //
+        // Every rooted trace is selected, not just those with spans still to send. Sending an
+        // already-archived trace again is a no-op (span puts use MDB_NOOVERWRITE), and selecting only
+        // traces with children would silently lose a single-span trace: it has no children, so it would
+        // never be sent, and it then satisfies every eviction condition and is deleted unarchived.
+        // Selecting everything is bounded because a root only lives here until the cut-off, so at most
+        // one or two start-time buckets are ever in play.
+        final Map<String, String> selected = new HashMap<>();
 
         env.read(readTxn -> {
             LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
@@ -1419,38 +1393,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 if (!root.isOrphan() && root.getStartTime() != null) {
                     final byte[] traceIdBytes = new byte[key.remaining()];
                     key.duplicate().get(traceIdBytes);
-                    rootLabels.put(HexStringUtil.encode(traceIdBytes), ArchivalGranularityUtil.label(
+                    selected.put(HexStringUtil.encode(traceIdBytes), ArchivalGranularityUtil.label(
                             granularity, NanoTimeUtil.toInstant(root.getStartTime())));
                 }
             });
-            if (!rootLabels.isEmpty()) {
-                LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                    if (key.remaining() >= TRACE_ID_BYTES && !isRootKey(key)) {
-                        withChildren.add(traceIdHex(key));
-                    }
-                });
-                if (since != null) {
-                    final long sinceMs = since.toEpochMilli();
-                    LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
-                        final ByteBuffer keyBuf = key.duplicate();
-                        if (keyBuf.remaining() == Long.BYTES + TRACE_ID_BYTES
-                                && keyBuf.getLong() >= sinceMs) {
-                            final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
-                            keyBuf.get(traceIdBytes);
-                            mergedSince.add(HexStringUtil.encode(traceIdBytes));
-                        }
-                    });
-                }
-            }
             return null;
         });
 
-        final Map<String, String> selected = new HashMap<>();
-        rootLabels.forEach((hex, label) -> {
-            if (since == null || withChildren.contains(hex) || mergedSince.contains(hex)) {
-                selected.put(hex, label);
-            }
-        });
         if (selected.isEmpty()) {
             return 0L;
         }
@@ -1471,9 +1420,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                          TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
                 archiveDb.env.write(archiveWriter -> {
                     env.read(srcTxn -> {
+                        final TraceIdHexCursor hex = new TraceIdHexCursor();
                         LmdbIterable.iterate(srcTxn, dbi, (key, val) -> {
                             if (key.remaining() < TRACE_ID_BYTES
-                                    || !label.equals(selected.get(traceIdHex(key)))) {
+                                    || !label.equals(selected.get(hex.hexOf(key)))) {
                                 return;
                             }
                             final byte[] rawKey = new byte[key.remaining()];
@@ -1497,10 +1447,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return env.write(writer -> {
             final Count count = new Count();
             env.read(readTxn -> {
+                final TraceIdHexCursor hex = new TraceIdHexCursor();
                 LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
                     if (key.remaining() >= TRACE_ID_BYTES
                             && !isRootKey(key)
-                            && selected.containsKey(traceIdHex(key))) {
+                            && selected.containsKey(hex.hexOf(key))) {
                         dbi.delete(writer.getWriteTxn(), key);
                         count.increment();
                     } else {
@@ -1534,50 +1485,103 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
     }
 
-    // Hex traceId from the leading 16 bytes of a span key.
-    private static String traceIdHex(final ByteBuffer key) {
-        final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
-        key.duplicate().get(traceIdBytes);
-        return HexStringUtil.encode(traceIdBytes);
+    /**
+     * Derives the hex traceId of a span key once per <em>trace</em> rather than once per span.
+     *
+     * <p>traceId is the leading field of a span key, so a full scan of the span DBI visits a trace's spans
+     * contiguously. Reusing the previous result while the prefix is unchanged turns a {@code byte[16]} plus
+     * a 32-char {@code String} per span into one per trace — for a trace at the 100k span cap that is one
+     * allocation instead of 100,000, on a scan that runs several times per shard per merge cycle.
+     */
+    private static final class TraceIdHexCursor {
+
+        private final byte[] last = new byte[TRACE_ID_BYTES];
+        private String lastHex;
+
+        private String hexOf(final ByteBuffer key) {
+            final ByteBuffer k = key.duplicate();
+            if (lastHex != null) {
+                boolean same = true;
+                for (int i = 0; i < TRACE_ID_BYTES; i++) {
+                    if (k.get(k.position() + i) != last[i]) {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same) {
+                    return lastHex;
+                }
+            }
+            k.get(last);
+            lastHex = HexStringUtil.encode(last);
+            return lastHex;
+        }
     }
 
     /**
-     * Evicts trace roots whose own end time is older than {@code evictBefore}, having first archived
-     * their spans. Nothing is moved: {@link #archiveRootedSpans} has already put the trace in its
-     * bucket, and the bucket derives its own authoritative root, so the copy here is redundant once the
-     * trace can no longer gain late spans.
+     * Evicts the holding-area copy of traces that are finished and already archived. Nothing is moved:
+     * {@link #archiveRootedSpans} has put the trace in its bucket and the bucket derives its own
+     * authoritative root, so this copy is redundant once the trace can no longer gain late spans.
      *
-     * <p>Removes the trace-roots entry, its value-addressed secondary index entries, its root span(s),
-     * its per-trace stats and its merge-time entries — everything the holding area was keeping purely to
-     * accumulate against.
+     * <p>Removes the trace-roots entry, its value-addressed secondary index entries, its root span(s) and
+     * its merge-time entries. <b>Per-trace stats are removed only for a trace that was not truncated.</b>
+     * {@link #readStats} reports {@link TraceStats#EMPTY} for a missing row — {@code spanCount 0,
+     * truncated false} — so dropping it would unlatch the per-trace span cap and let a capped trace
+     * accept a second full allowance, which is what {@link #isOverSpanLimit}'s cumulative count exists to
+     * prevent.
      *
-     * <p><b>Never evicts a root that still has non-root spans here</b>, even when it is past the
-     * cut-off. Unarchived children mean archival has not caught up for that trace, and evicting the root
-     * would strand them: the next merge would find no real root, synthesize an orphan, and the spans
-     * would age out to a bucket chosen by their own insert time rather than the trace's.
+     * <p>The conditions exist to stop eviction creating an orphan, because nothing then cleans one up:
+     * an orphaned trace is skipped here, by {@link #archiveRootedSpans} and by {@link #archiveOldData}'s
+     * root pass, so its spans are pinned in the holding area — invisible to queries, yet still copied to
+     * and from the shared store every cycle — until the insert-time sweep eventually collects them.
      *
-     * <p>Ages on the root's own end time via {@link #archivalAgeAxis}, not on last activity, so a leaky
-     * trace whose background threads keep emitting is still bounded.
+     * <p>Hence two guards beyond the age check. <b>Unarchived children</b> mean archival has not caught
+     * up, so evicting now would strand them under a bucket chosen by their own insert time rather than
+     * the trace's. And <b>the trace must have gone quiet</b>, because a trace still emitting has its
+     * children drained by every cycle — so the "no children" guard is satisfied between cycles and the
+     * root would be evicted out from under it.
      *
+     * <p>Quiet alone is not sufficient either: a trace trickling spans forever without reaching the span
+     * cap never goes quiet, so its root would sit here indefinitely while
+     * {@link #archiveRootedSpans} kept re-pushing its ever-older bucket, and no bucket would ever settle.
+     * {@code hardEvictBefore} bounds that case, restoring the intent documented on
+     * {@link #archivalAgeAxis} — at the cost of orphaning its later spans, which is accepted for a trace
+     * that never ends. A trace that <em>does</em> hit the cap needs no backstop: dropped spans never
+     * reach {@code recordNewSpan} and {@link #recordTruncation} leaves {@code lastActivityMs} alone, so
+     * it goes quiet by itself.
+     *
+     * @param evictBefore     compared against both the root's own end time and the trace's last activity.
+     *                        Derived from the configured root cut-off.
+     * @param hardEvictBefore the backstop, compared against the root's own end time only, evicting a
+     *                        still-active trace regardless of quiet. Earlier than {@code evictBefore};
+     *                        derived from the archival lead time.
      * @return the number of entries removed.
      */
-    public long evictArchivedRoots(final Instant evictBefore) {
+    public long evictArchivedRoots(final Instant evictBefore, final Instant hardEvictBefore) {
         final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(evictBefore);
+        final NanoTime hardNanoTimeBefore = NanoTimeUtil.fromInstant(hardEvictBefore);
+        final long evictBeforeMs = evictBefore.toEpochMilli();
         // traceIdHex -> the stored root, kept because deleting its index entries needs the OLD values.
         final Map<String, TraceRoot> evicting = new HashMap<>();
         // Traces whose children have not been archived yet, so must not be evicted.
         final Set<String> withChildren = new HashSet<>();
 
         env.read(readTxn -> {
+            final TraceIdHexCursor childHex = new TraceIdHexCursor();
             LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
                 if (key.remaining() >= TRACE_ID_BYTES && !isRootKey(key)) {
-                    withChildren.add(traceIdHex(key));
+                    withChildren.add(childHex.hexOf(key));
                 }
             });
             LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                 final TraceRoot root = traceRootValueSerde.read(val.duplicate());
                 final NanoTime ageAxis = archivalAgeAxis(root);
                 if (root.isOrphan() || ageAxis == null || !ageAxis.isBefore(nanoTimeBefore)) {
+                    return;
+                }
+                // Still receiving spans, and not yet past the backstop — see condition 3.
+                if (root.getLastActivityMs() >= evictBeforeMs
+                        && !ageAxis.isBefore(hardNanoTimeBefore)) {
                     return;
                 }
                 final byte[] traceIdBytes = new byte[key.remaining()];
@@ -1599,10 +1603,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             env.read(readTxn -> {
                 // Root spans of evicted traces go; every retained span has its lookups recorded so the
                 // deleteUnused below only drops entries nothing references any more.
+                final TraceIdHexCursor hex = new TraceIdHexCursor();
                 LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
                     if (key.remaining() >= TRACE_ID_BYTES
                             && isRootKey(key)
-                            && evicting.containsKey(traceIdHex(key))) {
+                            && evicting.containsKey(hex.hexOf(key))) {
                         dbi.delete(writer.getWriteTxn(), key);
                         count.increment();
                     } else {
@@ -1726,12 +1731,20 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * Deletes a trace's incremental stats + distinct-name set (prefix {@code traceId}) — used
      * when the trace's root is removed by retention/archival, so the counters don't leak.
      */
+    // Drops a trace's derived state, but keeps the stats row itself for a TRUNCATED trace: readStats
+    // returns TraceStats.EMPTY for a missing row (spanCount 0, truncated false), so dropping it would
+    // unlatch the per-trace span cap and let a capped trace accept another full allowance — which is what
+    // isOverSpanLimit's cumulative count exists to prevent. The retained row is reachable only by
+    // deleteOldData's sweep, since every caller here is already iterating trace-roots and has just
+    // removed this trace's entry. The bulky parts (distinct service names, DFS checkpoints) always go.
     private void deleteStatsOf(final Txn<ByteBuffer> readTxn,
                                final LmdbWriter writer,
                                final byte[] traceIdBytes) {
-        byteBuffers.useBytes(traceIdBytes, keyBuf -> {
-            traceStatsDbi.delete(writer.getWriteTxn(), keyBuf);
-        });
+        if (!readStats(readTxn, traceIdBytes).truncated()) {
+            byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+                traceStatsDbi.delete(writer.getWriteTxn(), keyBuf);
+            });
+        }
         byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
             final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuf).build();
             LmdbIterable.iterate(readTxn, traceServiceNamesDbi, keyRange,
@@ -1888,6 +1901,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 final long mergeTimeMs = key.duplicate().getLong();
                 if (mergeTimeMs < deleteBeforeMs) {
                     traceRootsMergeTimeDbi.delete(writer.getWriteTxn(), key);
+                }
+                writer.tryCommit();
+            });
+
+            // Reap span-cap latch rows left behind by deleteStatsOf. Every other stats deletion happens
+            // while iterating trace-roots, so once a trace's root has gone its retained row is reachable
+            // only from here — without this sweep it would live for the lifetime of the shard, and be
+            // copied to and from the shared store on every merge cycle.
+            LmdbIterable.iterate(readTxn, traceStatsDbi, (key, val) -> {
+                final byte[] traceIdBytes = new byte[key.remaining()];
+                key.duplicate().get(traceIdBytes);
+                final boolean rootGone = byteBuffers.useBytes(traceIdBytes, keyBuf ->
+                        traceRootsDbi.get(writer.getWriteTxn(), keyBuf) == null);
+                if (rootGone && traceStatsSerde.read(val.duplicate()).lastActivityMs() < deleteBeforeMs) {
+                    traceStatsDbi.delete(writer.getWriteTxn(), key);
+                    changeCount.increment();
                 }
                 writer.tryCommit();
             });

@@ -20,7 +20,6 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
@@ -44,7 +43,7 @@ public class PlanBDocStoreImpl
         implements PlanBDocStore {
 
     private final SecurityContext securityContext;
-    private final Provider<StatePaths> statePathsProvider;
+    private final Provider<PlanBPaths> planBPathsProvider;
     private final Provider<ClusterLockService> clusterLockServiceProvider;
 
     @Inject
@@ -52,7 +51,7 @@ public class PlanBDocStoreImpl
             final StoreFactory storeFactory,
             final PlanBDocSerialiser serialiser,
             final SecurityContext securityContext,
-            final Provider<StatePaths> statePathsProvider,
+            final Provider<PlanBPaths> planBPathsProvider,
             final Provider<ClusterLockService> clusterLockServiceProvider) {
         super(storeFactory,
                 serialiser,
@@ -60,7 +59,7 @@ public class PlanBDocStoreImpl
                 PlanBDoc::builder,
                 PlanBDoc::copy);
         this.securityContext = securityContext;
-        this.statePathsProvider = statePathsProvider;
+        this.planBPathsProvider = planBPathsProvider;
         this.clusterLockServiceProvider = clusterLockServiceProvider;
     }
 
@@ -240,7 +239,7 @@ public class PlanBDocStoreImpl
         }
         // 2. Check local storage
         try {
-            final Path localRoot = statePathsProvider.get().getShardDir();
+            final Path localRoot = planBPathsProvider.get().getShardDir();
             if (Files.isDirectory(localRoot)) {
                 try (final java.util.stream.Stream<Path> list = Files.list(localRoot)) {
                     if (list.anyMatch(p -> p.getFileName().toString().startsWith(doc.getUuid()))) {

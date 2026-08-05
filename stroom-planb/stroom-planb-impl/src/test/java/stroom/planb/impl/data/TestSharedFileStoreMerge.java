@@ -27,16 +27,18 @@ import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.db.BatchDestination;
 import stroom.planb.impl.db.DefaultBatchDestination;
 import stroom.planb.impl.db.PlanBStreamWriter;
 import stroom.planb.impl.db.PlanBStreamWriterFactory;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateRequest;
+import stroom.planb.impl.db.trace.TraceArchiveOperation;
 import stroom.planb.impl.fs.ArchiveOperation;
+import stroom.planb.impl.fs.LocalArchive;
 import stroom.planb.impl.fs.RetentionOperation;
 import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.fs.SharedFileStorePartDestination;
@@ -92,7 +94,7 @@ class TestSharedFileStoreMerge {
     @TempDir
     Path tempDir;
 
-    private StatePaths statePaths;
+    private PlanBPaths planBPaths;
     private PlanBConfig planBConfig;
     private PlanBDoc doc;
     private Path sharedRootDir;
@@ -121,7 +123,7 @@ class TestSharedFileStoreMerge {
     void setUp() throws IOException {
         mocks = MockitoAnnotations.openMocks(this);
         documentActionHandlers = new HashMap<>();
-        statePaths = new StatePaths(tempDir.resolve("local_state"));
+        planBPaths = new PlanBPaths(tempDir.resolve("local_state"));
         sharedRootDir = tempDir.resolve("shared_store");
         Files.createDirectories(sharedRootDir);
 
@@ -198,7 +200,7 @@ class TestSharedFileStoreMerge {
         final PlanBStreamWriterFactory shardWriters = new PlanBStreamWriterFactory(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
-                statePaths,
+                planBPaths,
                 batchPublisher,
                 new SharedFileStorePartDestination(),
                 new RestPartDestination(fileTransferClient));
@@ -224,7 +226,7 @@ class TestSharedFileStoreMerge {
                 null,
                 nodeInfo,
                 () -> planBConfig,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 taskContextFactory,
                 executorProvider,
@@ -232,18 +234,20 @@ class TestSharedFileStoreMerge {
         );
 
         final SharedFileStorePublisher publisher =
-                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, statePaths);
+                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths);
         final SharedFileStoreMergeProcessor mergeProcessor = new SharedFileStoreMergeProcessor(
                 clusterLockService,
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
                 () -> planBConfig,
-                statePaths,
+                planBPaths,
                 publisher,
                 securityContext,
                 taskContextFactory,
                 planBDocCache,
-                Set.of(new RetentionOperation(), new ArchiveOperation(publisher, statePaths))
+                Set.of(new RetentionOperation(),
+                        new TraceArchiveOperation(new LocalArchive(publisher, planBPaths)),
+                        new ArchiveOperation(new LocalArchive(publisher, planBPaths)))
         );
 
         // Run the merge

@@ -27,12 +27,12 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.ShardKeyRouter;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.fs.ArchiveStoreShard;
 import stroom.planb.impl.fs.SharedFileStoreShard;
 import stroom.planb.impl.rest.FileTransferClient;
@@ -88,7 +88,7 @@ public class ShardManager {
     private final Map<String, Shard> archiveShardMap = new ConcurrentHashMap<>();
     private final NodeInfo nodeInfo;
     private final Provider<PlanBConfig> configProvider;
-    private final StatePaths statePaths;
+    private final PlanBPaths planBPaths;
     private final FileTransferClient fileTransferClient;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
@@ -100,7 +100,7 @@ public class ShardManager {
                         final PlanBDocStore planBDocStore,
                         final NodeInfo nodeInfo,
                         final Provider<PlanBConfig> configProvider,
-                        final StatePaths statePaths,
+                        final PlanBPaths planBPaths,
                         final FileTransferClient fileTransferClient,
                         final TaskContextFactory taskContextFactory,
                         final ExecutorProvider executorProvider,
@@ -112,13 +112,13 @@ public class ShardManager {
         this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.nodeInfo = nodeInfo;
         this.configProvider = configProvider;
-        this.statePaths = statePaths;
+        this.planBPaths = planBPaths;
         this.fileTransferClient = fileTransferClient;
         this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get();
 
         // Delete any existing snapshots that might have been left behind from the last use of Stroom.
-        FileUtil.deleteDir(statePaths.getSnapshotDir());
+        FileUtil.deleteDir(planBPaths.getSnapshotDir());
 
         // Reap any shared-file-store shard generation dirs left behind by a previous run (nothing is
         // serving yet, so all are orphans); they are re-synced from the shared store on next access.
@@ -290,8 +290,8 @@ public class ShardManager {
     private void sweepOrphanGenerationDirs(final boolean startup) {
         // Live shards (shards/) and cached archive buckets (archive_cache/) both use the
         // <identity>/<generation> layout, so the same sweep handles both roots.
-        sweepGenerationDirs(statePaths.getShardDir(), collectLiveGenerationDirs(shardMap), startup);
-        sweepGenerationDirs(statePaths.getLocalArchiveDir(), collectLiveGenerationDirs(archiveShardMap),
+        sweepGenerationDirs(planBPaths.getShardDir(), collectLiveGenerationDirs(shardMap), startup);
+        sweepGenerationDirs(planBPaths.getArchiveCacheDir(), collectLiveGenerationDirs(archiveShardMap),
                 startup);
     }
 
@@ -442,7 +442,7 @@ public class ShardManager {
                                   final ArchiveShardRef ref) {
         final String cacheKey = doc.getUuid() + "_" + shardIndex + "_" + ref.dateLabel();
         return archiveShardMap.computeIfAbsent(cacheKey, k ->
-                new ArchiveStoreShard(byteBuffers, byteBufferFactory, configProvider, statePaths,
+                new ArchiveStoreShard(byteBuffers, byteBufferFactory, configProvider, planBPaths,
                         doc, shardIndex, ref));
     }
 
@@ -497,7 +497,7 @@ public class ShardManager {
                     byteBuffers,
                     byteBufferFactory,
                     configProvider,
-                    statePaths,
+                    planBPaths,
                     fileTransferClient,
                     doc,
                     DB_FACTORY,
@@ -508,7 +508,7 @@ public class ShardManager {
                     byteBuffers,
                     byteBufferFactory,
                     configProvider,
-                    statePaths,
+                    planBPaths,
                     doc,
                     shardIndex);
         }
@@ -516,7 +516,7 @@ public class ShardManager {
                 byteBuffers,
                 byteBufferFactory,
                 configProvider,
-                statePaths,
+                planBPaths,
                 doc,
                 shardIndex);
     }

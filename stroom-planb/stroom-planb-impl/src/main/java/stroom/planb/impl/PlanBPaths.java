@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.planb.impl.db;
+package stroom.planb.impl;
 
-import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.PlanBConstants;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
@@ -27,9 +25,9 @@ import jakarta.inject.Singleton;
 import java.nio.file.Path;
 
 @Singleton
-public class StatePaths {
+public class PlanBPaths {
 
-    // The root directory for the whole state store.
+    // The root directory for the whole local Plan B store.
     private final Path rootDir;
     // Each node writes a shard for each stream it processes to the writer dir.
     private final Path writerDir;
@@ -46,18 +44,17 @@ public class StatePaths {
     // Local snapshots allow for faster lookups.
     private final Path snapshotDir;
     // Local read-only cached copies of shared-store archive buckets.
-    private final Path localArchiveDir;
-    // Local staging for archival writes: dated delta envs, and the copied-down bucket a delta is
-    // merged into. Keeps all archival LMDB work off the shared mount.
-    private final Path archiveStagingDir;
+    private final Path archiveCacheDir;
+    // Local working area for archival writes, so no LMDB env is ever opened on the shared mount.
+    private final Path archiveLocalDir;
 
     @Inject
-    public StatePaths(final Provider<PlanBConfig> configProvider,
+    public PlanBPaths(final Provider<PlanBConfig> configProvider,
                       final PathCreator pathCreator) {
         this(pathCreator.toAppPath(configProvider.get().getPath()));
     }
 
-    public StatePaths(final Path rootDir) {
+    public PlanBPaths(final Path rootDir) {
         this.rootDir = rootDir;
         writerDir = rootDir.resolve(PlanBConstants.WRITER_DIR_NAME);
         receiveDir = rootDir.resolve(PlanBConstants.RECEIVE_DIR_NAME);
@@ -66,8 +63,8 @@ public class StatePaths {
         mergingDir = rootDir.resolve(PlanBConstants.MERGING_DIR_NAME);
         shardDir = rootDir.resolve(PlanBConstants.SHARDS_DIR_NAME);
         snapshotDir = rootDir.resolve(PlanBConstants.SNAPSHOTS_DIR_NAME);
-        localArchiveDir = rootDir.resolve(PlanBConstants.ARCHIVE_CACHE_DIR_NAME);
-        archiveStagingDir = rootDir.resolve(PlanBConstants.ARCHIVE_STAGING_DIR_NAME);
+        archiveCacheDir = rootDir.resolve(PlanBConstants.ARCHIVE_CACHE_DIR_NAME);
+        archiveLocalDir = rootDir.resolve(PlanBConstants.ARCHIVE_LOCAL_DIR_NAME);
     }
 
     public Path getRootDir() {
@@ -102,11 +99,11 @@ public class StatePaths {
         return snapshotDir;
     }
 
-    public Path getLocalArchiveDir() {
-        return localArchiveDir;
+    public Path getArchiveCacheDir() {
+        return archiveCacheDir;
     }
 
-    public Path getArchiveStagingDir() {
-        return archiveStagingDir;
+    public Path getArchiveLocalDir() {
+        return archiveLocalDir;
     }
 }

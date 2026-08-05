@@ -19,8 +19,8 @@ package stroom.planb.impl.data.shard;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.concurrent.Guard;
@@ -74,7 +74,7 @@ class SnapshotShard implements Shard {
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
     private final Provider<PlanBConfig> configProvider;
-    private final StatePaths statePaths;
+    private final PlanBPaths planBPaths;
     private final FileTransferClient fileTransferClient;
     private final PlanBDocument doc;
     private final DbFactory dbFactory;
@@ -87,7 +87,7 @@ class SnapshotShard implements Shard {
     public SnapshotShard(final ByteBuffers byteBuffers,
                          final ByteBufferFactory byteBufferFactory,
                          final Provider<PlanBConfig> configProvider,
-                         final StatePaths statePaths,
+                         final PlanBPaths planBPaths,
                          final FileTransferClient fileTransferClient,
                          final PlanBDocument doc,
                          final DbFactory dbFactory,
@@ -95,7 +95,7 @@ class SnapshotShard implements Shard {
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
-        this.statePaths = statePaths;
+        this.planBPaths = planBPaths;
         this.fileTransferClient = fileTransferClient;
         this.doc = doc;
         this.dbFactory = dbFactory;
@@ -105,7 +105,7 @@ class SnapshotShard implements Shard {
                 byteBuffers,
                 byteBufferFactory,
                 configProvider,
-                statePaths,
+                planBPaths,
                 fileTransferClient,
                 doc,
                 Instant.now(),
@@ -165,7 +165,7 @@ class SnapshotShard implements Shard {
                         byteBuffers,
                         byteBufferFactory,
                         configProvider,
-                        statePaths,
+                        planBPaths,
                         fileTransferClient,
                         doc,
                         now,
@@ -296,7 +296,7 @@ class SnapshotShard implements Shard {
         public SnapshotInstance(final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,
                                 final Provider<PlanBConfig> configProvider,
-                                final StatePaths statePaths,
+                                final PlanBPaths planBPaths,
                                 final FileTransferClient fileTransferClient,
                                 final PlanBDocument doc,
                                 final Instant createTime,
@@ -310,7 +310,7 @@ class SnapshotShard implements Shard {
 
             try {
                 // Get the snapshot dir.
-                dbDir = statePaths
+                dbDir = planBPaths
                         .getSnapshotDir()
                         .resolve(doc.getUuid())
                         .resolve(DateUtil.createFileDateTimeString(createTime));

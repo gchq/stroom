@@ -56,7 +56,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>The root span is <em>copied</em>, not moved: the bucket needs it to rebuild a real root, and
  *       the holding area needs it so late spans keep finding a real (non-orphan) root.</li>
  *   <li>Only non-root spans are removed from the holding area.</li>
- *   <li>A trace with nothing new to send is skipped, so buckets are not rewritten pointlessly.</li>
+ *   <li>Every rooted trace is selected on every run, including one whose only span is its root —
+ *       selecting only traces with children would lose those entirely.</li>
  *   <li>Orphan traces (no root span) are left alone — they have no bucket to go to.</li>
  * </ul>
  */
@@ -73,9 +74,6 @@ class TestArchiveRootedSpans {
     private static final Instant ROOT_START = Instant.parse("2024-01-10T12:00:00.000Z");
     private static final Instant CHILD_INSERT = Instant.parse("2024-01-20T12:00:00.000Z");
     private static final String ROOT_START_LABEL = "2024-01-10";
-
-    private static final Instant LONG_AGO = Instant.parse("2000-01-01T00:00:00.000Z");
-    private static final Instant FAR_FUTURE = Instant.parse("2100-01-01T00:00:00.000Z");
 
     // -----------------------------------------------------------------------
     // Bucketing, and what moves vs what stays
@@ -98,7 +96,7 @@ class TestArchiveRootedSpans {
             });
             db.mergeComplete();
 
-            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, null)).isEqualTo(1);
+            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir)).isEqualTo(1);
         }
 
         assertThat(labels(archiveBaseDir)).containsExactly(ROOT_START_LABEL);
@@ -123,7 +121,7 @@ class TestArchiveRootedSpans {
                 db.insert(writer, new SpanKV(childKey(), span(ROOT_START, CHILD_INSERT)));
             });
             db.mergeComplete();
-            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, null);
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
 
             // One span left in the holding area, and it is the root.
             final Optional<Trace> live = db.findTrace(HexStringUtil.decode(TRACE_A));
@@ -136,15 +134,18 @@ class TestArchiveRootedSpans {
     }
 
     // -----------------------------------------------------------------------
-    // Selection: don't rewrite buckets with nothing new
+    // Selection: every rooted trace, every run
     // -----------------------------------------------------------------------
 
     /**
-     * A second run with nothing merged since must archive nothing. Otherwise every bucket holding a
-     * live root would be rewritten every cycle, and each push costs O(bucket).
+     * A second run re-sends the trace, because selection is every rooted trace rather than only those
+     * with spans still to send. Nothing is removed the second time — the children have already gone — and
+     * re-sending is harmless, since span puts use {@code MDB_NOOVERWRITE} and the bucket recomputes its
+     * own root. The delta is then just the retained root span.
      */
     @Test
-    void skipsATraceWithNothingNewToSend(@TempDir final Path tempDir) throws IOException {
+    void reSendsAnAlreadyArchivedTraceWithoutRemovingAnything(@TempDir final Path tempDir)
+            throws IOException {
         final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
         final Path firstBase = Files.createDirectory(tempDir.resolve("archive1"));
         final Path secondBase = Files.createDirectory(tempDir.resolve("archive2"));
@@ -157,22 +158,24 @@ class TestArchiveRootedSpans {
             });
             db.mergeComplete();
 
-            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, firstBase, null)).isEqualTo(1);
+            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, firstBase)).isEqualTo(1);
 
-            // Children are gone and nothing has been merged since, so there is nothing to send.
-            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, secondBase, FAR_FUTURE))
-                    .isEqualTo(0);
+            // Selected again, but the child has already gone so nothing is removed.
+            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, secondBase)).isEqualTo(0);
         }
 
-        assertThat(labels(secondBase)).isEmpty();
+        // Still staged, carrying only the root span that stays behind in the holding area.
+        assertThat(labels(secondBase)).containsExactly(ROOT_START_LABEL);
+        assertThat(spanCount(secondBase.resolve(ROOT_START_LABEL), doc)).isEqualTo(1);
     }
 
     /**
-     * A trace whose only span is its root still has to reach its bucket once, or it would never be
-     * queryable. It has no children, so it is selected on the "merged since" arm instead.
+     * A trace whose only span is its root must still reach its bucket. It has no children, so a selection
+     * rule based on children alone would never send it — and it would then satisfy every
+     * {@code evictArchivedRoots} condition and be deleted having never been archived.
      */
     @Test
-    void archivesARootOnlyTraceViaTheMergedSinceGate(@TempDir final Path tempDir) throws IOException {
+    void archivesARootOnlyTrace(@TempDir final Path tempDir) throws IOException {
         final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
         final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
         final PlanBDoc doc = buildDoc();
@@ -183,7 +186,7 @@ class TestArchiveRootedSpans {
 
             // No children, so nothing is deleted from the holding area — but the delta must still be
             // written, which is what makes the trace queryable.
-            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, LONG_AGO))
+            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir))
                     .isEqualTo(0);
         }
 
@@ -210,7 +213,7 @@ class TestArchiveRootedSpans {
             db.write(writer -> db.insert(writer, new SpanKV(childKey(), span(ROOT_START, CHILD_INSERT))));
             db.mergeComplete();
 
-            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, null)).isEqualTo(0);
+            assertThat(db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir)).isEqualTo(0);
             // The orphan's span is still in the holding area.
             assertThat(db.count()).isEqualTo(1);
         }

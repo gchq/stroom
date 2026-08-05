@@ -21,9 +21,9 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.shard.AbstractStoreShard;
 import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.ArchivalSettings;
 import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
@@ -61,13 +61,13 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     public SharedFileStoreShard(final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,
                                 final Provider<PlanBConfig> configProvider,
-                                final StatePaths statePaths,
+                                final PlanBPaths planBPaths,
                                 final PlanBDocument doc,
                                 final int shardIndex) {
         // Read instances live in a per-instance generation subdir (shards/<uuid>_<idx>/<generation>)
         // so an idle-evicted (closing) instance and its replacement never share a lock.mdb dir.
-        super(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
-                statePaths.getShardDir(), newGeneration());
+        super(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex,
+                planBPaths.getShardDir(), newGeneration());
         syncFromSharedStoreIfRequired();
     }
 
@@ -90,11 +90,11 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     public SharedFileStoreShard(final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,
                                 final Provider<PlanBConfig> configProvider,
-                                final StatePaths statePaths,
+                                final PlanBPaths planBPaths,
                                 final PlanBDocument doc,
                                 final int shardIndex,
                                 final Path shardBaseDir) {
-        super(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex, shardBaseDir);
+        super(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex, shardBaseDir);
         syncFromSharedStoreIfRequired();
     }
 
@@ -130,6 +130,12 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     public <R> R get(final Function<Db<?, ?>, R> function) {
         syncFromSharedStoreIfRequired();
         return super.get(function);
+    }
+
+    @Override
+    public <R> R writeWithDb(final Function<Db<?, ?>, R> function) {
+        syncFromSharedStoreIfRequired();
+        return super.writeWithDb(function);
     }
 
     @Override
@@ -175,86 +181,6 @@ public class SharedFileStoreShard extends AbstractStoreShard {
         }
         try {
             count = db.archiveOldData(archiveBefore, archival.getGranularity(), archiveBaseDir);
-            if (count > 0) {
-                lastWriteTime = Instant.now();
-            }
-        } finally {
-            writeLock.unlock();
-        }
-
-        return count;
-    }
-
-    /**
-     * Archives the spans of rooted traces into their buckets, keeping each root in the live shard as
-     * the accumulator for late spans. Runs every merge cycle (see
-     * {@link Db#archiveRootedSpans}), so unlike {@link #archiveOldData} it is not gated on the
-     * archival lead time — only on archival being configured at all, since without it there are no
-     * buckets to write to.
-     *
-     * @param archiveBaseDir local base dir; dated subdirs are created underneath
-     * @param since          when this last ran for this shard, or null if never
-     * @return count of spans removed from the live shard (0 if nothing to archive)
-     */
-    public long archiveRootedSpans(final PlanBDocument doc,
-                                   final Path archiveBaseDir,
-                                   final Instant since) throws IOException {
-        syncFromSharedStoreIfRequired();
-
-        final ArchivalSettings archival = doc.getSettings() instanceof final HasSharedFileStore s
-                && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getArchival() : null;
-        if (archival == null || !archival.isEnabled()) {
-            return 0;
-        }
-
-        Files.createDirectories(archiveBaseDir);
-
-        final long count;
-        try {
-            writeLock.lockInterruptibly();
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
-        }
-        try {
-            count = db.archiveRootedSpans(archival.getGranularity(), archiveBaseDir, since);
-            if (count > 0) {
-                lastWriteTime = Instant.now();
-            }
-        } finally {
-            writeLock.unlock();
-        }
-
-        return count;
-    }
-
-    /**
-     * Evicts trace roots that are past the configured root cut-off, once their spans have been archived.
-     * Runs every merge cycle — the cut-off is short by design, so waiting out {@code checkInterval} would
-     * let the live store grow well beyond it.
-     *
-     * @return count of entries removed from the live shard (0 if nothing to evict)
-     */
-    public long evictArchivedRoots(final PlanBDocument doc) {
-        syncFromSharedStoreIfRequired();
-
-        final ArchivalSettings archival = doc.getSettings() instanceof final HasSharedFileStore s
-                && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getArchival() : null;
-        if (archival == null || !archival.isEnabled() || archival.getRootCutOff() == null) {
-            return 0;
-        }
-
-        final Instant evictBefore = SimpleDurationUtil.minus(Instant.now(), archival.getRootCutOff());
-
-        final long count;
-        try {
-            writeLock.lockInterruptibly();
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
-        }
-        try {
-            count = db.evictArchivedRoots(evictBefore);
             if (count > 0) {
                 lastWriteTime = Instant.now();
             }

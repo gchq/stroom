@@ -25,8 +25,8 @@ import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.value.SpanKV;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.TraceArchiveOperation;
 import stroom.planb.impl.db.trace.TraceDb;
@@ -90,7 +90,7 @@ class TestTraceArchiveOperation {
     private NodeInfo nodeInfo;
 
     private Path shared;
-    private StatePaths statePaths;
+    private PlanBPaths planBPaths;
     private PlanBDoc doc;
     private SharedFileStoreShard shard;
     private TraceArchiveOperation operation;
@@ -102,16 +102,16 @@ class TestTraceArchiveOperation {
         when(nodeInfo.getThisNodeName()).thenReturn("test-node");
 
         shared = Files.createDirectories(tempDir.resolve("shared"));
-        statePaths = new StatePaths(tempDir.resolve("local_state"));
+        planBPaths = new PlanBPaths(tempDir.resolve("local_state"));
         doc = buildDoc(shared);
 
         final PlanBConfig config = PlanBConfig.builder().build();
-        shard = new SharedFileStoreShard(BYTE_BUFFERS, BYTE_BUFFER_FACTORY, () -> config, statePaths,
-                doc, SHARD_INDEX, statePaths.getMergingDir());
+        shard = new SharedFileStoreShard(BYTE_BUFFERS, BYTE_BUFFER_FACTORY, () -> config, planBPaths,
+                doc, SHARD_INDEX, planBPaths.getMergingDir());
 
         final SharedFileStorePublisher publisher = new SharedFileStorePublisher(
-                nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, statePaths);
-        operation = new TraceArchiveOperation(new LocalArchive(publisher, statePaths));
+                nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths);
+        operation = new TraceArchiveOperation(new LocalArchive(publisher, planBPaths));
     }
 
     /**

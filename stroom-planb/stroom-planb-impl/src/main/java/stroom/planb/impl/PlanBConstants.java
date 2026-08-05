@@ -25,14 +25,8 @@ public final class PlanBConstants {
     public static final String MERGING_DIR_NAME = "merging";
     public static final String SHARDS_DIR_NAME = "shards";
     public static final String SNAPSHOTS_DIR_NAME = "snapshots";
-    // Local cache of read-only copies of shared-store archive buckets (distinct from the shared-store
-    // ARCHIVE_DIR_NAME tree). Layout: archive_cache/<uuid>_<idx>_<dateLabel>/<generation>/.
     public static final String ARCHIVE_CACHE_DIR_NAME = "archive_cache";
-    // Local WRITE staging for archival: the dated delta envs produced by archiveOldData, and the
-    // copied-down bucket that a new batch is merged into. All LMDB work for archival happens here so
-    // that no env is ever opened on the shared mount. Distinct from ARCHIVE_CACHE_DIR_NAME, which is
-    // the read-side cache.
-    public static final String ARCHIVE_STAGING_DIR_NAME = "archive_staging";
+    public static final String ARCHIVE_LOCAL_DIR_NAME = "archive_local";
     public static final String PROCESSING_DIR_NAME = "processing";
     public static final String TRASH_DIR_NAME = "trash";
 
@@ -45,22 +39,16 @@ public final class PlanBConstants {
     public static final String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
 
     public static final String DATA_FILE_NAME = "data.mdb";
-    // Transient name a merged archive data file is copied up under, before being renamed to
-    // DATA_FILE_NAME within the live bucket dir. Renaming within the dir means the bucket dir is
-    // never absent, so there is no window in which a bucket disappears from queries.
     public static final String DATA_TMP_FILE_NAME = ".tmp_data.mdb";
     public static final String LOCK_FILE_NAME = "lock.mdb";
     public static final String MERGED_FILE_NAME = ".merged";
     public static final String VERSION_FILE_NAME = ".version";
     public static final String FAILED_FILE_NAME = ".failed";
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";
-    public static final String ARCHIVE_DIR_NAME          = "archive";
-    public static final String ARCHIVAL_LAST_FILE_NAME   = ".archival.last";
-    public static final String SPAN_ARCHIVAL_LAST_FILE_NAME = ".span-archival.last";
+    public static final String ARCHIVE_DIR_NAME         = "archive";
+    public static final String ARCHIVAL_LAST_FILE_NAME  = ".archival.last";
 
-    private PlanBConstants() {
-        // Utility class
-    }
+    private PlanBConstants() {}
 
     public static String getMergeLockName(final String docUuid, final int shardIndex) {
         return "planb-merge-" + docUuid + "-" + shardIndex;
@@ -70,10 +58,6 @@ public final class PlanBConstants {
         return "planb-merge-" + docUuid + "-";
     }
 
-    /**
-     * Formats a shard index as a zero-padded four-digit string.
-     * Example: {@code formatShardIndex(3)} returns {@code "0003"}.
-     */
     public static String formatShardIndex(final int shardIndex) {
         return String.format("%04d", shardIndex);
     }

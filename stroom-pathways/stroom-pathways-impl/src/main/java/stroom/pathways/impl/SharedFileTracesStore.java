@@ -230,10 +230,21 @@ class SharedFileTracesStore extends AbstractTracesStore {
         final TimeFilter timeFilter = resolveTimeFilter(criteria.getTimeRange());
         validateTimeRangeLimit(doc, timeFilter);
 
-        // Fan out over archive buckets only — the holding-area shards are never queried. An absent time
-        // range means unbounded, which enumerates every bucket rather than returning nothing.
-        final long fromMs = timeFilter != null ? timeFilter.getFrom() : Long.MIN_VALUE;
-        final long toMs = timeFilter != null ? timeFilter.getTo() : Long.MAX_VALUE;
+        // Fan out over archive buckets only — the holding-area shards are never queried.
+        //
+        // An absent time range is bounded rather than treated as all-time. Every ref returned here is
+        // opened through ShardManager.getArchive, which copies that bucket's whole data.mdb down to local
+        // disk and holds it until idle eviction — so an unbounded fan-out would pull the entire archive
+        // history onto the node and saturate the shared mount. validateTimeRangeLimit cannot catch this
+        // because it returns early for a null filter.
+        final long toMs = timeFilter != null ? timeFilter.getTo() : System.currentTimeMillis();
+        final long fromMs = timeFilter != null
+                ? timeFilter.getFrom()
+                : toMs - defaultWindowMs(doc);
+        if (timeFilter == null) {
+            LOGGER.debug(() -> "No time range for '" + doc.getName() + "', defaulting to the last "
+                    + defaultWindowMs(doc) + "ms rather than scanning every archive bucket");
+        }
         for (int i = 0; i < doc.getShardCount(); i++) {
             final int shardIndex = i;
             for (final ArchiveShardRef ref : archiveShardLocator.findRelevantShards(
@@ -276,19 +287,24 @@ class SharedFileTracesStore extends AbstractTracesStore {
         for (final CompletableFuture<TracesResultPage> future : futures) {
             try {
                 final TracesResultPage page = future.get();
-                if (page != null) {
-                    if (page.getValues() != null) {
-                        allTraceRoots.addAll(page.getValues());
-                    }
-                    if (page.getPageResponse() != null) {
-                        total += page.getPageResponse().getTotal();
-                        if (!page.getPageResponse().isExact()) {
-                            exact = false;
-                        }
+                if (page == null) {
+                    // queryArchive logged the cause and returned null. Buckets are now the only source, so
+                    // an unread one means traces are missing from the page — the total cannot be exact.
+                    exact = false;
+                    continue;
+                }
+                if (page.getValues() != null) {
+                    allTraceRoots.addAll(page.getValues());
+                }
+                if (page.getPageResponse() != null) {
+                    total += page.getPageResponse().getTotal();
+                    if (!page.getPageResponse().isExact()) {
+                        exact = false;
                     }
                 }
             } catch (final Exception e) {
                 LOGGER.error("Failed to retrieve query result page from future", e);
+                exact = false;
             }
         }
 
@@ -485,6 +501,18 @@ class SharedFileTracesStore extends AbstractTracesStore {
                     " for doc " + doc.getName() + ": " + e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * The window to use when a query supplies no time range: the configured {@code maxQueryTimeRange} if
+     * there is one, since a caller could not have asked for more than that anyway, else one
+     * archival-granularity bucket. Never unbounded — see the call site for why.
+     */
+    private static long defaultWindowMs(final PlanBDocument doc) {
+        if (doc.getSettings() instanceof final TraceSettings ts && ts.getMaxQueryTimeRange() != null) {
+            return toMillis(ts.getMaxQueryTimeRange());
+        }
+        return maxHistogramWindowMs(doc);
     }
 
     /**

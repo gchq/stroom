@@ -21,7 +21,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.db.StatePaths;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.rest.NotModifiedException;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDocument;
@@ -58,31 +58,31 @@ public class RestStoreShard extends AbstractStoreShard implements SnapshotCapabl
     public RestStoreShard(final ByteBuffers byteBuffers,
                           final ByteBufferFactory byteBufferFactory,
                           final Provider<PlanBConfig> configProvider,
-                          final StatePaths statePaths,
+                          final PlanBPaths planBPaths,
                           final PlanBDocument doc) {
-        this(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, -1);
+        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, -1);
     }
 
     public RestStoreShard(final ByteBuffers byteBuffers,
                           final ByteBufferFactory byteBufferFactory,
                           final Provider<PlanBConfig> configProvider,
-                          final StatePaths statePaths,
+                          final PlanBPaths planBPaths,
                           final PlanBDocument doc,
                           final int shardIndex) {
-        this(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex,
-                statePaths.getShardDir());
+        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex,
+                planBPaths.getShardDir());
     }
 
     RestStoreShard(final ByteBuffers byteBuffers,
                    final ByteBufferFactory byteBufferFactory,
                    final Provider<PlanBConfig> configProvider,
-                   final StatePaths statePaths,
+                   final PlanBPaths planBPaths,
                    final PlanBDocument doc,
                    final int shardIndex,
                    final Path shardBaseDir) {
-        super(byteBuffers, byteBufferFactory, configProvider, statePaths, doc, shardIndex, shardBaseDir);
+        super(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex, shardBaseDir);
         final String dirSuffix = shardIndex >= 0 ? doc.getUuid() + "_" + shardIndex : doc.getUuid();
-        this.snapshotDir = statePaths.getSnapshotDir().resolve(dirSuffix);
+        this.snapshotDir = planBPaths.getSnapshotDir().resolve(dirSuffix);
     }
 
     @Override

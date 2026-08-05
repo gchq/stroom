@@ -16,9 +16,9 @@
 
 package stroom.planb.impl.data;
 
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.queue.SequentialFile;
 import stroom.planb.impl.data.queue.SequentialFileStore;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.rest.FileDescriptor;
 import stroom.planb.impl.rest.FileHashUtil;
 import stroom.util.io.FileUtil;
@@ -37,8 +37,8 @@ class TestSequentialFileStore {
     void test() throws IOException {
         final Path rootDir = Files.createTempDirectory("root");
         try {
-            final StatePaths statePaths = new StatePaths(rootDir);
-            final SequentialFileStore fileStore = new SequentialFileStore(statePaths.getStagingDir());
+            final PlanBPaths planBPaths = new PlanBPaths(rootDir);
+            final SequentialFileStore fileStore = new SequentialFileStore(planBPaths.getStagingDir());
             assertThat(fileStore.getMinStoreId()).isEqualTo(-1);
             assertThat(fileStore.getMaxStoreId()).isEqualTo(-1);
 

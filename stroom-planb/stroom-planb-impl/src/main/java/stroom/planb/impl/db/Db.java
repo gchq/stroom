@@ -49,41 +49,12 @@ public interface Db<K, V> extends AutoCloseable {
     default void mergeComplete() {
     }
 
-    /**
-     * Called after merging a batch into an archive bucket, so a store can finalise any derived
-     * state (e.g. recompute aggregate counts). Default: nothing to do.
-     */
-    default void archiveMergeComplete() {
-    }
-
     long deleteOldData(Instant deleteBefore,
                        boolean useStateTime);
 
     default long archiveOldData(final Instant archiveBefore,
                                 final ArchivalGranularity granularity,
                                 final Path archiveBaseDir) {
-        return 0L;
-    }
-
-    /**
-     * Archives the spans of records that are already complete enough to query, keeping the record
-     * itself in the live store as an accumulator for late arrivals. Runs every merge cycle, unlike
-     * {@link #archiveOldData}, which waits out the archival lead time. {@code since} is when this last
-     * ran, used to skip records with nothing new to send; null means "no marker yet, take everything".
-     * Default: nothing to do.
-     */
-    default long archiveRootedSpans(final ArchivalGranularity granularity,
-                                    final Path archiveBaseDir,
-                                    final Instant since) {
-        return 0L;
-    }
-
-    /**
-     * Evicts records whose spans have already been archived and which are now too old to gain more, so
-     * the live store stops holding what only existed to accumulate against. Nothing is moved — the
-     * archive already holds the data. Default: nothing to do.
-     */
-    default long evictArchivedRoots(final Instant evictBefore) {
         return 0L;
     }
 

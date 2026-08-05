@@ -157,6 +157,16 @@ public abstract sealed class AbstractPlanBSettings permits
             return "'Keep Trace Root For' (" + cutOff.toLongString() + ") must be at least one minute, "
                    + "otherwise a trace's root can be evicted before pathway processing has seen it.";
         }
+        // The lead time is the backstop that bounds a trace which never goes quiet. If the cut-off were
+        // the longer of the two, the backstop would always be unreachable for any root old enough to
+        // consider, so the "has it gone quiet" guard would be skipped and roots would be evicted out from
+        // under still-active traces — stranding their remaining spans as orphans.
+        final SimpleDuration leadTime = archival.getDuration();
+        if (leadTime != null && cutOff.getApproxMillis() >= leadTime.getApproxMillis()) {
+            return "'Keep Trace Root For' (" + cutOff.toLongString() + ") must be shorter than "
+                   + "'Archive Data Older Than' (" + leadTime.toLongString() + "), which is the backstop "
+                   + "that bounds a trace still receiving spans.";
+        }
         final RetentionSettings retention = settings.getRetention();
         if (retention != null && retention.isEnabled() && retention.getDuration() != null
                 && cutOff.getApproxMillis() >= retention.getDuration().getApproxMillis()) {

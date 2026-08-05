@@ -20,9 +20,9 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -70,25 +70,25 @@ public class SharedFileStorePublisher {
     private final NodeInfo nodeInfo;
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
-    private final Path archiveStagingDir;
+    private final Path archiveLocalDir;
 
     @Inject
     public SharedFileStorePublisher(final NodeInfo nodeInfo,
                                     final ByteBuffers byteBuffers,
                                     final ByteBufferFactory byteBufferFactory,
-                                    final StatePaths statePaths) {
+                                    final PlanBPaths planBPaths) {
         this.nodeInfo = nodeInfo;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
 
-        // Clear any staging dirs left by a previous JVM crash; each push removes its own on the way
+        // Clear any local archive dirs left by a previous JVM crash; each push removes its own on the way
         // out, so anything present at startup is dead. Mirrors MergeProcessor's treatment of
         // mergingDir/unzipDir.
-        archiveStagingDir = statePaths.getArchiveStagingDir();
-        FileUtil.ensureDirExists(archiveStagingDir);
-        if (!FileUtil.deleteContents(archiveStagingDir)) {
+        archiveLocalDir = planBPaths.getArchiveLocalDir();
+        FileUtil.ensureDirExists(archiveLocalDir);
+        if (!FileUtil.deleteContents(archiveLocalDir)) {
             throw new RuntimeException(
-                    "Unable to delete contents of: " + FileUtil.getCanonicalPath(archiveStagingDir));
+                    "Unable to delete contents of: " + FileUtil.getCanonicalPath(archiveLocalDir));
         }
     }
 
@@ -159,7 +159,7 @@ public class SharedFileStorePublisher {
      * earlier runs for the same date, which is data loss.
      *
      * <p><b>No LMDB env is ever opened on the shared mount.</b> To merge, the existing bucket's
-     * {@code data.mdb} is copied <em>down</em> to a local staging dir, the merge runs against that
+     * {@code data.mdb} is copied <em>down</em> to a local dir, the merge runs against that
      * local copy, and only the finished file is copied back up. The shared store therefore sees
      * whole-file copies and renames only.
      *
@@ -183,10 +183,10 @@ public class SharedFileStorePublisher {
                 .resolve(archiveShard.dateLabel());
 
         final String uid = System.currentTimeMillis() + "_" + UUID.randomUUID();
-        final Path stagingDir = archiveStagingDir.resolve(
+        final Path localDir = archiveLocalDir.resolve(
                 "merge_" + doc.getUuid() + "_" + PlanBConstants.formatShardIndex(shardIndex)
                         + "_" + archiveShard.dateLabel() + "_" + uid);
-        Files.createDirectories(stagingDir);
+        Files.createDirectories(localDir);
 
         try {
             if (!Files.exists(archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME))) {
@@ -195,56 +195,51 @@ public class SharedFileStorePublisher {
             }
 
             final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
-            final Path stagingData = stagingDir.resolve(PlanBConstants.DATA_FILE_NAME);
+            final Path localData = localDir.resolve(PlanBConstants.DATA_FILE_NAME);
             if (Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))
                     && Files.exists(existingData)) {
-                // Seed the staging env with the existing bucket, copied DOWN, so the new batch unions
+                // Seed the local env with the existing bucket, copied DOWN, so the new batch unions
                 // with it rather than replacing it.
                 LOGGER.info("Merging new archive batch into existing archive shard {}", archiveShardDir);
-                Files.copy(existingData, stagingData, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(existingData, localData, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // Always merge, even into an empty staging env for a brand-new bucket, rather than copying the
+            // Always merge, even into an empty local env for a brand-new bucket, rather than copying the
             // staged batch up verbatim. The batch holds spans only — its roots and sort indexes are
             // derived, not carried — so publishing it as-is would leave a bucket with spans that no query
             // could find, and without the index DBIs a read-only query open needs.
             try (final Db<?, ?> db = PlanBDb.open(
-                    doc, stagingDir, byteBuffers, byteBufferFactory, false, true)) {
+                    doc, localDir, byteBuffers, byteBufferFactory, false, true)) {
                 db.merge(archiveShard.localDir());
-                // Full rebuild rather than archiveMergeComplete's totalSpans-only patch: a trace's spans
-                // now all land in its root's start-time bucket, so the bucket can derive an authoritative
-                // root (depth, services, end time, counts) from its own span set. merge() maintains the
-                // per-trace stats it needs and queues every touched trace.
+                // Lets the bucket rebuild its own derived state from the span set it now holds, rather
+                // than inheriting whatever the batch happened to carry. merge() maintains the per-record
+                // stats this needs and queues every record it touched.
                 db.mergeComplete();
             }
             // Keep the archive layout as data.mdb + .version only: drop the lock file LMDB created
             // locally during the merge (it is recreated on the next open).
-            Files.deleteIfExists(stagingDir.resolve(PlanBConstants.LOCK_FILE_NAME));
+            Files.deleteIfExists(localDir.resolve(PlanBConstants.LOCK_FILE_NAME));
 
-            publishBucketData(stagingData, archiveShardDir, uid);
+            publishBucketData(localData, archiveShardDir, uid);
         } finally {
             // Swallow cleanup failures so they cannot mask an in-flight exception from the push. A
-            // leftover staging dir is harmless: the next startup clears the whole staging root.
+            // leftover local dir is harmless: the next startup clears the whole local archive root.
             try {
-                FileUtil.deleteDir(stagingDir);
+                FileUtil.deleteDir(localDir);
             } catch (final Exception e) {
-                LOGGER.warn("Failed to clean up archive staging dir {}: {}", stagingDir, e.getMessage());
+                LOGGER.warn("Failed to clean up local archive dir {}: {}", localDir, e.getMessage());
             }
         }
     }
 
-    /**
-     * Publishes a locally-prepared archive {@code data.mdb} into its live bucket dir without ever
-     * renaming that dir away: copy up under a temp name, rename within the dir, then bump
-     * {@code .version}.
-     *
-     * <p>Ordering matters in both directions. {@code .version} is written last because
-     * {@link stroom.planb.impl.data.archive.ArchiveShardLocator} treats its presence as "bucket
-     * complete", so a brand-new bucket stays invisible until its data is fully in place. And it is
-     * written <em>after</em> the data rename rather than before, so a crash in between leaves new data
-     * under an old version — readers re-sync on the next version change — rather than an advertised
-     * version whose data never arrived.
-     */
+    // Copies up under a temp name, renames within the live bucket dir, then bumps .version — so the dir
+    // is never renamed away and the bucket cannot transiently vanish.
+    //
+    // The ordering matters in both directions. .version goes last because ArchiveShardLocator treats its
+    // presence as "bucket complete", so a brand-new bucket stays invisible until its data is in place.
+    // And it goes after the data rename rather than before, so a crash in between leaves new data under
+    // an old version — which readers re-sync past on the next version change — rather than an advertised
+    // version whose data never arrived.
     private static void publishBucketData(final Path localData,
                                           final Path archiveShardDir,
                                           final String version) throws IOException {
@@ -268,12 +263,9 @@ public class SharedFileStorePublisher {
         }
     }
 
-    /**
-     * Removes temp data files orphaned in a bucket dir by a JVM kill between the copy up and the
-     * rename. They are bucket-sized and nothing else would ever clean them: {@link #recoverOrphaned}
-     * scans only the {@code shards/} tree, and {@code SharedFileStoreCleaner} covers only the
-     * {@code shards/} and {@code processing/} trees. Sweeping on the next push keeps it self-healing.
-     */
+    // A JVM kill between the copy up and the rename orphans a bucket-sized temp file here, and nothing
+    // else would ever clean it: recoverOrphaned scans only the shards/ tree, and SharedFileStoreCleaner
+    // only shards/ and processing/. Sweeping on the next push keeps that self-healing.
     private static void deleteOrphanedTempData(final Path archiveShardDir) throws IOException {
         try (final Stream<Path> files = Files.list(archiveShardDir)) {
             files.filter(p -> p.getFileName().toString().startsWith(PlanBConstants.DATA_TMP_FILE_NAME))

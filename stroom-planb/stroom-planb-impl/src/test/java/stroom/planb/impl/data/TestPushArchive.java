@@ -22,8 +22,8 @@ import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.value.SpanKV;
-import stroom.planb.impl.db.StatePaths;
 import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
@@ -291,11 +291,11 @@ class TestPushArchive {
     private SharedFileStorePublisher newPublisher() {
         // pushArchive does not use NodeInfo, so null is fine here.
         return new SharedFileStorePublisher(
-                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new StatePaths(localState));
+                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new PlanBPaths(localState));
     }
 
     private Path stagingDir() {
-        return new StatePaths(localState).getArchiveStagingDir();
+        return new PlanBPaths(localState).getArchiveLocalDir();
     }
 
     private Path bucketDir() {

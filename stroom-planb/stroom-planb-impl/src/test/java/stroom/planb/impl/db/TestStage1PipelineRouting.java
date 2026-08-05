@@ -22,6 +22,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.fs.SharedFileStoreCleaner;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
@@ -118,7 +119,7 @@ class TestStage1PipelineRouting {
     void testStreamWriterFactoryWithSharedStore(@TempDir final Path tempDir) throws IOException {
         final Path writerDir = tempDir.resolve("writer");
         final Path sharedRoot = tempDir.resolve("shared");
-        final StatePaths statePaths = new StatePaths(tempDir); // resolving tempDir/writer as writerDir
+        final PlanBPaths planBPaths = new PlanBPaths(tempDir); // resolving tempDir/writer as writerDir
 
         final PlanBDoc doc = PlanBDoc.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -139,7 +140,7 @@ class TestStage1PipelineRouting {
         final PlanBStreamWriterFactory shardWriters = new PlanBStreamWriterFactory(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
-                statePaths,
+                planBPaths,
                 batchPublisher,
                 new SharedFileStorePartDestination(),
                 new RestPartDestination(fileTransferClient));
@@ -188,7 +189,7 @@ class TestStage1PipelineRouting {
     @Test
     void testStreamWriterFactoryFallback(@TempDir final Path tempDir) throws IOException {
         final Path writerDir = tempDir.resolve("writer");
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths planBPaths = new PlanBPaths(tempDir);
 
 
         final PlanBDoc doc = PlanBDoc.builder()
@@ -209,7 +210,7 @@ class TestStage1PipelineRouting {
         final PlanBStreamWriterFactory shardWriters = new PlanBStreamWriterFactory(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
-                statePaths,
+                planBPaths,
                 batchPublisher,
                 new SharedFileStorePartDestination(),
                 new RestPartDestination(fileTransferClient));
@@ -234,7 +235,7 @@ class TestStage1PipelineRouting {
     void testStreamWriterFactoryWithZeroShardCount(@TempDir final Path tempDir) throws IOException {
         final Path writerDir = tempDir.resolve("writer");
         final Path sharedRoot = tempDir.resolve("shared");
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths planBPaths = new PlanBPaths(tempDir);
 
         final PlanBDoc doc = PlanBDoc.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -254,7 +255,7 @@ class TestStage1PipelineRouting {
         final PlanBStreamWriterFactory shardWriters = new PlanBStreamWriterFactory(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
-                statePaths,
+                planBPaths,
                 batchPublisher,
                 new SharedFileStorePartDestination(),
                 new RestPartDestination(fileTransferClient));
@@ -288,18 +289,18 @@ class TestStage1PipelineRouting {
     @Test
     void testStartupCleanup(@TempDir final Path tempDir) throws IOException {
         final Path sharedRoot = tempDir.resolve("shared");
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths planBPaths = new PlanBPaths(tempDir);
         final String docUuid = UUID.randomUUID().toString();
 
         // --- Local staging cleanup (PlanBStreamWriterFactory constructor) ---
-        final Path localStagingFolder = statePaths.getWriterDir().resolve("some_stale_staging_dir");
+        final Path localStagingFolder = planBPaths.getWriterDir().resolve("some_stale_staging_dir");
         Files.createDirectories(localStagingFolder);
 
         final FileTransferClient fileTransferClient = Mockito.mock(FileTransferClient.class);
         new PlanBStreamWriterFactory(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
-                statePaths,
+                planBPaths,
                 new DefaultBatchDestination(),
                 new SharedFileStorePartDestination(),
                 new RestPartDestination(fileTransferClient));

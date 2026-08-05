@@ -54,10 +54,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Eviction moves nothing — {@code archiveRootedSpans} has already put the trace in its bucket, and the
  * bucket derives its own root — so this only has to decide <em>when</em> a root is safe to drop:
  * <ul>
- *   <li>past the cut-off, judged on the root's own end time so a leaky trace is still bounded;</li>
- *   <li>and with no non-root spans left here, because unarchived children mean archival has not caught
- *       up and evicting the root would strand them as orphans.</li>
+ *   <li>past the cut-off, judged on the root's own end time;</li>
+ *   <li>with no non-root spans left here, because unarchived children mean archival has not caught up and
+ *       evicting the root would strand them as orphans;</li>
+ *   <li>and either gone quiet, or past the backstop cut-off. Quiet alone would pin a forever-active
+ *       trace's root here indefinitely; the backstop alone would orphan traces with ordinary trailing
+ *       activity.</li>
  * </ul>
+ *
+ * <p>Getting either of the last two wrong strands spans as orphans, which nothing archives or evicts — so
+ * each has a test here that fails without its guard.
  */
 class TestEvictArchivedRoots {
 
@@ -86,10 +92,10 @@ class TestEvictArchivedRoots {
             });
             db.mergeComplete();
             // Children away to the bucket; root span and root entry stay behind.
-            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, null);
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
             assertThat(traceIds(db)).containsExactly(TRACE_A);
 
-            assertThat(db.evictArchivedRoots(CUT_OFF)).isGreaterThan(0);
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isGreaterThan(0);
 
             // Nothing left of the trace in the holding area.
             assertThat(traceIds(db)).isEmpty();
@@ -110,9 +116,9 @@ class TestEvictArchivedRoots {
                 db.insert(writer, new SpanKV(childKey(), span(ROOT_START)));
             });
             db.mergeComplete();
-            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, null);
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
 
-            assertThat(db.evictArchivedRoots(BEFORE_ROOT_START)).isEqualTo(0);
+            assertThat(db.evictArchivedRoots(BEFORE_ROOT_START, BEFORE_ROOT_START)).isEqualTo(0);
             assertThat(traceIds(db)).containsExactly(TRACE_A);
         }
     }
@@ -135,7 +141,7 @@ class TestEvictArchivedRoots {
             db.mergeComplete();
 
             // Note: no archiveRootedSpans call, so the child is still here.
-            assertThat(db.evictArchivedRoots(CUT_OFF)).isEqualTo(0);
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isEqualTo(0);
             assertThat(traceIds(db)).containsExactly(TRACE_A);
             assertThat(db.count()).isEqualTo(2);
         }
@@ -154,7 +160,7 @@ class TestEvictArchivedRoots {
             db.write(writer -> db.insert(writer, new SpanKV(childKey(), span(ROOT_START))));
             db.mergeComplete();
 
-            assertThat(db.evictArchivedRoots(CUT_OFF)).isEqualTo(0);
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isEqualTo(0);
             assertThat(db.count()).isEqualTo(1);
         }
     }
@@ -169,10 +175,118 @@ class TestEvictArchivedRoots {
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
             db.write(writer -> db.insert(writer, new SpanKV(rootKey(), span(ROOT_START))));
             db.mergeComplete();
-            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir, BEFORE_ROOT_START);
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
 
-            assertThat(db.evictArchivedRoots(CUT_OFF)).isGreaterThan(0);
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isGreaterThan(0);
             assertThat(traceIds(db)).isEmpty();
+            assertThat(db.count()).isEqualTo(0);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Regressions: eviction must not manufacture orphans or unlatch the span cap
+    // -----------------------------------------------------------------------
+
+    /**
+     * A trace whose root finished long ago but which is still emitting spans must not be evicted. Its
+     * children are drained by every archival cycle, so the "no non-root spans present" guard is satisfied
+     * between cycles — without a quiet check the root would be evicted out from under a live trace, the
+     * next span would synthesize an orphan, and the whole trace would be pinned in the holding area
+     * where nothing archives or evicts it.
+     */
+    @Test
+    void doesNotEvictARootWhoseTraceIsStillActive(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildDoc();
+        final Instant recentActivity = Instant.parse("2024-01-10T12:30:00.000Z");
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(), span(ROOT_START)));
+                // A late child: same trace, but inserted well after the root finished.
+                db.insert(writer, new SpanKV(childKey(),
+                        spanWithInsert(ROOT_START, recentActivity)));
+            });
+            db.mergeComplete();
+            // Children drained, so only the quiet check can save this root.
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
+
+            // Root's own end (12:00) is past this cut-off, but activity (12:30) is not.
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isEqualTo(0);
+            assertThat(traceIds(db)).containsExactly(TRACE_A);
+
+            // Once activity is also past the cut-off it goes.
+            assertThat(db.evictArchivedRoots(Instant.parse("2024-01-10T12:35:00.000Z"), BEFORE_ROOT_START))
+                    .isGreaterThan(0);
+            assertThat(traceIds(db)).isEmpty();
+        }
+    }
+
+    /**
+     * A trace that keeps emitting forever must still be evicted eventually. Waiting for quiet alone would
+     * pin its root here indefinitely — and because it always has children, {@code archiveRootedSpans}
+     * would keep re-pushing its ever-older start-time bucket every cycle, so no bucket would ever settle.
+     * The per-trace span cap does not save this case: a trace trickling spans below the cap never reaches
+     * it. The backstop cut-off bounds it regardless of activity.
+     */
+    @Test
+    void evictsANeverQuietTraceAtTheBackstop(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildDoc();
+        // Activity far in the future relative to every cut-off below: this trace is never quiet.
+        final Instant stillActive = Instant.parse("2024-06-01T00:00:00.000Z");
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(), span(ROOT_START)));
+                db.insert(writer, new SpanKV(childKey(), spanWithInsert(ROOT_START, stillActive)));
+            });
+            db.mergeComplete();
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
+
+            // Normal cut-off passed but the trace is still active, and the backstop is not yet reached.
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isEqualTo(0);
+            assertThat(traceIds(db)).containsExactly(TRACE_A);
+
+            // Backstop now past the root's own end: evicted despite never having gone quiet.
+            final Instant backstop = Instant.parse("2024-01-10T12:03:00.000Z");
+            assertThat(db.evictArchivedRoots(CUT_OFF, backstop)).isGreaterThan(0);
+            assertThat(traceIds(db)).isEmpty();
+        }
+    }
+
+    /**
+     * Evicting a truncated trace must leave its per-trace stats behind. {@code readStats} reports
+     * {@code TraceStats.EMPTY} for a missing row — {@code spanCount 0, truncated false} — so deleting it
+     * unlatches the span cap and lets a capped trace accept another full allowance. Observed live: one
+     * trace reached 200,109 spans against a 100,000 cap this way.
+     */
+    @Test
+    void keepsTheSpanCapLatchedAfterEvictingATruncatedTrace(@TempDir final Path tempDir)
+            throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildCappedDoc(2);
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            // Exceed the 2-span cap so the trace latches truncated.
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(), span(ROOT_START)));
+                db.insert(writer, new SpanKV(childKey(), span(ROOT_START)));
+                db.insert(writer, new SpanKV(childKey("3333333333333333"), span(ROOT_START)));
+                db.insert(writer, new SpanKV(childKey("4444444444444444"), span(ROOT_START)));
+            });
+            db.mergeComplete();
+            db.archiveRootedSpans(ArchivalGranularity.DAY, archiveBaseDir);
+            assertThat(db.evictArchivedRoots(CUT_OFF, BEFORE_ROOT_START)).isGreaterThan(0);
+            assertThat(traceIds(db)).isEmpty();
+
+            // The cap must still be latched: a further span for the same trace is rejected, so the
+            // holding area does not start filling with a second allowance.
+            db.write(writer -> db.insert(writer,
+                    new SpanKV(childKey("5555555555555555"), span(ROOT_START))));
             assertThat(db.count()).isEqualTo(0);
         }
     }
@@ -197,14 +311,35 @@ class TestEvictArchivedRoots {
     }
 
     private static SpanKey childKey() {
-        return SpanKey.builder().traceId(TRACE_A).parentSpanId(ROOT_SPAN).spanId(CHILD_SPAN).build();
+        return childKey(CHILD_SPAN);
+    }
+
+    private static SpanKey childKey(final String spanId) {
+        return SpanKey.builder().traceId(TRACE_A).parentSpanId(ROOT_SPAN).spanId(spanId).build();
     }
 
     private static SpanValue span(final Instant start) {
+        return spanWithInsert(start, start);
+    }
+
+    /** Insert time drives lastActivityMs, which is what the quiet check ages on. */
+    private static SpanValue spanWithInsert(final Instant start, final Instant insert) {
         return SpanValue.builder()
                 .startTimeUnixNano(NanoTimeUtil.fromInstant(start))
                 .endTimeUnixNano(NanoTimeUtil.fromInstant(start))
-                .insertTime(NanoTimeUtil.fromInstant(start))
+                .insertTime(NanoTimeUtil.fromInstant(insert))
+                .build();
+    }
+
+    private static PlanBDoc buildCappedDoc(final long maxSpansPerTrace) {
+        return PlanBDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test-doc")
+                .stateType(StateType.TRACE)
+                .settings(new TraceSettings.Builder()
+                        .maxStoreSize(ByteSize.ofGibibytes(1).getBytes())
+                        .maxSpansPerTrace(maxSpansPerTrace)
+                        .build())
                 .build();
     }
 

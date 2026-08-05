@@ -19,6 +19,7 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.fs.SharedFileStorePartDestination;
 import stroom.planb.impl.rest.RestPartDestination;
 import stroom.util.io.FileUtil;
@@ -52,7 +53,7 @@ public class PlanBStreamWriterFactory {
 
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
-    private final StatePaths statePaths;
+    private final PlanBPaths planBPaths;
     private final BatchDestination batchPublisher;
     private final SharedFileStorePartDestination sharedFsDestination;
     private final RestPartDestination restDestination;
@@ -60,29 +61,29 @@ public class PlanBStreamWriterFactory {
     @Inject
     public PlanBStreamWriterFactory(final ByteBuffers byteBuffers,
                                     final ByteBufferFactory byteBufferFactory,
-                                    final StatePaths statePaths,
+                                    final PlanBPaths planBPaths,
                                     final BatchDestination batchPublisher,
                                     final SharedFileStorePartDestination sharedFsDestination,
                                     final RestPartDestination restDestination) {
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
-        this.statePaths = statePaths;
+        this.planBPaths = planBPaths;
         this.batchPublisher = batchPublisher;
         this.sharedFsDestination = sharedFsDestination;
         this.restDestination = restDestination;
 
         // Clear the local writer directory: any data remaining here was never
         // successfully published, so it is safe to discard.
-        if (Files.isDirectory(statePaths.getWriterDir())) {
-            LOGGER.info("Clearing writer directory: {}", statePaths.getWriterDir());
-            FileUtil.deleteDir(statePaths.getWriterDir());
+        if (Files.isDirectory(planBPaths.getWriterDir())) {
+            LOGGER.info("Clearing writer directory: {}", planBPaths.getWriterDir());
+            FileUtil.deleteDir(planBPaths.getWriterDir());
         }
     }
 
     public PlanBStreamWriter createWriter(final Meta meta) {
         final Path dir;
         try {
-            dir = statePaths.getWriterDir()
+            dir = planBPaths.getWriterDir()
                     .resolve(meta.getId() + "_" + UUID.randomUUID());
             Files.createDirectories(dir);
         } catch (final IOException e) {
