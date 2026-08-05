@@ -23,12 +23,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -248,5 +250,64 @@ class TestWorkQueue {
 
         Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
         Assertions.assertThat(execCount).hasValue(itemCount);
+    }
+
+    /**
+     * A runnable that throws {@link UncheckedInterruptedException} signals that the worker thread is being
+     * terminated, e.g. at shutdown. The worker must stop consuming rather than churn through the rest of the
+     * queue, and must not treat the interruption as an error.
+     */
+    @Test
+    void interruptedRunnableStopsWorker() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(1);
+        final WorkQueue workQueue = new WorkQueue(executor, 1, 10);
+        final CountDownLatch startedLatch = new CountDownLatch(1);
+        final AtomicInteger execCount = new AtomicInteger();
+
+        workQueue.exec(() -> {
+            startedLatch.countDown();
+            throw new UncheckedInterruptedException(new InterruptedException("Interrupted at shutdown"));
+        });
+        workQueue.exec(execCount::incrementAndGet);
+        workQueue.exec(execCount::incrementAndGet);
+
+        startedLatch.await();
+        workQueue.join();
+
+        Assertions.assertThat(execCount).hasValue(0);
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(2);
+    }
+
+    /**
+     * A worker interrupted while waiting for work completes its future exceptionally. Callers of join()
+     * expect an {@link UncheckedInterruptedException} in that case, not the CompletionException that
+     * {@link CompletableFuture#join()} wraps it in, so they can treat an interrupted work queue as expected
+     * at shutdown rather than as an error.
+     */
+    @Test
+    void joinThrowsUncheckedInterruptedWhenWorkerInterrupted() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(1);
+        final WorkQueue workQueue = new WorkQueue(executor, 1, 10);
+        final CountDownLatch startedLatch = new CountDownLatch(1);
+        final AtomicReference<Thread> workerThread = new AtomicReference<>();
+
+        workQueue.exec(() -> {
+            workerThread.set(Thread.currentThread());
+            startedLatch.countDown();
+        });
+        startedLatch.await();
+
+        // Wait for the worker to block waiting for more work, then interrupt it.
+        final Instant timeout = Instant.now().plusSeconds(10);
+        while (workerThread.get().getState() != Thread.State.WAITING) {
+            if (Instant.now().isAfter(timeout)) {
+                throw new AssertionError("Timed out waiting for the worker to block waiting for work");
+            }
+            TimeUnit.MILLISECONDS.sleep(1);
+        }
+        workerThread.get().interrupt();
+
+        Assertions.assertThatThrownBy(workQueue::join)
+                .isInstanceOf(UncheckedInterruptedException.class);
     }
 }

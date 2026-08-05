@@ -22,6 +22,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -55,6 +57,7 @@ public class MergeProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
 
     private final Map<String, DirQueue> mergeQueues = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<Void>> mergeConsumers = new ConcurrentHashMap<>();
     private final SequentialFileStore receiveStore;
     private final Path mergingDir;
     private final Path unzipDir;
@@ -63,6 +66,7 @@ public class MergeProcessor {
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
     private final Executor executor;
+    private final AtomicBoolean resumedQueues = new AtomicBoolean();
     private volatile boolean merging;
 
     @Inject
@@ -77,11 +81,17 @@ public class MergeProcessor {
         this.shardManager = shardManager;
         this.executor = executorProvider.get();
 
+        // The contents of the merging dir MUST survive a restart. Data is moved here from the staging store
+        // when it is queued for merge and the staged zip is then deleted, so once queued this is the only
+        // copy of any data that has not yet been merged. merge() recreates the queues from this dir so that
+        // data left behind by the last run, e.g. due to shutdown part way through merging, is merged when
+        // the merge job next runs. See gh-5696.
         mergingDir = statePaths.getMergingDir();
         FileUtil.ensureDirExists(mergingDir);
-        if (!FileUtil.deleteContents(mergingDir)) {
-            throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
-        }
+
+        // The unzip dir is transient. Anything in it still exists as a zip in the staging store, as staged
+        // zips are only deleted after their contents have been moved to the merging dir, so it is safe to
+        // delete anything left behind by the last run.
         unzipDir = statePaths.getUnzipDir();
         FileUtil.ensureDirExists(unzipDir);
         if (!FileUtil.deleteContents(unzipDir)) {
@@ -110,21 +120,32 @@ public class MergeProcessor {
     }
 
     public void merge() {
+        // One shot recreation of dir queues for all doc dirs currently in the merging dir, resuming merges
+        // for data that was queued but not merged when the process last stopped. After boot, new queue dirs
+        // are only ever created via getOrCreateDirQueue so there is no point re-listing. See gh-5696.
+        if (resumedQueues.compareAndSet(false, true)) {
+            try (final Stream<Path> stream = Files.list(mergingDir)) {
+                stream.forEach(path -> {
+                    final String docUuid = path.getFileName().toString();
+                    try {
+                        getOrCreateDirQueue(docUuid);
+                    } catch (final RuntimeException e) {
+                        // Don't let one bad queue dir stop the other queues from being processed.
+                        LOGGER.error(e::getMessage, e);
+                    }
+                });
+            } catch (final IOException e) {
+                // We couldn't list the merging dir at all, so try again on the next run rather than leave
+                // any queued data unmerged until the next boot.
+                LOGGER.error(e::getMessage, e);
+                resumedQueues.set(false);
+            }
+        }
+
         if (!merging) {
             synchronized (this) {
                 if (!merging) {
                     merging = true;
-
-                    // Start merge processing for all existing dir queues.
-                    try (final Stream<Path> stream = Files.list(mergingDir)) {
-                        stream.forEach(path -> {
-                            final String docUuid = path.getFileName().toString();
-                            getOrCreateDirQueue(docUuid);
-                        });
-                    } catch (final IOException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-
                     CompletableFuture.runAsync(() -> {
                         try {
                             unzipPartFiles();
@@ -135,6 +156,12 @@ public class MergeProcessor {
                 }
             }
         }
+
+        // Restart merge processing for any queue whose consumer has stopped, e.g. because it was interrupted
+        // by task termination but the system was not actually shut down. This must happen outside the merging
+        // guard as the guard stays closed for as long as the unzip loop is running. It is cheap as it only
+        // inspects the in-memory queue map.
+        mergeQueues.forEach(this::startQueueConsumer);
     }
 
     private void unzipPartFiles() {
@@ -210,6 +237,11 @@ public class MergeProcessor {
                     // Delete the original zip file.
                     receiveStore.delete(sequentialFile);
                 }
+            } catch (final UncheckedInterruptedException e) {
+                // Interrupted, e.g. at shutdown. The zip has not been deleted so it will be processed when
+                // the staging store is next read.
+                LOGGER.debug(e::getMessage, e);
+                throw e;
             } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
@@ -261,40 +293,63 @@ public class MergeProcessor {
                 // Delete the original zip file.
                 receiveStore.delete(sequentialFile);
             }
+        } catch (final UncheckedInterruptedException e) {
+            // Interrupted, e.g. at shutdown. The zip is only deleted once all dirs have been moved to merge
+            // queues, so it is safe to stop here and leave everything to be processed when the staging store
+            // is next read.
+            LOGGER.debug(e::getMessage, e);
+            throw e;
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
     }
 
     private DirQueue getOrCreateDirQueue(final String docUuid) {
-        return mergeQueues.computeIfAbsent(docUuid, k -> {
+        final DirQueue dirQueue = mergeQueues.computeIfAbsent(docUuid, k -> {
             try {
                 final Path uuidDir = mergingDir.resolve(docUuid);
                 Files.createDirectories(uuidDir);
-                final DirQueue dirQueue = new DirQueue(uuidDir, docUuid);
-                // Start processing this queue.
-                CompletableFuture.runAsync(() -> mergeStore(dirQueue, docUuid), executor);
-                return dirQueue;
+                return new DirQueue(uuidDir, docUuid);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
+        });
+        // Make sure this queue is being consumed.
+        startQueueConsumer(docUuid, dirQueue);
+        return dirQueue;
+    }
+
+    private void startQueueConsumer(final String docUuid,
+                                    final DirQueue dirQueue) {
+        // Compute is atomic per key so we will never start more than one consumer for a queue.
+        mergeConsumers.compute(docUuid, (k, future) -> {
+            if (future == null || future.isDone()) {
+                return CompletableFuture.runAsync(() -> mergeStore(dirQueue, docUuid), executor);
+            }
+            return future;
         });
     }
 
     private void mergeStore(final DirQueue dirQueue,
                             final String uuid) {
         securityContext.asProcessingUser(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                // Wait until new data is available.
-                try (final Dir dir = dirQueue.next()) {
-                    mergeDir(dir.getPath(), uuid);
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    // Wait until new data is available.
+                    try (final Dir dir = dirQueue.next()) {
+                        mergeDir(dir.getPath(), uuid);
 
-                    // If synchronisation is happening on merge then let the parent process know we finished merging
-                    // this dir.
-                    if (dir.getCountDownLatch() != null) {
-                        dir.getCountDownLatch().countDown();
+                        // If synchronisation is happening on merge then let the parent process know we finished
+                        // merging this dir.
+                        if (dir.getCountDownLatch() != null) {
+                            dir.getCountDownLatch().countDown();
+                        }
                     }
                 }
+            } catch (final UncheckedInterruptedException e) {
+                // This thread is being terminated, e.g. at shutdown. Stop consuming from the queue. Any dirs
+                // still on the queue remain on disk and will be merged when the queue is next consumed.
+                LOGGER.debug(e::getMessage, e);
             }
         });
     }
@@ -313,6 +368,13 @@ public class MergeProcessor {
             // Expected exception if a doc has been deleted.
             LOGGER.debug(e::getMessage, e);
             FileUtil.deleteDir(path);
+        } catch (final UncheckedInterruptedException e) {
+            // The merge was interrupted, e.g. at shutdown. Leave the dir in place so the merge can be rerun,
+            // and rethrow so that the caller stops rather than moving on to the next dir. The task context
+            // wrapper clears the thread interrupt flag when the task above completes, so this exception is
+            // the only remaining signal that we are being terminated. See gh-5696.
+            LOGGER.debug(e::getMessage, e);
+            throw e;
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

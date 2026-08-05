@@ -23,6 +23,7 @@ import stroom.util.logging.LogUtil;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
@@ -74,6 +75,13 @@ public class WorkQueue {
                     while (runnable != POISON_PILL) {
                         try {
                             runnable.run();
+                        } catch (final UncheckedInterruptedException e) {
+                            // This thread is being terminated, e.g. at shutdown, which is expected, so don't
+                            // log it as an error. Restore the interrupt flag in case the exception was
+                            // created without doing so.
+                            LOGGER.debug("Runnable interrupted, dropping out");
+                            Thread.currentThread().interrupt();
+                            break;
                         } catch (final RuntimeException e) {
                             // Ideally, the runnable should handle its own exceptions, but just in case
                             // we will swallow the exception so that the thread doesn't die.
@@ -85,7 +93,9 @@ public class WorkQueue {
                         }
                         runnable = queue.take();
                     }
-                    LOGGER.debug("POISON_PILL found, dropping out");
+                    if (runnable == POISON_PILL) {
+                        LOGGER.debug("POISON_PILL found, dropping out");
+                    }
                 } catch (final InterruptedException e) {
                     LOGGER.debug("Take loop interrupted");
                     Thread.currentThread().interrupt();
@@ -158,8 +168,19 @@ public class WorkQueue {
             stampedLock.unlockWrite(lockStamp);
         }
         // All callers will wait for all tasks to complete
-        CompletableFuture.allOf(futures)
-                .join();
+        try {
+            CompletableFuture.allOf(futures)
+                    .join();
+        } catch (final CompletionException e) {
+            // A worker interrupted while waiting for work completes its future with an
+            // UncheckedInterruptedException, which join() wraps. Unwrap it so callers can treat an
+            // interrupted work queue the same as being interrupted themselves, i.e. as expected at shutdown
+            // rather than as an error.
+            if (e.getCause() instanceof final UncheckedInterruptedException cause) {
+                throw cause;
+            }
+            throw e;
+        }
     }
 
     public long getTaskCount() {
