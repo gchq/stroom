@@ -33,12 +33,29 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.UriBuilder;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 class OpenIdManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
+
+    /**
+     * OIDC authentication request parameters that stroom sets itself; config-supplied extras must
+     * not be able to override them.
+     */
+    private static final Set<String> RESERVED_AUTH_REQUEST_PARAMS = Set.of(
+            OpenId.RESPONSE_TYPE,
+            OpenId.CLIENT_ID,
+            OpenId.REDIRECT_URI,
+            OpenId.SCOPE,
+            OpenId.STATE,
+            OpenId.NONCE,
+            OpenId.CODE_CHALLENGE,
+            OpenId.CODE_CHALLENGE_METHOD);
 
     private final OpenIdConfiguration openIdConfiguration;
     // We have to use the stroom specific one as only that one has the code flow
@@ -58,17 +75,28 @@ class OpenIdManager {
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
     public Optional<UserIdentity> loginWithRequestToken(final HttpServletRequest request) {
-        LOGGER.debug(() -> LogUtil.message("loginWithRequestToken() - session: {}",
+        return loginWithRequestCredential(request)
+                .map(AuthenticatedCredential::identity);
+    }
+
+    /**
+     * As {@link #loginWithRequestToken(HttpServletRequest)}, but also reporting which kind of
+     * credential proved the identity (API key, cluster token, request token), for
+     * {@link SecurityFilter}'s CSRF classification.
+     */
+    public Optional<AuthenticatedCredential> loginWithRequestCredential(final HttpServletRequest request) {
+        LOGGER.debug(() -> LogUtil.message("loginWithRequestCredential() - session: {}",
                 SessionUtil.getSessionId(request)));
         if (userIdentityFactory.hasAuthenticationToken(request)) {
-            final Optional<UserIdentity> optApiUserIdentity = userIdentityFactory.getApiUserIdentity(request);
-            if (LOGGER.isDebugEnabled()) {
-                final UserIdentity userIdentity = optApiUserIdentity.get();
-                LOGGER.debug("loginWithRequestToken() - Returning {} {}",
-                        LogUtil.getSimpleClassName(userIdentity),
-                        userIdentity);
-            }
-            return optApiUserIdentity;
+            final Optional<AuthenticatedCredential> optCredential =
+                    userIdentityFactory.getApiCredential(request);
+            optCredential.ifPresent(credential ->
+                    LOGGER.debug(() -> LogUtil.message(
+                            "loginWithRequestCredential() - Returning {} ({}) {}",
+                            LogUtil.getSimpleClassName(credential.identity()),
+                            credential.source(),
+                            credential.identity())));
+            return optCredential;
         } else {
             LOGGER.trace("No token on request. This is valid for API calls from the front-end");
             return Optional.empty();
@@ -115,6 +143,23 @@ class OpenIdManager {
         // Determine if we want to force login regardless of IDP auth state.
         if (state.isPrompt()) {
             uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.PROMPT, OpenId.LOGIN_PROMPT);
+        }
+
+        // Provider-specific extras, e.g. Google's 'access_type=offline' without which no refresh
+        // token is issued and the session dies with the first access token. Parameters stroom sets
+        // itself are skipped so config cannot corrupt the flow; 'prompt' additionally defers to a
+        // forced login.
+        final Map<String, String> extraParams =
+                openIdConfiguration.getAuthenticationRequestExtraParams();
+        for (final Entry<String, String> entry : NullSafe.map(extraParams).entrySet()) {
+            final String key = NullSafe.trim(entry.getKey());
+            if (RESERVED_AUTH_REQUEST_PARAMS.contains(key)
+                || (OpenId.PROMPT.equals(key) && state.isPrompt())) {
+                LOGGER.warn("createAuthUri() - Ignoring configured authenticationRequestExtraParams " +
+                            "entry '{}' as it clashes with a parameter stroom sets itself", key);
+            } else if (!key.isEmpty()) {
+                uriBuilder = UriBuilderUtil.addParam(uriBuilder, key, entry.getValue());
+            }
         }
 
         final String authenticationRequestUrl = uriBuilder.build().toString();

@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -181,6 +182,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return delegate.getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return delegate.getAuthenticationRequestExtraParams();
     }
 
     @Override

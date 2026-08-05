@@ -29,6 +29,7 @@ import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -62,7 +63,9 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern,
-            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType) {
+            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType,
+            @JsonProperty(PROP_NAME_AUTHENTICATION_REQUEST_EXTRA_PARAMS)
+            final Map<String, String> authenticationRequestExtraParams) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -85,7 +88,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 fullNameClaimTemplate,
                 expectedSignerPrefixes,
                 publicKeyUriPattern,
-                requiredAccessTokenType);
+                requiredAccessTokenType,
+                authenticationRequestExtraParams);
     }
 
     @JsonIgnore
@@ -139,6 +143,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getFullNameClaimTemplate(),
                 getExpectedSignerPrefixes(),
                 getPublicKeyUriPattern(),
-                getRequiredAccessTokenType());
+                getRequiredAccessTokenType(),
+                getAuthenticationRequestExtraParams());
     }
 }
