@@ -4801,6 +4801,36 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/fetchDeleteConfirmation" : {
+      "post" : {
+        "operationId" : "fetchExplorerDeleteConfirmation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteConfirmationRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeleteConfirmation"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the information needed to confirm a delete (contained items and dependants)",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/fetchDocRefs" : {
       "post" : {
         "operationId" : "fetchExplorerDocRefs",
@@ -17413,6 +17443,54 @@
           }
         }
       },
+      "DeleteConfirmation" : {
+        "type" : "object",
+        "properties" : {
+          "childItems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "childItemsTruncated" : {
+            "type" : "boolean"
+          },
+          "childTypeCounts" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "hasHiddenChildItems" : {
+            "type" : "boolean"
+          },
+          "hasHiddenDependants" : {
+            "type" : "boolean"
+          },
+          "totalChildCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "visibleDependants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        }
+      },
+      "DeleteConfirmationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        }
+      },
       "DeleteDuplicateCheckRequest" : {
         "type" : "object",
         "properties" : {
@@ -17578,6 +17656,33 @@
           }
         }
       },
+      "DocAuditEntry" : {
+        "type" : "object",
+        "properties" : {
+          "action" : {
+            "type" : "string",
+            "enum" : [ "CREATE", "UPDATE", "DELETE", "IMPORT", "EXPORT", "COPY", "MOVE", "RENAME" ]
+          },
+          "time" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/DocAuditUser"
+          }
+        }
+      },
+      "DocAuditUser" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "DocContentHighlights" : {
         "type" : "object",
         "properties" : {
@@ -17642,31 +17747,6 @@
           }
         },
         "required" : [ "uuid" ]
-      },
-      "DocRefInfo" : {
-        "type" : "object",
-        "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "otherInfo" : {
-            "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          }
-        }
       },
       "DocRefs" : {
         "type" : "object",
@@ -18621,8 +18701,8 @@
       "ExplorerNodeInfo" : {
         "type" : "object",
         "properties" : {
-          "docRefInfo" : {
-            "$ref" : "#/components/schemas/DocRefInfo"
+          "auditEntries" : {
+            "$ref" : "#/components/schemas/ResultPageDocAuditEntry"
           },
           "explorerNode" : {
             "$ref" : "#/components/schemas/ExplorerNode"
@@ -25011,6 +25091,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Dependency"
+            }
+          }
+        }
+      },
+      "ResultPageDocAuditEntry" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocAuditEntry"
             }
           }
         }
