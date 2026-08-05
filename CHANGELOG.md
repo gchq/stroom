@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.13] - 2026-08-05
+
+* Bug **#5696** : Stop the Plan B merge processor deleting un-merged queued data at startup and stop merge queue consumers churning through the queue when merges are interrupted at shutdown. Data queued for merge now survives a restart and interrupted merges are rerun when the merge job next runs.
+
+* Bug **#5696** : Fix Plan B merges double counting for histograms and metrics on resume.
+
+* Bug **#5696** : Stop Plan B histogram and metric stores double counting when a merge is rerun, e.g. after an interrupted shutdown, a duplicate part delivery or a sender retry. Each part shard now carries an instance UUID and additive stores track per source merge progress, skipping fully merged sources and resuming interrupted merges exactly after their last commit.
+
+* Bug **#5696** : Backport the Plan B filter staging buffer reuse from 7.13 so that a pooled buffer is no longer allocated and abandoned for every value element loaded.
+
+
 ## [v7.12.12] - 2026-08-04
 
 * Bug : Checkstyle.
@@ -2220,7 +2231,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.13...HEAD
+[v7.12.13]: https://github.com/gchq/stroom/compare/v7.12.12...v7.12.13
 [v7.12.12]: https://github.com/gchq/stroom/compare/v7.12.11...v7.12.12
 [v7.12.11]: https://github.com/gchq/stroom/compare/v7.12.10...v7.12.11
 [v7.12.10]: https://github.com/gchq/stroom/compare/v7.12.9...v7.12.10
