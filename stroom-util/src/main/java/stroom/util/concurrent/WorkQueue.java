@@ -81,7 +81,7 @@ public class WorkQueue {
                     LOGGER.debug("POISON_PILL found, dropping out");
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException(e.getMessage(), e);
+                    throw UncheckedInterruptedException.create(e);
                 }
             }, executor);
         }
@@ -109,7 +109,7 @@ public class WorkQueue {
                     queued = queue.offer(runnable, 100, TimeUnit.MILLISECONDS);
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException(e.getMessage(), e);
+                    throw UncheckedInterruptedException.create(e);
                 }
             } finally {
                 stampedLock.unlockRead(lockStamp);
@@ -131,7 +131,7 @@ public class WorkQueue {
                         queue.put(POISON_PILL);
                     } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException(e.getMessage(), e);
+                        throw UncheckedInterruptedException.create(e);
                     }
                 }
             } else {
