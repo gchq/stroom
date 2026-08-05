@@ -65,22 +65,27 @@ class SecurityFilter implements Filter {
     private final OpenIdManager openIdManager;
     private final AuthenticationBypassChecker authenticationBypassChecker;
     private final Provider<UriFactory> uriFactoryProvider;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
 
     private static final String CSRF_HEADER = "X-CSRF";
     private static final String CSRF_EXPECTED_VALUE = "1";
     private static final String ORIGIN_HEADER = "Origin";
     private static final String REFERER_HEADER = "Referer";
+    private static final String SEC_FETCH_SITE_HEADER = "Sec-Fetch-Site";
+    private static final String SEC_FETCH_SITE_CROSS_SITE = "cross-site";
 
     @Inject
     SecurityFilter(
             final SecurityContext securityContext,
             final OpenIdManager openIdManager,
             final AuthenticationBypassChecker authenticationBypassChecker,
-            final Provider<UriFactory> uriFactoryProvider) {
+            final Provider<UriFactory> uriFactoryProvider,
+            final Provider<AuthenticationConfig> authenticationConfigProvider) {
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
         this.authenticationBypassChecker = authenticationBypassChecker;
         this.uriFactoryProvider = uriFactoryProvider;
+        this.authenticationConfigProvider = authenticationConfigProvider;
     }
 
     @Override
@@ -158,15 +163,15 @@ class SecurityFilter implements Filter {
                     process(request, response, chain));
         } else {
             // First see if a previous call has placed a userIdentity in session
-            Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.getUserFromSession(
+            Optional<UserIdentity> optSessionIdentity = UserIdentitySessionUtil.getUserFromSession(
                     SessionUtil.getExistingSession(request));
-            logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from session");
+            logUserIdentityToDebug(optSessionIdentity, fullPath, servletPath, "from session");
 
             // Check if the underlying claims/token have expired. The expiry time of some impls
             // may get refreshed over time, so we may never hit it. When code flow is handled by
             // AWS ALB we will expire, so will just get the latest token from headers which the
             // ALB will be refreshing.
-            optUserIdentity = optUserIdentity.map(userIdentity -> {
+            optSessionIdentity = optSessionIdentity.map(userIdentity -> {
                 if (userIdentity instanceof final HasExpiry hasExpiry) {
                     if (hasExpiry.hasExpired()) {
                         LOGGER.info("UserIdentity {} obtained from session has expired, expiry: {}. " +
@@ -182,40 +187,31 @@ class SecurityFilter implements Filter {
                 return userIdentity;
             });
 
-            // Track whether the identity was obtained from a session cookie (vs a request token).
-            // CSRF protection is only needed for cookie-based auth because the browser automatically
-            // attaches cookies to cross-origin requests. API keys and Bearer tokens are not
-            // automatically attached, so they are not vulnerable to CSRF.
-            final boolean identityFromSession = optUserIdentity.isPresent();
+            // Track what kind of credential proved the identity, for the CSRF classification below.
+            Optional<AuthenticatedCredential> optCredential = optSessionIdentity
+                    .map(identity -> new AuthenticatedCredential(identity, CredentialSource.SESSION));
 
             // API requests that are not from the front-end should have a token.
             // Also requests from an AWS ALB will have an ALB signed token containing the claims
-            if (optUserIdentity.isEmpty()) {
-                optUserIdentity = openIdManager.loginWithRequestToken(request);
-                logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from request token");
+            if (optCredential.isEmpty()) {
+                optCredential = openIdManager.loginWithRequestCredential(request);
+                logUserIdentityToDebug(optCredential.map(AuthenticatedCredential::identity),
+                        fullPath, servletPath, "from request token");
             }
 
-            if (optUserIdentity.isPresent()) {
-                final UserIdentity userIdentity = optUserIdentity.get();
+            if (optCredential.isPresent()) {
+                final AuthenticatedCredential credential = optCredential.get();
 
                 // Now we have the session make note of the user-agent for logging and sessionListServlet duties
                 UserAgentSessionUtil.setUserAgentInSession(request);
 
-                // CSRF checks — only for session/cookie-based identity.
-                // API key / Bearer token requests are not vulnerable to CSRF because the
-                // browser does not automatically attach Authorization headers cross-origin.
-                // Two independent, complementary defences are applied for defence in depth:
-                //   1. Same-origin verification via the Origin/Referer header (works for both
-                //      XHR and native form posts, and covers requests the header check can't).
-                //   2. A custom X-CSRF header that browsers forbid cross-origin scripts from setting.
-                // Each check logs its own specific rejection reason.
-                if (identityFromSession && (!isOriginValid(request) || !isCsrfValid(request))) {
+                if (!isCsrfSafe(request, credential.source())) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     return;
                 }
 
                 // Now handle the request as this user
-                securityContext.asUser(userIdentity, () ->
+                securityContext.asUser(credential.identity(), () ->
                         process(request, response, chain));
             } else {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
@@ -283,6 +279,80 @@ class SecurityFilter implements Filter {
             shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
         }
         return shouldBypass;
+    }
+
+    /**
+     * CSRF protection for state-changing requests carrying an 'ambient' credential - one the
+     * victim's browser (or an intermediary acting on the browser's ambient cookies) attaches
+     * without the initiating page's involvement:
+     * <ul>
+     *     <li>a session cookie - the classic case;</li>
+     *     <li>a request token injected by an authenticating edge proxy (an AWS ALB's
+     *     {@code x-amzn-oidc-data}, or an IDP token relayed as a bearer credential by e.g.
+     *     oauth2-proxy). The proxy derives it from <i>its</i> session cookie, which the browser
+     *     attaches to cross-site requests all by itself - so by the time it reaches stroom, an
+     *     ambient credential has been relabelled as a deliberate-looking one. This is why
+     *     "Bearer tokens are not automatically attached" stops being true behind an edge RP.</li>
+     * </ul>
+     * API keys and the internal cluster token are never ambient: no proxy can mint them and a
+     * browser cannot be induced to attach them cross-site. A bearer token attached deliberately by
+     * a non-browser client is not ambient either - which is why the edge case below also requires
+     * browser provenance. In particular, inter-node calls relay the user's token in the
+     * Authorization header ({@code AbstractUserIdentityFactory.getAuthHeaders}) with no
+     * browser-only headers, and must not be challenged.
+     * <p>
+     * Ambient credentials get two independent, complementary defences for defence in depth:
+     * <ol>
+     *     <li>Same-origin verification via the Origin/Referer header (works for both XHR and
+     *     native form posts, and covers requests the header check can't).</li>
+     *     <li>A custom X-CSRF header that browsers forbid cross-origin scripts from setting.</li>
+     * </ol>
+     * Each check logs its own specific rejection reason.
+     *
+     * @return False if the request must be rejected as a suspected CSRF.
+     */
+    // Pkg private for testing
+    boolean isCsrfSafe(final HttpServletRequest request, final CredentialSource source) {
+        final boolean credentialIsAmbient =
+                CredentialSource.SESSION.equals(source)
+                || (CredentialSource.REQUEST_TOKEN.equals(source)
+                    && isEdgeAuthenticationEnabled()
+                    && hasBrowserProvenance(request));
+
+        if (credentialIsAmbient) {
+            return isOriginValid(request) && isCsrfValid(request);
+        }
+
+        // Safety net for an authenticating edge proxy nobody declared in config: cross-origin
+        // scripts cannot attach an Authorization header (the CORS preflight forbids it) and forms
+        // cannot at all, so a request token on a request whose fetch metadata says the browser
+        // made it cross-site can only have been injected by an intermediary - i.e. the credential
+        // is ambient whatever the configuration says. The X-CSRF header (which cross-site pages
+        // equally cannot set) remains the escape hatch for legitimate cross-site tooling.
+        if (CredentialSource.REQUEST_TOKEN.equals(source)
+            && authenticationConfigProvider.get().getCsrfConfig().isProtectBrowserOriginatedRequests()
+            && SEC_FETCH_SITE_CROSS_SITE.equals(request.getHeader(SEC_FETCH_SITE_HEADER))) {
+            // isCsrfValid is true for safe methods, so only unsafe methods can be rejected here.
+            return isCsrfValid(request);
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the browser itself issued this request. Browsers send {@code Origin} on all
+     * cross-origin unsafe requests (an {@code Origin: null} literal still counts as presence) and
+     * {@code Sec-Fetch-*} metadata on everything modern; page content cannot suppress either.
+     * Machine clients - inter-node calls, stroom-proxy, scripts - send none of them.
+     */
+    private static boolean hasBrowserProvenance(final HttpServletRequest request) {
+        return request.getHeader(ORIGIN_HEADER) != null
+               || request.getHeader(REFERER_HEADER) != null
+               || request.getHeader(SEC_FETCH_SITE_HEADER) != null;
+    }
+
+    private boolean isEdgeAuthenticationEnabled() {
+        return authenticationConfigProvider.get().getEdgeAuthenticationConfig().isEnabled();
     }
 
     /**

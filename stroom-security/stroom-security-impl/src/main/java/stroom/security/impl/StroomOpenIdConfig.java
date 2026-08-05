@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -62,7 +63,9 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern,
-            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType) {
+            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType,
+            @JsonProperty(PROP_NAME_AUTHENTICATION_REQUEST_EXTRA_PARAMS)
+            final Map<String, String> authenticationRequestExtraParams) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -85,7 +88,8 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 fullNameClaimTemplate,
                 expectedSignerPrefixes,
                 publicKeyUriPattern,
-                requiredAccessTokenType);
+                requiredAccessTokenType,
+                authenticationRequestExtraParams);
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
@@ -128,6 +132,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getFullNameClaimTemplate(),
                 getExpectedSignerPrefixes(),
                 getPublicKeyUriPattern(),
-                getRequiredAccessTokenType());
+                getRequiredAccessTokenType(),
+                getAuthenticationRequestExtraParams());
     }
 }

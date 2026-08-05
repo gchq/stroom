@@ -180,13 +180,28 @@ public class StroomUserIdentityFactory
 
     @Override
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
+        return getApiCredential(request)
+                .map(AuthenticatedCredential::identity);
+    }
+
+    /**
+     * As {@link #getApiUserIdentity(HttpServletRequest)}, but also reporting which kind of
+     * credential proved the identity, so {@link SecurityFilter} can tell an edge-proxy-injected
+     * token (ambient, needs CSRF checks) from an API key or the inter-node cluster token (never
+     * ambient).
+     */
+    public Optional<AuthenticatedCredential> getApiCredential(final HttpServletRequest request) {
         // First see if the optional insecure test credential is presented (only enabled in test/demo when
         // the environment explicitly opts in), then a Stroom API key, then the internally-signed inter-node
         // processing-user token, else see if we have a valid JWT.
         return getInsecureTestServiceUserIdentity(request)
-                .or(() -> apiKeyService.fetchVerifiedIdentity(request))
-                .or(() -> getClusterIdentity(request))
-                .or(() -> super.getApiUserIdentity(request));
+                .map(identity -> new AuthenticatedCredential(identity, CredentialSource.TEST_CREDENTIAL))
+                .or(() -> apiKeyService.fetchVerifiedIdentity(request)
+                        .map(identity -> new AuthenticatedCredential(identity, CredentialSource.API_KEY)))
+                .or(() -> getClusterIdentity(request)
+                        .map(identity -> new AuthenticatedCredential(identity, CredentialSource.CLUSTER_TOKEN)))
+                .or(() -> super.getApiUserIdentity(request)
+                        .map(identity -> new AuthenticatedCredential(identity, CredentialSource.REQUEST_TOKEN)));
     }
 
     /**

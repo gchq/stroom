@@ -17,32 +17,43 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
+import stroom.security.api.UserIdentity;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.AuthenticationState;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.shared.AuthFlowResponse;
+import stroom.util.authentication.HasExpiry;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.ForbiddenException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 class TestAuthFlowResourceImpl {
 
@@ -225,21 +236,177 @@ class TestAuthFlowResourceImpl {
         verify(response, never()).sendRedirect(anyString());
     }
 
+    // --- the request itself may carry a credential (edge proxy / relayed bearer token) ---
+
+    @Test
+    void requestTokenIdentityIsReportedAuthenticatedWithNoFlowStarted() {
+        // Behind an authenticating edge proxy (ALB x-amzn-oidc-data, relayed bearer token) the
+        // status request arrives carrying a verifiable credential; the app must load with no
+        // second, stroom-owned flow stacked on the proxy's - so no state, no cookies.
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final AuthenticationStateCache stateCache = mock(AuthenticationStateCache.class);
+        final OpenIdManager openIdManager = defaultOpenIdManager();
+        final UserIdentity tokenUser = identity("token-user", "Token User");
+        when(openIdManager.loginWithRequestToken(request)).thenReturn(Optional.of(tokenUser));
+
+        final AuthFlowResponse authFlowResponse =
+                newResource(stateCache, openIdManager, false, null)
+                        .status("/some/page", request, response);
+
+        assertThat(authFlowResponse.isAuthenticated()).isTrue();
+        assertThat(authFlowResponse.getSubjectId()).isEqualTo("token-user");
+        verify(stateCache, never()).create(anyString(), anyString(), anyBoolean());
+        verify(response, never()).addHeader(eq("Set-Cookie"), anyString());
+    }
+
+    @Test
+    void expiredRequestTokenIdentityFallsThroughToTheFlow() {
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final UserIdentity expired = mock(UserIdentity.class,
+                withSettings().extraInterfaces(HasExpiry.class));
+        lenient().doReturn("expired-user").when(expired).subjectId();
+        lenient().doReturn(Instant.now().minusSeconds(60)).when((HasExpiry) expired).getExpireTime();
+        final OpenIdManager openIdManager = defaultOpenIdManager();
+        when(openIdManager.loginWithRequestToken(request)).thenReturn(Optional.of(expired));
+
+        final AuthFlowResponse authFlowResponse =
+                newResource(stateCache("state-id"), openIdManager, false, null)
+                        .status("/", request, response);
+
+        assertThat(authFlowResponse.isAuthenticated()).isFalse();
+        assertThat(authFlowResponse.getRedirectUrl()).isNotNull();
+    }
+
+    @Test
+    void requestTokenAuthenticationFailureIsTerminalInEdgeMode() {
+        // A token that fails authentication (unknown/disabled user, or an unverifiable token) must
+        // NOT fall through to a flow start in edge mode: the IdP re-authenticates silently and
+        // returns straight back - an endless bounce. It must fail terminally instead.
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final AuthenticationStateCache stateCache = mock(AuthenticationStateCache.class);
+        final OpenIdManager openIdManager = defaultOpenIdManager();
+        when(openIdManager.loginWithRequestToken(request))
+                .thenThrow(new AuthenticationException("User 'x' failed authentication"));
+
+        assertThatThrownBy(() ->
+                newResource(stateCache, openIdManager, true, null)
+                        .status("/", request, response))
+                .isInstanceOf(ForbiddenException.class);
+        verify(stateCache, never()).create(anyString(), anyString(), anyBoolean());
+    }
+
+    @Test
+    void requestTokenAuthenticationFailureFallsThroughWithoutAnEdge() {
+        // With no edge there is no bounce to defend against, so a bad token must not dead-end the
+        // browser - stroom's own flow starts, and a genuinely unknown/disabled user fails at the
+        // callback exactly as before request tokens were consulted here.
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final OpenIdManager openIdManager = defaultOpenIdManager();
+        when(openIdManager.loginWithRequestToken(request))
+                .thenThrow(new AuthenticationException("Error authenticating request"));
+
+        final AuthFlowResponse authFlowResponse =
+                newResource(stateCache("state-id"), openIdManager, false, null)
+                        .status("/", request, response);
+
+        assertThat(authFlowResponse.isAuthenticated()).isFalse();
+        assertThat(authFlowResponse.getRedirectUrl()).isNotNull();
+    }
+
+    @Test
+    void noIdpModeNeverConsultsTheRequestToken() {
+        // DelegatingJwtContextFactory throws for NO_IDP, so the token source must be skipped.
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final OpenIdManager openIdManager = defaultOpenIdManager();
+
+        newResource(stateCache("state-id"), openIdManager, false, IdpType.NO_IDP)
+                .status("/", request, response);
+
+        verify(openIdManager, never()).loginWithRequestToken(any());
+    }
+
+    // --- edge mode: stroom owns no flow at either end ---
+
+    @Test
+    void edgeModeReturnsUnauthenticatedWithNoRedirectUrlAndNoCookies() {
+        // No redirectUrl tells the bootstrap to reload and let the proxy redirect as a top-level
+        // navigation. No state/target cookies: there is no flow to bind them to.
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final AuthenticationStateCache stateCache = mock(AuthenticationStateCache.class);
+
+        final AuthFlowResponse authFlowResponse =
+                newResource(stateCache, defaultOpenIdManager(), true, null)
+                        .status("/some/page", request, response);
+
+        assertThat(authFlowResponse.isAuthenticated()).isFalse();
+        assertThat(authFlowResponse.getRedirectUrl()).isNull();
+        verify(stateCache, never()).create(anyString(), anyString(), anyBoolean());
+        verify(response, never()).addHeader(eq("Set-Cookie"), anyString());
+    }
+
+    @Test
+    void edgeModeDisablesTheCallback() {
+        // With the edge as relying party no code can legitimately arrive here; 'exactly one RP'
+        // is enforced in code.
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final AuthenticationStateCache stateCache = mock(AuthenticationStateCache.class);
+
+        assertThatThrownBy(() ->
+                newResource(stateCache, defaultOpenIdManager(), true, null)
+                        .callback("the-code", "the-state", request, response))
+                .isInstanceOf(ForbiddenException.class);
+        verify(stateCache, never()).getAndRemove(any());
+    }
+
     // --------------------------------------------------------------------------------
 
     private AuthFlowResourceImpl newResource(final AuthenticationStateCache stateCache) {
-        final UriFactory uriFactory = mock(UriFactory.class);
-        when(uriFactory.publicUri(anyString())).thenReturn(PUBLIC_ROOT);
+        return newResource(stateCache, defaultOpenIdManager(), false, null);
+    }
 
-        final OpenIdManager openIdManager = mock(OpenIdManager.class);
-        when(openIdManager.createAuthUri(any(), any(), any())).thenReturn("https://idp.example.com/auth");
+    private AuthFlowResourceImpl newResource(final AuthenticationStateCache stateCache,
+                                             final OpenIdManager openIdManager,
+                                             final boolean edgeEnabled,
+                                             final IdpType idpType) {
+        final UriFactory uriFactory = mock(UriFactory.class);
+        lenient().when(uriFactory.publicUri(anyString())).thenReturn(PUBLIC_ROOT);
+
+        final OpenIdConfiguration openIdConfiguration = mock(OpenIdConfiguration.class);
+        lenient().when(openIdConfiguration.getIdentityProviderType()).thenReturn(idpType);
+
+        final AuthenticationConfig authenticationConfig = mock(AuthenticationConfig.class);
+        lenient().when(authenticationConfig.getEdgeAuthenticationConfig())
+                .thenReturn(new EdgeAuthenticationConfig(edgeEnabled, null));
 
         return new AuthFlowResourceImpl(
                 () -> openIdManager,
-                () -> mock(OpenIdConfiguration.class),
+                () -> openIdConfiguration,
                 () -> stateCache,
                 () -> uriFactory,
-                null);
+                null,
+                () -> authenticationConfig);
+    }
+
+    private OpenIdManager defaultOpenIdManager() {
+        final OpenIdManager openIdManager = mock(OpenIdManager.class);
+        lenient().when(openIdManager.createAuthUri(any(), any(), any()))
+                .thenReturn("https://idp.example.com/auth");
+        return openIdManager;
+    }
+
+    private UserIdentity identity(final String subjectId, final String displayName) {
+        final UserIdentity identity = mock(UserIdentity.class);
+        // doReturn, as getDisplayName() is a default method that delegates to subjectId().
+        lenient().doReturn(subjectId).when(identity).subjectId();
+        lenient().doReturn(displayName).when(identity).getDisplayName();
+        return identity;
     }
 
     private AuthenticationStateCache stateCache(final String stateId) {
