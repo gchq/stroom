@@ -78,7 +78,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -103,7 +102,6 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBFilter.class);
 
-    private static final Pattern PREFIX_DELIMITER_PATTERN = Pattern.compile(":");
 
     /*
         Example xml data
@@ -263,10 +261,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void startProcessing() {
         try {
-            final long ms = Optional.ofNullable(metaHolder.getMeta().getEffectiveMs())
+            final long ms = Optional
+                    .ofNullable(metaHolder.getMeta().getEffectiveMs())
                     .orElse(metaHolder.getMeta().getCreateMs());
             effectiveTime = Instant.ofEpochMilli(ms);
             writer = shardWriters.createWriter(metaHolder.getMeta());
+            stagingValueOutputStream = new ByteBufferPoolOutput(byteBufferFactory,
+                    BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
+            saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
         } finally {
             super.startProcessing();
         }
@@ -275,10 +277,8 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         try {
-            if (stagingValueOutputStream != null) {
-                LOGGER.debug("closing stagingValueOutputStream");
-                stagingValueOutputStream.close();
-            }
+            LOGGER.debug("closing stagingValueOutputStream");
+            stagingValueOutputStream.close();
         } finally {
             try {
                 writer.close();
@@ -319,7 +319,6 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
         super.endPrefixMapping(prefix);
@@ -357,7 +356,7 @@ public class PlanBFilter extends AbstractXMLFilter {
      * @param atts      The element's attributes.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#startElement(String,
-     * String, String, Attributes)
+     *      String, String, Attributes)
      */
     @Override
     public void startElement(final String uri,
@@ -365,14 +364,15 @@ public class PlanBFilter extends AbstractXMLFilter {
                              final String qName,
                              final Attributes atts)
             throws SAXException {
-        if (!inTrace && localName.equalsIgnoreCase(TRACE_ELEMENT)) {
+        final String elementName = localName.toLowerCase(Locale.ROOT);
+        if (!inTrace && TRACE_ELEMENT.equals(elementName)) {
             inTrace = true;
         }
 
         if (inTrace) {
             if (spanHandler != null) {
                 spanHandler.startElement(uri, localName, qName, atts);
-            } else if (localName.equalsIgnoreCase("span")) {
+            } else if ("span".equals(elementName)) {
                 spanHandler = new SpanHandler();
             }
 
@@ -383,14 +383,12 @@ public class PlanBFilter extends AbstractXMLFilter {
 
             LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
-            if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+            if (VALUE_ELEMENT.equals(elementName)) {
                 insideValueElement = true;
 
-                // Prepare to store new value.
-                stagingValueOutputStream =
-                        new ByteBufferPoolOutput(byteBufferFactory, BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
+                // Reset the reusable staging stream ready for the new value.
+                stagingValueOutputStream.reset();
                 currentStringValue = null;
-                saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
 
             } else if (insideValueElement) {
                 recordHavingSeenXmlContent();
@@ -415,11 +413,11 @@ public class PlanBFilter extends AbstractXMLFilter {
                 }
 
                 fastInfosetStartElement(localName, uri, qName, atts);
-            } else if ("tags".equalsIgnoreCase(localName)) {
+            } else if ("tags".equals(elementName)) {
                 currentName = null;
                 currentValue = null;
                 currentTags = new ArrayList<>();
-            } else if ("tag".equalsIgnoreCase(localName)) {
+            } else if ("tag".equals(elementName)) {
                 currentName = null;
                 currentValue = null;
             }
@@ -427,7 +425,6 @@ public class PlanBFilter extends AbstractXMLFilter {
 
         super.startElement(uri, localName, qName, atts);
     }
-
 
     private void recordHavingSeenXmlContent() throws SAXException {
         // This is an xml element inside the <value></value> element so we need to treat it as XML content
@@ -447,12 +444,9 @@ public class PlanBFilter extends AbstractXMLFilter {
     private String getPrefix(final String qName) {
         if (qName == null) {
             return null;
-        } else if (!qName.contains(":")) {
-            return "";
-        } else {
-            final String[] parts = PREFIX_DELIMITER_PATTERN.split(qName);
-            return parts[0];
         }
+        final int colonIdx = qName.indexOf(':');
+        return colonIdx < 0 ? "" : qName.substring(0, colonIdx);
     }
 
     /**
@@ -466,22 +460,23 @@ public class PlanBFilter extends AbstractXMLFilter {
      * @param qName     The element's qualified (prefixed) key, or the empty string.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#endElement(String,
-     * String, String)
+     *      String, String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         LOGGER.trace("endElement {} {} {} level:{} content:{}", uri, localName, qName, depthLevel, contentBuffer);
 
+        final String elementName = localName.toLowerCase(Locale.ROOT);
         if (inTrace) {
-            if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
+            if (MAP_ELEMENT.equals(elementName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
                 mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
-            } else if (localName.equalsIgnoreCase(TRACE_ELEMENT)) {
+            } else if (TRACE_ELEMENT.equals(elementName)) {
                 add(StateType.TRACE);
                 inTrace = false;
             } else if (spanHandler != null) {
-                if (localName.equalsIgnoreCase("span")) {
+                if ("span".equals(elementName)) {
                     span = spanHandler.build();
                     spanHandler = null;
                 } else {
@@ -491,7 +486,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
         } else {
             insideElement = false;
-            if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+            if (VALUE_ELEMENT.equals(elementName)) {
                 handleValueEndElement();
             }
 
@@ -505,76 +500,64 @@ public class PlanBFilter extends AbstractXMLFilter {
                 }
                 fastInfosetEndElement(localName, newUri, newQName);
             } else {
-                if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
-                    // capture the name of the map that the subsequent values will belong to. A ref
-                    // stream can contain data for multiple maps
-                    mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
-
-                } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
-                    // the key for the KV pair
-                    key = contentBuffer.toString();
-
-                } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
-                    // the start key for the key range
-                    final String string = contentBuffer.toString();
-                    try {
-                        rangeFrom = Long.parseLong(string);
-                    } catch (final RuntimeException e) {
-                        error("Unable to parse string \"" + string + "\" as long for range from", e);
+                switch (elementName) {
+                    case MAP_ELEMENT ->
+                        // capture the name of the map that the subsequent values will belong to. A ref
+                        // stream can contain data for multiple maps
+                        mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
+                    case KEY_ELEMENT ->
+                        // the key for the KV pair
+                        key = contentBuffer.toString();
+                    case FROM_ELEMENT -> {
+                        // the start key for the key range
+                        final String string = contentBuffer.toString();
+                        try {
+                            rangeFrom = Long.parseLong(string);
+                        } catch (final RuntimeException e) {
+                            error("Unable to parse string \"" + string + "\" as long for range from", e);
+                        }
                     }
-                } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
-                    // the end key for the key range
-                    final String string = contentBuffer.toString();
-                    try {
-                        rangeTo = Long.parseLong(string);
-                    } catch (final RuntimeException e) {
-                        error("Unable to parse string \"" + string + "\" as long for range to", e);
+                    case TO_ELEMENT -> {
+                        // the end key for the key range
+                        final String string = contentBuffer.toString();
+                        try {
+                            rangeTo = Long.parseLong(string);
+                        } catch (final RuntimeException e) {
+                            error("Unable to parse string \"" + string + "\" as long for range to", e);
+                        }
                     }
-                } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-                    addReference();
-                } else if (HISTOGRAM_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.HISTOGRAM);
-                } else if (METRIC_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.METRIC);
-                } else if (SESSION_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.SESSION);
-                } else if (STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.STATE);
-                } else if (RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.RANGED_STATE);
-                } else if (TEMPORAL_STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.TEMPORAL_STATE);
-                } else if (TEMPORAL_RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                    add(StateType.TEMPORAL_RANGED_STATE);
-                } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
-                    time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
-                } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
-                    timeout = StroomDuration.parse(contentBuffer.toString());
-                } else if ("name".equalsIgnoreCase(localName)) {
-                    currentName = contentBuffer.toString();
-                } else if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-                    currentValue = contentBuffer.toString();
-                } else if ("tag".equalsIgnoreCase(localName)) {
-                    if (currentName == null) {
-                        error("Name is null for tag");
-                    } else if (currentValue == null) {
-                        error("Value is null for tag");
-                    } else {
-                        currentTags.add(new Tag(currentName, ValString.create(currentValue)));
+                    case REFERENCE_ELEMENT -> addReference();
+                    case HISTOGRAM_ELEMENT -> add(StateType.HISTOGRAM);
+                    case METRIC_ELEMENT -> add(StateType.METRIC);
+                    case SESSION_ELEMENT -> add(StateType.SESSION);
+                    case STATE_ELEMENT -> add(StateType.STATE);
+                    case RANGE_STATE_ELEMENT -> add(StateType.RANGED_STATE);
+                    case TEMPORAL_STATE_ELEMENT -> add(StateType.TEMPORAL_STATE);
+                    case TEMPORAL_RANGE_STATE_ELEMENT -> add(StateType.TEMPORAL_RANGED_STATE);
+                    case TIME_ELEMENT -> time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
+                    case TIMEOUT_ELEMENT -> timeout = StroomDuration.parse(contentBuffer.toString());
+                    case "name" -> currentName = contentBuffer.toString();
+                    case VALUE_ELEMENT -> currentValue = contentBuffer.toString();
+                    case "tag" -> {
+                        if (currentName == null) {
+                            error("Name is null for tag");
+                        } else if (currentValue == null) {
+                            error("Value is null for tag");
+                        } else {
+                            currentTags.add(new Tag(currentName, ValString.create(currentValue)));
+                        }
                     }
                 }
             }
 
             // Manually call endPrefixMapping for those prefixes we added
-            final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
-                    depthLevel,
+            final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(depthLevel,
                     Collections.emptySet());
 
             if (!manuallyAddedPrefixes.isEmpty()) {
-                LOGGER.trace(() ->
-                        LogUtil.message("Ending {} manually added prefixes at level {}",
-                                manuallyAddedPrefixes.size(),
-                                depthLevel));
+                LOGGER.trace(() -> LogUtil.message("Ending {} manually added prefixes at level {}",
+                        manuallyAddedPrefixes.size(),
+                        depthLevel));
 
                 // Can't use .forEach() due to the SaxException
                 for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
@@ -582,8 +565,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                 }
 
                 // We are leaving this level so can now delete the prefix mappings for this level
-                manuallyAddedLevelToPrefixMap.get(depthLevel)
-                        .clear();
+                manuallyAddedLevelToPrefixMap.get(depthLevel).clear();
             }
 
             super.endElement(uri, localName, qName);
@@ -663,15 +645,16 @@ public class PlanBFilter extends AbstractXMLFilter {
         try {
             runnable.run();
         } catch (final BufferOverflowException boe) {
-            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
-                    key,
-                    mapName);
+            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer", key, mapName);
             error(msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
             error(e);
             LOGGER.error("Error putting key {} into map {}: {} {}",
-                    key, mapName, e.getClass().getSimpleName(), e.getMessage());
+                    key,
+                    mapName,
+                    e.getClass().getSimpleName(),
+                    e.getMessage());
             LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
         }
     }
@@ -733,9 +716,9 @@ public class PlanBFilter extends AbstractXMLFilter {
                         // negative values cause problems for the ordering of data in LMDB so prevent
                         // their use when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB
                         // as 0, 10, -10
-                        error(LogUtil.message(
-                                "Range state only supports non-negative numbers (key: {}) for {}",
-                                longKey, mapName));
+                        error(LogUtil.message("Range state only supports non-negative numbers (key: {}) for {}",
+                                longKey,
+                                mapName));
                     } else {
                         final RangeState.Key k = RangeState.Key.builder()
                                 .keyStart(longKey)
@@ -755,16 +738,18 @@ public class PlanBFilter extends AbstractXMLFilter {
             } else if (rangeTo == null) {
                 error(LogUtil.message("Range state 'to' is null for {}", mapName));
             } else if (rangeFrom > rangeTo) {
-                error(LogUtil.message(
-                        "Range 'from' must be less than or equal to range 'to' " +
+                error(LogUtil.message("Range 'from' must be less than or equal to range 'to' " +
                         "(from: {}, to: {}) for {}",
-                        rangeFrom, rangeTo, mapName));
+                        rangeFrom,
+                        rangeTo,
+                        mapName));
             } else if (rangeFrom < 0) {
                 // negative values cause problems for the ordering of data in LMDB so prevent their use
                 // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                error(LogUtil.message(
-                        "Range state only supports non-negative numbers (from: {}, to: {}) for {}",
-                        rangeFrom, rangeTo, mapName));
+                error(LogUtil.message("Range state only supports non-negative numbers (from: {}, to: {}) for {}",
+                        rangeFrom,
+                        rangeTo,
+                        mapName));
             } else {
                 final RangeState.Key k = RangeState.Key.builder()
                         .keyStart(rangeFrom)
@@ -799,8 +784,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                             // negative values cause problems for the ordering of data in LMDB so
                             // prevent their use when using byteBuffer.putLong, -10, 0 & 10 will be
                             // stored in LMDB as 0, 10, -10
-                            error(LogUtil.message(
-                                    "Temporal range state only supports non-negative numbers " +
+                            error(LogUtil.message("Temporal range state only supports non-negative numbers " +
                                     "(key: {}) for {}",
                                     longKey,
                                     mapName));
@@ -824,16 +808,16 @@ public class PlanBFilter extends AbstractXMLFilter {
                 } else if (rangeTo == null) {
                     error(LogUtil.message("Temporal range 'to' is null for {}", mapName));
                 } else if (rangeFrom > rangeTo) {
-                    error(LogUtil.message(
-                            "Temporal range 'from' must be less than or equal to range 'to' " +
+                    error(LogUtil.message("Temporal range 'from' must be less than or equal to range 'to' " +
                             "(from: {}, to: {}) for {}",
-                            rangeFrom, rangeTo, mapName));
+                            rangeFrom,
+                            rangeTo,
+                            mapName));
                 } else if (rangeFrom < 0) {
                     // negative values cause problems for the ordering of data in LMDB so prevent their
                     // use when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB
                     // as 0, 10, -10
-                    error(LogUtil.message(
-                            "Temporal range only supports non-negative numbers " +
+                    error(LogUtil.message("Temporal range only supports non-negative numbers " +
                             "(from: {}, to: {}) for {}",
                             rangeFrom,
                             rangeTo,
@@ -937,9 +921,11 @@ public class PlanBFilter extends AbstractXMLFilter {
         return switch (type) {
             case STRING -> ValString.create(currentStringValue);
             case XML -> {
-                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                value.flip();
-                yield ValXml.create(ByteBufferUtils.getBytes(value));
+                final ByteBuffer buffer = stagingValueOutputStream.getByteBuffer();
+                buffer.flip();
+                final Val val = ValXml.create(ByteBufferUtils.getBytes(buffer));
+                stagingValueOutputStream.clear();
+                yield val;
             }
             default -> ValNull.INSTANCE;
         };
@@ -951,7 +937,7 @@ public class PlanBFilter extends AbstractXMLFilter {
      * @param length The number of characters to use from the array.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#characters(char[],
-     * int, int)
+     *      int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -962,8 +948,7 @@ public class PlanBFilter extends AbstractXMLFilter {
             if (insideValueElement) {
                 if (haveSeenXmlInValueElement) {
                     // This is an XML FastInfoSet value
-                    LOGGER.trace(() -> LogUtil.message(
-                            "characters(\"{}\")", new String(ch, start, length).trim()));
+                    LOGGER.trace(() -> LogUtil.message("characters(\"{}\")", new String(ch, start, length).trim()));
                     if (insideElement || !isAllWhitespace(ch, start, length)) {
                         // Delegate to the fastInfoset content handler which will write to stagingValueOutputStream
                         fastInfosetCharacters(ch, start, length);
@@ -991,9 +976,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
         // Done like this because isOnlyWhitespace is not final so can't use a lambda
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}",
-                    new String(ch, start, length),
-                    isOnlyWhitespace);
+            LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
         }
         return isOnlyWhitespace;
     }
@@ -1002,7 +985,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         if (!isFastInfosetDocStarted) {
             LOGGER.trace("saxDocumentSerializer - startDocument()");
             saxDocumentSerializer.reset();
-            stagingValueOutputStream.reset();
+            stagingValueOutputStream.clear();
             appliedPrefixToUriMap.clear();
             saxDocumentSerializer.startDocument();
             isFastInfosetDocStarted = true;
@@ -1011,8 +994,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private void fastInfosetManuallyAddPrefixMapping(final String prefix, final String uri) throws SAXException {
         LOGGER.trace("Manually starting prefix mapping {}:{}", prefix, uri);
-        manuallyAddedLevelToPrefixMap.computeIfAbsent(depthLevel, key -> new HashSet<>())
-                .add(prefix);
+        manuallyAddedLevelToPrefixMap.computeIfAbsent(depthLevel, key -> new HashSet<>()).add(prefix);
         fastInfosetStartPrefixMapping(prefix, uri);
     }
 
@@ -1029,8 +1011,8 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void fastInfosetCharacters(final char[] ch, final int start, final int length) throws SAXException {
-        LOGGER.trace(() -> LogUtil.message(
-                "saxDocumentSerializer - characters(\"{}\")", new String(ch, start, length).trim()));
+        LOGGER.trace(() -> LogUtil.message("saxDocumentSerializer - characters(\"{}\")",
+                new String(ch, start, length).trim()));
         saxDocumentSerializer.characters(ch, start, length);
     }
 
@@ -1040,9 +1022,8 @@ public class PlanBFilter extends AbstractXMLFilter {
         isFastInfosetDocStarted = false;
     }
 
-    private void fastInfosetEndElement(final String localName,
-                                       final String newUri,
-                                       final String newQName) throws SAXException {
+    private void fastInfosetEndElement(final String localName, final String newUri, final String newQName)
+            throws SAXException {
         LOGGER.trace("saxDocumentSerializer - endElement({}, {}, {})", newUri, localName, newQName);
         saxDocumentSerializer.endElement(newUri, localName, newQName);
     }
@@ -1056,11 +1037,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private boolean hasUriBeenApplied(final String prefix, final String uri) {
-        return appliedPrefixToUriMap.entrySet()
-                .stream()
-                .anyMatch(prefixToUriEntry ->
-                        Objects.equals(prefixToUriEntry.getKey(), prefix)
-                        && Objects.equals(prefixToUriEntry.getValue(), uri));
+        return Objects.equals(appliedPrefixToUriMap.get(prefix), uri);
     }
 
     private boolean hasUriBeenApplied(final String prefix) {

@@ -25,6 +25,7 @@ import stroom.query.language.functions.ValuesConsumer;
 
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 
 public interface Db<K, V> extends AutoCloseable {
@@ -62,4 +63,33 @@ public interface Db<K, V> extends AutoCloseable {
     long count();
 
     String getInfoString();
+
+    /**
+     * @return The id that uniquely identifies this LMDB instance. Minted once when the instance is first
+     * created and carried wherever the instance is copied, so it identifies a merge source across replays.
+     * Null only for a read only instance created before instance ids were introduced.
+     */
+    String getInstanceUuid();
+
+    /**
+     * Record the id of the stream this instance was written from. Provenance only; this plays no part in
+     * merge de-duplication as a reprocessed stream produces a new instance with the same meta id.
+     */
+    void writeSourceMetaId(long metaId);
+
+    /**
+     * @return The id of the stream this instance was written from, if it was recorded.
+     */
+    OptionalLong getSourceMetaId();
+
+    /**
+     * Delete old merge status records. Only additive stores (histogram and metric) track merge status; the
+     * default is a no-op. The caller must ensure that no replayable copy of any source still exists before
+     * pruning. See docs/merge-idempotency-design.md.
+     *
+     * @return The number of records deleted.
+     */
+    default long deleteOldMergeStatus(final Instant deleteBefore) {
+        return 0;
+    }
 }

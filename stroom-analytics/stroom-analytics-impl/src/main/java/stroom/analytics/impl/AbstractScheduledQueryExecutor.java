@@ -102,6 +102,9 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             info(() -> "Processing " + LogUtil.namedCount("scheduled " + processType, NullSafe.size(docs)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final T doc : docs) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new UncheckedInterruptedException(new InterruptedException());
+                }
                 final Runnable runnable = createRunnable(doc, taskContext);
                 try {
                     workQueue.exec(runnable);
@@ -171,6 +174,9 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         for (final ExecutionSchedule executionSchedule : executionSchedules.getValues()) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new UncheckedInterruptedException(new InterruptedException());
+            }
             final Runnable runnable = () -> {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are

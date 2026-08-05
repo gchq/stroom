@@ -54,6 +54,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -779,6 +780,23 @@ class TestSnapshotShard {
         @Override
         public void lock(final Runnable runnable) {
             ensureOpen();
+        }
+
+        @Override
+        public String getInstanceUuid() {
+            ensureOpen();
+            return "test-instance-uuid";
+        }
+
+        @Override
+        public void writeSourceMetaId(final long metaId) {
+            ensureOpen();
+        }
+
+        @Override
+        public OptionalLong getSourceMetaId() {
+            ensureOpen();
+            return OptionalLong.empty();
         }
 
         @Override
