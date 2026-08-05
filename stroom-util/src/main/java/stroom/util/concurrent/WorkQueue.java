@@ -27,6 +27,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
+/**
+ * A work queue for asynchronous processing of tasks. It uses a fixed number of threads to process tasks from a queue.
+ * Tasks are added to the queue using the {@link #exec(Runnable)} method. The queue is bounded, but the number of
+ * threads is fixed. The queue will block if it is full.
+ */
 public class WorkQueue {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(WorkQueue.class);
@@ -80,6 +85,7 @@ public class WorkQueue {
                     }
                     LOGGER.debug("POISON_PILL found, dropping out");
                 } catch (final InterruptedException e) {
+                    LOGGER.debug("Take loop interrupted");
                     Thread.currentThread().interrupt();
                     throw UncheckedInterruptedException.create(e);
                 }
@@ -92,6 +98,8 @@ public class WorkQueue {
      *
      * @param runnable The {@link Runnable} to execute. It should handle any exceptions and not re-throw them
      *                 to ensure the queue thread can continue processing other tasks.
+     * @throws UncheckedInterruptedException if the thread is interrupted
+     * @throws IllegalStateException         if the work queue is shutting down or has been shutdown
      */
     public void exec(final Runnable runnable) {
         Objects.requireNonNull(runnable);
@@ -101,13 +109,14 @@ public class WorkQueue {
             final long lockStamp = stampedLock.readLock();
             try {
                 if (shuttingDown) {
-                    throw new IllegalStateException("WorkQueue is shutting down");
+                    throw new IllegalStateException("WorkQueue is shutting down, no more tasks can be accepted");
                 }
                 try {
                     // Allow join() to jump in front of us if the queue is full.
                     // In practice all calls to exec() should happen before join() is called.
                     queued = queue.offer(runnable, 100, TimeUnit.MILLISECONDS);
                 } catch (final InterruptedException e) {
+                    LOGGER.debug("exec() - Thread interrupted");
                     Thread.currentThread().interrupt();
                     throw UncheckedInterruptedException.create(e);
                 }
@@ -119,17 +128,23 @@ public class WorkQueue {
 
     /**
      * Block until all tasks have been completed.
+     *
+     * @throws UncheckedInterruptedException if the thread is interrupted
      */
     public void join() {
         LOGGER.debug("join() called");
         final long lockStamp = stampedLock.writeLock();
         try {
             if (!shuttingDown) {
+                // Mark work queue as shutting down so no more tasks can be accepted
                 shuttingDown = true;
+                // Put poison pills into the queue to signal to the worker threads to gracefully stop
+                // once they have completed all work on the queue
                 for (int i = 0; i < threadCount; i++) {
                     try {
                         queue.put(POISON_PILL);
                     } catch (final InterruptedException e) {
+                        LOGGER.debug("join() - Thread interrupted");
                         Thread.currentThread().interrupt();
                         throw UncheckedInterruptedException.create(e);
                     }
