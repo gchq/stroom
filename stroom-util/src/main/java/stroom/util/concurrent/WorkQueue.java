@@ -16,32 +16,69 @@
 
 package stroom.util.concurrent;
 
-import java.util.Optional;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.StampedLock;
 
 public class WorkQueue {
 
-    private final int threadCount;
-    private final ArrayBlockingQueue<Optional<Runnable>> queue;
-    private final CompletableFuture<Void>[] futures;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(WorkQueue.class);
 
+    private static final Runnable POISON_PILL = () -> {
+    };
+
+    private final int threadCount;
+    private final ArrayBlockingQueue<Runnable> queue;
+    private final CompletableFuture<Void>[] futures;
+    private final StampedLock stampedLock = new StampedLock();
+    private boolean shuttingDown = false;
+
+    /**
+     * @param executor    The executor that will provide the threads for the work queue.
+     * @param threadCount The number of threads to use for processing the work queue.
+     * @param capacity    Maximum number of items on the queue.
+     */
     @SuppressWarnings("unchecked")
     public WorkQueue(final Executor executor,
                      final int threadCount,
                      final int capacity) {
+        Objects.requireNonNull(executor);
+        if (threadCount <= 0) {
+            throw new IllegalArgumentException("threadCount must be > 0");
+        }
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("capacity must be > 0");
+        }
         this.threadCount = threadCount;
         queue = new ArrayBlockingQueue<>(capacity);
         futures = new CompletableFuture[threadCount];
         for (int i = 0; i < threadCount; i++) {
             futures[i] = CompletableFuture.runAsync(() -> {
                 try {
-                    Optional<Runnable> optional = queue.take();
-                    while (optional.isPresent()) {
-                        optional.get().run();
-                        optional = queue.take();
+                    Runnable runnable = queue.take();
+                    // Use instance equality
+                    while (runnable != POISON_PILL) {
+                        try {
+                            runnable.run();
+                        } catch (final RuntimeException e) {
+                            // Ideally, the runnable should handle its own exceptions, but just in case
+                            // we will swallow the exception so that the thread doesn't die.
+                            LOGGER.error("Error while executing runnable - {}", LogUtil.exceptionMessage(e), e);
+                        }
+                        if (Thread.currentThread().isInterrupted()) {
+                            LOGGER.debug("Thread interrupted, dropping out");
+                            break;
+                        }
+                        runnable = queue.take();
                     }
+                    LOGGER.debug("POISON_PILL found, dropping out");
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(e.getMessage(), e);
@@ -50,25 +87,61 @@ public class WorkQueue {
         }
     }
 
+    /**
+     * Add runnable to the work queue for asynchronous execution.
+     *
+     * @param runnable The {@link Runnable} to execute. It should handle any exceptions and not re-throw them
+     *                 to ensure the queue thread can continue processing other tasks.
+     */
     public void exec(final Runnable runnable) {
-        try {
-            queue.put(Optional.of(runnable));
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e.getMessage(), e);
+        Objects.requireNonNull(runnable);
+        LOGGER.debug("exec() called");
+        boolean queued = false;
+        while (!queued) {
+            final long lockStamp = stampedLock.readLock();
+            try {
+                if (shuttingDown) {
+                    throw new IllegalStateException("WorkQueue is shutting down");
+                }
+                try {
+                    // Allow join() to jump in front of us if the queue is full.
+                    // In practice all calls to exec() should happen before join() is called.
+                    queued = queue.offer(runnable, 100, TimeUnit.MILLISECONDS);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            } finally {
+                stampedLock.unlockRead(lockStamp);
+            }
         }
     }
 
+    /**
+     * Block until all tasks have been completed.
+     */
     public void join() {
-        for (int i = 0; i < threadCount; i++) {
-            try {
-                queue.put(Optional.empty());
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e.getMessage(), e);
+        LOGGER.debug("join() called");
+        final long lockStamp = stampedLock.writeLock();
+        try {
+            if (!shuttingDown) {
+                shuttingDown = true;
+                for (int i = 0; i < threadCount; i++) {
+                    try {
+                        queue.put(POISON_PILL);
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                }
+            } else {
+                LOGGER.warn("Join called multiple times");
             }
+        } finally {
+            stampedLock.unlockWrite(lockStamp);
         }
-
-        CompletableFuture.allOf(futures).join();
+        // All callers will wait for all tasks to complete
+        CompletableFuture.allOf(futures)
+                .join();
     }
 }
