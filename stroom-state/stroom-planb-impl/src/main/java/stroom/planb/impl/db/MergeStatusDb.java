@@ -16,6 +16,7 @@
 
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.stream.LmdbIterable.EntryConsumer;
@@ -102,7 +103,7 @@ public class MergeStatusDb {
             duplicate.get();
             final Instant time = Instant.ofEpochMilli(duplicate.getLong());
             if (time.isBefore(deleteBefore)) {
-                toDelete.add(copyBytes(key));
+                toDelete.add(ByteBufferUtils.toBytes(key));
             }
         });
         for (final byte[] key : toDelete) {
@@ -146,24 +147,9 @@ public class MergeStatusDb {
         return byteBuffers.useBytes(sourceUuid.getBytes(StandardCharsets.UTF_8), function);
     }
 
-    private static byte[] copyBytes(final ByteBuffer byteBuffer) {
-        final ByteBuffer duplicate = byteBuffer.duplicate();
-        final byte[] bytes = new byte[duplicate.remaining()];
-        duplicate.get(bytes);
-        return bytes;
-    }
-
     private static boolean bytesEqual(final ByteBuffer byteBuffer, final byte[] bytes) {
-        final ByteBuffer duplicate = byteBuffer.duplicate();
-        if (duplicate.remaining() != bytes.length) {
-            return false;
-        }
-        for (int i = 0; i < bytes.length; i++) {
-            if (duplicate.get() != bytes[i]) {
-                return false;
-            }
-        }
-        return true;
+        return byteBuffer.remaining() == bytes.length &&
+               ByteBufferUtils.equals(byteBuffer, byteBuffer.position(), ByteBuffer.wrap(bytes), 0, bytes.length);
     }
 
     /**
@@ -219,7 +205,7 @@ public class MergeStatusDb {
                     return;
                 }
                 // Copy the key before the delegate potentially consumes the buffer.
-                final byte[] keyCopy = copyBytes(key);
+                final byte[] keyCopy = ByteBufferUtils.toBytes(key);
                 delegate.accept(key, val);
                 lastMergedKey = keyCopy;
                 writer.incrementChangeCount();

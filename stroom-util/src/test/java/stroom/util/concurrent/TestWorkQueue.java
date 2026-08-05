@@ -149,13 +149,14 @@ class TestWorkQueue {
         workQueue.join();
 
         // Attempting to exec after join should throw an IllegalStateException
-        Assertions.assertThatThrownBy(() -> workQueue.exec(() -> {
-                }))
+        final Runnable noOp = () -> {
+        };
+        Assertions.assertThatThrownBy(() -> workQueue.exec(noOp))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void joinAfterNoTasks() throws InterruptedException {
+    void joinAfterNoTasks() {
         final Executor executor = Executors.newFixedThreadPool(2);
         final WorkQueue workQueue = new WorkQueue(executor, 2, 10);
 
@@ -166,8 +167,9 @@ class TestWorkQueue {
         Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
 
         // Attempting to exec after join should throw an IllegalStateException
-        Assertions.assertThatThrownBy(() -> workQueue.exec(() -> {
-                }))
+        final Runnable noOp = () -> {
+        };
+        Assertions.assertThatThrownBy(() -> workQueue.exec(noOp))
                 .isInstanceOf(IllegalStateException.class);
     }
 
