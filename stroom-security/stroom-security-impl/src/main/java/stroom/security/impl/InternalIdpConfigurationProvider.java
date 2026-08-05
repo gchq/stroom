@@ -29,6 +29,7 @@ import jakarta.inject.Singleton;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -191,6 +192,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return localOpenIdConfigProvider.get().getAuthenticationRequestExtraParams();
     }
 
     @Override

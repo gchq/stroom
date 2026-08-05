@@ -58,7 +58,20 @@ class TestSecurityFilter {
     @BeforeEach
     void setUp() {
         // Only the UriFactory is exercised by the origin check; the other collaborators are unused.
-        securityFilter = new SecurityFilter(null, null, null, () -> uriFactory);
+        securityFilter = filterWith(false, true);
+    }
+
+    /**
+     * A filter with the given edgeAuthentication.enabled and csrf.protectBrowserOriginatedRequests
+     * settings; other collaborators are unused by the CSRF/origin checks.
+     */
+    private SecurityFilter filterWith(final boolean edgeEnabled, final boolean protectBrowserOriginated) {
+        final AuthenticationConfig authenticationConfig = mock(AuthenticationConfig.class);
+        lenient().when(authenticationConfig.getEdgeAuthenticationConfig())
+                .thenReturn(new EdgeAuthenticationConfig(edgeEnabled, null));
+        lenient().when(authenticationConfig.getCsrfConfig())
+                .thenReturn(new CsrfConfig(protectBrowserOriginated));
+        return new SecurityFilter(null, null, null, () -> uriFactory, () -> authenticationConfig);
     }
 
     private void setUpAllowedOrigins() {
@@ -216,6 +229,144 @@ class TestSecurityFilter {
         assertThat(securityFilter.isCsrfValid(request)).isFalse();
     }
 
+    // --- ambient-credential classification (isCsrfSafe) ---
+    //
+    // 'Ambient' credentials (session cookie; edge-proxy-injected token on a browser-issued
+    // request) get the dual Origin + X-CSRF checks. Machine credentials never do - the regression
+    // cases below (inter-node relay, API keys, cluster token) are the ones earlier designs broke.
+
+    @Test
+    void sessionIdentityGetsTheDualChecks() {
+        // Existing behaviour, preserved: session-cookie identity is always ambient.
+        setUpAllowedOrigins();
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Origin")).thenReturn("https://evil.example.com");
+
+        assertThat(filterWith(false, true).isCsrfSafe(request, CredentialSource.SESSION)).isFalse();
+    }
+
+    @Test
+    void edgeInjectedTokenWithForeignOriginIsRejected() {
+        setUpAllowedOrigins();
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Origin")).thenReturn("https://evil.example.com");
+
+        assertThat(filterWith(true, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isFalse();
+    }
+
+    @Test
+    void edgeInjectedTokenWithoutCsrfHeaderIsRejected() {
+        setUpAllowedOrigins();
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Origin")).thenReturn(PUBLIC_URI);
+
+        assertThat(filterWith(true, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isFalse();
+    }
+
+    @Test
+    void edgeInjectedTokenSameOriginWithCsrfHeaderPasses() {
+        setUpAllowedOrigins();
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Origin")).thenReturn(PUBLIC_URI);
+        lenient().when(request.getHeader("X-CSRF")).thenReturn("1");
+
+        assertThat(filterWith(true, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isTrue();
+    }
+
+    @Test
+    void edgeModeNullLiteralOriginWithoutCsrfHeaderIsRejected() {
+        // 'Origin: null' (sandboxed iframe etc.) counts as browser provenance; the origin check
+        // defers, and the X-CSRF requirement then rejects.
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Origin")).thenReturn("null");
+
+        assertThat(filterWith(true, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isFalse();
+    }
+
+    @Test
+    void edgeModeTokenWithoutBrowserProvenancePasses() {
+        // THE F12 regression case: inter-node calls relay the user's token in the Authorization
+        // header (AbstractUserIdentityFactory.getAuthHeaders) and stroom-proxy/curl clients do the
+        // same with their own tokens. None of them send Origin/Referer/Sec-Fetch-*, and none of
+        // them send X-CSRF - they must not be challenged, even with edge mode on.
+        lenient().when(request.getMethod()).thenReturn("POST");
+
+        assertThat(filterWith(true, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isTrue();
+    }
+
+    @Test
+    void machineCredentialsAreNeverAmbient() {
+        // THE F1 regression case: an edge proxy cannot mint an API key or the cluster token, and a
+        // browser cannot be induced to attach them cross-site - so they skip the ambient checks
+        // even with edge mode on and browser provenance present.
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Origin")).thenReturn("https://evil.example.com");
+
+        final SecurityFilter filter = filterWith(true, true);
+        assertThat(filter.isCsrfSafe(request, CredentialSource.CLUSTER_TOKEN)).isTrue();
+        assertThat(filter.isCsrfSafe(request, CredentialSource.API_KEY)).isTrue();
+    }
+
+    @Test
+    void apiKeyFromInBrowserToolPasses() {
+        // In-browser Swagger UI with an API key: fetch metadata present, no X-CSRF. API keys are
+        // excluded from both mechanisms, so this keeps working.
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("same-origin");
+
+        assertThat(filterWith(false, true).isCsrfSafe(request, CredentialSource.API_KEY)).isTrue();
+    }
+
+    // --- mechanism 2: the undeclared-edge safety net ---
+
+    @Test
+    void crossSiteTokenWithoutCsrfHeaderIsRejectedEvenWithEdgeModeOff() {
+        // Cross-origin scripts cannot attach an Authorization header and forms cannot at all, so a
+        // request token on a request the browser marked cross-site can only have been injected by
+        // an intermediary - an authenticating proxy nobody declared in config.
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("cross-site");
+
+        assertThat(filterWith(false, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isFalse();
+    }
+
+    @Test
+    void crossSiteTokenWithCsrfHeaderPasses() {
+        // X-CSRF remains the escape hatch for legitimate cross-site tooling (cross-site pages
+        // equally cannot set it).
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("cross-site");
+        lenient().when(request.getHeader("X-CSRF")).thenReturn("1");
+
+        assertThat(filterWith(false, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isTrue();
+    }
+
+    @Test
+    void sameOriginTokenIsNotChallengedByTheSafetyNet() {
+        // Same-origin JS attaching its own bearer token is a deliberate credential, not ambient.
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("same-origin");
+
+        assertThat(filterWith(false, true).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isTrue();
+    }
+
+    @Test
+    void safetyNetCanBeDisabledByConfig() {
+        lenient().when(request.getMethod()).thenReturn("POST");
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("cross-site");
+
+        assertThat(filterWith(false, false).isCsrfSafe(request, CredentialSource.REQUEST_TOKEN))
+                .isTrue();
+    }
+
     // --- Origin check on the unauthenticated (bypass) path ---
 
     @Test
@@ -253,7 +404,9 @@ class TestSecurityFilter {
     private SecurityFilter bypassFilter() {
         final AuthenticationBypassChecker bypassChecker = mock(AuthenticationBypassChecker.class);
         when(bypassChecker.isUnauthenticated(any(), any(), any())).thenReturn(true);
-        return new SecurityFilter(new MockSecurityContext(), null, bypassChecker, () -> uriFactory);
+        final AuthenticationConfig authenticationConfig = mock(AuthenticationConfig.class);
+        return new SecurityFilter(new MockSecurityContext(), null, bypassChecker, () -> uriFactory,
+                () -> authenticationConfig);
     }
 
     private void givenUnauthenticatedRequest(final String method) {

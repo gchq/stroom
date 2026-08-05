@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.util.servlet;
+package stroom.security.impl;
 
-import com.google.inject.AbstractModule;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import stroom.security.api.UserIdentity;
 
-public class MockServletModule extends AbstractModule {
+import java.util.Objects;
 
-    @Override
-    protected void configure() {
-        final SessionIdProvider sessionIdProvider = () -> "mockSessionId";
-        bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
-        bind(HttpServletResponse.class).toProvider(HttpServletResponseHolder.class);
-        bind(SessionIdProvider.class).toInstance(sessionIdProvider);
+/**
+ * A verified identity together with the {@link CredentialSource kind of credential} that proved it.
+ */
+public record AuthenticatedCredential(UserIdentity identity, CredentialSource source) {
+
+    public AuthenticatedCredential {
+        Objects.requireNonNull(identity);
+        Objects.requireNonNull(source);
     }
 }
