@@ -13,6 +13,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5696** : Stop the Plan B merge processor deleting un-merged queued data at startup and stop merge queue consumers churning through the queue when merges are interrupted at shutdown. Data queued for merge now survives a restart and interrupted merges are rerun when the merge job next runs.
+
+* Bug **#5696** : Fix Plan B merges double counting for histograms and metrics on resume.
+
+* Bug **#5696** : Stop Plan B histogram and metric stores double counting when a merge is rerun, e.g. after an interrupted shutdown, a duplicate part delivery or a sender retry. Each part shard now carries an instance UUID and additive stores track per source merge progress, skipping fully merged sources and resuming interrupted merges exactly after their last commit.
+
+* Bug **#5696** : Backport the Plan B filter staging buffer reuse from 7.13 so that a pooled buffer is no longer allocated and abandoned for every value element loaded.
+
 * Bug **#5689** : Fix issue where snapshots were not found.
 
 * Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
