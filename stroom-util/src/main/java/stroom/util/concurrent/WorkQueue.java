@@ -40,6 +40,7 @@ public class WorkQueue {
     };
 
     private final int threadCount;
+    private final int capacity;
     private final ArrayBlockingQueue<Runnable> queue;
     private final CompletableFuture<Void>[] futures;
     private final StampedLock stampedLock = new StampedLock();
@@ -61,6 +62,7 @@ public class WorkQueue {
         if (capacity <= 0) {
             throw new IllegalArgumentException("capacity must be > 0");
         }
+        this.capacity = capacity;
         this.threadCount = threadCount;
         queue = new ArrayBlockingQueue<>(capacity);
         futures = new CompletableFuture[threadCount];
@@ -158,5 +160,24 @@ public class WorkQueue {
         // All callers will wait for all tasks to complete
         CompletableFuture.allOf(futures)
                 .join();
+    }
+
+    public long getTaskCount() {
+        return queue.stream()
+                .filter(task -> {
+                    // Intentional instance equality check
+                    return task != POISON_PILL;
+                })
+                .count();
+    }
+
+    @Override
+    public String toString() {
+        return "WorkQueue{" +
+               "capacity=" + capacity +
+               ", threadCount=" + threadCount +
+               ", shuttingDown=" + shuttingDown +
+               ", taskCount=" + getTaskCount() +
+               '}';
     }
 }

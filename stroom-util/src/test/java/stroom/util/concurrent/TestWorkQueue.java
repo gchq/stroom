@@ -20,12 +20,15 @@ import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -127,5 +130,123 @@ class TestWorkQueue {
                 .isEqualTo(availableProcessors);
         assertThat(cnt.longValue())
                 .isEqualTo(itemCount);
+    }
+
+    @Test
+    void execAfterJoin() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(2);
+        final WorkQueue workQueue = new WorkQueue(executor, 2, 10);
+        final int itemCount = 10;
+        final CountDownLatch completionLatch = new CountDownLatch(itemCount);
+
+        for (int i = 0; i < itemCount; i++) {
+            workQueue.exec(completionLatch::countDown);
+        }
+
+        completionLatch.await();
+        workQueue.join();
+
+        // Attempting to exec after join should throw an IllegalStateException
+        Assertions.assertThatThrownBy(() -> workQueue.exec(() -> {
+                }))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void joinAfterNoTasks() throws InterruptedException {
+        final Executor executor = Executors.newFixedThreadPool(2);
+        final WorkQueue workQueue = new WorkQueue(executor, 2, 10);
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+
+        workQueue.join();
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+
+        // Attempting to exec after join should throw an IllegalStateException
+        Assertions.assertThatThrownBy(() -> workQueue.exec(() -> {
+                }))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void taskCount() throws InterruptedException {
+        final int threadCount = 2;
+        final Executor executor = Executors.newFixedThreadPool(threadCount);
+        final WorkQueue workQueue = new WorkQueue(executor, threadCount, 10);
+        final int itemCount = 10;
+        final CountDownLatch takenLatch = new CountDownLatch(threadCount);
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch completionLatch = new CountDownLatch(itemCount);
+        final AtomicInteger execCount = new AtomicInteger();
+
+        for (int i = 0; i < itemCount; i++) {
+            workQueue.exec(() -> {
+                takenLatch.countDown();
+                try {
+                    startLatch.await();
+                } catch (final InterruptedException e) {
+                    throw new UncheckedInterruptedException(e);
+                }
+
+                execCount.incrementAndGet();
+                completionLatch.countDown();
+            });
+        }
+
+        // Two worker threads will have taken two items of the queue
+        takenLatch.await();
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(itemCount - threadCount);
+
+        startLatch.countDown();
+        completionLatch.await();
+        workQueue.join();
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+        Assertions.assertThat(execCount).hasValue(itemCount);
+    }
+
+    @Test
+    void taskCount2() throws InterruptedException {
+        final int threadCount = 2;
+        final Executor executor = Executors.newFixedThreadPool(threadCount);
+        final WorkQueue workQueue = new WorkQueue(executor, threadCount, 10);
+        final int itemCount = 10;
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch takenLatch = new CountDownLatch(threadCount);
+        final CountDownLatch completionLatch = new CountDownLatch(itemCount);
+        final AtomicInteger execCount = new AtomicInteger();
+
+        for (int i = 0; i < itemCount; i++) {
+            workQueue.exec(() -> {
+                takenLatch.countDown();
+                try {
+                    startLatch.await();
+                } catch (final InterruptedException e) {
+                    throw new UncheckedInterruptedException(e);
+                }
+
+                execCount.incrementAndGet();
+                completionLatch.countDown();
+            });
+        }
+
+        // Two worker threads will have taken two items of the queue
+        takenLatch.await();
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(itemCount - threadCount);
+
+        final Executor delayedExecutor = CompletableFuture.delayedExecutor(500,
+                TimeUnit.MILLISECONDS,
+                Executors.newSingleThreadScheduledExecutor());
+
+        // Make the tasks start after we call join
+        CompletableFuture.runAsync(startLatch::countDown, delayedExecutor);
+
+        workQueue.join();
+
+        completionLatch.await();
+
+        Assertions.assertThat(workQueue.getTaskCount()).isEqualTo(0);
+        Assertions.assertThat(execCount).hasValue(itemCount);
     }
 }
