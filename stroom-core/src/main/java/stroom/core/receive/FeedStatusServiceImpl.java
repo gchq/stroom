@@ -20,7 +20,6 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.meta.api.AttributeMap;
-import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
@@ -72,7 +71,12 @@ class FeedStatusServiceImpl implements FeedStatusService {
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
         // Legacy API that does not require a perm check
         return securityContext.asProcessingUserResult(() -> {
-            final FeedStatus feedStatus = feedProperties.getStatus(legacyRequest.getFeedName());
+            final String feedName = legacyRequest.getFeedName();
+            if (NullSafe.isBlankString(feedName)) {
+                LOGGER.debug("No feed name in legacy request: {}", legacyRequest);
+                return GetFeedStatusResponse.createFeedRequiredResponse();
+            }
+            final FeedStatus feedStatus = feedProperties.getStatus(feedName);
             return buildGetFeedStatusResponse(feedStatus);
         });
     }
@@ -84,13 +88,12 @@ class FeedStatusServiceImpl implements FeedStatusService {
             return securityContext.secureResult(REQUIRED_PERMISSION_SET, () ->
                     securityContext.asProcessingUserResult(() -> {
 
-                        final String feedName;
-                        try {
-                            feedName = request.getFeedName();
-                        } catch (final Exception e) {
-                            return new GetFeedStatusResponse(stroom.proxy.feed.remote.FeedStatus.Reject,
-                                    e.getMessage(),
-                                    StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+                        final String feedName = request.getFeedName();
+                        if (NullSafe.isBlankString(feedName)) {
+                            // Callers should not be asking about a nameless feed, and the lookup
+                            // below cannot cope with one.
+                            LOGGER.debug("No feed name in request: {}", request);
+                            return GetFeedStatusResponse.createFeedRequiredResponse();
                         }
 
                         FeedStatus feedStatus = feedProperties.getStatus(feedName);
