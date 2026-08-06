@@ -513,8 +513,10 @@ class StoreShard implements Shard {
             readLock.lockInterruptibly();
             try {
                 if (db == null) {
-                    // ShardManager.get() catches this and retries with a fresh shard, so a
-                    // caller holding a reference from before close()/delete() self-heals.
+                    // ShardManager.get() catches this and retries, normally recreating the
+                    // shard from disk. The retry can still return this dead instance in
+                    // cleanup()'s delete-then-remove window, but that only happens when the
+                    // doc has been deleted, so the resulting failure is the right outcome.
                     throw new SnapshotShard.ShardClosedException();
                 }
                 return function.apply(db);

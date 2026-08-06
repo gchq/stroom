@@ -1766,7 +1766,11 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             LOGGER.error("Timed out waiting for workers to finish", e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.error("Interrupted waiting for workers to finish", e);
+            // The interrupt may have been pending before we were even called (e.g. a runner
+            // timeout landing at the end of the test body), in which case the workers may all
+            // have finished already and it is still safe to close.
+            workersDone = futures.stream().allMatch(CompletableFuture::isDone);
+            LOGGER.error("Interrupted waiting for workers to finish (workersDone: {})", workersDone, e);
         }
         if (workersDone) {
             for (final BasicLmdbDb<String, String> db : dbs) {
