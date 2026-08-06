@@ -153,6 +153,17 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 effectiveStreamCache, metaIdToRefStoreCache);
     }
 
+    public ReferenceDataConfig withStagingLmdbConfig(final ReferenceDataStagingLmdbConfig stagingLmdbConfig) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                loadingLockStripes,
+                lmdbConfig,
+                stagingLmdbConfig,
+                effectiveStreamCache, metaIdToRefStoreCache);
+    }
+
     public ReferenceDataConfig withPurgeAge(final StroomDuration purgeAge) {
         return new ReferenceDataConfig(
                 maxPutsBeforeCommit,
