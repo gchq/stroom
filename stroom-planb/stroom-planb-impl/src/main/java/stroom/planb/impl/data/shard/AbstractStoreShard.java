@@ -438,36 +438,6 @@ public abstract class AbstractStoreShard implements Shard {
     }
 
     /**
-     * Write-side counterpart to {@link #get(Function)}: hands the open {@link Db} to the caller under the
-     * write lock, stamping {@code lastWriteTime} and running {@link #afterMutation()} afterwards.
-     *
-     * <p>Exists so a mutation that only applies to one store type does not need its own named method
-     * here. Store-type-specific callers test the {@code Db} for the capability interface they need — as
-     * {@code SnapshotCapable} callers already do — instead of this class growing vocabulary from a single
-     * type. Subclasses whose local copy must be refreshed first override it (see
-     * {@code SharedFileStoreShard}).
-     */
-    public <R> R writeWithDb(final Function<Db<?, ?>, R> function) {
-        try {
-            writeLock.lockInterruptibly();
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
-        }
-        try {
-            if (db == null) {
-                // Closed by an idle eviction between lookup and use — ShardManager retries.
-                throw new ShardClosedException();
-            }
-            final R result = function.apply(db);
-            lastWriteTime = Instant.now();
-            afterMutation();
-            return result;
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    /**
      * Idle reclamation of the local copy: waits for in-flight readers (via {@code exclusiveReadLock}),
      * closes the env and deletes the local shard dir. Safe to block here because a replacement instance
      * uses a fresh generation dir (see the generation ctor) so there is no same-{@code lock.mdb}

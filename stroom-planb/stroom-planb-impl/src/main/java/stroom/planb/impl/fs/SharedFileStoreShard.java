@@ -133,12 +133,6 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     }
 
     @Override
-    public <R> R writeWithDb(final Function<Db<?, ?>, R> function) {
-        syncFromSharedStoreIfRequired();
-        return super.writeWithDb(function);
-    }
-
-    @Override
     public String getInfo() {
         syncFromSharedStoreIfRequired();
         return super.getInfo();
