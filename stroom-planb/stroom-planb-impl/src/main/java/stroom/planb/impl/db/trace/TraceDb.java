@@ -87,6 +87,7 @@ import org.lmdbjava.Txn;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -924,6 +925,31 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             }
             return null;
         });
+    }
+
+    // Earliest span start for a trace, read straight from the span keys
+    // (traceId[16] ∥ parentSpanId[8] ∥ startTime[8] ∥ spanId[8]) so no value is decoded and no UID lookup
+    // is touched. Empty when the trace has no spans.
+    private Optional<NanoTime> earliestSpanStart(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+        final int startTimeOffset = TRACE_ID_BYTES + SPAN_ID_BYTES;
+        final long[] min = {Long.MAX_VALUE};
+        byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, dbi, keyRange)) {
+                stream.forEach(entry -> {
+                    final ByteBuffer key = entry.getKey().duplicate().order(ByteOrder.BIG_ENDIAN);
+                    if (key.remaining() >= startTimeOffset + START_TIME_BYTES) {
+                        // Ignore zero: a key built without a start time would otherwise pull the
+                        // minimum to the epoch and bucket the trace under 1970.
+                        final long start = key.getLong(key.position() + startTimeOffset);
+                        if (start > 0 && start < min[0]) {
+                            min[0] = start;
+                        }
+                    }
+                });
+            }
+        });
+        return min[0] == Long.MAX_VALUE ? Optional.empty() : Optional.of(NanoTime.ofNanos(min[0]));
     }
 
     // Key-only prefix count of the span DBI for a traceId (no value reads).
@@ -2644,17 +2670,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * Builds the stored {@link TraceRoot} from the per-trace incremental stats
-     * ({@link #recordNewSpan}) plus the root span — <b>O(1)</b>, no per-span rescan (this is what
-     * removes the merge-cycle cost that scaled with a growing trace). Returns empty if the trace
-     * has no root span (a traceId whose only spans are orphans), matching the previous skip guard.
+     * Builds the stored {@link TraceRoot} from the per-trace incremental stats ({@link #recordNewSpan})
+     * plus the root span, so a received root costs no per-span rescan however large the trace grows.
+     * Empty only when the trace has no live span at all — a trace with spans but no root span gets a
+     * flagged orphan root instead.
      *
      * <ul>
      *   <li>{@code totalSpans} / {@code services} — read from the cumulative counters;</li>
      *   <li>{@code endTime} / {@code lastActivityMs} — the ratcheted max span end / insert;</li>
      *   <li>{@code depth} — carried from the stats, recomputed by the bounded DFS only when never
      *       computed or {@code spanCount >= 2 × spanCountAtLastDepth} (depth is stable, so the DFS
-     *       stays off the per-cycle hot path — amortised O(log N) runs over a trace's life).</li>
+     *       stays off the per-cycle hot path — amortised O(log N) runs over a trace's life);</li>
+     *   <li>a synthesized root's {@code startTime} — the earliest span start, which does cost a
+     *       key-only prefix scan, but has to be stable because the archive bucket is labelled from it.</li>
      * </ul>
      */
     private Optional<TraceRoot> buildRootFromStats(final Txn<ByteBuffer> txn,
@@ -2673,11 +2701,14 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             final NanoTime orphanEnd = orphanStats.maxEnd() != null
                     ? orphanStats.maxEnd()
                     : NanoTime.ZERO;
+            // The archive bucket is labelled from the root's start time, so this has to be stable as spans
+            // arrive — the earliest span start is fixed by data already received, the latest end is not.
+            final NanoTime orphanStart = earliestSpanStart(txn, traceIdBytes).orElse(orphanEnd);
             return Optional.of(TraceRoot.builder()
                     .traceId(HexStringUtil.encode(traceIdBytes))
                     .name("")                       // no root operation name
-                    .startTime(orphanEnd)           // no root start; use the max span end as the
-                    .endTime(orphanEnd)             // single timestamp (duration 0)
+                    .startTime(orphanStart)
+                    .endTime(orphanEnd)
                     .services(orphanStats.serviceCount())
                     .depth(0)
                     .totalSpans((int) orphanStats.spanCount())
