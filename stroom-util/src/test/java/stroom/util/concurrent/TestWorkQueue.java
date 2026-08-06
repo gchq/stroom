@@ -363,7 +363,21 @@ class TestWorkQueue {
      */
     @Test
     void joinThrowsUncheckedInterruptedWhenWorkerInterrupted() {
-        try (final ExecutorService executor = Executors.newFixedThreadPool(1)) {
+        try (final ExecutorService executorService = Executors.newFixedThreadPool(1)) {
+            // The worker's future is completed before its task returns, so this latch tells us the interrupt has
+            // taken effect before we call join(). Without it the POISON_PILL that join() adds races the interrupt:
+            // if the queue is signalled at the same moment the worker is interrupted, the worker's wait ends
+            // normally with the interrupt flag merely re-asserted (see AQS REINTERRUPT), so it consumes the pill,
+            // completes normally and join() has nothing to throw.
+            final CountDownLatch workerFinishedLatch = new CountDownLatch(1);
+            final Executor executor = command -> executorService.execute(() -> {
+                try {
+                    command.run();
+                } finally {
+                    workerFinishedLatch.countDown();
+                }
+            });
+
             final WorkQueue workQueue = new WorkQueue(executor, 1, 10);
             final CountDownLatch startedLatch = new CountDownLatch(1);
             final AtomicReference<Thread> workerThread = new AtomicReference<>();
@@ -383,6 +397,7 @@ class TestWorkQueue {
                 ThreadUtil.sleepIgnoringInterrupts(1);
             }
             workerThread.get().interrupt();
+            AssertionUtil.assertAwait(workerFinishedLatch);
 
             Assertions.assertThatThrownBy(workQueue::join)
                     .isInstanceOf(UncheckedInterruptedException.class);
