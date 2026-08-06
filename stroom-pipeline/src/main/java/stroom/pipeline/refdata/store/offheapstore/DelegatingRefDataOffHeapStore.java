@@ -43,6 +43,7 @@ import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
@@ -81,7 +82,7 @@ import java.util.stream.Stream;
  * from the stream ID), or it delegates to all stores and aggregates the results.
  */
 @Singleton
-public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInfo {
+public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInfo, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DelegatingRefDataOffHeapStore.class);
 
@@ -742,10 +743,25 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         }
     }
 
+    /**
+     * Closes and deletes every store (legacy and feed specific) and resets all internal state.
+     * Only intended for tests, which must be able to reset this singleton so that later tests
+     * are not left with open envs or data on disk from earlier ones.
+     */
+    @Override
+    public void clear() {
+        if (legacyRefDataStore != null) {
+            closeAndDeleteLegacyStore();
+        }
+        feedNameToStoreMap.values().forEach(this::closeAndDeleteStore);
+        feedNameToStoreMap.clear();
+        metaIdToFeedStoreCache.clear();
+        migratedRefStreamIds.clear();
+    }
+
     private void closeAndDeleteStore(final RefDataOffHeapStore store) {
-        // This likely means all data has been migrated so delete it
         final RefDataLmdbEnv lmdbEnvironment = store.getLmdbEnvironment();
-        LOGGER.info("Closing and deleting empty ref data LMDB env from {}", lmdbEnvironment.getLocalDir());
+        LOGGER.info("Closing and deleting ref data LMDB env from {}", lmdbEnvironment.getLocalDir());
         try {
             lmdbEnvironment.close();
             try {
