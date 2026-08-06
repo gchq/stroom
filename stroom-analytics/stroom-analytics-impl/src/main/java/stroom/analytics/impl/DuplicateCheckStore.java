@@ -37,7 +37,6 @@ import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -406,18 +405,12 @@ class DuplicateCheckStore {
         LOGGER.debug("close called");
         LOGGER.trace(() -> "close()", new RuntimeException("close"));
         try {
-            // Waits for the writer's transfer task to perform its final commit and close its
-            // write txn, so the env close below cannot race them.
+            // Waits (uninterruptibly) for the writer's transfer task to perform its final
+            // commit and close its write txn, so the env close below cannot race them.
             writer.close();
-        } catch (final UncheckedInterruptedException e) {
-            // We can't know the writer has finished with its write txn, so deliberately leak
-            // the env rather than close it under a possibly live txn, which is undefined
-            // behaviour in LMDB.
-            LOGGER.error(() -> "Interrupted closing writer; leaking LMDB env " + lmdbEnv.getDir(), e);
-            throw e;
         } catch (final RuntimeException e) {
-            // The writer failed but has finished with its txn, so the env can still be
-            // closed safely below.
+            // The writer failed but has finished with its txn, so the env is still closed
+            // below. The env must always be closed; callers delete the dir after closing.
             LOGGER.error(e::getMessage, e);
         }
         closeEnvQuietly();

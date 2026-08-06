@@ -76,6 +76,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -87,9 +88,16 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
+    private static final long WAIT_WARN_FREQUENCY_MS = 30_000;
     private static final int MAX_LIST_SIZE = 10_000;
 
     private final LmdbEnv env;
+    // The env is built with MDB_NOTLS and maxReaders(1), so only one read txn may exist at a
+    // time. Client reads are serialised by this object's monitor, but the transfer thread
+    // reads the DB state without holding it (it cannot: close() holds the monitor while
+    // waiting for the transfer thread to finish), so reads take this lock instead. Not held
+    // by close() while it waits, so it can never delay the thread close() is waiting for.
+    private final ReentrantLock readTxnLock = new ReentrantLock();
     private final LmdbDb db;
     private final LmdbDb stateDb;
     private final ValueReferenceIndex valueReferenceIndex;
@@ -323,8 +331,8 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         SimpleMetrics.measure("Transfer", () -> {
-            transferState.setThread(Thread.currentThread());
             try {
+                transferState.setThread(Thread.currentThread());
                 env.write(writeTxn -> {
                     // Must be the unsynchronised read: close() holds this store's monitor
                     // while waiting for this thread to finish, so taking the monitor here
@@ -425,10 +433,12 @@ public class LmdbDataStore implements DataStore {
                 LOGGER.error(e::getMessage, e);
                 error(e);
             } finally {
+                // Count down first. close() waits on this latch uninterruptibly before
+                // closing the env, so nothing that can throw may run ahead of it — the
+                // env.write() above has returned by now, so the write txn is already closed.
+                complete.countDown();
                 // Ensure we complete.
                 queue.terminate();
-                // The LMDB environment will be closed after we complete.
-                complete.countDown();
                 LOGGER.debug(() -> "Finished transfer while loop");
                 transferState.setThread(null);
             }
@@ -631,8 +641,13 @@ public class LmdbDataStore implements DataStore {
                 LOGGER.debug(() -> "Waiting for transfer to stop");
                 while (true) {
                     try {
-                        completionState.awaitCompletion();
-                        break;
+                        if (completionState.awaitCompletion(WAIT_WARN_FREQUENCY_MS, TimeUnit.MILLISECONDS)) {
+                            break;
+                        }
+                        // Still unbounded, but a transfer thread wedged in native LMDB would
+                        // otherwise be an unattributable hang.
+                        LOGGER.warn(() -> "Still waiting for transfer to stop (queryKey=" +
+                                          queryKey + ", componentId=" + componentId + ")");
                     } catch (final InterruptedException e) {
                         LOGGER.trace(e::getMessage, e);
                         interrupted = true;
@@ -656,7 +671,17 @@ public class LmdbDataStore implements DataStore {
     @Override
     public synchronized void clear() {
         try {
-            close();
+            try {
+                close();
+            } catch (final RuntimeException e) {
+                // Log rather than propagate so the delete below is still attempted: if the
+                // env did close before the failure then bailing out here would leak the
+                // store dir on disk forever, and shutdown is already latched so a retried
+                // clear() would not close it either.
+                LOGGER.error(e::getMessage, e);
+            }
+            // Refuses to delete an env that is still open, so this can never delete under a
+            // live env; it throws instead, surfacing a genuinely failed close.
             env.delete();
         } finally {
             resultCount.set(0);
@@ -759,6 +784,15 @@ public class LmdbDataStore implements DataStore {
             return null;
         }
 
+        readTxnLock.lock();
+        try {
+            return doReadCurrentDbState();
+        } finally {
+            readTxnLock.unlock();
+        }
+    }
+
+    private CurrentDbState doReadCurrentDbState() {
         return env.readResult(readTxn -> {
             final ByteBuffer val = stateDb.get(readTxn, LmdbRowKeyFactoryFactory.DB_STATE_KEY);
             if (val == null) {
@@ -838,7 +872,11 @@ public class LmdbDataStore implements DataStore {
                                ") after store has been shut down");
 
         } else {
-            env.read(readTxn ->
+            // Only one read txn may exist at a time (maxReaders(1)); the transfer thread
+            // reads the DB state without holding this object's monitor, so share the lock.
+            readTxnLock.lock();
+            try {
+                env.read(readTxn ->
                     SimpleMetrics.measure("fetch", () -> {
                         try {
                             final FetchState fetchState = new FetchState();
@@ -873,6 +911,9 @@ public class LmdbDataStore implements DataStore {
                             throw e;
                         }
                     }));
+            } finally {
+                readTxnLock.unlock();
+            }
         }
     }
 

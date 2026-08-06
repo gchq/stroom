@@ -26,6 +26,8 @@ import jakarta.inject.Provider;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -33,13 +35,16 @@ import java.util.function.Consumer;
 public class LmdbWriter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbWriter.class);
+    private static final long WAIT_WARN_FREQUENCY_MS = 30_000;
 
     private final LmdbEnv env;
     private final ReentrantLock lock;
     private final Condition notFull;
     private final Condition notEmpty;
     private final CompletableFuture<Void> transferFuture;
-    private boolean closed;
+    // Volatile as the transfer loop's outer condition reads it without holding the lock, and
+    // close() now waits uninterruptibly for that loop to notice it.
+    private volatile boolean closed;
     // Set (under lock) when the transfer loop has exited, however it exited. Distinct from
     // closed, which is the client asking it to stop; terminated is it having stopped, and is
     // what stops a put() waiting forever on a loop that is no longer there to consume it.
@@ -49,8 +54,9 @@ public class LmdbWriter {
     /**
      * The supplied executor must either run or reject the transfer task; an executor that
      * silently drops a submitted task (e.g. {@code shutdownNow()} with the task still queued)
-     * leaves {@link #close()} waiting forever, as it has no way to distinguish a dropped task
-     * from one that has yet to run. Rejection at submission propagates from this constructor.
+     * leaves {@link #close()} waiting forever — and that wait is uninterruptible — as it has
+     * no way to distinguish a dropped task from one that has yet to run. Rejection at
+     * submission propagates from this constructor.
      */
     public LmdbWriter(final Provider<Executor> executorProvider,
                       final LmdbEnv env) {
@@ -86,41 +92,61 @@ public class LmdbWriter {
     }
 
     /**
-     * Asks the transfer loop to stop then waits for it to finish, i.e. to have performed its
-     * final commit and closed its write txn. Only once this has returned normally (or thrown
-     * anything other than {@link UncheckedInterruptedException}) is it safe for the caller to
-     * close the env; on interrupt the transfer loop may still be inside its write txn, so the
-     * caller must NOT close the env — closing an env under a live txn is undefined behaviour
-     * in LMDB.
+     * Stops the transfer loop and waits for it to finish, i.e. to have performed its final
+     * commit and closed its write txn. Once this returns — normally or by throwing — the
+     * caller may, and should, close the env: the write txn is closed on every path.
      * <p>
-     * Every blocking point here is interrupt responsive, which is what makes shutdown prompt:
-     * threads running under managed task contexts are interrupted at shutdown, escape whatever
-     * wait they are in, and the caller then leaks the env (dying with the process) rather than
-     * waiting for a writer task that may never finish.
+     * The wait is uninterruptible by design. An interrupt here is routine rather than
+     * exceptional (task threads are interrupted when work is terminated), and callers
+     * typically delete the env dir straight after closing it, so abandoning the wait would
+     * leak env dirs on disk. The interrupt flag is restored before returning. The wait is
+     * bounded in practice because the stop request below cannot be lost.
      */
     public synchronized void close() {
+        // Stop the transfer loop. Set directly under the lock rather than handed over via
+        // put(), so that an interrupt cannot leave the loop running: the wait below is
+        // uninterruptible, so the loop MUST be guaranteed to stop. Nothing can be queued at
+        // this point — every other public method is synchronized, and put() never returns
+        // with its item still queued — so stopping the loop cannot discard a write.
+        lock.lock();
         try {
-            put(null, true);
-        } catch (final UncheckedInterruptedException e) {
-            // We can't know the transfer loop has seen the close request, so we can't wait
-            // for it either. Propagate; the caller must not close the env.
-            throw e;
-        } catch (final RuntimeException e) {
-            // Already closed, or the transfer loop has already terminated (e.g. an earlier
-            // write failed). Either way we still wait for it below.
-            LOGGER.debug(e::getMessage, e);
+            closed = true;
+            notEmpty.signalAll();
+        } finally {
+            lock.unlock();
         }
+
+        boolean interrupted = false;
+        Throwable failure = null;
         try {
-            transferFuture.get();
-        } catch (final InterruptedException e) {
-            LOGGER.debug(e.getMessage(), e);
-            Thread.currentThread().interrupt();
-            throw new UncheckedInterruptedException(e);
-        } catch (final ExecutionException e) {
-            // The transfer loop failed, but it has exited, so its write txn has been closed
-            // and the caller may safely close the env. Surface the failure.
+            while (true) {
+                try {
+                    transferFuture.get(WAIT_WARN_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                    break;
+                } catch (final TimeoutException e) {
+                    // Still unbounded, but a transfer task wedged in native LMDB would
+                    // otherwise be an unattributable hang.
+                    LOGGER.warn(() -> "Still waiting for the writer to stop for env " + env.getDir());
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    interrupted = true;
+                } catch (final ExecutionException e) {
+                    // The transfer loop failed, but it has exited, so its write txn has been
+                    // closed and the caller may still close the env. Surface the failure.
+                    failure = e.getCause();
+                    break;
+                }
+            }
+        } finally {
+            if (interrupted) {
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        if (failure != null) {
             throw new RuntimeException(LogUtil.message("Error closing writer: {}",
-                    LogUtil.exceptionMessage(e.getCause())), e.getCause());
+                    LogUtil.exceptionMessage(failure)), failure);
         }
     }
 
