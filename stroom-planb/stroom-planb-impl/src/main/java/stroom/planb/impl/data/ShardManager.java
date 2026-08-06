@@ -341,8 +341,18 @@ public class ShardManager {
                 if (docDeleted) {
                     // Doc deleted — could be StoreShard whose delete() may fail if readers
                     // are active. Keep in map for retry on next cycle if delete fails.
+                    //
+                    // Deleted before being removed, so unlike the idle branch below there is
+                    // a window where a concurrent caller can still obtain this now dead
+                    // shard from the map. Its ShardClosedException retry will find the same
+                    // dead shard and fail. Accepted: this branch only runs once the doc has
+                    // been deleted, so failing the caller is the right outcome, and removing
+                    // first would lose the retry-on-next-cycle behaviour above.
                     if (shard.delete()) {
-                        shardMap.remove(uuid);
+                        // Two arg remove for consistency with the other removals; nothing can
+                        // replace the entry while the dead shard is still in the map, as
+                        // getOrCreateShard() would return that shard rather than create one.
+                        shardMap.remove(uuid, shard);
                     }
                 } else if (shard.isIdle()) {
                     // Idle eviction — only SnapshotShard reaches here (StoreShard.isIdle()

@@ -497,6 +497,14 @@ class SnapshotShard implements Shard {
         return lastAccessTime.plus(idleTimeout).isBefore(Instant.now());
     }
 
+    /**
+     * Always returns true, but the DB close and dir delete are only immediate when no reader
+     * is in flight; otherwise the guard defers them to the thread of the last reader to
+     * finish, so the env may still be open when this returns. Callers must not assume the
+     * dir has gone (e.g. by deleting a parent dir) on return. Nothing needs that today:
+     * fetched snapshot dirs left behind are swept by {@link #deleteFetchedSnapshots} at
+     * next startup.
+     */
     @Override
     public boolean delete() {
         final SnapshotInstance instance = snapshotRef.getAndSet(null);
