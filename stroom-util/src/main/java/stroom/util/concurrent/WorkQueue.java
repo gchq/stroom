@@ -115,7 +115,7 @@ public class WorkQueue {
      */
     public void exec(final Runnable runnable) {
         Objects.requireNonNull(runnable);
-        LOGGER.debug("exec() called");
+        LOGGER.trace("exec() called");
         boolean queued = false;
         while (!queued) {
             final long lockStamp = stampedLock.readLock();
