@@ -355,6 +355,28 @@ public class ShardManager {
         });
     }
 
+    /**
+     * Close all shards, closing their LMDB environments. Store shard data remains on disk and a
+     * later use of a shard recreates it, reopening its env; snapshot copies are discarded. For
+     * orderly shutdown, and for tests which must not leave envs open when their dirs are deleted.
+     * <p>
+     * Callers must ensure no new work is submitted concurrently: there is no closed flag, so a
+     * racing caller can create a fresh shard (opening a new env) while this runs, and that shard
+     * will remain open in the map when this returns.
+     */
+    public void closeAll() {
+        shardMap.forEach((uuid, shard) -> {
+            try {
+                // Remove before closing so no concurrent caller can obtain the closing shard.
+                // Two arg remove so we can't evict a newer shard created since we read this one.
+                shardMap.remove(uuid, shard);
+                shard.close();
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
+    }
+
     public <R> R get(final String mapName, final Function<Db<?, ?>, R> function) {
         try {
             final Shard shard = getShardForMapName(mapName);
