@@ -20,8 +20,10 @@ import stroom.config.common.UriFactory;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.AuthenticationState;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.AuthFlowResponse;
 import stroom.util.authentication.HasExpiry;
@@ -41,6 +43,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.ForbiddenException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -89,18 +92,21 @@ class AuthFlowResourceImpl implements AuthFlowResource {
     private final Provider<AuthenticationStateCache> authenticationStateCacheProvider;
     private final Provider<UriFactory> uriFactoryProvider;
     private final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
 
     @Inject
     AuthFlowResourceImpl(final Provider<OpenIdManager> openIdManagerProvider,
                          final Provider<OpenIdConfiguration> openIdConfigurationProvider,
                          final Provider<AuthenticationStateCache> authenticationStateCacheProvider,
                          final Provider<UriFactory> uriFactoryProvider,
-                         final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider) {
+                         final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider,
+                         final Provider<AuthenticationConfig> authenticationConfigProvider) {
         this.openIdManagerProvider = openIdManagerProvider;
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.authenticationStateCacheProvider = authenticationStateCacheProvider;
         this.uriFactoryProvider = uriFactoryProvider;
         this.stroomUserIdentityFactoryProvider = stroomUserIdentityFactoryProvider;
+        this.authenticationConfigProvider = authenticationConfigProvider;
     }
 
     @Unauthenticated
@@ -117,50 +123,40 @@ class AuthFlowResourceImpl implements AuthFlowResource {
         // Check existing session for a user identity.
         final HttpSession session = SessionUtil.getExistingSession(request);
         if (session != null) {
-            final Optional<UserIdentity> optIdentity = UserIdentitySessionUtil.getUserFromSession(session);
-            if (optIdentity.isPresent()) {
-                final UserIdentity identity = optIdentity.get();
-
-                // Check if the identity has expired.
-                if (identity instanceof final HasExpiry hasExpiry) {
-                    final Instant expireTime = hasExpiry.getExpireTime();
-                    if (expireTime != null) {
-                        if (Instant.now().isAfter(expireTime)) {
-                            LOGGER.debug("status() - Session identity has expired, treating as unauthenticated");
-                        } else {
-                            final long secondsTilExpiry = Duration.between(Instant.now(), expireTime).getSeconds();
-                            LOGGER.debug(() -> LogUtil.message(
-                                    "status() - Found authenticated identity: {}, expiresInSec: {}",
-                                    identity.subjectId(), secondsTilExpiry));
-                            return AuthFlowResponse.authenticated(
-                                    identity.subjectId(),
-                                    identity.getDisplayName(),
-                                    secondsTilExpiry);
-                        }
-                    } else {
-                        // No expire time, assume valid.
-                        LOGGER.debug(() -> LogUtil.message(
-                                "status() - Found authenticated identity with no expiry: {}",
-                                identity.subjectId()));
-                        return AuthFlowResponse.authenticated(
-                                identity.subjectId(),
-                                identity.getDisplayName(),
-                                null);
-                    }
-                } else {
-                    // Identity doesn't implement HasExpiry, assume valid.
-                    LOGGER.debug(() -> LogUtil.message(
-                            "status() - Found authenticated identity (no expiry info): {}",
-                            identity.subjectId()));
-                    return AuthFlowResponse.authenticated(
-                            identity.subjectId(),
-                            identity.getDisplayName(),
-                            null);
-                }
+            final Optional<AuthFlowResponse> optResponse =
+                    UserIdentitySessionUtil.getUserFromSession(session)
+                            .flatMap(identity -> toAuthenticatedResponse(identity, "session"));
+            if (optResponse.isPresent()) {
+                return optResponse.get();
             }
         }
 
-        // No valid session identity found - build the OIDC auth URL.
+        // Nothing usable in the session, but that does not mean nobody has authenticated this user:
+        // the request itself may carry a verifiable credential. Behind an AWS ALB with
+        // authenticate-oidc/authenticate-cognito (or any edge proxy relaying an IDP token) the proxy
+        // is the relying party: it has completed the flow already and injects a signed token into
+        // every request. There is no flow left for us to start there - the state, nonce and PKCE
+        // challenge we would mint belong to a second, redundant flow stacked on the proxy's - so
+        // report the proxy's user and let the app load. Deliberately no session is created:
+        // SecurityFilter re-derives this identity per request from the headers, which is also how
+        // the proxy's own token refresh reaches us.
+        final Optional<AuthFlowResponse> optTokenResponse = getRequestTokenResponse(request);
+        if (optTokenResponse.isPresent()) {
+            return optTokenResponse.get();
+        }
+
+        // Nobody has authenticated this user. When an edge proxy owns the auth flow there is no
+        // flow for us to start - returning no redirectUrl tells the bootstrap to reload the page,
+        // which lets the proxy run its own redirect as a top-level navigation (its 302 answer to
+        // the bootstrap's fetch() is cross-origin and cannot be followed by script). No state or
+        // target cookies either: there is no flow to bind them to.
+        if (isEdgeAuthentication()) {
+            LOGGER.debug("status() - Unauthenticated and edgeAuthentication is enabled, " +
+                         "returning no redirect URL");
+            return AuthFlowResponse.unauthenticated(null);
+        }
+
+        // No valid identity found anywhere - build the OIDC auth URL.
         final UriFactory uriFactory = uriFactoryProvider.get();
 
         // Only ever return the browser to our own origin after login. redirect_uri is unauthenticated
@@ -209,6 +205,16 @@ class AuthFlowResourceImpl implements AuthFlowResource {
                          final HttpServletRequest request,
                          final HttpServletResponse response) throws IOException {
         LOGGER.debug(() -> LogUtil.message("callback() - code: {}, stateId: {}", code, stateId));
+
+        // When an edge proxy is the relying party stroom never starts a flow, so no authorization
+        // code can legitimately arrive here. Refusing outright keeps 'exactly one relying party'
+        // true in code, and closes the endpoint to code/state injection games.
+        if (isEdgeAuthentication()) {
+            LOGGER.warn("callback() - Rejecting OIDC callback: edgeAuthentication is enabled so " +
+                        "stroom runs no auth flow of its own");
+            throw new ForbiddenException(
+                    "Authentication is handled by the edge proxy; stroom's OIDC callback is disabled.");
+        }
 
         Objects.requireNonNull(code, "Missing 'code' parameter");
         Objects.requireNonNull(stateId, "Missing 'state' parameter");
@@ -271,6 +277,87 @@ class AuthFlowResourceImpl implements AuthFlowResource {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Authentication error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Report the user as authenticated iff the identity is still usable.
+     *
+     * @return Empty when the identity has expired, i.e. is no longer usable and the caller must
+     * fall through to the next identity source.
+     */
+    private Optional<AuthFlowResponse> toAuthenticatedResponse(final UserIdentity identity,
+                                                               final String source) {
+        if (identity instanceof final HasExpiry hasExpiry) {
+            final Instant expireTime = hasExpiry.getExpireTime();
+            if (expireTime != null) {
+                if (Instant.now().isAfter(expireTime)) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "status() - {} identity has expired, treating as unauthenticated", source));
+                    return Optional.empty();
+                }
+                final long secondsTilExpiry = Duration.between(Instant.now(), expireTime).getSeconds();
+                LOGGER.debug(() -> LogUtil.message(
+                        "status() - Found authenticated {} identity: {}, expiresInSec: {}",
+                        source, identity.subjectId(), secondsTilExpiry));
+                return Optional.of(AuthFlowResponse.authenticated(
+                        identity.subjectId(),
+                        identity.getDisplayName(),
+                        secondsTilExpiry));
+            }
+        }
+        // No expiry, or an identity type with no expiry information - assume valid.
+        LOGGER.debug(() -> LogUtil.message(
+                "status() - Found authenticated {} identity with no expiry: {}",
+                source, identity.subjectId()));
+        return Optional.of(AuthFlowResponse.authenticated(
+                identity.subjectId(),
+                identity.getDisplayName(),
+                null));
+    }
+
+    /**
+     * See whether the request itself carries a credential we can verify (an ALB-signed
+     * {@code x-amzn-oidc-data} token, or an IDP token relayed as a bearer credential by an
+     * authenticating proxy), and if so report its user as authenticated.
+     */
+    private Optional<AuthFlowResponse> getRequestTokenResponse(final HttpServletRequest request) {
+        final IdpType idpType = openIdConfigurationProvider.get().getIdentityProviderType();
+        if (IdpType.NO_IDP.equals(idpType)) {
+            // No token verification is possible: DelegatingJwtContextFactory has no delegate for
+            // NO_IDP and would throw.
+            return Optional.empty();
+        }
+        try {
+            return openIdManagerProvider.get()
+                    .loginWithRequestToken(request)
+                    .flatMap(identity -> toAuthenticatedResponse(identity, "request token"));
+        } catch (final AuthenticationException e) {
+            // The request carried a token that did not yield a usable identity. This covers both
+            // an unknown/disabled user AND an unverifiable/expired token, because
+            // AbstractUserIdentityFactory wraps all verification failures in AuthenticationException.
+            if (isEdgeAuthentication()) {
+                // Behind an edge proxy, falling through would start a flow the IDP silently
+                // re-completes and bounces straight back - endlessly. Fail terminally instead; the
+                // bootstrap's one-shot reload still gives the proxy a single chance to refresh a
+                // stale token before the error is shown.
+                LOGGER.warn(() -> LogUtil.message(
+                        "status() - Request token failed authentication in edge mode: {}",
+                        e.getMessage()));
+                throw new ForbiddenException(
+                        "Authenticated user is not permitted to use stroom: " + e.getMessage());
+            }
+            // No edge proxy: no bounce is possible, so fall through and let stroom's own flow run,
+            // as it would have before request tokens were consulted here. A genuinely unknown or
+            // disabled user then fails terminally at the callback, exactly as they always did.
+            LOGGER.warn(() -> LogUtil.message(
+                    "status() - Ignoring request token that failed authentication: {}",
+                    e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    private boolean isEdgeAuthentication() {
+        return authenticationConfigProvider.get().getEdgeAuthenticationConfig().isEnabled();
     }
 
     /**

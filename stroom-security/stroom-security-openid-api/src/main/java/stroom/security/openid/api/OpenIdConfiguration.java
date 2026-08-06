@@ -16,7 +16,9 @@
 
 package stroom.security.openid.api;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -149,4 +151,16 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#getPublicKeyUriPattern()
      */
     String getPublicKeyUriPattern();
+
+    /**
+     * Extra query parameters to append to the OIDC authentication request, e.g. Google's
+     * {@code access_type=offline} (without which Google issues no refresh token).
+     * Default method so that implementations sourced from a discovery document (which cannot
+     * carry these) need not implement it.
+     *
+     * @see AbstractOpenIdConfig#getAuthenticationRequestExtraParams()
+     */
+    default Map<String, String> getAuthenticationRequestExtraParams() {
+        return Collections.emptyMap();
+    }
 }

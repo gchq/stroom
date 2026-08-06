@@ -96,8 +96,18 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                 .map(r -> {
                     final int permissionId = r.get(PERMISSION_APP.PERMISSION_ID).intValue();
                     final String permissionName = appPermissionIdDao.get(permissionId);
-                    return AppPermission.getPermissionForName(permissionName);
+                    final AppPermission appPermission = AppPermission.getPermissionForName(permissionName);
+                    if (appPermission == null) {
+                        // permission_app_id can hold names that are not (or are no longer) known to
+                        // AppPermission, e.g. ones carried over verbatim from the legacy app_permission
+                        // table by migration V07_06_00_800. Ignore them, else every permission check for
+                        // this user fails with an error rather than the user simply not holding them.
+                        LOGGER.warn("Ignoring unknown application permission '{}' (id: {}) held by user " +
+                                    "with uuid '{}'", permissionName, permissionId, userUuid);
+                    }
+                    return appPermission;
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(AppPermission.class)));
 
         return Collections.unmodifiableSet(appPermissions);

@@ -1032,11 +1032,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
         audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null

@@ -140,9 +140,13 @@ public class ApiKeyService {
      * is returned.
      */
     public Optional<UserIdentity> fetchVerifiedIdentity(final HttpServletRequest request) {
+        // Trimmed so the cache is keyed on the canonical form of the key, and so the hash
+        // verification in doFetchVerifiedIdentity() sees the same string that isApiKey() and
+        // extractPrefixPart() do, both of which trim. Whitespace is never part of an API key.
         final String token = NullSafe.get(
                 request.getHeader(HttpHeaders.AUTHORIZATION),
-                header -> header.replace(JwtUtil.BEARER_PREFIX, ""));
+                header -> header.replace(JwtUtil.BEARER_PREFIX, ""),
+                String::trim);
 
         // We need to do a basic check to see if it looks like an API key else we will fill the cache with
         // JWT tokens mapped to empty Optionals.
@@ -188,7 +192,8 @@ public class ApiKeyService {
         if (NullSafe.isBlankString(apiKeyStr)) {
             return Optional.empty();
         } else {
-            return apiKeyToAuthenticatedUserCache.get(apiKeyStr);
+            // See the note on trimming in fetchVerifiedIdentity(HttpServletRequest)
+            return apiKeyToAuthenticatedUserCache.get(apiKeyStr.trim());
         }
     }
 

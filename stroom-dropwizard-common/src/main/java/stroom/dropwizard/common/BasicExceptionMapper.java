@@ -48,7 +48,9 @@ public class BasicExceptionMapper implements ExceptionMapper<Throwable> {
         LOGGER.debug(throwable.getMessage(), throwable);
         return Response.status(status)
                 .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorMessage(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                // Must match the response status, else a client that reads the code from the body
+                // reports something other than the status it was actually sent.
+                .entity(new ErrorMessage(status.getStatusCode(),
                         throwable.getMessage(),
                         throwable.toString()))
                 .build();

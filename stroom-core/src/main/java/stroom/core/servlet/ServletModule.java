@@ -22,11 +22,13 @@ import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.ServletBinder;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.servlet.HttpServletResponseHolder;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 
 import com.google.inject.AbstractModule;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class ServletModule extends AbstractModule {
 
@@ -35,6 +37,7 @@ public class ServletModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
+        bind(HttpServletResponse.class).toProvider(HttpServletResponseHolder.class);
         bind(SessionIdProvider.class).to(SessionIdProviderImpl.class);
 
         // The regex for our script entities that can be cached
