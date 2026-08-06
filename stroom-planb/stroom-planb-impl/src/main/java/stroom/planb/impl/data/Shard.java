@@ -20,6 +20,7 @@ import stroom.planb.impl.dao.Db;
 import stroom.planb.shared.PlanBDoc;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.function.Function;
 
 public interface Shard {
@@ -47,6 +48,17 @@ public interface Shard {
      * Compact data in the shard.
      */
     void compact();
+
+    /**
+     * Delete old merge status records. Only shards for additive stores (histogram and metric) track merge
+     * status; the default is a no-op. The caller must ensure that no replayable copy of any merge source
+     * still exists before pruning. See docs/merge-idempotency-design.md.
+     *
+     * @return The number of records deleted.
+     */
+    default long deleteOldMergeStatus(final Instant deleteBefore) {
+        return 0;
+    }
 
     /**
      * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.

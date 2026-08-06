@@ -13,6 +13,36 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.10] - 2026-08-05
+
+* Bug **#5553** : Fix DocRefInfo cache bug.
+
+* Feature **#5582** : Add proper audit trail to doc history and store snapshots of data changes to allow future restore.
+
+* Task **#5588** : Improve JOOQ code generation to work with Flyway to remove catch 22 issue.
+
+* Feature **#2109** : Add doc dependencies to DB to improve capability.
+
+* Feature **#1556** : Add safe delete feature now we can depend on a reliable dependency discovery service.
+
+* Feature **#4111** : Add confirmation details when deleting a folder.
+
+* Bug **#4073** : Stop explorer scrolling to the top on deleting an item.
+
+* Bug **#5697** : Fix the UI bootstrap never recognising a user authenticated by an edge proxy (e.g. AWS ALB + Cognito, NGINX + oauth2-proxy): `/api/auth/flow/v1/status` now accepts a verified request token, and the new `security.authentication.edgeAuthentication` config block suppresses stroom's own OIDC flow and supports edge-aware logout when the proxy is the relying party.
+
+* Feature **#5697** : Apply CSRF Origin/X-CSRF checks to state-changing requests whose credential was injected by an authenticating edge proxy (previously only session-cookie identities were checked), and reject cross-site browser requests carrying a request token unless they send `X-CSRF: 1`. In-browser clients that attach their own bearer token must now send `X-CSRF: 1` on state-changing requests when `edgeAuthentication.enabled` is set; non-browser automation and inter-node traffic are unaffected.
+
+* Feature **#5697** : Add `security.authentication.openId.authenticationRequestExtraParams` to append provider-specific parameters to the OIDC authentication request, e.g. Google's `access_type: offline` without which Google issues no refresh token and the session cannot outlive the first access token.
+
+* Bug **#5696** : Stop the Plan B merge processor deleting un-merged queued data at startup and stop merge queue consumers churning through the queue when merges are interrupted at shutdown. Data queued for merge now survives a restart and interrupted merges are rerun when the merge job next runs.
+
+* Bug **#5696** : Fix Plan B merges double counting for histograms and metrics on resume.
+
+* Bug **#5696** : Stop Plan B histogram and metric stores double counting when a merge is rerun, e.g. after an interrupted shutdown, a duplicate part delivery or a sender retry. Each part shard now carries an instance UUID and additive stores track per source merge progress, skipping fully merged sources and resuming interrupted merges exactly after their last commit.
+
+* Bug **#5696** : Backport the Plan B filter staging buffer reuse from 7.13 so that a pooled buffer is no longer allocated and abandoned for every value element loaded.
+
 * Bug **#5689** : Fix issue where snapshots were not found.
 
 * Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
@@ -2406,7 +2436,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.10...HEAD
+[v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
 [v7.13-beta.9]: https://github.com/gchq/stroom/compare/v7.13-beta.8...v7.13-beta.9
 [v7.13-beta.8]: https://github.com/gchq/stroom/compare/v7.13-beta.7...v7.13-beta.8
 [v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7

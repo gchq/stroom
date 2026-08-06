@@ -44,7 +44,11 @@ import java.util.stream.Stream;
 public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDualEnvLmdbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    // As AbstractLmdbDbTest, and it matters more here because this base class opens two envs per
+    // test. Not measured directly: the only subclass, TestLmdbPerformance, is entirely @Disabled, so
+    // nothing in CI exercises these values. It overrides getMaxSizeBytes() for its own manual runs.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
+    private static final int MAX_DB_COUNT = 6;
 
     protected LmdbEnv lmdbEnv1 = null;
     protected LmdbEnv lmdbEnv2 = null;
@@ -111,7 +115,7 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
                 new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
-                .withMaxDbCount(10)
+                .withMaxDbCount(MAX_DB_COUNT)
                 .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();

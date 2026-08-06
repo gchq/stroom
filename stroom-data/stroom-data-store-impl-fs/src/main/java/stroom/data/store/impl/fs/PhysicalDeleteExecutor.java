@@ -286,7 +286,7 @@ public class PhysicalDeleteExecutor {
 
                 deleteEmptyDirs(simpleMetas, deleteThresholdEpoch, progress, dirToVolPathMap);
 
-                if (Thread.interrupted()) {
+                if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException();
                 }
 
@@ -393,7 +393,7 @@ public class PhysicalDeleteExecutor {
                 durationTimer.get(),
                 progress.getFailureCount()));
 
-        if (Thread.interrupted()) {
+        if (Thread.currentThread().isInterrupted()) {
             throw new InterruptedException();
         }
         return successfulMetaIdDeleteQueue;

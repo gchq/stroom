@@ -249,6 +249,20 @@ class StoreShard implements Shard {
     }
 
     @Override
+    public long deleteOldMergeStatus(final Instant deleteBefore) {
+        try {
+            writeLock.lockInterruptibly();
+            try {
+                return db.deleteOldMergeStatus(deleteBefore);
+            } finally {
+                writeLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+    }
+
+    @Override
     public void compact() {
         final Path dataFile = shardDir.resolve(DATA_FILE_NAME);
         final Path compactedDir = shardDir.resolve(COMPACTED_DIR_NAME);

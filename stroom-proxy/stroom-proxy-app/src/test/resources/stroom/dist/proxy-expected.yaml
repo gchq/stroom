@@ -172,6 +172,7 @@ proxyConfig:
         allowedAudiences: []
         audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null

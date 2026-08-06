@@ -107,6 +107,12 @@ public abstract class AppServlet extends HttpServlet {
      * Returns an inline JavaScript snippet that checks authentication status
      * via the BFF auth flow endpoint before loading the GWT application script.
      * If the user is not authenticated, the browser is redirected to the IdP.
+     * <p>
+     * When an authenticating edge proxy owns the auth flow there is no redirectUrl for the server
+     * to hand out, and a lapsed proxy session answers the fetch() with a cross-origin redirect the
+     * script cannot follow (it surfaces as a fetch error). Both cases are handled the same way: a
+     * one-shot, sessionStorage-guarded full page reload, which lets the proxy run its redirect as
+     * a top-level navigation. The guard stops a genuinely broken setup reloading forever.
      */
     private String getBootstrapScript(final String gwtScriptPath) {
         // Build the status path from the same shared constant the resource is served under, so the
@@ -116,6 +122,24 @@ public abstract class AppServlet extends HttpServlet {
         return """
                 <script type="text/javascript">
                 (function() {
+                  var RELOAD_KEY = 'stroomAuthReload';
+                  function reloadOnce(reason) {
+                    try {
+                      if (!sessionStorage.getItem(RELOAD_KEY)) {
+                        sessionStorage.setItem(RELOAD_KEY, '1');
+                        console.warn('Reloading to restart authentication: ' + reason);
+                        window.location.reload();
+                        return true;
+                      }
+                    } catch (e) {
+                      // sessionStorage unavailable - fall through to the error message.
+                    }
+                    return false;
+                  }
+                  function showError(message) {
+                    var el = document.getElementById('loadingText');
+                    if (el) el.textContent = 'Authentication error: ' + message;
+                  }
                   fetch('%s?redirect_uri='
                     + encodeURIComponent(window.location.href))
                     .then(function(resp) {
@@ -124,18 +148,22 @@ public abstract class AppServlet extends HttpServlet {
                     })
                     .then(function(auth) {
                       if (auth.authenticated) {
+                        try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) { }
                         var s = document.createElement('script');
                         s.type = 'text/javascript';
                         s.src = '%s';
                         document.head.appendChild(s);
-                      } else {
+                      } else if (auth.redirectUrl) {
                         window.location.href = auth.redirectUrl;
+                      } else if (!reloadOnce('no redirect URL, authentication is edge-managed')) {
+                        showError('not signed in, and the authenticating proxy did not sign you in');
                       }
                     })
                     .catch(function(err) {
-                      var el = document.getElementById('loadingText');
-                      if (el) el.textContent = 'Authentication error: ' + err.message;
-                      console.error('Bootstrap auth check failed', err);
+                      if (!reloadOnce(err.message)) {
+                        showError(err.message);
+                        console.error('Bootstrap auth check failed', err);
+                      }
                     });
                 })();
                 </script>""".formatted(statusPath, gwtScriptPath);

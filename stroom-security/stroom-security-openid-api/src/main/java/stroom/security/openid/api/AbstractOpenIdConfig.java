@@ -32,6 +32,7 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -46,6 +47,8 @@ public abstract class AbstractOpenIdConfig
     public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
     public static final String PROP_NAME_IDP_TYPE = "identityProviderType";
     public static final String PROP_NAME_EXPECTED_SIGNER_PREFIXES = "expectedSignerPrefixes";
+    public static final String PROP_NAME_AUTHENTICATION_REQUEST_EXTRA_PARAMS =
+            "authenticationRequestExtraParams";
     public static final String DEFAULT_POST_LOGOUT_REDIRECT_URI = OpenId.POST_LOGOUT_REDIRECT_URI;
     public static final List<String> DEFAULT_REQUEST_SCOPES = OpenId.DEFAULT_REQUEST_SCOPES;
     public static final List<String> DEFAULT_CLIENT_CREDENTIALS_SCOPES = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
@@ -185,6 +188,11 @@ public abstract class AbstractOpenIdConfig
      */
     private final String requiredAccessTokenType;
 
+    /**
+     * Extra query parameters appended verbatim to the OIDC authentication request.
+     */
+    private final Map<String, String> authenticationRequestExtraParams;
+
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
@@ -209,6 +217,7 @@ public abstract class AbstractOpenIdConfig
         expectedSignerPrefixes = Collections.emptySet();
         publicKeyUriPattern = DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE;
         requiredAccessTokenType = null;
+        authenticationRequestExtraParams = Collections.emptyMap();
     }
 
     @JsonIgnore
@@ -238,7 +247,9 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern,
-            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType) {
+            @JsonProperty(PROP_NAME_REQUIRED_ACCESS_TOKEN_TYPE) final String requiredAccessTokenType,
+            @JsonProperty(PROP_NAME_AUTHENTICATION_REQUEST_EXTRA_PARAMS)
+            final Map<String, String> authenticationRequestExtraParams) {
 
         this.identityProviderType = Objects.requireNonNullElseGet(identityProviderType, this::getDefaultIdpType);
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -266,6 +277,9 @@ public abstract class AbstractOpenIdConfig
         this.expectedSignerPrefixes = NullSafe.set(expectedSignerPrefixes);
         this.publicKeyUriPattern = publicKeyUriPattern;
         this.requiredAccessTokenType = requiredAccessTokenType;
+        this.authenticationRequestExtraParams = authenticationRequestExtraParams == null
+                ? Collections.emptyMap()
+                : Map.copyOf(authenticationRequestExtraParams);
     }
 
     /**
@@ -501,6 +515,19 @@ public abstract class AbstractOpenIdConfig
         return publicKeyUriPattern;
     }
 
+    @Override
+    @JsonProperty(PROP_NAME_AUTHENTICATION_REQUEST_EXTRA_PARAMS)
+    @JsonPropertyDescription("Extra query parameters to append to the OIDC authentication request sent to the " +
+                             "identity provider's authorization endpoint. E.g. Google requires " +
+                             "'access_type: offline' (and typically 'prompt: consent') or it will not issue a " +
+                             "refresh token, leaving stroom unable to keep a session alive past the first " +
+                             "access token's expiry. Parameters that clash with the standard OIDC parameters " +
+                             "stroom sets itself (response_type, client_id, redirect_uri, scope, state, nonce, " +
+                             "code_challenge, code_challenge_method) are ignored.")
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return authenticationRequestExtraParams;
+    }
+
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "If " + PROP_NAME_IDP_TYPE + " is set to 'EXTERNAL', property "
@@ -548,6 +575,7 @@ public abstract class AbstractOpenIdConfig
                ", fullNameClaimTemplate=" + fullNameClaimTemplate +
                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
                ", requiredAccessTokenType='" + requiredAccessTokenType + '\'' +
+               ", authenticationRequestExtraParams=" + authenticationRequestExtraParams +
                '}';
     }
 
@@ -579,7 +607,8 @@ public abstract class AbstractOpenIdConfig
                Objects.equals(userDisplayNameClaim, that.userDisplayNameClaim) &&
                Objects.equals(fullNameClaimTemplate, that.fullNameClaimTemplate) &&
                Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes) &&
-               Objects.equals(requiredAccessTokenType, that.requiredAccessTokenType);
+               Objects.equals(requiredAccessTokenType, that.requiredAccessTokenType) &&
+               Objects.equals(authenticationRequestExtraParams, that.authenticationRequestExtraParams);
     }
 
     @Override
@@ -604,6 +633,7 @@ public abstract class AbstractOpenIdConfig
                 userDisplayNameClaim,
                 fullNameClaimTemplate,
                 expectedSignerPrefixes,
-                requiredAccessTokenType);
+                requiredAccessTokenType,
+                authenticationRequestExtraParams);
     }
 }

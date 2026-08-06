@@ -5,6 +5,9 @@ server:
     - type: http
       port: ${STROOM_APP_PORT:-8080}
       useForwardedHeaders: true
+      # Edge session cookies (e.g. ALB+Cognito's sharded AWSELBAuthSessionCookie-0/-1) plus
+      # injected token headers exceed Jetty's 8KiB default.
+      maxRequestHeaderSize: 32KiB
   adminConnectors:
     - type: http
       port: ${STROOM_ADMIN_PORT:-8081}

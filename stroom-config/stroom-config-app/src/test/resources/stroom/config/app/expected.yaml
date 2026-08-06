@@ -761,6 +761,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
+    mergeStatusRetention: "P30D"
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
@@ -1028,11 +1029,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
         audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null

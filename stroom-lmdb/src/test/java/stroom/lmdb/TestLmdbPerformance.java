@@ -43,7 +43,17 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
     public static final int ITERATIONS = 1_000_000;
     public static final int ROUNDS = 7;
 
+    // These are manual perf tests writing ITERATIONS entries, so they need far more than the small
+    // default the base class uses for the tests that actually run in CI. This is the size they were
+    // getting from that default before it was reduced.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+
+    @Override
+    protected ByteSize getMaxSizeBytes() {
+        return DB_MAX_SIZE;
+    }
 
     private BasicLmdbDb<Integer, String> db1;
     private BasicLmdbDb<Integer, String> db2;
