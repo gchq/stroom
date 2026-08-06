@@ -165,9 +165,10 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
         // Close every LMDB env before JUnit deletes the @TempDir. Nothing else closes them: each
         // test gets a fresh injector and store, so without this every test leaks its envs (with
         // their reserved address space) for the life of the test JVM and the dir is deleted under
-        // open envs. All work in these tests is synchronous, so by the time we get here no txns
-        // are open and a plain close is safe. Env close is idempotent, so stores the test has
-        // already closed (e.g. via purge) are fine.
+        // open envs. By the time we get here no txns are open: single-threaded tests are fully
+        // synchronous, and the concurrency tests join ALL their tasks (normally or exceptionally)
+        // before returning or throwing, so a plain close is safe. Env close is idempotent, so
+        // stores the test has already closed (e.g. via purge) are fine.
         if (refDataStore instanceof final DelegatingRefDataOffHeapStore delegatingStore) {
             NullSafe.consume(delegatingStore.getLegacyRefDataStore(false), store ->
                     store.getLmdbEnvironment().close());
