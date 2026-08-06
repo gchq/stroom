@@ -69,6 +69,8 @@ import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -105,6 +107,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSearchResultCreation.class);
 
     // Make sure the search request is the same as the one we expected to make.
     private final Path resourcesDir = SearchDebugUtil.initialise();
@@ -156,7 +160,15 @@ class TestSearchResultCreation {
         // (waiting for its transfer thread to finish with the write txn) and deletes its env.
         // Nothing else does this: the ResultStores are never destroyed by these tests, so without
         // it every test leaked its envs and the @TempDir was deleted under them.
-        createdCoprocessors.forEach(CoprocessorsImpl::clear);
+        // Per-item catch so one failed clear doesn't leave the other coprocessors' stores open
+        // (which would also make the executor close below hang on their transfer threads).
+        createdCoprocessors.forEach(coprocessors -> {
+            try {
+                coprocessors.clear();
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error clearing coprocessors: {}", e.getMessage(), e);
+            }
+        });
         createdCoprocessors.clear();
         // close() awaits the (now exited) transfer threads before JUnit deletes the @TempDir.
         executorService.close();
