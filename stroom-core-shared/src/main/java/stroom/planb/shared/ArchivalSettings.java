@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.time.SimpleDuration;
-import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,19 +38,13 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ArchivalSettings extends DurationSetting {
 
-    private static final SimpleDuration DEFAULT_LEAD_TIME = SimpleDuration.builder()
-            .time(7)
-            .timeUnit(TimeUnit.DAYS)
-            .build();
-
     @JsonProperty
     private final ArchivalGranularity granularity;
 
     /**
-     * Archival is not optional. Queries read archive buckets, never the holding area, so a store with
-     * archiving switched off accumulates data that can never be found — silent loss rather than a
-     * configuration choice. The {@code enabled} property is still accepted so documents written before
-     * this became mandatory still deserialize, but its value is ignored.
+     * Archival is not optional: queries read archive buckets rather than the holding area, so a store with
+     * archiving off would accumulate data nothing can find. The inherited {@code enabled} property is
+     * accepted but ignored.
      */
     @JsonCreator
     public ArchivalSettings(
@@ -59,7 +52,7 @@ public class ArchivalSettings extends DurationSetting {
             @JsonProperty("duration") final SimpleDuration duration,
             @JsonProperty("checkInterval") final SimpleDuration checkInterval,
             @JsonProperty("granularity") final ArchivalGranularity granularity) {
-        super(true, Objects.requireNonNullElse(duration, DEFAULT_LEAD_TIME), checkInterval);
+        super(true, duration, checkInterval);
         if (getDuration().getTime() <= 0) {
             throw new IllegalArgumentException(
                     "ArchivalSettings duration must be positive, got: " + getDuration());

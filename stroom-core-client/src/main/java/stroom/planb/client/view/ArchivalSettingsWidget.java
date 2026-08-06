@@ -59,14 +59,14 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
 
         archivalAge.setMin(1);
         archivalAge.setMax(9999);
-        archivalAge.setValue(7);
+        archivalAge.setValue(12);
 
         archivalTimeUnit.addItem(TimeUnit.MINUTES);
         archivalTimeUnit.addItem(TimeUnit.HOURS);
         archivalTimeUnit.addItem(TimeUnit.DAYS);
         archivalTimeUnit.addItem(TimeUnit.WEEKS);
         archivalTimeUnit.addItem(TimeUnit.MONTHS);
-        archivalTimeUnit.setValue(TimeUnit.DAYS);
+        archivalTimeUnit.setValue(TimeUnit.HOURS);
 
         archivalCheckInterval.setMin(1);
         archivalCheckInterval.setMax(9999);
@@ -112,8 +112,8 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
             this.archivalAge.setValue(settings.getDuration().getTime());
             this.archivalTimeUnit.setValue(settings.getDuration().getTimeUnit());
         } else {
-            this.archivalAge.setValue(7L);
-            this.archivalTimeUnit.setValue(TimeUnit.DAYS);
+            this.archivalAge.setValue(12L);
+            this.archivalTimeUnit.setValue(TimeUnit.HOURS);
         }
         if (settings.getCheckInterval() != null) {
             this.archivalCheckInterval.setValue(settings.getCheckInterval().getTime());
