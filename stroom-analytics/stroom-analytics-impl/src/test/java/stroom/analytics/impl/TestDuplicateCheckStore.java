@@ -263,8 +263,9 @@ class TestDuplicateCheckStore {
 
                 duplicateCheckStore.flush();
             } finally {
-                // Note: no catch here. The previous version swallowed exceptions, which made this
-                // test pass whatever the store did.
+                // The test body deliberately has no catch (an earlier version swallowed all
+                // exceptions, making it pass whatever the store did); closeQuietly only
+                // swallows CLOSE failures so they can't mask a body failure.
                 closeQuietly(duplicateCheckStore);
             }
         }
