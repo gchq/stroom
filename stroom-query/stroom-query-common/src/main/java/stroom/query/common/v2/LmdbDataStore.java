@@ -326,7 +326,10 @@ public class LmdbDataStore implements DataStore {
             transferState.setThread(Thread.currentThread());
             try {
                 env.write(writeTxn -> {
-                    CurrentDbState currentDbState = getCurrentDbState();
+                    // Must be the unsynchronised read: close() holds this store's monitor
+                    // while waiting for this thread to finish, so taking the monitor here
+                    // would deadlock. See readCurrentDbState().
+                    CurrentDbState currentDbState = readCurrentDbState();
                     long lastCommitMs = System.currentTimeMillis();
                     long uncommittedCount = 0;
 
@@ -613,17 +616,36 @@ public class LmdbDataStore implements DataStore {
             // If the transfer loop is waiting on new queue items ensure it loops once more.
             completionState.signalComplete();
 
-            // Wait for transferring to stop.
+            // Wait for transferring to stop, and keep waiting even if we are interrupted.
+            // Terminating a search interrupts its task threads, so an interrupt here is
+            // routine rather than exceptional, and we must still close the env: clear()
+            // deletes the env dir immediately after this, so bailing out early would leak
+            // result store dirs on disk for every terminated search.
+            // Waiting is what makes closing the env safe. The transfer thread counts down
+            // `complete` in a finally that runs after env.write() has returned, i.e. once
+            // its write txn is closed, and it reaches that finally even when interrupted
+            // itself. The wait is short: the terminate calls above stop the transfer loop
+            // and wake it from its queue poll.
+            boolean interrupted = false;
             try {
                 LOGGER.debug(() -> "Waiting for transfer to stop");
-                completionState.awaitCompletion();
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            }
+                while (true) {
+                    try {
+                        completionState.awaitCompletion();
+                        break;
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e::getMessage, e);
+                        interrupted = true;
+                    }
+                }
 
-            env.close();
+                env.close();
+            } finally {
+                if (interrupted) {
+                    // Keep interrupting this thread.
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
     }
 
@@ -716,7 +738,23 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+    /**
+     * For client threads. Synchronised because this store's monitor is all that keeps client
+     * reads and close()'s env.close() apart (the lmdb2 env has no reader tracking of its own).
+     */
     private synchronized CurrentDbState getCurrentDbState() {
+        return readCurrentDbState();
+    }
+
+    /**
+     * Deliberately NOT synchronised, for use by the transfer thread only. close() holds this
+     * store's monitor while it waits for the transfer thread to exit, so a synchronised call
+     * from the transfer thread would deadlock: close() waits on the complete latch that only
+     * counts down when the transfer thread finishes. The read is still safe against env close
+     * because close() only closes the env after that latch, i.e. strictly after the transfer
+     * thread has finished. Client threads must use {@link #getCurrentDbState()}.
+     */
+    private CurrentDbState readCurrentDbState() {
         if (!currentDbStateFactory.isStoreLatestEventReference()) {
             return null;
         }
