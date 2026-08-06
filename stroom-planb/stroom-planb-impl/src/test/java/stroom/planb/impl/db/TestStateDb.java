@@ -785,7 +785,7 @@ class TestStateDb {
             assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 
@@ -804,7 +804,7 @@ class TestStateDb {
             }
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 

@@ -69,7 +69,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * interrupted dir swap under {@code archive/} would orphan the bucket permanently.
  *
  * <p>That repeated pushes for one date <em>merge</em> rather than overwrite is covered by
- * {@code TestArchiveOldData.pushArchive_mergesRepeatedBatchesForSameDay_ratherThanOverwriting}.
+ * {@code TestRunArchival.pushArchive_mergesRepeatedBatchesForSameDay_ratherThanOverwriting}.
  */
 class TestPushArchive {
 
@@ -315,7 +315,7 @@ class TestPushArchive {
         return new StagedArchive(DAY_LABEL, dir);
     }
 
-    /** Builds a local single-trace archive batch env, as archiveOldData would produce. */
+    /** Builds a local single-trace archive batch env, as runArchival would produce. */
     private StagedArchive stagedBatch(final String dirName, final String traceId) throws IOException {
         final Path dir = Files.createDirectories(tempDir.resolve(dirName));
         try (final TraceDb db = TraceDb.create(dir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {

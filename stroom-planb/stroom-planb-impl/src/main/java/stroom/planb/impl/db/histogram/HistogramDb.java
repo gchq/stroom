@@ -328,9 +328,9 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore, useStateTime);
+            final long count = runRetention(writer, deleteBefore, useStateTime);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -344,7 +344,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {

@@ -263,17 +263,17 @@ class TestArchiveOperation {
     }
 
     /**
-     * Creates a mock SharedFileStoreShard whose archiveOldData returns the given count (0 = nothing to archive).
+     * Creates a mock SharedFileStoreShard whose runArchival returns the given count (0 = nothing to archive).
      */
     private static SharedFileStoreShard mockShard(final PlanBDoc doc,
                                                   final long count) throws IOException {
         final SharedFileStoreShard shard = mock(SharedFileStoreShard.class);
-        when(shard.archiveOldData(any(), any())).thenReturn(count);
+        when(shard.runArchival(any(), any())).thenReturn(count);
         return shard;
     }
 
     /**
-     * Creates a mock SharedFileStoreShard whose archiveOldData returns a positive count
+     * Creates a mock SharedFileStoreShard whose runArchival returns a positive count
      * and also creates dated subdirectories in the archiveBaseDir argument so that
      * ArchiveOperation's Files.list() sees real archive shards.
      */
@@ -281,7 +281,7 @@ class TestArchiveOperation {
     private static SharedFileStoreShard mockShardWithDirs(final PlanBDoc doc,
                                                           final List<String> dateLabels) throws IOException {
         final SharedFileStoreShard shard = mock(SharedFileStoreShard.class);
-        when(shard.archiveOldData(any(), any())).thenAnswer((InvocationOnMock inv) -> {
+        when(shard.runArchival(any(), any())).thenAnswer((InvocationOnMock inv) -> {
             final Path archiveBaseDir = inv.getArgument(1, Path.class);
             for (final String label : dateLabels) {
                 Files.createDirectories(archiveBaseDir.resolve(label));

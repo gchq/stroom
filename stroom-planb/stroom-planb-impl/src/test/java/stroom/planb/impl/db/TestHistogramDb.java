@@ -245,9 +245,9 @@ class TestHistogramDb {
 
         try (final HistogramDb db = HistogramDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(1);
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
-            db.deleteOldData(Instant.now(), true);
+            db.runRetention(Instant.now(), true);
             assertThat(db.count()).isEqualTo(0);
         }
     }
@@ -266,10 +266,10 @@ class TestHistogramDb {
 
             assertThat(db.count()).isEqualTo(109L);
 
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(109L);
 
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(109L);
         }
     }

@@ -155,7 +155,7 @@ public class ShardManager {
                                     taskContext.info(() -> "Condensing data");
                                     total += shard.condense(loaded);
                                     taskContext.info(() -> "Deleting old data");
-                                    total += shard.deleteOldData(loaded);
+                                    total += shard.runRetention(loaded);
                                     if (total > 0) {
                                         // If we removed data then compact the shard.
                                         taskContext.info(() -> "Compacting shard");

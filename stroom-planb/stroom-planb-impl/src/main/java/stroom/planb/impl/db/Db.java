@@ -49,10 +49,10 @@ public interface Db<K, V> extends AutoCloseable {
     default void mergeComplete() {
     }
 
-    long deleteOldData(Instant deleteBefore,
+    long runRetention(Instant deleteBefore,
                        boolean useStateTime);
 
-    default long archiveOldData(final Instant archiveBefore,
+    default long runArchival(final Instant archiveBefore,
                                 final ArchivalGranularity granularity,
                                 final Path archiveBaseDir) {
         return 0L;

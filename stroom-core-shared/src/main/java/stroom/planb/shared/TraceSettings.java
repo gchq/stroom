@@ -37,7 +37,7 @@ import java.util.Objects;
  * <p>All other PlanB doc types use their own settings class and do <em>not</em>
  * implement {@link HasSharedFileStore}.  To add sharding support to a further type,
  * implement {@link HasSharedFileStore} on its settings class and provide an
- * {@code archiveOldData} override in its DB class — no changes are required to
+ * {@code runArchival} override in its DB class — no changes are required to
  * the core infrastructure ({@code ShardManager}, {@code ArchiveOperation}, etc.).
  */
 @JsonPropertyOrder({

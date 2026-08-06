@@ -262,7 +262,7 @@ public abstract class AbstractStoreShard implements Shard {
     }
 
     @Override
-    public long deleteOldData(final PlanBDocument doc) {
+    public long runRetention(final PlanBDocument doc) {
         long result = 0;
 
         // Find out how old data needs to be before we delete it.
@@ -281,7 +281,7 @@ public abstract class AbstractStoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    result = db.deleteOldData(deleteBefore, useStateTime);
+                    result = db.runRetention(deleteBefore, useStateTime);
                     lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();

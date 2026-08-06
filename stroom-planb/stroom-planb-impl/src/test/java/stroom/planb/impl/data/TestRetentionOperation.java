@@ -284,7 +284,7 @@ class TestRetentionOperation {
 
     private static SharedFileStoreShard mockShard(final PlanBDoc doc, final long deletedCount) {
         final SharedFileStoreShard shard = mock(SharedFileStoreShard.class);
-        when(shard.deleteOldData(any())).thenReturn(deletedCount);
+        when(shard.runRetention(any())).thenReturn(deletedCount);
         return shard;
     }
 

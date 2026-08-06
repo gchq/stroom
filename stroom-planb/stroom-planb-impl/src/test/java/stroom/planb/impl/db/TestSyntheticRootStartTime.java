@@ -104,7 +104,7 @@ class TestSyntheticRootStartTime {
         mergeBatch(dbDir, doc, tempDir, "b2", child("3333333333333333", LATE), LATE, LATE_END);
 
         try (final TraceDb db = TraceDb.create(dbDir, BB, BBF, doc, false)) {
-            db.archiveOldData(Instant.parse("2024-06-01T00:00:00.000Z"),
+            db.runArchival(Instant.parse("2024-06-01T00:00:00.000Z"),
                     ArchivalGranularity.DAY, archiveBaseDir);
         }
 

@@ -260,11 +260,11 @@ class TestTraceRootIndexConsistency {
             db.mergeComplete();
 
             // Cutoff before the root's own end → root retained.
-            db.deleteOldData(t.minusSeconds(60), false);
+            db.runRetention(t.minusSeconds(60), false);
             assertThat(traceIds(db)).as("root retained while its end is recent").containsExactly(TRACE);
 
             // Cutoff after the root's own end → root (and its root span) dropped.
-            db.deleteOldData(t.plusSeconds(60), false);
+            db.runRetention(t.plusSeconds(60), false);
             assertThat(traceIds(db)).as("aged root dropped").isEmpty();
         }
     }
@@ -297,7 +297,7 @@ class TestTraceRootIndexConsistency {
 
             // Cutoff between the root end and the late child → root dropped despite the recent
             // activity (the gate keys on the root's own end), late child left as an orphan.
-            db.deleteOldData(rootT.plusSeconds(3600), false); // 10:00
+            db.runRetention(rootT.plusSeconds(3600), false); // 10:00
             assertThat(traceIds(db)).as("aged root dropped despite activity").isEmpty();
             assertThat(db.get(key(ROOT, ""))).as("aged root span deleted").isNull();
             assertThat(db.get(key(GRAND, CHILD))).as("late child retained as orphan").isNotNull();
@@ -407,7 +407,7 @@ class TestTraceRootIndexConsistency {
             assertThat(storedRoot(db).getTotalSpans()).as("initial").isEqualTo(3);
 
             // Age out spans older than a cutoff between old and recent; the trace stays active.
-            db.deleteOldData(oldT.plusSeconds(60), false);
+            db.runRetention(oldT.plusSeconds(60), false);
 
             assertThat(storedRoot(db).getTotalSpans()).as("cumulative (not decremented)").isEqualTo(3);
             assertThat(liveSpanCount(db)).as("live spans after age-out").isEqualTo(2);

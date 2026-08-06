@@ -208,7 +208,7 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public long deleteOldData(final PlanBDocument doc) {
+    public long runRetention(final PlanBDocument doc) {
         // Deletion of old data is not supported on snapshots
         return 0L;
     }

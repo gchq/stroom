@@ -115,9 +115,9 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     }
 
     @Override
-    public long deleteOldData(final PlanBDocument doc) {
+    public long runRetention(final PlanBDocument doc) {
         syncFromSharedStoreIfRequired();
-        return super.deleteOldData(doc);
+        return super.runRetention(doc);
     }
 
     @Override
@@ -157,7 +157,7 @@ public class SharedFileStoreShard extends AbstractStoreShard {
      * @param archiveBaseDir local base dir; dated subdirs are created underneath
      * @return count of archived entries (0 if nothing to archive)
      */
-    public long archiveOldData(final PlanBDocument doc,
+    public long runArchival(final PlanBDocument doc,
                                final Path archiveBaseDir) throws IOException {
         syncFromSharedStoreIfRequired();
 
@@ -180,7 +180,7 @@ public class SharedFileStoreShard extends AbstractStoreShard {
             throw UncheckedInterruptedException.create(e);
         }
         try {
-            count = db.archiveOldData(archiveBefore, archival.getGranularity(), archiveBaseDir);
+            count = db.runArchival(archiveBefore, archival.getGranularity(), archiveBaseDir);
             if (count > 0) {
                 lastWriteTime = Instant.now();
             }

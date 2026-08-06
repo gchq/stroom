@@ -56,7 +56,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integration tests for {@code TraceDb.archiveOldData} — the single archival path for a trace store.
+ * Integration tests for {@code TraceDb.runArchival} — the single archival path for a trace store.
  *
  * <p>Every trace that has a root, real or synthesized, is staged into the bucket for its root's START time,
  * whatever the individual spans' timestamps. Its non-root spans are removed from the holding area; the root
@@ -64,7 +64,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>{@link ArchivalGranularity#DAY} is used throughout.
  */
-class TestArchiveOldData {
+class TestRunArchival {
 
     private static final ByteBufferFactoryImpl BYTE_BUFFER_FACTORY = new ByteBufferFactoryImpl();
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(BYTE_BUFFER_FACTORY);
@@ -105,7 +105,7 @@ class TestArchiveOldData {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
         }
 
         final List<Path> archiveDirs = listSubDirs(archiveBaseDir);
@@ -144,7 +144,7 @@ class TestArchiveOldData {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
         }
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
@@ -169,7 +169,7 @@ class TestArchiveOldData {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir))
+            assertThat(db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir))
                     .as("two spans plus the root row")
                     .isGreaterThanOrEqualTo(3);
         }
@@ -198,7 +198,7 @@ class TestArchiveOldData {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
         }
 
         assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())
@@ -236,7 +236,7 @@ class TestArchiveOldData {
             db.mergeComplete();
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir))
+            assertThat(db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir))
                     .isGreaterThanOrEqualTo(1);
         }
 
@@ -259,7 +259,7 @@ class TestArchiveOldData {
             db.write(writer -> db.insert(writer, new SpanKV(childKey(TRACE_A), span(CUTOFF, CUTOFF))));
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir)).isZero();
+            assertThat(db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir)).isZero();
         }
         assertThat(listSubDirs(archiveBaseDir)).isEmpty();
     }
@@ -344,7 +344,7 @@ class TestArchiveOldData {
 
         final long archived;
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            archived = db.archiveOldData(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+            archived = db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
         }
         // root + all children (+ the root-DBI entry) archived and deleted.
         assertThat(archived).isGreaterThanOrEqualTo(childCount + 1);

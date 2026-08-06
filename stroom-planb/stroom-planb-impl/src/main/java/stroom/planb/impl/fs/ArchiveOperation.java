@@ -75,7 +75,7 @@ public class ArchiveOperation implements SharedFileStoreOperation {
                         "No shared file store settings for " + ctx.lockName()));
 
         return localArchive.withLocalDir(ctx, localArchiveBase -> {
-            final long count = ctx.shard().archiveOldData(ctx.doc(), localArchiveBase);
+            final long count = ctx.shard().runArchival(ctx.doc(), localArchiveBase);
             if (count == 0) {
                 LOGGER.debug(() -> "Nothing to archive for " + ctx.lockName());
                 return false;

@@ -286,9 +286,9 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore);
+            final long count = runRetention(writer, deleteBefore);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -303,7 +303,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final Instant deleteBefore) {
         return env.read(readTxn -> {
             final Count changeCount = new Count();

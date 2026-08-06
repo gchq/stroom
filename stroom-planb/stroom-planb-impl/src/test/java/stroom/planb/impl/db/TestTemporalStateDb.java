@@ -449,10 +449,10 @@ class TestTemporalStateDb {
         try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(Instant.now());
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
             db.condense(Instant.now());
-            db.deleteOldData(Instant.now(), true);
+            db.runRetention(Instant.now(), true);
             assertThat(db.count()).isEqualTo(0);
         }
     }
@@ -472,11 +472,11 @@ class TestTemporalStateDb {
             assertThat(db.count()).isEqualTo(218);
 
             db.condense(refTime.plusMillis(1));
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(200);
 
             db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1));
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(182);
         }
     }
@@ -496,7 +496,7 @@ class TestTemporalStateDb {
             }
 
             db.condense(Instant.now());
-            db.deleteOldData(Instant.now(), true);
+            db.runRetention(Instant.now(), true);
             db.condense(Instant.now());
         }
     }
@@ -517,7 +517,7 @@ class TestTemporalStateDb {
 
             for (int i = 0; i < 100; i++) {
                 final Instant effectiveTime = refTime.plusSeconds(i * 60 * 60 * 24);
-                db.deleteOldData(effectiveTime, true);
+                db.runRetention(effectiveTime, true);
                 db.condense(Instant.now());
             }
         }
@@ -552,7 +552,7 @@ class TestTemporalStateDb {
 //                for (int i = 0; i < 100; i++) {
 //                    long total = 0;
 //                    total += db.condense(refTime2);
-//                    total += db.deleteOldData(refTime2, true);
+//                    total += db.runRetention(refTime2, true);
 //                    if (total > 0) {
 //                        // If we removed data then compact the shard.
 

@@ -483,7 +483,7 @@ public class TestTraceDb {
 //            assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 
@@ -501,7 +501,7 @@ public class TestTraceDb {
             }
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 

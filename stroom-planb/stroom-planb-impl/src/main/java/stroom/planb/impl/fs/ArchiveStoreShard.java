@@ -120,7 +120,7 @@ public class ArchiveStoreShard extends AbstractStoreShard {
     }
 
     @Override
-    public long deleteOldData(final PlanBDocument doc) {
+    public long runRetention(final PlanBDocument doc) {
         throw new UnsupportedOperationException("Archive shard is read-only");
     }
 

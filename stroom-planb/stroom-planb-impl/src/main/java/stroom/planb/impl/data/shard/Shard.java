@@ -34,7 +34,7 @@ public interface Shard {
     /**
      * Delete old data in the shard.
      */
-    long deleteOldData(PlanBDocument doc);
+    long runRetention(PlanBDocument doc);
 
     /**
      * Condense data in the shard.

@@ -499,7 +499,7 @@ class TestSnapshotShard {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("not supported");
 
-        assertThat(shard.deleteOldData(doc)).isEqualTo(0L);
+        assertThat(shard.runRetention(doc)).isEqualTo(0L);
         assertThat(shard.condense(doc)).isEqualTo(0L);
 
         // These should not throw
@@ -744,7 +744,7 @@ class TestSnapshotShard {
         }
 
         @Override
-        public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+        public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
             ensureOpen();
             return 0;
         }

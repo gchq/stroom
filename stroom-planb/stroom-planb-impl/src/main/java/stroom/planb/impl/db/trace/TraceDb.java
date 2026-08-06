@@ -98,7 +98,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +124,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * <p>The {@code trace-roots*} DBIs are deliberately <em>not</em> in this list.
      * Each archive receives only the roots (and the six secondary sort indexes
      * for those roots) whose start time falls in that archive's bucket, written
-     * explicitly by {@link #archiveOldData}. Copying the trace-root DBIs wholesale
+     * explicitly by {@link #runArchival}. Copying the trace-root DBIs wholesale
      * would place a full snapshot of every root into every bucket, causing the
      * same root to appear in multiple archives (duplicate results, inflated
      * counts) and mis-aligning the archive contents with the start-time bucket
@@ -183,7 +182,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private final KeySerde<SpanKey> keySerde;
     private final Serde<SpanValue> valueSerde;
     // Typed reference to the same object as valueSerde, held so that
-    // archiveOldData / deleteOldData can call readInsertTime() without
+    // runArchival / runRetention can call readInsertTime() without
     // going through the UID lookup table.
     private final SpanValueSerde spanValueSerde;
     private final UsedLookupsRecorder keyRecorder;
@@ -202,7 +201,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      *   <li><b>Written</b> by the merge processor when a root span (empty
      *       {@code parentSpanId}) is inserted via {@link #insert}.</li>
      *   <li><b>Cleared</b> from the live shard by retention and archiving
-     *       policies via {@link #deleteOldData}.</li>
+     *       policies via {@link #runRetention}.</li>
      *   <li><b>Copied</b> into archive shards by {@link #copyLookupsTo} so
      *       that archives remain independently queryable (e.g. for fan-out
      *       time-range queries).</li>
@@ -1109,7 +1108,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * @return the number of rows removed from the holding area — spans plus root-side rows, not traces
      */
     @Override
-    public long archiveOldData(final Instant archiveBefore,
+    public long runArchival(final Instant archiveBefore,
                                final ArchivalGranularity granularity,
                                final Path archiveBaseDir) {
         final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(archiveBefore);
@@ -1338,7 +1337,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // returns TraceStats.EMPTY for a missing row (spanCount 0, truncated false), so dropping it would
     // unlatch the per-trace span cap and let a capped trace accept another full allowance — which is what
     // isOverSpanLimit's cumulative count exists to prevent. The retained row is reachable only by
-    // deleteOldData's sweep, since every caller here is already iterating trace-roots and has just
+    // runRetention's sweep, since every caller here is already iterating trace-roots and has just
     // removed this trace's entry. The bulky parts (distinct service names, DFS checkpoints) always go.
     private void deleteStatsOf(final Txn<ByteBuffer> readTxn,
                                final LmdbWriter writer,
@@ -1380,7 +1379,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * Copies the lookup named-DBs (UID forward/reverse maps, hash map) from this
      * shard's LMDB environment to the archive shard's environment so that the UID
      * integers embedded in archived span values remain decodable. Trace-root DBIs
-     * are NOT copied here — see {@link #LOOKUP_DBI_NAMES} and {@link #archiveOldData},
+     * are NOT copied here — see {@link #LOOKUP_DBI_NAMES} and {@link #runArchival},
      * which write each archive's own roots and secondary indexes explicitly.
      */
     private void copyLookupsTo(final TraceDb archive) {
@@ -1411,10 +1410,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
             final NanoTime nanoTime = NanoTimeUtil.fromInstant(deleteBefore);
-            final long count = deleteOldData(writer, nanoTime);
+            final long count = runRetention(writer, nanoTime);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -1428,7 +1427,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final NanoTime deleteBefore) {
         return env.read(readTxn -> {
             final Count changeCount = new Count();
@@ -2761,9 +2760,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 .depth(depth)
                 .totalSpans((int) stats.spanCount())
                 .lastActivityMs(stats.lastActivityMs())
-                // The root span's own end time — fixed, unlike endTime (= max end across all
-                // spans). A large gap between the two flags trailing leaked activity (a pooled/
-                // background thread emitting spans under the trace long after the root finished).
                 .rootEndTime(root.end())
                 .error(stats.hasError())
                 .truncated(stats.truncated())

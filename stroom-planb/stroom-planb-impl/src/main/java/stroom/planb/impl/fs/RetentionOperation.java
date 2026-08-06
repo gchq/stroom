@@ -102,7 +102,7 @@ public class RetentionOperation implements SharedFileStoreOperation {
                 RetentionSettings::getCheckInterval);
         LOGGER.info("Running retention on main shard for {} (every {}, next due {})",
                 ctx.lockName(), interval, SimpleDurationUtil.plus(Instant.now(), interval));
-        final long deleted = ctx.shard().deleteOldData(ctx.doc());
+        final long deleted = ctx.shard().runRetention(ctx.doc());
         if (deleted > 0) {
             LOGGER.info("Deleted {} records from main shard for {}", deleted, ctx.lockName());
         } else {
