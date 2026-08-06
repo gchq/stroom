@@ -26,6 +26,7 @@ import stroom.planb.impl.fs.SharedFileStoreShard;
 import stroom.planb.impl.fs.StagedArchive;
 import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.ArchivalSettings;
+import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.StateType;
@@ -83,100 +84,96 @@ class TestArchiveOperation {
     // isDue — disabled / null archival
     // -----------------------------------------------------------------------
 
+    /**
+     * Archival cannot be switched off. Queries read archive buckets rather than the holding area, so a
+     * store that stopped archiving would accumulate data nothing could find — {@code ArchivalSettings}
+     * therefore forces {@code enabled} true and the UI has no toggle.
+     */
     @Test
-    void isDue_archivalDisabled_returnsFalse() {
-        final PlanBDoc doc = docWithArchival(false, SEVEN_DAYS);
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isFalse();
-    }
-
-    @Test
-    void isDue_archivalNull_returnsFalse() {
-        final PlanBDoc doc = PlanBDoc.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name("test")
-                .stateType(StateType.TEMPORAL_STATE)
-                .build();
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isFalse();
-    }
-
-    // -----------------------------------------------------------------------
-    // isDue — no last-run file (never run)
-    // -----------------------------------------------------------------------
-
-    @Test
-    void isDue_noLastRunFile_returnsTrue() {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+    void isDue_cannotBeDisabled() {
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
+        assertThat(doc.getSettings() instanceof HasSharedFileStore s
+                   && s.getSharedFileStore().getArchival().isEnabled())
+                .as("settings force archival on")
+                .isTrue();
         assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isTrue();
     }
 
     // -----------------------------------------------------------------------
-    // isDue — file present, interval not yet elapsed
+    // isDue — archival runs every merge cycle, so the check interval does not gate it
     // -----------------------------------------------------------------------
 
+    /**
+     * Archival claims the lock on its own account whenever it is enabled, regardless of when it last ran.
+     * Delaying it delays queries, since the archive is the queryable copy.
+     */
     @Test
-    void isDue_lastRunTooRecent_returnsFalse() throws IOException {
-        writeLastRunFile(Instant.now());
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
-        // Configured check interval is 16 hours — running now should not be due
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isFalse();
+    void isDue_trueWheneverArchivalIsEnabled() throws IOException {
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
+        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX))
+                .as("never run before")
+                .isTrue();
+
+        writeCompactionMarker(Instant.now());
+        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX))
+                .as("just compacted — still due, the marker only gates compaction")
+                .isTrue();
     }
 
     // -----------------------------------------------------------------------
-    // isDue — file present, interval has elapsed
+    // The marker gates COMPACTION, not archival
     // -----------------------------------------------------------------------
 
+    /** Compaction is a full env copy, so it is throttled by the check interval and records the marker. */
     @Test
-    void isDue_lastRunIntervalElapsed_returnsTrue() throws IOException {
-        // Write a last-run 2 days ago, well past the configured 16 hour check interval.
-        writeLastRunFile(Instant.now().minusSeconds(2 * 24 * 3600));
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isTrue();
-    }
+    void run_compactsAndWritesMarker_whenNothingCompactedYet() throws IOException {
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
+        final SharedFileStoreShard shard = mockShardWithDirs(doc, List.of("2025-05-18"));
 
-    // -----------------------------------------------------------------------
-    // isDue — corrupt file content
-    // -----------------------------------------------------------------------
-
-    @Test
-    void isDue_corruptLastRunFile_returnsTrue() throws IOException {
-        writeLastRunFile("not-a-timestamp");
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isTrue();
-    }
-
-    // -----------------------------------------------------------------------
-    // run — writes last-run file
-    // -----------------------------------------------------------------------
-
-    @Test
-    void run_writesLastRunFile() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
-        final SharedFileStoreShard shard = mockShard(doc, 0);
         archiveOperation.run(ctx(doc, shard));
 
-        final Path lastFile = sharedShardsDocDir
-                .resolve(PlanBConstants.formatShardIndex(SHARD_INDEX))
-                .resolve(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
+        verify(shard).compact();
+        final Path lastFile = compactMarkerFile();
         assertThat(lastFile).exists();
-        final String content = Files.readString(lastFile, StandardCharsets.UTF_8).trim();
-        assertThat(Instant.parse(content)).isNotNull();
+        assertThat(Instant.parse(Files.readString(lastFile, StandardCharsets.UTF_8).trim())).isNotNull();
     }
 
+    /** Archival still runs, but a full env copy is not repeated within the interval. */
     @Test
-    void run_thenIsDue_returnsFalse() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+    void run_archivesButSkipsCompaction_whenCompactedRecently() throws IOException {
+        writeCompactionMarker(Instant.now());
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
+        final SharedFileStoreShard shard = mockShardWithDirs(doc, List.of("2025-05-18"));
+
+        assertThat(archiveOperation.run(ctx(doc, shard)))
+                .as("archival ran")
+                .isTrue();
+        verify(shard, never()).compact();
+    }
+
+    /** Nothing archived means nothing to reclaim, so neither compaction nor the marker happens. */
+    @Test
+    void run_writesNoMarker_whenNothingArchived() throws IOException {
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final SharedFileStoreShard shard = mockShard(doc, 0);
-        archiveOperation.run(ctx(doc, shard));
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isFalse();
+
+        assertThat(archiveOperation.run(ctx(doc, shard))).isFalse();
+        assertThat(compactMarkerFile()).doesNotExist();
     }
 
     // -----------------------------------------------------------------------
     // run — return value
     // -----------------------------------------------------------------------
 
+    private Path compactMarkerFile() {
+        return sharedShardsDocDir
+                .resolve(PlanBConstants.formatShardIndex(SHARD_INDEX))
+                .resolve(PlanBConstants.COMPACTION_LAST_FILE_NAME);
+    }
+
     @Test
     void run_returnsTrue_whenShardsArchived() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final SharedFileStoreShard shard = mockShardWithDirs(doc, List.of("2025-05-18"));
 
         assertThat(archiveOperation.run(ctx(doc, shard))).isTrue();
@@ -184,18 +181,8 @@ class TestArchiveOperation {
 
     @Test
     void run_returnsFalse_whenNoShardsToArchive() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final SharedFileStoreShard shard = mockShard(doc, 0);
-        assertThat(archiveOperation.run(ctx(doc, shard))).isFalse();
-    }
-
-    @Test
-    void run_returnsFalse_whenNotDue() throws IOException {
-        // Write a recent last-run so isDue returns false.
-        writeLastRunFile(Instant.now());
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
-        final SharedFileStoreShard shard = mockShardWithDirs(doc, List.of("2025-05-18"));
-
         assertThat(archiveOperation.run(ctx(doc, shard))).isFalse();
     }
 
@@ -205,7 +192,7 @@ class TestArchiveOperation {
 
     @Test
     void run_callsPushArchiveForEachShard() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final List<String> dateLabels = List.of("2025-05-18", "2025-05-19");
         final SharedFileStoreShard shard = mockShardWithDirs(doc, dateLabels);
 
@@ -217,7 +204,7 @@ class TestArchiveOperation {
 
     @Test
     void run_doesNotCallPublisher_whenNoShardsToArchive() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final SharedFileStoreShard shard = mockShard(doc, 0);
 
         archiveOperation.run(ctx(doc, shard));
@@ -227,7 +214,7 @@ class TestArchiveOperation {
 
     @Test
     void run_callsCompact_whenShardsArchived() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final SharedFileStoreShard shard = mockShardWithDirs(doc, List.of("2025-05-18"));
 
         archiveOperation.run(ctx(doc, shard));
@@ -237,7 +224,7 @@ class TestArchiveOperation {
 
     @Test
     void run_doesNotCallCompact_whenNoShardsToArchive() throws IOException {
-        final PlanBDoc doc = docWithArchival(true, SEVEN_DAYS);
+        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         final SharedFileStoreShard shard = mockShard(doc, 0);
 
         archiveOperation.run(ctx(doc, shard));
@@ -249,23 +236,11 @@ class TestArchiveOperation {
     // run — archival disabled does nothing
     // -----------------------------------------------------------------------
 
-    @Test
-    void run_archivalDisabled_doesNotArchive() throws IOException {
-        final PlanBDoc doc = docWithArchival(false, SEVEN_DAYS);
-        final SharedFileStoreShard shard = mock(SharedFileStoreShard.class);
-
-        final boolean result = archiveOperation.run(ctx(doc, shard));
-
-        assertThat(result).isFalse();
-        verify(shard, never()).archiveOldData(any(), any());
-        verify(publisher, never()).pushArchive(any(), any(Integer.class), any());
-    }
-
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 
-    private PlanBDoc docWithArchival(final boolean enabled, final SimpleDuration duration) {
+    private PlanBDoc docWithArchival(final SimpleDuration duration) {
         return PlanBDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("test")
@@ -275,7 +250,6 @@ class TestArchiveOperation {
                                 1,
                                 null,
                                 new ArchivalSettings.Builder()
-                                        .enabled(enabled)
                                         .duration(duration)
                                         .checkInterval(CHECK_INTERVAL)
                                         .granularity(ArchivalGranularity.DAY)
@@ -317,14 +291,14 @@ class TestArchiveOperation {
         return shard;
     }
 
-    private void writeLastRunFile(final Instant timestamp) throws IOException {
-        writeLastRunFile(timestamp.toString());
+    private void writeCompactionMarker(final Instant timestamp) throws IOException {
+        writeCompactionMarker(timestamp.toString());
     }
 
-    private void writeLastRunFile(final String content) throws IOException {
+    private void writeCompactionMarker(final String content) throws IOException {
         final Path lastFile = sharedShardsDocDir
                 .resolve(PlanBConstants.formatShardIndex(SHARD_INDEX))
-                .resolve(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
+                .resolve(PlanBConstants.COMPACTION_LAST_FILE_NAME);
         Files.writeString(lastFile, content, StandardCharsets.UTF_8);
     }
 }

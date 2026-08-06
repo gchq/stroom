@@ -132,11 +132,8 @@ class TestOrphanTraceVisibility {
     // Helpers
     // -----------------------------------------------------------------------
 
-    /**
-     * A batch env holding one parentless span, for the shard to {@code merge}. It has to arrive that way
-     * rather than by a bare {@code insert}: only {@code merge} queues a root rebuild for every traceId it
-     * touches, so an inserted orphan would never get the synthesized root this test is about.
-     */
+    // Must arrive via merge, not insert: only merge queues a root rebuild, so an inserted orphan would
+    // never get the synthesized root this test is about.
     private static Path batchWithOrphanSpan(final Path tempDir, final PlanBDoc doc) throws IOException {
         final Path batch = Files.createDirectory(tempDir.resolve("batch_" + UUID.randomUUID()));
         try (final TraceDb db = TraceDb.create(batch, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {

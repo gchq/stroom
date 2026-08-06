@@ -142,6 +142,10 @@ public class ShardManager {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             shardMap.values().forEach(shard -> {
                 final PlanBDocument doc = shard.getDoc();
+                // The merge cycle maintains shared-file-store shards, under a cluster lock.
+                if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+                    return;
+                }
                 final Runnable runnable = taskContextFactory
                         .childContext(parentTaskContext, "Maintain shard: " + doc.getName(), taskContext -> {
                             try {

@@ -161,12 +161,12 @@ public class SharedFileStoreShard extends AbstractStoreShard {
                                final Path archiveBaseDir) throws IOException {
         syncFromSharedStoreIfRequired();
 
-        final ArchivalSettings archival = doc.getSettings() instanceof final HasSharedFileStore s
-                && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getArchival() : null;
-        if (archival == null || !archival.isEnabled()) {
-            return 0;
-        }
+        // Present for any doc with a shared file store, which this shard by definition has. Throw rather
+        // than return 0: silently not archiving would leave data only in the holding area, which queries
+        // never read.
+        final ArchivalSettings archival = HasSharedFileStore.archivalSettings(doc.getSettings())
+                .orElseThrow(() -> new IllegalStateException(
+                        "No shared file store settings for " + doc.getName()));
 
         final Instant archiveBefore =
                 SimpleDurationUtil.minus(Instant.now(), archival.getDuration());

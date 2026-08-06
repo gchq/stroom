@@ -267,7 +267,6 @@ class TestRetentionOperation {
                 .settings(new TraceSettings.Builder()
                         .sharedFileStore(new SharedFileStoreSettings(1, sharedPath,
                                 new ArchivalSettings.Builder()
-                                        .enabled(true)
                                         .granularity(ArchivalGranularity.DAY)
                                         .build()))
                         .retention(new RetentionSettings.Builder()

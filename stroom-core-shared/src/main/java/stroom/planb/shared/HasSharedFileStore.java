@@ -16,6 +16,8 @@
 
 package stroom.planb.shared;
 
+import java.util.Optional;
+
 /**
  * Marker interface for {@link AbstractPlanBSettings} subclasses that support
  * sharding and archiving via a shared file store.
@@ -44,4 +46,14 @@ public interface HasSharedFileStore {
      * store has not been configured.
      */
     SharedFileStoreSettings getSharedFileStore();
+
+    /**
+     * The archival policy for any settings object, empty when there is no shared file store to archive to.
+     * Archival itself cannot be switched off — see {@link SharedFileStoreSettings}.
+     */
+    static Optional<ArchivalSettings> archivalSettings(final AbstractPlanBSettings settings) {
+        return settings instanceof final HasSharedFileStore s && s.getSharedFileStore() != null
+                ? Optional.of(s.getSharedFileStore().getArchival())
+                : Optional.empty();
+    }
 }

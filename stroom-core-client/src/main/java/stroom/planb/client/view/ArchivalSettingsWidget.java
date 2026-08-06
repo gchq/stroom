@@ -22,7 +22,6 @@ import stroom.planb.shared.ArchivalSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -37,8 +36,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
     private final Widget widget;
 
     @UiField
-    CustomCheckBox archivalEnabled;
-    @UiField
     FormGroup archivalLeadTimePanel;
     @UiField
     ValueSpinner archivalAge;
@@ -52,12 +49,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
     SelectionBox<TimeUnit> archivalCheckIntervalTimeUnit;
     @UiField
     SelectionBox<ArchivalGranularity> archivalGranularity;
-    @UiField
-    FormGroup rootCutOffPanel;
-    @UiField
-    ValueSpinner rootCutOff;
-    @UiField
-    SelectionBox<TimeUnit> rootCutOffTimeUnit;
 
     private boolean readOnly;
     private boolean hasSharedPath;
@@ -90,15 +81,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         archivalGranularity.addItem(ArchivalGranularity.DAY);
         archivalGranularity.addItem(ArchivalGranularity.WEEK);
         archivalGranularity.setValue(ArchivalGranularity.DAY);
-
-        rootCutOff.setMin(1);
-        rootCutOff.setMax(9999);
-        rootCutOff.setValue(10);
-
-        rootCutOffTimeUnit.addItem(TimeUnit.MINUTES);
-        rootCutOffTimeUnit.addItem(TimeUnit.HOURS);
-        rootCutOffTimeUnit.addItem(TimeUnit.DAYS);
-        rootCutOffTimeUnit.setValue(TimeUnit.MINUTES);
     }
 
     @Override
@@ -109,7 +91,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
     @Override
     public ArchivalSettings getArchival() {
         return new ArchivalSettings.Builder()
-                .enabled(archivalEnabled.getValue())
                 .duration(SimpleDuration.builder()
                         .time(archivalAge.getValue())
                         .timeUnit(archivalTimeUnit.getValue())
@@ -119,10 +100,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
                         .timeUnit(archivalCheckIntervalTimeUnit.getValue())
                         .build())
                 .granularity(archivalGranularity.getValue())
-                .rootCutOff(SimpleDuration.builder()
-                        .time(rootCutOff.getValue())
-                        .timeUnit(rootCutOffTimeUnit.getValue())
-                        .build())
                 .build();
     }
 
@@ -131,7 +108,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         final ArchivalSettings settings = archival != null
                 ? archival
                 : new ArchivalSettings.Builder().build();
-        this.archivalEnabled.setValue(settings.isEnabled());
         if (settings.getDuration() != null) {
             this.archivalAge.setValue(settings.getDuration().getTime());
             this.archivalTimeUnit.setValue(settings.getDuration().getTimeUnit());
@@ -150,13 +126,6 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
                 settings.getGranularity() != null
                         ? settings.getGranularity()
                         : ArchivalGranularity.DAY);
-        if (settings.getRootCutOff() != null) {
-            this.rootCutOff.setValue(settings.getRootCutOff().getTime());
-            this.rootCutOffTimeUnit.setValue(settings.getRootCutOff().getTimeUnit());
-        } else {
-            this.rootCutOff.setValue(10L);
-            this.rootCutOffTimeUnit.setValue(TimeUnit.MINUTES);
-        }
         updateStates();
     }
 
@@ -165,33 +134,23 @@ public class ArchivalSettingsWidget extends AbstractSettingsWidget implements Ar
         updateStates();
     }
 
+    // Archival cannot be turned off — only its parameters are editable, and only once a shared path
+    // makes an archive possible at all.
     private void updateStates() {
         final boolean editable = !readOnly && hasSharedPath;
-        archivalEnabled.setEnabled(editable);
-
-        final boolean on = archivalEnabled.getValue();
         archivalLeadTimePanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
         archivalCheckIntervalPanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
-        rootCutOffPanel.getElement().getStyle().setOpacity(editable ? 1 : 0.5);
-        archivalAge.setEnabled(editable && on);
-        archivalTimeUnit.setEnabled(editable && on);
-        archivalCheckInterval.setEnabled(editable && on);
-        archivalCheckIntervalTimeUnit.setEnabled(editable && on);
-        archivalGranularity.setEnabled(editable && on);
-        rootCutOff.setEnabled(editable && on);
-        rootCutOffTimeUnit.setEnabled(editable && on);
+        archivalAge.setEnabled(editable);
+        archivalTimeUnit.setEnabled(editable);
+        archivalCheckInterval.setEnabled(editable);
+        archivalCheckIntervalTimeUnit.setEnabled(editable);
+        archivalGranularity.setEnabled(editable);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         updateStates();
-    }
-
-    @UiHandler("archivalEnabled")
-    public void onArchivalEnabled(final ValueChangeEvent<Boolean> event) {
-        updateStates();
-        getUiHandlers().onChange();
     }
 
     @UiHandler("archivalAge")

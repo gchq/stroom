@@ -20,6 +20,7 @@ import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.ArchivalSettings;
 import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RetentionSettings;
@@ -127,11 +128,9 @@ public class RetentionOperation implements SharedFileStoreOperation {
                 SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
 
         final ArchivalGranularity configuredGranularity =
-                ctx.doc().getSettings() instanceof final HasSharedFileStore s
-                        && s.getSharedFileStore() != null
-                        && s.getSharedFileStore().getArchival() != null
-                        ? s.getSharedFileStore().getArchival().getGranularity()
-                        : null;
+                HasSharedFileStore.archivalSettings(ctx.doc().getSettings())
+                        .map(ArchivalSettings::getGranularity)
+                        .orElse(null);
 
         final String sharedPathStr = ctx.doc().getSharedPath();
         if (sharedPathStr == null) {

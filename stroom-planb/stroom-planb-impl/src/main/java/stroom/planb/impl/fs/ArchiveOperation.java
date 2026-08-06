@@ -32,24 +32,21 @@ import java.nio.file.Path;
 import java.time.Instant;
 
 /**
- * SharedFileStoreOperation that archives old entries from a {@link HasSharedFileStore} shard
- * into date-labelled archive shards on the shared file store.
+ * Archives entries from a {@link HasSharedFileStore} shard into date-labelled buckets on the shared file
+ * store, then occasionally compacts the shard it emptied.
  *
- * <p>Archival is only supported for doc types whose settings implement
- * {@link HasSharedFileStore}. All other doc types are skipped without error.
- *
- * <p>How often archival is checked comes from the doc's own
- * {@link ArchivalSettings#getCheckInterval()} — it is not derived from the archival lead time,
- * which decides only which data moves. After archiving, the main shard is compacted to reclaim
- * freed space.
+ * <p>Archival runs every merge cycle rather than on a schedule, because the archive is the queryable copy
+ * and any delay here is query latency. Compaction does not: {@code shard.compact()} is a full LMDB env copy
+ * under the shard's write lock, so {@link ArchivalSettings#getCheckInterval()} throttles it via the
+ * {@code .compaction.last} marker.
  */
 public class ArchiveOperation implements SharedFileStoreOperation {
 
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(ArchiveOperation.class);
 
-    private static final OperationMarker MARKER =
-            new OperationMarker(PlanBConstants.ARCHIVAL_LAST_FILE_NAME);
+    private static final OperationMarker COMPACT_MARKER =
+            new OperationMarker(PlanBConstants.COMPACTION_LAST_FILE_NAME);
 
     private final LocalArchive localArchive;
 
@@ -68,50 +65,41 @@ public class ArchiveOperation implements SharedFileStoreOperation {
     public boolean isDue(final PlanBDocument doc,
                          final Path sharedShardsDocDir,
                          final int shardIndex) {
-        final ArchivalSettings archival = archival(doc);
-        if (archival == null || !archival.isEnabled()) {
-            return false;
-        }
-        final Instant lastRun = MARKER.lastRun(sharedShardsDocDir, shardIndex);
-        return lastRun == null
-               || Instant.now().isAfter(SimpleDurationUtil.plus(lastRun, archival.getCheckInterval()));
-    }
-
-    private static ArchivalSettings archival(final PlanBDocument doc) {
-        return doc.getSettings() instanceof final HasSharedFileStore s
-               && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getArchival()
-                : null;
+        return true;
     }
 
     @Override
     public boolean run(final SharedFileStoreOperationContext ctx) throws IOException {
-        if (!isDue(ctx.doc(), ctx.sharedShardsDocDir(), ctx.shardIndex())) {
-            return false;
-        }
-        return archiveAgedData(ctx);
-    }
-
-    private boolean archiveAgedData(final SharedFileStoreOperationContext ctx) throws IOException {
-        final SimpleDuration interval = archival(ctx.doc()).getCheckInterval();
-        LOGGER.info("Running archival for {} (every {}, next due {})",
-                ctx.lockName(), interval, SimpleDurationUtil.plus(Instant.now(), interval));
+        final ArchivalSettings archival = HasSharedFileStore.archivalSettings(ctx.doc().getSettings())
+                .orElseThrow(() -> new IllegalStateException(
+                        "No shared file store settings for " + ctx.lockName()));
 
         return localArchive.withLocalDir(ctx, localArchiveBase -> {
             final long count = ctx.shard().archiveOldData(ctx.doc(), localArchiveBase);
             if (count == 0) {
-                LOGGER.debug(() -> "No data to archive for " + ctx.lockName());
-                MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+                LOGGER.debug(() -> "Nothing to archive for " + ctx.lockName());
                 return false;
             }
             localArchive.pushAll(ctx, localArchiveBase);
+            LOGGER.info("Archived {} row(s) for {}", count, ctx.lockName());
 
-            LOGGER.info("Compacting main shard after archival for {}", ctx.lockName());
-            ctx.shard().compact();
-
-            MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+            compactIfDue(ctx, archival);
             return true;
         });
+    }
+
+    // Reclaiming space is worth a full env copy only occasionally; archival itself has already run.
+    private void compactIfDue(final SharedFileStoreOperationContext ctx,
+                              final ArchivalSettings archival) {
+        final SimpleDuration interval = archival.getCheckInterval();
+        final Instant lastCompact = COMPACT_MARKER.lastRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
+        if (lastCompact != null
+                && !Instant.now().isAfter(SimpleDurationUtil.plus(lastCompact, interval))) {
+            return;
+        }
+        LOGGER.info("Compacting main shard for {} (every {})", ctx.lockName(), interval);
+        ctx.shard().compact();
+        COMPACT_MARKER.recordRun(ctx.sharedShardsDocDir(), ctx.shardIndex());
     }
 
 }

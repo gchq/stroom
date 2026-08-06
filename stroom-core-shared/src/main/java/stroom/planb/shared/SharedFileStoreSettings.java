@@ -34,8 +34,9 @@ import java.util.Objects;
  *   <li><b>sharedPath</b> — path to the shared filesystem used for multi-node
  *       replication and archiving. {@code null} or blank means the shared file
  *       store is disabled.</li>
- *   <li><b>archival</b> — optional time-based archival policy; {@code null} means
- *       archival is not configured.</li>
+ *   <li><b>archival</b> — the archival policy. Never null: archival is mandatory, because queries read
+ *       archive buckets rather than the live store, so a store that stopped archiving would accumulate
+ *       data nothing could find. An absent block means defaults, not "off".</li>
  * </ul>
  *
  * <p>Archival is nested here (rather than being a sibling field on the enclosing
@@ -62,12 +63,13 @@ public final class SharedFileStoreSettings {
             @JsonProperty("archival") final ArchivalSettings archival) {
         this.shardCount = shardCount;
         this.sharedPath = sharedPath;
-        this.archival = archival;
+        // Never null: archival is mandatory, so an absent block means defaults, not "off".
+        this.archival = Objects.requireNonNullElse(archival, new ArchivalSettings.Builder().build());
     }
 
     /**
-     * Convenience constructor for cases where no archival policy is needed
-     * (e.g. tests, or stores that have not yet configured archival).
+     * Convenience constructor for callers with nothing to say about archival — it still gets the default
+     * policy, since archival cannot be switched off.
      */
     public SharedFileStoreSettings(final int shardCount, final String sharedPath) {
         this(shardCount, sharedPath, null);
@@ -81,10 +83,7 @@ public final class SharedFileStoreSettings {
         return sharedPath;
     }
 
-    /**
-     * Returns the archival policy for this store, or {@code null} if archival
-     * has not been configured.
-     */
+    /** The archival policy, never null — see the constructor. */
     public ArchivalSettings getArchival() {
         return archival;
     }

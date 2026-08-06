@@ -37,8 +37,9 @@ import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.ArchivalSettings;
+import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
-import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.TimeFilter;
@@ -453,14 +454,12 @@ abstract class AbstractTracesStore implements TracesStore {
     }
 
     // Widest window the histogram will serve: one archival-granularity bucket (so at most 1-2 archive
-    // buckets are ever touched). Defaults to DAY when archival is not configured.
+    // buckets are ever touched). Defaults to DAY when there is no shared file store to archive to.
     protected static long maxHistogramWindowMs(final PlanBDocument doc) {
-        ArchivalGranularity granularity = ArchivalGranularity.DAY;
-        if (doc.getSettings() instanceof final TraceSettings ts
-                && ts.getSharedFileStore() != null
-                && ts.getSharedFileStore().getArchival() != null) {
-            granularity = ts.getSharedFileStore().getArchival().getGranularity();
-        }
+        final ArchivalGranularity granularity =
+                HasSharedFileStore.archivalSettings(doc.getSettings())
+                        .map(ArchivalSettings::getGranularity)
+                        .orElse(ArchivalGranularity.DAY);
         return switch (granularity) {
             case HOUR -> 60L * 60 * 1000;
             case DAY -> 24L * 60 * 60 * 1000;
