@@ -79,6 +79,8 @@ public class ShardManager {
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
+    // Set permanently by closeAll(); stops any new shard (and so any new env) being created.
+    private volatile boolean closed;
     // Serialises creation of a given shard without holding a lock on the shard map while we do it.
     private final StripedLock creationLocks = new StripedLock();
     private final NodeInfo nodeInfo;
@@ -357,18 +359,24 @@ public class ShardManager {
 
     /**
      * Close all shards, closing their LMDB environments. Store shard data remains on disk and a
-     * later use of a shard recreates it, reopening its env; snapshot copies are discarded. For
-     * orderly shutdown, and for tests which must not leave envs open when their dirs are deleted.
+     * later use of a shard would recreate it, reopening its env; snapshot copies are discarded.
+     * For orderly shutdown, and for tests which must not leave envs open when their dirs are
+     * deleted.
      * <p>
-     * Callers must ensure no new work is submitted concurrently: there is no closed flag, so a
-     * racing caller can create a fresh shard (opening a new env) while this runs, and that shard
-     * will remain open in the map when this returns.
+     * This manager is closed permanently: no shard can be created afterwards, so nothing can
+     * reopen an env on a dir whose env we have just closed.
      */
     public void closeAll() {
+        // Set BEFORE sweeping, which is what makes this airtight against a creation that is
+        // already in flight: such a creation publishes its shard to the map and then re-reads
+        // this flag, so either we see its entry in the sweep below, or it sees this flag and
+        // closes its own shard. See getOrCreateShard().
+        closed = true;
+
         shardMap.forEach((uuid, shard) -> {
             try {
-                // Remove before closing so no concurrent caller can obtain the closing shard.
-                // Two arg remove so we can't evict a newer shard created since we read this one.
+                // Remove before closing so no concurrent caller can obtain the closing
+                // shard. Two arg remove so we can't evict a shard we are not closing.
                 shardMap.remove(uuid, shard);
                 shard.close();
             } catch (final Exception e) {
@@ -443,8 +451,27 @@ public class ShardManager {
                 return created;
             }
 
+            if (closed) {
+                // Fast path only: don't open an env we would immediately have to close
+                // again. The check that actually matters is the one after publishing below.
+                throw new RuntimeException("Plan B shard manager is closed");
+            }
+
             final Shard shard = creator.get();
             shardMap.put(docUuid, shard);
+
+            // closeAll() may have swept the map while we were opening the env above, which
+            // would leave this shard and its open env in the map with nothing left to close
+            // it. Re-read the flag AFTER publishing: closeAll() sets it before it sweeps, so
+            // the two possible orderings are exhaustive — either it sees our entry and closes
+            // it, or we see the flag here and close it ourselves.
+            if (closed) {
+                if (shardMap.remove(docUuid, shard)) {
+                    shard.close();
+                }
+                throw new RuntimeException("Plan B shard manager is closed");
+            }
+
             return shard;
         } finally {
             lock.unlock();
