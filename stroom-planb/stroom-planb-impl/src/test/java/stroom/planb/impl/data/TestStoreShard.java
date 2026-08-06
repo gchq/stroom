@@ -53,10 +53,14 @@ class TestStoreShard {
         final StatePaths statePaths = new StatePaths(tempDir);
         final PlanBDoc doc = createDoc(new SnapshotSettings(true, false, false));
         final StoreShard shard = createShard(statePaths, doc);
+        try {
+            assertThatNoException().isThrownBy(shard::createSnapshot);
 
-        assertThatNoException().isThrownBy(shard::createSnapshot);
-
-        assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).exists();
+            assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).exists();
+        } finally {
+            // The shard's env must be closed before JUnit deletes the @TempDir
+            shard.close();
+        }
     }
 
     /**
@@ -68,13 +72,16 @@ class TestStoreShard {
         final StatePaths statePaths = new StatePaths(tempDir);
         final PlanBDoc doc = createDoc(new SnapshotSettings(true, false, false));
         final StoreShard shard = createShard(statePaths, doc);
+        try {
+            shard.createSnapshot();
+            final Path zip = statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip");
+            assertThat(zip).exists();
 
-        shard.createSnapshot();
-        final Path zip = statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip");
-        assertThat(zip).exists();
-
-        assertThatNoException().isThrownBy(shard::createSnapshot);
-        assertThat(zip).exists();
+            assertThatNoException().isThrownBy(shard::createSnapshot);
+            assertThat(zip).exists();
+        } finally {
+            shard.close();
+        }
     }
 
     /**
@@ -86,10 +93,13 @@ class TestStoreShard {
         final StatePaths statePaths = new StatePaths(tempDir);
         final PlanBDoc doc = createDoc(new SnapshotSettings(false, false, true));
         final StoreShard shard = createShard(statePaths, doc);
+        try {
+            shard.createSnapshot();
 
-        shard.createSnapshot();
-
-        assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).exists();
+            assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).exists();
+        } finally {
+            shard.close();
+        }
     }
 
     /**
@@ -100,10 +110,13 @@ class TestStoreShard {
         final StatePaths statePaths = new StatePaths(tempDir);
         final PlanBDoc doc = createDoc(new SnapshotSettings(false, false, false));
         final StoreShard shard = createShard(statePaths, doc);
+        try {
+            shard.createSnapshot();
 
-        shard.createSnapshot();
-
-        assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).doesNotExist();
+            assertThat(statePaths.getSnapshotDir().resolve(doc.getUuid()).resolve("snapshot.zip")).doesNotExist();
+        } finally {
+            shard.close();
+        }
     }
 
     /**
@@ -116,17 +129,20 @@ class TestStoreShard {
         final StatePaths statePaths = new StatePaths(tempDir);
         final PlanBDoc doc = createDoc(new SnapshotSettings(true, false, false));
         final StoreShard shard = createShard(statePaths, doc);
+        try {
+            // Make the final move fail by putting a non empty dir where the snapshot zip needs to go. The zip is
+            // still written to the temp file first, so this exercises a failure after the temp file exists.
+            final Path snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+            final Path zip = snapshotDir.resolve("snapshot.zip");
+            Files.createDirectories(zip);
+            Files.writeString(zip.resolve("occupied"), "occupied");
 
-        // Make the final move fail by putting a non empty dir where the snapshot zip needs to go. The zip is
-        // still written to the temp file first, so this exercises a failure after the temp file exists.
-        final Path snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
-        final Path zip = snapshotDir.resolve("snapshot.zip");
-        Files.createDirectories(zip);
-        Files.writeString(zip.resolve("occupied"), "occupied");
+            shard.createSnapshot();
 
-        shard.createSnapshot();
-
-        assertThat(snapshotDir.resolve("snapshot.tmp")).doesNotExist();
+            assertThat(snapshotDir.resolve("snapshot.tmp")).doesNotExist();
+        } finally {
+            shard.close();
+        }
     }
 
     private PlanBDoc createDoc(final SnapshotSettings snapshotSettings) {
