@@ -45,7 +45,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.List;
@@ -501,12 +500,16 @@ class TestDuplicateCheckStore {
 
         // Remove the version entry from the info db
         final LmdbEnv lmdbEnv = createEnv(duplicateCheckStoreConfig.getLmdbConfig(), lmdbEnvDir);
-        final LmdbDb infoDb = lmdbEnv.openDb(DuplicateCheckStore.INFO_DB_NAME);
-        lmdbEnv.write(writeTxn -> {
-            infoDb.delete(writeTxn, InfoKey.SCHEMA_VERSION.getByteBuffer());
-            writeTxn.commit();
-        });
-        lmdbEnv.close();
+        try {
+            final LmdbDb infoDb = lmdbEnv.openDb(DuplicateCheckStore.INFO_DB_NAME);
+            lmdbEnv.write(writeTxn -> {
+                infoDb.delete(writeTxn, InfoKey.SCHEMA_VERSION.getByteBuffer());
+                writeTxn.commit();
+            });
+        } finally {
+            // The env must not outlive this test's @TempDir whatever happens above
+            lmdbEnv.close();
+        }
 
         // Now re-create the store which should delete and re-create the env
         try (final ExecutorService executorService = Executors.newSingleThreadExecutor()) {
@@ -529,15 +532,19 @@ class TestDuplicateCheckStore {
         }
 
         // The re-created env should have the current schema version in it.
+        // The int is extracted inside the txn (the buffer is LMDB owned) but asserted outside,
+        // after the close, so an assertion failure can't leave the env open at @TempDir deletion.
         final LmdbEnv lmdbEnv2 = createEnv(duplicateCheckStoreConfig.getLmdbConfig(), lmdbEnvDir);
-        final LmdbDb infoDb2 = lmdbEnv2.openDb(DuplicateCheckStore.INFO_DB_NAME);
-        lmdbEnv2.read(readTxn -> {
-            final ByteBuffer byteBuffer = infoDb2.get(readTxn, InfoKey.SCHEMA_VERSION.getByteBuffer());
-            final int version = byteBuffer.getInt();
-            assertThat(version)
-                    .isEqualTo(DuplicateCheckStore.CURRENT_SCHEMA_VERSION);
-        });
-        lmdbEnv2.close();
+        final int version;
+        try {
+            final LmdbDb infoDb2 = lmdbEnv2.openDb(DuplicateCheckStore.INFO_DB_NAME);
+            version = lmdbEnv2.readResult(readTxn ->
+                    infoDb2.get(readTxn, InfoKey.SCHEMA_VERSION.getByteBuffer()).getInt());
+        } finally {
+            lmdbEnv2.close();
+        }
+        assertThat(version)
+                .isEqualTo(DuplicateCheckStore.CURRENT_SCHEMA_VERSION);
     }
 
     @Test

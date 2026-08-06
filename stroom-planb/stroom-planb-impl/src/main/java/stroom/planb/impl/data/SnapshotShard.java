@@ -507,6 +507,14 @@ class SnapshotShard implements Shard {
     }
 
     @Override
+    public void close() {
+        // A snapshot is a transient local copy, so closing it is the same as discarding it.
+        // destroy() flags the instance; the DB close and dir delete run immediately if no
+        // readers are in flight, otherwise on the thread of the last reader to finish.
+        delete();
+    }
+
+    @Override
     public PlanBDoc getDoc() {
         return doc;
     }

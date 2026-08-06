@@ -130,7 +130,7 @@ class StoreShard implements Shard {
                 if (exclusiveReadLock.tryLock()) {
                     try {
                         LOGGER.info(() -> "Deleting data for: " + doc);
-                        close();
+                        closeDb();
                         FileUtil.deleteDir(shardDir);
                         return true;
                     } finally {
@@ -291,7 +291,7 @@ class StoreShard implements Shard {
                 exclusiveReadLock.lockInterruptibly();
                 try {
                     // Close the DB.
-                    close();
+                    closeDb();
 
                     // Switch files.
                     try {
@@ -513,7 +513,9 @@ class StoreShard implements Shard {
             readLock.lockInterruptibly();
             try {
                 if (db == null) {
-                    throw new RuntimeException("Database is closed");
+                    // ShardManager.get() catches this and retries with a fresh shard, so a
+                    // caller holding a reference from before close()/delete() self-heals.
+                    throw new SnapshotShard.ShardClosedException();
                 }
                 return function.apply(db);
             } finally {
@@ -546,13 +548,35 @@ class StoreShard implements Shard {
     /**
      * Must only be called while holding {@code exclusiveReadLock}.
      */
-    private void close() {
+    private void closeDb() {
         if (db != null) {
             try {
                 db.close();
             } finally {
                 db = null;
             }
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            writeLock.lockInterruptibly();
+            try {
+                // Unlike delete(), wait for in-flight readers rather than giving up, so the
+                // env cannot be closed under a live read txn.
+                exclusiveReadLock.lockInterruptibly();
+                try {
+                    LOGGER.debug(() -> "Closing shard for: " + doc);
+                    closeDb();
+                } finally {
+                    exclusiveReadLock.unlock();
+                }
+            } finally {
+                writeLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -567,7 +591,7 @@ class StoreShard implements Shard {
             readLock.lockInterruptibly();
             try {
                 if (db == null) {
-                    throw new RuntimeException("Database is closed");
+                    throw new SnapshotShard.ShardClosedException();
                 }
                 return db.getInfoString();
             } finally {
