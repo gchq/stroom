@@ -56,6 +56,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 @Singleton
@@ -68,7 +71,7 @@ public class PathwaysProcessor {
     private final MessageReceiverFactory messageReceiverFactory;
     private final ByteBuffers byteBuffers;
     private final Path dbPath;
-    private final Map<String, PathwaysDb> pathwaysDbMap = new ConcurrentHashMap<>();
+    private final Map<String, Store> pathwaysDbMap = new ConcurrentHashMap<>();
     // Serialises creation of a given store without holding a lock on the map while we do it.
     private final StripedLock creationLocks = new StripedLock();
     private final PathwaySerde pathwaySerde;
@@ -99,21 +102,37 @@ public class PathwaysProcessor {
 
         final List<DocRef> docRefs = pathwaysStore.list();
         for (final DocRef docRef : NullSafe.list(docRefs)) {
-            final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-            if (doc != null &&
-                doc.getTracesDocRef() != null &&
-                Objects.equals(doc.getProcessingNode(), nodeInfo.getThisNodeName())) {
+            try {
+                process(docRef);
+            } catch (final RuntimeException e) {
+                // Keep going: a doc deleted since list() above, or one that fails to process,
+                // must not stop us processing the rest until the next run of this job.
+                LOGGER.error(() -> LogUtil.message("Error processing pathways for '{}': {}",
+                        docRef, e.getMessage()), e);
+            }
+        }
+    }
 
-                // Check that this is the node that trace stores are likely to be located.
-                if (shardManager.isSnapshotNode()) {
-                    throw new RuntimeException("Attempt to run pathways processing on different node to trace store");
-                }
+    private void process(final DocRef docRef) {
+        final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
+        if (doc != null &&
+            doc.getTracesDocRef() != null &&
+            Objects.equals(doc.getProcessingNode(), nodeInfo.getThisNodeName())) {
 
-                // Load pathways DB for doc.
-                final PathwaysDb pathwaysDb = getPathwaysDb(docRef, true);
+            // Check that this is the node that trace stores are likely to be located.
+            if (shardManager.isSnapshotNode()) {
+                throw new RuntimeException("Attempt to run pathways processing on different node to trace store");
+            }
 
-                final DocRef infoFeed = doc.getInfoFeed();
-                if (infoFeed != null && infoFeed.getName() != null) {
+            final DocRef infoFeed = doc.getInfoFeed();
+            if (infoFeed != null && infoFeed.getName() != null) {
+                // Load pathways DB for doc, held under its read lock for the whole of the
+                // processing below so it can't be closed and deleted while we write to it.
+                useStore(docRef, true, pathwaysDb -> {
+                    if (pathwaysDb == null) {
+                        return null;
+                    }
+
                     messageReceiverFactory.create(infoFeed.getName(), messageReceiver -> {
 
                         shardManager.get(doc.getTracesDocRef().getName(), db -> {
@@ -135,9 +154,18 @@ public class PathwaysProcessor {
                             return null;
                         });
                     });
-                }
+                    return null;
+                });
             }
         }
+    }
+
+    /**
+     * Opens the store for a doc, creating it if needed. Only for tests that need an open
+     * store to exercise the close and delete path.
+     */
+    void openForTesting(final DocRef docRef) {
+        useStore(docRef, true, pathwaysDb -> null);
     }
 
     private Path getPathwaysPath(final DocRef docRef) {
@@ -145,14 +173,41 @@ public class PathwaysProcessor {
     }
 
     /**
+     * Runs the supplied function against the doc's store while holding that store's read lock,
+     * so the store cannot be closed and its dir deleted while the function is using it. The
+     * function is passed null if there is no store, which is only possible when
+     * createIfNotExists is false or the store was deleted while we were waiting for the lock.
+     *
      * @param createIfNotExists Whether to create the store if we don't already have one. Pass
      *                          false from read only paths so that querying a doc that has
-     *                          never been processed doesn't create a store as a side effect;
-     *                          they get null and can report no results.
+     *                          never been processed doesn't create a store as a side effect.
      */
-    private PathwaysDb getPathwaysDb(final DocRef docRef, final boolean createIfNotExists) {
+    private <R> R useStore(final DocRef docRef,
+                           final boolean createIfNotExists,
+                           final Function<PathwaysDb, R> function) {
+        final Store store = getStore(docRef, createIfNotExists);
+        if (store == null) {
+            return function.apply(null);
+        }
+
+        // Excludes deleteStore() for the duration of the call. Without this the store could be
+        // closed, and its files unlinked, while we are inside a read txn on it, which is
+        // undefined behaviour in LMDB rather than an error we could report.
+        store.lock.readLock().lock();
+        try {
+            if (store.closed) {
+                // Deleted between us taking it from the map and acquiring the lock.
+                return function.apply(null);
+            }
+            return function.apply(store.db);
+        } finally {
+            store.lock.readLock().unlock();
+        }
+    }
+
+    private Store getStore(final DocRef docRef, final boolean createIfNotExists) {
         final String uuid = docRef.getUuid();
-        final PathwaysDb existing = pathwaysDbMap.get(uuid);
+        final Store existing = pathwaysDbMap.get(uuid);
         if (existing != null) {
             return existing;
         }
@@ -166,7 +221,7 @@ public class PathwaysProcessor {
         lock.lock();
         try {
             // Another thread may have created it while we were waiting for the lock.
-            final PathwaysDb created = pathwaysDbMap.get(uuid);
+            final Store created = pathwaysDbMap.get(uuid);
             if (created != null) {
                 return created;
             }
@@ -181,9 +236,9 @@ public class PathwaysProcessor {
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-            final PathwaysDb pathwaysDb = PathwaysDb.create(processingPath, byteBuffers, false);
-            pathwaysDbMap.put(uuid, pathwaysDb);
-            return pathwaysDb;
+            final Store store = new Store(PathwaysDb.create(processingPath, byteBuffers, false));
+            pathwaysDbMap.put(uuid, store);
+            return store;
         } finally {
             lock.unlock();
         }
@@ -230,18 +285,46 @@ public class PathwaysProcessor {
     }
 
     private void deleteStore(final String uuid, final Path dir) {
-        // Take the creation lock so we can't race a caller that is opening this same store,
-        // and remove from the map before closing so nobody can pick it up mid close.
+        // Held for the whole delete, not just the map removal: it stops a concurrent caller
+        // creating a new store on this dir behind us, which we would then delete the files
+        // from. Contention is acceptable as only a deleted doc gets here, and only callers
+        // whose uuid shares one of the 2048 stripes are affected.
         final Lock lock = creationLocks.getLockForKey(uuid);
         lock.lock();
         try {
-            final PathwaysDb pathwaysDb = pathwaysDbMap.remove(uuid);
-            if (pathwaysDb != null) {
-                // Must close the env before deleting the dir it lives in.
-                pathwaysDb.close();
+            // Single arg remove is safe here because creation takes the same stripe, so no
+            // replacement can have been published since we read it.
+            final Store store = pathwaysDbMap.remove(uuid);
+            boolean closed = true;
+            if (store != null) {
+                // Waits for in-flight users, so the env is never closed under a live txn.
+                // Plain lock() as this must happen even if the job thread is interrupted; it
+                // ignores interrupts and restores the flag once acquired.
+                store.lock.writeLock().lock();
+                try {
+                    store.closed = true;
+                    // Must close the env before deleting the dir it lives in.
+                    store.db.close();
+                } catch (final RuntimeException e) {
+                    closed = false;
+                    LOGGER.error(() -> LogUtil.message("Error closing pathways store '{}': {}",
+                            FileUtil.getCanonicalPath(dir), e.getMessage()), e);
+                } finally {
+                    store.lock.writeLock().unlock();
+                }
             }
-            LOGGER.info(() -> "Deleting pathways store for deleted doc: " + uuid);
-            FileUtil.deleteDir(dir);
+
+            if (closed) {
+                LOGGER.info(() -> "Deleting pathways store for deleted doc: " + uuid);
+                if (!FileUtil.deleteDir(dir)) {
+                    LOGGER.error(() -> "Failed to delete all of pathways store " +
+                                       FileUtil.getCanonicalPath(dir));
+                }
+            } else {
+                // Leave the data alone rather than unlink it for an env we could not close.
+                LOGGER.error(() -> "Keeping pathways store " + FileUtil.getCanonicalPath(dir) +
+                                   " as its env could not be closed");
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(() -> LogUtil.message("Error deleting pathways store '{}': {}",
                     FileUtil.getCanonicalPath(dir), e.getMessage()), e);
@@ -250,19 +333,46 @@ public class PathwaysProcessor {
         }
     }
 
-    public PathwayResultPage findPathways(final FindPathwayCriteria criteria) {
-        final PathwaysDb pathwaysDb = getPathwaysDb(criteria.getDataSourceRef(), false);
-        if (pathwaysDb == null) {
-            // Nothing has been processed for this doc yet.
-            return new PathwayResultPage(Collections.emptyList(), PageResponse
-                    .builder()
-                    .offset(criteria.getPageRequest().getOffset())
-                    .length(0)
-                    .total(0L)
-                    .exact(true)
-                    .build());
-        }
 
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A store and the lock that keeps its use apart from its closure.
+     */
+    private static class Store {
+
+        private final PathwaysDb db;
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+        // Guarded by lock.
+        private boolean closed;
+
+        private Store(final PathwaysDb db) {
+            this.db = db;
+        }
+    }
+
+    public PathwayResultPage findPathways(final FindPathwayCriteria criteria) {
+        // Read only, so don't create a store for a doc that has never been processed. Held
+        // under the store's read lock for the whole scan, which can be long as it walks every
+        // entry to count them, so the store can't be closed and deleted underneath it.
+        return useStore(criteria.getDataSourceRef(), false, pathwaysDb -> {
+            if (pathwaysDb == null) {
+                // Nothing has been processed for this doc yet.
+                return new PathwayResultPage(Collections.emptyList(), PageResponse
+                        .builder()
+                        .offset(criteria.getPageRequest().getOffset())
+                        .length(0)
+                        .total(0L)
+                        .exact(true)
+                        .build());
+            }
+
+            return findPathways(criteria, pathwaysDb);
+        });
+    }
+
+    private PathwayResultPage findPathways(final FindPathwayCriteria criteria, final PathwaysDb pathwaysDb) {
         final Count count = new Count();
         final List<Pathway> list = new ArrayList<>();
         final PageRequest pageRequest = criteria.getPageRequest();

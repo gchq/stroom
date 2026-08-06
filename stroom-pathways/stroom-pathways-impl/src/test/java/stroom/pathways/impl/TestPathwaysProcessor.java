@@ -16,12 +16,18 @@
 
 package stroom.pathways.impl;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.node.api.NodeInfo;
+import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.planb.impl.data.ShardManager;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PermissionException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -62,9 +68,10 @@ class TestPathwaysProcessor {
                 .thenReturn(null);
         Mockito.when(pathwaysStore.readDocument(docRef(NOT_FOUND_UUID)))
                 .thenThrow(new DocumentNotFoundException(docRef(NOT_FOUND_UUID)));
-        // Anything other than a definite "not found" must leave the store alone.
+        // Anything other than a definite "not found" must leave the store alone. A permission
+        // failure is the realistic case: the docstore throws rather than returning null.
         Mockito.when(pathwaysStore.readDocument(docRef(UNKNOWN_UUID)))
-                .thenThrow(new RuntimeException("Some transient failure"));
+                .thenThrow(new PermissionException(null, "Not authorised"));
 
         createProcessor(tempDir, pathwaysStore).exec();
 
@@ -72,6 +79,35 @@ class TestPathwaysProcessor {
         assertThat(notFound).doesNotExist();
         assertThat(live).exists();
         assertThat(unknown).exists();
+    }
+
+    /**
+     * The store being deleted is normally open, so this covers the close() that
+     * PathwaysDb gained for exactly this purpose, and the deletion of a real env's files.
+     */
+    @Test
+    void closesAnOpenStoreBeforeDeletingIt(@TempDir final Path tempDir) {
+        final PathwaysStore pathwaysStore = Mockito.mock(PathwaysStore.class);
+        Mockito.when(pathwaysStore.list()).thenReturn(Collections.emptyList());
+        Mockito.when(pathwaysStore.readDocument(docRef(DELETED_UUID)))
+                .thenThrow(new DocumentNotFoundException(docRef(DELETED_UUID)));
+
+        final Path storeDir = tempDir.resolve("pathways").resolve(DELETED_UUID);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final PathwaysProcessor processor = createProcessor(
+                tempDir, pathwaysStore, new ByteBuffers(byteBufferFactory));
+
+        // Opens a real env on disk, as processing would.
+        processor.findPathways(criteria(DELETED_UUID));
+        assertThat(storeDir).doesNotExist();
+
+        // Now make one exist and be open, then let the sweep close and delete it.
+        processor.openForTesting(docRef(DELETED_UUID));
+        assertThat(storeDir.resolve("data.mdb")).exists();
+
+        processor.exec();
+
+        assertThat(storeDir).doesNotExist();
     }
 
     @Test
@@ -95,14 +131,24 @@ class TestPathwaysProcessor {
         return dir;
     }
 
+    private FindPathwayCriteria criteria(final String uuid) {
+        return new FindPathwayCriteria(PageRequest.createDefault(), null, docRef(uuid));
+    }
+
     private PathwaysProcessor createProcessor(final Path tempDir, final PathwaysStore pathwaysStore) {
+        return createProcessor(tempDir, pathwaysStore, null);
+    }
+
+    private PathwaysProcessor createProcessor(final Path tempDir,
+                                              final PathwaysStore pathwaysStore,
+                                              final ByteBuffers byteBuffers) {
         final PathCreator pathCreator = Mockito.mock(PathCreator.class);
-        Mockito.when(pathCreator.toAppPath(Mockito.anyString())).thenReturn(tempDir);
+        Mockito.when(pathCreator.toAppPath("${stroom.home}/pathways")).thenReturn(tempDir);
         return new PathwaysProcessor(
                 pathwaysStore,
                 Mockito.mock(MessageReceiverFactory.class),
                 pathCreator,
-                null,
+                byteBuffers,
                 null,
                 Mockito.mock(ShardManager.class),
                 Mockito.mock(NodeInfo.class));
