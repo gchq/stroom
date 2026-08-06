@@ -78,6 +78,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private OffHeapStagingStore offHeapStagingStore;
     private RefDataLmdbEnv refDataLmdbEnv;
+    private Path dbDir;
 
     private final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
             UUID.randomUUID().toString(),
@@ -87,7 +88,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
     @BeforeEach
     void setup() throws IOException {
         LOGGER.debug("setup() started");
-        final Path dbDir = Files.createTempDirectory("stroom");
+        dbDir = Files.createTempDirectory("stroom");
 //        dbDir = Paths.get("/home/dev/tmp/ref_test");
         Files.createDirectories(dbDir);
         FileUtil.deleteContents(dbDir);
@@ -155,6 +156,12 @@ class TestOffHeapStagingStore extends StroomUnitTest {
             // deleted. Nothing else closes it as each test creates a fresh injector and store.
             if (refDataLmdbEnv != null) {
                 refDataLmdbEnv.close();
+                // Reached only when the close above succeeded. If setup failed before the env
+                // field was assigned (the env may be open with the field null), or the close
+                // threw, we deliberately leave the dir rather than delete it under an open env.
+                if (dbDir != null) {
+                    FileUtil.deleteDir(dbDir);
+                }
             }
         }
         LOGGER.debug("teardown() finished");
