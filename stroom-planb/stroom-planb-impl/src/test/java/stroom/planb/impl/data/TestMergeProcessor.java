@@ -187,7 +187,9 @@ class TestMergeProcessor {
         interrupting.set(false);
         mergeProcessor.merge();
         waitUntil(() -> merged.contains(queuedDir2), "queued dir 2 to be merged after consumer restart");
-        assertThat(queuedDir2).doesNotExist();
+        // The consumer deletes the dir only once shard.merge() has returned, and the mock records
+        // the call from inside merge(), so waiting for the record alone would race the delete.
+        waitUntil(() -> !Files.exists(queuedDir2), "queued dir 2 to be deleted after merging");
 
         // The dir the interrupted consumer skipped stays on disk until a restart, when the recreated queue
         // finds it again.
@@ -195,7 +197,7 @@ class TestMergeProcessor {
         final MergeProcessor rebooted = createMergeProcessor(statePaths, shardManager);
         rebooted.merge();
         waitUntil(() -> merged.contains(queuedDir1), "queued dir 1 to be merged after reboot");
-        assertThat(queuedDir1).doesNotExist();
+        waitUntil(() -> !Files.exists(queuedDir1), "queued dir 1 to be deleted after merging");
     }
 
     /**
