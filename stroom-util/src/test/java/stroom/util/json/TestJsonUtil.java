@@ -25,12 +25,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.TypeLiteral;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -390,6 +401,67 @@ class TestJsonUtil {
                 .isEqualTo('Z');
     }
 
+    /**
+     * Make sure we can serialise and deserialise times and durations
+     */
+    @Disabled // This only works if we set:
+    //   .configure(DateTimeFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
+    // on the mapper
+    @Test
+    void testTimesAndDurations() {
+        final LocalDateTime localDateTime = LocalDateTime.of(
+                2026, 8, 6, 16, 32, 59, 123_000_000);
+        final ZonedDateTime zonedDateTime = ZonedDateTime.of(
+                localDateTime, ZoneId.of("+03:00"));
+
+        final TimesAndDurations timesAndDurations = new TimesAndDurations(
+                Duration.ofMinutes(20),
+                localDateTime.toInstant(ZoneOffset.UTC),
+                localDateTime,
+                zonedDateTime);
+
+        TestUtil.testSerialisation(timesAndDurations, TimesAndDurations.class);
+    }
+
+    @Test
+    void testTimesAndDurations_backwardCompatibility() {
+        final LocalDateTime localDateTime = LocalDateTime.of(
+                2026, 8, 6, 16, 32, 59, 123_000_000);
+        final ZonedDateTime zonedDateTime = ZonedDateTime.of(
+                localDateTime, ZoneId.of("+03:00"));
+
+        final TimesAndDurations timesAndDurations = new TimesAndDurations(
+                Duration.ofMinutes(20),
+                localDateTime.toInstant(ZoneOffset.UTC),
+                localDateTime,
+                zonedDateTime);
+
+        // Jackson v2 default
+        final JsonMapper oldMapper = JsonUtil.getNoIndentMapper()
+                .rebuild()
+                .configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, true) // The old way
+                .build();
+
+        // Jackson v3 default
+        final JsonMapper newMapper = JsonUtil.getNoIndentMapper()
+                .rebuild()
+                .configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false) // The new way
+                .build();
+
+        final String oldJson = oldMapper.writeValueAsString(timesAndDurations);
+        final String newJson = newMapper.writeValueAsString(timesAndDurations);
+
+        LOGGER.info("oldJson\n{}", oldJson);
+        LOGGER.info("newJson\n{}", newJson);
+
+        // Make sure the new v3 mapper can
+        final TimesAndDurations oldWithNewObj = newMapper.readValue(oldJson, TimesAndDurations.class);
+        final TimesAndDurations newWithNewObj = newMapper.readValue(newJson, TimesAndDurations.class);
+
+        Assertions.assertThat(oldWithNewObj)
+                .isEqualTo(newWithNewObj);
+    }
+
     private static <T> String writeValueAsStringWithV2Jackson(final T value) {
         try {
             return new com.fasterxml.jackson.databind.ObjectMapper()
@@ -495,6 +567,76 @@ class TestJsonUtil {
 
         public MyPojo() {
             this("DDD", "AAA", "ZZZ", "CCC", "XXX");
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class TimesAndDurations {
+
+        @JsonProperty
+        private final Duration duration;
+        @JsonProperty
+        private final Instant instant;
+        @JsonProperty
+        private final LocalDateTime localDateTime;
+        @JsonProperty
+        private final ZonedDateTime zonedDateTime;
+
+        @JsonCreator
+        private TimesAndDurations(@JsonProperty("duration") final Duration duration,
+                                  @JsonProperty("instant") final Instant instant,
+                                  @JsonProperty("localDateTime") final LocalDateTime localDateTime,
+                                  @JsonProperty("zonedDateTime") final ZonedDateTime zonedDateTime) {
+            this.duration = duration;
+            this.instant = instant;
+            this.localDateTime = localDateTime;
+            this.zonedDateTime = zonedDateTime;
+        }
+
+        public Duration getDuration() {
+            return duration;
+        }
+
+        public Instant getInstant() {
+            return instant;
+        }
+
+        public LocalDateTime getLocalDateTime() {
+            return localDateTime;
+        }
+
+        public ZonedDateTime getZonedDateTime() {
+            return zonedDateTime;
+        }
+
+        @Override
+        public boolean equals(final Object object) {
+            if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+            final TimesAndDurations that = (TimesAndDurations) object;
+            return Objects.equals(duration, that.duration)
+                   && Objects.equals(instant, that.instant)
+                   && Objects.equals(localDateTime, that.localDateTime)
+                   && Objects.equals(zonedDateTime, that.zonedDateTime);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(duration, instant, localDateTime, zonedDateTime);
+        }
+
+        @Override
+        public String toString() {
+            return "TimesAndDurations{" +
+                   "duration=" + duration +
+                   ", instant=" + instant +
+                   ", localDateTime=" + localDateTime +
+                   ", zonedDateTime=" + zonedDateTime +
+                   '}';
         }
     }
 

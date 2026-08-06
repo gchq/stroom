@@ -207,6 +207,11 @@ public final class JsonUtil {
                 // as the serialised form, so turn that off so we use the name.
                 .disable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
                 .addModule(createPrimitiveWarningModule())
+                // TODO ADJUST_DATES_TO_CONTEXT_TIME_ZONE defaults to true, which seems a bit
+                //  silly as a ZDT of 2026-08-06T16:32:59.123+01:00 in the JSON becomes
+                //  2026-08-06T15:32:59.123Z after deserialisation, thus losing the TZ info.
+                //  We may want to consider disabling this.
+//                .configure(DateTimeFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
                 .build();
     }
 
@@ -332,6 +337,14 @@ public final class JsonUtil {
         }
     }
 
+    /**
+     * This module puts errors in the app log if we try to deser primitive values that are null.
+     * Previously in Jackson v2, this was disabled. Enabling it makes sense, but for backward compatibility
+     * we allow it to use default values.
+     * <p>See <a href="https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md#changes-deserializationfeature">
+     * MIGRATING_TO_JACKSON_3
+     * </a>
+     */
     private static SimpleModule createPrimitiveWarningModule() {
         final SimpleModule warningModule = new SimpleModule("NullPrimitiveWarningModule");
 
