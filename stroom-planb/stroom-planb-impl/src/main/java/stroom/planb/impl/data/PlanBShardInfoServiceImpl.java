@@ -323,16 +323,26 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         if (Files.isDirectory(shardDir)) {
             try (final Stream<Path> stream = Files.list(shardDir)) {
                 stream.forEach(shard -> {
-                    final String uuid = shard.getFileName().toString();
-                    final Optional<PlanBDoc> optionalPlanBDoc = map
-                            .computeIfAbsent(uuid, k ->
-                                    Optional.ofNullable(planBDocStore.readDocument(DocRef
-                                            .builder()
-                                            .type(PlanBDoc.TYPE)
-                                            .uuid(uuid)
-                                            .build())));
+                    // Per shard, as the snapshot branch above is: one shard that can't be read
+                    // (deleted doc, or a closed shard whose getInfo throws) must not lose the
+                    // whole listing, which would show an admin no shards at all.
+                    try {
+                        final String uuid = shard.getFileName().toString();
+                        final Optional<PlanBDoc> optionalPlanBDoc = map
+                                .computeIfAbsent(uuid, k ->
+                                        Optional.ofNullable(planBDocStore.readDocument(DocRef
+                                                .builder()
+                                                .type(PlanBDoc.TYPE)
+                                                .uuid(uuid)
+                                                .build())));
 
-                    addData(fields, results, shard, optionalPlanBDoc, "Shard");
+                        addData(fields, results, shard, optionalPlanBDoc, "Shard");
+                    } catch (final DocumentNotFoundException e) {
+                        // It is possible that a Plan B store is deleted before we try to query it.
+                        LOGGER.debug(e::getMessage, e);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
                 });
             } catch (final IOException e) {
                 LOGGER.debug(e::getMessage, e);

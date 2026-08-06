@@ -38,6 +38,7 @@ import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv.Factory;
 import stroom.security.api.SecurityContext;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.io.PathCreator;
 import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
@@ -67,6 +68,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -105,6 +107,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     // Ideally this would be a loading cache but that presents all sorts of issues around closure
     // of the store when other threads are using it.
     private final Map<String, RefDataOffHeapStore> feedNameToStoreMap = new ConcurrentHashMap<>();
+    // Serialises creation of a given feed's store without holding a lock on the map while we do it.
+    private final StripedLock storeCreationLocks = new StripedLock();
 
     // Following items all relate to migration of a legacy ref data store that may or may not
     // be present depending on when the instance was first deployed.
@@ -566,18 +570,45 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
 
     public RefDataOffHeapStore getEffectiveStore(final String feedName) {
         // TODO: 26/05/2023 Do we always want to be creating stores?
-        return feedNameToStoreMap.computeIfAbsent(
-                feedName,
-                this::getOrCreateFeedSpecificStore);
+        return getOrCreateStoreForFeed(feedName);
+    }
+
+    /**
+     * Deliberately not {@link java.util.concurrent.ConcurrentHashMap#computeIfAbsent}: the
+     * mapping function opens an LMDB env, and computeIfAbsent runs it while synchronized on
+     * the feed's bin, so every OTHER call that went through computeIfAbsent for a feed in
+     * that bin had to wait for the env to open. Lookups now take an unlocked get() fast path,
+     * and creation is serialised by a striped lock outside the map, so concurrent callers for
+     * the same feed still wait rather than both building one. See gh-5689.
+     */
+    private RefDataOffHeapStore getOrCreateStoreForFeed(final String feedName) {
+        final RefDataOffHeapStore existing = feedNameToStoreMap.get(feedName);
+        if (existing != null) {
+            return existing;
+        }
+
+        final Lock lock = storeCreationLocks.getLockForKey(feedName);
+        lock.lock();
+        try {
+            // Another thread may have created it while we were waiting for the lock.
+            final RefDataOffHeapStore created = feedNameToStoreMap.get(feedName);
+            if (created != null) {
+                return created;
+            }
+
+            final RefDataOffHeapStore store = getOrCreateFeedSpecificStore(feedName);
+            feedNameToStoreMap.put(feedName, store);
+            return store;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private FeedSpecificStore getOrCreateFeedSpecificStore(final long refStreamId) {
         final String feedName = lookUpFeedName(refStreamId);
         Objects.requireNonNull(feedName);
 
-        final RefDataOffHeapStore feedSpecificStore = feedNameToStoreMap.computeIfAbsent(
-                feedName,
-                this::getOrCreateFeedSpecificStore);
+        final RefDataOffHeapStore feedSpecificStore = getOrCreateStoreForFeed(feedName);
 
         // We migrate at the refStreamId level, so we just hold a set of IDs rather than a load of
         // RefStreamDefinition objects which will be more costly to check against. In most cases there
@@ -786,7 +817,24 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         final String subDirName = NullSafe.get(feedName, this::feedNameToSubDirName);
         // This will get/create the env on disk
         final RefDataLmdbEnv refDataLmdbEnv = refDataLmdbEnvFactory.create(feedName, subDirName);
-        final RefDataOffHeapStore refDataOffHeapStore = refDataOffHeapStoreFactory.create(refDataLmdbEnv);
+        // If store creation fails the env is open but no store references it, so nothing else
+        // could ever close it. Close it here rather than leak it for the life of the process.
+        // Guarded with a flag rather than catch(RuntimeException) so that an Error, which
+        // opening LMDB DBIs via JNI can raise, leaks the env no more than an exception does.
+        final RefDataOffHeapStore refDataOffHeapStore;
+        boolean storeCreated = false;
+        try {
+            refDataOffHeapStore = refDataOffHeapStoreFactory.create(refDataLmdbEnv);
+            storeCreated = true;
+        } finally {
+            if (!storeCreated) {
+                try {
+                    refDataLmdbEnv.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error closing ref data lmdb env {}: {}", refDataLmdbEnv, e.getMessage(), e);
+                }
+            }
+        }
         LOGGER.debug("Created {} ref data store {}in dir: '{}'",
                 (feedName == null
                         ? "legacy"

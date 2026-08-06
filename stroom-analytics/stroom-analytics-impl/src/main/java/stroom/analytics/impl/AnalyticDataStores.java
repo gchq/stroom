@@ -24,6 +24,7 @@ import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -156,15 +157,45 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final Set<AnalyticRuleDoc> cachedDocs = new HashSet<>(dataStoreCache.keySet());
         final Set<String> actualDirs = getFileSystemAnalyticStoreDirs();
 
-        // Remove old cached stuff.
-        final List<AnalyticRuleDoc> currentRules = loadAll();
-        for (final AnalyticRuleDoc cachedDoc : cachedDocs) {
-            if (!currentRules.contains(cachedDoc)) {
-                dataStoreCache.remove(cachedDoc);
-            }
+        // Deliberately not loadAll(), which logs and skips a rule it fails to read. A rule
+        // missing from this list is treated as deleted, so a partial list would delete the
+        // store of a rule that still exists. Anything but a definite "not found" aborts the
+        // sweep and we try again next time.
+        final List<AnalyticRuleDoc> currentRules;
+        try {
+            currentRules = loadAllForDeletion();
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> "Not deleting old analytic stores as the current rules could not all be " +
+                               "read: " + e.getMessage(), e);
+            return;
         }
 
         final Set<String> expectedDirs = getExpectedAnalyticStoreDirs(currentRules);
+
+        // Remove old cached stuff. Note the cache is keyed on the doc and AnalyticRuleDoc has
+        // value based equality (including a version that changes on every save), so a rule that
+        // has merely been EDITED no longer matches its cached entry and lands here too, not
+        // just one that has been deleted.
+        for (final AnalyticRuleDoc cachedDoc : cachedDocs) {
+            if (!currentRules.contains(cachedDoc)) {
+                final AnalyticDataStore dataStore = dataStoreCache.remove(cachedDoc);
+                if (dataStore != null) {
+                    // Close only the stores whose dir the sweep below is about to delete, so
+                    // that no dir is ever deleted with an open env on it. An edited rule keeps
+                    // its dir (it is keyed on the rule uuid and name), so its store is left
+                    // open and untouched: closing it would make an in flight search on that
+                    // store silently return no rows, and deleting its dir would destroy the
+                    // analytic's accumulated state.
+                    if (!expectedDirs.contains(getAnalyticStoreDir(dataStore))) {
+                        try {
+                            dataStore.getLmdbDataStore().close();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(() -> "Error closing old analytic store: " + e.getMessage(), e);
+                        }
+                    }
+                }
+            }
+        }
         for (final String actualDir : actualDirs) {
             try {
                 if (!expectedDirs.contains(actualDir)) {
@@ -178,6 +209,11 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 LOGGER.debug(e::getMessage, e);
             }
         }
+    }
+
+    private String getAnalyticStoreDir(final AnalyticDataStore dataStore) {
+        final SearchRequest searchRequest = dataStore.getSearchRequest();
+        return getAnalyticStoreDir(searchRequest.getKey(), getComponentId(searchRequest));
     }
 
     private String getAnalyticStoreDir(final QueryKey queryKey,
@@ -211,6 +247,14 @@ public class AnalyticDataStores implements HasResultStoreInfo {
             }
         });
         return expectedDirs;
+    }
+
+    /**
+     * Seeds the store cache without opening an env. Only for tests that need a cached store to
+     * exercise what deleteOldStores() does, and does not do, to it.
+     */
+    void putStoreForTesting(final AnalyticRuleDoc analyticRuleDoc, final AnalyticDataStore dataStore) {
+        dataStoreCache.put(analyticRuleDoc, dataStore);
     }
 
     public AnalyticDataStore get(final AnalyticRuleDoc analyticRuleDoc) {
@@ -358,6 +402,29 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         });
 
         return new ResultPage<>(list);
+    }
+
+    /**
+     * As {@link #loadAll()} but does not swallow read failures, so a caller that decides what
+     * to delete cannot mistake a rule it failed to read for one that has been deleted. Only a
+     * rule that is genuinely gone is omitted.
+     *
+     * @throws RuntimeException if any current rule could not be read.
+     */
+    private List<AnalyticRuleDoc> loadAllForDeletion() {
+        final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
+        for (final DocRef docRef : analyticRuleStore.list()) {
+            try {
+                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+                if (analyticRuleDoc != null) {
+                    currentRules.add(analyticRuleDoc);
+                }
+            } catch (final DocumentNotFoundException e) {
+                // Deleted since the list above, so genuinely not a current rule.
+                LOGGER.debug(e::getMessage, e);
+            }
+        }
+        return currentRules;
     }
 
     public List<AnalyticRuleDoc> loadAll() {
