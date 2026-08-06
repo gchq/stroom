@@ -54,7 +54,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -68,7 +67,6 @@ class StoreShard implements Shard {
 
     private static final String DATA_FILE_NAME = "data.mdb";
     private static final String COMPACTED_DIR_NAME = "compacted";
-    private static final long LOCK_WARN_FREQUENCY_MS = 30_000;
 
     /**
      * Caps the linear growth of the delay between snapshot creation retries, as a multiple of the snapshot
@@ -277,14 +275,14 @@ class StoreShard implements Shard {
 
                 // Ensure the DB is open and won't be closed. Checked before we create the
                 // compacted dir below so a closed shard doesn't leave one behind.
-                requireDb();
+                final Db<?, ?> openDb = requireDb();
                 try {
                     // Perform compaction.
                     LOGGER.info("Running compaction");
                     LOGGER.info(() -> "Size before compaction: " + fileSize(dataFile));
                     FileUtil.deleteDir(compactedDir);
                     Files.createDirectory(compactedDir);
-                    db.compact(compactedDir);
+                    openDb.compact(compactedDir);
                     LOGGER.info(() -> "Size after compaction: " + fileSize(compactedFile));
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
@@ -516,6 +514,9 @@ class StoreShard implements Shard {
         try {
             readLock.lockInterruptibly();
             try {
+                // A ShardClosedException from here is retried once by ShardManager.get(),
+                // which normally builds a fresh shard. Note the other requireDb() callers
+                // are NOT retried; their callers just log and move on.
                 return function.apply(requireDb());
             } finally {
                 readLock.unlock();
@@ -566,48 +567,35 @@ class StoreShard implements Shard {
         // than giving up, so the env is never closed under a live read txn — that wait is
         // exactly what makes closing safe, so it cannot be skippable. The interrupt flag is
         // restored before returning.
-        boolean interrupted = false;
+        lockUninterruptibly(writeLock);
         try {
-            interrupted = lockUninterruptibly(writeLock);
+            lockUninterruptibly(exclusiveReadLock);
             try {
-                interrupted |= lockUninterruptibly(exclusiveReadLock);
-                try {
-                    LOGGER.debug(() -> "Closing shard for: " + doc);
-                    closeDb();
-                } finally {
-                    exclusiveReadLock.unlock();
-                }
+                LOGGER.debug(() -> "Closing shard for: " + doc);
+                closeDb();
             } finally {
-                writeLock.unlock();
+                exclusiveReadLock.unlock();
             }
         } finally {
-            if (interrupted) {
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            }
+            writeLock.unlock();
         }
     }
 
     /**
-     * Acquires the lock, ignoring interrupts. Unbounded, as the caller must have the lock to
-     * proceed, but logs periodically so a holder that never lets go is diagnosable rather
-     * than a silent hang.
-     *
-     * @return true if this thread was interrupted while waiting, so the caller can restore
-     * the interrupt flag once it has finished.
+     * Acquires the lock, ignoring interrupts. {@link Lock#lock()} already does exactly that,
+     * restoring the interrupt flag once it has the lock, so all this adds is a log line when
+     * we actually have to wait — a holder that never lets go is then visible rather than a
+     * silent block.
+     * <p>
+     * Deliberately not a timed {@code tryLock} retry loop: a timed acquire cancels its queue
+     * node on timeout, which lets arriving readers barge past a waiting writer and can starve
+     * this call indefinitely, and it throws rather than times out when the caller is already
+     * interrupted, so any periodic logging it did would never fire during shutdown anyway.
      */
-    private boolean lockUninterruptibly(final Lock lock) {
-        boolean interrupted = false;
-        while (true) {
-            try {
-                if (lock.tryLock(LOCK_WARN_FREQUENCY_MS, TimeUnit.MILLISECONDS)) {
-                    return interrupted;
-                }
-                LOGGER.warn(() -> "Still waiting to lock shard for: " + doc);
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                interrupted = true;
-            }
+    private void lockUninterruptibly(final Lock lock) {
+        if (!lock.tryLock()) {
+            LOGGER.warn(() -> "Waiting to lock shard for: " + doc);
+            lock.lock();
         }
     }
 
@@ -619,10 +607,6 @@ class StoreShard implements Shard {
     private Db<?, ?> requireDb() {
         final Db<?, ?> db = this.db;
         if (db == null) {
-            // ShardManager.get() catches this and retries, normally recreating the shard
-            // from disk. The retry can still return this dead instance in cleanup()'s
-            // delete-then-remove window, but that only happens when the doc has been
-            // deleted, so the resulting failure is the right outcome.
             throw new SnapshotShard.ShardClosedException();
         }
         return db;

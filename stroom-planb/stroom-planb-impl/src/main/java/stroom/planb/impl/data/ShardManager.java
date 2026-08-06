@@ -73,6 +73,7 @@ public class ShardManager {
     public static final String SNAPSHOT_CLEANUP_TASK_NAME = "Plan B Snapshot Cleanup";
 
     private static final DbFactory DB_FACTORY = PlanBDb::open;
+    private static final String CLOSED_MESSAGE = "Plan B shard manager is closed";
 
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
@@ -173,7 +174,7 @@ public class ShardManager {
                                     if (loaded == null) {
                                         taskContext.info(() -> "Deleting shard");
                                         if (shard.delete()) {
-                                            shardMap.remove(shard.getDoc().getUuid());
+                                            shardMap.remove(shard.getDoc().getUuid(), shard);
                                         }
                                     } else {
                                         long total = 0;
@@ -191,7 +192,7 @@ public class ShardManager {
                                     LOGGER.debug(e::getMessage, e);
                                     // If we can't get the doc then we must have deleted it so delete the shard.
                                     if (shard.delete()) {
-                                        shardMap.remove(shard.getDoc().getUuid());
+                                        shardMap.remove(shard.getDoc().getUuid(), shard);
                                     }
                                 }
                             } catch (final Exception e) {
@@ -246,7 +247,7 @@ public class ShardManager {
                         // If we can't get the doc then we must have deleted it so delete the shard.
                         if (loaded == null) {
                             if (shard.delete()) {
-                                shardMap.remove(shard.getDoc().getUuid());
+                                shardMap.remove(shard.getDoc().getUuid(), shard);
                             }
                         } else {
                             // If we removed data then compact the shard.
@@ -256,7 +257,7 @@ public class ShardManager {
                         LOGGER.debug(e::getMessage, e);
                         // If we can't get the doc then we must have deleted it so delete the shard.
                         if (shard.delete()) {
-                            shardMap.remove(shard.getDoc().getUuid());
+                            shardMap.remove(shard.getDoc().getUuid(), shard);
                         }
                     }
                 } catch (final Exception e) {
@@ -349,16 +350,15 @@ public class ShardManager {
                     // been deleted, so failing the caller is the right outcome, and removing
                     // first would lose the retry-on-next-cycle behaviour above.
                     if (shard.delete()) {
-                        // Two arg remove for consistency with the other removals; nothing can
-                        // replace the entry while the dead shard is still in the map, as
-                        // getOrCreateShard() would return that shard rather than create one.
+                        // Two arg remove so we can only ever evict the shard we just
+                        // deleted, never a replacement published since we read it.
                         shardMap.remove(uuid, shard);
                     }
                 } else if (shard.isIdle()) {
                     // Idle eviction — only SnapshotShard reaches here (StoreShard.isIdle()
                     // always returns false). Remove from map first to prevent a zombie shard
                     // window where a concurrent reader gets a deleted shard from computeIfAbsent.
-                    shardMap.remove(uuid);
+                    shardMap.remove(uuid, shard);
                     shard.delete();
                 }
             } catch (final Exception e) {
@@ -368,13 +368,15 @@ public class ShardManager {
     }
 
     /**
-     * Close all shards, closing their LMDB environments. Store shard data remains on disk and a
-     * later use of a shard would recreate it, reopening its env; snapshot copies are discarded.
-     * For orderly shutdown, and for tests which must not leave envs open when their dirs are
-     * deleted.
+     * Close all shards, closing their LMDB environments. Store shard data remains on disk;
+     * snapshot copies are discarded. Closes this manager permanently: no shard can be created
+     * afterwards, so nothing can reopen an env on a dir whose env we have just closed.
      * <p>
-     * This manager is closed permanently: no shard can be created afterwards, so nothing can
-     * reopen an env on a dir whose env we have just closed.
+     * Every env is closed, but not necessarily before this returns. A creation already in
+     * flight when this runs may publish its shard after the sweep below has passed; that
+     * creator then closes its own shard (see {@link #getOrCreateShard}), which may happen
+     * after this method has returned. Callers that must know every env is shut before they
+     * touch the files (e.g. deleting the parent dir) have to quiesce their own callers first.
      */
     public void closeAll() {
         // Set BEFORE sweeping, which is what makes this airtight against a creation that is
@@ -385,10 +387,12 @@ public class ShardManager {
 
         shardMap.forEach((uuid, shard) -> {
             try {
-                // Remove before closing so no concurrent caller can obtain the closing
-                // shard. Two arg remove so we can't evict a shard we are not closing.
-                shardMap.remove(uuid, shard);
-                shard.close();
+                // Remove before closing so no concurrent caller can obtain the closing shard.
+                // Only close it if we were the one to remove it: a creator racing us may have
+                // taken it out first, in which case closing it is its job, not ours.
+                if (shardMap.remove(uuid, shard)) {
+                    shard.close();
+                }
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
@@ -400,7 +404,9 @@ public class ShardManager {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
         } catch (final SnapshotShard.ShardClosedException e) {
-            // The shard was evicted by cleanup between our lookup and use.
+            // The shard was closed between our lookup and use, by cleanup evicting it or by
+            // closeAll(). Retrying builds a fresh shard in the first case; in the second it
+            // throws "closed", which is the right outcome.
             // Retry once — we will create a fresh shard.
             LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
             final Shard shard = getShardForMapName(mapName);
@@ -452,6 +458,7 @@ public class ShardManager {
             return existing;
         }
 
+        final Shard orphan;
         final Lock lock = creationLocks.getLockForKey(docUuid);
         lock.lock();
         try {
@@ -464,7 +471,7 @@ public class ShardManager {
             if (closed) {
                 // Fast path only: don't open an env we would immediately have to close
                 // again. The check that actually matters is the one after publishing below.
-                throw new RuntimeException("Plan B shard manager is closed");
+                throw new RuntimeException(CLOSED_MESSAGE);
             }
 
             final Shard shard = creator.get();
@@ -474,18 +481,28 @@ public class ShardManager {
             // would leave this shard and its open env in the map with nothing left to close
             // it. Re-read the flag AFTER publishing: closeAll() sets it before it sweeps, so
             // the two possible orderings are exhaustive — either it sees our entry and closes
-            // it, or we see the flag here and close it ourselves.
-            if (closed) {
-                if (shardMap.remove(docUuid, shard)) {
-                    shard.close();
-                }
-                throw new RuntimeException("Plan B shard manager is closed");
+            // it, or we see the flag here and take responsibility for closing it ourselves.
+            if (!closed) {
+                return shard;
             }
-
-            return shard;
+            orphan = shardMap.remove(docUuid, shard)
+                    ? shard
+                    : null;
         } finally {
             lock.unlock();
         }
+
+        // Closed while we were creating. Closed outside the creation lock as close() waits
+        // for in-flight readers, and this lock is striped, so holding it here would stall
+        // creation for unrelated docs that hash to the same stripe.
+        if (orphan != null) {
+            try {
+                orphan.close();
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+        throw new RuntimeException(CLOSED_MESSAGE);
     }
 
     private Shard createShard(final PlanBDoc doc) {

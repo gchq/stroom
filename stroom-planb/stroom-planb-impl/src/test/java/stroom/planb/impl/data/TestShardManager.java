@@ -16,20 +16,36 @@
 
 package stroom.planb.impl.data;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.dao.StatePaths;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.StateType;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -37,8 +53,56 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestShardManager {
+
+    /**
+     * Once closed, no shard may be created, as creating one opens an LMDB env that nothing
+     * would then close — possibly on a dir whose env closeAll() has just closed.
+     */
+    @Test
+    void closeAllPreventsFurtherShardUse(@TempDir final Path tempDir) {
+        final PlanBDoc doc = PlanBDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test-map")
+                .stateType(StateType.STATE)
+                .settings(new StateSettings.Builder().build())
+                .build();
+        final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
+        Mockito.when(planBDocCache.get(Mockito.any(String.class))).thenReturn(doc);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final ShardManager shardManager = new ShardManager(
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
+                planBDocCache,
+                Mockito.mock(PlanBDocStore.class),
+                null,
+                () -> new PlanBConfig(tempDir.toAbsolutePath().toString()),
+                new StatePaths(tempDir),
+                null,
+                new SimpleTaskContextFactory(),
+                new ExecutorProvider() {
+                    @Override
+                    public Executor get() {
+                        return Runnable::run;
+                    }
+
+                    @Override
+                    public Executor get(final ThreadPool threadPool) {
+                        return Runnable::run;
+                    }
+                });
+
+        // Usable before closing.
+        assertThatNoException().isThrownBy(() -> shardManager.get(doc.getName(), db -> null));
+
+        shardManager.closeAll();
+
+        assertThatThrownBy(() -> shardManager.get(doc.getName(), db -> null))
+                .hasMessageContaining("closed");
+    }
 
     /**
      * A node that stores shards publishes its snapshot as a file directly in the doc dir. Deleting that on
