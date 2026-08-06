@@ -36,7 +36,6 @@ import stroom.planb.impl.db.PlanBStreamWriter;
 import stroom.planb.impl.db.PlanBStreamWriterFactory;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateRequest;
-import stroom.planb.impl.db.trace.TraceArchiveOperation;
 import stroom.planb.impl.fs.ArchiveOperation;
 import stroom.planb.impl.fs.LocalArchive;
 import stroom.planb.impl.fs.RetentionOperation;
@@ -251,7 +250,6 @@ class TestSharedFileStoreMerge {
                 taskContextFactory,
                 planBDocCache,
                 Set.of(new RetentionOperation(),
-                        new TraceArchiveOperation(new LocalArchive(publisher, planBPaths)),
                         new ArchiveOperation(new LocalArchive(publisher, planBPaths)))
         );
 
