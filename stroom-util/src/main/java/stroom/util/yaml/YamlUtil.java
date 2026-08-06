@@ -28,6 +28,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.BeanProperty;
 import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.MapperFeature;
@@ -229,6 +230,10 @@ public class YamlUtil {
                 // JacksonV3 changes the default behaviour for enums to use the toString
                 // as the serialised form, so turn that off so we use the name.
                 .disable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
+                // This defaults to true in Jackson v3, but false in v2.
+                // Make it behave like v2 for now, with the warning module to warn us about null
+                // primitives. When we think we have fixed the issues, we can make it error for null prims
+                .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
                 .addModule(createPrimitiveWarningModule())
                 .build();
     }

@@ -24,9 +24,8 @@ class TestAuthenticationType {
 
     @Test
     void testSerde() {
-        AuthenticationType authenticationType = AuthenticationType.DATA_FEED_KEY;
+        final AuthenticationType authenticationType = AuthenticationType.DATA_FEED_KEY;
 
-        final AuthenticationType authenticationType2 = TestUtil.testSerialisation(authenticationType,
-                AuthenticationType.class);
+        TestUtil.testSerialisation(authenticationType, AuthenticationType.class);
     }
 }
