@@ -55,6 +55,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -73,12 +74,15 @@ public class ShardManager {
     public static final String SNAPSHOT_CLEANUP_TASK_NAME = "Plan B Snapshot Cleanup";
 
     private static final DbFactory DB_FACTORY = PlanBDb::open;
+    private static final String CLOSED_MESSAGE = "Plan B shard manager is closed";
 
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
+    // Set permanently by closeAll(); stops any new shard (and so any new env) being created.
+    private volatile boolean closed;
     // Serialises creation of a given shard without holding a lock on the shard map while we do it.
     private final StripedLock creationLocks = new StripedLock();
     private final NodeInfo nodeInfo;
@@ -171,7 +175,7 @@ public class ShardManager {
                                     if (loaded == null) {
                                         taskContext.info(() -> "Deleting shard");
                                         if (shard.delete()) {
-                                            shardMap.remove(shard.getDoc().getUuid());
+                                            shardMap.remove(shard.getDoc().getUuid(), shard);
                                         }
                                     } else {
                                         long total = 0;
@@ -189,7 +193,7 @@ public class ShardManager {
                                     LOGGER.debug(e::getMessage, e);
                                     // If we can't get the doc then we must have deleted it so delete the shard.
                                     if (shard.delete()) {
-                                        shardMap.remove(shard.getDoc().getUuid());
+                                        shardMap.remove(shard.getDoc().getUuid(), shard);
                                     }
                                 }
                             } catch (final Exception e) {
@@ -244,7 +248,7 @@ public class ShardManager {
                         // If we can't get the doc then we must have deleted it so delete the shard.
                         if (loaded == null) {
                             if (shard.delete()) {
-                                shardMap.remove(shard.getDoc().getUuid());
+                                shardMap.remove(shard.getDoc().getUuid(), shard);
                             }
                         } else {
                             // If we removed data then compact the shard.
@@ -254,7 +258,7 @@ public class ShardManager {
                         LOGGER.debug(e::getMessage, e);
                         // If we can't get the doc then we must have deleted it so delete the shard.
                         if (shard.delete()) {
-                            shardMap.remove(shard.getDoc().getUuid());
+                            shardMap.remove(shard.getDoc().getUuid(), shard);
                         }
                     }
                 } catch (final Exception e) {
@@ -339,15 +343,126 @@ public class ShardManager {
                 if (docDeleted) {
                     // Doc deleted — could be StoreShard whose delete() may fail if readers
                     // are active. Keep in map for retry on next cycle if delete fails.
+                    //
+                    // Deleted before being removed, so unlike the idle branch below there is
+                    // a window where a concurrent caller can still obtain this now dead
+                    // shard from the map. Its ShardClosedException retry will find the same
+                    // dead shard and fail. Accepted: this branch only runs once the doc has
+                    // been deleted, so failing the caller is the right outcome, and removing
+                    // first would lose the retry-on-next-cycle behaviour above.
                     if (shard.delete()) {
-                        shardMap.remove(uuid);
+                        // Two arg remove so we can only ever evict the shard we just
+                        // deleted, never a replacement published since we read it.
+                        shardMap.remove(uuid, shard);
                     }
                 } else if (shard.isIdle()) {
                     // Idle eviction — only SnapshotShard reaches here (StoreShard.isIdle()
                     // always returns false). Remove from map first to prevent a zombie shard
                     // window where a concurrent reader gets a deleted shard from computeIfAbsent.
-                    shardMap.remove(uuid);
+                    shardMap.remove(uuid, shard);
                     shard.delete();
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
+
+        deleteOrphanedDirs();
+    }
+
+    /**
+     * Deletes shard and snapshot dirs that no shard in the map owns and whose doc has definitely
+     * been deleted. The loop above only reaches shards this process has OPENED, and a shard whose
+     * doc has gone can never be opened again: nothing routes merges to it and no query can resolve
+     * its name. Without this its dir is held for the life of the deployment, and it does not even
+     * appear in the shard listing, which drops a shard whose doc it cannot read.
+     */
+    private void deleteOrphanedDirs() {
+        deleteOrphanedDirs(statePaths.getShardDir());
+        // Same reasoning for a snapshot node, where the fetched copy is the only thing on disk.
+        deleteOrphanedDirs(statePaths.getSnapshotDir());
+    }
+
+    private void deleteOrphanedDirs(final Path parentDir) {
+        if (!Files.isDirectory(parentDir)) {
+            return;
+        }
+        try (final Stream<Path> stream = Files.list(parentDir)) {
+            stream.filter(Files::isDirectory).forEach(this::deleteIfOrphaned);
+        } catch (final IOException e) {
+            LOGGER.error(() -> "Error listing " + FileUtil.getCanonicalPath(parentDir) +
+                               " to find orphaned dirs: " + e.getMessage(), e);
+        }
+    }
+
+    private void deleteIfOrphaned(final Path dir) {
+        final String docUuid = dir.getFileName().toString();
+        try {
+            // An open shard is the map driven loop's job, as that closes the env before deleting
+            // the dir. We must never unlink files that an env is still on.
+            if (shardMap.containsKey(docUuid)) {
+                return;
+            }
+
+            // Anything but a definite "not found" leaves the dir alone. A transient docstore
+            // failure, or one we lack permission to read, must not be taken to mean the doc has
+            // gone and destroy the data of a shard that is still live.
+            try {
+                if (planBDocStore.readDocument(
+                        DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build()) != null) {
+                    return;
+                }
+            } catch (final DocumentNotFoundException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+
+            // The same stripe getOrCreateShard() creates under, so a shard cannot be opened on
+            // these files while we are deleting them.
+            final Lock lock = creationLocks.getLockForKey(docUuid);
+            lock.lock();
+            try {
+                // A shard may have been opened between the check above and taking the lock.
+                if (shardMap.containsKey(docUuid)) {
+                    return;
+                }
+                LOGGER.info(() -> "Deleting orphaned Plan B dir for deleted doc " + docUuid + ": " +
+                                  FileUtil.getCanonicalPath(dir));
+                FileUtil.deleteDir(dir);
+            } finally {
+                lock.unlock();
+            }
+        } catch (final RuntimeException e) {
+            // One bad dir must not stop the rest being reclaimed.
+            LOGGER.error(() -> "Error deleting orphaned Plan B dir " + FileUtil.getCanonicalPath(dir) +
+                               ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Close all shards, closing their LMDB environments. Store shard data remains on disk;
+     * snapshot copies are discarded. Closes this manager permanently: no shard can be created
+     * afterwards, so nothing can reopen an env on a dir whose env we have just closed.
+     * <p>
+     * Every env is closed, but not necessarily before this returns. A creation already in
+     * flight when this runs may publish its shard after the sweep below has passed; that
+     * creator then closes its own shard (see {@link #getOrCreateShard}), which may happen
+     * after this method has returned. Callers that must know every env is shut before they
+     * touch the files (e.g. deleting the parent dir) have to quiesce their own callers first.
+     */
+    public void closeAll() {
+        // Set BEFORE sweeping, which is what makes this airtight against a creation that is
+        // already in flight: such a creation publishes its shard to the map and then re-reads
+        // this flag, so either we see its entry in the sweep below, or it sees this flag and
+        // closes its own shard. See getOrCreateShard().
+        closed = true;
+
+        shardMap.forEach((uuid, shard) -> {
+            try {
+                // Remove before closing so no concurrent caller can obtain the closing shard.
+                // Only close it if we were the one to remove it: a creator racing us may have
+                // taken it out first, in which case closing it is its job, not ours.
+                if (shardMap.remove(uuid, shard)) {
+                    shard.close();
                 }
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
@@ -360,7 +475,9 @@ public class ShardManager {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
         } catch (final SnapshotShard.ShardClosedException e) {
-            // The shard was evicted by cleanup between our lookup and use.
+            // The shard was closed between our lookup and use, by cleanup evicting it or by
+            // closeAll(). Retrying builds a fresh shard in the first case; in the second it
+            // throws "closed", which is the right outcome.
             // Retry once — we will create a fresh shard.
             LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
             final Shard shard = getShardForMapName(mapName);
@@ -369,6 +486,16 @@ public class ShardManager {
             LOGGER.error(() -> LogUtil.message("Error getting shard for map: {} {}", mapName, e.getMessage()), e);
             throw e;
         }
+    }
+
+    /**
+     * @return The shard for a doc uuid if one is already open, without creating one. For callers
+     * that must not open an env as a side effect of a read, e.g. an admin info listing. Note the
+     * shard this returns may still have side effects of its own when used: a snapshot shard
+     * refreshes its access time and may start a fetch.
+     */
+    public Optional<Shard> getExistingShard(final String docUuid) {
+        return Optional.ofNullable(shardMap.get(docUuid));
     }
 
     public Shard getShardForMapName(final String mapName) {
@@ -412,6 +539,7 @@ public class ShardManager {
             return existing;
         }
 
+        final Shard orphan;
         final Lock lock = creationLocks.getLockForKey(docUuid);
         lock.lock();
         try {
@@ -421,12 +549,41 @@ public class ShardManager {
                 return created;
             }
 
+            if (closed) {
+                // Fast path only: don't open an env we would immediately have to close
+                // again. The check that actually matters is the one after publishing below.
+                throw new RuntimeException(CLOSED_MESSAGE);
+            }
+
             final Shard shard = creator.get();
             shardMap.put(docUuid, shard);
-            return shard;
+
+            // closeAll() may have swept the map while we were opening the env above, which
+            // would leave this shard and its open env in the map with nothing left to close
+            // it. Re-read the flag AFTER publishing: closeAll() sets it before it sweeps, so
+            // the two possible orderings are exhaustive — either it sees our entry and closes
+            // it, or we see the flag here and take responsibility for closing it ourselves.
+            if (!closed) {
+                return shard;
+            }
+            orphan = shardMap.remove(docUuid, shard)
+                    ? shard
+                    : null;
         } finally {
             lock.unlock();
         }
+
+        // Closed while we were creating. Closed outside the creation lock as close() waits
+        // for in-flight readers, and this lock is striped, so holding it here would stall
+        // creation for unrelated docs that hash to the same stripe.
+        if (orphan != null) {
+            try {
+                orphan.close();
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+        throw new RuntimeException(CLOSED_MESSAGE);
     }
 
     private Shard createShard(final PlanBDoc doc) {

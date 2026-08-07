@@ -93,9 +93,6 @@ public class WorkQueue {
                         }
                         runnable = queue.take();
                     }
-                    if (runnable == POISON_PILL) {
-                        LOGGER.debug("POISON_PILL found, dropping out");
-                    }
                 } catch (final InterruptedException e) {
                     LOGGER.debug("Take loop interrupted");
                     Thread.currentThread().interrupt();
@@ -115,7 +112,6 @@ public class WorkQueue {
      */
     public void exec(final Runnable runnable) {
         Objects.requireNonNull(runnable);
-        LOGGER.debug("exec() called");
         boolean queued = false;
         while (!queued) {
             final long lockStamp = stampedLock.readLock();
@@ -144,7 +140,6 @@ public class WorkQueue {
      * @throws UncheckedInterruptedException if the thread is interrupted
      */
     public void join() {
-        LOGGER.debug("join() called");
         final long lockStamp = stampedLock.writeLock();
         try {
             if (!shuttingDown) {

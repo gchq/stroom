@@ -294,10 +294,20 @@ public class TestLmdbEnv {
             try {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             } finally {
-                for (int i = 0; i < envs.size(); i++) {
-                    LOGGER.debug("Closing {}", envs.get(i).getLocalDir().toAbsolutePath());
-                    envs.get(i).close();
-                    FileUtil.deleteDir(dbDirs.get(i));
+                // Per-env catch so one bad close/delete doesn't leave the rest of the envs
+                // open, and so a cleanup failure can't replace the worker failure surfaced
+                // by the join above. Iterates dbDirs as it may hold one more entry than envs
+                // if the env builder itself threw part way through the loop above.
+                for (int i = 0; i < dbDirs.size(); i++) {
+                    try {
+                        if (i < envs.size()) {
+                            LOGGER.debug("Closing {}", envs.get(i).getLocalDir().toAbsolutePath());
+                            envs.get(i).close();
+                        }
+                        FileUtil.deleteDir(dbDirs.get(i));
+                    } catch (final Exception e) {
+                        LOGGER.error("Error closing/deleting env {}: {}", i, e.getMessage(), e);
+                    }
                 }
             }
         }
@@ -361,6 +371,9 @@ public class TestLmdbEnv {
                     .isInstanceOf(MapFullException.class)
                     .message()
                     .containsIgnoringCase("Environment mapsize reached");
+        } finally {
+            // Env closed by the try-with-resources above before we delete its dir
+            FileUtil.deleteDir(dbDir);
         }
     }
 

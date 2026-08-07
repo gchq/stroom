@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateCheckRows;
@@ -48,6 +49,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
     private final DuplicateCheckStoreConfig analyticResultStoreConfig;
     private final DuplicateCheckStorePool<String, DuplicateCheckStore> pool;
+    private final DuplicateCheckDirs duplicateCheckDirs;
 
     @Inject
     public DuplicateCheckFactoryImpl(final DuplicateCheckDirs duplicateCheckDirs,
@@ -57,6 +59,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                                      final DuplicateCheckRowSerde duplicateCheckRowSerde,
                                      final Provider<Executor> executorProvider) {
         this.analyticResultStoreConfig = duplicateCheckStoreConfig;
+        this.duplicateCheckDirs = duplicateCheckDirs;
 
         pool = new DuplicateCheckStorePool<>(
                 k -> new DuplicateCheckStore(
@@ -73,6 +76,28 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     }
 
     @Override
+    public List<String> deleteUnusedStores(final List<AnalyticRuleDoc> currentRules) {
+        return duplicateCheckDirs.deleteUnused(
+                duplicateCheckDirs.getAnalyticRuleUUIDList(),
+                currentRules,
+                uuid -> {
+                    // Only delete the files while nothing holds the store, and while holding the
+                    // pool lock for that uuid so nothing can borrow it, and so open an env on
+                    // the files, part way through the delete.
+                    final boolean deleted = pool.doIfNotInUse(
+                            uuid,
+                            () -> duplicateCheckDirs.deleteDuplicateStore(uuid));
+                    if (!deleted) {
+                        LOGGER.info(() -> "Not deleting duplicate check store " + uuid +
+                                          " as it is in use; will retry on the next run");
+                    }
+                    return deleted
+                            ? Optional.of(uuid)
+                            : Optional.empty();
+                });
+    }
+
+    @Override
     public DuplicateCheck create(final AbstractAnalyticRuleDoc analyticRuleDoc,
                                  final CompiledColumns compiledColumns) {
         try {
@@ -85,15 +110,28 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                 duplicateCheck = NoOpDuplicateCheck.INSTANCE;
             } else {
                 final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
-                final DuplicateCheckRowFactory duplicateCheckRowFactory =
-                        new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
-                store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
+                // Anything failing between the borrow and handing ownership to the returned
+                // DuplicateCheck must release, or the reference count never returns to zero:
+                // the store is then never closed, so its env and writer thread leak for the
+                // life of the process and its dir stays open for the tidy up sweep to delete
+                // underneath it.
+                boolean handedOver = false;
+                try {
+                    final DuplicateCheckRowFactory duplicateCheckRowFactory =
+                            new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
+                    store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
 
-                duplicateCheck = buildDuplicateCheck(
-                        analyticRuleDoc,
-                        duplicateCheckRowFactory,
-                        store,
-                        duplicateNotificationConfig);
+                    duplicateCheck = buildDuplicateCheck(
+                            analyticRuleDoc,
+                            duplicateCheckRowFactory,
+                            store,
+                            duplicateNotificationConfig);
+                    handedOver = true;
+                } finally {
+                    if (!handedOver) {
+                        pool.release(analyticRuleDoc.getUuid());
+                    }
+                }
             }
             return duplicateCheck;
         } catch (final RuntimeException e) {

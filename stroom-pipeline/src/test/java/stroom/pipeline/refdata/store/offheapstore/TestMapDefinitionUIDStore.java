@@ -126,20 +126,25 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
                 "MyMapName");
 
-        final UID uid1 = lmdbEnv.getWithWriteTxn(writeTxn -> {
-            final UID uid = mapDefinitionUIDStore.getOrCreateUid(
-                    writeTxn,
-                    mapDefinition,
-                    mapDefinitionUIDStore.getUidPooledByteBuffer());
+        final UID uid1;
+        try (final PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            uid1 = lmdbEnv.getWithWriteTxn(writeTxn -> {
+                final UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                        writeTxn,
+                        mapDefinition,
+                        uidPooledBuffer);
 
-            assertThat(uid).isNotNull();
+                assertThat(uid).isNotNull();
 
-            final long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
+                final long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
-            // empty store so should get back the first id value of 0
-            assertThat(id).isEqualTo(0);
-            return uid;
-        });
+                // empty store so should get back the first id value of 0
+                assertThat(id).isEqualTo(0);
+                // The returned UID may wrap a buffer owned by LMDB (or by the pool), so it can
+                // only be used outside the txn/pool scope if we clone it first.
+                return uid.cloneToNewBuffer();
+            });
+        }
 
         assertThat(mapDefinitionUIDStore.getEntryCount()).isEqualTo(1);
 
@@ -147,20 +152,25 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
         mapUidReverseDb.logRawDatabaseContents();
 
         // now try again with the same mapDefinition, which should give the same UID
-        final UID uid2 = lmdbEnv.getWithWriteTxn(writeTxn -> {
-            final UID uid = mapDefinitionUIDStore.getOrCreateUid(
-                    writeTxn,
-                    mapDefinition,
-                    mapDefinitionUIDStore.getUidPooledByteBuffer());
+        final UID uid2;
+        try (final PooledByteBuffer uidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+            uid2 = lmdbEnv.getWithWriteTxn(writeTxn -> {
+                final UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                        writeTxn,
+                        mapDefinition,
+                        uidPooledBuffer);
 
-            assertThat(uid).isNotNull();
+                assertThat(uid).isNotNull();
 
-            final long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
+                final long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
-            // empty store so should get back the first id value of 0
-            assertThat(id).isEqualTo(0);
-            return uid;
-        });
+                // empty store so should get back the first id value of 0
+                assertThat(id).isEqualTo(0);
+                // This call hits the existing-UID branch which returns a UID wrapping an LMDB
+                // owned buffer, only valid inside the txn — clone before leaving it.
+                return uid.cloneToNewBuffer();
+            });
+        }
 
         assertThat(uid1.getBackingBuffer())
                 .isEqualByComparingTo(uid2.getBackingBuffer());
@@ -394,14 +404,17 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             mapDefinitions.stream()
                     .forEach(mapDefinition -> {
-                        final UID uid = mapDefinitionUIDStore.getOrCreateUid(
-                                writeTxn,
-                                mapDefinition,
-                                mapDefinitionUIDStore.getUidPooledByteBuffer());
-                        assertThat(uid).isNotNull();
+                        try (final PooledByteBuffer uidPooledBuffer =
+                                mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+                            final UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                                    writeTxn,
+                                    mapDefinition,
+                                    uidPooledBuffer);
+                            assertThat(uid).isNotNull();
 
-                        // we are going to leave the txn so need to clone the UIDs
-                        loadedEntries.put(uid.cloneToNewBuffer(), mapDefinition);
+                            // we are going to leave the txn so need to clone the UIDs
+                            loadedEntries.put(uid.cloneToNewBuffer(), mapDefinition);
+                        }
                     });
         });
 

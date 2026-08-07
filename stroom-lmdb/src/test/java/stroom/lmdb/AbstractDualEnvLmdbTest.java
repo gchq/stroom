@@ -68,17 +68,26 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
 
     @AfterEach
     final void teardown() throws IOException {
-        teardown(dbDir1, lmdbEnv1);
-        lmdbEnv1 = null;
-        teardown(dbDir2, lmdbEnv2);
-        lmdbEnv2 = null;
+        // try/finally so a failure tearing down env1 cannot leave env2 open (and its dir
+        // undeleted) for the rest of the JVM.
+        try {
+            teardown(dbDir1, lmdbEnv1);
+        } finally {
+            lmdbEnv1 = null;
+            try {
+                teardown(dbDir2, lmdbEnv2);
+            } finally {
+                lmdbEnv2 = null;
+            }
+        }
     }
 
     final void teardown(final Path dbDir, final LmdbEnv lmdbEnv) throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
-        if (Files.isDirectory(dbDir)) {
+        // Null check as createEnvs() may have failed before assigning the dir
+        if (dbDir != null && Files.isDirectory(dbDir)) {
             try (final Stream<Path> fileStream = Files.list(dbDir)) {
                 fileStream
                         .filter(path -> path.endsWith("data.mdb"))

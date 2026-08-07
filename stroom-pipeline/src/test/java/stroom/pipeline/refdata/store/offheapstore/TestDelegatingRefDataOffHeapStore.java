@@ -35,10 +35,16 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -51,6 +57,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDelegatingRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDelegatingRefDataOffHeapStore.class);
+
+    /**
+     * Feed specific stores are created outside the map, under a striped lock with a double check,
+     * rather than by computeIfAbsent. Threads racing for the same feed must still end up sharing
+     * one store; two would mean two LMDB envs open on one dir, which LMDB does not support.
+     * See gh-5689.
+     */
+    @Test
+    void concurrentCallersShareOneStorePerFeed() throws Exception {
+        final DelegatingRefDataOffHeapStore delegatingStore = (DelegatingRefDataOffHeapStore) refDataStore;
+        // Nothing loaded yet, so every thread below really does race to create the store rather
+        // than all taking the fast path on one that already exists.
+        assertThat(delegatingStore.getFeedNameToStoreMap()).isEmpty();
+
+        final int threads = 8;
+        final CyclicBarrier barrier = new CyclicBarrier(threads);
+        final ExecutorService executor = Executors.newCachedThreadPool();
+        try {
+            final List<Future<RefDataOffHeapStore>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    // Release them all at once so they genuinely contend.
+                    barrier.await(30, TimeUnit.SECONDS);
+                    return delegatingStore.getEffectiveStore(RefDataStoreTestModule.FEED_1_NAME);
+                }));
+            }
+
+            final RefDataOffHeapStore first = futures.getFirst().get(30, TimeUnit.SECONDS);
+            assertThat(first).isNotNull();
+            for (final Future<RefDataOffHeapStore> future : futures) {
+                assertThat(future.get(30, TimeUnit.SECONDS)).isSameAs(first);
+            }
+            assertThat(delegatingStore.getFeedNameToStoreMap()).hasSize(1);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
 
     @Test
     void testMultipleFeeds() {
