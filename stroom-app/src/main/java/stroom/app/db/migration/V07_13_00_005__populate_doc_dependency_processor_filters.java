@@ -54,11 +54,11 @@ import java.util.Set;
  *       name resolved from the {@code doc} table in the docstore DB.</li>
  * </ul>
  */
-public class V07_14_00_005__populate_doc_dependency_processor_filters
+public class V07_13_00_005__populate_doc_dependency_processor_filters
         extends AbstractCrossModuleJavaDbMigration {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory
-            .getLogger(V07_14_00_005__populate_doc_dependency_processor_filters.class);
+            .getLogger(V07_13_00_005__populate_doc_dependency_processor_filters.class);
 
     private static final String PIPELINE_TYPE = "Pipeline";
     private static final String PROCESSOR_FILTER_TYPE = "ProcessorFilter";
@@ -105,7 +105,7 @@ public class V07_14_00_005__populate_doc_dependency_processor_filters
     private final DocStoreDbConnProvider docStoreDbConnProvider;
 
     @Inject
-    public V07_14_00_005__populate_doc_dependency_processor_filters(
+    public V07_13_00_005__populate_doc_dependency_processor_filters(
             final ProcessorDbConnProvider processorDbConnProvider,
             final DocStoreDbConnProvider docStoreDbConnProvider) {
         this.processorDbConnProvider = processorDbConnProvider;

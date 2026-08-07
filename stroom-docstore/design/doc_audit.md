@@ -322,7 +322,7 @@ This phase creates the database foundation and shared types. After this phase: n
 
 #### Migration Script
 
-#### [NEW] [V07_14_00_001__split_doc_table.sql](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/resources/stroom/docstore/impl/db/migration/V07_14_00_001__split_doc_table.sql)
+#### [NEW] [V07_13_00_001__split_doc_table.sql](file:///home/stroomdev66/work/stroom-7.10/stroom-docstore/stroom-docstore-impl-db/src/main/resources/stroom/docstore/impl/db/migration/V07_13_00_001__split_doc_table.sql)
 
 A Flyway versioned migration that:
 
