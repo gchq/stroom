@@ -64,7 +64,11 @@ public class LifecycleBinder {
     /**
      * Bind the shutdown task with the supplied priority
      *
-     * @param priority Higher value will shutdown later
+     * @param priority Higher value will shutdown earlier. Shutdown tasks are sorted by
+     *                 descending priority and run from the highest down, the same ordering
+     *                 used for startup tasks, so a task that must run late in shutdown (e.g.
+     *                 one that flushes or closes state other tasks are still using) needs a
+     *                 LOW value.
      */
     public <T extends Runnable> LifecycleBinder bindShutdownTaskTo(final Class<T> runnableClass,
                                                                    final int priority) {

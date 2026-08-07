@@ -323,16 +323,34 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         if (Files.isDirectory(shardDir)) {
             try (final Stream<Path> stream = Files.list(shardDir)) {
                 stream.forEach(shard -> {
-                    final String uuid = shard.getFileName().toString();
-                    final Optional<PlanBDoc> optionalPlanBDoc = map
-                            .computeIfAbsent(uuid, k ->
-                                    Optional.ofNullable(planBDocStore.readDocument(DocRef
-                                            .builder()
-                                            .type(PlanBDoc.TYPE)
-                                            .uuid(uuid)
-                                            .build())));
+                    // Per shard, as the snapshot branch above is: one shard that can't be read
+                    // (deleted doc, or a closed shard whose getInfo throws) must not lose the
+                    // whole listing, which would show an admin no shards at all.
+                    try {
+                        final String uuid = shard.getFileName().toString();
+                        // Same VIEW check as the snapshot branch. Without it any user able to
+                        // query this datasource saw every shard's name, size and settings.
+                        if (!securityContext.isAdmin() &&
+                            !securityContext.hasDocumentPermission(
+                                    DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build(),
+                                    DocumentPermission.VIEW)) {
+                            return;
+                        }
+                        final Optional<PlanBDoc> optionalPlanBDoc = map
+                                .computeIfAbsent(uuid, k ->
+                                        Optional.ofNullable(planBDocStore.readDocument(DocRef
+                                                .builder()
+                                                .type(PlanBDoc.TYPE)
+                                                .uuid(uuid)
+                                                .build())));
 
-                    addData(fields, results, shard, optionalPlanBDoc, "Shard");
+                        addData(fields, results, shard, optionalPlanBDoc, "Shard");
+                    } catch (final DocumentNotFoundException e) {
+                        // It is possible that a Plan B store is deleted before we try to query it.
+                        LOGGER.debug(e::getMessage, e);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
                 });
             } catch (final IOException e) {
                 LOGGER.debug(e::getMessage, e);
@@ -368,9 +386,20 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                 values[i] = String.valueOf(FileUtil.getByteSize(dir));
             } else if (field.equals(PlanBShardInfoFields.SETTINGS_FIELD.getFldName()) &&
                        optionalPlanBDoc.isPresent()) {
-                final Shard shard = shardManager.getShardForMapName(optionalPlanBDoc.get().getName());
-                if (shard != null) {
-                    values[i] = shard.getInfo();
+                // Deliberately does not CREATE a shard: getShardForMapName() would open a store
+                // shard's env as a side effect of an admin query, and after a restart that means
+                // opening one per row. A shard that is not open simply has no settings to report.
+                // Note this does not make the read side effect free — SnapshotShard.getInfo()
+                // still refreshes its access time and can start a snapshot fetch.
+                try {
+                    values[i] = shardManager.getExistingShard(optionalPlanBDoc.get().getUuid())
+                            .map(Shard::getInfo)
+                            .orElse(null);
+                } catch (final SnapshotShard.ShardClosedException e) {
+                    // Closed between the lookup and the call. Report the shard with no settings
+                    // rather than letting it vanish from the listing, which is what happens if
+                    // this escapes, as the row is only added once every field is resolved.
+                    LOGGER.debug(e::getMessage, e);
                 }
             }
         }

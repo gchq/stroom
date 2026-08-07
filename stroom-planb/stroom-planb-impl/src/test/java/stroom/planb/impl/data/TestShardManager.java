@@ -16,20 +16,38 @@
 
 package stroom.planb.impl.data;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.dao.StatePaths;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.StateType;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -37,8 +55,168 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestShardManager {
+
+    /**
+     * Once closed, no shard may be created, as creating one opens an LMDB env that nothing
+     * would then close — possibly on a dir whose env closeAll() has just closed.
+     */
+    @Test
+    void closeAllPreventsFurtherShardUse(@TempDir final Path tempDir) {
+        final PlanBDoc doc = PlanBDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("test-map")
+                .stateType(StateType.STATE)
+                .settings(new StateSettings.Builder().build())
+                .build();
+        final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
+        Mockito.when(planBDocCache.get(Mockito.any(String.class))).thenReturn(doc);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final ShardManager shardManager = new ShardManager(
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
+                planBDocCache,
+                Mockito.mock(PlanBDocStore.class),
+                null,
+                () -> new PlanBConfig(tempDir.toAbsolutePath().toString()),
+                new StatePaths(tempDir),
+                null,
+                new SimpleTaskContextFactory(),
+                new ExecutorProvider() {
+                    @Override
+                    public Executor get() {
+                        return Runnable::run;
+                    }
+
+                    @Override
+                    public Executor get(final ThreadPool threadPool) {
+                        return Runnable::run;
+                    }
+                });
+
+        // Usable before closing.
+        assertThatNoException().isThrownBy(() -> shardManager.get(doc.getName(), db -> null));
+
+        shardManager.closeAll();
+
+        assertThatThrownBy(() -> shardManager.get(doc.getName(), db -> null))
+                .hasMessageContaining("closed");
+    }
+
+    /**
+     * A shard whose doc has been deleted while it was not open can never be opened again: nothing
+     * routes merges to it and no query can resolve its name. cleanup() only walks the map of OPEN
+     * shards, so without a disk driven sweep its dir would be held for the life of the deployment,
+     * invisible in the shard listing too.
+     */
+    @Test
+    void cleanupDeletesDirsOfDeletedDocs(@TempDir final Path tempDir) throws IOException {
+        final StatePaths statePaths = new StatePaths(tempDir);
+        final Path deletedShard = createDir(statePaths.getShardDir(), "deleted-doc-uuid");
+        final Path notFoundShard = createDir(statePaths.getShardDir(), "not-found-doc-uuid");
+        final Path liveShard = createDir(statePaths.getShardDir(), "live-doc-uuid");
+        final Path unreadableShard = createDir(statePaths.getShardDir(), "unreadable-doc-uuid");
+        final Path deletedSnapshot = createDir(statePaths.getSnapshotDir(), "deleted-doc-uuid");
+
+        final PlanBDocStore docStore = Mockito.mock(PlanBDocStore.class);
+        Mockito.when(docStore.readDocument(docRef("deleted-doc-uuid"))).thenReturn(null);
+        Mockito.when(docStore.readDocument(docRef("not-found-doc-uuid")))
+                .thenThrow(new DocumentNotFoundException(docRef("not-found-doc-uuid")));
+        Mockito.when(docStore.readDocument(docRef("live-doc-uuid")))
+                .thenReturn(doc("live-doc-uuid"));
+        // Anything but a definite "not found" must leave the dir alone, or a transient docstore
+        // failure would destroy the data of a shard that is still live.
+        Mockito.when(docStore.readDocument(docRef("unreadable-doc-uuid")))
+                .thenThrow(new RuntimeException("Some transient failure"));
+
+        createShardManager(tempDir, docStore, Mockito.mock(PlanBDocCache.class)).cleanup();
+
+        assertThat(deletedShard).doesNotExist();
+        assertThat(notFoundShard).doesNotExist();
+        assertThat(deletedSnapshot).doesNotExist();
+        assertThat(liveShard).exists();
+        assertThat(unreadableShard).exists();
+    }
+
+    /**
+     * An OPEN shard's dir must only ever be deleted via the shard, which closes its env first;
+     * unlinking files an env is still mapped on is undefined behaviour. Proven by the map entry
+     * being cleared, which cleanup() only does when the shard's own delete() reported success,
+     * and that closes the db before deleting the dir.
+     */
+    @Test
+    void cleanupClosesAnOpenShardBeforeDeletingItsDir(@TempDir final Path tempDir) {
+        final PlanBDoc doc = doc(UUID.randomUUID().toString());
+        final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
+        Mockito.when(planBDocCache.get(Mockito.any(String.class))).thenReturn(doc);
+        final PlanBDocStore docStore = Mockito.mock(PlanBDocStore.class);
+        // The doc has gone, so the sweep would delete the dir if it did not first check the map.
+        Mockito.when(docStore.readDocument(Mockito.any()))
+                .thenThrow(new DocumentNotFoundException(docRef(doc.getUuid())));
+
+        final ShardManager shardManager = createShardManager(tempDir, docStore, planBDocCache);
+        // Opens an env on the shard dir.
+        shardManager.get(doc.getName(), db -> null);
+        final Path shardDir = new StatePaths(tempDir).getShardDir().resolve(doc.getUuid());
+        assertThat(shardDir).exists();
+
+        shardManager.cleanup();
+
+        // Deleted, but by the shard, which closed its env first, rather than by the dir sweep.
+        assertThat(shardDir).doesNotExist();
+        assertThat(shardManager.getExistingShard(doc.getUuid())).isEmpty();
+    }
+
+    private DocRef docRef(final String uuid) {
+        return DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build();
+    }
+
+    private PlanBDoc doc(final String uuid) {
+        return PlanBDoc
+                .builder()
+                .uuid(uuid)
+                .name("test-map")
+                .stateType(StateType.STATE)
+                .settings(new StateSettings.Builder().build())
+                .build();
+    }
+
+    private Path createDir(final Path parent, final String name) throws IOException {
+        final Path dir = parent.resolve(name);
+        Files.createDirectories(dir);
+        Files.writeString(dir.resolve("data.mdb"), "plan b data for " + name);
+        return dir;
+    }
+
+    private ShardManager createShardManager(final Path tempDir,
+                                            final PlanBDocStore docStore,
+                                            final PlanBDocCache planBDocCache) {
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        return new ShardManager(
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
+                planBDocCache,
+                docStore,
+                null,
+                () -> new PlanBConfig(tempDir.toAbsolutePath().toString()),
+                new StatePaths(tempDir),
+                null,
+                new SimpleTaskContextFactory(),
+                new ExecutorProvider() {
+                    @Override
+                    public Executor get() {
+                        return Runnable::run;
+                    }
+
+                    @Override
+                    public Executor get(final ThreadPool threadPool) {
+                        return Runnable::run;
+                    }
+                });
+    }
 
     /**
      * A node that stores shards publishes its snapshot as a file directly in the doc dir. Deleting that on

@@ -43,6 +43,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -396,10 +397,15 @@ class SnapshotShard implements Shard {
      */
     private SnapshotInstance fetchSnapshot(final Instant previousSnapshotTime) {
         final Instant createTime = Instant.now();
+        // The timestamp is only for humans reading the dir listing, and has millisecond
+        // resolution, so it is not unique on its own: a snapshot destroyed and refetched inside
+        // one millisecond would land on the dir the outgoing instance is still mapping (its
+        // destroy is deferred until the last reader finishes), giving two envs on one dir with
+        // one deleting the other's files. Nothing parses this name, so a uuid makes it unique.
         final Path dbDir = statePaths
                 .getSnapshotDir()
                 .resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()))
-                .resolve(DateUtil.createFileDateTimeString(createTime));
+                .resolve(DateUtil.createFileDateTimeString(createTime) + "__" + UUID.randomUUID());
 
         try {
             // Create dir.
@@ -497,6 +503,14 @@ class SnapshotShard implements Shard {
         return lastAccessTime.plus(idleTimeout).isBefore(Instant.now());
     }
 
+    /**
+     * Always returns true, but the DB close and dir delete are only immediate when no reader
+     * is in flight; otherwise the guard defers them to the thread of the last reader to
+     * finish, so the env may still be open when this returns. Callers must not assume the
+     * dir has gone (e.g. by deleting a parent dir) on return. Nothing needs that today:
+     * fetched snapshot dirs left behind are swept by {@link #deleteFetchedSnapshots} at
+     * next startup.
+     */
     @Override
     public boolean delete() {
         final SnapshotInstance instance = snapshotRef.getAndSet(null);
@@ -504,6 +518,14 @@ class SnapshotShard implements Shard {
             instance.destroy();
         }
         return true;
+    }
+
+    @Override
+    public void close() {
+        // A snapshot is a transient local copy, so closing it is the same as discarding it.
+        // destroy() flags the instance; the DB close and dir delete run immediately if no
+        // readers are in flight, otherwise on the thread of the last reader to finish.
+        delete();
     }
 
     @Override

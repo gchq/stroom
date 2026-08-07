@@ -23,6 +23,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathSegmentUtil;
@@ -51,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
 
 @Singleton
@@ -62,6 +64,8 @@ public class MergeProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
 
     private final Map<String, DirQueue> mergeQueues = new ConcurrentHashMap<>();
+    // Serialises creation of a given queue without holding a lock on the map while we do it.
+    private final StripedLock queueCreationLocks = new StripedLock();
     private final Map<String, CompletableFuture<Void>> mergeConsumers = new ConcurrentHashMap<>();
     private final SequentialFileStore receiveStore;
     private final Path mergingDir;
@@ -354,22 +358,52 @@ public class MergeProcessor {
         }
     }
 
-    private DirQueue getOrCreateDirQueue(final String docUuid) {
+    /**
+     * Package private so tests can drive queue creation directly.
+     */
+    DirQueue getOrCreateDirQueue(final String docUuid) {
         // docUuid is a directory name taken from data received from another node; it must not be able to
         // escape the merging directory when resolved as a single path segment.
         PathSegmentUtil.requireSafeSegment(docUuid);
-        final DirQueue dirQueue = mergeQueues.computeIfAbsent(docUuid, k -> {
-            try {
-                final Path uuidDir = mergingDir.resolve(docUuid);
-                Files.createDirectories(uuidDir);
-                return new DirQueue(uuidDir, docUuid);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
+        DirQueue dirQueue = mergeQueues.get(docUuid);
+        if (dirQueue == null) {
+            dirQueue = createDirQueue(docUuid);
+        }
         // Make sure this queue is being consumed.
         startQueueConsumer(docUuid, dirQueue);
         return dirQueue;
+    }
+
+    /**
+     * Deliberately not {@link ConcurrentHashMap#computeIfAbsent}: constructing a {@link DirQueue}
+     * creates its dir and then recursively scans it to find the min and max ids, which on a queue
+     * with a large id gap can walk a lot of directories. computeIfAbsent would do all of that
+     * while synchronized on the key's bin, making every other queue in that bin wait for it.
+     * Creation is serialised by a striped lock outside the map instead. See gh-5689.
+     */
+    private DirQueue createDirQueue(final String docUuid) {
+        final Lock lock = queueCreationLocks.getLockForKey(docUuid);
+        lock.lock();
+        try {
+            // Another thread may have created it while we were waiting for the lock.
+            final DirQueue existing = mergeQueues.get(docUuid);
+            if (existing != null) {
+                return existing;
+            }
+
+            final DirQueue dirQueue;
+            try {
+                final Path uuidDir = mergingDir.resolve(docUuid);
+                Files.createDirectories(uuidDir);
+                dirQueue = new DirQueue(uuidDir, docUuid);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            mergeQueues.put(docUuid, dirQueue);
+            return dirQueue;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void startQueueConsumer(final String docUuid,

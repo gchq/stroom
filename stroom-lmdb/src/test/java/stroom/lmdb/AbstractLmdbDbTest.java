@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
 
@@ -82,18 +83,21 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
             lmdbEnv.close();
         }
         lmdbEnv = null;
-        if (Files.isDirectory(dbDir)) {
-            Files.list(dbDir)
-                    .filter(path -> path.endsWith("data.mdb"))
-                    .forEach(path -> {
-                        try {
-                            final long fileSizeBytes = Files.size(path);
-                            LOGGER.info("LMDB file size: {}",
-                                    ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
-                        } catch (final IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+        // Null check as setup() may have failed before assigning the dir
+        if (dbDir != null && Files.isDirectory(dbDir)) {
+            try (final Stream<Path> fileStream = Files.list(dbDir)) {
+                fileStream
+                        .filter(path -> path.endsWith("data.mdb"))
+                        .forEach(path -> {
+                            try {
+                                final long fileSizeBytes = Files.size(path);
+                                LOGGER.info("LMDB file size: {}",
+                                        ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
+                            } catch (final IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
             LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize().toString());
             FileUtil.deleteDir(dbDir);
         }
