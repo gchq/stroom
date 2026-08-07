@@ -219,12 +219,18 @@ class QueryResourceImpl implements QueryResource {
                     .build();
             final DashboardSearchResponse response = search(null, request);
 
-            // A search that failed, e.g. a query that will not parse, comes back with null results and
-            // the diagnostics in tokenError/errorMessages, so report those rather than dereferencing
-            // null. Not just parse errors: QueryServiceImpl returns the same shape for any
-            // RuntimeException, e.g. an unresolvable data source. See gh-5688.
-            if (NullSafe.isEmptyCollection(response.getResults())) {
-                throw searchFailure(response);
+            if (response == null || NullSafe.isEmptyCollection(response.getResults())) {
+                // A search that failed, e.g. a query that will not parse, comes back with no results and
+                // the diagnostics in tokenError/errorMessages, so report those rather than dereferencing
+                // null. Not just parse errors: QueryServiceImpl returns the same shape for any
+                // RuntimeException, e.g. an unresolvable data source. See gh-5688.
+                final String failure = describeFailure(response);
+                if (failure != null) {
+                    throw RestUtil.badRequest(failure);
+                }
+                // No results and nothing to report is not a failure. A query is entitled to match
+                // nothing, so this is the same empty response as a search that returned no rows.
+                return null;
             }
 
             final Result result = response.getResults().getFirst();
@@ -248,12 +254,15 @@ class QueryResourceImpl implements QueryResource {
     }
 
     /**
-     * Turns a search response that carries no results into the exception to throw. The query being at
-     * fault, e.g. one that will not parse, is a bad request rather than a server error, so report the
-     * diagnostics the search gathered. A response with neither results nor diagnostics is not something
-     * the caller can act on, so that stays a server error.
+     * @return The reason a search that returned no results failed, or null if it did not report one.
+     * The query being at fault, e.g. one that will not parse, is a bad request rather than a server
+     * error, so the caller is given the diagnostics the search gathered.
      */
-    private RuntimeException searchFailure(final DashboardSearchResponse response) {
+    private String describeFailure(final DashboardSearchResponse response) {
+        if (response == null) {
+            return null;
+        }
+
         final List<String> messages = new ArrayList<>();
         NullSafe.list(response.getErrorMessages())
                 .stream()
@@ -275,10 +284,9 @@ class QueryResourceImpl implements QueryResource {
                     tokenError.getFrom().getColNo()));
         }
 
-        if (messages.isEmpty()) {
-            return new RuntimeException("The query returned no results and no error to explain why");
-        }
-        return RestUtil.badRequest(String.join("\n", messages));
+        return messages.isEmpty()
+                ? null
+                : String.join("\n", messages);
     }
 
     @Override
