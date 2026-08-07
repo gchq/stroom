@@ -53,10 +53,10 @@ import java.util.Set;
  * database.
  */
 @SuppressWarnings("unused")
-public class V07_14_00_004__populate_doc_dependency extends BaseJavaMigration {
+public class V07_13_00_004__populate_doc_dependency extends BaseJavaMigration {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory
-            .getLogger(V07_14_00_004__populate_doc_dependency.class);
+            .getLogger(V07_13_00_004__populate_doc_dependency.class);
 
     /**
      * Doc types whose dependencies are embedded in StroomQL query strings
