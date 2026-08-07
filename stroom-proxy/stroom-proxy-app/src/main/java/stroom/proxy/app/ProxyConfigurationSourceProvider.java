@@ -23,14 +23,14 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import jakarta.validation.constraints.NotNull;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -77,7 +77,8 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         try (final InputStream in = delegate.open(path)) {
             // This is the yaml tree after passing though the delegate
             // substitutions
-            final YAMLMapper mapper = YamlUtil.getVanillaMapper();
+            // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+            final ObjectMapper mapper = YamlV2Util.getVanillaObjectMapper();
             final JsonNode rootNode = mapper.readTree(in);
 
             Objects.requireNonNull(rootNode, () ->
@@ -108,7 +109,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
     /**
      * Merge our compile time defaults with the de-serialised config so we have a full tree
      */
-    private void mergeInDefaultConfig(final YAMLMapper objectMapper,
+    private void mergeInDefaultConfig(final ObjectMapper objectMapper,
                                       final JsonNode rootNode) {
         final JsonNode proxyConfigNode = rootNode.at(PROXY_CONFIG_JSON_POINTER);
         final ProxyConfig defaultConfig = new ProxyConfig();
@@ -121,7 +122,8 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             throw new RuntimeException("No config node found at " + PROXY_CONFIG_JSON_POINTER);
         }
 
-        YamlUtil.mergeYamlNodeTrees(
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        YamlV2Util.mergeYamlNodeTrees(
                 objectMapper,
                 objectMapper2 ->
                         proxyConfigNode,
@@ -178,7 +180,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                 final String valueNodePath = path + "/" + entry.getKey();
                 if (names.contains(entry.getKey())) {
                     // found our node so mutate it
-                    final String value = entry.getValue().stringValue();
+                    final String value = entry.getValue().textValue();
                     final String newValue = valueMutator.apply(value);
                     log("Replacing value for \"{}\": [{}] => [{}]",
                             valueNodePath, value, newValue);
