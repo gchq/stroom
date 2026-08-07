@@ -24,6 +24,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.Result;
 import stroom.query.api.TableResult;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
@@ -41,13 +42,17 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -56,6 +61,7 @@ import jakarta.ws.rs.client.Entity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -213,7 +219,22 @@ class QueryResourceImpl implements QueryResource {
                     .build();
             final DashboardSearchResponse response = search(null, request);
 
-            final TableResult tableResult = (TableResult) response.getResults().get(0);
+            // A search that failed, e.g. a query that will not parse, comes back with null results and
+            // the diagnostics in tokenError/errorMessages, so report those rather than dereferencing
+            // null. Not just parse errors: QueryServiceImpl returns the same shape for any
+            // RuntimeException, e.g. an unresolvable data source. See gh-5688.
+            if (NullSafe.isEmptyCollection(response.getResults())) {
+                throw searchFailure(response);
+            }
+
+            final Result result = response.getResults().getFirst();
+            if (!(result instanceof final TableResult tableResult)) {
+                throw new RuntimeException(LogUtil.message(
+                        "Expected a {} from query '{}' but got {}",
+                        TableResult.class.getSimpleName(),
+                        query,
+                        result.getClass().getSimpleName()));
+            }
 
             if (tableResult.getColumns().isEmpty() || tableResult.getRows().isEmpty()) {
                 return null;
@@ -224,6 +245,40 @@ class QueryResourceImpl implements QueryResource {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    /**
+     * Turns a search response that carries no results into the exception to throw. The query being at
+     * fault, e.g. one that will not parse, is a bad request rather than a server error, so report the
+     * diagnostics the search gathered. A response with neither results nor diagnostics is not something
+     * the caller can act on, so that stays a server error.
+     */
+    private RuntimeException searchFailure(final DashboardSearchResponse response) {
+        final List<String> messages = new ArrayList<>();
+        NullSafe.list(response.getErrorMessages())
+                .stream()
+                .map(ErrorMessage::getMessage)
+                .filter(Objects::nonNull)
+                .forEach(messages::add);
+        // Older nodes in a mixed version cluster may only populate the deprecated errors field.
+        if (messages.isEmpty()) {
+            NullSafe.list(response.getErrors())
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .forEach(messages::add);
+        }
+
+        final TokenError tokenError = response.getTokenError();
+        if (tokenError != null && tokenError.getFrom() != null) {
+            messages.add(LogUtil.message("Error at line {}, column {}",
+                    tokenError.getFrom().getLineNo(),
+                    tokenError.getFrom().getColNo()));
+        }
+
+        if (messages.isEmpty()) {
+            return new RuntimeException("The query returned no results and no error to explain why");
+        }
+        return RestUtil.badRequest(String.join("\n", messages));
     }
 
     @Override
