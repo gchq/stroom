@@ -436,6 +436,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
 
     public void executeNow(final ExecutionSchedule executionSchedule,
                            final ScheduledExecutable<T> scheduledExecutable) {
+        // TODO Why is this using the workQueue, only one task is ever executed
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         final Runnable runnable = () -> {
             try {
