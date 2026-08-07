@@ -34,7 +34,6 @@ import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.MetaService;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.processor.impl.ProcessorTaskQueueManager;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
@@ -107,7 +106,6 @@ class TestInjectionPerformance {
                 IndexShardManager.class,
                 IndexShardWriterCache.class,
                 VolumeCreator.class,
-                ProcessorTaskQueueManager.class,
                 VolumeConfig.class,
                 FsVolumeConfig.class,
                 FsVolumeService.class,

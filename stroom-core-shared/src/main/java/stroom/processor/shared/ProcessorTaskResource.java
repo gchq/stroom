@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -41,6 +42,7 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     String BASE_PATH = "/processorTask" + ResourcePaths.V1;
     String ASSIGN_TASKS_PATH_PART = "/assign";
     String ABANDON_TASKS_PATH_PART = "/abandon";
+    String CLAIM_STATUS_PATH_PART = "/claimStatus";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @POST
@@ -74,4 +76,11 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
             operationId = "abandonProcessorTasks")
     Boolean abandonTasks(@PathParam("nodeName") String nodeName,
                          @Parameter(description = "request", required = true) ProcessorTaskList request);
+
+    @GET
+    @Path(CLAIM_STATUS_PATH_PART + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Get what a node is doing about claiming its own processor tasks",
+            operationId = "getProcessorClaimStatus")
+    ProcessorClaimStatus getClaimStatus(@PathParam("nodeName") String nodeName);
 }

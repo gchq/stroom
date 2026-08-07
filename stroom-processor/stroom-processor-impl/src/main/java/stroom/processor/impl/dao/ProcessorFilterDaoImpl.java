@@ -30,7 +30,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
-import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.util.exception.DataChangedException;
@@ -62,6 +61,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -85,7 +85,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final QueryDataSerialiser queryDataSerialiser;
     private final ExpressionMapper expressionMapper;
     private final SecurityContext securityContext;
-    private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
     private final Provider<ProcessorDaoImpl> processorDaoImplProvider;
 
     @Inject
@@ -94,12 +93,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                            final QueryDataSerialiser queryDataSerialiser,
                            final Provider<UserRefLookup> userRefLookupProvider,
                            final SecurityContext securityContext,
-                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl,
                            final Provider<ProcessorDaoImpl> processorDaoImplProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.queryDataSerialiser = queryDataSerialiser;
         this.securityContext = securityContext;
-        this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
         this.processorDaoImplProvider = processorDaoImplProvider;
 
         recordToProcessorFilterMapper = new RecordToProcessorFilterMapper(
@@ -204,6 +201,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
                         PROCESSOR_FILTER.PROFILE_NAME,
                         PROCESSOR_FILTER.MAX_TASK_CREATION_DELAY,
+                        PROCESSOR_FILTER.PARENT_FILTER_ID,
                         PROCESSOR_FILTER.RUN_AS_USER_UUID)
                 .values(1,
                         filter.getCreateTimeMs(),
@@ -224,6 +222,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.getMaxProcessingTasks(),
                         filter.getProfileName(),
                         NullSafe.get(filter.getMaxTaskCreationDelay(), SimpleDuration::toString),
+                        filter.getParentFilterId(),
                         NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .returning(PROCESSOR_FILTER.ID)
                 .fetchOne(PROCESSOR_FILTER.ID);
@@ -231,6 +230,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return filter.copy().id(id).version(1).build();
     }
 
+    /**
+     * Note that {@code parent_filter_id} is deliberately not updatable. It records what this
+     * filter was made from, which is a fact about its creation and cannot later become untrue.
+     */
     private ProcessorFilter updateFilter(final DSLContext context, final ProcessorFilter filter) {
         final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final int count = context
@@ -322,73 +325,64 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
-    public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter,
-                                                  final boolean resetTracker) {
-        LOGGER.debug("restoreProcessorFilter() - processorFilter: {}, resetTracker: {}",
-                processorFilter, resetTracker);
+    public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter) {
+        LOGGER.debug("restoreProcessorFilter() - processorFilter: {}", processorFilter);
         Objects.requireNonNull(processorFilter);
 
-        return JooqUtil.transactionResult(processorDbConnProvider, txnContext -> {
-            if (processorFilter.isDeleted()) {
-                final ProcessorFilter.Builder builder = processorFilter.copy();
-                final Integer processorFilterTrackerId = NullSafe.get(processorFilter,
-                        ProcessorFilter::getProcessorFilterTracker,
-                        ProcessorFilterTracker::getId);
-
-                // Un-delete the parent processor if needs be
-                Processor processor = processorFilter.getProcessor();
-                if (processor.isDeleted()) {
-                    processor = processorDaoImplProvider.get()
-                            .update(processor.copy().deleted(false).build(), txnContext);
-                    builder.processor(processor);
-                }
-
-                // We are un-deleting the filter so reset the tracker back to clean slate
-                if (processorFilterTrackerId != null && resetTracker) {
-                    resetTracker(processorFilter, txnContext);
-                }
-                builder.deleted(false);
-                builder.stampAudit(securityContext);
-                return updateFilter(txnContext, builder.build());
-            } else {
-                LOGGER.debug("restoreProcessorFilter() - Processor filter is not in a deleted state {}",
-                        processorFilter);
-                return processorFilter;
-            }
-        });
-    }
-
-    private ProcessorFilterTracker resetTracker(final ProcessorFilter processorFilter,
-                                                final DSLContext context) {
-        final Integer processorFilterId = Objects.requireNonNull(processorFilter.getId());
-        final Integer taskCount = context.selectCount()
-                .from(PROCESSOR_TASK)
-                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
-                .and(PROCESSOR_TASK.STATUS.notIn(List.of(
-                        TaskStatus.COMPLETE,
-                        TaskStatus.DELETED,
-                        TaskStatus.FAILED)))
-                .fetchOneInto(Integer.class);
-
-        // This shouldn't happen as all tasks are set to deleted when the processorFilter is
-        // logically deleted, but here just in case
-        if (taskCount != null && taskCount > 0) {
-            LOGGER.debug("resetTracker() - processorFilterId: {}, count: {}", processorFilterId, taskCount);
-            throw new RuntimeException(LogUtil.message(
-                    "Unable to reset tracker for filter {} as {} active tasks exist",
-                    processorFilter.getId(), taskCount));
+        if (!processorFilter.isDeleted()) {
+            LOGGER.debug("restoreProcessorFilter() - Processor filter is not in a deleted state {}",
+                    processorFilter);
+            return processorFilter;
         }
 
-        final ProcessorFilterTracker existingTracker = processorFilter.getProcessorFilterTracker();
-        final Integer processorFilterTrackerId = existingTracker.getId();
-        // Reset the tracker to the state it would be in if it was just created fresh
-        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-        tracker.setId(processorFilterTrackerId);
-        tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
-        tracker.setVersion(existingTracker.getVersion());
-        final int count = processorFilterTrackerDaoImpl.update(context, tracker);
-        LOGGER.debug("resetTracker() - processorFilterId: {}, count: {}", processorFilterTrackerId, count);
-        return tracker;
+        return JooqUtil.transactionResult(processorDbConnProvider, txnContext -> {
+            // Un-delete the parent processor if needs be
+            Processor processor = processorFilter.getProcessor();
+            if (processor.isDeleted()) {
+                processor = processorDaoImplProvider.get()
+                        .update(processor.copy().deleted(false).build(), txnContext);
+            }
+
+            // The replica takes over the deleted filter's identity, so the deleted filter has to
+            // give it up first - the uuid is unique, and it is the live filter that the doc ref
+            // must resolve to. The superseded filter keeps everything else, including its tasks,
+            // and is on its way to being physically deleted anyway.
+            final String uuid = processorFilter.getUuid();
+            final int freed = txnContext
+                    .update(PROCESSOR_FILTER)
+                    .set(PROCESSOR_FILTER.UUID, UUID.randomUUID().toString())
+                    .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                    .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
+                    .where(PROCESSOR_FILTER.ID.eq(processorFilter.getId()))
+                    .and(PROCESSOR_FILTER.VERSION.eq(processorFilter.getVersion()))
+                    .execute();
+            if (freed == 0) {
+                throw new DataChangedException("Failed to restore processor filter, " +
+                                               "it may have been updated by another user or deleted");
+            }
+
+            final ProcessorFilterTracker tracker = createTracker(txnContext);
+            final ProcessorFilter replica = processorFilter
+                    .copy()
+                    .id(null)
+                    .version(null)
+                    .uuid(uuid)
+                    .parentFilterId(processorFilter.getId())
+                    .processor(processor)
+                    .processorFilterTracker(tracker)
+                    .deleted(false)
+                    // A new filter created now, by whoever asked for it - not the original's
+                    // creation, which stays with the filter that actually did that work.
+                    .createTimeMs(null)
+                    .createUser(null)
+                    .stampAudit(securityContext)
+                    .build();
+
+            final ProcessorFilter created = createFilter(txnContext, replica);
+            LOGGER.debug("restoreProcessorFilter() - replaced filter {} with replica {}",
+                    processorFilter.getId(), created.getId());
+            return created;
+        });
     }
 
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {

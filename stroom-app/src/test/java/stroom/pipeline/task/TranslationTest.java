@@ -48,7 +48,6 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -548,13 +547,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<ProcessorTask> getTasks() {
-        ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
-        List<ProcessorTask> list = processorTasks.getList();
+        List<ProcessorTask> list = processorTaskTestHelper.assignTasks(100);
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
         while (!list.isEmpty()) {
             dataProcessorTasks.addAll(list);
-            processorTasks = processorTaskTestHelper.assignTasks(100);
-            list = processorTasks.getList();
+            list = processorTaskTestHelper.assignTasks(100);
         }
 
         return dataProcessorTasks;

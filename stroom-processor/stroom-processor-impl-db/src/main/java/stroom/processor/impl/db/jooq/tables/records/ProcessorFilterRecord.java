@@ -314,6 +314,20 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         return (String) get(20);
     }
 
+    /**
+     * Setter for <code>stroom.processor_filter.parent_filter_id</code>.
+     */
+    public void setParentFilterId(Integer value) {
+        set(21, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_filter.parent_filter_id</code>.
+     */
+    public Integer getParentFilterId() {
+        return (Integer) get(21);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -337,7 +351,7 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
     /**
      * Create a detached, initialised ProcessorFilterRecord
      */
-    public ProcessorFilterRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String uuid, Integer fkProcessorId, Integer fkProcessorFilterTrackerId, String data, Integer priority, Boolean reprocess, Boolean enabled, Boolean deleted, Long minMetaCreateTimeMs, Long maxMetaCreateTimeMs, Integer maxProcessingTasks, String runAsUserUuid, Boolean export, String profileName, String maxTaskCreationDelay) {
+    public ProcessorFilterRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String uuid, Integer fkProcessorId, Integer fkProcessorFilterTrackerId, String data, Integer priority, Boolean reprocess, Boolean enabled, Boolean deleted, Long minMetaCreateTimeMs, Long maxMetaCreateTimeMs, Integer maxProcessingTasks, String runAsUserUuid, Boolean export, String profileName, String maxTaskCreationDelay, Integer parentFilterId) {
         super(ProcessorFilter.PROCESSOR_FILTER);
 
         setId(id);
@@ -361,6 +375,7 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         setExport(export);
         setProfileName(profileName);
         setMaxTaskCreationDelay(maxTaskCreationDelay);
+        setParentFilterId(parentFilterId);
         resetTouchedOnNotNull();
     }
 }

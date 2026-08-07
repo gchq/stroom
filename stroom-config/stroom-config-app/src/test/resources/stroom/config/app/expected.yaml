@@ -775,6 +775,7 @@ appConfig:
       statisticsMode: "INTERNAL"
   processor:
     assignTasks: true
+    claimTasksOnWorker: true
     createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
@@ -794,7 +795,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
-    disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"
@@ -830,7 +830,9 @@ appConfig:
     skipEmptyFilterFetchDuration: "PT10S"
     skipNonProducingFiltersDuration: "PT10S"
     skipNonProducingFiltersMaxDuration: "PT1M"
+    taskAvailabilityInterval: "PT5S"
     taskCreationThreadCount: 5
+    taskLeaseTimeout: "PT10M"
     tasksToCreate: 1000
     useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"

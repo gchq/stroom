@@ -30,14 +30,20 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Singleton;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Singleton
@@ -53,9 +59,20 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public long retainOwnedTasks(final Set<String> retainForNodes,
-                                 final Instant statusOlderThan) {
-        return releaseTasks(null, retainForNodes, statusOlderThan);
+    public long reapDeadTasks(final Instant statusOlderThan) {
+        return 0;
+    }
+
+    @Override
+    public int countDeadTasks(final Instant statusOlderThan) {
+        return 0;
+    }
+
+    @Override
+    public int renewTaskHeartbeats(final String nodeName,
+                                   final Collection<Long> taskIds,
+                                   final long nowMs) {
+        return 0;
     }
 
     private long releaseTasks(final Set<String> releaseForNodes,
@@ -134,6 +151,51 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
+    public List<ProcessorTask> claimTasks(final int filterId, final String nodeName, final int limit) {
+        final long now = System.currentTimeMillis();
+        final List<ProcessorTask> claimed = dao.getMap().values()
+                .stream()
+                .filter(task -> TaskStatus.CREATED.equals(task.getStatus()))
+                .filter(task -> Objects.equals(
+                        NullSafe.get(task, ProcessorTask::getProcessorFilter, ProcessorFilter::getId),
+                        filterId))
+                .sorted(Comparator.comparing(ProcessorTask::getId))
+                .limit(Math.max(0, limit))
+                .toList();
+        return claimed
+                .stream()
+                .map(task -> dao.update(task.copy()
+                        .status(TaskStatus.PROCESSING)
+                        .statusTimeMs(now)
+                        .startTimeMs(now)
+                        .nodeName(nodeName)
+                        .build()))
+                .toList();
+    }
+
+    @Override
+    public long sweepQueuedTasks(final Instant statusOlderThan) {
+        return 0;
+    }
+
+    @Override
+    public Map<Integer, Long> getTaskAvailability(final Collection<Integer> filterIds) {
+        final Set<Integer> wanted = new HashSet<>(filterIds);
+        final Map<Integer, Long> availability = new HashMap<>();
+        dao.getMap().values().forEach(task -> {
+            final Integer filterId = NullSafe.get(task,
+                    ProcessorTask::getProcessorFilter,
+                    ProcessorFilter::getId);
+            if (filterId != null
+                && wanted.contains(filterId)
+                && TaskStatus.CREATED.equals(task.getStatus())) {
+                availability.merge(filterId, task.getId(), Math::min);
+            }
+        });
+        return availability;
+    }
+
+    @Override
     public int countTasksForFilter(final int filterId, final TaskStatus status) {
         return 0;
     }
@@ -144,6 +206,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                                                 final TaskStatus status) {
         return new FilterTaskCounts(0, 0);
     }
+
 
     @Override
     public List<ProcessorTask> queueTasks(final Set<Long> idSet,
@@ -253,4 +316,5 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                                                               final int limit) {
         return null;
     }
+
 }
