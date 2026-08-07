@@ -535,6 +535,7 @@ public class S3ClientHelper {
 
                 logRequest("Deleting: ", bucketName, objectIdentifiers, request);
 
+                // The S3 delete is idempotent, so if we get a failure and redo this meta we are ok
                 final DeleteObjectsResponse response;
                 if (s3ClientConfig.isAsync()) {
                     try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
@@ -548,7 +549,8 @@ public class S3ClientHelper {
                     }
                 } else {
                     try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-                        response = pooledClient.getClient().deleteObjects(request);
+                        response = pooledClient.getClient()
+                                .deleteObjects(request);
                     } catch (final S3Exception e) {
                         LOGGER.error("Error deleting: bucketName={}, objectIdentifiers={}",
                                 bucketName, objectIdentifiers, e);

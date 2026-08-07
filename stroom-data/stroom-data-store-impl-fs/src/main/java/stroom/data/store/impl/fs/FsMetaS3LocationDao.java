@@ -24,7 +24,6 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public interface FsMetaS3LocationDao {
@@ -41,5 +40,5 @@ public interface FsMetaS3LocationDao {
 
     int delete(final Collection<Long> metaIds);
 
-    int delete(final Long metaId, final List<S3Location> s3Locations);
+    int delete(final Long metaId, final Collection<S3Location> s3Locations);
 }

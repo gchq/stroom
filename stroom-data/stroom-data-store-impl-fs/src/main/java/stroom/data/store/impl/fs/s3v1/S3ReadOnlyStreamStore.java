@@ -86,12 +86,17 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
         LOGGER.debug("physicallyDelete() - No-op - simpleMeta: {}, dataVolume: {}, progress: {}",
                 simpleMeta, dataVolume, progress);
 
-        // S3 is not under our control, so we don't touch the files on there.
+        // S3 is not under our control, so we don't touch the files on S3, they are
+        // somebody else's problem.
 
-        // We do need to remove the S3 location records in the DB though
-        fsMetaS3LocationDao.delete(List.of(simpleMeta.getId()));
+        try {
+            // We do need to remove the S3 location records in the DB though
+            fsMetaS3LocationDao.delete(List.of(simpleMeta.getId()));
 
-        return new ReadOnlyS3PhysicalDeleteOutcome(true, dataVolume, simpleMeta);
+            return new ReadOnlyS3PhysicalDeleteOutcome(true, dataVolume, simpleMeta);
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

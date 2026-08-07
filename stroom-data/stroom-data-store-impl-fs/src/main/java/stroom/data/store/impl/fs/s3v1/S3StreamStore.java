@@ -54,7 +54,6 @@ import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -248,28 +247,20 @@ public class S3StreamStore extends AbstractS3StreamStore {
         LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}", simpleMeta, dataVolume);
         // Remove the files on S3 first.
         final S3LocationDataVolume s3LocationDataVolume = dataVolumeService.findS3Locations(simpleMeta.getId());
-        boolean success = true;
         final List<S3Location> deletedLocations = new ArrayList<>();
         if (s3LocationDataVolume != null && !s3LocationDataVolume.isEmpty()) {
             final S3Manager s3Manager = createS3Manager(s3LocationDataVolume.dataVolume());
-            for (final S3Location s3Location : s3LocationDataVolume.s3Locations()) {
-                try {
-                    final DeleteObjectResponse deleteObjectResponse = s3Manager.delete(s3Location);
-                    deletedLocations.add(s3Location);
-                } catch (final Exception e) {
-                    success = false;
-                    break;
-                }
-            }
+            final Set<S3Location> s3Locations = s3LocationDataVolume.s3Locations();
+            s3Manager.delete(s3LocationDataVolume.s3Locations());
+            deletedLocations.addAll(s3Locations);
+
+            // Now remove the S3 location records in the DB.
+            fsMetaS3LocationDao.delete(List.of(simpleMeta.getId()));
         } else {
             LOGGER.debug("physicallyDelete() - Nothing to delete");
         }
 
-        // Now remove the S3 location records in the DB.
-        if (!deletedLocations.isEmpty()) {
-            fsMetaS3LocationDao.delete(simpleMeta.getId(), deletedLocations);
-        }
-        return new S3PhysicalDeleteOutcome(success, dataVolume, simpleMeta, deletedLocations);
+        return new S3PhysicalDeleteOutcome(true, dataVolume, simpleMeta, deletedLocations);
     }
 
     @Override

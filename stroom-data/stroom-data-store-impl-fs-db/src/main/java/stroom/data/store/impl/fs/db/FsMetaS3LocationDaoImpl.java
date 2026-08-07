@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Gatherers;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location.FS_META_S3_LOCATION;
 
@@ -155,25 +156,33 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
     }
 
     @Override
-    public int delete(final Long metaId, final List<S3Location> s3Locations) {
+    public int delete(final Long metaId, final Collection<S3Location> s3Locations) {
         final int count;
         if (NullSafe.hasItems(s3Locations)) {
             count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-                final List<Query> queries = s3Locations.stream()
-                        .map(s3Location -> (Query) context
-                                .delete(FsMetaS3Location.FS_META_S3_LOCATION)
-                                .where(FsMetaS3Location.FS_META_S3_LOCATION.META_ID
-                                        .eq(metaId)
-                                        .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_REGION
-                                                .eq(s3Location.getRegionName()))
-                                        .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_BUCKET
-                                                .eq(s3Location.getBucketName()))
-                                        .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_KEY
-                                                .eq(s3Location.getKey()))))
-                        .toList();
-                final int[] counts = context.batch(queries)
-                        .execute();
-                return Arrays.stream(counts).sum();
+                // Use a batch size in case we get a meta with lots of s3 locations
+                return s3Locations.stream()
+                        .gather(Gatherers.windowFixed(50))
+                        .mapToInt(locationsBatch -> {
+                            final List<Query> queries = locationsBatch.stream()
+                                    .map(s3Location -> (Query) context
+                                            .delete(FsMetaS3Location.FS_META_S3_LOCATION)
+                                            .where(FsMetaS3Location.FS_META_S3_LOCATION.META_ID
+                                                    .eq(metaId)
+                                                    .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_REGION
+                                                            .eq(s3Location.getRegionName()))
+                                                    .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_BUCKET
+                                                            .eq(s3Location.getBucketName()))
+                                                    .and(FsMetaS3Location.FS_META_S3_LOCATION.S3_KEY
+                                                            .eq(s3Location.getKey()))))
+                                    .toList();
+                            // Do it as a batch query to reduce jdbc calls. Don't have to worry about batch size
+                            // as one meta
+                            final int[] counts = context.batch(queries)
+                                    .execute();
+                            return Arrays.stream(counts).sum();
+                        })
+                        .sum();
             });
         } else {
             count = 0;

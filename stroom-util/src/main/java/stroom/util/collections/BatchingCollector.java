@@ -73,6 +73,9 @@ public class BatchingCollector<T> implements Collector<T, List<T>, List<T>> {
      * @param batchProcessor the batch processor which accepts batches of records to process
      */
     BatchingCollector(final int batchSize, final Consumer<List<T>> batchProcessor) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("batchSize must be greater than zero");
+        }
         this.batchSize = batchSize;
         this.batchProcessor = Objects.requireNonNull(batchProcessor);
     }
@@ -96,22 +99,25 @@ public class BatchingCollector<T> implements Collector<T, List<T>, List<T>> {
     public BiConsumer<List<T>, T> accumulator() {
         return (ts, t) -> {
             ts.add(t);
+            final List<T> batch = new ArrayList<>(ts);
             if (ts.size() >= batchSize) {
-                batchProcessor.accept(ts);
-                recordsProcessed.addAndGet(ts.size());
+                batchProcessor.accept(batch);
+                recordsProcessed.addAndGet(batch.size());
                 ts.clear();
             }
         };
     }
 
     public BinaryOperator<List<T>> combiner() {
-        return (ts, ots) -> {
+        return (left, right) -> {
             // process each parallel list without checking for batch size
             // avoids adding all elements of one to another
             // can be modified if a strict batching mode is required
-            batchProcessor.accept(ts);
-            batchProcessor.accept(ots);
-            recordsProcessed.addAndGet(ts.size() + ots.size());
+            final List<T> leftBatch = new ArrayList<>(left);
+            final List<T> rightBatch = new ArrayList<>(right);
+            batchProcessor.accept(leftBatch);
+            batchProcessor.accept(rightBatch);
+            recordsProcessed.addAndGet(leftBatch.size() + rightBatch.size());
             return Collections.emptyList();
         };
     }
@@ -119,8 +125,9 @@ public class BatchingCollector<T> implements Collector<T, List<T>, List<T>> {
     public Function<List<T>, List<T>> finisher() {
         return ts -> {
             if (!ts.isEmpty()) {
-                batchProcessor.accept(ts);
-                recordsProcessed.addAndGet(ts.size());
+                final List<T> batch = new ArrayList<>(ts);
+                batchProcessor.accept(batch);
+                recordsProcessed.addAndGet(batch.size());
             }
             return Collections.emptyList();
         };
