@@ -75,16 +75,23 @@ class TestQueryResourceImplCsvSearch {
     }
 
     /**
-     * Without diagnostics there is nothing for the caller to act on, so blaming their request would be
-     * wrong; that stays a server error.
+     * A query is entitled to match nothing, so no results with nothing reported must not be turned
+     * into an error. It is the same empty response as a search that returned no rows.
      */
     @Test
-    void noResultsAndNoDiagnosticsIsNotBlamedOnTheCaller() {
+    void noResultsAndNoDiagnosticsIsNotAnError() {
         final DashboardSearchResponse response = failedResponse(null, null);
 
-        assertThatThrownBy(() -> csvSearch(response))
-                .isInstanceOf(RuntimeException.class)
-                .isNotInstanceOf(BadRequestException.class);
+        assertThat(csvSearch(response)).isNull();
+    }
+
+    /**
+     * SearchResponseMapper returns null for a null search response, so the response itself has to be
+     * guarded as well as the results it carries.
+     */
+    @Test
+    void noResponseAtAllIsNotAnError() {
+        assertThat(csvSearch(null)).isNull();
     }
 
     /**
