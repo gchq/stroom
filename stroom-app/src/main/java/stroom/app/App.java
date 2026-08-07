@@ -60,7 +60,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 import stroom.util.validation.ValidationModule;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlFileUtil;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
@@ -140,7 +140,7 @@ public class App extends Application<Config> {
         //   Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
         System.setProperty("org.jboss.logging.provider", "slf4j");
 
-        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
+        final Path yamlConfigFile = YamlFileUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
 
