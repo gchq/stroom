@@ -17,6 +17,7 @@
 package stroom.planb.impl.db;
 
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBDocNotFoundException;
 import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.logging.LambdaLogger;
@@ -95,13 +96,14 @@ public class PlanBDocumentResolver {
                 return Optional.empty();
             }
             final PlanBDocument doc = planBDocCache.get(mapName);
-            if (doc == null) {
-                errorConsumer.accept("Unable to find state doc for map name: " + mapName);
-                unresolvedNames.add(mapName);
-                return Optional.empty();
-            }
             resolvedDocs.put(mapName, doc);
             return Optional.of(doc);
+        } catch (final PlanBDocNotFoundException e) {
+            // There is no such doc, so no later row will resolve it either. Remembering that is what keeps
+            // one missing map name to one error per stream rather than one per record.
+            errorConsumer.accept("Unable to find state doc for map name: " + mapName);
+            unresolvedNames.add(mapName);
+            return Optional.empty();
         } catch (final RuntimeException e) {
             // Do not add to unresolvedNames — transient failures should be retried.
             LOGGER.debug(e::getMessage, e);

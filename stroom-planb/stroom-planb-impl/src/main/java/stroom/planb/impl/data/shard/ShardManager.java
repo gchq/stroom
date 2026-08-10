@@ -149,8 +149,15 @@ public class ShardManager {
                 final Runnable runnable = taskContextFactory
                         .childContext(parentTaskContext, "Maintain shard: " + doc.getName(), taskContext -> {
                             try {
-                                try {
-                                    final PlanBDocument loaded = planBDocCache.get(doc.getName());
+                                // By UUID, not name: a shard holds the doc it was created with, so a
+                                // renamed doc would look deleted and have its shard destroyed.
+                                final PlanBDocument loaded = readPlanBDoc(doc.getUuid());
+                                if (loaded == null) {
+                                    // The doc has been deleted, so delete the shard with it.
+                                    if (shard.delete()) {
+                                        shardMap.remove(doc.getUuid());
+                                    }
+                                } else {
                                     long total = 0;
                                     taskContext.info(() -> "Condensing data");
                                     total += shard.condense(loaded);
@@ -160,12 +167,6 @@ public class ShardManager {
                                         // If we removed data then compact the shard.
                                         taskContext.info(() -> "Compacting shard");
                                         shard.compact();
-                                    }
-                                } catch (final DocumentNotFoundException e) {
-                                    LOGGER.debug(e::getMessage, e);
-                                    // If we can't get the doc then we must have deleted it so delete the shard.
-                                    if (shard.delete()) {
-                                        shardMap.remove(shard.getDoc().getUuid());
                                     }
                                 }
                             } catch (final Exception e) {
@@ -188,16 +189,14 @@ public class ShardManager {
             shardMap.values().forEach(shard -> {
                 try {
                     final PlanBDocument doc = shard.getDoc();
-                    try {
-                        planBDocCache.get(doc.getName());
-                        // Doc exists — compact the shard.
-                        shard.compact();
-                    } catch (final DocumentNotFoundException e) {
-                        LOGGER.debug(e::getMessage, e);
-                        // If we can't get the doc then we must have deleted it so delete the shard.
+                    // By UUID, not name — see condenseAll.
+                    if (readPlanBDoc(doc.getUuid()) == null) {
+                        // The doc has been deleted, so delete the shard with it.
                         if (shard.delete()) {
-                            shardMap.remove(shard.getDoc().getUuid());
+                            shardMap.remove(doc.getUuid());
                         }
+                    } else {
+                        shard.compact();
                     }
                 } catch (final Exception e) {
                     LOGGER.error(e::getMessage, e);
@@ -248,16 +247,8 @@ public class ShardManager {
     private void cleanupMap(final Map<String, Shard> map) {
         map.forEach((key, shard) -> {
             try {
-                boolean docDeleted;
-
-                // Check if the doc has been deleted.
-                try {
-                    planBDocCache.get(shard.getDoc().getName());
-                    docDeleted = false;
-                } catch (final DocumentNotFoundException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    docDeleted = true;
-                }
+                // Check if the doc has been deleted. By UUID, not name — see condenseAll.
+                final boolean docDeleted = readPlanBDoc(shard.getDoc().getUuid()) == null;
 
                 if (docDeleted) {
                     // Doc deleted — could be a StoreShard whose delete() may fail if readers
@@ -489,7 +480,12 @@ public class ShardManager {
             final PlanBDocument doc = readPlanBDoc(docUuid);
             if (doc == null) {
                 LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
-                throw new DocumentNotFoundException(DocRef.builder().uuid(docUuid).build());
+                // A type is required — DocRef's constructor rejects a null one, and an NPE here would be
+                // caught as an unexpected RuntimeException by callers that handle DocumentNotFoundException.
+                throw new DocumentNotFoundException(DocRef.builder()
+                        .type(PlanBDoc.TYPE)
+                        .uuid(docUuid)
+                        .build());
             }
             return createShard(doc, shardIndex);
         });

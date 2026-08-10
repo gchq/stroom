@@ -29,6 +29,10 @@ public interface PlanBDocCache {
      */
     List<PlanBDocument> getAll();
 
+    /**
+     * @throws PlanBDocNotFoundException if no document is registered under that name. Never returns
+     *                                   {@code null}.
+     */
     PlanBDocument get(String name);
 
     void remove(String name);

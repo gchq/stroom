@@ -43,19 +43,31 @@ public class DefaultBatchDestination implements BatchDestination {
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(DefaultBatchDestination.class);
 
+    /**
+     * Attempts every part, then throws if any failed.
+     *
+     * <p>Throwing is what marks the stream as failed so it can be reprocessed — the parts that did not
+     * transfer hold the only copy of that stream's data, and a stream recorded as successful is never
+     * retried. Every part is still attempted first, so one unreachable destination does not strand the
+     * data belonging to the others.
+     */
     @Override
     public void publish(final WrittenBatch batch) throws IOException {
-        boolean allOk = false;
+        int failed = 0;
         try {
-            boolean ok = true;
             for (final WrittenPart part : batch.parts()) {
                 if (!part.destination().transfer(part, batch.meta())) {
-                    ok = false;
+                    failed++;
                 }
             }
-            allOk = ok;
         } finally {
-            cleanUpWriterDir(batch.writerDir(), allOk);
+            cleanUpWriterDir(batch.writerDir(), failed == 0);
+        }
+
+        if (failed > 0) {
+            throw new IOException(LogUtil.message(
+                    "Failed to transfer {} of {} Plan B part(s) for meta {}; see earlier errors for the cause",
+                    failed, batch.parts().size(), batch.meta().getId()));
         }
     }
 

@@ -21,7 +21,6 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
-import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.planb.shared.PlanBDocument;
@@ -95,7 +94,7 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
             }
 
             if (result == null) {
-                throw new DocumentNotFoundException(DocRef.builder().name(name).build());
+                throw new PlanBDocNotFoundException(name);
             }
             return result;
         });
