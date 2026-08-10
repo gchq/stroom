@@ -99,12 +99,12 @@ public class SharedFileStoreShard extends AbstractStoreShard {
     }
 
     /**
-     * A shared-file-store shard is a holding area, not a query target — queries read the archive buckets.
-     * So it carries none of the query-only structures a store can have (for traces, the secondary sort
-     * indexes), which would otherwise be maintained for every span merged and never read.
+     * A shared-file-store shard is a holding area: it is read by key, never listed or sorted, because those
+     * queries are served from the archive buckets. Its secondary indexes would therefore be maintained for
+     * every record merged and never read, so they are not opened at all.
      */
     @Override
-    protected boolean isQueryable() {
+    protected boolean withSecondaryIndexes() {
         return false;
     }
 

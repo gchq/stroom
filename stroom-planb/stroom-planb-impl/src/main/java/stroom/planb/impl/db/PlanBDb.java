@@ -32,7 +32,7 @@ import java.nio.file.Path;
 
 public class PlanBDb {
 
-    /** Opens a queryable store. See the six-arg overload for stores that are only written and merged. */
+    /** Opens a store with its secondary indexes. See the six-arg overload to open without them. */
     public static Db<?, ?> open(final PlanBDocument doc,
                                 final Path targetPath,
                                 final ByteBuffers byteBuffers,
@@ -42,17 +42,21 @@ public class PlanBDb {
     }
 
     /**
-     * @param queryable whether this env needs the structures that only sorted/filtered queries use.
-     *                  Currently only {@code TRACE} stores have any (their secondary sort indexes);
-     *                  every other type ignores it. Must be consistent for every open of a given env —
-     *                  see {@link stroom.planb.impl.db.trace.TraceDb#create}.
+     * @param withSecondaryIndexes whether to open the store's secondary indexes — those only sorted or
+     *                             filtered queries read. Pass {@code false} for an env that is only written
+     *                             and merged, to avoid maintaining them. A store type with no secondary
+     *                             indexes ignores it.
+     *                             <p><b>Must be consistent for every open of a given env.</b> Asking a
+     *                             read-only env for a DBI it does not contain throws, so an env written
+     *                             without its indexes cannot later be opened read-only with them. Opening
+     *                             with {@code false} is always safe.
      */
     public static Db<?, ?> open(final PlanBDocument doc,
                                 final Path targetPath,
                                 final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,
                                 final boolean readOnly,
-                                final boolean queryable) {
+                                final boolean withSecondaryIndexes) {
         switch (doc.getStateType()) {
             case STATE -> {
                 return StateDb.create(
@@ -110,7 +114,7 @@ public class PlanBDb {
                         byteBufferFactory,
                         doc,
                         readOnly,
-                        queryable);
+                        withSecondaryIndexes);
             }
 
             default -> throw new RuntimeException("Unexpected Plan B store type: " + doc.getStateType());
