@@ -1068,11 +1068,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         };
     }
 
-    // Age axis for archive/delete decisions: the root span's own end (getRootEndTime), falling back to
-    // start time for a legacy root (or a ZERO/invalid end). Gating on the root's own end — not the
-    // trace's max end, which trailing spans inflate — bounds leaky/never-ending traces; later spans
-    // then arrive as parentless orphans and are swept by insert time.
-    private static NanoTime archivalAgeAxis(final TraceRoot root) {
+    // The instant a trace's age is measured from for archive/delete decisions: the root span's own end
+    // (getRootEndTime), falling back to start time for a legacy root (or a ZERO/invalid end). Gating on the
+    // root's own end — not the trace's max end, which trailing spans inflate — bounds leaky/never-ending
+    // traces; later spans then arrive as parentless orphans and are swept by insert time.
+    private static NanoTime getAgeFrom(final TraceRoot root) {
         final NanoTime start = root.getStartTime();
         final NanoTime rootEnd = root.getRootEndTime();
         if (rootEnd != null && (start == null || !rootEnd.isLessThan(start))) {
@@ -1091,19 +1091,24 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * in a different bucket; that is accepted — the cut-off is the operator's answer to "how long until all
      * of a trace's spans have arrived".
      *
-     * <p>Real and synthesized roots are treated identically: a synthesized root has a start time like any
-     * other, so no separate sweep for rootless traces is needed.
+     * <p><b>A trace whose only root is synthesized waits</b>, either for its real root or for the cut-off.
+     * The root span usually arrives last, so archiving on a synthesized root's start time — the earliest
+     * span's, not the root's — would bucket the trace by a start time the real root then contradicts, and
+     * since its children have already been deleted locally only the root span would reach the second bucket.
+     * Holding it back in the meantime is what the holding area is for; the cost is that a trace whose root
+     * never arrives is not queryable until the cut-off retires it.
      *
      * <p><b>The root span is copied, not moved</b>, until its root is retired. The bucket needs it to derive
      * a real (non-orphan) root of its own via {@code mergeComplete()} after {@code pushArchive} merges this
      * delta in. The holding area needs it too: without it {@link #buildRootFromStats} would see spans but no
      * root span and overwrite the real root with a synthesized orphan.
      *
-     * <p><b>Every trace with a root is staged</b>, not just those with spans still to send. Re-sending an
-     * already-archived trace is a no-op — span puts use {@code MDB_NOOVERWRITE} and the bucket recomputes
+     * <p><b>Every trace with a real root is staged</b>, not just those with spans still to send. Re-sending
+     * an already-archived trace is a no-op — span puts use {@code MDB_NOOVERWRITE} and the bucket recomputes
      * its root from its own spans — whereas staging only traces that still have children would silently lose
      * a single-span trace: with no children it would never be sent, and it would then be retired having
-     * never been archived.
+     * never been archived. That is why the wait above keys on having a real root rather than on having
+     * children.
      *
      * @return the number of rows removed from the holding area — spans plus root-side rows, not traces
      */
@@ -1131,13 +1136,24 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 final byte[] traceIdBytes = new byte[key.remaining()];
                 key.duplicate().get(traceIdBytes);
                 final String hex = HexStringUtil.encode(traceIdBytes);
+
+                // Age on the root's own end (see getAgeFrom), so trailing spans cannot keep a never-ending
+                // trace in the holding area forever.
+                final NanoTime ageFrom = getAgeFrom(root);
+                final boolean pastCutOff = ageFrom != null && ageFrom.isBefore(nanoTimeBefore);
+
+                // A synthesized root's start time is the earliest span's, not the root span's, so archiving
+                // on it would bucket the trace by a start time the real root will contradict. Hold the trace
+                // back until the real root arrives, or until the cut-off says it never will.
+                if (root.isOrphan() && !pastCutOff) {
+                    return;
+                }
+
                 labels.put(hex, ArchivalGranularityUtil.label(
                         granularity, NanoTimeUtil.toInstant(startTime)));
-
-                // Age on the root's own end (see archivalAgeAxis), so trailing spans cannot keep a
-                // never-ending trace in the holding area forever.
-                final NanoTime ageAxis = archivalAgeAxis(root);
-                if (ageAxis != null && ageAxis.isBefore(nanoTimeBefore)) {
+                // Falling through from the guard above keeps retiring a subset of bucketLabels, so nothing is
+                // retired without having been staged first.
+                if (pastCutOff) {
                     retiring.put(hex, root);
                 }
             });
@@ -1483,8 +1499,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         deleteOrphanRoot(readTxn, writer, key, traceIdBytes, value, changeCount);
                     }
                 } else {
-                    final NanoTime ageAxis = archivalAgeAxis(value);
-                    if (ageAxis != null && ageAxis.isBefore(deleteBefore)) {
+                    final NanoTime ageFrom = getAgeFrom(value);
+                    if (ageFrom != null && ageFrom.isBefore(deleteBefore)) {
                         // Remove the root entry + its sort indexes, its root span(s), and stats.
                         traceRootsDbi.delete(writer.getWriteTxn(), key);
                         deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, value);

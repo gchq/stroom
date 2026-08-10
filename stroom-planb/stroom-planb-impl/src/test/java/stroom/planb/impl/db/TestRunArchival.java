@@ -58,9 +58,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for {@code TraceDb.runArchival} — the single archival path for a trace store.
  *
- * <p>Every trace that has a root, real or synthesized, is staged into the bucket for its root's START time,
- * whatever the individual spans' timestamps. Its non-root spans are removed from the holding area; the root
- * itself stays until it is older than the cutoff, so late spans keep finding a real root.
+ * <p>Every trace with a real root is staged into the bucket for its root's START time, whatever the
+ * individual spans' timestamps. Its non-root spans are removed from the holding area; the root itself stays
+ * until it is older than the cutoff, so late spans keep finding a real root. A trace whose only root is
+ * synthesized waits in the holding area until its real root arrives or the cut-off passes.
  *
  * <p>{@link ArchivalGranularity#DAY} is used throughout.
  */
@@ -243,6 +244,99 @@ class TestRunArchival {
         assertThat(listSubDirs(archiveBaseDir)).hasSize(1);
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             assertThat(db.get(childKey(TRACE_A))).as("span archived out of the live shard").isNull();
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // A synthesized root is waited on, not archived
+    // -----------------------------------------------------------------------
+
+    /**
+     * A synthesized root's start time is the earliest span's, not the root span's, so archiving on it would
+     * bucket the trace by a start time the real root then contradicts. Inside the cut-off the trace waits.
+     */
+    @Test
+    void orphanInsideTheCutOffIsNotStaged(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildDoc();
+
+        mergeChild(dbDir, doc, tempDir, "b1", CHILD_SPAN, AFTER_CUTOFF);
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            assertThat(db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir)).isZero();
+        }
+
+        assertThat(listSubDirs(archiveBaseDir)).as("no bucket for a trace still awaiting its root").isEmpty();
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(db.get(childKeyAt(TRACE_A, AFTER_CUTOFF))).as("span held back").isNotNull();
+        }
+    }
+
+    /** Once the cut-off says the real root will never arrive, the same trace is archived as an orphan. */
+    @Test
+    void orphanPastTheCutOffIsStaged(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildDoc();
+
+        mergeChild(dbDir, doc, tempDir, "b1", CHILD_SPAN, AFTER_CUTOFF);
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            assertThat(db.runArchival(Instant.parse("2024-06-01T00:00:00.000Z"),
+                    ArchivalGranularity.DAY, archiveBaseDir))
+                    .as("span plus the retired root row")
+                    .isGreaterThanOrEqualTo(2);
+        }
+
+        assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())
+                .containsExactly("2024-03-20");
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(traceIds(db)).as("root retired with the span").isEmpty();
+        }
+    }
+
+    /**
+     * The bug the wait fixes. A child arriving first synthesizes a root starting on 2024-03-20; the real root
+     * starts half an hour earlier, on 2024-03-19. Had the child been staged on the first cycle it would have
+     * been deleted locally, leaving the root span alone to reach the 2024-03-19 bucket — one trace reported
+     * two ways depending on which bucket a query opened.
+     */
+    @Test
+    void traceLandsWhollyInTheRealRootsBucket_whenTheRootArrivesLater(@TempDir final Path tempDir)
+            throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildDoc();
+
+        final Instant childStart = Instant.parse("2024-03-20T00:30:00.000Z");
+        final Instant rootStart = Instant.parse("2024-03-19T23:30:00.000Z");
+
+        mergeChild(dbDir, doc, tempDir, "b1", CHILD_SPAN, childStart);
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+        }
+        assertThat(listSubDirs(archiveBaseDir)).as("nothing staged while the root is outstanding").isEmpty();
+
+        final Path rootBatch = Files.createDirectory(tempDir.resolve("b2"));
+        try (final TraceDb db = TraceDb.create(rootBatch, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(w -> db.insert(w, new SpanKV(rootKeyAt(TRACE_A, rootStart), span(rootStart, rootStart))));
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.merge(rootBatch);
+            db.mergeComplete();
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+        }
+
+        final List<Path> archiveDirs = listSubDirs(archiveBaseDir);
+        assertThat(archiveDirs.stream().map(p -> p.getFileName().toString()).toList())
+                .as("one bucket, the real root's start day")
+                .containsExactly("2024-03-19");
+        try (final TraceDb delta =
+                     TraceDb.create(archiveDirs.getFirst(), BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(spanCount(delta.getTrace(HexStringUtil.decode(TRACE_A))))
+                    .as("root span and child together")
+                    .isEqualTo(2);
         }
     }
 
@@ -468,6 +562,46 @@ class TestRunArchival {
 
     private static SpanKey childKey(final String traceId) {
         return SpanKey.builder().traceId(traceId).parentSpanId(ROOT_SPAN).spanId(CHILD_SPAN).build();
+    }
+
+    // Production builds keys with SpanKey.create(span), so the start time is on the key too — which is what
+    // the earliest-start scan behind a synthesized root reads.
+    private static SpanKey keyAt(final String traceId,
+                                 final String parentSpanId,
+                                 final String spanId,
+                                 final Instant start) {
+        return SpanKey.builder()
+                .traceId(traceId)
+                .parentSpanId(parentSpanId)
+                .spanId(spanId)
+                .startTimeUnixNano(Long.toString(NanoTimeUtil.fromInstant(start).toEpochNanos()))
+                .build();
+    }
+
+    private static SpanKey rootKeyAt(final String traceId, final Instant start) {
+        return keyAt(traceId, "", ROOT_SPAN, start);
+    }
+
+    private static SpanKey childKeyAt(final String traceId, final Instant start) {
+        return keyAt(traceId, ROOT_SPAN, CHILD_SPAN, start);
+    }
+
+    // Only merge queues the root rebuild that synthesizes a root for a rootless trace; a bare insert does not.
+    private static void mergeChild(final Path dbDir,
+                                   final PlanBDoc doc,
+                                   final Path tempDir,
+                                   final String batchName,
+                                   final String spanId,
+                                   final Instant start) throws IOException {
+        final Path batch = Files.createDirectory(tempDir.resolve(batchName));
+        try (final TraceDb db = TraceDb.create(batch, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> db.insert(writer,
+                    new SpanKV(keyAt(TRACE_A, ROOT_SPAN, spanId, start), span(start, start))));
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.merge(batch);
+            db.mergeComplete();
+        }
     }
 
     /** A span value with the given start time (also used as end time) and insert time. */
