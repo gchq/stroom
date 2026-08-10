@@ -247,6 +247,48 @@ class TestRunArchival {
         }
     }
 
+    /**
+     * Each delta must hold only the traces assigned to its own label. Staging seeks to each selected trace's
+     * key prefix, so a wrong prefix would copy a neighbouring trace into the wrong bucket rather than skip
+     * it — and nothing else asserts that a bucket is free of other buckets' traces.
+     */
+    @Test
+    void eachDeltaHoldsOnlyItsOwnTraces(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
+        final PlanBDoc doc = buildDoc();
+
+        final Instant january = Instant.parse("2024-01-10T09:00:00.000Z");
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(TRACE_A), span(january, january)));
+                db.insert(writer, new SpanKV(childKey(TRACE_A), span(january, january)));
+                db.insert(writer, new SpanKV(rootKey(TRACE_B), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+                db.insert(writer, new SpanKV(childKey(TRACE_B), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+            });
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir);
+        }
+
+        assertDeltaHoldsOnly(archiveBaseDir.resolve("2024-01-10"), doc, TRACE_A, TRACE_B);
+        assertDeltaHoldsOnly(archiveBaseDir.resolve("2024-03-20"), doc, TRACE_B, TRACE_A);
+    }
+
+    private static void assertDeltaHoldsOnly(final Path deltaDir,
+                                             final PlanBDoc doc,
+                                             final String presentTraceId,
+                                             final String absentTraceId) {
+        try (final TraceDb delta = TraceDb.create(deltaDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(spanCount(delta.getTrace(HexStringUtil.decode(presentTraceId))))
+                    .as("root span and child of " + presentTraceId)
+                    .isEqualTo(2);
+            assertThat(delta.findTrace(HexStringUtil.decode(absentTraceId)))
+                    .as(absentTraceId + " is assigned to the other label")
+                    .isEmpty();
+        }
+    }
+
     // -----------------------------------------------------------------------
     // A synthesized root is waited on, not archived
     // -----------------------------------------------------------------------

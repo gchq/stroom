@@ -18,9 +18,10 @@ package stroom.planb.impl.db.trace;
 
 import stroom.pathways.shared.otel.trace.TraceRoot;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * What one archival pass will act on, decided once by {@code TraceDb.selectRoots} and then read by the
@@ -40,10 +41,6 @@ record ArchivalSelection(Map<String, String> labels, Map<String, TraceRoot> reti
         return labels.isEmpty();
     }
 
-    String labelOf(final String traceIdHex) {
-        return labels.get(traceIdHex);
-    }
-
     boolean isStaged(final String traceIdHex) {
         return labels.containsKey(traceIdHex);
     }
@@ -52,7 +49,14 @@ record ArchivalSelection(Map<String, String> labels, Map<String, TraceRoot> reti
         return retiring.containsKey(traceIdHex);
     }
 
-    Set<String> distinctLabels() {
-        return new LinkedHashSet<>(labels.values());
+    /**
+     * The traces to stage, grouped by the bucket they go to. Each group is in ascending trace-id order,
+     * which is also the order of the span keys they prefix, so a delta's writes stay sequential.
+     */
+    Map<String, List<String>> tracesByLabel() {
+        final Map<String, List<String>> byLabel = new LinkedHashMap<>();
+        labels.keySet().stream().sorted().forEach(traceIdHex ->
+                byLabel.computeIfAbsent(labels.get(traceIdHex), k -> new ArrayList<>()).add(traceIdHex));
+        return byLabel;
     }
 }

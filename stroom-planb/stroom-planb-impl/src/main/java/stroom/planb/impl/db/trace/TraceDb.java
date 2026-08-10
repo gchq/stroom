@@ -1155,45 +1155,63 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return new ArchivalSelection(labels, retiring);
     }
 
-    // One delta env per bucket label, spans streamed straight from the source index so peak memory is
-    // O(labels), not O(spans). The label set is bounded by the cut-off — only the one or two start-time
-    // buckets still accepting spans are ever in play — so re-scanning per label stays cheap. Labels are
-    // derived once per trace by selectRoots, never per span.
+    // Writes one local delta per date label, each holding the spans of the traces selectRoots assigned to
+    // that label. A delta is throwaway: pushArchive merges it into the archive bucket for the same label on
+    // the shared store, then it is deleted.
+    //
+    // Only selected traces are read, and each one is found by seeking to its trace-id prefix rather than by
+    // filtering a full scan of the span DBI. The cost is then the spans actually copied, rather than the
+    // whole shard read once per label — which matters because the label count is not bounded: a label comes
+    // from the root's start time while retirement goes on its end, so a long-running trace, backfill, or a
+    // batch of timed-out orphans can put many labels in play at once. Spans stream straight from the source
+    // index, so peak memory is O(1) either way.
     private void stageSpans(final ArchivalSelection selection, final Path archiveBaseDir) {
-        for (final String label : selection.distinctLabels()) {
-            final Path archiveDir = archiveBaseDir.resolve(label);
+        for (final Map.Entry<String, List<String>> group : selection.tracesByLabel().entrySet()) {
+            final String label = group.getKey();
+            final List<String> traceIdHexes = group.getValue();
+            final Path deltaDir = archiveBaseDir.resolve(label);
             try {
-                Files.createDirectories(archiveDir);
+                Files.createDirectories(deltaDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
             // Indexed, unlike the holding shard this is written from: a delta's index cost is one write per
             // root, not per span, and it keeps a staged batch readable in isolation.
-            try (final TraceDb archiveDb =
-                         TraceDb.create(archiveDir, byteBuffers, byteBufferFactory, doc, false)) {
-                archiveDb.env.write(archiveWriter -> {
+            try (final TraceDb deltaDb =
+                         TraceDb.create(deltaDir, byteBuffers, byteBufferFactory, doc, false)) {
+                deltaDb.env.write(deltaWriter -> {
                     env.read(srcTxn -> {
-                        final TraceIdHexCursor hex = new TraceIdHexCursor();
-                        LmdbIterable.iterate(srcTxn, dbi, (key, val) -> {
-                            if (key.remaining() < TRACE_ID_BYTES
-                                    || !label.equals(selection.labelOf(hex.hexOf(key)))) {
-                                return;
-                            }
-                            final byte[] rawKey = new byte[key.remaining()];
-                            key.duplicate().get(rawKey);
-                            final byte[] rawVal = new byte[val.remaining()];
-                            val.duplicate().get(rawVal);
-                            putDirect(archiveDb.dbi, archiveWriter.getWriteTxn(), rawKey, rawVal);
-                            archiveWriter.tryCommit();
-                        });
+                        for (final String traceIdHex : traceIdHexes) {
+                            copySpansTo(deltaDb, deltaWriter, srcTxn, HexStringUtil.decode(traceIdHex));
+                        }
                         return null;
                     });
                     return null;
                 });
                 // Clone the UID / hash lookup tables so the delta's span values decode when merged.
-                copyLookupsTo(archiveDb);
+                copyLookupsTo(deltaDb);
             }
         }
+    }
+
+    // Every span of one trace, found by prefix since a span key starts with its trace id. Raw bytes across,
+    // no decode/re-encode: a span's value is opaque here, and copyLookupsTo gives the delta the lookup tables
+    // it needs to decode it later.
+    private void copySpansTo(final TraceDb deltaDb,
+                             final LmdbWriter deltaWriter,
+                             final Txn<ByteBuffer> srcTxn,
+                             final byte[] traceIdBytes) {
+        byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
+            LmdbIterable.iterate(srcTxn, dbi, keyRange, (key, val) -> {
+                final byte[] rawKey = new byte[key.remaining()];
+                key.duplicate().get(rawKey);
+                final byte[] rawVal = new byte[val.remaining()];
+                val.duplicate().get(rawVal);
+                putDirect(deltaDb.dbi, deltaWriter.getWriteTxn(), rawKey, rawVal);
+                deltaWriter.tryCommit();
+            });
+        });
     }
 
     // Remove what stageSpans copied: every non-root span, plus the root-side rows of a retired trace. A
