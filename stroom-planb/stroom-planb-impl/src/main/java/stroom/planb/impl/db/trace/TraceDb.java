@@ -98,7 +98,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1091,39 +1090,30 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * in a different bucket; that is accepted — the cut-off is the operator's answer to "how long until all
      * of a trace's spans have arrived".
      *
-     * <p><b>A trace whose only root is synthesized waits</b>, either for its real root or for the cut-off.
-     * The root span usually arrives last, so archiving on a synthesized root's start time — the earliest
-     * span's, not the root's — would bucket the trace by a start time the real root then contradicts, and
-     * since its children have already been deleted locally only the root span would reach the second bucket.
-     * Holding it back in the meantime is what the holding area is for; the cost is that a trace whose root
-     * never arrives is not queryable until the cut-off retires it.
-     *
-     * <p><b>The root span is copied, not moved</b>, until its root is retired. The bucket needs it to derive
-     * a real (non-orphan) root of its own via {@code mergeComplete()} after {@code pushArchive} merges this
-     * delta in. The holding area needs it too: without it {@link #buildRootFromStats} would see spans but no
-     * root span and overwrite the real root with a synthesized orphan.
-     *
-     * <p><b>Every trace with a real root is staged</b>, not just those with spans still to send. Re-sending
-     * an already-archived trace is a no-op — span puts use {@code MDB_NOOVERWRITE} and the bucket recomputes
-     * its root from its own spans — whereas staging only traces that still have children would silently lose
-     * a single-span trace: with no children it would never be sent, and it would then be retired having
-     * never been archived. That is why the wait above keys on having a real root rather than on having
-     * children.
-     *
      * @return the number of rows removed from the holding area — spans plus root-side rows, not traces
      */
     @Override
     public long runArchival(final Instant archiveBefore,
                                final ArchivalGranularity granularity,
                                final Path archiveBaseDir) {
-        final NanoTime nanoTimeBefore = NanoTimeUtil.fromInstant(archiveBefore);
+        final ArchivalSelection selection = selectRoots(NanoTimeUtil.fromInstant(archiveBefore), granularity);
+        if (selection.isEmpty()) {
+            return 0L;
+        }
+        stageSpans(selection, archiveBaseDir);
+        return purgeStaged(selection);
+    }
 
-        // traceIdHex -> bucket label, for every trace that has a root. Labelled by the root's START time:
-        // the axis queries filter on, so the bucket a trace lands in is the bucket ArchiveShardLocator
-        // opens for a query covering it.
+    // Buckets are labelled by the root's START time: the axis queries filter on, so the bucket a trace lands
+    // in is the bucket ArchiveShardLocator opens for a query covering it.
+    //
+    // Every trace with a real root is selected, not just those with spans still to send. Re-sending an
+    // already-archived trace is a no-op — span puts use MDB_NOOVERWRITE and the bucket recomputes its root
+    // from its own spans — whereas selecting only traces that still have children would silently lose a
+    // single-span trace: with no children it would never be sent, and it would then be retired having never
+    // been archived. That is why the orphan wait below keys on having a real root, not on having children.
+    private ArchivalSelection selectRoots(final NanoTime cutOff, final ArchivalGranularity granularity) {
         final Map<String, String> labels = new HashMap<>();
-        // traceIdHex -> the stored root, for the traces being retired. Kept because deleting a root's
-        // value-addressed index entries has to be computed from the OLD value.
         final Map<String, TraceRoot> retiring = new HashMap<>();
 
         env.read(readTxn -> {
@@ -1140,19 +1130,21 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 // Age on the root's own end (see getAgeFrom), so trailing spans cannot keep a never-ending
                 // trace in the holding area forever.
                 final NanoTime ageFrom = getAgeFrom(root);
-                final boolean pastCutOff = ageFrom != null && ageFrom.isBefore(nanoTimeBefore);
+                final boolean pastCutOff = ageFrom != null && ageFrom.isBefore(cutOff);
 
-                // A synthesized root's start time is the earliest span's, not the root span's, so archiving
-                // on it would bucket the trace by a start time the real root will contradict. Hold the trace
-                // back until the real root arrives, or until the cut-off says it never will.
+                // The root span usually arrives last. A synthesized root's start time is the earliest span's,
+                // not the root span's, so staging on it would bucket the trace by a start time the real root
+                // then contradicts — and since purgeStaged has by then deleted the children locally, only the
+                // root span would reach the second bucket. Hold the trace back until the real root arrives,
+                // or until the cut-off says it never will. The cost is that a trace whose root never arrives
+                // is not queryable until the cut-off retires it.
                 if (root.isOrphan() && !pastCutOff) {
                     return;
                 }
 
                 labels.put(hex, ArchivalGranularityUtil.label(
                         granularity, NanoTimeUtil.toInstant(startTime)));
-                // Falling through from the guard above keeps retiring a subset of bucketLabels, so nothing is
-                // retired without having been staged first.
+                // Falling through from the guard above is what keeps retiring a subset of labels.
                 if (pastCutOff) {
                     retiring.put(hex, root);
                 }
@@ -1160,15 +1152,15 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             return null;
         });
 
-        if (labels.isEmpty()) {
-            return 0L;
-        }
+        return new ArchivalSelection(labels, retiring);
+    }
 
-        // One delta env per bucket label, spans streamed straight from the source index so peak memory is
-        // O(labels), not O(spans). The label set is bounded by the cut-off — only the one or two start-time
-        // buckets still accepting spans are ever in play — so re-scanning per label stays cheap. Labels are
-        // derived once per trace above, never per span.
-        for (final String label : new LinkedHashSet<>(labels.values())) {
+    // One delta env per bucket label, spans streamed straight from the source index so peak memory is
+    // O(labels), not O(spans). The label set is bounded by the cut-off — only the one or two start-time
+    // buckets still accepting spans are ever in play — so re-scanning per label stays cheap. Labels are
+    // derived once per trace by selectRoots, never per span.
+    private void stageSpans(final ArchivalSelection selection, final Path archiveBaseDir) {
+        for (final String label : selection.distinctLabels()) {
             final Path archiveDir = archiveBaseDir.resolve(label);
             try {
                 Files.createDirectories(archiveDir);
@@ -1184,7 +1176,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         final TraceIdHexCursor hex = new TraceIdHexCursor();
                         LmdbIterable.iterate(srcTxn, dbi, (key, val) -> {
                             if (key.remaining() < TRACE_ID_BYTES
-                                    || !label.equals(labels.get(hex.hexOf(key)))) {
+                                    || !label.equals(selection.labelOf(hex.hexOf(key)))) {
                                 return;
                             }
                             final byte[] rawKey = new byte[key.remaining()];
@@ -1202,58 +1194,19 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 copyLookupsTo(archiveDb);
             }
         }
+    }
 
-        // Remove what was staged: every non-root span, plus the root-side rows of a retired trace. A
-        // retained span records its lookups so the deleteUnused below only drops entries nothing references.
-        //
-        // Iteration reads from readTxn while mutations go through writer.
+    // Remove what stageSpans copied: every non-root span, plus the root-side rows of a retired trace. A
+    // retained span records its lookups so the deleteUnused below only drops entries nothing references.
+    // Returns the number of rows removed.
+    //
+    // Iteration reads from readTxn while mutations go through writer.
+    private long purgeStaged(final ArchivalSelection selection) {
         return env.write(writer -> {
             final Count count = new Count();
             env.read(readTxn -> {
-                final TraceIdHexCursor hex = new TraceIdHexCursor();
-                LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
-                    final boolean staged = key.remaining() >= TRACE_ID_BYTES
-                            && labels.containsKey(hex.hexOf(key));
-                    // A root span goes only with its root, so late spans keep finding a real root.
-                    final boolean remove = staged
-                            && (!isRootKey(key) || retiring.containsKey(hex.hexOf(key)));
-                    if (remove) {
-                        dbi.delete(writer.getWriteTxn(), key);
-                        count.increment();
-                    } else {
-                        keyRecorder.recordUsed(writer, key);
-                        valueRecorder.recordUsed(writer, val);
-                    }
-                    writer.tryCommit();
-                });
-
-                for (final Map.Entry<String, TraceRoot> entry : retiring.entrySet()) {
-                    final byte[] traceIdBytes = HexStringUtil.decode(entry.getKey());
-                    byteBuffers.useBytes(traceIdBytes, keyBuf -> {
-                        traceRootsDbi.delete(writer.getWriteTxn(), keyBuf);
-                    });
-                    deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, entry.getValue());
-                    deleteStatsOf(readTxn, writer, traceIdBytes);
-                    count.increment();
-                    writer.tryCommit();
-                }
-
-                // Merge-time entries for retired roots. Key: mergeTimeMs[8] ∥ traceId[16].
-                if (!retiring.isEmpty()) {
-                    LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
-                        final ByteBuffer keyBuf = key.duplicate();
-                        if (keyBuf.remaining() != Long.BYTES + TRACE_ID_BYTES) {
-                            return;
-                        }
-                        keyBuf.getLong(); // skip the mergeTimeMs prefix
-                        final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
-                        keyBuf.get(traceIdBytes);
-                        if (retiring.containsKey(HexStringUtil.encode(traceIdBytes))) {
-                            traceRootsMergeTimeDbi.delete(writer.getWriteTxn(), key);
-                            writer.tryCommit();
-                        }
-                    });
-                }
+                deleteStagedSpans(selection, readTxn, writer, count);
+                retireRoots(selection, readTxn, writer, count);
                 return null;
             });
             writer.commit();
@@ -1267,6 +1220,64 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             }
             return count.get();
         });
+    }
+
+    private void deleteStagedSpans(final ArchivalSelection selection,
+                                   final Txn<ByteBuffer> readTxn,
+                                   final LmdbWriter writer,
+                                   final Count count) {
+        final TraceIdHexCursor hex = new TraceIdHexCursor();
+        LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+            final boolean staged = key.remaining() >= TRACE_ID_BYTES
+                    && selection.isStaged(hex.hexOf(key));
+            // The root span is copied, not moved, until its root is retired. The bucket needs it to derive a
+            // real (non-orphan) root of its own via mergeComplete() once pushArchive merges the delta in. The
+            // holding area needs it too: without it buildRootFromStats would see spans but no root span and
+            // overwrite the real root with a synthesized orphan.
+            final boolean remove = staged
+                    && (!isRootKey(key) || selection.isRetiring(hex.hexOf(key)));
+            if (remove) {
+                dbi.delete(writer.getWriteTxn(), key);
+                count.increment();
+            } else {
+                keyRecorder.recordUsed(writer, key);
+                valueRecorder.recordUsed(writer, val);
+            }
+            writer.tryCommit();
+        });
+    }
+
+    private void retireRoots(final ArchivalSelection selection,
+                             final Txn<ByteBuffer> readTxn,
+                             final LmdbWriter writer,
+                             final Count count) {
+        for (final Map.Entry<String, TraceRoot> entry : selection.retiring().entrySet()) {
+            final byte[] traceIdBytes = HexStringUtil.decode(entry.getKey());
+            byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+                traceRootsDbi.delete(writer.getWriteTxn(), keyBuf);
+            });
+            deleteSecondaryIndexes(writer.getWriteTxn(), traceIdBytes, entry.getValue());
+            deleteStatsOf(readTxn, writer, traceIdBytes);
+            count.increment();
+            writer.tryCommit();
+        }
+
+        // Merge-time entries for retired roots. Key: mergeTimeMs[8] ∥ traceId[16].
+        if (!selection.retiring().isEmpty()) {
+            LmdbIterable.iterate(readTxn, traceRootsMergeTimeDbi, (key, val) -> {
+                final ByteBuffer keyBuf = key.duplicate();
+                if (keyBuf.remaining() != Long.BYTES + TRACE_ID_BYTES) {
+                    return;
+                }
+                keyBuf.getLong(); // skip the mergeTimeMs prefix
+                final byte[] traceIdBytes = new byte[TRACE_ID_BYTES];
+                keyBuf.get(traceIdBytes);
+                if (selection.isRetiring(HexStringUtil.encode(traceIdBytes))) {
+                    traceRootsMergeTimeDbi.delete(writer.getWriteTxn(), key);
+                    writer.tryCommit();
+                }
+            });
+        }
     }
 
     // Fail loudly rather than with an NPE if a sorted/indexed read is ever attempted against a store
