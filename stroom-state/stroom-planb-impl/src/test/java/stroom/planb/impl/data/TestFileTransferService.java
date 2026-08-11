@@ -29,9 +29,16 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.io.StreamUtil;
+import stroom.util.jersey.WebTargetFactory;
+import stroom.util.time.StroomDuration;
 import stroom.util.zip.ZipUtil;
 
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -42,6 +49,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -60,6 +68,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
 
     private static final String THIS_NODE = "thisNode";
     private static final String REMOTE_NODE = "remoteNode";
+    private static final int SEND_PART_ATTEMPTS = 3;
 
     private static ExecutorService executorService;
     private static ExecutorProvider executorProvider;
@@ -269,9 +278,12 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
      * A failure to send a part to a node must reach the caller, as that is what fails the processing task and so
      * gets the reason into the stream processing error file. This client only logs such a failure at debug, so
      * the rethrow is the only thing reporting it. See gh-5706.
+     * <p>
+     * The node answering, even with an error, must not be retried. It may have received and queued the part
+     * already, and the additive stores do not merge the same part twice without double counting.
      */
     @Test
-    void testFailureToSendPartReachesCaller() throws IOException {
+    void testFailureToSendPartReachesCallerAndIsNotRetried() throws Exception {
         final Path path = Files.createTempFile("test", "test");
         Files.writeString(path, "TestFileTransferService");
         final FileDescriptor fileDescriptor = new FileDescriptor(
@@ -289,10 +301,84 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                         Mockito.anyBoolean(),
                         Mockito.any(InputStream.class));
 
-        assertThatThrownBy(() -> partSendingFileTransferClient().storePart(fileDescriptor, path, true))
+        final FileTransferClientImpl fileTransferClient = partSendingFileTransferClient(
+                url -> getWebTarget(FileTransferResource.SEND_PART_PATH_PART));
+
+        assertThatThrownBy(() -> fileTransferClient.storePart(fileDescriptor, path, true))
                 .isInstanceOf(UncheckedIOException.class)
                 .hasMessageContaining("Unable to send file to '" + REMOTE_NODE + "'")
+                .hasMessageContaining("after 1 attempt(s)")
                 .hasMessageContaining("Disk exploded");
+
+        Mockito.verify(fileTransferService, Mockito.times(1)).receivePart(
+                Mockito.anyLong(),
+                Mockito.anyLong(),
+                Mockito.anyString(),
+                Mockito.anyString(),
+                Mockito.anyBoolean(),
+                Mockito.any(InputStream.class));
+    }
+
+    /**
+     * A failure to connect to a node, e.g. the DNS lookup failing during a network blip, is retried, as nothing
+     * can have been delivered. The part is only reported as undeliverable once the attempts are used up.
+     * See gh-5706.
+     */
+    @Test
+    void testConnectionFailureIsRetried() throws Exception {
+        final Path path = Files.createTempFile("test", "test");
+        Files.writeString(path, "TestFileTransferService");
+        final FileDescriptor fileDescriptor = new FileDescriptor(
+                System.currentTimeMillis(),
+                1,
+                FileHashUtil.hash(path));
+
+        final Invocation.Builder builder = Mockito.mock(Invocation.Builder.class);
+        Mockito.when(builder.header(Mockito.anyString(), Mockito.any())).thenReturn(builder);
+        Mockito.when(builder.post(Mockito.any(Entity.class)))
+                .thenThrow(new ProcessingException(new UnknownHostException("no.such.host")));
+        final WebTarget unreachableTarget = Mockito.mock(WebTarget.class);
+        Mockito.when(unreachableTarget.request()).thenReturn(builder);
+
+        final FileTransferClientImpl fileTransferClient =
+                partSendingFileTransferClient(url -> unreachableTarget);
+
+        assertThatThrownBy(() -> fileTransferClient.storePart(fileDescriptor, path, true))
+                .isInstanceOf(UncheckedIOException.class)
+                .hasMessageContaining("Unable to send file to '" + REMOTE_NODE + "'")
+                .hasMessageContaining("after " + SEND_PART_ATTEMPTS + " attempt(s)")
+                .hasMessageContaining("no.such.host");
+
+        Mockito.verify(builder, Mockito.times(SEND_PART_ATTEMPTS)).post(Mockito.any(Entity.class));
+    }
+
+    /**
+     * A blip that clears before the attempts are used up must leave the send, and so the processing task, in
+     * the same state as if it had never happened. See gh-5706.
+     */
+    @Test
+    void testTransientFailureIsRetriedThenSucceeds() throws Exception {
+        final Path path = Files.createTempFile("test", "test");
+        Files.writeString(path, "TestFileTransferService");
+        final FileDescriptor fileDescriptor = new FileDescriptor(
+                System.currentTimeMillis(),
+                1,
+                FileHashUtil.hash(path));
+
+        final Response okResponse = Mockito.mock(Response.class);
+        Mockito.when(okResponse.getStatus()).thenReturn(Status.OK.getStatusCode());
+
+        final Invocation.Builder builder = Mockito.mock(Invocation.Builder.class);
+        Mockito.when(builder.header(Mockito.anyString(), Mockito.any())).thenReturn(builder);
+        Mockito.when(builder.post(Mockito.any(Entity.class)))
+                .thenThrow(new ProcessingException(new UnknownHostException("no.such.host")))
+                .thenReturn(okResponse);
+        final WebTarget flakyTarget = Mockito.mock(WebTarget.class);
+        Mockito.when(flakyTarget.request()).thenReturn(builder);
+
+        partSendingFileTransferClient(url -> flakyTarget).storePart(fileDescriptor, path, true);
+
+        Mockito.verify(builder, Mockito.times(2)).post(Mockito.any(Entity.class));
     }
 
     private FileTransferClientImpl fileTransferClient() {
@@ -328,10 +414,10 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
     }
 
     /**
-     * A client for {@code storePart}, configured to send to a single remote node. The resolved URL is ignored so
-     * the call still lands on the in-process test resource.
+     * A client for {@code storePart}, configured to send to a single remote node. The resolved URL is ignored,
+     * the supplied factory decides what the send lands on.
      */
-    private FileTransferClientImpl partSendingFileTransferClient()
+    private FileTransferClientImpl partSendingFileTransferClient(final WebTargetFactory webTargetFactory)
             throws NullClusterStateException, NodeNotFoundException {
         final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         Mockito.doAnswer(invocation -> {
@@ -342,12 +428,20 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
         final TargetNodeSetFactory targetNodeSetFactory = Mockito.mock(TargetNodeSetFactory.class);
         Mockito.when(targetNodeSetFactory.getEnabledTargetNodeSet()).thenReturn(Set.of(REMOTE_NODE));
 
+        final PlanBConfig planBConfig = PlanBConfig
+                .builder()
+                .nodeList(List.of(REMOTE_NODE))
+                .sendPartAttempts(SEND_PART_ATTEMPTS)
+                // Keep the test quick, the delay is not what is under test.
+                .sendPartRetryDelay(StroomDuration.ofMillis(1))
+                .build();
+
         return new FileTransferClientImpl(
-                () -> PlanBConfig.builder().nodeList(List.of(REMOTE_NODE)).build(),
+                () -> planBConfig,
                 mockNodeService(),
                 mockNodeInfo(),
                 targetNodeSetFactory,
-                url -> getWebTarget(FileTransferResource.SEND_PART_PATH_PART),
+                webTargetFactory,
                 null,
                 securityContext,
                 executorProvider);
