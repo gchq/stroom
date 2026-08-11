@@ -91,9 +91,9 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
                 runCommand(bootstrap, namespace, config, childInjector);
             } catch (final Exception e) {
                 final String msg = "Error running command "
-                        + commandName
-                        + ": " + e.getMessage()
-                        + ". Check logs for more detail.";
+                                   + commandName
+                                   + ": " + e.getMessage()
+                                   + ". Check logs for more detail.";
                 error(LOGGER, msg, e);
                 System.exit(1);
             }
@@ -242,8 +242,13 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
                         }
                     })
                     .sorted(Entry.comparingByKey())
-                    .map(entry ->
-                            "--" + entry.getKey() + " " + argValueToString(entry.getValue()))
+                    .map(entry -> {
+                        final String key = entry.getKey();
+                        final String value = key.equalsIgnoreCase("password")
+                                ? "********"
+                                : argValueToString(entry.getValue());
+                        return "--" + key + " " + value;
+                    })
                     .collect(Collectors.joining(" "));
         }
     }

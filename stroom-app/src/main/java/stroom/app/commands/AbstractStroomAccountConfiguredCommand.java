@@ -41,6 +41,7 @@ import javax.sql.DataSource;
 
 // TODO consider refactoring this into AbstractStroomCommand with an abstract method to return a guice module
 //  to create the child injector with.
+
 /**
  * Additional DW Command so instead of
  * ... server ../local.yml
@@ -96,9 +97,9 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
                     runCommand(bootstrap, namespace, config, appInjector);
                 } catch (final Exception e) {
                     final String msg = "Error running command "
-                            + commandName
-                            + ": " + e.getMessage()
-                            + ". Check logs for more detail.";
+                                       + commandName
+                                       + ": " + e.getMessage()
+                                       + ". Check logs for more detail.";
                     System.err.println(msg);
                     LOGGER.error(msg, e);
                     System.exit(1);
@@ -177,8 +178,13 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
                         }
                     })
                     .sorted(Entry.comparingByKey())
-                    .map(entry ->
-                            "--" + entry.getKey() + " " + argValueToString(entry.getValue()))
+                    .map(entry -> {
+                        final String key = entry.getKey();
+                        final String value = key.equalsIgnoreCase("password")
+                                ? "********"
+                                : argValueToString(entry.getValue());
+                        return "--" + key + " " + value;
+                    })
                     .collect(Collectors.joining(" "));
         }
     }
