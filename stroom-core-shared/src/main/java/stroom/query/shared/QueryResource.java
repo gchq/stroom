@@ -28,6 +28,7 @@ import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -158,7 +159,11 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
                           "say whether it finished. An incremental search returns whatever results it has when " +
                           "the timeout expires, so those may be partial; a non incremental search waits for the " +
                           "search to finish, which risks the request itself timing out.",
-            operationId = "queryCsv")
+            operationId = "queryCsv",
+            responses = {
+                    @ApiResponse(description = "Returns the matching rows as CSV, which may be a subset of the " +
+                                               "matching data if the search had not finished")
+            })
     @Produces(MediaType.TEXT_PLAIN)
     Response csvSearch(@QueryParam("query") final String query,
                        @QueryParam("offset") final int offset,
