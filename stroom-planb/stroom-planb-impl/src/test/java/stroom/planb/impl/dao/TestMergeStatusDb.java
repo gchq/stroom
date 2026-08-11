@@ -175,7 +175,8 @@ class TestMergeStatusDb {
     private PlanBEnv createEnv(final Path path) {
         return new PlanBEnv(
                 path,
-                ByteSize.ofMebibytes(100).getBytes(),
+                // These tests write a handful of small status records.
+                ByteSize.ofMebibytes(10).getBytes(),
                 5,
                 false,
                 new HashClashCommitRunnable());

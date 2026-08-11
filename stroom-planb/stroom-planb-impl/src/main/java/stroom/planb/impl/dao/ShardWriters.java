@@ -115,7 +115,7 @@ public class ShardWriters {
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
-        private final Map<PlanBDoc, WriterInstance> writers = new HashMap<>();
+        private final Map<String, WriterInstance> writers = new HashMap<>();
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
         public ShardWriter(final PlanBDocCache planBDocCache,
@@ -225,8 +225,29 @@ public class ShardWriters {
 
             @Override
             public void close() {
-                writer.close();
-                lmdb.close();
+                // writer.close() commits, so it can fail on a full disk or map. The env must
+                // still be closed when it does, or the caller's cleanup deletes this dir with
+                // an open env on it. The commit failure still propagates.
+                RuntimeException commitFailure = null;
+                try {
+                    writer.close();
+                } catch (final RuntimeException e) {
+                    commitFailure = e;
+                } finally {
+                    try {
+                        lmdb.close();
+                    } catch (final RuntimeException e) {
+                        // Don't let this hide why the commit failed, e.g. a full store.
+                        if (commitFailure != null) {
+                            commitFailure.addSuppressed(e);
+                        } else {
+                            commitFailure = e;
+                        }
+                    }
+                }
+                if (commitFailure != null) {
+                    throw commitFailure;
+                }
             }
         }
 
@@ -271,27 +292,51 @@ public class ShardWriters {
         }
 
         private WriterInstance getWriter(final PlanBDoc doc) {
-            return writers.computeIfAbsent(doc, k -> {
-                final Db<?, ?> db = PlanBDb.open(doc,
-                        getLmdbEnvDir(k),
-                        byteBuffers,
-                        byteBufferFactory,
-                        false);
-                // Record the stream this part shard is written from, for provenance.
-                db.writeSourceMetaId(meta.getId());
-                return new WriterInstance(db,
-                        NullSafe.getOrElse(
-                                doc,
-                                PlanBDoc::getSettings,
-                                AbstractPlanBSettings::getSynchroniseMerge,
-                                false));
+            // Keyed on the doc uuid, not the doc. PlanBDoc has value based equality, so if a doc
+            // is renamed mid stream both names resolve to one uuid and keying on the doc would
+            // open a second env on the same dir.
+            return writers.computeIfAbsent(doc.getUuid(), k -> {
+                // Everything after the open must either be registered in the map or undone.
+                // writeSourceMetaId commits, so it fails on a full disk or map exactly like the
+                // close path does, and computeIfAbsent stores nothing when the mapping function
+                // throws. The env would then be open with nothing referencing it, so close()
+                // could not close it and the cleanup would delete this dir from under it.
+                Db<?, ?> db = null;
+                try {
+                    db = PlanBDb.open(doc,
+                            getLmdbEnvDir(doc),
+                            byteBuffers,
+                            byteBufferFactory,
+                            false);
+                    // Record the stream this part shard is written from, for provenance.
+                    db.writeSourceMetaId(meta.getId());
+                    return new WriterInstance(db,
+                            NullSafe.getOrElse(
+                                    doc,
+                                    PlanBDoc::getSettings,
+                                    AbstractPlanBSettings::getSynchroniseMerge,
+                                    false));
+                } catch (final Throwable t) {
+                    if (db != null) {
+                        try {
+                            db.close();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            t.addSuppressed(e);
+                        }
+                    }
+                    throw t;
+                }
             });
         }
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {
             try {
                 final Path path = dir.resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()));
-                Files.createDirectory(path);
+                // createDirectories, not createDirectory: if a previous record for this map
+                // failed after the dir was made, the retry must not fail with a misleading
+                // "file already exists" that hides the original cause.
+                Files.createDirectories(path);
                 return path;
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
@@ -306,7 +351,27 @@ public class ShardWriters {
 
             try {
                 if (!writers.isEmpty()) {
-                    writers.values().forEach(WriterInstance::close);
+                    // Close every writer even if one fails. WriterInstance.close() commits, so
+                    // a full disk or map on one writer used to abort this loop, leaving that
+                    // writer and every later one open — and the finally below then deleted the
+                    // dir out from under them.
+                    RuntimeException closeFailure = null;
+                    for (final WriterInstance writerInstance : writers.values()) {
+                        try {
+                            writerInstance.close();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            if (closeFailure == null) {
+                                closeFailure = e;
+                            }
+                        }
+                    }
+                    if (closeFailure != null) {
+                        // The part is incomplete, so don't zip and send it. The dir is cleaned
+                        // up in the finally as before and the stream needs reprocessing, but
+                        // every env is closed by now so nothing is unlinked from under one.
+                        throw closeFailure;
+                    }
 
                     final boolean synchroniseMerge = writers
                             .values()

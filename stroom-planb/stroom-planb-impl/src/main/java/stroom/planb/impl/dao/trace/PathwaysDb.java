@@ -37,7 +37,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-public class PathwaysDb {
+public class PathwaysDb implements AutoCloseable {
 
     protected static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDb.class);
 
@@ -72,6 +72,15 @@ public class PathwaysDb {
 
     public LmdbWriter createWriter() {
         return env.createWriter();
+    }
+
+    /**
+     * Closes the LMDB environment. Must be called before the directory the env lives in is
+     * deleted, and after any writers created from this instance have been closed.
+     */
+    @Override
+    public void close() {
+        env.close();
     }
 
     public static PathwaysDb create(final Path path,

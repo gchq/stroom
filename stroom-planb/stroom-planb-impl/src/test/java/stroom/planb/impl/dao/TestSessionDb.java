@@ -129,6 +129,8 @@ class TestSessionDb {
         final Path dbDir = Files.createTempDirectory("stroom");
         final KeyPrefix prefix = KeyPrefix.create("User1");
         final Instant refTime = Instant.parse("2025-12-01T00:00:00.000Z");
+        // Outer try so the dir (created outside @TempDir) is deleted after the db
+        // try-with-resources has closed the env
         try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
             db.write(writer -> {
                 Instant day = refTime;
@@ -178,6 +180,8 @@ class TestSessionDb {
 
             // Assert the data is as expected.
             validateResults(results, refTime.plus(3, ChronoUnit.DAYS), 6);
+        } finally {
+            FileUtil.deleteDir(dbDir);
         }
     }
 

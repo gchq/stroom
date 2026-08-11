@@ -187,73 +187,66 @@ public class TestTraceDb {
 
         final int threads = 10;
 
-        // Write parts.
-        final List<CompletableFuture<Void>> list = new ArrayList<>();
-        for (int thread = 0; thread < threads; thread++) {
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, createSpanKey())));
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, createSpanKey())));
+        // All reads go through the shard's own open env via the ShardManager (the production
+        // read path). Opening a second env on the live shard dir would violate the LMDB
+        // close-before-reopen ordering.
+        try {
+            // Write parts.
+            final List<CompletableFuture<Void>> list = new ArrayList<>();
+            for (int thread = 0; thread < threads; thread++) {
+                list.add(CompletableFuture.runAsync(() ->
+                        writePart(mergeProcessor, createSpanKey())));
+                list.add(CompletableFuture.runAsync(() ->
+                        writePart(mergeProcessor, createSpanKey())));
+            }
+            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+
+            // Consume and merge parts.
+            mergeProcessor.mergeCurrent();
+
+            // Read merged
+            assertThat(shardCount(shardManager)).isEqualTo(166);
+
+            // Try compaction.
+            shardManager.compactAll();
+            shardManager.compactAll();
+
+            // Read compacted
+            assertThat(shardCount(shardManager)).isEqualTo(166);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(9);
+
+            // Try deletion.
+            shardManager.condenseAll(new SimpleTaskContext());
+
+            // Read after deletion
+            assertThat(shardCount(shardManager)).isEqualTo(0);
+            final String infoString = shardManager.get(MAP_NAME, Db::getInfoString);
+            System.err.println(infoString);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(9);
+
+            // Try compaction.
+            shardManager.compactAll();
+            shardManager.compactAll();
+
+            // Read compacted
+            assertThat(shardCount(shardManager)).isEqualTo(0);
+            assertThat(shardEnvEntryCount(shardManager)).isEqualTo(9);
+        } finally {
+            // The shard's env must be closed before JUnit deletes the @TempDir
+            shardManager.closeAll();
         }
-        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+    }
 
-        // Consume and merge parts.
-        mergeProcessor.mergeCurrent();
+    private long shardCount(final ShardManager shardManager) {
+        return shardManager.get(MAP_NAME, Db::count);
+    }
 
-        // Read merged
-        try (final TraceDb db = TraceDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                BYTE_BUFFERS,
-                BYTE_BUFFER_FACTORY,
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(166);
-        }
+    private int shardDbNameCount(final ShardManager shardManager) {
+        return shardManager.get(MAP_NAME, db -> ((AbstractDb<?, ?>) db).getInfo().env().dbNames().size());
+    }
 
-        // Try compaction.
-        shardManager.compactAll();
-        shardManager.compactAll();
-
-        // Read compacted
-        try (final TraceDb db = TraceDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                BYTE_BUFFERS,
-                BYTE_BUFFER_FACTORY,
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(166);
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(9);
-        }
-
-        // Try deletion.
-        shardManager.condenseAll(new SimpleTaskContext());
-
-        // Read after deletion
-        try (final TraceDb db = TraceDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                BYTE_BUFFERS,
-                BYTE_BUFFER_FACTORY,
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(0);
-            System.err.println(db.getInfoString());
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(9);
-        }
-
-        // Try compaction.
-        shardManager.compactAll();
-        shardManager.compactAll();
-
-        // Read compacted
-        try (final TraceDb db = TraceDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                BYTE_BUFFERS,
-                BYTE_BUFFER_FACTORY,
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(0);
-            assertThat(db.getInfo().env().stat().entries).isEqualTo(9);
-        }
+    private long shardEnvEntryCount(final ShardManager shardManager) {
+        return shardManager.get(MAP_NAME, db -> ((AbstractDb<?, ?>) db).getInfo().env().stat().entries);
     }
 
     @Test
@@ -293,12 +286,17 @@ public class TestTraceDb {
             final Function<Integer, SpanKey> keyFunction = i -> keyName;
             final Function<Integer, SpanValue> valueFunction = i -> createSpanValue();
             final Path partPath = Files.createTempDirectory("part");
-            final Path mapPath = partPath.resolve(MAP_UUID);
-            Files.createDirectories(mapPath);
-            testWrite(mapPath, BASIC_SETTINGS);
-            final Path zipFile = Files.createTempFile("lmdb", "zip");
-            ZipUtil.zip(zipFile, partPath);
-            FileUtil.deleteDir(partPath);
+            final Path zipFile;
+            try {
+                final Path mapPath = partPath.resolve(MAP_UUID);
+                Files.createDirectories(mapPath);
+                testWrite(mapPath, BASIC_SETTINGS);
+                zipFile = Files.createTempFile("lmdb", "zip");
+                ZipUtil.zip(zipFile, partPath);
+            } finally {
+                // The part env was closed by testWrite before we get here
+                FileUtil.deleteDir(partPath);
+            }
             final String fileHash = FileHashUtil.hash(zipFile);
             mergeProcessor.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile, false);
         } catch (final IOException e) {

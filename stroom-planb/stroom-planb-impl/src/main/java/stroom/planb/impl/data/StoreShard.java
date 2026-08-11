@@ -130,7 +130,7 @@ class StoreShard implements Shard {
                 if (exclusiveReadLock.tryLock()) {
                     try {
                         LOGGER.info(() -> "Deleting data for: " + doc);
-                        close();
+                        closeDb();
                         FileUtil.deleteDir(shardDir);
                         return true;
                     } finally {
@@ -152,7 +152,7 @@ class StoreShard implements Shard {
         try {
             writeLock.lockInterruptibly();
             try {
-                db.merge(sourceDir);
+                requireDb().merge(sourceDir);
                 lastWriteTime = Instant.now();
                 createSnapshot();
             } finally {
@@ -183,7 +183,7 @@ class StoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    result = db.deleteOldData(deleteBefore, useStateTime);
+                    result = requireDb().deleteOldData(deleteBefore, useStateTime);
                     lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();
@@ -223,7 +223,7 @@ class StoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    result = db.condense(condenseBefore);
+                    result = requireDb().condense(condenseBefore);
                     lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();
@@ -253,7 +253,7 @@ class StoreShard implements Shard {
         try {
             writeLock.lockInterruptibly();
             try {
-                return db.deleteOldMergeStatus(deleteBefore);
+                return requireDb().deleteOldMergeStatus(deleteBefore);
             } finally {
                 writeLock.unlock();
             }
@@ -273,14 +273,16 @@ class StoreShard implements Shard {
             writeLock.lockInterruptibly();
             try {
 
-                // Ensure the DB is open and won't be closed.
+                // Ensure the DB is open and won't be closed. Checked before we create the
+                // compacted dir below so a closed shard doesn't leave one behind.
+                final Db<?, ?> openDb = requireDb();
                 try {
                     // Perform compaction.
                     LOGGER.info("Running compaction");
                     LOGGER.info(() -> "Size before compaction: " + fileSize(dataFile));
                     FileUtil.deleteDir(compactedDir);
                     Files.createDirectory(compactedDir);
-                    db.compact(compactedDir);
+                    openDb.compact(compactedDir);
                     LOGGER.info(() -> "Size after compaction: " + fileSize(compactedFile));
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
@@ -291,7 +293,7 @@ class StoreShard implements Shard {
                 exclusiveReadLock.lockInterruptibly();
                 try {
                     // Close the DB.
-                    close();
+                    closeDb();
 
                     // Switch files.
                     try {
@@ -512,10 +514,10 @@ class StoreShard implements Shard {
         try {
             readLock.lockInterruptibly();
             try {
-                if (db == null) {
-                    throw new RuntimeException("Database is closed");
-                }
-                return function.apply(db);
+                // A ShardClosedException from here is retried once by ShardManager.get(),
+                // which normally builds a fresh shard. Note the other requireDb() callers
+                // are NOT retried; their callers just log and move on.
+                return function.apply(requireDb());
             } finally {
                 readLock.unlock();
             }
@@ -546,7 +548,7 @@ class StoreShard implements Shard {
     /**
      * Must only be called while holding {@code exclusiveReadLock}.
      */
-    private void close() {
+    private void closeDb() {
         if (db != null) {
             try {
                 db.close();
@@ -554,6 +556,60 @@ class StoreShard implements Shard {
                 db = null;
             }
         }
+    }
+
+    @Override
+    public void close() {
+        // The env must be closed whatever happens, so neither wait here is interruptible.
+        // Shutdown interrupts task threads, so bailing out on interrupt would routinely
+        // leave envs open with their map reserved, and a later shard could then open a
+        // second env on the same dir. Unlike delete(), we wait for in-flight readers rather
+        // than giving up, so the env is never closed under a live read txn — that wait is
+        // exactly what makes closing safe, so it cannot be skippable. The interrupt flag is
+        // restored before returning.
+        lockUninterruptibly(writeLock);
+        try {
+            lockUninterruptibly(exclusiveReadLock);
+            try {
+                LOGGER.debug(() -> "Closing shard for: " + doc);
+                closeDb();
+            } finally {
+                exclusiveReadLock.unlock();
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    /**
+     * Acquires the lock, ignoring interrupts. {@link Lock#lock()} already does exactly that,
+     * restoring the interrupt flag once it has the lock, so all this adds is a log line when
+     * we actually have to wait — a holder that never lets go is then visible rather than a
+     * silent block.
+     * <p>
+     * Deliberately not a timed {@code tryLock} retry loop: a timed acquire cancels its queue
+     * node on timeout, which lets arriving readers barge past a waiting writer and can starve
+     * this call indefinitely, and it throws rather than times out when the caller is already
+     * interrupted, so any periodic logging it did would never fire during shutdown anyway.
+     */
+    private void lockUninterruptibly(final Lock lock) {
+        if (!lock.tryLock()) {
+            LOGGER.warn(() -> "Waiting to lock shard for: " + doc);
+            lock.lock();
+        }
+    }
+
+    /**
+     * Must be called while holding {@code readLock} or {@code writeLock}, both of which
+     * exclude the paths that null the db, so it stays non-null for the rest of the
+     * caller's locked section.
+     */
+    private Db<?, ?> requireDb() {
+        final Db<?, ?> db = this.db;
+        if (db == null) {
+            throw new SnapshotShard.ShardClosedException();
+        }
+        return db;
     }
 
     @Override
@@ -566,10 +622,7 @@ class StoreShard implements Shard {
         try {
             readLock.lockInterruptibly();
             try {
-                if (db == null) {
-                    throw new RuntimeException("Database is closed");
-                }
-                return db.getInfoString();
+                return requireDb().getInfoString();
             } finally {
                 readLock.unlock();
             }

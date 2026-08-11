@@ -36,12 +36,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,6 +104,35 @@ class TestMergeProcessor {
 
         assertThat(queuedFile).exists();
         assertThat(unzipLeftover).doesNotExist();
+    }
+
+    /**
+     * Queue creation is serialised by a striped lock rather than by
+     * {@link java.util.concurrent.ConcurrentHashMap#computeIfAbsent}, so it double checks the map under that
+     * lock. Two threads racing for the same doc must still end up sharing one queue; two queues on the same
+     * dir would each hand the same dir to a consumer and merge it twice. See gh-5689.
+     */
+    @Test
+    void concurrentCreationSharesOneQueuePerDoc(@TempDir final Path tempDir) throws Exception {
+        final MergeProcessor mergeProcessor = createMergeProcessor(
+                new StatePaths(tempDir), Mockito.mock(ShardManager.class));
+
+        final int threads = 16;
+        final CyclicBarrier barrier = new CyclicBarrier(threads);
+        final List<Future<DirQueue>> futures = new ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            futures.add(executorService.submit(() -> {
+                // Release them all at once so they genuinely contend.
+                barrier.await(10, TimeUnit.SECONDS);
+                return mergeProcessor.getOrCreateDirQueue(DOC_UUID);
+            }));
+        }
+
+        final DirQueue first = futures.getFirst().get(10, TimeUnit.SECONDS);
+        assertThat(first).isNotNull();
+        for (final Future<DirQueue> future : futures) {
+            assertThat(future.get(10, TimeUnit.SECONDS)).isSameAs(first);
+        }
     }
 
     /**
@@ -187,7 +219,9 @@ class TestMergeProcessor {
         interrupting.set(false);
         mergeProcessor.merge();
         waitUntil(() -> merged.contains(queuedDir2), "queued dir 2 to be merged after consumer restart");
-        assertThat(queuedDir2).doesNotExist();
+        // The consumer deletes the dir only once shard.merge() has returned, and the mock records
+        // the call from inside merge(), so waiting for the record alone would race the delete.
+        waitUntil(() -> !Files.exists(queuedDir2), "queued dir 2 to be deleted after merging");
 
         // The dir the interrupted consumer skipped stays on disk until a restart, when the recreated queue
         // finds it again.
@@ -195,7 +229,7 @@ class TestMergeProcessor {
         final MergeProcessor rebooted = createMergeProcessor(statePaths, shardManager);
         rebooted.merge();
         waitUntil(() -> merged.contains(queuedDir1), "queued dir 1 to be merged after reboot");
-        assertThat(queuedDir1).doesNotExist();
+        waitUntil(() -> !Files.exists(queuedDir1), "queued dir 1 to be deleted after merging");
     }
 
     /**

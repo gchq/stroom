@@ -42,7 +42,9 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
@@ -91,6 +93,10 @@ public class RefDataStoreModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(DelegatingRefDataOffHeapStore.class);
+
+        // Allows integration tests to close/delete all the store's LMDB envs between tests
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(DelegatingRefDataOffHeapStore.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(RefDataPurge.class, builder -> builder

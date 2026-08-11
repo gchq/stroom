@@ -93,7 +93,7 @@ public class WorkQueue {
                         runnable = queue.take();
                     }
                     if (runnable == PoisonPill.INSTANCE) {
-                        LOGGER.trace("POISON_PILL found, dropping out");
+                        LOGGER.trace("Poison pill found, dropping out");
                     }
                 } catch (final InterruptedException e) {
                     LOGGER.trace("Take loop interrupted");

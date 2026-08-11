@@ -261,69 +261,66 @@ class TestStateDb {
 
         final int threads = 10;
 
-        // Write parts.
-        final List<CompletableFuture<Void>> list = new ArrayList<>();
-        for (int thread = 0; thread < threads; thread++) {
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, KeyPrefix.create("TEST_KEY_1"))));
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, KeyPrefix.create("TEST_KEY_2"))));
+        // All reads go through the shard's own open env via the ShardManager (the production
+        // read path). Opening a second env on the live shard dir would violate the LMDB
+        // close-before-reopen ordering.
+        try {
+            // Write parts.
+            final List<CompletableFuture<Void>> list = new ArrayList<>();
+            for (int thread = 0; thread < threads; thread++) {
+                list.add(CompletableFuture.runAsync(() ->
+                        writePart(mergeProcessor, KeyPrefix.create("TEST_KEY_1"))));
+                list.add(CompletableFuture.runAsync(() ->
+                        writePart(mergeProcessor, KeyPrefix.create("TEST_KEY_2"))));
+            }
+            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+
+            // Consume and merge parts.
+            mergeProcessor.mergeCurrent();
+
+            // Read merged
+            assertThat(shardCount(shardManager)).isEqualTo(2);
+
+            // Try compaction.
+            shardManager.compactAll();
+            shardManager.compactAll();
+
+            // Read compacted
+            assertThat(shardCount(shardManager)).isEqualTo(2);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(14);
+
+            // Try deletion.
+            shardManager.condenseAll(new SimpleTaskContext());
+
+            // Read after deletion
+            assertThat(shardCount(shardManager)).isEqualTo(0);
+            final String infoString = shardManager.get(MAP_NAME, Db::getInfoString);
+            System.err.println(infoString);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(14);
+
+            // Try compaction.
+            shardManager.compactAll();
+            shardManager.compactAll();
+
+            // Read compacted
+            assertThat(shardCount(shardManager)).isEqualTo(0);
+            assertThat(shardEnvEntryCount(shardManager)).isEqualTo(14);
+        } finally {
+            // The shard's env must be closed before JUnit deletes the @TempDir
+            shardManager.closeAll();
         }
-        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+    }
 
-        // Consume and merge parts.
-        mergeProcessor.mergeCurrent();
+    private long shardCount(final ShardManager shardManager) {
+        return shardManager.get(MAP_NAME, Db::count);
+    }
 
-        // Read merged
-        try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                new ByteBuffers(new ByteBufferFactoryImpl()),
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(2);
-        }
+    private int shardDbNameCount(final ShardManager shardManager) {
+        return shardManager.get(MAP_NAME, db -> ((AbstractDb<?, ?>) db).getInfo().env().dbNames().size());
+    }
 
-        // Try compaction.
-        shardManager.compactAll();
-        shardManager.compactAll();
-
-        // Read compacted
-        try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                new ByteBuffers(new ByteBufferFactoryImpl()),
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(2);
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
-        }
-
-        // Try deletion.
-        shardManager.condenseAll(new SimpleTaskContext());
-
-        // Read after deletion
-        try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                new ByteBuffers(new ByteBufferFactoryImpl()),
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(0);
-            System.err.println(db.getInfoString());
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
-        }
-
-        // Try compaction.
-        shardManager.compactAll();
-        shardManager.compactAll();
-
-        // Read compacted
-        try (final StateDb db = StateDb.create(
-                statePaths.getShardDir().resolve(MAP_UUID),
-                new ByteBuffers(new ByteBufferFactoryImpl()),
-                DOC,
-                true)) {
-            assertThat(db.count()).isEqualTo(0);
-            assertThat(db.getInfo().env().stat().entries).isEqualTo(14);
-        }
+    private long shardEnvEntryCount(final ShardManager shardManager) {
+        return shardManager.get(MAP_NAME, db -> ((AbstractDb<?, ?>) db).getInfo().env().stat().entries);
     }
 
     @Test
@@ -343,8 +340,14 @@ class TestStateDb {
 
         try (final StateDb db1 = StateDb.create(source, BYTE_BUFFERS, DOC, false)) {
             list.add(CompletableFuture.runAsync(() -> {
-                insertData(db1, ITERATIONS, keyFunction, valueFunction);
-                writeComplete.set(true);
+                // Flag set in a finally so a writer failure still stops the zip loop below —
+                // otherwise it would spin forever and the join would hang with the env open,
+                // masking the writer's exception.
+                try {
+                    insertData(db1, ITERATIONS, keyFunction, valueFunction);
+                } finally {
+                    writeComplete.set(true);
+                }
             }));
 
             list.add(CompletableFuture.runAsync(() -> {
@@ -423,12 +426,17 @@ class TestStateDb {
             final Function<Integer, KeyPrefix> keyFunction = i -> keyName;
             final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
             final Path partPath = Files.createTempDirectory("part");
-            final Path mapPath = partPath.resolve(MAP_UUID);
-            Files.createDirectories(mapPath);
-            testWrite(mapPath, BASIC_SETTINGS, 100, keyFunction, valueFunction);
-            final Path zipFile = Files.createTempFile("lmdb", "zip");
-            ZipUtil.zip(zipFile, partPath);
-            FileUtil.deleteDir(partPath);
+            final Path zipFile;
+            try {
+                final Path mapPath = partPath.resolve(MAP_UUID);
+                Files.createDirectories(mapPath);
+                testWrite(mapPath, BASIC_SETTINGS, 100, keyFunction, valueFunction);
+                zipFile = Files.createTempFile("lmdb", "zip");
+                ZipUtil.zip(zipFile, partPath);
+            } finally {
+                // The part env was closed by testWrite before we get here
+                FileUtil.deleteDir(partPath);
+            }
             final String fileHash = FileHashUtil.hash(zipFile);
             mergeProcessor.add(new FileDescriptor(
                     System.currentTimeMillis(),
