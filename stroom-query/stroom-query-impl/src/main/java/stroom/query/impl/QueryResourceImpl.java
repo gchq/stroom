@@ -57,7 +57,10 @@ import stroom.util.shared.TokenError;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,6 +74,11 @@ import java.util.function.Predicate;
 class QueryResourceImpl implements QueryResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryResourceImpl.class);
+
+    // Matches the previous behaviour of QuerySearchRequest's builder default.
+    private static final Duration DEFAULT_INCREMENTAL_CSV_TIMEOUT = Duration.ofSeconds(1);
+    // Matches SearchResponseCreator's own fall back for a synchronous search.
+    private static final Duration DEFAULT_NON_INCREMENTAL_CSV_TIMEOUT = Duration.ofMinutes(5);
 
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<QueryService> queryServiceProvider;
@@ -209,13 +217,19 @@ class QueryResourceImpl implements QueryResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public String csvSearch(final String query, final int offset, final int length) {
+    public Response csvSearch(final String query,
+                              final int offset,
+                              final int length,
+                              final boolean incremental,
+                              final Long timeout) {
         RestUtil.requireNonNull(query, "query not supplied");
         try {
             final QuerySearchRequest request = QuerySearchRequest.builder()
                     .requestedRange(OffsetRange.builder().offset(offset).length(length).build())
                     .queryContext(QueryContext.builder().build())
                     .query(query)
+                    .incremental(incremental)
+                    .timeout(effectiveTimeout(incremental, timeout))
                     .build();
             final DashboardSearchResponse response = search(null, request);
 
@@ -228,9 +242,9 @@ class QueryResourceImpl implements QueryResource {
                 if (failure != null) {
                     throw RestUtil.badRequest(failure);
                 }
-                // No results and nothing to report is not a failure. A query is entitled to match
-                // nothing, so this is the same empty response as a search that returned no rows.
-                return null;
+                // No results is not a failure. A query is entitled to match nothing, and an incremental
+                // search may simply not have found anything yet, which the headers below convey.
+                return csvResponse(null, request, response);
             }
 
             final Result result = response.getResults().getFirst();
@@ -242,15 +256,47 @@ class QueryResourceImpl implements QueryResource {
                         result.getClass().getSimpleName()));
             }
 
-            if (tableResult.getColumns().isEmpty() || tableResult.getRows().isEmpty()) {
-                return null;
-            }
-
-            return new TableResultCsvWriter(tableResult).toCsv();
+            final String csv = tableResult.getColumns().isEmpty() || tableResult.getRows().isEmpty()
+                    ? null
+                    : new TableResultCsvWriter(tableResult).toCsv();
+            return csvResponse(csv, request, response);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    /**
+     * An incremental search returns whatever it has when the timeout expires, so a short timeout gets the
+     * caller a quick, probably partial, answer. A non incremental search is waiting for the whole result
+     * set, so it needs long enough to get it; the request itself timing out is the caller's risk to take.
+     * {@link QuerySearchRequest} cannot express "no timeout supplied", so the server side default can
+     * never apply and we have to supply one here.
+     */
+    private long effectiveTimeout(final boolean incremental, final Long timeout) {
+        if (timeout != null) {
+            return timeout;
+        }
+        return incremental
+                ? DEFAULT_INCREMENTAL_CSV_TIMEOUT.toMillis()
+                : DEFAULT_NON_INCREMENTAL_CSV_TIMEOUT.toMillis();
+    }
+
+    /**
+     * Always 200, with the CSV found so far, however little that is. The headers, not the status, say
+     * whether the search ran incrementally and whether it finished, so a caller can tell a complete
+     * empty result from a search that had not found anything yet. See gh-5688.
+     */
+    private Response csvResponse(final String csv,
+                                 final QuerySearchRequest request,
+                                 final DashboardSearchResponse response) {
+        // No response at all means we know nothing, so we cannot claim the search completed.
+        final boolean complete = response != null && response.isComplete();
+        return Response
+                .ok(Objects.requireNonNullElse(csv, ""), MediaType.TEXT_PLAIN_TYPE)
+                .header(QueryResource.CSV_INCREMENTAL_HEADER, request.isIncremental())
+                .header(QueryResource.CSV_COMPLETE_HEADER, complete)
+                .build();
     }
 
     /**

@@ -39,6 +39,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
@@ -55,6 +56,16 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     String SEARCH_PATH_PART = "/search";
     String COLUMN_VALUES_PATH_PART = "/columnValues";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
+
+    /**
+     * Tells the caller whether the search ran incrementally, i.e. whether the results can be partial.
+     */
+    String CSV_INCREMENTAL_HEADER = "X-Stroom-Search-Incremental";
+    /**
+     * Tells the caller whether the search finished. False means the CSV holds only what had been found
+     * when the search returned, so it is a subset of the matching data.
+     */
+    String CSV_COMPLETE_HEADER = "X-Stroom-Search-Complete";
 
     @GET
     @Path("/{uuid}")
@@ -142,11 +153,18 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     @Path("/csv/search")
     @Operation(
             summary = "Perform a csv query",
+            description = "Returns the results as CSV. Sets the '" + CSV_INCREMENTAL_HEADER + "' header to say " +
+                          "whether the search ran incrementally, and the '" + CSV_COMPLETE_HEADER + "' header to " +
+                          "say whether it finished. An incremental search returns whatever results it has when " +
+                          "the timeout expires, so those may be partial; a non incremental search waits for the " +
+                          "search to finish, which risks the request itself timing out.",
             operationId = "queryCsv")
     @Produces(MediaType.TEXT_PLAIN)
-    String csvSearch(@QueryParam("query") final String query,
-                     @QueryParam("offset") final int offset,
-                     @DefaultValue("100") @QueryParam("length") final int length);
+    Response csvSearch(@QueryParam("query") final String query,
+                       @QueryParam("offset") final int offset,
+                       @DefaultValue("100") @QueryParam("length") final int length,
+                       @DefaultValue("true") @QueryParam("incremental") final boolean incremental,
+                       @QueryParam("timeout") final Long timeout);
 
     @GET
     @Path("/fetchTimeZones")

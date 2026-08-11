@@ -18,8 +18,10 @@ package stroom.query.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.Column;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
+import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ErrorMessage;
@@ -27,7 +29,10 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.TokenError;
 
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -82,7 +87,7 @@ class TestQueryResourceImplCsvSearch {
     void noResultsAndNoDiagnosticsIsNotAnError() {
         final DashboardSearchResponse response = failedResponse(null, null);
 
-        assertThat(csvSearch(response)).isNull();
+        assertThat(body(csvSearch(response))).isEmpty();
     }
 
     /**
@@ -91,7 +96,7 @@ class TestQueryResourceImplCsvSearch {
      */
     @Test
     void noResponseAtAllIsNotAnError() {
-        assertThat(csvSearch(null)).isNull();
+        assertThat(body(csvSearch(null))).isEmpty();
     }
 
     /**
@@ -119,7 +124,115 @@ class TestQueryResourceImplCsvSearch {
         final DashboardSearchResponse response = new DashboardSearchResponse(
                 "node1", null, null, null, null, true, List.of(tableResult), null);
 
-        assertThat(csvSearch(response)).contains("Alice");
+        assertThat(body(csvSearch(response))).contains("Alice");
+    }
+
+    /**
+     * A csv/search query always builds a table, so anything else means the server built something this
+     * endpoint cannot render. That is an internal fault rather than a bad query, so unlike the other
+     * failure paths it stays a 500 and must not be turned into a {@link BadRequestException}.
+     */
+    @Test
+    void nonTableResultIsAServerErrorNamingBothTypes() {
+        final DashboardSearchResponse response = new DashboardSearchResponse(
+                "node1", null, null, null, null, true,
+                List.of(FlatResult.builder().componentId("table").build()), null);
+
+        assertThatThrownBy(() -> csvSearch(response))
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasMessageContaining("TableResult")
+                .hasMessageContaining("FlatResult")
+                .hasMessageContaining(QUERY);
+    }
+
+    /**
+     * The defect 2 case: an incremental search that has not finished returns whatever rows it has so far.
+     * Those are a subset of the matching data, so the caller has to be told, or truncated data looks
+     * exactly like a complete result. See gh-5688.
+     */
+    @Test
+    void partialResultsAreLabelledIncomplete() {
+        final DashboardSearchResponse response = new DashboardSearchResponse(
+                "node1", null, null, null, null, false, List.of(tableResult()), null);
+
+        final Response actual = csvSearch(response);
+
+        assertThat(body(actual)).contains("Alice");
+        assertThat(header(actual, QueryResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
+        assertThat(header(actual, QueryResource.CSV_INCREMENTAL_HEADER)).isEqualTo("true");
+    }
+
+    /**
+     * A complete search with no matches must be distinguishable from one that has not finished yet, which
+     * an empty body alone cannot do.
+     */
+    @Test
+    void completeEmptyResultIsDistinguishableFromUnfinished() {
+        final DashboardSearchResponse complete = new DashboardSearchResponse(
+                "node1", null, null, null, null, true, List.of(emptyTableResult()), null);
+        final DashboardSearchResponse unfinished = new DashboardSearchResponse(
+                "node1", null, null, null, null, false, List.of(emptyTableResult()), null);
+
+        assertThat(body(csvSearch(complete))).isEmpty();
+        assertThat(header(csvSearch(complete), QueryResource.CSV_COMPLETE_HEADER)).isEqualTo("true");
+
+        assertThat(body(csvSearch(unfinished))).isEmpty();
+        assertThat(header(csvSearch(unfinished), QueryResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
+    }
+
+    /**
+     * A non incremental search waits for the whole result set, so it must not be sent the 1s timeout that
+     * suits an incremental one, or it would time out almost immediately.
+     */
+    @Test
+    void nonIncrementalSearchWaitsRatherThanTimingOutImmediately() {
+        final ArgumentCaptor<QuerySearchRequest> captor = ArgumentCaptor.forClass(QuerySearchRequest.class);
+        final QueryService queryService = mockQueryService(new DashboardSearchResponse(
+                "node1", null, null, null, null, true, List.of(tableResult()), null));
+
+        resource(queryService).csvSearch(QUERY, 0, 100, false, null);
+
+        Mockito.verify(queryService).search(captor.capture());
+        assertThat(captor.getValue().isIncremental()).isFalse();
+        assertThat(captor.getValue().getTimeout()).isGreaterThan(1_000L);
+    }
+
+    @Test
+    void callerSuppliedTimeoutIsHonoured() {
+        final ArgumentCaptor<QuerySearchRequest> captor = ArgumentCaptor.forClass(QuerySearchRequest.class);
+        final QueryService queryService = mockQueryService(new DashboardSearchResponse(
+                "node1", null, null, null, null, true, List.of(tableResult()), null));
+
+        resource(queryService).csvSearch(QUERY, 0, 100, true, 250L);
+
+        Mockito.verify(queryService).search(captor.capture());
+        assertThat(captor.getValue().getTimeout()).isEqualTo(250L);
+    }
+
+    private TableResult tableResult() {
+        return TableResult
+                .builder()
+                .componentId("table")
+                .columns(List.of(Column.builder().id("0").name("Name").build()))
+                .addRow(Row.builder().values(List.of("Alice")).build())
+                .build();
+    }
+
+    private TableResult emptyTableResult() {
+        return TableResult
+                .builder()
+                .componentId("table")
+                .columns(List.of(Column.builder().id("0").name("Name").build()))
+                .build();
+    }
+
+    private String body(final Response response) {
+        assertThat(response.getStatus()).isEqualTo(Status.OK.getStatusCode());
+        return (String) response.getEntity();
+    }
+
+    private String header(final Response response, final String name) {
+        return response.getHeaderString(name);
     }
 
     private DashboardSearchResponse failedResponse(final TokenError tokenError, final String message) {
@@ -137,17 +250,23 @@ class TestQueryResourceImplCsvSearch {
                         : List.of(new ErrorMessage(Severity.ERROR, message)));
     }
 
-    private String csvSearch(final DashboardSearchResponse response) {
+    private Response csvSearch(final DashboardSearchResponse response) {
+        return resource(mockQueryService(response)).csvSearch(QUERY, 0, 100, true, null);
+    }
+
+    private QueryService mockQueryService(final DashboardSearchResponse response) {
         final QueryService queryService = Mockito.mock(QueryService.class);
         // null node means execute locally rather than making a remote REST call.
         Mockito.when(queryService.getBestNode(Mockito.isNull(), Mockito.any(QuerySearchRequest.class)))
                 .thenReturn(null);
         Mockito.when(queryService.search(Mockito.any(QuerySearchRequest.class))).thenReturn(response);
+        return queryService;
+    }
 
-        final QueryResourceImpl resource = new QueryResourceImpl(
+    private QueryResourceImpl resource(final QueryService queryService) {
+        return new QueryResourceImpl(
                 () -> null,
                 () -> queryService,
                 null, null, null, null, null, null, null, null);
-        return resource.csvSearch(QUERY, 0, 100);
     }
 }
