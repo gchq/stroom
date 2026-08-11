@@ -52,6 +52,28 @@ public class RestResources {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResources.class);
 
+    /**
+     * Class level paths that more than one resource is allowed to declare.
+     * <p>
+     * This check is deliberately coarse, it compares only the class level path, so it flags resources
+     * that share a base path even when none of their endpoints actually collide. Jersey does the precise
+     * check for us anyway, rejecting the application at startup if two endpoints really are ambiguous, so
+     * an entry here does not make a genuine clash go unnoticed.
+     * <p>
+     * QueryCsvResource shares QueryResource's base path because its csvSearch method returns a Response,
+     * which cannot live on QueryResource as that interface has to compile under GWT. See gh-5688.
+     * <p>
+     * That constraint is expected to be temporary. If the UI moves off GWT then csvSearch can go back on
+     * QueryResource, QueryCsvResource can be deleted, and this exception should go with it.
+     * <p>
+     * Note that this has to repeat QueryResource's path rather than reference the constant, as this
+     * module does not depend on stroom-core-shared, so it must be kept in step with it by hand. A stale
+     * entry here is not silently wrong though, it just means the shared path is reported as a duplicate
+     * again and the application refuses to start.
+     */
+    private static final Set<String> SHAREABLE_RESOURCE_PATHS = Set.of(
+            ResourcePaths.buildAuthenticatedApiPath("/query" + ResourcePaths.V1));
+
     private final Environment environment;
     private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;
     private final AuthenticationBypassCheckerImpl authenticationBypassCheckerImpl;
@@ -227,6 +249,13 @@ public class RestResources {
                            final ResourceProvider resourceProvider) {
         final String name = resourceProvider.resourceClass().getName();
         if (allPaths.contains(resourceProvider.resourcePath())) {
+            if (SHAREABLE_RESOURCE_PATHS.contains(resourceProvider.resourcePath())) {
+                LOGGER.info("\t{} => {}   {}",
+                        StringUtils.rightPad(name, maxNameLength, " "),
+                        resourceProvider.resourcePath(),
+                        ConsoleColour.yellow("**Shared path**"));
+                return true;
+            }
             LOGGER.error("\t{} => {}   {}",
                     StringUtils.rightPad(name, maxNameLength, " "),
                     resourceProvider.resourcePath(),

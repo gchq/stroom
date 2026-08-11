@@ -21,7 +21,6 @@ import stroom.query.api.Column;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
-import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ErrorMessage;
@@ -46,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * dereferencing the results gave the caller an HTTP 500 NPE instead of the reason their query was
  * rejected. See gh-5688.
  */
-class TestQueryResourceImplCsvSearch {
+class TestQueryCsvResourceImpl {
 
     private static final String QUERY = "from \"Example Index\" take 3";
 
@@ -158,8 +157,8 @@ class TestQueryResourceImplCsvSearch {
         final Response actual = csvSearch(response);
 
         assertThat(body(actual)).contains("Alice");
-        assertThat(header(actual, QueryResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
-        assertThat(header(actual, QueryResource.CSV_INCREMENTAL_HEADER)).isEqualTo("true");
+        assertThat(header(actual, QueryCsvResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
+        assertThat(header(actual, QueryCsvResource.CSV_INCREMENTAL_HEADER)).isEqualTo("true");
     }
 
     /**
@@ -174,10 +173,10 @@ class TestQueryResourceImplCsvSearch {
                 "node1", null, null, null, null, false, List.of(emptyTableResult()), null);
 
         assertThat(body(csvSearch(complete))).isEmpty();
-        assertThat(header(csvSearch(complete), QueryResource.CSV_COMPLETE_HEADER)).isEqualTo("true");
+        assertThat(header(csvSearch(complete), QueryCsvResource.CSV_COMPLETE_HEADER)).isEqualTo("true");
 
         assertThat(body(csvSearch(unfinished))).isEmpty();
-        assertThat(header(csvSearch(unfinished), QueryResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
+        assertThat(header(csvSearch(unfinished), QueryCsvResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
     }
 
     /**
@@ -263,10 +262,9 @@ class TestQueryResourceImplCsvSearch {
         return queryService;
     }
 
-    private QueryResourceImpl resource(final QueryService queryService) {
-        return new QueryResourceImpl(
-                () -> null,
-                () -> queryService,
-                null, null, null, null, null, null, null, null);
+    private QueryCsvResourceImpl resource(final QueryService queryService) {
+        // A real service rather than a mock, as the failure handling under test lives in it.
+        final CsvSearchService csvSearchService = new CsvSearchService(() -> queryService, () -> null);
+        return new QueryCsvResourceImpl(() -> csvSearchService);
     }
 }

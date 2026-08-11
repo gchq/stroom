@@ -23,16 +23,12 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.query.api.OffsetRange;
-import stroom.query.api.Result;
-import stroom.query.api.TableResult;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
-import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
@@ -42,29 +38,20 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.rest.RestUtil;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.ErrorMessage;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.TokenError;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,11 +61,6 @@ import java.util.function.Predicate;
 class QueryResourceImpl implements QueryResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryResourceImpl.class);
-
-    // Matches the previous behaviour of QuerySearchRequest's builder default.
-    private static final Duration DEFAULT_INCREMENTAL_CSV_TIMEOUT = Duration.ofSeconds(1);
-    // Matches SearchResponseCreator's own fall back for a synchronous search.
-    private static final Duration DEFAULT_NON_INCREMENTAL_CSV_TIMEOUT = Duration.ofMinutes(5);
 
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<QueryService> queryServiceProvider;
@@ -213,126 +195,6 @@ class QueryResourceImpl implements QueryResource {
             LOGGER.debug(e.getMessage(), e);
             throw e;
         }
-    }
-
-    @AutoLogged(OperationType.MANUALLY_LOGGED)
-    @Override
-    public Response csvSearch(final String query,
-                              final int offset,
-                              final int length,
-                              final boolean incremental,
-                              final Long timeout) {
-        RestUtil.requireNonNull(query, "query not supplied");
-        try {
-            final QuerySearchRequest request = QuerySearchRequest.builder()
-                    .requestedRange(OffsetRange.builder().offset(offset).length(length).build())
-                    .queryContext(QueryContext.builder().build())
-                    .query(query)
-                    .incremental(incremental)
-                    .timeout(effectiveTimeout(incremental, timeout))
-                    .build();
-            final DashboardSearchResponse response = search(null, request);
-
-            if (response == null || NullSafe.isEmptyCollection(response.getResults())) {
-                // A search that failed, e.g. a query that will not parse, comes back with no results and
-                // the diagnostics in tokenError/errorMessages, so report those rather than dereferencing
-                // null. Not just parse errors: QueryServiceImpl returns the same shape for any
-                // RuntimeException, e.g. an unresolvable data source. See gh-5688.
-                final String failure = describeFailure(response);
-                if (failure != null) {
-                    throw RestUtil.badRequest(failure);
-                }
-                // No results is not a failure. A query is entitled to match nothing, and an incremental
-                // search may simply not have found anything yet, which the headers below convey.
-                return csvResponse(null, request, response);
-            }
-
-            final Result result = response.getResults().getFirst();
-            if (!(result instanceof final TableResult tableResult)) {
-                throw new RuntimeException(LogUtil.message(
-                        "Expected a {} from query '{}' but got {}",
-                        TableResult.class.getSimpleName(),
-                        query,
-                        result.getClass().getSimpleName()));
-            }
-
-            final String csv = tableResult.getColumns().isEmpty() || tableResult.getRows().isEmpty()
-                    ? null
-                    : new TableResultCsvWriter(tableResult).toCsv();
-            return csvResponse(csv, request, response);
-        } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
-            throw e;
-        }
-    }
-
-    /**
-     * An incremental search returns whatever it has when the timeout expires, so a short timeout gets the
-     * caller a quick, probably partial, answer. A non incremental search is waiting for the whole result
-     * set, so it needs long enough to get it; the request itself timing out is the caller's risk to take.
-     * {@link QuerySearchRequest} cannot express "no timeout supplied", so the server side default can
-     * never apply and we have to supply one here.
-     */
-    private long effectiveTimeout(final boolean incremental, final Long timeout) {
-        if (timeout != null) {
-            return timeout;
-        }
-        return incremental
-                ? DEFAULT_INCREMENTAL_CSV_TIMEOUT.toMillis()
-                : DEFAULT_NON_INCREMENTAL_CSV_TIMEOUT.toMillis();
-    }
-
-    /**
-     * Always 200, with the CSV found so far, however little that is. The headers, not the status, say
-     * whether the search ran incrementally and whether it finished, so a caller can tell a complete
-     * empty result from a search that had not found anything yet. See gh-5688.
-     */
-    private Response csvResponse(final String csv,
-                                 final QuerySearchRequest request,
-                                 final DashboardSearchResponse response) {
-        // No response at all means we know nothing, so we cannot claim the search completed.
-        final boolean complete = response != null && response.isComplete();
-        return Response
-                .ok(Objects.requireNonNullElse(csv, ""), MediaType.TEXT_PLAIN_TYPE)
-                .header(QueryResource.CSV_INCREMENTAL_HEADER, request.isIncremental())
-                .header(QueryResource.CSV_COMPLETE_HEADER, complete)
-                .build();
-    }
-
-    /**
-     * @return The reason a search that returned no results failed, or null if it did not report one.
-     * The query being at fault, e.g. one that will not parse, is a bad request rather than a server
-     * error, so the caller is given the diagnostics the search gathered.
-     */
-    private String describeFailure(final DashboardSearchResponse response) {
-        if (response == null) {
-            return null;
-        }
-
-        final List<String> messages = new ArrayList<>();
-        NullSafe.list(response.getErrorMessages())
-                .stream()
-                .map(ErrorMessage::getMessage)
-                .filter(Objects::nonNull)
-                .forEach(messages::add);
-        // Older nodes in a mixed version cluster may only populate the deprecated errors field.
-        if (messages.isEmpty()) {
-            NullSafe.list(response.getErrors())
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .forEach(messages::add);
-        }
-
-        final TokenError tokenError = response.getTokenError();
-        if (tokenError != null && tokenError.getFrom() != null) {
-            messages.add(LogUtil.message("Error at line {}, column {}",
-                    tokenError.getFrom().getLineNo(),
-                    tokenError.getFrom().getColNo()));
-        }
-
-        return messages.isEmpty()
-                ? null
-                : String.join("\n", messages);
     }
 
     @Override

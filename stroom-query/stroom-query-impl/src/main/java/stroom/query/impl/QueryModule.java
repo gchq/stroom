@@ -40,6 +40,7 @@ public class QueryModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(QueryResourceImpl.class)
+                .bind(QueryCsvResourceImpl.class)
                 .bind(ExpressionResourceImpl.class)
                 .bind(ResultStoreResourceImpl.class);
     }
