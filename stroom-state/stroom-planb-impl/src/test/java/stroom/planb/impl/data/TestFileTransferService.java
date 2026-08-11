@@ -17,7 +17,10 @@
 package stroom.planb.impl.data;
 
 import stroom.docref.DocRef;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.planb.shared.PlanBDoc;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
 import stroom.test.common.util.test.AbstractResourceTest;
@@ -34,7 +37,6 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -42,11 +44,15 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFileTransferService extends AbstractResourceTest<FileTransferResource> {
+
+    private static final String THIS_NODE = "thisNode";
+    private static final String REMOTE_NODE = "remoteNode";
 
     private static ExecutorService executorService;
     private static ExecutorProvider executorProvider;
@@ -213,6 +219,26 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
     }
 
     /**
+     * A NOT_MODIFIED answer is the store node confirming that the snapshot we already hold is current, not a
+     * failure to fetch one. It must reach the caller as a {@link NotModifiedException}, as wrapping it hides the
+     * type, making an unchanged store look like a failing one until the snapshot ages out and reads start
+     * failing. See gh-5705.
+     */
+    @Test
+    void testNotModifiedIsNotWrapped(@TempDir final Path tempDir) {
+        Mockito
+                .doThrow(new NotModifiedException())
+                .when(fileTransferService).openSnapshot(Mockito.any(SnapshotRequest.class));
+
+        final DocRef planBDocRef = DocRef.builder().type(PlanBDoc.TYPE).uuid("test-uuid").name("MyMAP").build();
+        final SnapshotRequest request = new SnapshotRequest(planBDocRef, 0L, System.currentTimeMillis());
+
+        assertThatThrownBy(() -> nodeCallingFileTransferClient().fetchSnapshot(REMOTE_NODE, request, tempDir))
+                .isInstanceOf(NotModifiedException.class)
+                .hasMessageContaining("304");
+    }
+
+    /**
      * A genuine failure must not be reported as a 404, which would be indistinguishable from there simply being
      * no snapshot yet.
      */
@@ -241,6 +267,33 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                 null,
                 null,
                 null,
+                executorProvider);
+    }
+
+    /**
+     * A client for the node addressing {@code fetchSnapshot} overload, i.e. the one that resolves a node name to
+     * an endpoint. The resolved URL is ignored so the call still lands on the in-process test resource.
+     */
+    private FileTransferClientImpl nodeCallingFileTransferClient() {
+        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class);
+        Mockito.when(nodeInfo.getThisNodeName()).thenReturn(THIS_NODE);
+
+        final NodeService nodeService = Mockito.mock(NodeService.class);
+        Mockito.when(nodeService.getBaseEndpointUrl(REMOTE_NODE)).thenReturn("http://remote:8080");
+        Mockito.when(nodeService.getBaseEndpointUrl(THIS_NODE)).thenReturn("http://this:8080");
+
+        final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.when(securityContext.asProcessingUserResult(Mockito.<Supplier<Object>>any()))
+                .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
+
+        return new FileTransferClientImpl(
+                null,
+                nodeService,
+                nodeInfo,
+                null,
+                url -> getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART),
+                null,
+                securityContext,
                 executorProvider);
     }
 }
