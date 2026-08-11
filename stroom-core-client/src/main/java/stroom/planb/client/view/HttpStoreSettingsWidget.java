@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,21 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class SnapshotSettingsWidget extends AbstractSettingsWidget implements SnapshotSettingsView {
+/**
+ * The settings of a store served over HTTP: whether reads come from snapshots pushed to other nodes,
+ * and whether a write waits for the receiving node to merge the transferred part.
+ *
+ * <p>None of this applies to a store backed by a shared file store, which has no part transfer and no
+ * snapshots — see {@link stroom.planb.shared.AbstractHttpStoreSettings}.
+ */
+public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements HttpStoreSettingsView {
 
     private final Widget widget;
 
+    @UiField
+    CustomCheckBox synchroniseMerge;
+    @UiField
+    CustomCheckBox overwrite;
     @UiField
     CustomCheckBox useSnapshotsForLookup;
     @UiField
@@ -37,13 +48,16 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
     @UiField
     CustomCheckBox useSnapshotsForQuery;
 
+    private boolean readOnly;
+
     @Inject
-    public SnapshotSettingsWidget(final Binder binder) {
+    public HttpStoreSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setOverwrite(true);
     }
 
     @Override
-    public Widget asWidget() {
+    Widget asWidget() {
         return widget;
     }
 
@@ -58,34 +72,43 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
         if (snapshotSettings != null) {
-            final boolean lookupVal = !shardingEnabled && snapshotSettings.isUseSnapshotsForLookup();
-            final boolean getVal = !shardingEnabled && snapshotSettings.isUseSnapshotsForGet();
-            final boolean queryVal = !shardingEnabled && snapshotSettings.isUseSnapshotsForQuery();
-            this.useSnapshotsForLookup.setValue(lookupVal);
-            this.useSnapshotsForGet.setValue(getVal);
-            this.useSnapshotsForQuery.setValue(queryVal);
+            useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
+            useSnapshotsForGet.setValue(snapshotSettings.isUseSnapshotsForGet());
+            useSnapshotsForQuery.setValue(snapshotSettings.isUseSnapshotsForQuery());
         }
     }
 
-    private boolean readOnly;
-    private boolean shardingEnabled;
+    @Override
+    public Boolean getSynchroniseMerge() {
+        return synchroniseMerge.getValue()
+                ? Boolean.TRUE
+                : null;
+    }
 
-    public void setShardingEnabled(final boolean shardingEnabled) {
-        this.shardingEnabled = shardingEnabled;
-        updateStates();
+    @Override
+    public void setSynchroniseMerge(final Boolean synchroniseMerge) {
+        this.synchroniseMerge.setValue(synchroniseMerge != null && synchroniseMerge);
+    }
+
+    @Override
+    public Boolean getOverwrite() {
+        return overwrite.getValue()
+                ? null
+                : overwrite.getValue();
+    }
+
+    @Override
+    public void setOverwrite(final Boolean overwrite) {
+        this.overwrite.setValue(overwrite == null || overwrite);
     }
 
     private void updateStates() {
-        final boolean enabled = !readOnly && !shardingEnabled;
+        final boolean enabled = !readOnly;
+        synchroniseMerge.setEnabled(enabled);
+        overwrite.setEnabled(enabled);
         useSnapshotsForLookup.setEnabled(enabled);
         useSnapshotsForGet.setEnabled(enabled);
         useSnapshotsForQuery.setEnabled(enabled);
-
-        if (shardingEnabled) {
-            useSnapshotsForLookup.setValue(false);
-            useSnapshotsForGet.setValue(false);
-            useSnapshotsForQuery.setValue(false);
-        }
     }
 
     @Override
@@ -94,6 +117,15 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
         updateStates();
     }
 
+    @UiHandler("synchroniseMerge")
+    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("overwrite")
+    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
 
     @UiHandler("useSnapshotsForLookup")
     public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
@@ -110,7 +142,7 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
         getUiHandlers().onChange();
     }
 
-    public interface Binder extends UiBinder<Widget, SnapshotSettingsWidget> {
+    public interface Binder extends UiBinder<Widget, HttpStoreSettingsWidget> {
 
     }
 }

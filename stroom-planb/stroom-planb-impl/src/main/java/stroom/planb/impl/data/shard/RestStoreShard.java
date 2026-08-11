@@ -23,7 +23,7 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.rest.NotModifiedException;
-import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.AbstractHttpStoreSettings;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SnapshotSettings;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -141,11 +141,8 @@ public class RestStoreShard extends AbstractStoreShard implements SnapshotCapabl
     }
 
     private boolean isNewSnapshotRequired() {
-        final SnapshotSettings snapshotSettings = NullSafe.getOrElse(
-                doc,
-                PlanBDocument::getSettings,
-                AbstractPlanBSettings::getSnapshotSettings,
-                new SnapshotSettings());
+        final SnapshotSettings snapshotSettings = AbstractHttpStoreSettings.snapshotSettings(
+                NullSafe.get(doc, PlanBDocument::getSettings));
 
         if (!snapshotSettings.isUseSnapshotsForLookup() &&
             !snapshotSettings.isUseSnapshotsForGet() &&

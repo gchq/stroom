@@ -35,7 +35,7 @@ public class PathwaysModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(TracesStore.class).to(TracesStoreImpl.class);
+        bind(TracesStore.class).to(SharedFileTracesStore.class);
         bind(TracesDocStore.class).to(TracesDocStoreImpl.class);
 
         Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
@@ -48,8 +48,7 @@ public class PathwaysModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(PathwaysResourceImpl.class)
                 .bind(TracesResourceImpl.class)
-                .bind(TracesDocResourceImpl.class)
-                .bind(TracesRemoteQueryResourceImpl.class);
+                .bind(TracesDocResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessPathways.class, builder -> builder

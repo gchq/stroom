@@ -18,13 +18,10 @@ package stroom.planb.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.client.presenter.SharedFileStorePresenterUtil;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
-import stroom.planb.client.view.ArchivalSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
-import stroom.planb.client.view.SharedFileStoreView;
-import stroom.planb.client.view.SnapshotSettingsView;
+import stroom.planb.client.view.SharedFileStoreSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.time.SimpleDuration;
@@ -34,6 +31,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+/**
+ * Settings for a Traces store. A trace store is only ever served from a shared file store, so this
+ * offers no snapshot or part-transfer settings — see {@code AbstractHttpStoreSettings} for the store
+ * types that do.
+ */
 public class TraceSettingsPresenter
         extends AbstractPlanBSettingsPresenter<TraceSettingsView> {
 
@@ -51,9 +53,6 @@ public class TraceSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    /** Archival settings from the most recent {@link #read} call — round-tripped by {@link #write}. */
-    // NOTE: archival is now managed via the view (ArchivalSettingsView), not cached here.
-
     public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
         if (settings instanceof final TraceSettings traceSettings) {
             read(traceSettings, readOnly);
@@ -67,59 +66,27 @@ public class TraceSettingsPresenter
         maxQueryTimeRange = settings.getMaxQueryTimeRange();
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setMaxSpansPerTrace(settings.getMaxSpansPerTrace());
-        getView().setSynchroniseMerge(settings.getSynchroniseMerge());
-        getView().setOverwrite(settings.getOverwrite());
         getView().setRetention(settings.getRetention());
-        getView().setSnapshotSettings(settings.getSnapshotSettings());
-        SharedFileStorePresenterUtil.readSharedFileStore(settings, getView(), getView());
-        updateShardingEnabled();
+        getView().setSharedFileStore(settings.getSharedFileStore());
     }
 
     public AbstractPlanBSettings write() {
         return new TraceSettings.Builder()
                 .maxStoreSize(getView().getMaxStoreSize())
                 .maxSpansPerTrace(getView().getMaxSpansPerTrace())
-                .synchroniseMerge(getView().getSynchroniseMerge())
-                .overwrite(getView().getOverwrite())
                 .retention(getView().getRetention())
-                .sharedFileStore(SharedFileStorePresenterUtil.writeSharedFileStore(getView(), getView()))
-                .snapshotSettings(getView().getSnapshotSettings())
+                .sharedFileStore(getView().getSharedFileStore())
                 .maxQueryTimeRange(maxQueryTimeRange)
                 .build();
-    }
-
-    @Override
-    public boolean supportsSharding() {
-        return true;
-    }
-
-    @Override
-    public void onChange() {
-        updateShardingEnabled();
-        super.onChange();
-    }
-
-    private void updateShardingEnabled() {
-        getView().setShardingEnabled(getView().getShardCount() > 0);
-    }
-
-    public void setShardCountLocked(final boolean locked) {
-        getView().setShardCountLocked(locked);
     }
 
     public interface TraceSettingsView extends
             View,
             GeneralSettingsView,
-            SharedFileStoreView,
+            SharedFileStoreSettingsView,
             RetentionSettingsView,
-            SnapshotSettingsView,
-            ArchivalSettingsView,
             ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {
-
-        void setShardingEnabled(boolean shardingEnabled);
-
-        void setShardCountLocked(boolean locked);
 
         Long getMaxSpansPerTrace();
 

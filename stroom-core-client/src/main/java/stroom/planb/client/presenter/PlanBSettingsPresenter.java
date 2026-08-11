@@ -25,8 +25,9 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
-import stroom.planb.client.view.SharedFileStoreView;
+import stroom.planb.client.view.SharedFileStoreSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
@@ -196,8 +197,6 @@ public class PlanBSettingsPresenter
                 final TraceSettingsPresenter presenter =
                         traceSettingsPresenterProvider.get();
                 presenter.getView().setMaxStoreSize(maxStoreSize);
-                presenter.getView().setSynchroniseMerge(synchroniseMerge);
-                presenter.getView().setOverwrite(overwrite);
                 presenter.getView().setRetention(retention);
                 settingsPresenter = presenter;
                 break;
@@ -243,16 +242,10 @@ public class PlanBSettingsPresenter
                 : null;
     }
 
-    public void setShardCountLocked(final boolean locked) {
-        if (settingsPresenter != null) {
-            settingsPresenter.setShardCountLocked(locked);
-        }
-    }
-
-    public void setSharedPathLocked(final boolean locked) {
+    public void setSharedFileStoreLocked(final boolean locked) {
         if (settingsPresenter != null
-                && settingsPresenter.getView() instanceof final SharedFileStoreView sv) {
-            sv.setSharedFileStorePathLocked(locked);
+                && settingsPresenter.getView() instanceof final SharedFileStoreSettingsView view) {
+            view.setSharedFileStoreLocked(locked);
         }
     }
 
@@ -269,15 +262,15 @@ public class PlanBSettingsPresenter
     }
 
     private Boolean getSynchroniseMerge(final View view) {
-        if (view instanceof final GeneralSettingsView generalSettingsView) {
-            return generalSettingsView.getSynchroniseMerge();
+        if (view instanceof final HttpStoreSettingsView httpStoreSettingsView) {
+            return httpStoreSettingsView.getSynchroniseMerge();
         }
         return synchroniseMerge;
     }
 
     private Boolean getOverwrite(final View view) {
-        if (view instanceof final GeneralSettingsView generalSettingsView) {
-            return generalSettingsView.getOverwrite();
+        if (view instanceof final HttpStoreSettingsView httpStoreSettingsView) {
+            return httpStoreSettingsView.getOverwrite();
         }
         return overwrite;
     }

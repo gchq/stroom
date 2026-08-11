@@ -18,13 +18,25 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.shared.ArchivalSettings;
+import stroom.planb.shared.SnapshotSettings;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-public interface ArchivalSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
+/**
+ * The settings of a store whose parts are transferred between nodes over HTTP, mirroring
+ * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
+ */
+public interface HttpStoreSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
-    ArchivalSettings getArchival();
+    SnapshotSettings getSnapshotSettings();
 
-    void setArchival(ArchivalSettings archival);
+    void setSnapshotSettings(SnapshotSettings snapshotSettings);
+
+    Boolean getSynchroniseMerge();
+
+    void setSynchroniseMerge(Boolean synchroniseMerge);
+
+    Boolean getOverwrite();
+
+    void setOverwrite(Boolean overwrite);
 }

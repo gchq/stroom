@@ -36,7 +36,7 @@ public class TemporalRangeStateSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
-    private final SnapshotSettingsWidget snapshotSettingsWidget;
+    private final HttpStoreSettingsWidget httpStoreSettingsWidget;
     private final CondenseSettingsWidget condenseSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
     private final TemporalRangeKeySchemaSettingsWidget temporalRangeKeySchemaSettingsWidget;
@@ -45,7 +45,7 @@ public class TemporalRangeStateSettingsViewImpl
     @UiField
     SettingsGroup generalPanel;
     @UiField
-    SettingsGroup snapshotPanel;
+    SettingsGroup httpStorePanel;
     @UiField
     SettingsGroup condensePanel;
     @UiField
@@ -58,7 +58,7 @@ public class TemporalRangeStateSettingsViewImpl
     @Inject
     public TemporalRangeStateSettingsViewImpl(final Binder binder,
                                               final GeneralSettingsWidget generalSettingsWidget,
-                                              final SnapshotSettingsWidget snapshotSettingsWidget,
+                                              final HttpStoreSettingsWidget httpStoreSettingsWidget,
                                               final CondenseSettingsWidget condenseSettingsWidget,
                                               final RetentionSettingsWidget retentionSettingsWidget,
                                               final TemporalRangeKeySchemaSettingsWidget
@@ -66,13 +66,13 @@ public class TemporalRangeStateSettingsViewImpl
                                               final StateValueSchemaSettingsWidget stateValueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
-        this.snapshotSettingsWidget = snapshotSettingsWidget;
+        this.httpStoreSettingsWidget = httpStoreSettingsWidget;
         this.condenseSettingsWidget = condenseSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.temporalRangeKeySchemaSettingsWidget = temporalRangeKeySchemaSettingsWidget;
         this.stateValueSchemaSettingsWidget = stateValueSchemaSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
-        snapshotPanel.add(snapshotSettingsWidget.asWidget());
+        httpStorePanel.add(httpStoreSettingsWidget.asWidget());
         condensePanel.add(condenseSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
         keySchemaPanel.add(temporalRangeKeySchemaSettingsWidget.asWidget());
@@ -83,7 +83,7 @@ public class TemporalRangeStateSettingsViewImpl
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
+        httpStoreSettingsWidget.setUiHandlers(uiHandlers);
         condenseSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
         temporalRangeKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
@@ -107,22 +107,22 @@ public class TemporalRangeStateSettingsViewImpl
 
     @Override
     public Boolean getSynchroniseMerge() {
-        return generalSettingsWidget.getSynchroniseMerge();
+        return httpStoreSettingsWidget.getSynchroniseMerge();
     }
 
     @Override
     public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        generalSettingsWidget.setSynchroniseMerge(synchroniseMerge);
+        httpStoreSettingsWidget.setSynchroniseMerge(synchroniseMerge);
     }
 
     @Override
     public Boolean getOverwrite() {
-        return generalSettingsWidget.getOverwrite();
+        return httpStoreSettingsWidget.getOverwrite();
     }
 
     @Override
     public void setOverwrite(final Boolean overwrite) {
-        generalSettingsWidget.setOverwrite(overwrite);
+        httpStoreSettingsWidget.setOverwrite(overwrite);
     }
 
     @Override
@@ -147,12 +147,12 @@ public class TemporalRangeStateSettingsViewImpl
 
     @Override
     public SnapshotSettings getSnapshotSettings() {
-        return snapshotSettingsWidget.getSnapshotSettings();
+        return httpStoreSettingsWidget.getSnapshotSettings();
     }
 
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
-        snapshotSettingsWidget.setSnapshotSettings(snapshotSettings);
+        httpStoreSettingsWidget.setSnapshotSettings(snapshotSettings);
     }
 
     @Override
@@ -178,7 +178,7 @@ public class TemporalRangeStateSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
-        snapshotSettingsWidget.onReadOnly(readOnly);
+        httpStoreSettingsWidget.onReadOnly(readOnly);
         condenseSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
         temporalRangeKeySchemaSettingsWidget.onReadOnly(readOnly);

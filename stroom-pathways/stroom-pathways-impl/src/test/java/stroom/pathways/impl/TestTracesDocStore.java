@@ -81,7 +81,7 @@ class TestTracesDocStore {
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, null, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, tempDir.resolve("shared").toString(), null))
                         .build())
                 .build();
 
@@ -94,18 +94,19 @@ class TestTracesDocStore {
 
     @Test
     void testWriteDocument_sameShardCount() {
+        final String sharedPath = tempDir.resolve("shared").toString();
         final TracesDoc oldDoc = TracesDoc.tracesBuilder()
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, null, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath, null))
                         .build())
                 .build();
         final TracesDoc newDoc = TracesDoc.tracesBuilder()
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, null, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath, null))
                         .build())
                 .build();
 
@@ -173,19 +174,22 @@ class TestTracesDocStore {
     @Test
     void testWriteDocument_changeShardCount_withLocalData() throws IOException {
         final String uuid = "test-uuid";
+        // A shared path that holds no data for this uuid, so only the local shard file below could
+        // block the change.
+        final String sharedPath = tempDir.resolve("shared").toString();
 
         final TracesDoc oldDoc = TracesDoc.tracesBuilder()
                 .uuid(uuid)
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, null, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath, null))
                         .build())
                 .build();
         final TracesDoc newDoc = TracesDoc.tracesBuilder()
                 .uuid(uuid)
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(6, null, null))
+                        .sharedFileStore(new SharedFileStoreSettings(6, sharedPath, null))
                         .build())
                 .build();
 

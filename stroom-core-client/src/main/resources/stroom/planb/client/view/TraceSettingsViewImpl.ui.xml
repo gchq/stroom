@@ -3,13 +3,11 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:sg="urn:import:stroom.planb.client.view">
     <g:FlowPanel styleName="max form">
+        <sg:SettingsGroup label="Shared File Store"
+                          ui:field="sharedFileStorePanel"/>
         <sg:SettingsGroup label="General"
                           ui:field="generalPanel"/>
-        <sg:SettingsGroup label="Snapshot"
-                          ui:field="snapshotPanel"/>
         <sg:SettingsGroup label="Data Retention"
                           ui:field="retentionPanel"/>
-        <sg:SettingsGroup label="Shared File Store"
-                          ui:field="shardingArchivingPanel"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

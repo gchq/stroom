@@ -35,7 +35,7 @@ public class MetricSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
-    private final SnapshotSettingsWidget snapshotSettingsWidget;
+    private final HttpStoreSettingsWidget httpStoreSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
     private final MetricKeySchemaSettingsWidget keySchemaSettingsWidget;
     private final MetricValueSchemaSettingsWidget valueSchemaSettingsWidget;
@@ -43,7 +43,7 @@ public class MetricSettingsViewImpl
     @UiField
     SettingsGroup generalPanel;
     @UiField
-    SettingsGroup snapshotPanel;
+    SettingsGroup httpStorePanel;
     @UiField
     SettingsGroup retentionPanel;
     @UiField
@@ -54,19 +54,19 @@ public class MetricSettingsViewImpl
     @Inject
     public MetricSettingsViewImpl(final Binder binder,
                                   final GeneralSettingsWidget generalSettingsWidget,
-                                  final SnapshotSettingsWidget snapshotSettingsWidget,
+                                  final HttpStoreSettingsWidget httpStoreSettingsWidget,
                                   final RetentionSettingsWidget retentionSettingsWidget,
                                   final MetricKeySchemaSettingsWidget
                                               keySchemaSettingsWidget,
                                   final MetricValueSchemaSettingsWidget valueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
-        this.snapshotSettingsWidget = snapshotSettingsWidget;
+        this.httpStoreSettingsWidget = httpStoreSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.keySchemaSettingsWidget = keySchemaSettingsWidget;
         this.valueSchemaSettingsWidget = valueSchemaSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
-        snapshotPanel.add(snapshotSettingsWidget.asWidget());
+        httpStorePanel.add(httpStoreSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
         keySchemaPanel.add(keySchemaSettingsWidget.asWidget());
         valueSchemaPanel.add(valueSchemaSettingsWidget.asWidget());
@@ -76,7 +76,7 @@ public class MetricSettingsViewImpl
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
+        httpStoreSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
         keySchemaSettingsWidget.setUiHandlers(uiHandlers);
         valueSchemaSettingsWidget.setUiHandlers(uiHandlers);
@@ -99,22 +99,22 @@ public class MetricSettingsViewImpl
 
     @Override
     public Boolean getSynchroniseMerge() {
-        return generalSettingsWidget.getSynchroniseMerge();
+        return httpStoreSettingsWidget.getSynchroniseMerge();
     }
 
     @Override
     public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        generalSettingsWidget.setSynchroniseMerge(synchroniseMerge);
+        httpStoreSettingsWidget.setSynchroniseMerge(synchroniseMerge);
     }
 
     @Override
     public Boolean getOverwrite() {
-        return generalSettingsWidget.getOverwrite();
+        return httpStoreSettingsWidget.getOverwrite();
     }
 
     @Override
     public void setOverwrite(final Boolean overwrite) {
-        generalSettingsWidget.setOverwrite(overwrite);
+        httpStoreSettingsWidget.setOverwrite(overwrite);
     }
 
     @Override
@@ -129,12 +129,12 @@ public class MetricSettingsViewImpl
 
     @Override
     public SnapshotSettings getSnapshotSettings() {
-        return snapshotSettingsWidget.getSnapshotSettings();
+        return httpStoreSettingsWidget.getSnapshotSettings();
     }
 
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
-        snapshotSettingsWidget.setSnapshotSettings(snapshotSettings);
+        httpStoreSettingsWidget.setSnapshotSettings(snapshotSettings);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class MetricSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
-        snapshotSettingsWidget.onReadOnly(readOnly);
+        httpStoreSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
         keySchemaSettingsWidget.onReadOnly(readOnly);
         valueSchemaSettingsWidget.onReadOnly(readOnly);

@@ -19,8 +19,6 @@ package stroom.pathways.impl;
 import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;
-import stroom.pathways.shared.GetTraceOverviewRequest;
-import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TraceHistogram;
 import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceSpanPage;
@@ -63,20 +61,18 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Shared machinery for the node-local trace query implementations ({@link RestTracesStore} and
- * {@link SharedFileTracesStore}). Holds the single-trace reads (get trace / spans / overview) — which are
- * identical for both storage layouts because the archive-merge step self-selects on {@code sharedPath} — plus
- * the helpers both fan-out implementations need. The two operations that genuinely differ between the layouts,
- * {@code findTraces} and {@code getTraceHistogram}, are left abstract.
+ * Query helpers shared by a trace store's read operations: archive-bucket paging and cursors,
+ * quick-filter parsing, trace merging across buckets, and histogram sizing and assembly.
+ *
+ * <p>Declares no {@link TracesStore} operation itself — {@link SharedFileTracesStore} is the only
+ * subclass and implements all of them in terms of these helpers.
  */
 abstract class AbstractTracesStore implements TracesStore {
 
@@ -124,27 +120,6 @@ abstract class AbstractTracesStore implements TracesStore {
                 filter, FILTER_FIELD_PROVIDER, FILTER_VALUE_FUNCTIONS, DateTimeSettings.builder().build());
     }
 
-    // Reads the trace from the shard only, returning empty when it is not present there. A present
-    // root means the trace was not archived (archival removes the root with the trace).
-    protected Optional<Trace> readTrace(final GetTraceRequest request) {
-        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        return shardManager.get(request.getDataSourceRef().getName(), request.getTraceId(), reader -> {
-            if (reader instanceof final TraceDb traceDb) {
-                return traceDb.findTrace(traceIdBytes);
-            }
-            throw new IllegalStateException("Unexpected value: " + reader);
-        });
-    }
-
-    protected boolean hasRoot(final String docName, final String traceId, final byte[] traceIdBytes) {
-        return Boolean.TRUE.equals(shardManager.get(docName, traceId, reader -> {
-            if (reader instanceof final TraceDb traceDb) {
-                return traceDb.rootSpan(traceIdBytes).isPresent();
-            }
-            throw new IllegalStateException("Unexpected value: " + reader);
-        }));
-    }
-
     // Expand/collapse: the client sends a GroupSelection only when the view actually prunes something
     // (a collapsed span or a reduced expand-level); null ⇒ fully expanded ⇒ the unfiltered walk, which
     // keeps the fast on-disk-checkpoint path. The "group key" is the span's spanId (hex).
@@ -152,94 +127,6 @@ abstract class AbstractTracesStore implements TracesStore {
         return groupSelection == null
                 ? TraceDb.SpanOpenTest.ALL
                 : (spanId, depth) -> groupSelection.isGroupOpen(HexStringUtil.encode(spanId), depth);
-    }
-
-    // Pages a rooted trace wholly from the shard: fully expanded via the on-disk checkpoints
-    // (exact TraceRoot total, no total sent); pruned via a filtered in-memory checkpoint index (cached by
-    // trace + shard version + selection) whose total reflects the collapsed view.
-    protected TraceSpanPage rootedSpanPage(final GetSpansRequest request,
-                                               final GroupSelection groupSelection,
-                                               final TraceDb.SpanOpenTest openTest) {
-        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final String docName = request.getDataSourceRef().getName();
-
-        if (groupSelection == null) {
-            final TraceDb.SpanPage page = shardManager.get(docName, request.getTraceId(), reader -> {
-                if (reader instanceof final TraceDb traceDb) {
-                    return traceDb.getSpanPageAtOffset(
-                            traceIdBytes, request.getOffset(), request.getLimit());
-                }
-                throw new IllegalStateException("Unexpected value: " + reader);
-            });
-            return toSpanPage(page, false, null);
-        }
-
-        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
-        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
-        final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), List.of())
-                + groupSelectionKey(groupSelection);
-        return shardManager.get(docName, request.getTraceId(), reader -> {
-            if (!(reader instanceof final TraceDb traceDb)) {
-                throw new IllegalStateException("Unexpected value: " + reader);
-            }
-            return traceDb.read(txn -> {
-                final TraceDb.ChildCursor cursor =
-                        new TraceDb.SingleStoreChildCursor(traceDb, txn, traceIdBytes);
-                final TraceDb.CheckpointIndex index = mergedCheckpointCache.getOrBuild(
-                        cacheKey, () -> TraceDb.buildCheckpoints(cursor, openTest));
-                final TraceDb.SpanPage page = TraceDb.getSpanPageAtOffset(
-                        cursor, index, request.getOffset(), request.getLimit(), openTest);
-                return toSpanPage(page, false, index.total());
-            });
-        });
-    }
-
-    // Pages a trace whose root is not in the shard by merging the shard with the supplied archive
-    // bucket(s) as one pre-order tree with a sequential cursor. Passing empty refs serves the shard alone,
-    // which is the degenerate case for a non-shared store.
-    protected TraceSpanPage mergedSpanPage(final GetSpansRequest request,
-                                           final List<ArchiveShardRef> refs,
-                                           final TraceDb.SpanOpenTest openTest) {
-        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final String docName = request.getDataSourceRef().getName();
-        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
-        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
-        final List<byte[]> cursorPath = decodeCursor(request.getCursor());
-        final String cacheKey = checkpointCacheKey(doc, shardIndex, request.getTraceId(), refs)
-                + groupSelectionKey(request.getGroupSelection());
-
-        return shardManager.get(docName, request.getTraceId(), reader -> {
-            if (!(reader instanceof final TraceDb db)) {
-                throw new IllegalStateException("Unexpected value: " + reader);
-            }
-            return db.read(txn -> {
-                final List<TraceDb.ChildCursor> cursors = new ArrayList<>();
-                cursors.add(new TraceDb.SingleStoreChildCursor(db, txn, traceIdBytes));
-                return openArchivesAndPage(doc, shardIndex, refs, 0, traceIdBytes, cursors,
-                        cursorPath, request.getOffset(), request.getLimit(), cacheKey, openTest);
-            });
-        });
-    }
-
-    // Reads the downsampled overview spans (one streaming pass, bounded memory) from the shard only,
-    // keyed by spanId with first-write-wins. Extents are supplied by the caller from the already-known
-    // TraceRoot, so the axis is whole before any span is loaded.
-    protected Map<String, Span> readOverview(final GetTraceOverviewRequest request) {
-        final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final String docName = request.getDataSourceRef().getName();
-
-        final Map<String, Span> bySpanId = new LinkedHashMap<>();
-        final List<Span> spans = shardManager.get(docName, request.getTraceId(), reader -> {
-            if (reader instanceof final TraceDb traceDb) {
-                return traceDb.getOverviewSpans(
-                        traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars());
-            }
-            throw new IllegalStateException("Unexpected value: " + reader);
-        });
-        if (spans != null) {
-            spans.forEach(s -> bySpanId.putIfAbsent(s.getSpanId(), s));
-        }
-        return bySpanId;
     }
 
     /**

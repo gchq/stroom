@@ -262,7 +262,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         super(env,
                 byteBuffers,
                 doc,
-                settings.overwrite(),
+                true,
                 hashClashCommitRunnable,
                 new SchemaInfo(
                         CURRENT_SCHEMA_VERSION,

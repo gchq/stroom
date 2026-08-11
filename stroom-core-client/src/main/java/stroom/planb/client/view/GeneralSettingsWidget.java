@@ -19,7 +19,6 @@ package stroom.planb.client.view;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,18 +34,12 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
 
     @UiField
     TextBox maxStoreSize;
-    @UiField
-    CustomCheckBox synchroniseMerge;
-    @UiField
-    CustomCheckBox overwrite;
 
     private boolean readOnly;
-    private boolean shardingEnabled;
 
     @Inject
     public GeneralSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        setOverwrite(true);
     }
 
     @Override
@@ -84,46 +77,8 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
                 ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
     }
 
-    @Override
-    public Boolean getSynchroniseMerge() {
-        return synchroniseMerge.getValue()
-                ? Boolean.TRUE
-                : null;
-    }
-
-    @Override
-    public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        this.synchroniseMerge.setValue(synchroniseMerge != null && synchroniseMerge);
-    }
-
-    @Override
-    public Boolean getOverwrite() {
-        return overwrite.getValue()
-                ? null
-                : overwrite.getValue();
-    }
-
-    @Override
-    public void setOverwrite(final Boolean overwrite) {
-        this.overwrite.setValue(overwrite == null || overwrite);
-    }
-
-    public void setShardingEnabled(final boolean shardingEnabled) {
-        this.shardingEnabled = shardingEnabled;
-        if (shardingEnabled) {
-            synchroniseMerge.setValue(false);
-        }
-        updateStates();
-    }
-
-    public void setSharedPathLocked(final boolean locked) {
-        // No longer supported — shared path is managed by SharedFileStoreSettingsWidget.
-    }
-
     private void updateStates() {
         maxStoreSize.setEnabled(!readOnly);
-        synchroniseMerge.setEnabled(!readOnly && !shardingEnabled);
-        overwrite.setEnabled(!readOnly);
     }
 
     @Override
@@ -134,16 +89,6 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
 
     @UiHandler("maxStoreSize")
     public void onMaxStoreSize(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("synchroniseMerge")
-    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("overwrite")
-    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onChange();
     }
 

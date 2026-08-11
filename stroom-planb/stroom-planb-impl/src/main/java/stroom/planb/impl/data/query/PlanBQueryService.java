@@ -41,7 +41,7 @@ import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
-import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.AbstractHttpStoreSettings;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateType;
@@ -102,11 +102,8 @@ public class PlanBQueryService {
             LOGGER.warn(() -> "No Plan B doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + request.getMapName() + "'");
         }
-        final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
-                doc,
-                PlanBDocument::getSettings,
-                AbstractPlanBSettings::getSnapshotSettings,
-                SnapshotSettings::new);
+        final SnapshotSettings snapshotSettings = AbstractHttpStoreSettings.snapshotSettings(
+                NullSafe.get(doc, PlanBDocument::getSettings));
         final boolean local = snapshotSettings.isUseSnapshotsForLookup() || !shardManager.isSnapshotNode();
         final PlanBValue value = getPlanBValue(request, local);
         return convertToTemporalState(request.getKeyName(), value);
@@ -118,11 +115,8 @@ public class PlanBQueryService {
             LOGGER.warn(() -> "No Plan B doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + request.getMapName() + "'");
         }
-        final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
-                doc,
-                PlanBDocument::getSettings,
-                AbstractPlanBSettings::getSnapshotSettings,
-                SnapshotSettings::new);
+        final SnapshotSettings snapshotSettings = AbstractHttpStoreSettings.snapshotSettings(
+                NullSafe.get(doc, PlanBDocument::getSettings));
         final boolean local = snapshotSettings.isUseSnapshotsForGet() || !shardManager.isSnapshotNode();
         final PlanBValue value = getPlanBValue(request, local);
         return convertToVal(value, () -> StateType.SESSION.equals(doc.getStateType())

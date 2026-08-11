@@ -50,9 +50,12 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     @UiField
     SelectionBox<TimeUnit> retentionCheckIntervalTimeUnit;
     @UiField
+    FormGroup useStateTimePanel;
+    @UiField
     CustomCheckBox useStateTime;
 
     private boolean readOnly;
+    private boolean useStateTimeVisible = true;
 
     @Inject
     public RetentionSettingsWidget(final Binder binder) {
@@ -101,8 +104,6 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                 .build();
     }
 
-    private boolean shardingEnabled;
-
     @Override
     public void setRetention(final RetentionSettings retention) {
         final RetentionSettings settings = new RetentionSettings.Builder(retention).build();
@@ -119,16 +120,20 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
             this.retentionCheckInterval.setValue(settings.getCheckInterval().getTime());
             this.retentionCheckIntervalTimeUnit.setValue(settings.getCheckInterval().getTimeUnit());
         }
-        this.useStateTime.setValue(settings.useStateTime());
+        // Clamped, so a value the user cannot see is never read back out by getRetention().
+        this.useStateTime.setValue(useStateTimeVisible && settings.useStateTime());
         updateStates();
     }
 
-    public void setShardingEnabled(final boolean shardingEnabled) {
-        this.shardingEnabled = shardingEnabled;
-        if (shardingEnabled) {
+    /**
+     * Hide the Use State Time option for a store whose retention ignores it.
+     */
+    public void setUseStateTimeVisible(final boolean visible) {
+        this.useStateTimeVisible = visible;
+        if (!visible) {
             useStateTime.setValue(false);
         }
-        updateStates();
+        useStateTimePanel.setVisible(visible);
     }
 
     private void updateStates() {
@@ -151,7 +156,7 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         retentionTimeUnit.setEnabled(editable && retentionOn);
         retentionCheckInterval.setEnabled(editable && retentionOn);
         retentionCheckIntervalTimeUnit.setEnabled(editable && retentionOn);
-        useStateTime.setEnabled(editable && retentionOn && !shardingEnabled);
+        useStateTime.setEnabled(editable && retentionOn);
     }
 
     public void onReadOnly(final boolean readOnly) {

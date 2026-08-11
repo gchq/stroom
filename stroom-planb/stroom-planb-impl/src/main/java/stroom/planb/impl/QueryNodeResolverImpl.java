@@ -17,8 +17,7 @@
 package stroom.planb.impl;
 
 import stroom.docref.DocRef;
-import stroom.pathways.shared.TracesDoc;
-import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.AbstractHttpStoreSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SnapshotSettings;
@@ -42,18 +41,22 @@ public class QueryNodeResolverImpl implements QueryNodeResolver {
         this.configProvider = configProvider;
     }
 
+    /**
+     * Pins the query to the node that holds the store, unless snapshots of it are pushed to every node.
+     *
+     * <p>Only applies to {@link PlanBDoc}. A traces store is read through the shared file store, which
+     * every node can reach, and its non-shared-file-store fallbacks locate the data themselves, so
+     * there is no node to pin a trace query to.
+     */
     @Override
     public String getNode(final DocRef docRef) {
-        if (docRef == null || (!PlanBDoc.TYPE.equals(docRef.getType()) && !TracesDoc.TYPE.equals(docRef.getType()))) {
+        if (docRef == null || !PlanBDoc.TYPE.equals(docRef.getType())) {
             return null;
         }
 
         final PlanBDocument doc = planBDocCache.get(docRef.getName());
-        final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
-                doc,
-                PlanBDocument::getSettings,
-                AbstractPlanBSettings::getSnapshotSettings,
-                SnapshotSettings::new);
+        final SnapshotSettings snapshotSettings = AbstractHttpStoreSettings.snapshotSettings(
+                NullSafe.get(doc, PlanBDocument::getSettings));
         if (snapshotSettings.isUseSnapshotsForQuery()) {
             return null;
         }

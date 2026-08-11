@@ -16,21 +16,18 @@
 
 package stroom.planb.client.view;
 
-public interface SharedFileStoreView {
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.planb.shared.SharedFileStoreSettings;
 
-    int getShardCount();
+import com.gwtplatform.mvp.client.HasUiHandlers;
 
-    void setShardCount(int count);
+public interface SharedFileStoreSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
-    boolean isEnableSharedFileStore();
+    SharedFileStoreSettings getSharedFileStore();
 
-    void setEnableSharedFileStore(boolean enable);
+    void setSharedFileStore(SharedFileStoreSettings sharedFileStore);
 
-    String getSharedPath();
-
-    void setSharedPath(String sharedPath);
-
-    /** Lock the path field (e.g. when an existing shard path must not change). */
-    default void setSharedFileStorePathLocked(final boolean locked) {
-    }
+    /** Fix the path and shard count, for a store that already holds data at that location. */
+    void setSharedFileStoreLocked(boolean locked);
 }

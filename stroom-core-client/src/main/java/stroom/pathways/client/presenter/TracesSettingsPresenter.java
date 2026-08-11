@@ -65,9 +65,7 @@ public class TracesSettingsPresenter
     protected void onRead(final DocRef docRef, final TracesDoc doc, final boolean readOnly) {
         getView().onReadOnly(readOnly);
         planBSettingsPresenter.readSettings(doc.getSettings(), StateType.TRACE, readOnly);
-        final boolean locked = doc.hasSharedFileStoreData();
-        planBSettingsPresenter.setShardCountLocked(locked);
-        planBSettingsPresenter.setSharedPathLocked(locked);
+        planBSettingsPresenter.setSharedFileStoreLocked(doc.hasSharedFileStoreData());
     }
 
     @Override

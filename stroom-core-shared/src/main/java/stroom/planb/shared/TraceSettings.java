@@ -42,11 +42,8 @@ import java.util.Objects;
  */
 @JsonPropertyOrder({
         "maxStoreSize",
-        "synchroniseMerge",
-        "overwrite",
         "retention",
         "sharedFileStore",
-        "snapshotSettings",
         "maxQueryTimeRange",
         "maxSpansPerTrace"
 })
@@ -72,14 +69,11 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
 
     @JsonCreator
     public TraceSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
-                         @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
-                         @JsonProperty("overwrite") final Boolean overwrite,
                          @JsonProperty("retention") final RetentionSettings retention,
                          @JsonProperty("sharedFileStore") final SharedFileStoreSettings sharedFileStore,
-                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
                          @JsonProperty("maxQueryTimeRange") final SimpleDuration maxQueryTimeRange,
                          @JsonProperty("maxSpansPerTrace") final Long maxSpansPerTrace) {
-        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
+        super(maxStoreSize, retention);
         this.sharedFileStore = sharedFileStore;
         this.maxQueryTimeRange = maxQueryTimeRange;
         this.maxSpansPerTrace = maxSpansPerTrace;
@@ -194,11 +188,8 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
         public TraceSettings build() {
             return new TraceSettings(
                     maxStoreSize,
-                    synchroniseMerge,
-                    overwrite,
                     retention,
                     sharedFileStore,
-                    snapshotSettings,
                     maxQueryTimeRange,
                     maxSpansPerTrace);
         }

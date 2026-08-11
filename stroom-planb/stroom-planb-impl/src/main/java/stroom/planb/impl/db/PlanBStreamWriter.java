@@ -26,7 +26,7 @@ import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.data.value.TemporalRangeState;
 import stroom.planb.impl.data.value.TemporalState;
 import stroom.planb.impl.data.value.TemporalValue;
-import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.AbstractHttpStoreSettings;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -173,11 +173,8 @@ public class PlanBStreamWriter implements AutoCloseable {
      * handles the case where {@code createWriter()} subsequently fails.
      */
     private WriterInstance createWriterInstance(final PlanBDocument doc, final int shardIndex) {
-        final boolean synchroniseMerge = NullSafe.getOrElse(
-                doc,
-                PlanBDocument::getSettings,
-                AbstractPlanBSettings::getSynchroniseMerge,
-                false);
+        final boolean synchroniseMerge = AbstractHttpStoreSettings.synchroniseMerge(
+                NullSafe.get(doc, PlanBDocument::getSettings));
         final PartDestination destination = isSharedStoreDestination(doc)
                 ? sharedFsDestination
                 : restDestination;

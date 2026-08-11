@@ -27,6 +27,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
@@ -208,6 +209,7 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
 
     @Override
     public TracesDoc writeDocument(final TracesDoc document) {
+        validateSettings(document);
         final DocRef docRef = DocRef.builder()
                 .type(document.getType())
                 .uuid(document.getUuid())
@@ -224,6 +226,29 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
             }
         }
         return store.writeDocument(document);
+    }
+
+    /**
+     * Backstops the REST path, which does not go through the client's pre-save check.
+     *
+     * <p>A trace store is only ever read through a shared file store, so a stored document must always
+     * name one. {@code SharedFileTracesStore} is the sole reader and has no fallback to resolve a
+     * document without a path or shards, so this is the boundary that keeps one out of the store.
+     *
+     * <p>Note {@code createDocument} and {@code importDocument} delegate straight to the underlying
+     * docstore and so bypass this.
+     */
+    private void validateSettings(final TracesDoc document) {
+        final String error = AbstractPlanBSettings.validationError(document.getSettings());
+        if (error != null) {
+            throw new EntityServiceException(error);
+        }
+        if (document.getSharedPath() == null || document.getSharedPath().isBlank()) {
+            throw new EntityServiceException("A shared file store path is required.");
+        }
+        if (document.getShardCount() < 1) {
+            throw new EntityServiceException("A shard count of at least 1 is required.");
+        }
     }
 
     @Override

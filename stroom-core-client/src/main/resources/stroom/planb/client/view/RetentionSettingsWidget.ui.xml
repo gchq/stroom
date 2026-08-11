@@ -30,7 +30,8 @@
                 <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="useStateTimePanel"
+        <form:FormGroup ui:field="useStateTimePanel"
+                        identity="useStateTimePanel"
                         label="Use State Time"
                         helpText="Perform retention based on temporal state time rather than data insert time.">
             <tickbox:CustomCheckBox ui:field="useStateTime"
