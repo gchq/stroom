@@ -259,6 +259,17 @@ public class FileTransferClientImpl implements FileTransferClient {
                         FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
                 final WebTarget webTarget = webTargetFactory.create(url);
                 return fetchSnapshot(webTarget, request, snapshotDir);
+            } catch (final NotModifiedException e) {
+                // Not a failure, but the node's confirmation that the snapshot the caller already holds is
+                // current. Rethrow as is, as wrapping it would hide the type from the caller, which would then
+                // treat this as a fetch failure and eventually fail reads for a store that simply hasn't
+                // changed. See gh-5705.
+                LOGGER.debug(() -> "Snapshot not modified on '" +
+                                   nodeName +
+                                   "' for '" +
+                                   request.getPlanBDocRef() +
+                                   "'");
+                throw e;
             } catch (final Exception e) {
                 // Distinguish 'we couldn't reach this node' from 'this node answered and told us no'. Only the
                 // former is worth trying another node for, as every configured node holds a copy of the same
