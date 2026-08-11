@@ -35,9 +35,10 @@ import java.time.Instant;
  * Archives entries from a {@link HasSharedFileStore} shard into date-labelled buckets on the shared file
  * store, then occasionally compacts the shard it emptied.
  *
- * <p>Archival runs every merge cycle rather than on a schedule, because the archive is the queryable copy
- * and any delay here is query latency. Compaction does not: {@code shard.compact()} is a full LMDB env copy
- * under the shard's write lock, so {@link ArchivalSettings#getCheckInterval()} throttles it via the
+ * <p>Archival runs on every merge cycle rather than on a schedule of its own, because the archive is the
+ * queryable copy and any delay here is query latency. It does not ask for a cycle when there is nothing to
+ * merge — see {@link #isDue}. Compaction is throttled separately: {@code shard.compact()} is a full LMDB env
+ * copy under the shard's write lock, so {@link ArchivalSettings#getCheckInterval()} limits it via the
  * {@code .compaction.last} marker.
  */
 public class ArchiveOperation implements SharedFileStoreOperation {
@@ -61,11 +62,21 @@ public class ArchiveOperation implements SharedFileStoreOperation {
         return 200;
     }
 
+    /**
+     * Never asks for a cycle of its own. A merge cycle already happens whenever there are batches to merge,
+     * and {@link #run} is unconditional, so anything merged is archived in that same cycle — which is what
+     * keeps the archive current. With nothing merged there is nothing new to archive, and claiming the
+     * cluster lock to copy the shard down and rescan it would achieve nothing.
+     *
+     * <p>The trade: work archival defers is deferred until data next arrives. Spans held back waiting for a
+     * real root stay in the holding area, unqueryable, and roots past the cut-off stay un-retired. Nothing
+     * is lost, and the next batch drains them.
+     */
     @Override
     public boolean isDue(final PlanBDocument doc,
                          final Path sharedShardsDocDir,
                          final int shardIndex) {
-        return true;
+        return false;
     }
 
     @Override

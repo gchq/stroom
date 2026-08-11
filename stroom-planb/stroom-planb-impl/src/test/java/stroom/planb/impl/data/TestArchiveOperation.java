@@ -81,43 +81,31 @@ class TestArchiveOperation {
     }
 
     // -----------------------------------------------------------------------
-    // isDue — disabled / null archival
+    // isDue — archival never asks for a cycle of its own
     // -----------------------------------------------------------------------
 
     /**
-     * Archival cannot be switched off. Queries read archive buckets rather than the holding area, so a
-     * store that stopped archiving would accumulate data nothing could find — {@code ArchivalSettings}
-     * therefore forces {@code enabled} true and the UI has no toggle.
+     * Archival is enabled and cannot be switched off — {@code ArchivalSettings} forces {@code enabled} true
+     * and the UI has no toggle — yet it still never claims a cycle. A cycle already happens when there are
+     * batches to merge and {@code run()} is unconditional, so merged data is archived immediately; a cycle
+     * with nothing merged would copy the shard down and rescan it to find nothing.
      */
     @Test
-    void isDue_cannotBeDisabled() {
+    void isDue_neverClaimsACycle() throws IOException {
         final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         assertThat(doc.getSettings() instanceof HasSharedFileStore s
                    && s.getSharedFileStore().getArchival().isEnabled())
                 .as("settings force archival on")
                 .isTrue();
-        assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX)).isTrue();
-    }
 
-    // -----------------------------------------------------------------------
-    // isDue — archival runs every merge cycle, so the check interval does not gate it
-    // -----------------------------------------------------------------------
-
-    /**
-     * Archival claims the lock on its own account whenever it is enabled, regardless of when it last ran.
-     * Delaying it delays queries, since the archive is the queryable copy.
-     */
-    @Test
-    void isDue_trueWheneverArchivalIsEnabled() throws IOException {
-        final PlanBDoc doc = docWithArchival(SEVEN_DAYS);
         assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX))
-                .as("never run before")
-                .isTrue();
+                .as("never run before, still not due")
+                .isFalse();
 
         writeCompactionMarker(Instant.now());
         assertThat(archiveOperation.isDue(doc, sharedShardsDocDir, SHARD_INDEX))
-                .as("just compacted — still due, the marker only gates compaction")
-                .isTrue();
+                .as("the compaction marker has no bearing on it either")
+                .isFalse();
     }
 
     // -----------------------------------------------------------------------
