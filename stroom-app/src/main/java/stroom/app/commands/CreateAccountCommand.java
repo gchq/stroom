@@ -47,7 +47,7 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateAccountCommand.class);
     private static final String COMMAND_NAME = "create_account";
     private static final String COMMAND_DESCRIPTION = "Creates the specified user account in the internal identity " +
-            "provider";
+                                                      "provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
@@ -111,7 +111,7 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
                 .help("The user's first name");
 
         subparser.addArgument(asArg('s', LAST_NAME_ARG_NAME))
-                .dest(FIRST_NAME_ARG_NAME)
+                .dest(LAST_NAME_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("The user's last name");
@@ -169,9 +169,10 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
         final String lastName = namespace.getString(LAST_NAME_ARG_NAME);
         final boolean noPasswordChange = namespace.getBoolean(NO_PASSWORD_CHANGE);
         final boolean neverExpires = namespace.getBoolean(NEVER_EXPIRES_CHANGE_ARG_NAME);
-        final long now = System.currentTimeMillis();
 
-        LOGGER.info("Creating account for user '{}'", username);
+        LOGGER.info("Creating account for user '{}' - email '{}', first name '{}', last name '{}', " +
+                    "no password change '{}', never expires '{}'",
+                username, email, firstName, lastName, noPasswordChange, neverExpires);
 
         final CreateAccountRequest createAccountRequest = new CreateAccountRequest(
                 firstName,

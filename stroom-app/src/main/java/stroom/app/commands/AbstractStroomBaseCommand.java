@@ -249,7 +249,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
     }
 
     protected String obfuscateArgValue(final String argName, final String value) {
-        if ("password".equals(argName)) {
+        if ("password".equalsIgnoreCase(argName)) {
             return "*****";
         } else {
             return value;
