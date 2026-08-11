@@ -16,9 +16,13 @@
 
 package stroom.planb.impl.data;
 
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.planb.impl.PlanBConfig;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -37,10 +41,13 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -258,6 +265,36 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                 .hasMessageContaining("Disk exploded");
     }
 
+    /**
+     * A failure to send a part to a node must reach the caller, as that is what fails the processing task and so
+     * gets the reason into the stream processing error file. This client only logs such a failure at debug, so
+     * the rethrow is the only thing reporting it. See gh-5706.
+     */
+    @Test
+    void testFailureToSendPartReachesCaller() throws IOException {
+        final Path path = Files.createTempFile("test", "test");
+        Files.writeString(path, "TestFileTransferService");
+        final FileDescriptor fileDescriptor = new FileDescriptor(
+                System.currentTimeMillis(),
+                1,
+                FileHashUtil.hash(path));
+
+        Mockito
+                .doThrow(new RuntimeException("Disk exploded"))
+                .when(fileTransferService).receivePart(
+                        Mockito.anyLong(),
+                        Mockito.anyLong(),
+                        Mockito.anyString(),
+                        Mockito.anyString(),
+                        Mockito.anyBoolean(),
+                        Mockito.any(InputStream.class));
+
+        assertThatThrownBy(() -> partSendingFileTransferClient().storePart(fileDescriptor, path, true))
+                .isInstanceOf(UncheckedIOException.class)
+                .hasMessageContaining("Unable to send file to '" + REMOTE_NODE + "'")
+                .hasMessageContaining("Disk exploded");
+    }
+
     private FileTransferClientImpl fileTransferClient() {
         return new FileTransferClientImpl(
                 null,
@@ -275,25 +312,57 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
      * an endpoint. The resolved URL is ignored so the call still lands on the in-process test resource.
      */
     private FileTransferClientImpl nodeCallingFileTransferClient() {
-        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class);
-        Mockito.when(nodeInfo.getThisNodeName()).thenReturn(THIS_NODE);
-
-        final NodeService nodeService = Mockito.mock(NodeService.class);
-        Mockito.when(nodeService.getBaseEndpointUrl(REMOTE_NODE)).thenReturn("http://remote:8080");
-        Mockito.when(nodeService.getBaseEndpointUrl(THIS_NODE)).thenReturn("http://this:8080");
-
         final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         Mockito.when(securityContext.asProcessingUserResult(Mockito.<Supplier<Object>>any()))
                 .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
 
         return new FileTransferClientImpl(
                 null,
-                nodeService,
-                nodeInfo,
+                mockNodeService(),
+                mockNodeInfo(),
                 null,
                 url -> getWebTarget(FileTransferResource.FETCH_SNAPSHOT_PATH_PART),
                 null,
                 securityContext,
                 executorProvider);
+    }
+
+    /**
+     * A client for {@code storePart}, configured to send to a single remote node. The resolved URL is ignored so
+     * the call still lands on the in-process test resource.
+     */
+    private FileTransferClientImpl partSendingFileTransferClient()
+            throws NullClusterStateException, NodeNotFoundException {
+        final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.doAnswer(invocation -> {
+            invocation.getArgument(0, Runnable.class).run();
+            return null;
+        }).when(securityContext).asProcessingUser(Mockito.any(Runnable.class));
+
+        final TargetNodeSetFactory targetNodeSetFactory = Mockito.mock(TargetNodeSetFactory.class);
+        Mockito.when(targetNodeSetFactory.getEnabledTargetNodeSet()).thenReturn(Set.of(REMOTE_NODE));
+
+        return new FileTransferClientImpl(
+                () -> PlanBConfig.builder().nodeList(List.of(REMOTE_NODE)).build(),
+                mockNodeService(),
+                mockNodeInfo(),
+                targetNodeSetFactory,
+                url -> getWebTarget(FileTransferResource.SEND_PART_PATH_PART),
+                null,
+                securityContext,
+                executorProvider);
+    }
+
+    private NodeInfo mockNodeInfo() {
+        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class);
+        Mockito.when(nodeInfo.getThisNodeName()).thenReturn(THIS_NODE);
+        return nodeInfo;
+    }
+
+    private NodeService mockNodeService() {
+        final NodeService nodeService = Mockito.mock(NodeService.class);
+        Mockito.when(nodeService.getBaseEndpointUrl(REMOTE_NODE)).thenReturn("http://remote:8080");
+        Mockito.when(nodeService.getBaseEndpointUrl(THIS_NODE)).thenReturn("http://this:8080");
+        return nodeService;
     }
 }

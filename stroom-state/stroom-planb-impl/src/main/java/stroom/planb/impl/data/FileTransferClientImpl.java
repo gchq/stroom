@@ -126,7 +126,9 @@ public class FileTransferClientImpl implements FileTransferClient {
                         }
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
+                    // Debug only as we rethrow, so the caller reports the failure, e.g. to the pipeline error
+                    // receiver, which records it in the stream processing error file. See gh-5706.
+                    LOGGER.debug(e::getMessage, e);
                     throw new RuntimeException(e.getMessage(), e);
                 }
             }
@@ -159,7 +161,9 @@ public class FileTransferClientImpl implements FileTransferClient {
                                             synchroniseMerge);
                                 }
                             } catch (final IOException e) {
-                                LOGGER.error(e::getMessage, e);
+                                // Debug only as the exception is collected and rethrown to the caller, which
+                                // reports it. See gh-5706.
+                                LOGGER.debug(e::getMessage, e);
                                 final UncheckedIOException uncheckedIOException = new UncheckedIOException(e);
                                 collectedExceptions.add(uncheckedIOException);
                                 throw uncheckedIOException;
@@ -214,7 +218,10 @@ public class FileTransferClientImpl implements FileTransferClient {
         try {
             storePartRemotely(webTarget, fileDescriptor, path, synchroniseMerge);
         } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
+            // Debug only as we rethrow, so the caller reports the failure. A network blip, e.g. a DNS lookup
+            // failure, is expected in normal operation and fails the processing task, which puts the reason in
+            // the stream processing error file. Logging it here as well just duplicates it. See gh-5706.
+            LOGGER.debug(e::getMessage, e);
             throw new IOException("Unable to send file to '" + targetNode + "': " + e.getMessage(), e);
         }
     }
