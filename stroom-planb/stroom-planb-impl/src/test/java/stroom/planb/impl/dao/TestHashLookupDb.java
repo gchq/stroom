@@ -24,6 +24,7 @@ import stroom.planb.impl.serde.hash.HashClashCount;
 import stroom.planb.impl.serde.hash.HashFactory;
 import stroom.planb.impl.serde.hash.IntegerHashFactory;
 import stroom.planb.impl.serde.hash.LongHashFactory;
+import stroom.util.io.ByteSize;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,7 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestHashLookupDb {
 
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
-    static final Long DEFAULT_MAX_STORE_SIZE = 10737418240L;
+    // Sized for the 1,000,000 small lookup entries the biggest tests write (in a single write
+    // txn, so the map must hold all its dirty pages at once), rather than the production default
+    // of 10GiB of reserved address space.
+    static final Long DEFAULT_MAX_STORE_SIZE = ByteSize.ofMebibytes(512).getBytes();
 
     @Test
     void testIntegerHashFactory(@TempDir final Path tempDir) {

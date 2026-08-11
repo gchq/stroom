@@ -338,27 +338,31 @@ class TestLmdbStream {
     private Result run(final BiFunction<Txn<ByteBuffer>, Dbi<ByteBuffer>, Stream<LmdbEntry>> function) {
         try {
             final Path path = Files.createTempDirectory("stroom");
-            final AtomicReference<ByteBuffer> firstItem = new AtomicReference<>();
-            final AtomicReference<ByteBuffer> lastItem = new AtomicReference<>();
-            final AtomicInteger count = new AtomicInteger();
-            try (final Env<ByteBuffer> env = Env.create()
-                    .setMapSize(ByteSize.ofMebibytes(1).getBytes())
-                    .open(path.toFile())) {
-                final Dbi<ByteBuffer> dbi = setupDb(env);
-                try (final Txn<ByteBuffer> txn = env.txnRead()) {
-                    try (final Stream<LmdbEntry> stream = function.apply(txn, dbi)) {
-                        stream.forEach(entry -> {
-                            if (firstItem.get() == null) {
-                                firstItem.set(ByteBufferUtils.copyToDirectBuffer(entry.getKey()));
-                            }
-                            lastItem.set(ByteBufferUtils.copyToDirectBuffer(entry.getKey()));
-                            count.incrementAndGet();
-                        });
+            try {
+                final AtomicReference<ByteBuffer> firstItem = new AtomicReference<>();
+                final AtomicReference<ByteBuffer> lastItem = new AtomicReference<>();
+                final AtomicInteger count = new AtomicInteger();
+                try (final Env<ByteBuffer> env = Env.create()
+                        .setMapSize(ByteSize.ofMebibytes(1).getBytes())
+                        .open(path.toFile())) {
+                    final Dbi<ByteBuffer> dbi = setupDb(env);
+                    try (final Txn<ByteBuffer> txn = env.txnRead()) {
+                        try (final Stream<LmdbEntry> stream = function.apply(txn, dbi)) {
+                            stream.forEach(entry -> {
+                                if (firstItem.get() == null) {
+                                    firstItem.set(ByteBufferUtils.copyToDirectBuffer(entry.getKey()));
+                                }
+                                lastItem.set(ByteBufferUtils.copyToDirectBuffer(entry.getKey()));
+                                count.incrementAndGet();
+                            });
+                        }
                     }
                 }
+                return new Result(count.get(), firstItem.get(), lastItem.get());
+            } finally {
+                // The env try-with-resources has closed by the time we get here
+                FileUtil.deleteDir(path);
             }
-            FileUtil.deleteDir(path);
-            return new Result(count.get(), firstItem.get(), lastItem.get());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

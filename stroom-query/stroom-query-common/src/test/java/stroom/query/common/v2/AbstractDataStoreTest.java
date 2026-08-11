@@ -31,9 +31,13 @@ import stroom.query.api.TableSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 import stroom.util.shared.ModelStringUtil;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 
 import java.util.ArrayList;
@@ -41,15 +45,55 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractDataStoreTest {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataStoreTest.class);
+
+    private final List<DataStore> createdStores = new CopyOnWriteArrayList<>();
+
     @BeforeAll
     static void beforeAll() {
         SimpleMetrics.setEnabled(true);
+    }
+
+    /**
+     * For an LmdbDataStore clear() closes the store (waiting for its transfer thread to finish
+     * with the write txn) and then deletes the env. Without this every test leaks its store's
+     * env and the @TempDir it lives in is deleted under it.
+     * <p>
+     * Idempotent, so a subclass with its own @AfterEach that must run after this one (JUnit runs
+     * subclass @AfterEach methods first) can call it directly.
+     */
+    @AfterEach
+    final void clearCreatedStores() {
+        // Newest first: a later store can reopen the env dir of an earlier, closed one (see
+        // TestLmdbDataStore.testReload), and clearing the earlier one first would delete that dir
+        // from under the later store's open env.
+        Collections.reverse(createdStores);
+        for (final DataStore dataStore : createdStores) {
+            try {
+                dataStore.clear();
+            } catch (final RuntimeException e) {
+                // Carry on so one bad store doesn't leave the rest open.
+                LOGGER.error("Error clearing store: {}", e.getMessage(), e);
+            }
+        }
+        createdStores.clear();
+    }
+
+    /**
+     * Record a store so {@link #clearCreatedStores()} tears it down. Tests that create stores
+     * directly via the subclass create method (rather than the recording overloads here) should
+     * pass them through this.
+     */
+    <T extends DataStore> T record(final T dataStore) {
+        createdStores.add(dataStore);
+        return dataStore;
     }
 
     void basicTest() {
@@ -656,14 +700,34 @@ abstract class AbstractDataStoreTest {
     }
 
     DataStore create(final TableSettings tableSettings, final DataStoreSettings dataStoreSettings) {
-        return create(
+        return record(create(
                 SearchRequestSource.createBasic(),
                 new QueryKey(UUID.randomUUID().toString()),
                 "0",
                 tableSettings,
-                new SearchResultStoreConfig(),
+                createResultStoreConfig(),
                 dataStoreSettings,
-                UUID.randomUUID().toString());
+                UUID.randomUUID().toString()));
+    }
+
+    /**
+     * As the production default config but with a map size fit for what these tests write, rather
+     * than the production default of 10GiB of reserved address space per store.
+     */
+    static SearchResultStoreConfig createResultStoreConfig() {
+        return new SearchResultStoreConfig(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                ResultStoreLmdbConfig.builder()
+                        .localDir("search_results")
+                        .maxStoreSize(ByteSize.ofGibibytes(1))
+                        .build(),
+                null);
     }
 
     abstract DataStore create(SearchRequestSource searchRequestSource,

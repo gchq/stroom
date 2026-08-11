@@ -41,6 +41,7 @@ import javax.sql.DataSource;
 
 // TODO consider refactoring this into AbstractStroomCommand with an abstract method to return a guice module
 //  to create the child injector with.
+
 /**
  * Additional DW Command so instead of
  * ... server ../local.yml
@@ -96,9 +97,9 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
                     runCommand(bootstrap, namespace, config, appInjector);
                 } catch (final Exception e) {
                     final String msg = "Error running command "
-                            + commandName
-                            + ": " + e.getMessage()
-                            + ". Check logs for more detail.";
+                                       + commandName
+                                       + ": " + e.getMessage()
+                                       + ". Check logs for more detail.";
                     System.err.println(msg);
                     LOGGER.error(msg, e);
                     System.exit(1);
@@ -178,19 +179,29 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
                     })
                     .sorted(Entry.comparingByKey())
                     .map(entry ->
-                            "--" + entry.getKey() + " " + argValueToString(entry.getValue()))
+                            "--" + entry.getKey() + " " + argValueToString(entry.getKey(), entry.getValue()))
                     .collect(Collectors.joining(" "));
         }
     }
 
-    final String argValueToString(final Object value) {
+    protected String obfuscateArgValue(final String argName, final String value) {
+        if ("password".equalsIgnoreCase(argName)) {
+            return "*****";
+        } else {
+            return value;
+        }
+    }
+
+    final String argValueToString(final String argName, final Object value) {
+        final String str;
         if (value instanceof final List<?> listVal) {
-            return listVal.stream()
+            str = listVal.stream()
                     .map(item -> "'" + item.toString() + "'")
                     .collect(Collectors.joining(" "));
         } else {
-            return value.toString();
+            str = value.toString();
         }
+        return obfuscateArgValue(argName, str);
     }
 
     /**

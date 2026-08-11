@@ -488,7 +488,8 @@ public class TestLmdbStreamBenchmark {
             env.close();
         }
         env = null;
-        if (Files.isDirectory(dbDir)) {
+        // Null check as setup may have failed before assigning the dir
+        if (dbDir != null && Files.isDirectory(dbDir)) {
             FileUtil.deleteDir(dbDir);
         }
     }

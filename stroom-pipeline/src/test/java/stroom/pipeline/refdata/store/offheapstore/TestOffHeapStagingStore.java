@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
+import stroom.pipeline.refdata.ReferenceDataStagingLmdbConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
@@ -31,6 +32,7 @@ import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -74,11 +76,9 @@ class TestOffHeapStagingStore extends StroomUnitTest {
     private MapDefinitionUIDStore.Factory mapDefinitionUidStoreFactory;
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
-    private Injector injector;
-    private Path dbDir = null;
     private OffHeapStagingStore offHeapStagingStore;
-    private RefDataStore refDataStore;
     private RefDataLmdbEnv refDataLmdbEnv;
+    private Path dbDir;
 
     private final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
             UUID.randomUUID().toString(),
@@ -102,11 +102,22 @@ class TestOffHeapStagingStore extends StroomUnitTest {
         referenceDataConfig = new ReferenceDataConfig()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
                         .withLocalDir(dbDir.toAbsolutePath().toString())
+                        // Without this the main store env gets the production default map size
+                        // of 50GiB and the staging env 10GiB.
+                        .withMaxStoreSize(ByteSize.ofMebibytes(50))
                         .withReaderBlockedByWriter(false))
+                .withStagingLmdbConfig(new ReferenceDataStagingLmdbConfig()
+                        .withMaxStoreSize(ByteSize.ofMebibytes(50)))
                 .withMaxPutsBeforeCommit(batchSize)
                 .withMaxPurgeDeletesBeforeCommit(batchSize);
 
-        injector = Guice.createInjector(
+        //                        bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
+        //                        bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
+        //                        bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
+        //                        bind(PathCreator.class).to(SimplePathCreator.class);
+        //                        install(new RefDataStoreModule());
+        //                        install(new PipelineScopeModule());
+        final Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
@@ -124,7 +135,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
                 });
 
         injector.injectMembers(this);
-        refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
+        final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
         refDataLmdbEnv = ((RefDataOffHeapStore) refDataStore).getLmdbEnvironment();
         final MapDefinitionUIDStore mapDefinitionUIDStore = mapDefinitionUidStoreFactory.create(refDataLmdbEnv);
         offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition, mapDefinitionUIDStore);
@@ -135,7 +146,24 @@ class TestOffHeapStagingStore extends StroomUnitTest {
     @AfterEach
     void tearDown() throws Exception {
         LOGGER.debug("teardown() started");
-        offHeapStagingStore.close();
+        try {
+            // Closes (and deletes) the staging env. Its write txn is closed first inside close().
+            if (offHeapStagingStore != null) {
+                offHeapStagingStore.close();
+            }
+        } finally {
+            // The main ref store env must be closed too, before the test dir it lives in is
+            // deleted. Nothing else closes it as each test creates a fresh injector and store.
+            if (refDataLmdbEnv != null) {
+                refDataLmdbEnv.close();
+                // Reached only when the close above succeeded. If setup failed before the env
+                // field was assigned (the env may be open with the field null), or the close
+                // threw, we deliberately leave the dir rather than delete it under an open env.
+                if (dbDir != null) {
+                    FileUtil.deleteDir(dbDir);
+                }
+            }
+        }
         LOGGER.debug("teardown() finished");
     }
 

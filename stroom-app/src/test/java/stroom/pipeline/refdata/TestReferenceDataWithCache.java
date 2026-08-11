@@ -46,6 +46,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
@@ -68,6 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(50);
     private static final String TEST_PIPELINE_1 = "TEST_PIPELINE_1";
     private static final String TEST_PIPELINE_2 = "TEST_PIPELINE_2";
     public static final String DUMMY_FEED = "DUMMY_FEED";
@@ -101,6 +103,15 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void setup() {
+        // The feed specific store and staging store envs are created lazily on first use,
+        // reading the config at that point, so this mapper takes effect for every env this
+        // test creates. The production defaults are 50GiB/10GiB.
+        setConfigValueMapper(ReferenceDataConfig.class, config -> config
+                .withLmdbConfig(config.getLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE))
+                .withStagingLmdbConfig(config.getStagingLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE)));
+
         refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 

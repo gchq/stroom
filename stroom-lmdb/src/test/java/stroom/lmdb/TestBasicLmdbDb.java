@@ -33,7 +33,6 @@ import stroom.lmdb.serde.UnsignedLongSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.functions.TriConsumer;
 import stroom.util.io.ByteSize;
@@ -64,6 +63,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -74,7 +74,10 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -1442,49 +1445,59 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             };
             LOGGER.info("baseDir: {}", temporaryPathCreator.getBaseTempDir().toAbsolutePath().normalize());
 
-            final BasicLmdbDb<String, String> basicLmdb1 = createEnvAndDb(temporaryPathCreator, envFlags, "1");
-            final BasicLmdbDb<String, String> basicLmdb2 = createEnvAndDb(temporaryPathCreator, envFlags, "2");
-            final CountDownLatch countDownLatch = new CountDownLatch(2);
+            // Dedicated two thread executor: on the common pool a small box (parallelism 1)
+            // would run the workers sequentially and the exchange latch could never complete.
+            final ExecutorService executorService = Executors.newFixedThreadPool(2);
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
+            BasicLmdbDb<String, String> basicLmdb1 = null;
+            BasicLmdbDb<String, String> basicLmdb2 = null;
+            try {
+                basicLmdb1 = createEnvAndDb(temporaryPathCreator, envFlags, "1");
+                basicLmdb2 = createEnvAndDb(temporaryPathCreator, envFlags, "2");
+                final BasicLmdbDb<String, String> db1 = basicLmdb1;
+                final BasicLmdbDb<String, String> db2 = basicLmdb2;
+                final CountDownLatch countDownLatch = new CountDownLatch(2);
 
-            final CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
-                LOGGER.info("Opening writeTxn1");
-                basicLmdb1.getLmdbEnvironment().doWithWriteTxn(writeTxn1 -> {
-                    LOGGER.info("writeTxn1 open");
-                    basicLmdb1.put(writeTxn1, "1", "one", true);
-                    LOGGER.info("put 1");
-                    countDownLatch.countDown();
-                    try {
-                        countDownLatch.await();
-                    } catch (final InterruptedException e) {
-                        throw new UncheckedInterruptedException(e);
-                    }
-                    LOGGER.info("Closing writeTxn1");
-                });
-            });
+                futures.add(CompletableFuture.runAsync(() -> {
+                    LOGGER.info("Opening writeTxn1");
+                    db1.getLmdbEnvironment().doWithWriteTxn(writeTxn1 -> {
+                        LOGGER.info("writeTxn1 open");
+                        db1.put(writeTxn1, "1", "one", true);
+                        LOGGER.info("put 1");
+                        countDownLatch.countDown();
+                        // Timed so that if the other thread fails before counting down we fail
+                        // rather than sitting in this write txn forever.
+                        awaitWithTimeout(countDownLatch, 10);
+                        LOGGER.info("Closing writeTxn1");
+                    });
+                }, executorService));
 
-            final CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
-                LOGGER.info("Opening writeTxn2");
-                basicLmdb2.getLmdbEnvironment().doWithWriteTxn(writeTxn2 -> {
-                    LOGGER.info("writeTxn2 open");
-                    basicLmdb2.put(writeTxn2, "2", "two", true);
-                    LOGGER.info("put 2");
-                    countDownLatch.countDown();
-                    try {
-                        countDownLatch.await();
-                    } catch (final InterruptedException e) {
-                        throw new UncheckedInterruptedException(e);
-                    }
-                    LOGGER.info("Closing writeTxn2");
-                });
-            });
+                futures.add(CompletableFuture.runAsync(() -> {
+                    LOGGER.info("Opening writeTxn2");
+                    db2.getLmdbEnvironment().doWithWriteTxn(writeTxn2 -> {
+                        LOGGER.info("writeTxn2 open");
+                        db2.put(writeTxn2, "2", "two", true);
+                        LOGGER.info("put 2");
+                        countDownLatch.countDown();
+                        awaitWithTimeout(countDownLatch, 10);
+                        LOGGER.info("Closing writeTxn2");
+                    });
+                }, executorService));
 
-            future1.get();
-            future2.get();
+                // allOf waits for BOTH to finish (normally or not) before throwing, so neither
+                // thread can still be inside a write txn when we close the envs below.
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
 
-            assertThat(basicLmdb1.get("1"))
-                    .hasValue("one");
-            assertThat(basicLmdb2.get("2"))
-                    .hasValue("two");
+                assertThat(basicLmdb1.get("1"))
+                        .hasValue("one");
+                assertThat(basicLmdb2.get("2"))
+                        .hasValue("two");
+            } finally {
+                // Envs must be closed before the TemporaryPathCreator deletes their dirs, and
+                // only once the workers are confirmed out of their txns.
+                closeEnvsAfterWorkers(futures, Arrays.asList(basicLmdb1, basicLmdb2));
+                executorService.shutdownNow();
+            }
         }
     }
 
@@ -1571,80 +1584,90 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                     false,
                     "1");
             final LmdbEnv lmdbEnv = basicLmdb1.getLmdbEnvironment();
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
+            try {
+                final AtomicInteger runNo = new AtomicInteger(1);
 
-            final AtomicInteger runNo = new AtomicInteger(1);
-
-            final Consumer<Txn<ByteBuffer>> putConsumer = writeTxn -> {
-                final int run = runNo.getAndIncrement();
+                final Consumer<Txn<ByteBuffer>> putConsumer = writeTxn -> {
+                    final int run = runNo.getAndIncrement();
 //                LOGGER.info("Putting for run: {}", run);
-                for (int i = 1; i <= 1_000; i++) {
-                    basicLmdb1.put(
-                            writeTxn,
-                            Strings.padStart(Integer.toString(i), 6, '0'),
-                            "val-"
-                            + Strings.padStart(Integer.toString(i), 6, '0')
-                            + "_run-"
-                            + Strings.padStart(Integer.toString(run), 3, '0'),
-                            true);
+                    for (int i = 1; i <= 1_000; i++) {
+                        basicLmdb1.put(
+                                writeTxn,
+                                Strings.padStart(Integer.toString(i), 6, '0'),
+                                "val-"
+                                + Strings.padStart(Integer.toString(i), 6, '0')
+                                + "_run-"
+                                + Strings.padStart(Integer.toString(run), 3, '0'),
+                                true);
 
-                }
-                final Optional<String> optVal1 = basicLmdb1.get(writeTxn, "000001");
-                assertThat(optVal1)
-                        .isNotEmpty();
-//                LOGGER.info("Val for key 1: {}", optVal1.orElse("[empty]"));
-            };
-
-            // Initial rounds of putting the same set of keys but with different values
-            // each round.
-            for (int i = 0; i < 5; i++) {
-                lmdbEnv.doWithWriteTxn(putConsumer);
-                LOGGER.info("Run: {}, DB size on disk: {}, entry count: {}",
-                        runNo.get() - 1,  // already incremented
-                        ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),
-                        basicLmdb1.getEntryCount());
-            }
-
-            final CountDownLatch readStartLatch = new CountDownLatch(1);
-            final CountDownLatch writeFinishLatch = new CountDownLatch(1);
-
-            final CompletableFuture<Void> readFuture = CompletableFuture.runAsync(() -> {
-                LOGGER.info("Read thread started");
-                lmdbEnv.doWithReadTxn(ThrowingConsumer.unchecked(readTxn -> {
-                    LOGGER.info("Read txn started");
-                    readStartLatch.countDown();
-                    LOGGER.info("readStartLatch counted down");
-
-                    // Just hold the readTxn open while all the writes happen
-
-                    awaitWithTimeout(writeFinishLatch, 10);
-                }));
-                LOGGER.info("Finished read thread");
-            });
-
-            // Wait for the read txn to be active
-            awaitWithTimeout(readStartLatch, 10);
-
-            final CompletableFuture<Void> writeFuture = CompletableFuture.runAsync(() -> {
-                LOGGER.info("Write thread started");
-                lmdbEnv.doWithWriteTxn(ThrowingConsumer.unchecked(writeTxn -> {
-                    LOGGER.info("Write txn started");
-
-                    for (int i = 0; i < 5; i++) {
-                        // Initial puts with no read txn
-                        putConsumer.accept(writeTxn);
-                        LOGGER.info("Run: {}, DB size on disk: {}, entry count: {}",
-                                runNo.get() - 1,  // already incremented
-                                ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),
-                                basicLmdb1.getEntryCount());
                     }
+                    final Optional<String> optVal1 = basicLmdb1.get(writeTxn, "000001");
+                    assertThat(optVal1)
+                            .isNotEmpty();
+//                LOGGER.info("Val for key 1: {}", optVal1.orElse("[empty]"));
+                };
 
-                    writeFinishLatch.countDown();
-                }));
-                LOGGER.info("Finished write thread");
-            });
+                // Initial rounds of putting the same set of keys but with different values
+                // each round.
+                for (int i = 0; i < 5; i++) {
+                    lmdbEnv.doWithWriteTxn(putConsumer);
+                    LOGGER.info("Run: {}, DB size on disk: {}, entry count: {}",
+                            runNo.get() - 1,  // already incremented
+                            ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),
+                            basicLmdb1.getEntryCount());
+                }
 
-            readFuture.get();
-            writeFuture.get();
+                final CountDownLatch readStartLatch = new CountDownLatch(1);
+                final CountDownLatch writeFinishLatch = new CountDownLatch(1);
+
+                final CompletableFuture<Void> readFuture = CompletableFuture.runAsync(() -> {
+                    LOGGER.info("Read thread started");
+                    lmdbEnv.doWithReadTxn(ThrowingConsumer.unchecked(readTxn -> {
+                        LOGGER.info("Read txn started");
+                        readStartLatch.countDown();
+                        LOGGER.info("readStartLatch counted down");
+
+                        // Just hold the readTxn open while all the writes happen
+
+                        awaitWithTimeout(writeFinishLatch, 10);
+                    }));
+                    LOGGER.info("Finished read thread");
+                });
+                futures.add(readFuture);
+
+                // Wait for the read txn to be active
+                awaitWithTimeout(readStartLatch, 10);
+
+                final CompletableFuture<Void> writeFuture = CompletableFuture.runAsync(() -> {
+                    LOGGER.info("Write thread started");
+                    lmdbEnv.doWithWriteTxn(ThrowingConsumer.unchecked(writeTxn -> {
+                        LOGGER.info("Write txn started");
+
+                        for (int i = 0; i < 5; i++) {
+                            // Initial puts with no read txn
+                            putConsumer.accept(writeTxn);
+                            LOGGER.info("Run: {}, DB size on disk: {}, entry count: {}",
+                                    runNo.get() - 1,  // already incremented
+                                    ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),
+                                    basicLmdb1.getEntryCount());
+                        }
+
+                        writeFinishLatch.countDown();
+                    }));
+                    LOGGER.info("Finished write thread");
+                });
+                futures.add(writeFuture);
+
+                // allOf waits for BOTH to finish (normally or not) before throwing, so a failure
+                // on the read side (e.g. a latch timeout) cannot leave the writer mid write txn
+                // when the env is closed below.
+                CompletableFuture.allOf(readFuture, writeFuture).get();
+            } finally {
+                // Env must be closed before the TemporaryPathCreator deletes its dir, and only
+                // once the workers are confirmed out of their txns.
+                closeEnvsAfterWorkers(futures, Collections.singletonList(basicLmdb1));
+            }
         }
     }
 
@@ -1714,6 +1737,53 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             }
         } catch (final InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Closes the envs of the supplied dbs, but only after a bounded wait confirms every worker
+     * future has finished, so no worker can still be inside a txn when its env is closed. If the
+     * workers can't be confirmed finished (timeout/interrupt) the envs are deliberately LEAKED
+     * rather than closed: closing an env under a live txn is undefined behaviour in LMDB, and a
+     * leak until JVM exit is the lesser evil. All failures here are logged, never thrown, so the
+     * test's own failure propagating through the enclosing finally is never masked. Null dbs
+     * (env creation failed part way through setup) are skipped.
+     */
+    private void closeEnvsAfterWorkers(final List<CompletableFuture<Void>> futures,
+                                       final List<BasicLmdbDb<String, String>> dbs) {
+        boolean workersDone = false;
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .get(30, TimeUnit.SECONDS);
+            workersDone = true;
+        } catch (final ExecutionException e) {
+            // allOf only completes once ALL futures have completed, so the workers are done,
+            // just not all successfully. The original failure is already propagating from the
+            // test body.
+            workersDone = true;
+            LOGGER.error("A worker failed: {}", e.getMessage(), e);
+        } catch (final TimeoutException e) {
+            LOGGER.error("Timed out waiting for workers to finish", e);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            // The interrupt may have been pending before we were even called (e.g. a runner
+            // timeout landing at the end of the test body), in which case the workers may all
+            // have finished already and it is still safe to close.
+            workersDone = futures.stream().allMatch(CompletableFuture::isDone);
+            LOGGER.error("Interrupted waiting for workers to finish (workersDone: {})", workersDone, e);
+        }
+        if (workersDone) {
+            for (final BasicLmdbDb<String, String> db : dbs) {
+                if (db != null) {
+                    try {
+                        db.getLmdbEnvironment().close();
+                    } catch (final Exception e) {
+                        LOGGER.error("Error closing env {}: {}", db.getDbName(), e.getMessage(), e);
+                    }
+                }
+            }
+        } else {
+            LOGGER.error("Leaking LMDB env(s) rather than closing them under possibly live txns");
         }
     }
 
