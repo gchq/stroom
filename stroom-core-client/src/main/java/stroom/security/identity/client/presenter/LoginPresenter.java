@@ -26,6 +26,7 @@ import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.security.identity.shared.LoginRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.util.client.RedirectUrlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -113,7 +114,10 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
                 changePasswordPresenterProvider.get();
         changePasswordPresenter.show("Change Password", e -> {
             if (e.isOk()) {
-                if (getView().validate()) {
+                // Validate the change-password dialog (new password strength + confirmation), not the
+                // login view. This updates the dialog's feedback labels and, on failure, e.reset() keeps
+                // the dialog open showing them — OK stays enabled throughout.
+                if (changePasswordPresenter.validate()) {
                     final ChangePasswordRequest request = new ChangePasswordRequest(
                             getView().getUserName(),
                             getView().getPassword(),
@@ -146,9 +150,24 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
         final String uri = Window.Location.getParameter("redirect_uri");
         if (uri == null) {
             Window.Location.replace("");
-        } else {
+        } else if (isSameOrigin(uri)) {
             Window.Location.replace(uri);
+        } else {
+            // Only ever redirect back into stroom itself, so ignore an off-origin target and reload here.
+            Window.Location.replace("");
         }
+    }
+
+    /**
+     * Whether a post-login redirect target stays on this application's origin. A safe root-relative path is
+     * fine; a protocol-relative {@code //host} or an absolute URL to any other origin is not.
+     */
+    private boolean isSameOrigin(final String uri) {
+        if (RedirectUrlUtil.isSafeRootRelativePath(uri)) {
+            return true;
+        }
+        final String origin = Window.Location.getProtocol() + "//" + Window.Location.getHost();
+        return uri.equals(origin) || uri.startsWith(origin + "/");
     }
 
     @Override

@@ -25,10 +25,12 @@ import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeService;
 import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.EffectiveMetaSet;
@@ -99,6 +101,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private ExplorerNodeService explorerNodeService;
     @Inject
     private PathCreator pathCreator;
+    @Inject
+    private DocFinder docFinder;
 
     private DocRef feed1;
     private DocRef feed2;
@@ -136,7 +140,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * Setup some test data.
      */
     private DocRef setupFeed(final String feedName) {
-        final List<DocRef> docRefs = feedService.findByName(feedName);
+        final List<DocRef> docRefs = docFinder.findByName(FeedDoc.TYPE, feedName);
         if (docRefs != null && docRefs.size() > 0) {
             return docRefs.get(0);
         }

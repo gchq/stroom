@@ -19,6 +19,7 @@ package stroom.pipeline.xmlschema;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
@@ -52,7 +53,8 @@ public class XmlSchemaSerialiser implements DocumentSerialiser2<XmlSchemaDoc> {
         final String xsd = document.getData();
         final ImportExportDocument importExportDocument = delegate.write(document.copy().data(null).build());
         if (xsd != null) {
-            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(XSD, EncodingUtil.asBytes(xsd)));
+            importExportDocument.addExtAsset(
+                    new ByteArrayImportExportAsset(XSD, DocDataType.TEXT, EncodingUtil.asBytes(xsd)));
         }
         return importExportDocument;
     }

@@ -560,8 +560,13 @@ public class TableBuilderAnalyticExecutor {
         // Get the field index.
         final FieldIndex fieldIndex = lmdbDataStore.getFieldIndex();
 
+        // Resolve the field names against the view we are actually extracting with, not the one the
+        // store was created with. The store keeps its original columns for the life of the process
+        // even if the rule is edited, so if the rule has since been repointed at another view the
+        // extraction pipeline below emits the NEW view's fields; resolving them against the old
+        // view would apply the wrong field types to them.
         final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
-                .create(searchRequest.getQuery().getDataSource(), fieldIndex);
+                .create(analytic.searchRequest().getQuery().getDataSource(), fieldIndex);
 
         // We don't filter table analytics as they are already filtered by the LMDB data store.
         final Predicate<Val[]> valFilter = Predicates.alwaysTrue();
@@ -989,7 +994,7 @@ public class TableBuilderAnalyticExecutor {
                             viewDoc = loadViewDoc(ruleIdentity, dataSource);
                         }
 
-                        final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
+                        final AnalyticDataStore dataStore = analyticDataStores.get(searchRequest);
 
                         // Get or create LMDB data store.
                         final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();

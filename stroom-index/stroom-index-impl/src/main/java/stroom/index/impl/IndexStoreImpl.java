@@ -17,8 +17,7 @@
 package stroom.index.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.api.ImportExportDocument;
@@ -43,15 +42,15 @@ import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class IndexStoreImpl implements IndexStore {
+public class IndexStoreImpl
+        extends AbstractDocumentStore<LuceneIndexDoc>
+        implements IndexStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexStoreImpl.class);
 
-    private final Store<LuceneIndexDoc> store;
     private final Provider<IndexFieldService> indexFieldServiceProvider;
     private final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider;
     private final IndexSerialiser serialiser;
@@ -61,23 +60,14 @@ public class IndexStoreImpl implements IndexStore {
                    final IndexSerialiser serialiser,
                    final Provider<IndexFieldService> indexFieldServiceProvider,
                    final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
-        this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 LuceneIndexDoc.TYPE,
                 LuceneIndexDoc::builder,
                 LuceneIndexDoc::copy);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
+        this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
         this.serialiser = serialiser;
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
     }
 
     @Override
@@ -86,85 +76,15 @@ public class IndexStoreImpl implements IndexStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final DocRef copy = store.copyDocument(docRef.getUuid(), newName);
+        final DocRef copy = getStore().copyDocument(docRef.getUuid(), newName);
         indexFieldServiceProvider.get().copyAll(docRef, copy);
         return copy;
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
     public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
+        super.deleteDocument(docRef);
         indexFieldServiceProvider.get().deleteAll(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public LuceneIndexDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public LuceneIndexDoc writeDocument(final LuceneIndexDoc document) {
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
     }
 
     @Override
@@ -217,16 +137,16 @@ public class IndexStoreImpl implements IndexStore {
                     docRef, e.getMessage()), e);
         }
 
-        return store.importDocument(docRef, effectiveImportExportDocument, importState, importSettings);
+        return getStore().importDocument(docRef, effectiveImportExportDocument, importState, importSettings);
     }
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                               final boolean omitAuditFields,
-                                               final List<Message> messageList) {
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         // Get the first 1000 fields.
         final List<LuceneIndexField> fields = getFieldsForExport(docRef);
-        return store.exportDocument(docRef, omitAuditFields, messageList, d -> d.copy().fields(fields).build());
+        return getStore().exportDocument(docRef, omitAuditFields, messageList, d -> d.copy().fields(fields).build());
     }
 
     private List<LuceneIndexField> getFieldsForExport(final DocRef docRef) {
@@ -247,34 +167,5 @@ public class IndexStoreImpl implements IndexStore {
             LOGGER.error(e::getMessage, e);
         }
         return null;
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 }

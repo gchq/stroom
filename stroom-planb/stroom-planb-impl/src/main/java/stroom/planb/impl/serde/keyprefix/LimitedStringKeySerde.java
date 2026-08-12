@@ -18,8 +18,8 @@ package stroom.planb.impl.serde.keyprefix;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.KeyLength;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.KeyLength;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;

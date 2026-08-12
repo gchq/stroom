@@ -45,7 +45,8 @@ class TestSessionDetails {
                 0,
                 0,
                 "agent",
-                "node1");
+                "node1",
+                "session-handle");
 
         final JsonMapper jsonMapper = JsonUtil.getMapper();
         final String json1 = JsonUtil.getMapper().writeValueAsString(sessionDetails1);

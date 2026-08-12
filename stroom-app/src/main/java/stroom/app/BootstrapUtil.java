@@ -17,8 +17,8 @@
 package stroom.app;
 
 import stroom.app.guice.BootStrapModule;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
+import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.common.AbstractDbConfig;

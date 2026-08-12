@@ -31,7 +31,7 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
-import stroom.meta.impl.db.MetaDaoImpl;
+import stroom.meta.impl.dao.MetaDaoImpl;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;

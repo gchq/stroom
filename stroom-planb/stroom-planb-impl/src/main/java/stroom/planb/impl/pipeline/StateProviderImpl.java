@@ -63,6 +63,9 @@ public class StateProviderImpl implements StateProvider {
             final String docName = mapName.toLowerCase(Locale.ROOT);
             final Optional<PlanBDoc> stateOptional = securityContext.useAsReadResult(() ->
                     Optional.ofNullable(stateDocCache.get(docName)));
+            // Note that this never returns null, which callers rely on, see StateProvider.getState. A missing
+            // doc gives the orElse, and if the cache produced null, Optional.map would swallow it into an
+            // empty Optional and give the orElse too.
             return stateOptional
                     .map(stateDoc -> {
                         final GetRequest request = new GetRequest(docName, keyName, effectiveTimeMs);

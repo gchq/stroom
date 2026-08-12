@@ -21,7 +21,7 @@ import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.config.app.ConfigHolderImpl;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
-import stroom.config.global.impl.db.GlobalConfigDaoModule;
+import stroom.config.global.impl.dao.GlobalConfigDaoModule;
 import stroom.db.util.DbModule;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.metrics.Metrics;

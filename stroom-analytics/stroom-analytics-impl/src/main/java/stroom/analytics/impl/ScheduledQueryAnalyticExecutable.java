@@ -22,6 +22,7 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
@@ -56,6 +57,7 @@ import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.security.api.SecurityContext;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -91,7 +93,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     private final DuplicateCheckFactory duplicateCheckFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
-    private final DuplicateCheckDirs duplicateCheckDirs;
+    private final SecurityContext securityContext;
     final WordListProvider wordListProvider;
 
     @Inject
@@ -105,12 +107,13 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                      final SearchRequestFactory searchRequestFactory,
                                      final ExpressionContextFactory expressionContextFactory,
                                      final DuplicateCheckFactory duplicateCheckFactory,
-                                     final DuplicateCheckDirs duplicateCheckDirs,
                                      final ExpressionPredicateFactory expressionPredicateFactory,
                                      final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
-                                     final WordListProvider wordListProvider) {
+                                     final WordListProvider wordListProvider,
+                                     final SecurityContext securityContext) {
         super(analyticErrorWriterProvider, errorReceiverProxyProvider, analyticRuleHolderProvider);
         this.analyticRuleStore = analyticRuleStore;
+        this.securityContext = securityContext;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
@@ -120,7 +123,6 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         this.duplicateCheckFactory = duplicateCheckFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
-        this.duplicateCheckDirs = duplicateCheckDirs;
         this.wordListProvider = wordListProvider;
     }
 
@@ -303,11 +305,54 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
 
     @Override
     public void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
-        // Start by finding a set of UUIDs for existing rule checking stores.
-        final List<String> duplicateStoreUuids = duplicateCheckDirs.getAnalyticRuleUUIDList();
+        // Deliberately re-reads the rules rather than using the list we were handed. That list
+        // comes from getRules(), which logs and skips any rule it fails to read, and is then
+        // filtered by process type. A rule missing from it for either reason would look deleted
+        // here and lose its duplicate check store, which holds the record of what has already
+        // been notified on. Only a complete list of ALL rules is safe to delete against.
+        final List<AnalyticRuleDoc> currentRules;
+        try {
+            // As the processing user, because AnalyticRuleStore.list() silently filters out
+            // docs the caller cannot read. A rule filtered out that way is indistinguishable
+            // from a deleted one here, and would lose its duplicate check store. The job
+            // already runs as the processing user; this makes the sweep depend on that
+            // explicitly rather than inheriting it from a caller that could change.
+            currentRules = securityContext.asProcessingUserResult(this::loadAllRulesForDeletion);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> "Not deleting unused duplicate check stores as the current rules could not " +
+                               "all be read: " + e.getMessage(), e);
+            return;
+        }
 
-        // Delete unused duplicate stores.
-        duplicateCheckDirs.deleteUnused(duplicateStoreUuids, analyticDocs);
+        // Delete unused duplicate stores. Routed through the factory, not the dirs, because the
+        // factory owns the pool that holds a store's env open while it is borrowed and so is the
+        // only thing that can tell whether a store's files are safe to unlink.
+        duplicateCheckFactory.deleteUnusedStores(currentRules);
+    }
+
+    /**
+     * As {@link #getRules()} but does not swallow read failures, and does not filter by process
+     * type, so that a rule which still exists is not mistaken for a deleted one.
+     * <p>
+     * Must be called as the processing user: the list() it builds on filters out docs the
+     * caller cannot read, and it cannot tell that from a doc that has been deleted.
+     *
+     * @throws RuntimeException if any listed rule could not be read.
+     */
+    private List<AnalyticRuleDoc> loadAllRulesForDeletion() {
+        final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
+        for (final DocRef docRef : analyticRuleStore.list()) {
+            try {
+                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+                if (analyticRuleDoc != null) {
+                    currentRules.add(analyticRuleDoc);
+                }
+            } catch (final DocumentNotFoundException e) {
+                // Deleted since the list above, so genuinely not a current rule.
+                LOGGER.debug(e::getMessage, e);
+            }
+        }
+        return currentRules;
     }
 
     @Override

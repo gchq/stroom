@@ -48,7 +48,7 @@ import java.util.function.Supplier;
 class GetState extends AbstractManyChildFunction {
 
     static final String NAME = "getState";
-    private final StateFetcher stateFetcher;
+    private final StateProvider stateProvider;
     private Generator gen;
     private String map;
     private String key;
@@ -56,8 +56,8 @@ class GetState extends AbstractManyChildFunction {
 
     public GetState(final ExpressionContext expressionContext, final String name) {
         super(name, 2, 3);
-        this.stateFetcher = expressionContext.getStateFetcher();
-        Objects.requireNonNull(stateFetcher, "Null lookup provider");
+        this.stateProvider = expressionContext.getStateProvider();
+        Objects.requireNonNull(stateProvider, "Null state provider");
     }
 
     @Override
@@ -81,7 +81,7 @@ class GetState extends AbstractManyChildFunction {
         // If we have values for all params then do a lookup now.
         if (map != null && key != null && effectiveTimeMs != null) {
             // Create static value.
-            final Val val = stateFetcher.getState(map, key, effectiveTimeMs);
+            final Val val = stateProvider.getState(map, key, effectiveTimeMs);
             gen = new StaticValueGen(val);
         }
     }
@@ -96,17 +96,17 @@ class GetState extends AbstractManyChildFunction {
 
     @Override
     protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(stateFetcher, map, key, effectiveTimeMs, childGenerators);
+        return new Gen(stateProvider, map, key, effectiveTimeMs, childGenerators);
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private final StateFetcher stateProvider;
+        private final StateProvider stateProvider;
         private final String map;
         private final String key;
         private final Long effectiveTimeMs;
 
-        Gen(final StateFetcher stateProvider,
+        Gen(final StateProvider stateProvider,
             final String map,
             final String key,
             final Long effectiveTimeMs,

@@ -17,7 +17,6 @@
 package stroom.importexport.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 
 public interface NonExplorerDocRefProvider {
 
@@ -41,12 +40,4 @@ public interface NonExplorerDocRefProvider {
      * @return A string that represents a suitable name for this docref.
      */
     String findNameOfDocRef(final DocRef docRef);
-
-    /**
-     * Retrieve the audit information for a particular doc ref
-     *
-     * @param docRef The docRef to return the information for
-     * @return The Audit information about the given DocRef.
-     */
-    DocRefInfo info(DocRef docRef);
 }

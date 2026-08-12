@@ -59,7 +59,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -344,6 +343,7 @@ public class ConfigMapper {
     private void updateXmlSecureProcessing() {
         final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
         SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
+        SAXParserSettings.setExternalEntitiesDisabled(parserConfig.isDisableExternalEntities());
     }
 
     private synchronized AbstractConfig rebuildObjectInstance(
@@ -924,13 +924,11 @@ public class ConfigMapper {
     }
 
     private static String serialiseToJson(final Object value) {
-        final JsonMapper jsonMapper = JsonUtil.getMapper(true);
-        return jsonMapper.writeValueAsString(value);
+        return JsonUtil.writeValueAsString(value, true);
     }
 
     private static <T> T deserialiseFromJson(final Class<T> clazz, final String json) {
-        final JsonMapper jsonMapper = JsonUtil.getMapper(true);
-        return jsonMapper.readValue(json, clazz);
+        return JsonUtil.readValue(json, clazz);
     }
 
     private static String convertToString(final Object value,

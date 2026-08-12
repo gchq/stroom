@@ -21,6 +21,7 @@ import stroom.security.identity.client.ChangePasswordPlugin;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.LoginPresenter;
+import stroom.security.identity.client.presenter.ResetPasswordPresenter;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.inject.Provider;
@@ -30,6 +31,8 @@ public interface ChangePasswordGinjector {
     Provider<LoginPresenter> getLoginPresenter();
 
     Provider<AuthenticationErrorPresenter> getAuthenticationErrorPresenter();
+
+    Provider<ResetPasswordPresenter> getResetPasswordPresenter();
 
     AsyncProvider<AccountsPlugin> getAccountsPlugin();
 

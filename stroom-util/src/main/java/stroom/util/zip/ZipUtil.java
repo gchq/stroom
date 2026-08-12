@@ -177,14 +177,21 @@ public final class ZipUtil {
     }
 
     /**
-     * Unzipping from an {@link InputStream} means you may unzip entries that are not in the
-     * ZIP central directory. See ZipArchiveInputStream javadoc.
+     * Unzips the ZIP data in inputStream into targetDir. targetDir will be created if it doesn't exist.
+     * <p>
+     * Entry paths are validated, so an entry cannot write outside targetDir (zip slip).
+     * <p>
+     * Note that unzipping from an {@link InputStream} reads entries sequentially from their local file
+     * headers, as the ZIP central directory is at the end of the stream, so entries that are not listed in
+     * the central directory may be extracted. See the {@link ZipArchiveInputStream} javadoc. Prefer
+     * {@link #unzip(Path, Path)} for ZIP data from untrusted sources, as it reads the central directory.
+     * This variant is fine for ZIP data produced by Stroom itself and avoids having to spool the data to
+     * disk first.
      *
      * @param inputStream The input stream to unzip.
      * @param targetDir   The target directory to unzip into.
      * @throws IOException
      */
-    @Deprecated
     public static void unzip(final InputStream inputStream, final Path targetDir) throws IOException {
         Objects.requireNonNull(inputStream);
         Objects.requireNonNull(targetDir);
@@ -234,7 +241,7 @@ public final class ZipUtil {
     public static List<String> pathList(final Path zipFilePath, final boolean validatePaths) throws IOException {
         Objects.requireNonNull(zipFilePath);
         final List<String> pathList = new ArrayList<>();
-        try (ZipFile zipFile = createZipFile(zipFilePath)) {
+        try (final ZipFile zipFile = createZipFile(zipFilePath)) {
             final Iterator<ZipArchiveEntry> iterator = zipFile.getEntries().asIterator();
             while (iterator.hasNext()) {
                 final ZipArchiveEntry zipEntry = iterator.next();

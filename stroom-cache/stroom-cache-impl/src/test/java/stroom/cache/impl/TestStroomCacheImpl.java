@@ -145,6 +145,24 @@ class TestStroomCacheImpl {
     }
 
     @Test
+    void testGetAndRemove() {
+        cache.put(1, "January");
+
+        // First call returns the value and removes it...
+        assertThat(cache.getAndRemove(1))
+                .contains("January");
+        // ...so a second call for the same key gets nothing.
+        assertThat(cache.getAndRemove(1))
+                .isEmpty();
+    }
+
+    @Test
+    void testGetAndRemove_miss() {
+        assertThat(cache.getAndRemove(999))
+                .isEmpty();
+    }
+
+    @Test
     void testGet() {
         numbers.forEach(i -> {
             final String name = cache.get(i);

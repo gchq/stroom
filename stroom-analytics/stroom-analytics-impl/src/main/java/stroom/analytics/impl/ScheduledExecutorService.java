@@ -22,7 +22,7 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -96,17 +96,17 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     /**
      * Creates a new scheduled executor service.
      *
-     * @param executorProvider          Provider for executor services.
-     * @param taskContextFactory        Factory for creating task contexts.
-     * @param nodeInfo                  Information about the current node.
-     * @param securityContext           Security context used for permission checks and run-as execution.
-     * @param executionScheduleDao      DAO for execution schedules, trackers, and history.
-     * @param docRefInfoServiceProvider Provider for document reference decoration.
+     * @param executorProvider     Provider for executor services.
+     * @param taskContextFactory   Factory for creating task contexts.
+     * @param nodeInfo             Information about the current node.
+     * @param securityContext      Security context used for permission checks and run-as execution.
+     * @param executionScheduleDao DAO for execution schedules, trackers, and history.
+     * @param docFinderProvider    Provider for document reference decoration.
      */
     @Inject
     ScheduledExecutorService(final ExecutorProvider executorProvider,
@@ -114,13 +114,13 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                              final NodeInfo nodeInfo,
                              final SecurityContext securityContext,
                              final ExecutionScheduleDao executionScheduleDao,
-                             final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                             final Provider<DocFinder> docFinderProvider) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.executionScheduleDao = executionScheduleDao;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
     }
 
     /**
@@ -156,6 +156,9 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                     NullSafe.size(docs)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final T doc : docs) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new UncheckedInterruptedException(new InterruptedException());
+                }
                 final Runnable runnable = createRunnable(doc, taskContext, scheduledExecutable);
                 try {
                     workQueue.exec(runnable);
@@ -359,6 +362,9 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
 
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         for (final ExecutionSchedule executionSchedule : executionSchedules.getValues()) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new UncheckedInterruptedException(new InterruptedException());
+            }
             final Runnable runnable = () -> {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
@@ -430,6 +436,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
 
     public void executeNow(final ExecutionSchedule executionSchedule,
                            final ScheduledExecutable<T> scheduledExecutable) {
+        // TODO Why is this using the workQueue, only one task is ever executed
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         final Runnable runnable = () -> {
             try {
@@ -578,11 +585,11 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                     + userRef.toInfoString());
         }
 
-        final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
+        final DocFinder docFinder = docFinderProvider.get();
         return NullSafe.stream(executionScheduleDao.fetchSchedulesByRunAsUser(userRef.getUuid()))
                 .map(executionSchedule -> {
                     DocRef owningDocRef = executionSchedule.getOwningDoc();
-                    owningDocRef = docRefInfoService.decorate(owningDocRef);
+                    owningDocRef = docFinder.decorate(owningDocRef);
                     final String details = LogUtil.message(
                             "{} '{}' has as a scheduled executor named '{}' " +
                             "with a run-as dependency.",

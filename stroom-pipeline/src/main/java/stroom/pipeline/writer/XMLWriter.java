@@ -17,7 +17,7 @@
 package stroom.pipeline.writer;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.cache.PoolItem;
 import stroom.pipeline.cache.StoredXsltExecutable;
@@ -33,8 +33,8 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.filter.NullXMLFilter;
+import stroom.pipeline.filter.PipelineDocFinder;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -94,7 +94,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private final PathCreator pathCreator;
     final Provider<FeedHolder> feedHolder;
     final Provider<PipelineHolder> pipelineHolder;
-    final DocRefInfoService docRefInfoService;
+    final DocFinder docFinder;
 
     private ContentHandler handler = NullXMLFilter.INSTANCE;
 
@@ -127,7 +127,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         this.pathCreator = null;
         this.feedHolder = null;
         this.pipelineHolder = null;
-        this.docRefInfoService = null;
+        this.docFinder = null;
     }
 
     @Inject
@@ -138,7 +138,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                      final PathCreator pathCreator,
                      final Provider<FeedHolder> feedHolder,
                      final Provider<PipelineHolder> pipelineHolder,
-                     final DocRefInfoService docRefInfoService) {
+                     final DocFinder docFinder) {
         super(errorReceiverProxy);
         this.locationFactory = locationFactory;
         this.xsltStore = xsltStore;
@@ -146,7 +146,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         this.pathCreator = pathCreator;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -207,13 +207,12 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     public XsltDoc loadXsltDoc() {
 
-        final DocFinder<XsltDoc> docFinder = new DocFinder<>(
+        final PipelineDocFinder<XsltDoc> pipelineDocFinder = new PipelineDocFinder<>(
                 XsltDoc.TYPE,
                 pathCreator,
-                xsltStore,
-                docRefInfoService);
+                docFinder);
         final DocRef docRef =
-                docFinder.findDoc(
+                pipelineDocFinder.findDoc(
                         xsltRef,
                         xsltNamePattern,
                         getFeedName(),
@@ -350,7 +349,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                 if (!doneElement) {
                     doneElement = true;
 
-                    if (cb.length() > 0) {
+                    if (!cb.isEmpty()) {
                         // Compensate for the fact that the writer will not have
                         // received a closing bracket as it waits to see if the
                         // current start element will be an empty element. We
@@ -425,7 +424,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
                 // If depth = 1 then we have finished an event.
                 if (depth == 1) {
-                    if (cb.length() > 0) {
+                    if (!cb.isEmpty()) {
                         // Compensate for the fact that the writer will now have
                         // received a closing bracket see comment in
                         // startElement() for an explanation.

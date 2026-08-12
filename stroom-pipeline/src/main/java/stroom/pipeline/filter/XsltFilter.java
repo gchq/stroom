@@ -17,7 +17,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.PoolItem;
@@ -104,7 +104,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final PipelineContext pipelineContext;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<XsltDoc> docFinder;
+    private final PipelineDocFinder<XsltDoc> pipelineDocFinder;
 
     private ErrorListener errorListener;
 
@@ -140,7 +140,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final PathCreator pathCreator,
                       final Provider<FeedHolder> feedHolder,
                       final Provider<PipelineHolder> pipelineHolder,
-                      final DocRefInfoService docRefInfoService) {
+                      final DocFinder docFinder) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
@@ -150,7 +150,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(XsltDoc.TYPE, pathCreator, xsltStore, docRefInfoService);
+        this.pipelineDocFinder = new PipelineDocFinder<>(XsltDoc.TYPE, pathCreator, docFinder);
     }
 
     @Override
@@ -722,7 +722,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docFinder.findDoc(
+        return pipelineDocFinder.findDoc(
                 xsltRef,
                 xsltNamePattern,
                 feedName,

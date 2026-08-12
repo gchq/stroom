@@ -65,8 +65,12 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
         try {
             return RsaJsonWebKey.Factory.newPublicJwk(json);
         } catch (final JoseException e) {
-            LOGGER.error("Unable to create RsaJsonWebKey from json:\n{}", json, e);
-            throw new RuntimeException(e);
+            // The JSON must never appear in the message, the log, or anything derived from them. asJson()
+            // serialises with INCLUDE_PRIVATE, so this string *is* the RSA private key that signs every token -
+            // writing it out on a parse failure would move the key from the database into a log file, which is
+            // typically aggregated and far less protected. Callers add which key row failed, which is what an
+            // operator actually needs.
+            throw new RuntimeException("Unable to read a JSON Web Key from its stored JSON", e);
         }
     }
 }

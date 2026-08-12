@@ -20,7 +20,7 @@ import stroom.collection.api.CollectionService;
 import stroom.db.util.ExpressionMapper.MultiConverter;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.QueryField;
@@ -71,7 +71,7 @@ class TestTermHandler {
     @Mock
     private CollectionService collectionServiceMock;
     @Mock
-    private DocRefInfoService docRefInfoServiceMock;
+    private DocFinder docFinder;
 
     @Test
     void name() {
@@ -208,7 +208,7 @@ class TestTermHandler {
 
     @TestFactory
     Stream<DynamicTest> testDocRefField() {
-        Mockito.when(docRefInfoServiceMock.name(Mockito.eq(A_DOC_REF)))
+        Mockito.when(docFinder.getName(Mockito.eq(A_DOC_REF)))
                 .thenReturn(Optional.of(A_DOC_REF.getName()));
 
         Mockito.when(collectionServiceMock.getDescendants(
@@ -273,7 +273,7 @@ class TestTermHandler {
                 values -> values,
                 new MockProviderImpl<>(wordListProviderMock),
                 new MockProviderImpl<>(collectionServiceMock),
-                new MockProviderImpl<>(docRefInfoServiceMock),
+                new MockProviderImpl<>(docFinder),
                 useName,
                 false);
     }
@@ -285,7 +285,7 @@ class TestTermHandler {
                 MultiConverter.wrapConverter(Long::parseLong),
                 new MockProviderImpl<>(wordListProviderMock),
                 new MockProviderImpl<>(collectionServiceMock),
-                new MockProviderImpl<>(docRefInfoServiceMock),
+                new MockProviderImpl<>(docFinder),
                 useName,
                 false);
     }
@@ -295,6 +295,7 @@ class TestTermHandler {
      * Not a true provider as it always returns the same object.
      */
     private static class MockProviderImpl<T> implements Provider<T> {
+
         private final T provided;
 
         public MockProviderImpl(final T provided) {

@@ -16,9 +16,9 @@
 
 package stroom.planb.impl.serde;
 
-import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UsedLookupsRecorder;
 
 import org.lmdbjava.Txn;
 

@@ -19,6 +19,7 @@ package stroom.feed.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
@@ -51,18 +52,21 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
     private final LoadingStroomCache<String, Optional<FeedDoc>> cache;
     private final FeedStore feedStore;
     private final SecurityContext securityContext;
+    private final DocFinder docFinder;
 
     @Inject
     public FeedDocCache(final CacheManager cacheManager,
                         final FeedStore feedStore,
                         final SecurityContext securityContext,
-                        final Provider<FeedConfig> feedConfigProvider) {
+                        final Provider<FeedConfig> feedConfigProvider,
+                        final DocFinder docFinder) {
         this.feedStore = feedStore;
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> feedConfigProvider.get().getFeedDocCache(),
                 this::create);
+        this.docFinder = docFinder;
     }
 
     public Optional<FeedDoc> get(final String feedName) {
@@ -71,9 +75,9 @@ public class FeedDocCache implements Clearable, EntityEvent.Handler {
 
     private Optional<FeedDoc> create(final String feedName) {
         return securityContext.asProcessingUserResult(() -> {
-            final List<DocRef> list = feedStore.findByName(feedName);
+            final List<DocRef> list = docFinder.findByName(FeedDoc.TYPE, feedName);
             if (NullSafe.hasItems(list)) {
-                return Optional.ofNullable(feedStore.readDocument(list.get(0)));
+                return Optional.ofNullable(feedStore.readDocument(list.getFirst()));
             }
             return Optional.empty();
         });

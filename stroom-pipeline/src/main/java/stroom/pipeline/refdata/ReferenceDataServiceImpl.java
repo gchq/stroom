@@ -20,9 +20,9 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
@@ -56,6 +56,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -137,7 +138,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final RefDataStore refDataStore;
     private final RefDataStoreFactory refDataStoreFactory;
     private final SecurityContext securityContext;
-    private final FeedStore feedStore;
     private final Provider<ReferenceData> referenceDataProvider;
     private final RefDataValueConverter refDataValueConverter;
     private final PipelineScopeRunnable pipelineScopeRunnable;
@@ -146,14 +146,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final ByteBufferPool byteBufferPool;
     private final NodeService nodeService;
     private final WordListProvider wordListProvider;
-    private final DocRefInfoService docRefInfoService;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final Executor executor;
+    private final DocFinder docFinder;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
                                     final SecurityContext securityContext,
-                                    final FeedStore feedStore,
                                     final Provider<ReferenceData> referenceDataProvider,
                                     final RefDataValueConverter refDataValueConverter,
                                     final PipelineScopeRunnable pipelineScopeRunnable,
@@ -162,13 +161,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final ByteBufferPool byteBufferPool,
                                     final NodeService nodeService,
                                     final WordListProvider wordListProvider,
-                                    final DocRefInfoService docRefInfoService,
                                     final FieldInfoResultPageFactory fieldInfoResultPageFactory,
-                                    final ExecutorProvider executorProvider) {
+                                    final ExecutorProvider executorProvider,
+                                    final DocFinder docFinder) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.refDataStoreFactory = refDataStoreFactory;
         this.securityContext = securityContext;
-        this.feedStore = feedStore;
         this.referenceDataProvider = referenceDataProvider;
         this.refDataValueConverter = refDataValueConverter;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
@@ -177,9 +175,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.byteBufferPool = byteBufferPool;
         this.nodeService = nodeService;
         this.wordListProvider = wordListProvider;
-        this.docRefInfoService = docRefInfoService;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.executor = executorProvider.get();
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -640,6 +638,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return referenceLoaders.stream()
                     .map(referenceLoader -> {
                         final DocRef feedDocRef = getFeedDocRef(referenceLoader);
+                        final DocRef loaderPipeline = referenceLoader.getLoaderPipeline();
+
+                        requireUsePermissionIfPresent(securityContext, loaderPipeline);
 
                         // TODO validate the stream type name
                         final String streamType = Objects.requireNonNullElse(
@@ -647,11 +648,24 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 StreamTypeNames.REFERENCE);
 
                         return new PipelineReference(
-                                referenceLoader.getLoaderPipeline(),
+                                loaderPipeline,
                                 feedDocRef,
                                 streamType);
                     })
                     .collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * The loader pipeline in a lookup request is client-supplied, so the caller must have USE permission on
+     * it before a lookup executes it. A null pipeline is left for downstream validation to reject.
+     */
+    static void requireUsePermissionIfPresent(final SecurityContext securityContext,
+                                              final DocRef loaderPipeline) {
+        if (loaderPipeline != null
+            && !securityContext.hasDocumentPermission(loaderPipeline, DocumentPermission.USE)) {
+            throw new PermissionException(securityContext.getUserRef(), LogUtil.message(
+                    "You do not have USE permission on reference loader pipeline {}", loaderPipeline));
         }
     }
 
@@ -665,7 +679,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 return referenceLoader.getReferenceFeed();
             } else if (referenceLoader.getReferenceFeed().getName() != null) {
                 // Feed names are unique
-                return feedStore.findByName(referenceLoader.getReferenceFeed().getName())
+                return docFinder
+                        .findByName(FeedDoc.TYPE, referenceLoader.getReferenceFeed().getName(), false)
                         .stream()
                         .findFirst()
                         .orElseThrow(() ->
@@ -1079,7 +1094,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 if (docRef == null) {
                     return false;
                 } else {
-                    return docRefInfoService.name(docRef)
+                    return docFinder.getName(docRef)
                             .map(namePredicate::test)
                             .orElse(false);
                 }
@@ -1119,8 +1134,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return ValNull.INSTANCE;
         } else {
             String val = docRef.getUuid();
-            if (docRefInfoService != null) {
-                val = docRefInfoService.name(docRef).orElse(docRef.getUuid());
+            if (docFinder != null) {
+                val = docFinder.getName(docRef).orElse(docRef.getUuid());
             }
             return ValString.create(val);
         }

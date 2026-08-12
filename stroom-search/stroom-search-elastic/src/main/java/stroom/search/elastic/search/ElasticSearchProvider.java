@@ -17,6 +17,7 @@
 package stroom.search.elastic.search;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Query;
 import stroom.query.api.SearchRequest;
@@ -96,6 +97,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticSearchExecutor elasticSearchExecutor;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final DocFinder docFinder;
 
     @Inject
     public ElasticSearchProvider(
@@ -110,7 +112,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final ElasticIndexStore elasticIndexStore,
             final SecurityContext securityContext,
             final ElasticSearchExecutor elasticSearchExecutor,
-            final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+            final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+            final DocFinder docFinder) {
         this.elasticIndexCache = elasticIndexCache;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -120,6 +123,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         this.elasticIndexStore = elasticIndexStore;
         this.elasticSearchExecutor = elasticSearchExecutor;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -513,6 +517,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return elasticIndexStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

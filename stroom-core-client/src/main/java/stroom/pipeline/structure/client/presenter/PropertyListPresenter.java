@@ -29,14 +29,9 @@ import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -64,7 +59,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -78,8 +72,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PropertyListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasChangeHandlers {
+        extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -432,11 +425,8 @@ public class PropertyListPresenter
                                                     .build();
                                             builder.getProperties().getAddList().add(embeddedProperty);
 
-                                            final PipelineData pipelineData = builder.build();
-                                            pipelineModel.setPipelineLayer(new PipelineLayer(pipelineModel
-                                                    .getPipelineLayer().getSourcePipeline(), pipelineData));
+                                            pipelineModel.update(builder.build());
 
-                                            onChange();
                                             refresh();
                                             e.hide();
                                         });
@@ -446,11 +436,8 @@ public class PropertyListPresenter
                                 // Do nothing as we have already removed it.
                         }
 
-                        final PipelineData pipelineData = builder.build();
-                        pipelineModel.setPipelineLayer(
-                                new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
+                        pipelineModel.update(builder.build());
 
-                        onChange();
                         refresh();
                     }
                 }
@@ -575,10 +562,6 @@ public class PropertyListPresenter
         }
     }
 
-    private void onChange() {
-        ChangeEvent.fire(this);
-    }
-
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {
         if ("boolean".equals(propertyType.getType())) {
             boolean defaultValue = true;
@@ -625,11 +608,6 @@ public class PropertyListPresenter
         }
 
         return pipelineModel.getBaseData().getPropertySource(property);
-    }
-
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 

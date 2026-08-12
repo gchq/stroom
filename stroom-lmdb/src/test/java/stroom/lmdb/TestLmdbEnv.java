@@ -46,9 +46,11 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
@@ -61,12 +63,21 @@ public class TestLmdbEnv {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbEnv.class);
 
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    // These tests write a handful of tiny entries each, so the map only needs to be big enough for
+    // LMDB's own overhead. Keep it small; every open env reserves this much address space and these
+    // tests run alongside others in parallel gradle forks. Measured: the suite fails at 32KiB and
+    // passes at 64KiB, with a margin over that floor as the concurrent writer tests have a peak
+    // usage that varies with thread interleaving.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofKibibytes(256);
+    // testManyEnvs opens this many envs at once, so keep this one smaller still.
+    private static final ByteSize MANY_ENVS_DB_MAX_SIZE = ByteSize.ofKibibytes(200);
 
     // If this value is set too high then the test will fail on gh actions as
     // that has limited cores available.
     private static final int CORES = 100;
     private static final int MAX_READERS = CORES;
+
+    private static final long LATCH_TIMEOUT_SECONDS = 60;
 
     private static final ExecutorService executor = Executors.newCachedThreadPool();
     private static final ByteBufferPool BYTE_BUFFER_POOL = new ByteBufferPoolFactory().getByteBufferPool();
@@ -217,80 +228,106 @@ public class TestLmdbEnv {
      * Have tried it with 1000.
      */
     @Test
-    void testManyEnvs() throws IOException, InterruptedException {
+    void testManyEnvs() throws IOException {
         final List<Path> dbDirs = new ArrayList<>();
         final List<LmdbEnv> envs = new ArrayList<>();
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
         final int cnt = 10;
         final CountDownLatch startLatch = new CountDownLatch(cnt);
         final CountDownLatch closeTxnLatch = new CountDownLatch(cnt);
-        final CountDownLatch completionLatch = new CountDownLatch(cnt);
-        for (int i = 0; i < cnt; i++) {
+        try {
+            for (int i = 0; i < cnt; i++) {
 
-            final Path dbDir = Files.createTempDirectory("stroom");
-            dbDirs.add(dbDir);
+                final Path dbDir = Files.createTempDirectory("stroom");
+                dbDirs.add(dbDir);
 
-            final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
-            final TempDirProvider tempDirProvider = () -> dbDir;
+                final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+                final TempDirProvider tempDirProvider = () -> dbDir;
 
-            final LmdbEnv lmdbEnv = new LmdbEnvFactory(
-                    pathCreator,
-                    new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
-                    .builder(dbDir)
-                    .withMapSize(ByteSize.ofKibibytes(200))
-                    .withMaxDbCount(1)
-                    .setIsReaderBlockedByWriter(true)
-                    .addEnvFlag(EnvFlags.MDB_NOTLS)
-                    .build();
-            envs.add(lmdbEnv);
+                final LmdbEnv lmdbEnv = new LmdbEnvFactory(
+                        pathCreator,
+                        new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
+                        .builder(dbDir)
+                        .withMapSize(MANY_ENVS_DB_MAX_SIZE)
+                        .withMaxDbCount(1)
+                        .setIsReaderBlockedByWriter(true)
+                        .addEnvFlag(EnvFlags.MDB_NOTLS)
+                        .build();
+                envs.add(lmdbEnv);
 
-            final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
-                    lmdbEnv,
-                    BYTE_BUFFER_POOL,
-                    new StringSerde(),
-                    new StringSerde(),
-                    "MyBasicLmdb");
+                final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                        lmdbEnv,
+                        BYTE_BUFFER_POOL,
+                        new StringSerde(),
+                        new StringSerde(),
+                        "MyBasicLmdb");
 
-            CompletableFuture.runAsync(() -> {
-                lmdbEnv.doWithWriteTxn(writeTxn -> {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    lmdbEnv.doWithWriteTxn(writeTxn -> {
 
-                    LOGGER.debug("putting to env: {}", lmdbEnv.getLocalDir().toAbsolutePath());
-                    db.put(writeTxn, "hello", "world", false);
-                });
+                        LOGGER.debug("putting to env: {}", lmdbEnv.getLocalDir().toAbsolutePath());
+                        db.put(writeTxn, "hello", "world", false);
+                    });
 
-                lmdbEnv.doWithReadTxn(readTxn -> {
-                    startLatch.countDown();
-                    try {
-                        LOGGER.debug("countDownLatch1: {}", startLatch.getCount());
-                        startLatch.await();
-                    } catch (final InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    lmdbEnv.doWithReadTxn(readTxn -> {
+                        startLatch.countDown();
+                        LOGGER.debug("startLatch: {}", startLatch.getCount());
+                        awaitLatch(startLatch, "startLatch");
 
-                    final Optional<String> optVal = db.get("hello");
-                    Assertions.assertThat(optVal)
-                            .hasValue("world");
+                        final Optional<String> optVal = db.get("hello");
+                        Assertions.assertThat(optVal)
+                                .hasValue("world");
 
-                    closeTxnLatch.countDown();
-                    try {
                         // Wait for all others to reach this point before closing the txn so we have
                         // cnt txns open
-                        closeTxnLatch.await();
-                    } catch (final InterruptedException e) {
-                        throw new RuntimeException(e);
+                        closeTxnLatch.countDown();
+                        awaitLatch(closeTxnLatch, "closeTxnLatch");
+                    });
+                }, executor));
+            }
+        } finally {
+            // Every worker must have finished with its env before we close it. A future only completes
+            // once doWithReadTxn has returned, i.e. once that env's read txn has been closed, so joining
+            // here is what stops us calling env.close() (or deleting the files) with a txn still open,
+            // which is undefined behaviour in LMDB. Joining also surfaces failures in the workers that
+            // a discarded future would silently swallow.
+            try {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            } finally {
+                // Per-env catch so one bad close/delete doesn't leave the rest of the envs
+                // open, and so a cleanup failure can't replace the worker failure surfaced
+                // by the join above. Iterates dbDirs as it may hold one more entry than envs
+                // if the env builder itself threw part way through the loop above.
+                for (int i = 0; i < dbDirs.size(); i++) {
+                    try {
+                        if (i < envs.size()) {
+                            LOGGER.debug("Closing {}", envs.get(i).getLocalDir().toAbsolutePath());
+                            envs.get(i).close();
+                        }
+                        FileUtil.deleteDir(dbDirs.get(i));
+                    } catch (final Exception e) {
+                        LOGGER.error("Error closing/deleting env {}: {}", i, e.getMessage(), e);
                     }
-
-                    completionLatch.countDown();
-                });
-            }, executor);
+                }
+            }
         }
+    }
 
-        LOGGER.debug("countDownLatch2: {}", completionLatch.getCount());
-        completionLatch.await();
-
-        for (int i = 0; i < cnt; i++) {
-            LOGGER.debug("Closing {}", envs.get(i).getLocalDir().toAbsolutePath());
-            envs.get(i).close();
-            FileUtil.deleteDir(dbDirs.get(i));
+    /**
+     * Waits on a latch that every worker is expected to reach. Times out rather than waiting forever so
+     * that one worker failing before it counts down fails the test instead of wedging all the others,
+     * and with them the test JVM.
+     */
+    private static void awaitLatch(final CountDownLatch latch, final String name) {
+        try {
+            if (!latch.await(LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                throw new IllegalStateException(String.format(
+                        "Timed out after %ss waiting for %s, count: %s. Another thread has probably failed.",
+                        LATCH_TIMEOUT_SECONDS, name, latch.getCount()));
+            }
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted waiting for " + name, e);
         }
     }
 
@@ -334,6 +371,9 @@ public class TestLmdbEnv {
                     .isInstanceOf(MapFullException.class)
                     .message()
                     .containsIgnoringCase("Environment mapsize reached");
+        } finally {
+            // Env closed by the try-with-resources above before we delete its dir
+            FileUtil.deleteDir(dbDir);
         }
     }
 
@@ -402,7 +442,10 @@ public class TestLmdbEnv {
         final CountDownLatch threadsStartedLatch = new CountDownLatch(threadCount);
         final CountDownLatch releaseThreadsLatch = new CountDownLatch(1);
         final Queue<String> threads = new ConcurrentLinkedQueue<>();
-        final List<Exception> exceptions = new ArrayList<>();
+        // Added to by all the reader/writer threads, so must be thread safe. A plain ArrayList can
+        // lose entries or throw when written concurrently, which would both hide real failures and
+        // produce spurious ones.
+        final List<Exception> exceptions = new CopyOnWriteArrayList<>();
 
         final int readerThreads = doWrites
                 ? threadCount / 2

@@ -16,14 +16,10 @@
 
 package stroom.gitrepo.impl;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
-import stroom.importexport.api.ImportExportActionHandler;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -32,18 +28,10 @@ public class GitRepoModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(GitRepoStore.class).to(GitRepoStoreImpl.class);
         bind(GitRepoStorageService.class).to(GitRepoStorageServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(GitRepoStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(GitRepoStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(GitRepoStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(GitRepoDoc.TYPE, GitRepoStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(GitRepoDoc.TYPE, GitRepoStore.class, GitRepoStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(GitRepoResourceImpl.class);

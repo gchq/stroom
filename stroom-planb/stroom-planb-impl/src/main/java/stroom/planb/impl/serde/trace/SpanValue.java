@@ -23,7 +23,7 @@ import stroom.pathways.shared.otel.trace.SpanEvent;
 import stroom.pathways.shared.otel.trace.SpanKind;
 import stroom.pathways.shared.otel.trace.SpanLink;
 import stroom.pathways.shared.otel.trace.SpanStatus;
-import stroom.planb.impl.db.trace.NanoTimeUtil;
+import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

@@ -16,6 +16,7 @@
 
 package stroom.importexport.impl;
 
+import stroom.docstore.api.DocDependencyService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -63,7 +64,6 @@ import jakarta.inject.Provider;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -76,16 +76,19 @@ public class ContentResourceImpl implements ContentResource {
     private final Provider<ContentService> contentServiceProvider;
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
     private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
 
     @Inject
     ContentResourceImpl(final Provider<StroomEventLoggingService> eventLoggingServiceProvider,
                         final Provider<ContentService> contentServiceProvider,
                         final Provider<ExplorerNodeService> explorerNodeServiceProvider,
-                        final Provider<SecurityContext> securityContextProvider) {
+                        final Provider<SecurityContext> securityContextProvider,
+                        final Provider<DocDependencyService> docDependencyServiceProvider) {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
         this.contentServiceProvider = contentServiceProvider;
         this.explorerNodeServiceProvider = explorerNodeServiceProvider;
         this.securityContextProvider = securityContextProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
     }
 
     @Override
@@ -238,7 +241,7 @@ public class ContentResourceImpl implements ContentResource {
                         .withQuery(buildRawQuery(criteria.getPartialName()))
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {
-                    final ResultPage<Dependency> result = contentServiceProvider.get()
+                    final ResultPage<Dependency> result = docDependencyServiceProvider.get()
                             .fetchDependencies(criteria);
 
                     final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
@@ -257,7 +260,7 @@ public class ContentResourceImpl implements ContentResource {
                 ? new Query()
                 : Query.builder()
                         .withRaw("Activity matches \""
-                                 + Objects.requireNonNullElse(userInput, "")
+                                 + userInput
                                  + "\"")
                         .build();
     }

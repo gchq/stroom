@@ -17,7 +17,7 @@
 package stroom.core.meta;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.LuceneIndexDoc;
@@ -36,6 +36,7 @@ import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -68,7 +69,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final TaskContextFactory taskContextFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Executor executor;
@@ -100,7 +101,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                     final SecurityContext securityContext,
                                     final FeedStore feedStore,
                                     final TaskContextFactory taskContextFactory,
-                                    final DocRefInfoService docRefInfoService,
+                                    final DocFinder docFinder,
                                     final SuggestionsService suggestionsService,
                                     final ExpressionPredicateFactory expressionPredicateFactory,
                                     final ExecutorProvider executorProvider) {
@@ -108,7 +109,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.taskContextFactory = taskContextFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.executor = executorProvider.get();
@@ -235,8 +236,13 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     private List<String> getNonUniqueDocRefNames(final String docRefType,
                                                  final String userInput) {
-        return expressionPredicateFactory.filterAndSortStream(docRefInfoService
-                                .findByType(docRefType)
+        String nameFilter = "*";
+        if (NullSafe.isNonBlankString(userInput)) {
+            nameFilter = userInput + "*";
+        }
+        final List<DocRef> docRefs = docFinder.findByName(docRefType, nameFilter, true);
+
+        return expressionPredicateFactory.filterAndSortStream(docRefs
                                 .stream()
                                 .map(DocRef::getName),
                         userInput,

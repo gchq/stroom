@@ -18,6 +18,7 @@ package stroom.util.servlet;
 
 import com.google.inject.AbstractModule;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class MockServletModule extends AbstractModule {
 
@@ -25,6 +26,7 @@ public class MockServletModule extends AbstractModule {
     protected void configure() {
         final SessionIdProvider sessionIdProvider = () -> "mockSessionId";
         bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
+        bind(HttpServletResponse.class).toProvider(HttpServletResponseHolder.class);
         bind(SessionIdProvider.class).toInstance(sessionIdProvider);
     }
 }

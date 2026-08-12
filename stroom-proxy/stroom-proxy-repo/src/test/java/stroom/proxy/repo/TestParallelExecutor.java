@@ -26,7 +26,12 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -288,4 +293,69 @@ class TestParallelExecutor {
         assertThat(parallelExecutor.isPaused())
                 .isFalse(); // Un-paused by calling stop
     }
+
+    /**
+     * Pins the deadlock fixed in {@link ParallelExecutor#stop()}.
+     * <p>
+     * stop() used to be synchronized, so it held this object's monitor for the whole of its wait for the
+     * worker threads to terminate. A worker finishing its task takes the same monitor in run()'s finally
+     * block, so it could never finish, so the wait never ended - and because the wait was one day long, the
+     * result was a hang rather than a failure. Verified against the old code, where the probe below times
+     * out.
+     * </p>
+     * <p>
+     * The probe acquires the monitor rather than calling a synchronized method, so that it proves the lock
+     * is free without changing the executor's state.
+     * </p>
+     */
+    @Test
+    void stopDoesNotHoldTheLockWhileAwaitingTermination() throws Exception {
+        final CountDownLatch taskRunning = new CountDownLatch(1);
+        final AtomicBoolean letTaskFinish = new AtomicBoolean(false);
+
+        // A task that ignores interruption, so stop() has something real to wait for.
+        final Supplier<Runnable> taskSupplier = () -> () -> {
+            taskRunning.countDown();
+            while (!letTaskFinish.get()) {
+                try {
+                    Thread.sleep(10);
+                } catch (final InterruptedException e) {
+                    // Deliberately swallowed - see above.
+                }
+            }
+        };
+
+        final ParallelExecutor parallelExecutor = new ParallelExecutor("test-thread", taskSupplier, 1);
+        final ExecutorService helpers = Executors.newFixedThreadPool(2);
+        try {
+            parallelExecutor.start();
+            assertThat(taskRunning.await(20, TimeUnit.SECONDS))
+                    .withFailMessage("task should have started")
+                    .isTrue();
+
+            final Future<?> stopping = helpers.submit(() -> {
+                parallelExecutor.stop();
+                return null;
+            });
+
+            // Give stop() time to reach its wait, then check the monitor is obtainable.
+            ThreadUtil.sleep(500);
+            final Future<?> probe = helpers.submit(() -> {
+                synchronized (parallelExecutor) {
+                    return null;
+                }
+            });
+
+            probe.get(10, TimeUnit.SECONDS);
+
+            letTaskFinish.set(true);
+            stopping.get(60, TimeUnit.SECONDS);
+            assertThat(parallelExecutor.isStopped())
+                    .isTrue();
+        } finally {
+            letTaskFinish.set(true);
+            helpers.shutdownNow();
+        }
+    }
+
 }

@@ -21,7 +21,7 @@ import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.FsVolumeConfig;
-import stroom.data.store.impl.fs.db.FsDataStoreDaoModule;
+import stroom.data.store.impl.fs.dao.FsDataStoreDaoModule;
 import stroom.data.store.impl.fs.db.FsDataStoreDbModule;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.meta.shared.SimpleMeta;

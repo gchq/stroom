@@ -25,6 +25,7 @@ import stroom.lifecycle.api.LifecycleBinder;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.ProcessorFilterDoc;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProcessorResource;

@@ -94,31 +94,31 @@ public class SearchRequestFactory {
     public static final String VIS_COMPONENT_ID = "vis";
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
-    private final DocResolver docResolver;
+    private final DataSourceResolver dataSourceResolver;
     private final Provider<QueryFieldProvider> queryFieldProviderProvider;
     private final SecurityContext securityContext;
 
     @Inject
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
-                                final DocResolver docResolver,
+                                final DataSourceResolver dataSourceResolver,
                                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                                 final SecurityContext securityContext) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
-        this.docResolver = docResolver;
+        this.dataSourceResolver = dataSourceResolver;
         this.queryFieldProviderProvider = queryFieldProviderProvider;
         this.securityContext = securityContext;
     }
 
     public void extractDataSourceOnly(final String string,
                                       final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, docResolver, queryFieldProviderProvider, securityContext)
+        new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
                 .extractDataSourceOnly(string, consumer);
     }
 
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, docResolver, queryFieldProviderProvider, securityContext)
+        return new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
                 .create(string, in, expressionContext);
     }
 
@@ -129,7 +129,7 @@ public class SearchRequestFactory {
     private static class Builder {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
-        private final DocResolver docResolver;
+        private final DataSourceResolver dataSourceResolver;
         private final Provider<QueryFieldProvider> queryFieldProviderProvider;
         private final SecurityContext securityContext;
 
@@ -143,11 +143,11 @@ public class SearchRequestFactory {
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
-                final DocResolver docResolver,
+                final DataSourceResolver dataSourceResolver,
                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                 final SecurityContext securityContext) {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
-            this.docResolver = docResolver;
+            this.dataSourceResolver = dataSourceResolver;
             this.queryFieldProviderProvider = queryFieldProviderProvider;
             this.securityContext = securityContext;
             this.fieldIndex = new FieldIndex();
@@ -273,7 +273,7 @@ public class SearchRequestFactory {
             }
             final String dataSourceName = dataSourceToken.getUnescapedText();
             final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
-                    docResolver.resolveDataSourceRef(dataSourceName));
+                    dataSourceResolver.resolveDataSourceRef(dataSourceName));
 
             consumer.accept(dataSourceDocRef);
 
@@ -443,7 +443,7 @@ public class SearchRequestFactory {
                 final String dictionaryName = dictionaryNameToken.getUnescapedText().trim();
                 final DocRef dictionaryRef;
                 try {
-                    dictionaryRef = docResolver.resolveDocRef("Dictionary", dictionaryName);
+                    dictionaryRef = dataSourceResolver.findDictionaryDoc(dictionaryName);
                 } catch (final RuntimeException e) {
                     throw new TokenException(dictionaryNameToken, e.getMessage());
                 }

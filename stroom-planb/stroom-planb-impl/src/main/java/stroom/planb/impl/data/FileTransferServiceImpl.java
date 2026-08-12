@@ -24,7 +24,6 @@ import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 @Singleton
 public class FileTransferServiceImpl implements FileTransferService {
@@ -44,31 +43,17 @@ public class FileTransferServiceImpl implements FileTransferService {
     }
 
     /**
-     * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
+     * Check that we can supply a snapshot and open it ready for streaming.
      *
-     * @param request The request to create a snapshot.
+     * @param request The request for a snapshot.
+     * @return The snapshot, which the caller must close.
      */
     @Override
-    public void checkSnapshotStatus(final SnapshotRequest request) {
+    public InputStream openSnapshot(final SnapshotRequest request) {
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
         }
-        shardManager.checkSnapshotStatus(request);
-    }
-
-    /**
-     * Actually create a snapshot and stream it to the supplied output stream.
-     *
-     * @param request      The request to create a snapshot.
-     * @param outputStream The output stream to write the snapshot to.
-     */
-    @Override
-    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
-        // We will have already checked that we have a processing user but check again just in case.
-        if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
-        }
-        shardManager.fetchSnapshot(request, outputStream);
+        return shardManager.openSnapshot(request);
     }
 
     /**

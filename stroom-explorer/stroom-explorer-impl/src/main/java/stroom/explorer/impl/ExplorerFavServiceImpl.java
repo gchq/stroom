@@ -17,7 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.api.SecurityContext;
@@ -37,17 +37,17 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
 
     private final ExplorerFavDao explorerFavDao;
     private final SecurityContext securityContext;
-    private final Provider<DocRefInfoService> docRefInfoService;
+    private final Provider<DocFinder> docFinderProvider;
     private final Provider<ExplorerService> explorerService;
 
     @Inject
     ExplorerFavServiceImpl(final ExplorerFavDao explorerFavDao,
                            final SecurityContext securityContext,
-                           final Provider<DocRefInfoService> docRefInfoService,
+                           final Provider<DocFinder> docFinderProvider,
                            final Provider<ExplorerService> explorerService) {
         this.explorerFavDao = explorerFavDao;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinderProvider = docFinderProvider;
         this.explorerService = explorerService;
     }
 
@@ -72,7 +72,7 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
                 .stream()
                 .map(docRef -> {
                     try {
-                        return docRefInfoService.get().decorate(docRef);
+                        return docFinderProvider.get().decorateIfExists(docRef).orElseThrow();
                     } catch (final RuntimeException e) {
                         // Doc info couldn't be found, probably due to a document that exists in the `explorer_node`
                         // table, but not `doc`.

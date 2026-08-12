@@ -18,8 +18,8 @@ package stroom.planb.impl.serde.temporalkey;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.KeyLength;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.KeyLength;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;

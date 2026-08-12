@@ -19,14 +19,67 @@ package stroom.util.xml;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.Reader;
+import java.io.StringReader;
 import javax.xml.parsers.SAXParserFactory;
 
-@Disabled
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 class TestSAXParserFactoryFactory {
 
+    // An XXE payload. If the DOCTYPE / external entity were processed the parser would try to read a local
+    // file (file:///etc/hostname) rather than being rejected.
+    private static final String XXE_DOC = """
+            <?xml version="1.0"?>
+            <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/hostname">]>
+            <foo>&xxe;</foo>""";
+
+    private static final String PLAIN_DOC = "<?xml version=\"1.0\"?><foo>hello</foo>";
+
+    @Test
+    void secureByDefaultRejectsDoctypeXxe() {
+        // Default settings (disableExternalEntities=true) disallow the DOCTYPE outright, so the external
+        // entity is never resolved.
+        assertThatThrownBy(() -> parse(XXE_DOC))
+                .isInstanceOf(SAXException.class);
+    }
+
+    @Test
+    void plainXmlStillParses() {
+        assertThatCode(() -> parse(PLAIN_DOC))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void hardeningCanBeDisabledViaSettings() {
+        try {
+            SAXParserSettings.setExternalEntitiesDisabled(false);
+            // With the hardening opted out, a DOCTYPE is no longer rejected. Use an INTERNAL entity so the
+            // test never touches the filesystem.
+            final String internalEntityDoc = """
+                    <?xml version="1.0"?>
+                    <!DOCTYPE foo [<!ENTITY e "hi">]>
+                    <foo>&e;</foo>""";
+            assertThatCode(() -> parse(internalEntityDoc))
+                    .doesNotThrowAnyException();
+        } finally {
+            SAXParserSettings.setExternalEntitiesDisabled(true);
+        }
+    }
+
+    private void parse(final String xml) throws Exception {
+        final SAXParserFactory factory = SAXParserFactoryFactory.newInstance();
+        final XMLReader xmlReader = factory.newSAXParser().getXMLReader();
+        xmlReader.setContentHandler(new DefaultHandler());
+        xmlReader.parse(new InputSource(new StringReader(xml)));
+    }
+
+    @Disabled("Manual entity-limit stress test")
     @Test
     void testExceedingTotalEntities() throws Exception {
         // Set this to true to test limits.

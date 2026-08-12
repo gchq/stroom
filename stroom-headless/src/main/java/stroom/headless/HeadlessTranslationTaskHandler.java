@@ -18,6 +18,7 @@ package stroom.headless;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -82,6 +83,7 @@ class HeadlessTranslationTaskHandler {
     private final PipelineDataCache pipelineDataCache;
     private final MetaHolder metaHolder;
     private final SecurityContext securityContext;
+    private final DocFinder docFinder;
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
@@ -96,7 +98,8 @@ class HeadlessTranslationTaskHandler {
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
                                    final MetaHolder metaHolder,
-                                   final SecurityContext securityContext) {
+                                   final SecurityContext securityContext,
+                                   final DocFinder docFinder) {
         this.pipelineFactory = pipelineFactory;
         this.feedProperties = feedProperties;
         this.pipelineStore = pipelineStore;
@@ -110,6 +113,7 @@ class HeadlessTranslationTaskHandler {
         this.pipelineDataCache = pipelineDataCache;
         this.metaHolder = metaHolder;
         this.securityContext = securityContext;
+        this.docFinder = docFinder;
     }
 
     public void exec(final InputStream dataStream,
@@ -145,7 +149,7 @@ class HeadlessTranslationTaskHandler {
                     metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                     // Set the pipeline, so it can be used by a filter if needed.
-                    final List<DocRef> pipelines = pipelineStore.findByName(feedName);
+                    final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, feedName);
                     final int pipelinesCount = NullSafe.size(pipelines);
                     if (pipelinesCount == 0) {
                         throw ProcessException.create("No pipeline found matching feed name '" + feedName + "'");

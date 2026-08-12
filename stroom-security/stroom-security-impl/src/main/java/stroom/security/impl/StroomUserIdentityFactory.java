@@ -19,6 +19,7 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.security.api.HasJwt;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
@@ -26,7 +27,7 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.UserService;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
-import stroom.security.common.impl.HasJwtClaims;
+import stroom.security.common.impl.InsecureTestCredentials;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
@@ -34,12 +35,12 @@ import stroom.security.common.impl.UpdatableToken;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.impl.apikey.ApiKeyService;
 import stroom.security.impl.event.PermissionChangeEvent;
-import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.ClusterToken;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
+import stroom.security.openid.api.TokenRevoker;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
 import stroom.util.cert.CertificateExtractor;
@@ -47,7 +48,6 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.exception.DataChangedException;
-import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
@@ -67,12 +67,10 @@ import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -86,7 +84,6 @@ public class StroomUserIdentityFactory
 
     private static final String CACHE_NAME_BY_SUBJECT_ID = "User Cache (by Subject Id)";
 
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final LoadingStroomCache<String, Optional<User>> cacheBySubjectId;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<UserService> userServiceProvider;
@@ -94,11 +91,16 @@ public class StroomUserIdentityFactory
     private final SecurityContext securityContext;
     private final EntityEventBus entityEventBus;
     private final ApiKeyService apiKeyService;
+    // Verifies the internally-signed inter-node cluster (processing-user) token. This is the sole path that
+    // promotes to the processing user, in every IdP mode - the internal signing key is the trust anchor.
+    private final ClusterTokenVerifier clusterTokenVerifier;
+    private final InsecureTestCredentials insecureTestCredentials;
+    private final JwtContextFactory jwtContextFactory;
+    private final Provider<TokenRevoker> tokenRevokerProvider;
 
     @Inject
     public StroomUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                                      final Provider<OpenIdConfiguration> openIdConfigProvider,
-                                     final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                      final CertificateExtractor certificateExtractor,
                                      final UserCache userCache,
                                      final ServiceUserFactory serviceUserFactory,
@@ -110,24 +112,29 @@ public class StroomUserIdentityFactory
                                      final ApiKeyService apiKeyService,
                                      final Provider<AuthorisationConfig> authorisationConfigProvider,
                                      final CacheManager cacheManager,
-                                     final SimplePathCreator simplePathCreator) {
+                                     final SimplePathCreator simplePathCreator,
+                                     final ClusterTokenVerifier clusterTokenVerifier,
+                                     final InsecureTestCredentials insecureTestCredentials,
+                                     final Provider<TokenRevoker> tokenRevokerProvider) {
 
         super(jwtContextFactory,
                 openIdConfigProvider,
-                defaultOpenIdCredentials,
                 certificateExtractor,
                 serviceUserFactory,
                 jerseyClientFactory,
                 simplePathCreator,
                 refreshManager);
 
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.openIdConfigProvider = openIdConfigProvider;
         this.userCache = userCache;
         this.userServiceProvider = userServiceProvider;
         this.securityContext = securityContext;
         this.entityEventBus = entityEventBus;
         this.apiKeyService = apiKeyService;
+        this.clusterTokenVerifier = clusterTokenVerifier;
+        this.insecureTestCredentials = insecureTestCredentials;
+        this.jwtContextFactory = jwtContextFactory;
+        this.tokenRevokerProvider = tokenRevokerProvider;
 
         cacheBySubjectId = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_SUBJECT_ID,
@@ -144,35 +151,10 @@ public class StroomUserIdentityFactory
     protected Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
                                                     final HttpServletRequest request) {
 
-        final String headerKey = UserIdentityFactory.RUN_AS_USER_HEADER;
-        final String runAsUserUuid = NullSafe.trim(request.getHeader(headerKey));
-        if (!runAsUserUuid.isEmpty()) {
-            // Request is proxying for a user, so it needs to be the processing user that
-            // sent the request. Getting the proc user, even though we don't do anything with it will
-            // ensure it is authenticated.
-            // We have to run as like this because human users may have aws tokens that are not refreshable.
-            getProcessingUser(jwtContext)
-                    .orElseThrow(() -> new AuthenticationException(
-                            "Expecting request to be made by processing user identity. url: "
-                            + request.getRequestURI()));
-
-            final UserIdentity runAsUserIdentity = userCache.getByUuid(runAsUserUuid)
-                    .map(user -> {
-                        verifyEnabledOrThrow(user, "OAuth token");
-                        return user.asRef();
-                    })
-                    .map(BasicUserIdentity::new)
-                    .orElseThrow(() -> new AuthenticationException(LogUtil.message("{} {} not found",
-                            headerKey, runAsUserUuid)));
-            LOGGER.trace("Found '{}' header, running as user {}", headerKey, runAsUserIdentity);
-            return Optional.ofNullable(runAsUserIdentity);
-        } else {
-            // Always try to get the proc user identity as it is a bit of a special case
-            final Optional<UserIdentity> optUserIdentity = getProcessingUser(jwtContext)
-                    .or(() -> getApiUserIdentity(jwtContext, request));
-            LOGGER.debug("Returning optUserIdentity: {}", optUserIdentity);
-            return optUserIdentity;
-        }
+        // The internal cluster (processing-user) token and its run-as header are handled earlier, in
+        // getClusterIdentity() (the single key-verified promotion path). By the time we get here the token
+        // is a regular user token, so we just map it to its user - this path never promotes.
+        return getApiUserIdentity(jwtContext, request);
     }
 
     @Override
@@ -198,10 +180,81 @@ public class StroomUserIdentityFactory
 
     @Override
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
-        // First see if we have a Stroom API key to authenticate with, else see if we have
-        // a valid JWT. Proxy can't auth using API keys as it doesn't have the back end to hold/manage them.
-        return apiKeyService.fetchVerifiedIdentity(request)
-                .or(() -> super.getApiUserIdentity(request));
+        return getApiCredential(request)
+                .map(AuthenticatedCredential::identity);
+    }
+
+    /**
+     * As {@link #getApiUserIdentity(HttpServletRequest)}, but also reporting which kind of
+     * credential proved the identity, so {@link SecurityFilter} can tell an edge-proxy-injected
+     * token (ambient, needs CSRF checks) from an API key or the inter-node cluster token (never
+     * ambient).
+     */
+    public Optional<AuthenticatedCredential> getApiCredential(final HttpServletRequest request) {
+        // First see if the optional insecure test credential is presented (only enabled in test/demo when
+        // the environment explicitly opts in), then a Stroom API key, then the internally-signed inter-node
+        // processing-user token, else see if we have a valid JWT.
+        return getInsecureTestServiceUserIdentity(request)
+                .map(identity -> new AuthenticatedCredential(identity, CredentialSource.TEST_CREDENTIAL))
+                .or(() -> apiKeyService.fetchVerifiedIdentity(request)
+                        .map(identity -> new AuthenticatedCredential(identity, CredentialSource.API_KEY)))
+                .or(() -> getClusterIdentity(request)
+                        .map(identity -> new AuthenticatedCredential(identity, CredentialSource.CLUSTER_TOKEN)))
+                .or(() -> super.getApiUserIdentity(request)
+                        .map(identity -> new AuthenticatedCredential(identity, CredentialSource.REQUEST_TOKEN)));
+    }
+
+    /**
+     * When the insecure test credential is enabled (test/demo only, off unless the environment opts in) a
+     * request carrying the shared secret is authenticated as the service (processing) user.
+     */
+    private Optional<UserIdentity> getInsecureTestServiceUserIdentity(final HttpServletRequest request) {
+        return insecureTestCredentials.matches(request)
+                ? Optional.of(getServiceUserIdentity())
+                : Optional.empty();
+    }
+
+    /**
+     * The single inter-node cluster promotion path, used in <em>every</em> IdP mode. The internally-signed
+     * cluster (processing-user) token is verified by {@link ClusterTokenVerifier}, which requires the
+     * cluster's internal signing key plus the fixed cluster issuer/audience/subject - so the internal key is
+     * the sole trust anchor and a token from a real identity provider can never be promoted here, even if it
+     * claims the processing-user subject. A verified cluster token authenticates the calling node as the
+     * cluster; if it carries a run-as header the call is on behalf of a human, so we downscope to that user's
+     * permissions.
+     * <p>
+     * A verified cluster token must <em>always</em> carry a run-as header (the caller always sets it): the
+     * {@link ClusterToken#PROCESSING_USER_SUBJECT} sentinel for a genuine system/background call, or a human's
+     * uuid to downscope. An absent header is a bug/misconfiguration and is rejected (fail closed) rather than
+     * silently defaulting to the all-powerful processing user.
+     */
+    private Optional<UserIdentity> getClusterIdentity(final HttpServletRequest request) {
+        if (clusterTokenVerifier.verify(request).isEmpty()) {
+            return Optional.empty();
+        }
+        final String runAsUser = NullSafe.trim(request.getHeader(UserIdentityFactory.RUN_AS_USER_HEADER));
+        if (runAsUser.isEmpty()) {
+            throw new AuthenticationException(LogUtil.message(
+                    "A cluster token was presented with no '{}' header",
+                    UserIdentityFactory.RUN_AS_USER_HEADER));
+        }
+        if (ClusterToken.PROCESSING_USER_SUBJECT.equals(runAsUser)) {
+            // A genuine processing-user (system/background) inter-node call.
+            return Optional.of(getServiceUserIdentity());
+        }
+        // The call is on behalf of a human - downscope to that user so the receiver enforces their perms.
+        return Optional.of(resolveRunAsUser(runAsUser));
+    }
+
+    private UserIdentity resolveRunAsUser(final String runAsUserUuid) {
+        return userCache.getByUuid(runAsUserUuid)
+                .map(user -> {
+                    verifyEnabledOrThrow(user, "cluster run-as");
+                    return user.asRef();
+                })
+                .map(BasicUserIdentity::new)
+                .orElseThrow(() -> new AuthenticationException(LogUtil.message("{} {} not found",
+                        UserIdentityFactory.RUN_AS_USER_HEADER, runAsUserUuid)));
     }
 
     /**
@@ -220,6 +273,45 @@ public class StroomUserIdentityFactory
                     // Swallow the error so the rest of the logout can proceed
                 }
             }
+        }
+        revokeGrantHeldBySession(userIdentity);
+    }
+
+    /**
+     * Retire the tokens this session was holding.
+     * <p>
+     * Tokens minted for a browser session live only in that session, on the server - the browser is given a
+     * session cookie and never the tokens themselves. So when the session goes, by logout or by expiry, the only
+     * copy of those tokens goes with it and nothing can present them again. Leaving the rows usable would
+     * overstate how much live access the subject has, and would leave a refresh token redeemable for weeks after
+     * the last legitimate copy of it ceased to exist.
+     * </p>
+     * <p>
+     * Tokens issued to a real OAuth client are unaffected: such a client holds its own tokens and has no stroom
+     * session, so nothing here ever runs for them.
+     * </p>
+     */
+    private void revokeGrantHeldBySession(final UserIdentity userIdentity) {
+        if (!(userIdentity instanceof final HasJwt hasJwt)) {
+            return;
+        }
+        try {
+            final String jwt = hasJwt.getJwt();
+            if (NullSafe.isBlankString(jwt)) {
+                return;
+            }
+            // Unverified: the token has already served its purpose and may well have expired by now, and all
+            // that is wanted from it is the id naming the grant. A jti that matches nothing revokes nothing.
+            jwtContextFactory.getJwtContext(jwt, false)
+                    .map(JwtContext::getJwtClaims)
+                    .map(claims -> claims.getClaimValueAsString("jti"))
+                    .filter(jti -> !NullSafe.isBlankString(jti))
+                    .ifPresent(jti -> tokenRevokerProvider.get().revokeGrant(jti));
+        } catch (final Exception e) {
+            // Never fail a logout because the tidy-up failed - the session is going either way, and the tokens
+            // expire on their own.
+            LOGGER.error("Error revoking the grant held by the session for {}. {}",
+                    userIdentity, LogUtil.exceptionMessage(e), e);
         }
     }
 
@@ -357,6 +449,11 @@ public class StroomUserIdentityFactory
         final AtomicBoolean isNewSession = new AtomicBoolean(false);
         final HttpSession session = SessionUtil.getOrCreateSession(request, newSession -> isNewSession.set(true));
         try {
+            // Rotate the session id now the request has gained privilege. Only needed when reusing a
+            // session the request arrived on; a freshly created session already has a new id.
+            if (!isNewSession.get()) {
+                SessionUtil.changeSessionId(request);
+            }
             UserAgentSessionUtil.setUserAgentInSession(request, session);
 
             // Make a token object that we can update as/when we do a token refresh
@@ -410,39 +507,27 @@ public class StroomUserIdentityFactory
                                               final HttpServletRequest request) {
         LOGGER.debug(() -> "Getting API user identity for uri: " + request.getRequestURI());
 
-        try {
-            final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            final String subjectId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
-            final Optional<String> optDisplayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims);
-            LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {}, displayName: {}, uri: {}",
-                    subjectId, optDisplayName, request.getRequestURI()));
+        final JwtClaims jwtClaims = jwtContext.getJwtClaims();
+        final String subjectId = JwtUtil.getUniqueIdentity(openIdConfigProvider.get(), jwtClaims);
+        final Optional<String> optDisplayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims);
+        LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {}, displayName: {}, uri: {}",
+                subjectId, optDisplayName, request.getRequestURI()));
 
-            final String userUuid;
+        User user = getOrCreateUserBySubjectId(subjectId).orElseThrow(() ->
+                new AuthenticationException("Unable to find user with id: " + subjectId
+                                            + "(displayName: " + optDisplayName + ")"));
+        // A disabled user must not authenticate even with an otherwise valid token, matching the
+        // run-as, interactive and API key paths.
+        verifyEnabledOrThrow(user, "OAuth token");
+        user = updateUserInfo(subjectId, user, jwtClaims);
+        final String userUuid = user.getUuid();
 
-            if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())
-                && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
-                && subjectId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                LOGGER.debug("Authenticating using default API key. DO NOT USE IN PRODUCTION!");
-                // Using default creds so just fake a user
-                userUuid = UUID.randomUUID().toString();
-            } else {
-                User user = getOrCreateUserBySubjectId(subjectId).orElseThrow(() ->
-                        new AuthenticationException("Unable to find user with id: " + subjectId
-                                                    + "(displayName: " + optDisplayName + ")"));
-                user = updateUserInfo(subjectId, user, jwtClaims);
-                userUuid = user.getUuid();
-            }
-
-            return Optional.of(createApiUserIdentity(
-                    jwtContext,
-                    subjectId,
-                    optDisplayName.orElse(null),
-                    userUuid,
-                    request));
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
-            return Optional.empty();
-        }
+        return Optional.of(createApiUserIdentity(
+                jwtContext,
+                subjectId,
+                optDisplayName.orElse(null),
+                userUuid,
+                request));
     }
 
     private static ApiUserIdentity createApiUserIdentity(final JwtContext jwtContext,
@@ -456,57 +541,6 @@ public class StroomUserIdentityFactory
                 displayName,
                 SessionUtil.getSessionId(request),
                 jwtContext);
-    }
-
-    private Optional<UserIdentity> getProcessingUser(final JwtContext jwtContext) {
-        try {
-            final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            final UserIdentity serviceUser = getServiceUserIdentity();
-            if (isServiceUser(jwtClaims.getSubject(), jwtClaims.getIssuer(), serviceUser)) {
-                LOGGER.debug("getProcessingUser() - {}", serviceUser);
-                return Optional.of(serviceUser);
-            }
-        } catch (final MalformedClaimException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return Optional.empty();
-    }
-
-    public boolean isServiceUser(final String subject,
-                                 final String issuer,
-                                 final UserIdentity serviceUser) {
-
-        if (serviceUser instanceof final HasJwtClaims hasJwtClaims) {
-            return Optional.ofNullable(hasJwtClaims.getJwtClaims())
-                    .map(ThrowingFunction.unchecked(jwtClaims -> {
-                        final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
-                                                         && Objects.equals(issuer, jwtClaims.getIssuer());
-
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
-                                    subject,
-                                    jwtClaims.getSubject(),
-                                    issuer,
-                                    jwtClaims.getIssuer(),
-                                    isProcessingUser);
-                        }
-                        return isProcessingUser;
-                    }))
-                    .orElse(false);
-        } else {
-            final String requiredIssuer = openIdConfigProvider.get().getIssuer();
-            final boolean isProcessingUser = Objects.equals(subject, serviceUser.subjectId())
-                                             && Objects.equals(issuer, requiredIssuer);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
-                        subject,
-                        serviceUser.subjectId(),
-                        issuer,
-                        requiredIssuer,
-                        isProcessingUser);
-            }
-            return isProcessingUser;
-        }
     }
 
     /**

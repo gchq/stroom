@@ -26,15 +26,11 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
@@ -59,7 +55,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -72,8 +67,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasChangeHandlers {
+        extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
@@ -366,7 +360,6 @@ public class PipelineReferenceListPresenter
 
                         setPipelineData(builder.build());
 
-                        onChange();
                         refresh();
                         e.hide();
                     }
@@ -418,14 +411,14 @@ public class PipelineReferenceListPresenter
             }
 
             setPipelineData(builder.build());
-            onChange();
             refresh();
         }
     }
 
     private void setPipelineData(final PipelineData pipelineData) {
-        pipelineModel.setPipelineLayer(
-                new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
+        // Update the model rather than just setting the layer on it. The resulting change event is
+        // what makes the pipeline re-evaluate whether it is dirty and so enables the Save button.
+        pipelineModel.update(pipelineData);
     }
 
     private void addReference(final PipelineReference reference, final State state) {
@@ -549,15 +542,6 @@ public class PipelineReferenceListPresenter
             editButton.setTitle("Edit Reference");
             removeButton.setTitle("Remove Reference");
         }
-    }
-
-    private void onChange() {
-        ChangeEvent.fire(this);
-    }
-
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     private enum State {

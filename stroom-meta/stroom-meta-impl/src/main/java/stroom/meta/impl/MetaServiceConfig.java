@@ -16,11 +16,9 @@
 
 package stroom.meta.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.data.shared.StreamTypeNames;
+import stroom.meta.impl.db.MetaServiceDbConfig;
 import stroom.meta.shared.DataFormatNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.collections.CollectionUtil;
@@ -29,7 +27,6 @@ import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
@@ -49,7 +46,6 @@ import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 import java.util.Set;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -266,24 +262,5 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         LOGGER.debug("metaTypes: {}, rawMetaTypes: {}", metaTypes, rawMetaTypes);
         return metaTypes != null
                && metaTypes.containsAll(NullSafe.set(rawMetaTypes));
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class MetaServiceDbConfig extends AbstractDbConfig {
-
-        public MetaServiceDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public MetaServiceDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

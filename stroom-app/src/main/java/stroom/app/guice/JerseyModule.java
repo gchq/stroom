@@ -23,6 +23,7 @@ import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.openid.api.ClusterToken;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.jersey.JerseyClientFactory;
@@ -104,12 +105,16 @@ public class JerseyModule extends AbstractModule {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
 
                     final UserIdentityFactory userIdentityFactory = userIdentityFactoryProvider.get();
-                    if (!userIdentityFactory.isServiceUser(userIdentity)) {
-                        // We are running as a user who is not the service/proc user so need to put their
-                        // identity in the headers. We can't use the human user identity as they may have
-                        // an AWS token that we can't refresh.
-                        builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, securityContext.getUserRef().getUuid());
-                    }
+                    // Always name the effective caller in the run-as header: a human user's uuid, or the
+                    // processing-user sentinel for a genuine system/background call. The receiver requires
+                    // this header on a cluster token, so an accidental omission fails closed rather than
+                    // silently escalating to the processing user. (We can't use the human's own token as
+                    // they may have an AWS token that we can't refresh, so we always authenticate the node
+                    // as the proc user below and downscope via this header.)
+                    final String runAsUser = userIdentityFactory.isServiceUser(userIdentity)
+                            ? ClusterToken.PROCESSING_USER_SUBJECT
+                            : securityContext.getUserRef().getUuid();
+                    builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, runAsUser);
                     // Always authenticate as the proc user
                     final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
 

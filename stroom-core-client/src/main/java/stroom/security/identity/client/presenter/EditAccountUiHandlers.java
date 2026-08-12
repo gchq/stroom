@@ -21,4 +21,15 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface EditAccountUiHandlers extends UiHandlers {
 
     void onChangePassword();
+
+    /**
+     * Release a lock applied by repeated wrong passwords. Applied straight away rather than staged into the
+     * save, because it is a single unambiguous act with nothing to combine it with.
+     */
+    void onUnlock();
+
+    /**
+     * Make an account that has gone unused active again. Applied straight away, as for {@link #onUnlock()}.
+     */
+    void onReactivate();
 }

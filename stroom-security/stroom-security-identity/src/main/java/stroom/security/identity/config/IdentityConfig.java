@@ -16,15 +16,13 @@
 
 package stroom.security.identity.config;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.security.identity.db.IdentityDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -45,13 +43,23 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
     private static final boolean DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT = false;
     public static final boolean DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION = false;
+    private static final String DEFAULT_CERTIFICATE_CN_PATTERN = ".*\\((.*)\\)";
+    private static final int DEFAULT_FAILED_LOGIN_LOCK_THRESHOLD = 3;
     private static final int DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX = 1;
+    private static final boolean DEFAULT_REACTIVATE_INACTIVE_ACCOUNTS_ON_LOGIN = false;
+    private static final boolean DEFAULT_ALLOW_LOCKED_ACCOUNT_PASSWORD_RESET = false;
+    private static final StroomDuration DEFAULT_PASSWORD_RESET_REQUEST_COOLDOWN = StroomDuration.ofMinutes(1);
+    private static final StroomDuration DEFAULT_FAILED_LOGIN_LOCK_DURATION = StroomDuration.ofMinutes(30);
 
     private final boolean autoCreateAdminAccountOnBoot;
     private final boolean allowCertificateAuthentication;
     private final String certificateCnPattern;
     private final int certificateCnCaptureGroupIndex;
     private final Integer failedLoginLockThreshold;
+    private final StroomDuration failedLoginLockDuration;
+    private final boolean reactivateInactiveAccountsOnLogin;
+    private final boolean allowLockedAccountPasswordReset;
+    private final StroomDuration passwordResetRequestCooldown;
 
     private final EmailConfig emailConfig;
     private final TokenConfig tokenConfig;
@@ -62,9 +70,13 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public IdentityConfig() {
         autoCreateAdminAccountOnBoot = DEFAULT_AUTO_CREATE_ADMIN_ACCOUNT_ON_BOOT;
         allowCertificateAuthentication = DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION;
-        certificateCnPattern = ".*\\((.*)\\)";
+        certificateCnPattern = DEFAULT_CERTIFICATE_CN_PATTERN;
         certificateCnCaptureGroupIndex = DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX;
-        failedLoginLockThreshold = 3;
+        failedLoginLockThreshold = DEFAULT_FAILED_LOGIN_LOCK_THRESHOLD;
+        failedLoginLockDuration = DEFAULT_FAILED_LOGIN_LOCK_DURATION;
+        reactivateInactiveAccountsOnLogin = DEFAULT_REACTIVATE_INACTIVE_ACCOUNTS_ON_LOGIN;
+        allowLockedAccountPasswordReset = DEFAULT_ALLOW_LOCKED_ACCOUNT_PASSWORD_RESET;
+        passwordResetRequestCooldown = DEFAULT_PASSWORD_RESET_REQUEST_COOLDOWN;
 
         emailConfig = new EmailConfig();
         tokenConfig = new TokenConfig();
@@ -80,6 +92,13 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                           @JsonProperty("certificateCnPattern") final String certificateCnPattern,
                           @JsonProperty("certificateCnCaptureGroupIndex") final Integer certificateCnCaptureGroupIndex,
                           @JsonProperty("failedLoginLockThreshold") final Integer failedLoginLockThreshold,
+                          @JsonProperty("failedLoginLockDuration") final StroomDuration failedLoginLockDuration,
+                          @JsonProperty("reactivateInactiveAccountsOnLogin") final
+                          Boolean reactivateInactiveAccountsOnLogin,
+                          @JsonProperty("allowLockedAccountPasswordReset") final
+                          Boolean allowLockedAccountPasswordReset,
+                          @JsonProperty("passwordResetRequestCooldown") final
+                          StroomDuration passwordResetRequestCooldown,
                           @JsonProperty(PROP_NAME_EMAIL) final EmailConfig emailConfig,
                           @JsonProperty(PROP_NAME_TOKEN) final TokenConfig tokenConfig,
                           @JsonProperty(PROP_NAME_OPENID) final OpenIdConfig openIdConfig,
@@ -91,16 +110,40 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
         this.allowCertificateAuthentication = Objects.requireNonNullElse(
                 allowCertificateAuthentication,
                 DEFAULT_ALLOW_CERTIFICATE_AUTHENTICATION);
-        this.certificateCnPattern = certificateCnPattern;
+        // Defaulted like its siblings. Left raw, a partial identity block in the YAML that turned
+        // certificate authentication on would make Pattern.compile(null) throw on every attempt.
+        this.certificateCnPattern = Objects.requireNonNullElse(
+                certificateCnPattern,
+                DEFAULT_CERTIFICATE_CN_PATTERN);
         this.certificateCnCaptureGroupIndex = Objects.requireNonNullElse(
                 certificateCnCaptureGroupIndex,
                 DEFAULT_CERTIFICATE_CN_CAPTURE_GROUP_INDEX);
-        this.failedLoginLockThreshold = failedLoginLockThreshold;
-        this.emailConfig = emailConfig;
-        this.tokenConfig = tokenConfig;
-        this.openIdConfig = openIdConfig;
-        this.passwordPolicyConfig = passwordPolicyConfig;
-        this.dbConfig = dbConfig;
+        // Left raw, a partial identity block would leave this null - and a null threshold does not
+        // fail, it silently turns account lockout off altogether, which is worse than an error.
+        this.failedLoginLockThreshold = Objects.requireNonNullElse(
+                failedLoginLockThreshold,
+                DEFAULT_FAILED_LOGIN_LOCK_THRESHOLD);
+        this.failedLoginLockDuration = Objects.requireNonNullElse(
+                failedLoginLockDuration,
+                DEFAULT_FAILED_LOGIN_LOCK_DURATION);
+        this.reactivateInactiveAccountsOnLogin = Objects.requireNonNullElse(
+                reactivateInactiveAccountsOnLogin,
+                DEFAULT_REACTIVATE_INACTIVE_ACCOUNTS_ON_LOGIN);
+        this.allowLockedAccountPasswordReset = Objects.requireNonNullElse(
+                allowLockedAccountPasswordReset,
+                DEFAULT_ALLOW_LOCKED_ACCOUNT_PASSWORD_RESET);
+        this.passwordResetRequestCooldown = Objects.requireNonNullElse(
+                passwordResetRequestCooldown,
+                DEFAULT_PASSWORD_RESET_REQUEST_COOLDOWN);
+        // The nested blocks are defaulted like the scalars above, and for the same reason: a YAML block
+        // naming this section but not a sub-section left these null, and a null here does not fail on
+        // boot - it fails on the first sign in (passwordPolicy is read on every successful login) or the
+        // first reset request, long after the config that caused it was written.
+        this.emailConfig = Objects.requireNonNullElseGet(emailConfig, EmailConfig::new);
+        this.tokenConfig = Objects.requireNonNullElseGet(tokenConfig, TokenConfig::new);
+        this.openIdConfig = Objects.requireNonNullElseGet(openIdConfig, OpenIdConfig::new);
+        this.passwordPolicyConfig = Objects.requireNonNullElseGet(passwordPolicyConfig, PasswordPolicyConfig::new);
+        this.dbConfig = Objects.requireNonNullElseGet(dbConfig, IdentityDbConfig::new);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -109,7 +152,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                              "called 'admin' and a group called 'Administrators' with the app permission " +
                              "'Administrator'. If the 'admin' user account is created then its password will be " +
                              "set to 'admin'. This feature also requires that the 'identityProviderType' property " +
-                             "is set to INTERNAL_IDP or TEST_CREDENTIALS. The default value for this property is " +
+                             "is set to INTERNAL_IDP. The default value for this property is " +
                              "false. If false it is possible to create administrator users/groups using the " +
                              "'manage_users' CLI command.")
     public boolean isAutoCreateAdminAccountOnBoot() {
@@ -167,6 +210,57 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     }
 
     @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("How long an account locked by reaching 'failedLoginLockThreshold' failed logins " +
+                             "stays locked before it is unlocked automatically, so that a lockout is temporary " +
+                             "and cannot be used to deny a user access indefinitely. Set to zero (e.g. 'PT0S') to " +
+                             "disable automatic unlocking, in which case a locked account stays locked until an " +
+                             "administrator unlocks it or the user completes the 'Forgot password' flow. A lock " +
+                             "set manually by an administrator is never affected by this and never expires. Only " +
+                             "applies when using the internal identity provider.")
+    public StroomDuration getFailedLoginLockDuration() {
+        return this.failedLoginLockDuration;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("If true, an account that has been marked as inactive by the " +
+                             "'Account Maintenance' job will be automatically made active again when the user " +
+                             "next authenticates successfully with the correct password. Reactivation only " +
+                             "happens on a successful authentication, so resetting a password does not by " +
+                             "itself make an inactive account active again. Accounts that are locked, disabled " +
+                             "or are processing accounts are never reactivated this way. Only applies when " +
+                             "using the internal identity provider. The default value for this property is false.")
+    public boolean isReactivateInactiveAccountsOnLogin() {
+        return reactivateInactiveAccountsOnLogin;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("If true, a user whose account has been locked by exceeding " +
+                             "'failedLoginLockThreshold' may unlock it themselves by completing the " +
+                             "'Forgot password' flow. Successfully setting a new password clears the locked " +
+                             "state so the user can sign in again. This does not weaken the protection that " +
+                             "locking gives against password guessing because completing a reset requires " +
+                             "possession of the short lived token that is sent to the account's email " +
+                             "address. Requires 'passwordPolicy.allowPasswordResets' and email to be " +
+                             "configured. Only applies when using the internal identity provider. The " +
+                             "default value for this property is false.")
+    public boolean isAllowLockedAccountPasswordReset() {
+        return allowLockedAccountPasswordReset;
+    }
+
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("How long a user must wait between requesting one password reset email and " +
+                             "the next. This stops the unauthenticated 'Forgot password' endpoint being " +
+                             "used to send mail to someone's address over and over. " +
+                             "Requests for an address that has no account are not limited " +
+                             "here because no mail is sent for them. Only applies when using the " +
+                             "internal identity provider.")
+    public StroomDuration getPasswordResetRequestCooldown() {
+        return passwordResetRequestCooldown;
+    }
+
+    @NotNull
     @JsonProperty(PROP_NAME_TOKEN)
     public TokenConfig getTokenConfig() {
         return tokenConfig;
@@ -198,31 +292,15 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                ", certificateCnPattern='" + certificateCnPattern + '\'' +
                ", certificateCnCaptureGroupIndex=" + certificateCnCaptureGroupIndex +
                ", failedLoginLockThreshold=" + failedLoginLockThreshold +
+               ", failedLoginLockDuration=" + failedLoginLockDuration +
+               ", reactivateInactiveAccountsOnLogin=" + reactivateInactiveAccountsOnLogin +
+               ", allowLockedAccountPasswordReset=" + allowLockedAccountPasswordReset +
+               ", passwordResetRequestCooldown=" + passwordResetRequestCooldown +
                ", emailConfig=" + emailConfig +
                ", tokenConfig=" + tokenConfig +
                ", openIdConfig=" + openIdConfig +
                ", passwordPolicyConfig=" + passwordPolicyConfig +
                ", dbConfig=" + dbConfig +
                '}';
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class IdentityDbConfig extends AbstractDbConfig {
-
-        public IdentityDbConfig() {
-            super();
-        }
-
-        @SuppressWarnings("unused")
-        @JsonCreator
-        public IdentityDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

@@ -19,6 +19,7 @@ package stroom.planb.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -51,23 +52,26 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
     private final PlanBDocStore planBDocStore;
     private final LoadingStroomCache<String, PlanBDoc> cache;
     private final SecurityContext securityContext;
+    private final DocFinder docFinder;
 
     @Inject
     PlanBDocCacheImpl(final CacheManager cacheManager,
                       final PlanBDocStore planBDocStore,
                       final SecurityContext securityContext,
-                      final Provider<PlanBConfig> stateConfigProvider) {
+                      final Provider<PlanBConfig> stateConfigProvider,
+                      final DocFinder docFinder) {
         this.planBDocStore = planBDocStore;
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> stateConfigProvider.get().getStateDocCache(),
                 this::create);
+        this.docFinder = docFinder;
     }
 
     private PlanBDoc create(final String name) {
         return securityContext.asProcessingUserResult(() -> {
-            final List<DocRef> list = planBDocStore.findByName(name);
+            final List<DocRef> list = docFinder.findByName(PlanBDoc.TYPE, name);
             if (list.size() > 1) {
                 throw new RuntimeException("Unexpectedly found more than one state doc with key: " + name);
             }

@@ -17,6 +17,7 @@
 package stroom.gitrepo.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.shared.scheduler.CronExpressions;

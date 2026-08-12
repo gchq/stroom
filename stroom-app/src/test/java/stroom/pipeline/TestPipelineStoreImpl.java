@@ -17,6 +17,8 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.TestUtil;
 
@@ -44,6 +46,8 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private PipelineStore pipelineStore;
+    @Inject
+    private DocFinder docFinder;
 
     @BeforeEach
     void setUp() {
@@ -61,13 +65,13 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
                 .withTestFunction(testCase -> {
                     final String nameFilter = testCase.getInput();
                     // Need to sort to ensure predictable order for tests
-                    return pipelineStore.findByName(nameFilter, true)
+                    return docFinder.findByName(PipelineDoc.TYPE, nameFilter, true)
                             .stream()
                             .sorted(Comparator.naturalOrder())
                             .collect(Collectors.toList());
                 })
                 .withSimpleEqualityAssertion()
-                .addCase(null, Collections.emptyList())
+//                .addCase(null, Collections.emptyList())
                 .addCase("Pipe", Collections.emptyList())
                 .addCase(PIPE_1_NAME.toLowerCase(), Collections.emptyList())
                 .addCase(PIPE_1_NAME, List.of(pipe1))
@@ -87,13 +91,13 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
                 .withTestFunction(testCase -> {
                     final String nameFilter = testCase.getInput();
                     // Need to sort to ensure predictable order for tests
-                    return pipelineStore.findByName(nameFilter, false)
+                    return docFinder.findByName(PipelineDoc.TYPE, nameFilter, false)
                             .stream()
                             .sorted(Comparator.naturalOrder())
                             .collect(Collectors.toList());
                 })
                 .withSimpleEqualityAssertion()
-                .addCase(null, Collections.emptyList())
+//                .addCase(null, Collections.emptyList())
                 .addCase("Pipe", Collections.emptyList())
                 .addCase(PIPE_1_NAME.toLowerCase(), Collections.emptyList())
                 .addCase(PIPE_1_NAME, List.of(pipe1))

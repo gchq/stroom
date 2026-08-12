@@ -18,6 +18,7 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.impl.db.migration.legacyqd.ExpressionTerm;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.query.api.ExpressionOperator;

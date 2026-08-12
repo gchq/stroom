@@ -17,80 +17,124 @@
 package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.RWLockFactory;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.importexport.api.ImportExportDocument;
-import stroom.util.PredicateUtil;
-import stroom.util.shared.NullSafe;
-import stroom.util.string.PatternUtil;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
+/**
+ * Abstraction over the underlying document storage mechanism (database, filesystem, or in-memory).
+ * Each implementation is responsible for CRUD operations, auditing, listing, and search
+ * across document types. Implementations must handle their own concurrency control
+ * (e.g. database transactions, file-system locks).
+ */
 public interface Persistence {
 
+    /**
+     * Check whether a non-deleted document exists for the given reference.
+     *
+     * @param docRef the document reference to check
+     * @return {@code true} if the document exists and has not been deleted
+     */
     boolean exists(DocRef docRef);
 
-    void delete(DocRef docRef);
+    /**
+     * Delete a document. Database implementations use soft-delete (setting a deleted timestamp);
+     * filesystem implementations physically remove the files.
+     *
+     * @param docRef  the document to delete
+     * @param userRef the user performing the deletion (recorded for audit)
+     */
+    void delete(DocRef docRef, UserRef userRef);
 
+    /**
+     * Read all asset data for a document.
+     *
+     * @param docRef the document to read
+     * @return the document's assets (meta, data, etc.), or {@code null} / exception if not found
+     * @throws IOException if there is an error reading the data
+     */
     ImportExportDocument read(DocRef docRef) throws IOException;
 
-    void write(DocRef docRef, boolean update, ImportExportDocument importExportDocument) throws IOException;
+    /**
+     * Write document data to storage.
+     *
+     * @param docRef                 the document reference
+     * @param auditAction            the audit action being performed
+     * @param userRef                the user performing the action
+     * @param importExportDocument   the document data to write
+     * @param expectedVersion        for UPDATE/RENAME: the version the caller expects to be current
+     *                               (throws {@link stroom.util.exception.DataChangedException} if stale).
+     *                               For CREATE/COPY/IMPORT: {@code null} (no version check).
+     * @param newVersion             the new version to set on the document after a successful write
+     */
+    void write(DocRef docRef, AuditAction auditAction, UserRef userRef,
+               ImportExportDocument importExportDocument,
+               String expectedVersion, String newVersion) throws IOException;
 
+    /**
+     * List all non-deleted documents of the given type.
+     *
+     * @param type the document type to list
+     * @return the matching document references, or an empty list if none found
+     */
     List<DocRef> list(String type);
 
-    RWLockFactory getLockFactory();
-
+    /**
+     * Find document references that are embedded within the given parent document.
+     * For example, a pipeline document may embed references to XSLT or dictionary documents.
+     *
+     * @param parent the parent document to search within
+     * @return the embedded document references, or an empty list if none found
+     */
     List<DocRef> findDocRefsEmbeddedIn(final DocRef parent);
+
+    /**
+     * List documents across multiple types.
+     * If types is null or empty, returns an empty list.
+     */
+    List<DocRef> list(Collection<String> types);
 
     /**
      * Find docRefs by name and type. Name can be optionally wild carded using '*' to match 0-many chars.
      */
-    default List<DocRef> find(final String type,
-                              final String nameFilter,
-                              final boolean allowWildCards) {
-        // Default impl that does all filtering in java. Not efficient for DB impls.
-        return nameFilter == null
-                ? Collections.emptyList()
-                : find(type, List.of(nameFilter), allowWildCards);
-    }
+    List<DocRef> find(String type,
+                      String nameFilter,
+                      boolean allowWildCards);
 
     /**
      * Find docRefs by type and one or more nameFilters.
      * nameFilters can be optionally wild carded using '*' to match 0-many chars.
      */
-    default List<DocRef> find(final String type,
-                              final List<String> nameFilters,
-                              final boolean allowWildCards) {
-        // Default impl that does all filtering in java. Not efficient for DB impls.
-        if (NullSafe.isEmptyCollection(nameFilters)) {
-            return Collections.emptyList();
-        } else {
-            // Merge the filters into one predicate
-            final Predicate<DocRef> combinedPredicate = nameFilters.stream()
-                    .map(nameFilter -> {
-                        final Predicate<DocRef> predicate;
-                        if (allowWildCards && PatternUtil.containsWildCards(nameFilter)) {
-                            final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(
-                                    nameFilter, true);
-                            predicate = docRef ->
-                                    pattern.matcher(docRef.getName()).matches();
-                        } else {
-                            predicate = docRef ->
-                                    nameFilter.equals(docRef.getName());
-                        }
-                        return predicate;
-                    })
-                    .reduce(PredicateUtil::orPredicates)
-                    .orElse(val -> false); // no filters, no matches
+    List<DocRef> find(String type,
+                      List<String> nameFilters,
+                      boolean allowWildCards);
 
-            return list(type)
-                    .stream()
-                    .filter(combinedPredicate)
-                    .collect(Collectors.toList());
-        }
-    }
+    /**
+     * Find docRefs by name across multiple types. If types is null or empty, searches ALL types.
+     * This is the cross-type variant used by caches and services.
+     */
+    List<DocRef> find(Collection<String> types,
+                      List<String> nameFilters,
+                      boolean allowWildCards);
+
+    /**
+     * Get the current name for the supplied doc ref.
+     *
+     * @param docRef The doc ref to get the name for.
+     * @return The name or empty if not found.
+     */
+    Optional<String> getName(DocRef docRef);
+
+    /**
+     * Get document audit entries by UUID without needing to know the document type.
+     * Returns empty result page if the document doesn't exist.
+     */
+    ResultPage<DocAuditEntry> getAuditInfo(DocRef docRef);
 }

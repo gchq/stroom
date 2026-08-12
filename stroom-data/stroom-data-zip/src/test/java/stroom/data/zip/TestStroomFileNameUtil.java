@@ -68,4 +68,16 @@ class TestStroomFileNameUtil {
                 null, 3000, staticTemplate, attributeMap))
                 .isEqualTo("003/003000_someStaticText");
     }
+
+    @Test
+    void testConstructFilename_neutralisesTraversal() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", "../../etc");
+
+        // The '..' parts of a substituted value must be neutralised so the cleaned path cannot escape upward
+        // when it is later resolved against an output directory.
+        assertThat(StroomFileNameUtil.constructFilename(
+                null, 1, "${feed}/${id}", attributeMap, ".zip"))
+                .isEqualTo("_/_/etc/001.zip");
+    }
 }

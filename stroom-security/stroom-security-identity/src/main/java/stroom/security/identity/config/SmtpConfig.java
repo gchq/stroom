@@ -38,6 +38,7 @@ import java.util.Objects;
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final int DEFAULT_PORT = 2525;
+    private static final String DEFAULT_TRANSPORT = "plain";
 
     @NotNull
     @JsonProperty("host")
@@ -67,7 +68,7 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     public SmtpConfig() {
         host = "localhost";
         port = DEFAULT_PORT;
-        transport = "plain";
+        transport = DEFAULT_TRANSPORT;
         password = null;
         username = null;
     }
@@ -81,7 +82,10 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
                       @JsonProperty("password") final String password) {
         this.host = host;
         this.port = Objects.requireNonNullElse(port, DEFAULT_PORT);
-        this.transport = transport;
+        // Defaulted like the port. Left raw, an smtp block that omits it makes getTransportStrategy
+        // throw inside the executor that sends the mail - by which point the user has already been
+        // told their reset email is on its way.
+        this.transport = Objects.requireNonNullElse(transport, DEFAULT_TRANSPORT);
         this.username = username;
         this.password = password;
     }
@@ -119,12 +123,15 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     @Override
     public String toString() {
+        // Deliberately does NOT include the password, so the object can be logged without leaking the SMTP
+        // credential. This is chained into EmailConfig and IdentityConfig, so any debug log or config dump that
+        // renders the identity configuration would otherwise write it to disk.
         return "SmtpConfig{" +
                 "host='" + host + '\'' +
                 ", port=" + port +
                 ", transport='" + transport + '\'' +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
+                ", password='****'" +
                 '}';
     }
 }

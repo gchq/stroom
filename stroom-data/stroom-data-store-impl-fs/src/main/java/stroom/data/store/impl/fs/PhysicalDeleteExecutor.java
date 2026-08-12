@@ -280,7 +280,7 @@ public class PhysicalDeleteExecutor {
 
                 deleteEmptyDirs(deleteThresholdEpoch, progress, physicalDeleteOutcomes);
 
-                if (Thread.interrupted()) {
+                if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException();
                 }
 
@@ -406,7 +406,7 @@ public class PhysicalDeleteExecutor {
                 durationTimer.get(),
                 progress.getFailureCount()));
 
-        if (Thread.interrupted()) {
+        if (Thread.currentThread().isInterrupted()) {
             throw new InterruptedException();
         }
     }

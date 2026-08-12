@@ -16,8 +16,7 @@
 
 package stroom.guice;
 
-
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.AnalyticsDataSetup;
 import stroom.analytics.impl.AnalyticRuleStore;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;

@@ -18,14 +18,13 @@ ext.moduleName = 'stroom.dashboard.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
     implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -37,29 +36,25 @@ dependencies {
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.commons.text
-    implementation libs.dropwizard.jersey
     implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
-    implementation libs.jersey.client
-    implementation libs.jersey.common
-    implementation libs.poi
     implementation libs.poi.ooxml
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
 
-    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+    runtimeOnly libs.mysql.connector.java
+
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

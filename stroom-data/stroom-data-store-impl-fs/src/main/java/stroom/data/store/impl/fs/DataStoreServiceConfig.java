@@ -16,12 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.data.store.impl.fs.db.DataStoreServiceDbConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -32,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class DataStoreServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -163,24 +159,5 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
                 fileSystemCleanBatchSize,
                 fileSystemCleanDeleteOut,
                 fileSystemCleanOldAge);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class DataStoreServiceDbConfig extends AbstractDbConfig {
-
-        public DataStoreServiceDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public DataStoreServiceDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

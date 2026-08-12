@@ -240,11 +240,13 @@ class TestDictionaryStoreImpl {
                 Mockito.any(),
                 Mockito.eq(DictionaryDoc.TYPE),
                 Mockito.any(),
+                Mockito.any(),
                 Mockito.any());
         Mockito.when(store).thenReturn(mockStore);
 
         return new DictionaryStoreImpl(
                 mockStoreFactory,
-                mockDictionarySerialiser);
+                mockDictionarySerialiser,
+                null);
     }
 }

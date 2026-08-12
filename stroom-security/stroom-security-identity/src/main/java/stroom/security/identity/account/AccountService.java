@@ -17,10 +17,10 @@
 package stroom.security.identity.account;
 
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountChange;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
@@ -31,13 +31,24 @@ public interface AccountService {
 
     ResultPage<Account> search(FindAccountRequest request);
 
-    Account create(CreateAccountRequest request);
+    /**
+     * @param enforcePasswordPolicy When {@code false} the configured password length/strength policy is
+     *                              not applied. Used only for the boot-time default admin account, which is
+     *                              a deliberate known-weak default that is force-changed on first login;
+     *                              enforcing the policy there would break {@code autoCreateAdminAccountOnBoot}
+     *                              whenever a non-trivial policy is configured.
+     */
+    Account create(CreateAccountRequest request, boolean enforcePasswordPolicy);
+
+    default Account create(final CreateAccountRequest request) {
+        return create(request, true);
+    }
 
     Optional<Account> read(int accountId);
 
     Optional<Account> read(String userId);
 
-    void update(UpdateAccountRequest request, int accountId);
+    void update(AccountChange change, int accountId);
 
     void delete(int accountId);
 }

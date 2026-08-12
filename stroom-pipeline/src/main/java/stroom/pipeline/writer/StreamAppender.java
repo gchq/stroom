@@ -20,7 +20,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
@@ -49,6 +49,7 @@ import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @ConfigurableElement(
         type = "StreamAppender",
@@ -69,7 +70,7 @@ public class StreamAppender extends AbstractAppender {
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     private DocRef feedRef;
@@ -88,7 +89,7 @@ public class StreamAppender extends AbstractAppender {
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
                           final RecordCount recordCount,
-                          final DocRefInfoService docRefInfoService,
+                          final DocFinder docFinder,
                           final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
@@ -97,7 +98,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
@@ -107,9 +108,11 @@ public class StreamAppender extends AbstractAppender {
 
         String feed = null;
         if (feedRef != null) {
-            feed = docRefInfoService.name(feedRef).orElse(null);
-            if (Strings.isNullOrEmpty(feed)) {
+            final Optional<String> name = docFinder.getName(feedRef);
+            if (name.isEmpty()) {
                 fatal("Feed not found");
+            } else {
+                feed = name.get();
             }
 
         } else if (parentMeta == null) {

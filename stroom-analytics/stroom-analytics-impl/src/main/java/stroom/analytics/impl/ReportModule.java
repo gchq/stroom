@@ -17,12 +17,8 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.ReportDoc;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -31,17 +27,8 @@ public class ReportModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ReportStore.class).to(ReportStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(ReportStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ReportStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(ReportStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(ReportDoc.TYPE, ReportStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(ReportDoc.TYPE, ReportStore.class, ReportStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

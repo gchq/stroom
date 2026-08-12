@@ -16,14 +16,14 @@
 
 package stroom.planb.impl;
 
-import stroom.planb.impl.db.histogram.HistogramFields;
-import stroom.planb.impl.db.metric.MetricFields;
-import stroom.planb.impl.db.rangestate.RangeStateFields;
-import stroom.planb.impl.db.session.SessionFields;
-import stroom.planb.impl.db.state.StateFields;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateFields;
-import stroom.planb.impl.db.temporalstate.TemporalStateFields;
-import stroom.planb.impl.db.trace.TraceFields;
+import stroom.planb.impl.dao.histogram.HistogramFields;
+import stroom.planb.impl.dao.metric.MetricFields;
+import stroom.planb.impl.dao.rangestate.RangeStateFields;
+import stroom.planb.impl.dao.session.SessionFields;
+import stroom.planb.impl.dao.state.StateFields;
+import stroom.planb.impl.dao.temporalrangestate.TemporalRangeStateFields;
+import stroom.planb.impl.dao.temporalstate.TemporalStateFields;
+import stroom.planb.impl.dao.trace.TraceFields;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.MetricValueSchema;

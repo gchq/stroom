@@ -16,13 +16,10 @@
 
 package stroom.job.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.job.impl.db.JobSystemDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.ModelStringUtil;
 
@@ -35,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -130,21 +126,5 @@ public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, H
                 "enabled=" + enabled +
                 ", executionInterval='" + executionInterval + '\'' +
                 '}';
-    }
-
-    @BootStrapConfig
-    public static class JobSystemDbConfig extends AbstractDbConfig {
-
-        public JobSystemDbConfig() {
-            super();
-        }
-
-        @SuppressWarnings("unused")
-        @JsonCreator
-        public JobSystemDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

@@ -26,7 +26,7 @@ import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;

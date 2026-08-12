@@ -112,7 +112,9 @@ public class KeyBinding {
         addGotoKeySequence(Action.GOTO_USER_GROUPS, KeyCodes.KEY_G);
         addGotoKeySequence(Action.GOTO_USER_PREFERENCES, KeyCodes.KEY_U);
         addGotoKeySequence(Action.GOTO_FS_VOLUMES, KeyCodes.KEY_V);
+        addGotoKeySequence(Action.GOTO_USER_ACCESS, KeyCodes.KEY_W);
         addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
+        addGotoKeySequence(Action.GOTO_SIGNING_KEYS, KeyCodes.KEY_Y);
 
         // Binds for creating a document. Sort these by 2nd key
         addCreateDocKeySequence(Action.CREATE_ANNOTATION, KeyCodes.KEY_A);
@@ -537,6 +539,7 @@ public class KeyBinding {
         GOTO_ANNOTATIONS,
         GOTO_PROPERTIES,
         GOTO_API_KEYS,
+        GOTO_SIGNING_KEYS,
         GOTO_CACHES,
         GOTO_DATA_RETENTION,
         GOTO_CONTENT_TEMPLATES,
@@ -550,6 +553,7 @@ public class KeyBinding {
         GOTO_APP_PERMS,
         GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
+        GOTO_USER_ACCESS,
         GOTO_USER_ACCOUNTS,
         GOTO_USER_PROFILE,
         GOTO_USERS,

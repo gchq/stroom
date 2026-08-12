@@ -16,8 +16,10 @@
 
 package stroom.processor.impl;
 
-import org.junit.jupiter.api.Disabled;
+import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
+import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 
+import org.junit.jupiter.api.Disabled;
 
 @Disabled
 class TestProcessorTaskManagerRecentStreamDetails {

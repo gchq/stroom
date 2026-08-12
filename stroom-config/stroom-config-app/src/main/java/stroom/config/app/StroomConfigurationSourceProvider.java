@@ -16,24 +16,26 @@
 
 package stroom.config.app;
 
+import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
+import stroom.util.io.StreamUtil;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import jakarta.validation.constraints.NotNull;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -80,7 +82,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         try (final InputStream in = delegate.open(path)) {
             // This is the yaml tree after passing though the delegate
             // substitutions
-            final YAMLMapper mapper = YamlUtil.getNoIndentMapper();
+            final ObjectMapper mapper = YamlV2Util.getNoIndentMapper();
             final JsonNode rootNode = mapper.readTree(in);
 
             Objects.requireNonNull(rootNode, () ->
@@ -110,11 +112,11 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     /**
      * Merge our compile time defaults with the de-serialised config so we have a full tree
      */
-    private void mergeInDefaultConfig(final YAMLMapper yamlMapper,
+    private void mergeInDefaultConfig(final ObjectMapper objectMapper,
                                       final JsonNode rootNode) {
         final JsonNode appConfigNode = rootNode.at(APP_CONFIG_JSON_POINTER);
         final AppConfig defaultConfig = new AppConfig();
-        final JsonNode defaultConfigNode = yamlMapper.valueToTree(defaultConfig);
+        final JsonNode defaultConfigNode = objectMapper.valueToTree(defaultConfig);
 
         if (appConfigNode == null || appConfigNode.isMissingNode()) {
             ((ObjectNode) rootNode).set(
@@ -123,34 +125,34 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             throw new RuntimeException("No config node found at " + APP_CONFIG_JSON_POINTER);
         }
 
-        YamlUtil.mergeYamlNodeTrees(
-                yamlMapper,
+        YamlV2Util.mergeYamlNodeTrees(
+                objectMapper,
                 objectMapper2 ->
                         appConfigNode,
                 objectMapper2 ->
-                        yamlMapper.valueToTree(defaultConfig));
+                        objectMapper.valueToTree(defaultConfig));
     }
 
-//    private void dumpYamlDiff(final String path,
-//                              final InputStream in,
-//                              final ObjectMapper mapper,
-//                              final JsonNode rootNode) throws IOException {
-//        in.reset();
-//        try {
-//            final String originalYaml = StreamUtil.streamToString(in);
-//            final String newYaml = mapper.writeValueAsString(rootNode);
-//            DiffUtil.unifiedDiff(
-//                    originalYaml,
-//                    newYaml,
-//                    true,
-//                    3,
-//                    diffLines ->
-//                            log("Comparing original and modified yaml:\n{}",
-//                                    String.join("\n", diffLines)));
-//        } catch (final Exception e) {
-//            log("Unable to read file " + path, e);
-//        }
-//    }
+    private void dumpYamlDiff(final String path,
+                              final InputStream in,
+                              final ObjectMapper mapper,
+                              final JsonNode rootNode) throws IOException {
+        in.reset();
+        try {
+            final String originalYaml = StreamUtil.streamToString(in);
+            final String newYaml = mapper.writeValueAsString(rootNode);
+            DiffUtil.unifiedDiff(
+                    originalYaml,
+                    newYaml,
+                    true,
+                    3,
+                    diffLines ->
+                            log("Comparing original and modified yaml:\n{}",
+                                    String.join("\n", diffLines)));
+        } catch (final IOException e) {
+            log("Unable to read file " + path, e);
+        }
+    }
 
 
     private void mutateNodes(final JsonNode rootNode,
@@ -175,11 +177,11 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                 mutateNodes(parent.get(i), names, valueMutator, path + "/" + i);
             }
         } else if (parent instanceof ObjectNode) {
-            parent.properties().forEach(entry -> {
+            parent.fields().forEachRemaining(entry -> {
                 final String valueNodePath = path + "/" + entry.getKey();
                 if (names.contains(entry.getKey())) {
                     // found our node so mutate it
-                    final String value = entry.getValue().stringValue();
+                    final String value = entry.getValue().textValue();
                     final String newValue = valueMutator.apply(value);
                     log("Replacing value for \"{}\": [{}] => [{}]",
                             valueNodePath, value, newValue);

@@ -21,6 +21,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public interface DataSourceProvider {
 
@@ -78,5 +79,31 @@ public interface DataSourceProvider {
      */
     default Optional<QueryField> getTimeField(final DocRef docRef) {
         return Optional.empty();
+    }
+
+    /**
+     * Find a data source by its UUID.
+     *
+     * @param uuid The UUID to search for.
+     * @return An optional matching DocRef.
+     */
+    default Optional<DocRef> findDataSourceByUuid(final String uuid) {
+        return getDataSourceDocRefs()
+                .stream()
+                .filter(docRef -> docRef != null && uuid.equals(docRef.getUuid()))
+                .findFirst();
+    }
+
+    /**
+     * Find data sources matching the given name.
+     *
+     * @param name The name to search for.
+     * @return A list of matching DocRefs.
+     */
+    default List<DocRef> findDataSourceByName(final String name) {
+        return getDataSourceDocRefs()
+                .stream()
+                .filter(docRef -> docRef != null && name.equals(docRef.getName()))
+                .collect(Collectors.toList());
     }
 }

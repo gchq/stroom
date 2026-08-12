@@ -17,13 +17,9 @@
 package stroom.search.solr;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
@@ -49,7 +45,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -57,100 +52,26 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Singleton
-public class SolrIndexStoreImpl implements SolrIndexStore {
+public class SolrIndexStoreImpl
+        extends AbstractDocumentStore<SolrIndexDoc>
+        implements SolrIndexStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexStoreImpl.class);
 
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
 
-    private final Store<SolrIndexDoc> store;
     private final SolrIndexClientCache solrIndexClientCache;
 
     @Inject
     SolrIndexStoreImpl(final StoreFactory storeFactory,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 SolrIndexDoc.TYPE,
                 SolrIndexDoc::builder,
                 SolrIndexDoc::copy);
         this.solrIndexClientCache = solrIndexClientCache;
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public SolrIndexDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
     }
 
     @Override
@@ -262,7 +183,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
         builder.solrSynchState(new SolrSynchState(System.currentTimeMillis(), messages));
 
-        return store.writeDocument(builder.build());
+        return getStore().writeDocument(builder.build());
     }
 
     private List<SolrIndexField> fetchSolrFields(final SolrClient solrClient,
@@ -275,15 +196,15 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    final SolrIndexField.Builder builder = field.copy();
-                    builder.fldType(FieldType.TEXT);
+                    final SolrIndexField.Builder fieldBuilder = field.copy();
+                    fieldBuilder.fldType(FieldType.TEXT);
 
                     final SolrIndexField existingField = existingFieldMap.get(field.getFldName());
                     if (existingField != null) {
-                        builder.fldType(existingField.getFldType());
+                        fieldBuilder.fldType(existingField.getFldType());
                     }
 
-                    return builder.build();
+                    return fieldBuilder.build();
                 })
                 .collect(Collectors.toList());
     }
@@ -361,61 +282,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                               final boolean omitAuditFields,
-                                               final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList, doc ->
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
+        return getStore().exportDocument(docRef, omitAuditFields, messageList, doc ->
                 doc.copy().solrSynchState(null).build());
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 }

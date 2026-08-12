@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;

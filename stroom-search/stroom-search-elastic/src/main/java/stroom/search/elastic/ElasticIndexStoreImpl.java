@@ -17,28 +17,19 @@
 package stroom.search.elastic;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 @Singleton
-public class ElasticIndexStoreImpl implements ElasticIndexStore {
+public class ElasticIndexStoreImpl
+        extends AbstractDocumentStore<ElasticIndexDoc>
+        implements ElasticIndexStore {
 
-    private final Store<ElasticIndexDoc> store;
     private final ElasticIndexService elasticIndexService;
 
     @Inject
@@ -46,7 +37,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
             final StoreFactory storeFactory,
             final ElasticIndexService elasticIndexService,
             final ElasticIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 ElasticIndexDoc.TYPE,
                 ElasticIndexDoc::builder,
@@ -54,150 +45,24 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         this.elasticIndexService = elasticIndexService;
     }
 
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
-    }
-
-    @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {
-        final ElasticIndexDoc doc = store.readDocument(docRef);
+        final ElasticIndexDoc doc = getStore().readDocument(docRef);
         return doc.copy().fields(elasticIndexService.getFields(doc)).build();
     }
 
     @Override
     public ElasticIndexDoc writeDocument(final ElasticIndexDoc document) {
-        return store.writeDocument(document.copy().fields(elasticIndexService.getFields(document)).build());
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
+        return getStore().writeDocument(document.copy().fields(elasticIndexService.getFields(document)).build());
     }
 
     @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<ElasticIndexDoc> createMapper() {
+    protected DependencyRemapFunction<ElasticIndexDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             dependencyRemapper.remap(doc.getClusterRef());
             dependencyRemapper.remap(doc.getVectorGenerationModelRef());
             dependencyRemapper.remap(doc.getRerankModelRef());
             return doc;
         };
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 }

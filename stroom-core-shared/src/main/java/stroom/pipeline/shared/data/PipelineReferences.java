@@ -34,6 +34,11 @@ public class PipelineReferences extends AbstractAddRemove<PipelineReference> {
         super(add, remove);
     }
 
+    // NOTE: Unlike elements, links and properties, reference order IS significant - reference data
+    // lookups try each loader in the order the references appear - so the inherited order sensitive
+    // comparison in AbstractAddRemove is deliberately kept, and re-ordering references counts as a
+    // change.
+
 
     // --------------------------------------------------------------------------------
 

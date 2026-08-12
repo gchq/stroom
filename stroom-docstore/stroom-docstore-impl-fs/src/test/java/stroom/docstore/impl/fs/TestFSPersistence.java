@@ -17,13 +17,14 @@
 package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
+import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -47,24 +48,22 @@ class TestFSPersistence {
 
         // Ensure the doc doesn't exist.
         if (persistence.exists(docRef)) {
-            persistence.delete(docRef);
+            persistence.delete(docRef, null);
         }
 
-        GenericDoc doc = new GenericDoc(
-                docRef.getUuid(),
-                docRef.getName(),
-                null,
-                null,
-                null,
-                null,
-                null);
+        GenericDoc doc = GenericDoc
+                .builder()
+                .type(docRef.getType())
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .build();
         final JsonMapper mapper = JsonUtil.getNoIndentMapper();
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
         // Create
         final ImportExportDocument ieDoc = new ImportExportDocument();
-        ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
-        persistence.write(docRef, false, ieDoc);
+        ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
+        persistence.write(docRef, AuditAction.CREATE, null, ieDoc, null, UUID.randomUUID().toString());
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
@@ -85,8 +84,8 @@ class TestFSPersistence {
         doc = doc.copy().name("New Name").build();
         bytes = mapper.writeValueAsBytes(doc);
         final ImportExportDocument ieDocNewName = new ImportExportDocument();
-        ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
-        persistence.write(docRef, true, ieDocNewName);
+        ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
+        persistence.write(docRef, AuditAction.UPDATE, null, ieDocNewName, null, UUID.randomUUID().toString());
 
         // Read
         final ImportExportDocument ieDocNewNameRead = persistence.read(docRef);
@@ -101,53 +100,6 @@ class TestFSPersistence {
         assertThat(refs.getFirst().getName()).isEqualTo("New Name");
 
         // Delete
-        persistence.delete(docRef);
-    }
-
-    private static class GenericDoc extends AbstractDoc {
-
-        public GenericDoc(@JsonProperty("uuid") final String uuid,
-                          @JsonProperty("name") final String name,
-                          @JsonProperty("version") final String version,
-                          @JsonProperty("createTimeMs") final Long createTimeMs,
-                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                          @JsonProperty("createUser") final String createUser,
-                          @JsonProperty("updateUser") final String updateUser) {
-            super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        }
-
-        public Builder copy() {
-            return new Builder(this);
-        }
-
-        public static Builder builder() {
-            return new Builder();
-        }
-
-        public static final class Builder extends AbstractBuilder<GenericDoc, Builder> {
-
-            private Builder() {
-            }
-
-            private Builder(final GenericDoc genericDoc) {
-                super(genericDoc);
-            }
-
-            @Override
-            protected Builder self() {
-                return this;
-            }
-
-            public GenericDoc build() {
-                return new GenericDoc(
-                        uuid,
-                        name,
-                        version,
-                        createTimeMs,
-                        updateTimeMs,
-                        createUser,
-                        updateUser);
-            }
-        }
+        persistence.delete(docRef, null);
     }
 }

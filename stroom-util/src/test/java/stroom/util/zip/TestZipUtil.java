@@ -30,6 +30,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestZipUtil {
 
@@ -88,7 +91,7 @@ class TestZipUtil {
 
         // It will create the target dir and all child dirs
         Assertions.assertThat(subDir)
-                        .doesNotExist();
+                .doesNotExist();
         ZipUtil.unzip(zipFile, subDir);
 
         dumpDirContents(dir);
@@ -309,4 +312,85 @@ class TestZipUtil {
 //        final Snapshot snapshot = DirectorySnapshot.of(dir);
 //        LOGGER.debug("snapshot: \n{}", snapshot);
     }
+
+    /**
+     * An entry that resolves outside the target directory must not be extracted (zip slip). The benign
+     * leading entry matters: it creates the target directory, without which the escaping path fails to even
+     * resolve on some file systems, letting a vulnerable implementation pass by accident.
+     */
+    @Test
+    void testUnzipStreamRejectsZipSlip(@TempDir final Path dir) throws IOException {
+        final Path targetDir = dir.resolve("target");
+        final byte[] zipBytes = createZipWithEntries("ok.txt", "../evil.txt");
+
+        assertThatThrownBy(() ->
+                ZipUtil.unzip(new ByteArrayInputStream(zipBytes), targetDir))
+                .isInstanceOf(IOException.class);
+
+        // Nothing must have been written outside the target dir.
+        assertThat(dir.resolve("evil.txt")).doesNotExist();
+    }
+
+    /**
+     * The file based variant must reject the same thing.
+     */
+    @Test
+    void testUnzipFileRejectsZipSlip(@TempDir final Path dir) throws IOException {
+        final Path targetDir = dir.resolve("target");
+        final Path zipFile = dir.resolve("evil.zip");
+        Files.write(zipFile, createZipWithEntries("ok.txt", "../evil.txt"));
+
+        assertThatThrownBy(() ->
+                ZipUtil.unzip(zipFile, targetDir))
+                .isInstanceOf(IOException.class);
+
+        assertThat(dir.resolve("evil.txt")).doesNotExist();
+    }
+
+    /**
+     * The stream variant is used where the ZIP data never touches disk, e.g. fetching Plan B snapshots, so
+     * make sure it extracts equivalent content to the file based variant.
+     */
+    @Test
+    void testUnzipStream(@TempDir final Path dir) throws IOException {
+        final Path targetDir = dir.resolve("target");
+        final byte[] zipBytes = createZipWithEntry("dir/file1.txt", "hello world");
+
+        ZipUtil.unzip(new ByteArrayInputStream(zipBytes), targetDir);
+
+        assertThat(targetDir.resolve("dir").resolve("file1.txt"))
+                .isRegularFile()
+                .hasContent("hello world");
+    }
+
+    private byte[] createZipWithEntry(final String entryName, final String content) throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final ZipArchiveOutputStream zipOutputStream =
+                ZipUtil.createOutputStream(byteArrayOutputStream)) {
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(entryName));
+            try {
+                zipOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
+            } finally {
+                zipOutputStream.closeArchiveEntry();
+            }
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private byte[] createZipWithEntries(final String... entryNames) throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final ZipArchiveOutputStream zipOutputStream =
+                ZipUtil.createOutputStream(byteArrayOutputStream)) {
+            for (final String entryName : entryNames) {
+                zipOutputStream.putArchiveEntry(new ZipArchiveEntry(entryName));
+                try {
+                    zipOutputStream.write("content".getBytes(StandardCharsets.UTF_8));
+                } finally {
+                    zipOutputStream.closeArchiveEntry();
+                }
+            }
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
 }

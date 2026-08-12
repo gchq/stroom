@@ -472,9 +472,10 @@ public class ReferenceData {
                     pipelineReference);
         }
 
-        // Check that the current user has permission to read the ref stream.
+        // Check that the current user has permission to read the ref stream. Fail closed: if there is no
+        // permission cache to consult, deny rather than allow.
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
-                documentPermissionCache == null ||
+                documentPermissionCache != null &&
                 documentPermissionCache.canUseDocument(pipelineReference.getFeed()));
 
         if (hasPermission) {

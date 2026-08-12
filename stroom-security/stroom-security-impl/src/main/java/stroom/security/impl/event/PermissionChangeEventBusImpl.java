@@ -66,9 +66,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
     @Override
     public void fire(final PermissionChangeEvent event) {
-        if (started) {
-            securityContext.asProcessingUser(() -> fireGlobally(event));
-        }
+        securityContext.asProcessingUser(() -> fireGlobally(event));
     }
 
     private void fireGlobally(final PermissionChangeEvent event) {

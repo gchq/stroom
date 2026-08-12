@@ -442,6 +442,19 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    docRefInfoCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    docRefNameCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    physicalDeleteAge: "P30D"
   elastic:
     client:
       maxConnections: 30
@@ -486,12 +499,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     dependencyWarningsEnabled: false
-    docRefInfoCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
     suggestedTags:
     - "reference-loader"
     - "dynamic"
@@ -707,6 +714,7 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      disableExternalEntities: true
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
@@ -759,10 +767,13 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
+    mergeStatusRetention: "P30D"
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
     path: "planb"
+    sendPartAttempts: 3
+    sendPartRetryDelay: "PT10S"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
@@ -941,8 +952,8 @@ appConfig:
     dataFeedIdentitiesDir: "data_feed_identities"
     dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
-    - "AuthenticationType{displayValue='OAuth Token'}"
-    - "AuthenticationType{displayValue='Client certificate'}"
+    - "TOKEN"
+    - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
@@ -1027,11 +1038,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null
@@ -1049,10 +1068,12 @@ appConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:
@@ -1097,7 +1118,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       userCache:
         expireAfterAccess: "PT30M"
-        expireAfterWrite: null
+        expireAfterWrite: "PT30M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -1123,6 +1144,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      allowLockedAccountPasswordReset: false
       autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
@@ -1143,31 +1165,24 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       email:
-        allowPasswordResets: false
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
         passwordResetSubject: "Password reset for Stroom"
         passwordResetText: "A password reset has been requested for this email address.\
           \ Please visit the following URL to reset your password: %s."
-        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
         smtp:
           host: "localhost"
           password: null
           port: 2525
           transport: "plain"
           username: null
+      failedLoginLockDuration: "PT30M"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
           maximumSize: 1000
-          refreshAfterWrite: null
-          statisticsMode: "INTERNAL"
-        refreshTokenCache:
-          expireAfterAccess: "P1D"
-          expireAfterWrite: null
-          maximumSize: 10000
           refreshAfterWrite: null
           statisticsMode: "INTERNAL"
       passwordPolicy:
@@ -1177,17 +1192,19 @@ appConfig:
         minimumPasswordLength: 8
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
-        passwordComplexityRegex: ".*"
         passwordPolicyMessage: "To conform with our Strong Password policy, you are\
-          \ required to use a sufficiently strong password. Password must be more\
-          \ than 8 characters."
+          \ required to use a sufficiently strong password. Password must be at least\
+          \ 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
+      passwordResetRequestCooldown: "PT1M"
+      reactivateInactiveAccountsOnLogin: false
       token:
         accessTokenExpiration: "PT1H"
         algorithm: "RS256"
         defaultApiKeyExpiration: "P365D"
         emailResetTokenExpiration: "PT10M"
         idTokenExpiration: "PT1H"
+        jwkRotationInterval: "P30D"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
     webContent:

@@ -17,6 +17,7 @@
 package stroom.node.impl;
 
 import stroom.node.api.NodeInfo;
+import stroom.node.impl.db.jooq.tables.Node;
 import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.state.RecordCountService;

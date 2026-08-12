@@ -35,7 +35,7 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
@@ -78,6 +78,7 @@ import stroom.query.language.functions.Values;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -91,6 +92,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -146,6 +148,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
     private final QueryNodeResolver queryNodeResolver;
+    private final DocFinder docFinder;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -162,7 +165,8 @@ class DashboardServiceImpl implements DashboardService {
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
                          final ValPredicateFactory valPredicateFactory,
-                         final QueryNodeResolver queryNodeResolver) {
+                         final QueryNodeResolver queryNodeResolver,
+                         final DocFinder docFinder) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -178,6 +182,7 @@ class DashboardServiceImpl implements DashboardService {
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
         this.queryNodeResolver = queryNodeResolver;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -213,6 +218,16 @@ class DashboardServiceImpl implements DashboardService {
             try {
                 if (request == null) {
                     throw new EntityServiceException("Query is empty");
+                }
+
+                // The query targets a request-supplied data source, so require USE permission on it before
+                // exporting the query - parity with the search execution, which requires USE to query it.
+                final DocRef dataSourceRef = NullSafe.get(
+                        request, DashboardSearchRequest::getSearch, Search::getDataSourceRef);
+                if (dataSourceRef != null
+                    && !securityContext.hasDocumentPermission(dataSourceRef, DocumentPermission.USE)) {
+                    throw new PermissionException(securityContext.getUserRef(),
+                            "You do not have USE permission on data source " + dataSourceRef);
                 }
 
                 final DashboardSearchRequest.Builder builder = request.copy();
@@ -392,12 +407,8 @@ class DashboardServiceImpl implements DashboardService {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
         String basename = searchRequestSource.getComponentId();
         if (searchRequestSource.getOwnerDocRef() != null) {
-            final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
-            final String dashboardName = NullSafe.getOrElse(
-                    dashDocRefInfo,
-                    DocRefInfo::getDocRef,
-                    DocRef::getName,
-                    searchRequestSource.getOwnerDocRef().getName());
+            final Optional<String> name = docFinder.getName(searchRequestSource.getOwnerDocRef());
+            final String dashboardName = name.orElse(searchRequestSource.getOwnerDocRef().getName());
             if (dashboardName != null) {
                 basename = dashboardName + "__" + searchRequestSource.getComponentId();
             }

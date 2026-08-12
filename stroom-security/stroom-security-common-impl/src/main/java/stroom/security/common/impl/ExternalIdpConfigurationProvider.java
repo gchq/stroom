@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -332,6 +333,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getRequiredAccessTokenType() {
+        return localOpenIdConfigProvider.get().getRequiredAccessTokenType();
+    }
+
+    @Override
     public String getClientSecret() {
         return localOpenIdConfigProvider.get().getClientSecret();
     }
@@ -362,6 +368,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public boolean isValidateAudience() {
+        return localOpenIdConfigProvider.get().isValidateAudience();
+    }
+
+    @Override
     public Set<String> getValidIssuers() {
         return localOpenIdConfigProvider.get().getValidIssuers();
     }
@@ -389,6 +400,11 @@ public class ExternalIdpConfigurationProvider
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return localOpenIdConfigProvider.get().getAuthenticationRequestExtraParams();
     }
 
     @Override

@@ -82,6 +82,16 @@ public class PipelineElement implements Comparable<PipelineElement> {
         return id.compareTo(o.id);
     }
 
+    /**
+     * Elements are equal if they identify the same node in the pipeline graph, i.e. they have the
+     * same id and type. Name and description are deliberately excluded: elements are used as map
+     * keys and lookup values throughout the client (child/parent maps, tree selection, the canonical
+     * {@code PipelineModel.SOURCE_ELEMENT} constant), all of which must keep matching an element
+     * whose name or description has since been edited.
+     * <p>
+     * Use {@link #contentEquals(PipelineElement, PipelineElement)} to test whether two elements hold
+     * the same values, e.g. when deciding if a document has unsaved changes.
+     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -98,6 +108,32 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @Override
     public int hashCode() {
         return Objects.hash(id, type);
+    }
+
+    /**
+     * Tests whether two elements hold the same values, including name and description, unlike
+     * {@link #equals(Object)} which tests identity within the pipeline graph.
+     */
+    public static boolean contentEquals(final PipelineElement element, final PipelineElement other) {
+        if (element == other) {
+            return true;
+        }
+        if (element == null || other == null) {
+            return false;
+        }
+        return Objects.equals(element.id, other.id) &&
+               Objects.equals(element.type, other.type) &&
+               Objects.equals(element.name, other.name) &&
+               Objects.equals(element.description, other.description);
+    }
+
+    /**
+     * @see #contentEquals(PipelineElement, PipelineElement)
+     */
+    public static int contentHashCode(final PipelineElement element) {
+        return element == null
+                ? 0
+                : Objects.hash(element.id, element.type, element.name, element.description);
     }
 
     @Override

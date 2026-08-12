@@ -29,13 +29,6 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Map;
 import java.util.Optional;
 
-///**
-// * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
-// * that always tries the {@link InternalJwtContextFactory} first in case it is a processing
-// * user request which always uses the internal idp. It also takes into account whether
-// * an external IDP is in use.
-// */
-
 /**
  * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
  * that picks the delegate based on the identity provider that has been configured, e.g.
@@ -90,7 +83,7 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
 
     private JwtContextFactory getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
-            case INTERNAL_IDP, TEST_CREDENTIALS -> internalJwtContextFactory;
+            case INTERNAL_IDP -> internalJwtContextFactory;
             case EXTERNAL_IDP -> standardJwtContextFactory;
             case NO_IDP ->
                     throw new UnsupportedOperationException("No JwtContextFactory when IDP type is " + IdpType.NO_IDP);

@@ -17,9 +17,6 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
@@ -46,7 +43,7 @@ import java.util.stream.Collectors;
 
 public class PipelineTreePresenter
         extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
-        implements HasChangeHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+        implements PipelineTreeUiHandlers, HasContextMenuHandlers {
 
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
@@ -85,9 +82,9 @@ public class PipelineTreePresenter
     public void onMove(final PipelineElement parent, final PipelineElement child) {
         if (pipelineModel != null && pipelineModel.getParentMap() != null) {
             try {
-                if (pipelineModel.moveElement(parent, child)) {
-                    onChange();
-                }
+                // A successful move fires a change event from the model, which is what redraws the
+                // tree and re-evaluates whether the pipeline is dirty.
+                pipelineModel.moveElement(parent, child);
             } catch (final RuntimeException e) {
                 AlertEvent.fireError(PipelineTreePresenter.this, e.getMessage(), null);
             }
@@ -127,15 +124,6 @@ public class PipelineTreePresenter
 
     public void setAllowNullSelection(final boolean allowNullSelection) {
         getView().setAllowNullSelection(allowNullSelection);
-    }
-
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
-    }
-
-    private void onChange() {
-        ChangeEvent.fire(this);
     }
 
     @Override

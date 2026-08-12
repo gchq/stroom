@@ -16,7 +16,7 @@
 
 package stroom.db.util;
 
-import stroom.job.impl.db.JobDaoImpl;
+import stroom.job.impl.dao.JobDaoImpl;
 import stroom.job.impl.db.JobDbConnProvider;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
 import stroom.job.shared.Job;

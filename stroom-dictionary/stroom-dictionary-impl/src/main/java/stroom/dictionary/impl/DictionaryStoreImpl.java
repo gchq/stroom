@@ -22,19 +22,13 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
 import stroom.dictionary.shared.WordList.Builder;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefDecorator;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.string.StringUtil;
@@ -45,93 +39,36 @@ import jakarta.inject.Singleton;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 @Singleton
-public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
+public class DictionaryStoreImpl
+        extends AbstractDocumentStore<DictionaryDoc>
+        implements DictionaryStore, WordListProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DictionaryStoreImpl.class);
 
     public static final boolean IS_DE_DUP_DEFAULT = false;
-    private final Store<DictionaryDoc> store;
+
+    private final DocFinder docFinder;
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
-                        final DictionarySerialiser serialiser) {
-        this.store = storeFactory.createStore(
+                        final DictionarySerialiser serialiser,
+                        final DocFinder docFinder) {
+        super(storeFactory,
                 serialiser,
                 DictionaryDoc.TYPE,
                 DictionaryDoc::builder,
                 DictionaryDoc::copy);
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+        this.docFinder = docFinder;
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<DictionaryDoc> createMapper() {
+    protected DependencyRemapFunction<DictionaryDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             if (doc.getImports() != null) {
                 final List<DocRef> replacedDocRefImports = doc
@@ -145,105 +82,20 @@ public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         };
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DictionaryDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public DictionaryDoc writeDocument(final DictionaryDoc document) {
-        return store.writeDocument(document);
-    }
-
-//    /**
-//     * Ensure all the imports have the correct names. Modifies the import list.
-//     */
-//    private void decorateImports(final DictionaryDoc dictionaryDoc) {
-//        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
-//            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
-//            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
-//                    .stream()
-//                    .map(docRef -> decorateDocRef(docRefInfoService, docRef))
-//                    .toList();
-//            dictionaryDoc.setImports(decoratedImports);
-//        }
-//    }
-
-    private DocRef decorateDocRef(final DocRefDecorator docRefDecorator,
-                                  final DocRef docRef) {
+    private DocRef decorateDocRef(final DocRef docRef) {
         if (docRef == null) {
             return null;
-        } else if (docRefDecorator == null) {
+        } else if (docFinder == null) {
             return docRef;
         } else {
-            try {
-                return docRefDecorator.decorate(docRef, true);
-            } catch (final Exception e) {
-                // Likely docRef doesn't exist, so we will just leave it as is, i.e.
-                // a broken dep
-                LOGGER.debug(() -> LogUtil.message("Unable to decorate docRef {}: {}",
-                        docRef, LogUtil.exceptionMessage(e)), e);
-                return docRef;
-            }
+            return docFinder.decorate(docRef);
         }
     }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
 
     @Override
     public Optional<DocRef> findByUuid(final String uuid) {
         try {
-            final DocRefInfo docRefInfo = store.info(new DocRef(DictionaryDoc.TYPE, uuid));
-            return Optional.ofNullable(docRefInfo.getDocRef());
+            return docFinder.decorateIfExists(new DocRef(DictionaryDoc.TYPE, uuid));
         } catch (final RuntimeException e) {
             // Expected permission exception for some users.
             LOGGER.debug(e::getMessage, e);
@@ -253,48 +105,31 @@ public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public List<DocRef> findByName(final String name) {
-        return findByNames(List.of(name), false);
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-        return store.findByNames(names, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
-    }
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
+        return docFinder.findByName(getType(), name, false);
     }
 
     @Override
     public String getCombinedData(final DocRef docRef) {
-        return getCombinedWordList(docRef, null, IS_DE_DUP_DEFAULT).asString();
+        return getCombinedWordList(docRef, IS_DE_DUP_DEFAULT).asString();
     }
 
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
-        return getCombinedWordList(dictionaryRef, null, IS_DE_DUP_DEFAULT).asWordArray();
+        return getCombinedWordList(dictionaryRef, IS_DE_DUP_DEFAULT).asWordArray();
     }
 
     @Override
-    public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                        final DocRefDecorator docRefDecorator) {
-        return getCombinedWordList(dictionaryRef, docRefDecorator, IS_DE_DUP_DEFAULT);
+    public WordList getCombinedWordList(final DocRef dictionaryRef) {
+        return getCombinedWordList(dictionaryRef, IS_DE_DUP_DEFAULT);
     }
 
     public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                        final DocRefDecorator docRefDecorator,
                                         final boolean deDup) {
         final Builder builder = WordList.builder(deDup);
         final Set<DocRef> visited = new HashSet<>();
         final Stack<DocRef> visitPath = new Stack<>();
 
-        doGetCombinedWordList(docRefDecorator, builder, dictionaryRef, visited, visitPath);
+        doGetCombinedWordList(builder, dictionaryRef, visited, visitPath);
 
         final WordList wordList = builder.build();
 
@@ -304,15 +139,14 @@ public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         return wordList;
     }
 
-    private void doGetCombinedWordList(final DocRefDecorator docRefDecorator,
-                                       final WordList.Builder wordListBuilder,
+    private void doGetCombinedWordList(final WordList.Builder wordListBuilder,
                                        final DocRef docRef,
                                        final Set<DocRef> visited,
                                        final Stack<DocRef> visitPath) {
 
         // As we are adding the docRef to the WordList, we want to ensure it
         // has a name and the correct name
-        final DocRef decorateDocRef = decorateDocRef(docRefDecorator, docRef);
+        final DocRef decorateDocRef = decorateDocRef(docRef);
         LOGGER.debug(() -> LogUtil.message("decorateDocRef: {}, visitPath: {}",
                 decorateDocRef.toShortString(), docRefsToStr(visitPath)));
         visitPath.push(decorateDocRef);
@@ -339,7 +173,6 @@ public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         for (final DocRef importDocRef : imports) {
                             // Recurse
                             doGetCombinedWordList(
-                                    docRefDecorator,
                                     wordListBuilder,
                                     importDocRef,
                                     visited,

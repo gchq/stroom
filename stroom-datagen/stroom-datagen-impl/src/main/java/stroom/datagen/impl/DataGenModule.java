@@ -21,14 +21,10 @@ import stroom.analytics.impl.ExecuteNowProviderBinder;
 import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.datagen.shared.DataGenDoc;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -47,17 +43,8 @@ public class DataGenModule extends AbstractModule {
                         .enabledOnBootstrap(false)
                         .advanced(true));
 
-        bind(DataGenStore.class).to(DataGenStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(DataGenStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(DataGenStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(DataGenStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(DataGenDoc.TYPE, DataGenStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(DataGenDoc.TYPE, DataGenStore.class, DataGenStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

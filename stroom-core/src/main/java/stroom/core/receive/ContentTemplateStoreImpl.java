@@ -18,16 +18,10 @@ package stroom.core.receive;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.SecurityContext;
@@ -35,28 +29,26 @@ import stroom.security.shared.AppPermission;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * A bit of a special store that only ever holds one doc with a hard coded name.
  */
 @Singleton
-public class ContentTemplateStoreImpl implements ContentTemplateStore {
+public class ContentTemplateStoreImpl
+        extends AbstractDocumentStore<ContentTemplates>
+        implements ContentTemplateStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentTemplateStoreImpl.class);
     private static final String DOC_NAME = "Content Templates";
     private static final String LOCK_NAME = "ContentTemplatesCreation";
 
-    private final Store<ContentTemplates> store;
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
     private final LazyValue<DocRef> lazyDocRef = LazyValue.initialisedBy(this::doGetOrCreate);
@@ -66,15 +58,13 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
                                     final Serialiser2Factory serialiser2Factory,
                                     final SecurityContext securityContext,
                                     final ClusterLockService clusterLockService) {
-        this.securityContext = securityContext;
-        this.clusterLockService = clusterLockService;
-        final DocumentSerialiser2<ContentTemplates> serialiser = serialiser2Factory.createSerialiser(
-                ContentTemplates.class);
-        this.store = storeFactory.createStore(
-                serialiser,
+        super(storeFactory,
+                serialiser2Factory.createSerialiser(ContentTemplates.class),
                 ContentTemplates.TYPE,
                 ContentTemplates::builder,
                 ContentTemplates::copy);
+        this.securityContext = securityContext;
+        this.clusterLockService = clusterLockService;
     }
 
     @Override
@@ -106,7 +96,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
     }
 
     private DocRef getSingletonDoc() {
-        final List<DocRef> docRefs = store.list();
+        final List<DocRef> docRefs = getStore().list();
         final DocRef docRef;
         if (NullSafe.isEmptyCollection(docRefs)) {
             docRef = null;
@@ -123,69 +113,22 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         return docRef;
     }
 
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+    public ContentTemplates readDocument(final DocRef docRef) {
+        return securityContext.secureResult(() ->
+                getStore().readDocument(docRef));
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+    public ContentTemplates writeDocument(final ContentTemplates document) {
+        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+        // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
+        return securityContext.secureResult(AppPermission.MANAGE_CONTENT_TEMPLATES_PERMISSION,
+                () -> securityContext.asProcessingUserResult(() -> getStore().writeDocument(document)));
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<ContentTemplates> createMapper() {
+    protected DependencyRemapFunction<ContentTemplates> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final List<ContentTemplate> templates = doc.getContentTemplates();
             if (NullSafe.hasItems(templates)) {
@@ -198,80 +141,4 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
             return doc;
         };
     }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public ContentTemplates readDocument(final DocRef docRef) {
-        return securityContext.secureResult(() ->
-                store.readDocument(docRef));
-    }
-
-    @Override
-    public ContentTemplates writeDocument(final ContentTemplates document) {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
-        return securityContext.secureResult(AppPermission.MANAGE_CONTENT_TEMPLATES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
-
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
-    }
-
 }

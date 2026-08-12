@@ -16,10 +16,11 @@
 
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.Db;
+import stroom.planb.impl.dao.Db;
 import stroom.planb.shared.PlanBDoc;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.function.Function;
 
 public interface Shard {
@@ -47,6 +48,17 @@ public interface Shard {
      * Compact data in the shard.
      */
     void compact();
+
+    /**
+     * Delete old merge status records. Only shards for additive stores (histogram and metric) track merge
+     * status; the default is a no-op. The caller must ensure that no replayable copy of any merge source
+     * still exists before pruning. See docs/merge-idempotency-design.md.
+     *
+     * @return The number of records deleted.
+     */
+    default long deleteOldMergeStatus(final Instant deleteBefore) {
+        return 0;
+    }
 
     /**
      * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
@@ -92,4 +104,14 @@ public interface Shard {
      * @return true if the shard is idle and can be safely evicted from the shard map.
      */
     boolean isIdle();
+
+    /**
+     * Close the shard's underlying database, closing its LMDB environment. A {@link StoreShard}
+     * waits for in-flight readers and writers to finish before closing, and its data remains on
+     * disk to be reopened by a newly created shard. A {@link SnapshotShard} discards its local
+     * copy; if readers are in flight the actual close/delete is deferred until the last one
+     * finishes, so the env may still be open when this method returns. The shard must not be
+     * used after closing — obtain a fresh one from the {@code ShardManager}.
+     */
+    void close();
 }

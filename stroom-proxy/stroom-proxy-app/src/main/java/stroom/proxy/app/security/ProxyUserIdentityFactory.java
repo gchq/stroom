@@ -16,11 +16,11 @@
 
 package stroom.proxy.app.security;
 
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
+import stroom.security.common.impl.InsecureTestCredentials;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
@@ -28,7 +28,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.VerifyApiKeyRequest;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.jersey.JerseyClientFactory;
@@ -55,24 +54,22 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
     private final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<CommonSecurityContext> proxySecurityContextProvider;
+    private final InsecureTestCredentials insecureTestCredentials;
 
     @Inject
     ProxyUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
-                             final DefaultOpenIdCredentials defaultOpenIdCredentials,
                              final CertificateExtractor certificateExtractor,
                              final ServiceUserFactory serviceUserFactory,
                              final JerseyClientFactory jerseyClientFactory,
                              final RefreshManager refreshManager,
                              final SimplePathCreator simplePathCreator,
                              final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider,
-                             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                             final Provider<CommonSecurityContext> proxySecurityContextProvider) {
+                             final Provider<CommonSecurityContext> proxySecurityContextProvider,
+                             final InsecureTestCredentials insecureTestCredentials) {
         super(jwtContextFactory,
                 openIdConfigProvider,
-                defaultOpenIdCredentials,
                 certificateExtractor,
                 serviceUserFactory,
                 jerseyClientFactory,
@@ -80,8 +77,8 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                 refreshManager);
         this.openIdConfigurationProvider = openIdConfigProvider;
         this.proxyApiKeyServiceProvider = proxyApiKeyServiceProvider;
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.proxySecurityContextProvider = proxySecurityContextProvider;
+        this.insecureTestCredentials = insecureTestCredentials;
     }
 
     @Override
@@ -115,17 +112,30 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
     @Override
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
-        // First see if we have a Stroom API key to authenticate with, else
-        // let the super try and get the identity
+        // First see if the optional insecure test credential is presented (only enabled in test/demo when
+        // the environment explicitly opts in), then a Stroom API key, else let the super try and get the
+        // identity (unless there is no IDP, in which case only the API key path applies).
         final Optional<UserIdentity> optIdentity;
         if (IdpType.NO_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
-            optIdentity = fetchApiKeyUserIdentity(request);
+            optIdentity = getInsecureTestServiceUserIdentity(request)
+                    .or(() -> fetchApiKeyUserIdentity(request));
         } else {
-            optIdentity = fetchApiKeyUserIdentity(request)
+            optIdentity = getInsecureTestServiceUserIdentity(request)
+                    .or(() -> fetchApiKeyUserIdentity(request))
                     .or(() -> super.getApiUserIdentity(request));
         }
         LOGGER.debug("getApiUserIdentity() - optIdentity: {}", optIdentity);
         return optIdentity;
+    }
+
+    /**
+     * When the insecure test credential is enabled (test/demo only, off unless the environment opts in) a
+     * request carrying the shared secret is authenticated as the service (processing) user.
+     */
+    private Optional<UserIdentity> getInsecureTestServiceUserIdentity(final HttpServletRequest request) {
+        return insecureTestCredentials.matches(request)
+                ? Optional.of(getServiceUserIdentity())
+                : Optional.empty();
     }
 
     private Optional<UserIdentity> fetchApiKeyUserIdentity(final HttpServletRequest request) {

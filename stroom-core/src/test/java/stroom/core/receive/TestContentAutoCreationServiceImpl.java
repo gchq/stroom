@@ -17,6 +17,7 @@
 package stroom.core.receive;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.feed.api.FeedStore;
@@ -65,6 +66,8 @@ class TestContentAutoCreationServiceImpl {
     private UserService mockUserService;
     @Mock
     private SecurityContext mockSecurityContext;
+    @Mock
+    private DocFinder docFinder;
 
     @Test
     void testFeedAlreadyExists() {
@@ -82,7 +85,7 @@ class TestContentAutoCreationServiceImpl {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of(docRef));
         Mockito.when(mockFeedStore.readDocument(Mockito.eq(docRef)))
                 .thenReturn(feedDoc);
@@ -105,7 +108,7 @@ class TestContentAutoCreationServiceImpl {
                 .uuid(UUID.randomUUID().toString())
                 .name("Templates")
                 .build();
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of());
         Mockito.when(mockContentTemplateStore.getOrCreate())
                 .thenReturn(contentTemplates);
@@ -137,7 +140,7 @@ class TestContentAutoCreationServiceImpl {
                                 .build())
                         .build()))
                 .build();
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of());
         Mockito.when(mockContentTemplateStore.getOrCreate())
                 .thenReturn(contentTemplates);
@@ -170,7 +173,7 @@ class TestContentAutoCreationServiceImpl {
                                 .build())
                         .build()))
                 .build();
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of());
         Mockito.when(mockContentTemplateStore.getOrCreate())
                 .thenReturn(contentTemplates);

@@ -33,6 +33,7 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
 
     private static final boolean DEFAULT_SECURE = true;
     private static final boolean DEFAULT_HTTP_ONLY = true;
+    private static final SameSite DEFAULT_SAME_SITE = SameSite.STRICT;
 
     @JsonProperty
     @JsonPropertyDescription("Marks the session cookies with the secure flag, indicating they " +
@@ -51,7 +52,7 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
     public SessionCookieConfig() {
         secure = DEFAULT_SECURE;
         httpOnly = DEFAULT_HTTP_ONLY;
-        sameSite = SameSite.STRICT;
+        sameSite = DEFAULT_SAME_SITE;
     }
 
     @SuppressWarnings("unused")
@@ -61,7 +62,7 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("sameSite") final SameSite sameSite) {
         this.secure = Objects.requireNonNullElse(secure, DEFAULT_SECURE);
         this.httpOnly = Objects.requireNonNullElse(httpOnly, DEFAULT_HTTP_ONLY);
-        this.sameSite = sameSite;
+        this.sameSite = Objects.requireNonNullElse(sameSite, DEFAULT_SAME_SITE);
     }
 
     public boolean isSecure() {

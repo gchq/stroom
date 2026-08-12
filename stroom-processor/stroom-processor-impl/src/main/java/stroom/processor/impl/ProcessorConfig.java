@@ -16,13 +16,10 @@
 
 package stroom.processor.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.processor.impl.db.ProcessorDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -33,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
-
 
 @SuppressWarnings("unused")
 @JsonPropertyOrder(alphabetic = true)
@@ -184,7 +180,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     @Min(1)
     @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
                              "Note that this number will be exceeded if we have currently queued tasks from lower " +
-                             "priority filters.")
+                             "priority filters. This is a cluster wide total shared by all nodes, so it should " +
+                             "comfortably exceed the number of tasks all nodes will ask for at once, i.e. the " +
+                             "number of nodes multiplied by their Data Processing job task limit. Note also that " +
+                             "no further filters are considered once half this number is already queued.")
     public int getQueueSize() {
         return queueSize;
     }
@@ -280,20 +279,5 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
                '}';
-    }
-
-    @BootStrapConfig
-    public static class ProcessorDbConfig extends AbstractDbConfig implements IsStroomConfig {
-
-        public ProcessorDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public ProcessorDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

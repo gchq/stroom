@@ -17,9 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.api.DocumentNotFoundException;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.docstore.shared.DocumentType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
@@ -34,6 +32,8 @@ import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.DeleteConfirmation;
+import stroom.explorer.shared.DeleteConfirmationRequest;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentTypes;
@@ -62,7 +62,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
@@ -129,6 +128,12 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
+    public DeleteConfirmation fetchDeleteConfirmation(final DeleteConfirmationRequest request) {
+        return explorerServiceProvider.get().getDeleteConfirmation(request.getDocRefs());
+    }
+
+    @Override
     public BulkActionResult copy(final ExplorerServiceCopyRequest request) {
         return explorerServiceProvider.get().copy(
                 request.getExplorerNodes(),
@@ -170,37 +175,24 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public ExplorerNodeInfo info(final DocRef docRef) {
-        final DocRefInfo docRefInfo = docRefInfoServiceProvider.get()
-                .info(docRef)
-                .orElse(null);
-
-        if (docRefInfo == null) {
-            return null;
-        } else {
-            final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
-                    .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
-            return new ExplorerNodeInfo(explorerNode, docRefInfo);
-        }
+        final ExplorerNode explorerNode = explorerServiceProvider.get().getFromDocRef(docRef)
+                .orElseThrow(() -> new RuntimeException("No explorerNode for " + docRef));
+        final ResultPage<DocAuditEntry> resultPage = docRefInfoServiceProvider.get()
+                .getAuditInfo(docRef);
+        return new ExplorerNodeInfo(explorerNode, resultPage);
     }
 
     @Override
     @AutoLogged(OperationType.VIEW)
     public DocRef decorate(final DecorateRequest decorateRequest) {
-
         Objects.requireNonNull(decorateRequest);
         try {
-            return NullSafe.get(decorateRequest,
-                    req -> docRefInfoServiceProvider.get()
-                            .decorate(req.getDocRef(),
-                                    true,
-                                    req.getRequiredPermissions()));
-        } catch (final DocumentNotFoundException | PermissionException e) {
+            return docRefInfoServiceProvider.get()
+                    .decorate(decorateRequest.getDocRef(),
+                            decorateRequest.getRequiredPermissions()).orElseThrow();
+        } catch (final Exception e) {
             LOGGER.debug("docRef not found - {}", decorateRequest, e);
             return null;
-        } catch (final Exception e) {
-            // Something unexpected
-            LOGGER.error("Error decorating docRef - {}", decorateRequest, e);
-            throw new RuntimeException(e);
         }
     }
 

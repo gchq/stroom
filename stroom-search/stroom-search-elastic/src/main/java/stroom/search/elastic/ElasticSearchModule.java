@@ -16,10 +16,7 @@
 
 package stroom.search.elastic;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
@@ -64,36 +61,14 @@ public class ElasticSearchModule extends AbstractModule {
                 .addBinding(ElasticIndexCacheImpl.class)
                 .addBinding(ElasticClientCacheImpl.class);
 
-        // Elastic cluster
+        // Elastic cluster + Elastic index
 
-        bind(ElasticClusterStore.class).to(ElasticClusterStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(ElasticClusterStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ElasticClusterStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(ElasticClusterStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(ElasticClusterDoc.TYPE, ElasticClusterStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(ElasticClusterDoc.TYPE, ElasticClusterStore.class, ElasticClusterStoreImpl.class)
+                .bind(ElasticIndexDoc.TYPE, ElasticIndexStore.class, ElasticIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ElasticClusterResourceImpl.class);
-
-        // Elastic index
-
-        bind(ElasticIndexStore.class).to(ElasticIndexStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(ElasticIndexStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ElasticIndexStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(ElasticIndexStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(ElasticIndexDoc.TYPE, ElasticIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ElasticIndexResourceImpl.class)

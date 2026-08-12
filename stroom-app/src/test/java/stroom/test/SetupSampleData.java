@@ -22,7 +22,7 @@ import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.util.io.PathCreator;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlFileUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -65,7 +65,7 @@ public final class SetupSampleData {
         if (args.length != 1) {
             throw new RuntimeException("Expected 1 argument that is the location of the config.");
         }
-        final Path configFile = YamlUtil.getYamlFileFromArgs(args);
+        final Path configFile = YamlFileUtil.getYamlFileFromArgs(args);
         final Config config;
         try {
             config = StroomYamlUtil.readConfig(configFile);

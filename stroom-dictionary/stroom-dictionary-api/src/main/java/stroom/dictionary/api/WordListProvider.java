@@ -18,7 +18,6 @@ package stroom.dictionary.api;
 
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,11 +44,9 @@ public interface WordListProvider {
      * all of their imports). Words are returned in depth first order, i.e. imports first.
      *
      * @param dictionaryRef   The Dictionary to get a combined word list for.
-     * @param docRefDecorator Optionally supply a {@link DocRefDecorator} to ensure any returned
-     *                        {@link DocRef}s have the correct name/type information.
      * @return
      */
-    WordList getCombinedWordList(DocRef dictionaryRef, DocRefDecorator docRefDecorator);
+    WordList getCombinedWordList(DocRef dictionaryRef);
 
     List<DocRef> findByName(String name);
 

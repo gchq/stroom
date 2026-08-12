@@ -17,15 +17,12 @@
 package stroom.feed.impl;
 
 import stroom.data.store.api.FsVolumeGroupService;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -41,17 +38,12 @@ public class FeedModule extends AbstractModule {
         // Needed in FeedStoreImpl
         requireBinding(FsVolumeGroupService.class);
 
-        bind(FeedStore.class).to(FeedStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(FeedDoc.TYPE, FeedStore.class, FeedStoreImpl.class);
+
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
         bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
         bind(VolumeGroupNameProvider.class).to(VolumeGroupNameProviderImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(FeedStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(FeedStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(FeedStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FeedDocCache.class)
@@ -59,9 +51,6 @@ public class FeedModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(FeedDocCache.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(FeedDoc.TYPE, FeedStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

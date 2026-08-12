@@ -84,6 +84,7 @@ public class ElementPresenter
     private String pipelineName;
     private boolean refreshRequired = true;
     private boolean loaded;
+    private boolean dirty;
     private DocRef docRef;
     private Document document;
     private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
@@ -268,6 +269,7 @@ public class ElementPresenter
             documentPlugin.save(docRef, toSave,
                     result -> {
                         document = result;
+                        refreshDirty();
                         onComplete.run();
                     },
                     throwable -> {
@@ -289,6 +291,12 @@ public class ElementPresenter
         } else {
             setCode("");
         }
+        refreshDirty();
+    }
+
+    private void onCodeChange() {
+        refreshDirty();
+        ChangeEvent.fire(ElementPresenter.this);
     }
 
     private Document write() {
@@ -493,17 +501,26 @@ public class ElementPresenter
     }
 
     public boolean isDirty() {
-        // Compute dirtiness by comparing the current editor content against the loaded/last-saved
-        // baseline, mirroring DocPresenter.onChange(). This makes reverting an edit (e.g. typing a
-        // letter then deleting it) return to a clean state rather than latching a boolean flag.
-        if (loaded && document instanceof final HasData hasData) {
-            return !Objects.equals(hasData.getData(), getCode());
-        }
-        return false;
+        // Returns the verdict cached by refreshDirty(). The enclosing pipeline asks every open
+        // element whether it is dirty on each keypress, and reading the editor content to answer is
+        // expensive for a large document, so the comparison is only made when the editor changes.
+        return dirty;
+    }
+
+    /**
+     * Recomputes dirtiness by comparing the current editor content against the loaded/last saved
+     * baseline, mirroring DocPresenter.onChange(). Comparing rather than latching a flag means
+     * reverting an edit (e.g. typing a letter then deleting it) returns to a clean state.
+     */
+    private void refreshDirty() {
+        dirty = loaded
+                && document instanceof final HasData hasData
+                && !Objects.equals(hasData.getData(), getCode());
     }
 
     public void setLoaded(final boolean loaded) {
         this.loaded = loaded;
+        refreshDirty();
     }
 
     public DocRef getDocRef() {
@@ -529,13 +546,11 @@ public class ElementPresenter
 
             // Fire a change event on any edit so the enclosing presenter re-evaluates dirty state via
             // onChange(). This is a "something changed" signal, not a dirty assertion - the actual
-            // dirtiness is recomputed by comparison in isDirty(), so a reverted edit returns to clean.
-            // Mirrors the ChangeEvent idiom used by the sibling structure presenters (e.g.
-            // PropertyListPresenter, PipelineTreePresenter) that feed PipelineStructurePresenter.
-            registerHandler(codePresenter.addValueChangeHandler(event ->
-                    ChangeEvent.fire(ElementPresenter.this)));
-            registerHandler(codePresenter.addFormatHandler(event ->
-                    ChangeEvent.fire(ElementPresenter.this)));
+            // dirtiness is recomputed by comparison in refreshDirty(), so a reverted edit returns to
+            // clean. Note that element code is not part of the pipeline structure, so this must not
+            // touch the pipeline model: rebuilding it on each keypress makes the editor lag.
+            registerHandler(codePresenter.addValueChangeHandler(event -> onCodeChange()));
+            registerHandler(codePresenter.addFormatHandler(event -> onCodeChange()));
         }
         return codePresenter;
     }

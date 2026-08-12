@@ -18,6 +18,7 @@ package stroom.security.identity;
 
 import stroom.security.identity.account.AccountModule;
 import stroom.security.identity.authenticate.AuthenticateModule;
+import stroom.security.identity.exceptions.mappers.ExceptionMapperModule;
 import stroom.security.identity.openid.OpenIdModule;
 import stroom.security.identity.token.TokenModule;
 
@@ -29,6 +30,7 @@ public final class IdentityModule extends AbstractModule {
     protected void configure() {
         install(new AccountModule());
         install(new AuthenticateModule());
+        install(new ExceptionMapperModule());
         install(new OpenIdModule());
         install(new TokenModule());
     }

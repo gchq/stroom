@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -47,7 +48,6 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     public DelegatingIdpConfigurationProvider(
             final Provider<InternalIdpConfigurationProvider> internalIdpConfigurationProviderProvider,
             final Provider<ExternalIdpConfigurationProvider> externalIdpConfigurationProviderProvider,
-            final Provider<StroomTestIdpConfigurationProvider> stroomTestIdpConfigurationProviderProvider,
             final Provider<StroomOpenIdConfig> localOpenIdConfigProvider,
             final UriFactory uriFactory) {
 
@@ -55,7 +55,6 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
 
             case INTERNAL_IDP -> internalIdpConfigurationProviderProvider.get();
             case EXTERNAL_IDP -> externalIdpConfigurationProviderProvider.get();
-            case TEST_CREDENTIALS -> stroomTestIdpConfigurationProviderProvider.get();
             // Might need to create a NoIdpConfigurationProvider
             case NO_IDP -> throw new UnsupportedOperationException(
                     "No delegate when IDP type is " + IdpType.NO_IDP);
@@ -116,6 +115,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     }
 
     @Override
+    public String getRequiredAccessTokenType() {
+        return delegate.getRequiredAccessTokenType();
+    }
+
+    @Override
     public String getClientSecret() {
         return delegate.getClientSecret();
     }
@@ -146,6 +150,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     }
 
     @Override
+    public boolean isValidateAudience() {
+        return delegate.isValidateAudience();
+    }
+
+    @Override
     public Set<String> getValidIssuers() {
         return delegate.getValidIssuers();
     }
@@ -173,6 +182,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return delegate.getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return delegate.getAuthenticationRequestExtraParams();
     }
 
     @Override

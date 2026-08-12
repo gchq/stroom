@@ -18,6 +18,7 @@ package stroom.storedquery.impl;
 
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.storedquery.api.StoredQueryService;
+import stroom.storedquery.impl.db.jooq.tables.Query;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.scheduler.CronExpressions;

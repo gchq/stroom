@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-# Automatically discovers every directory whose name ends in "db-jooq"
-# (searching from the repo root, two levels deep) and runs generateJooq
-# in each one.
+# Automatically discovers every module containing a jooq-codegen.xml file
+# and runs generateJooq in each one.  The Gradle task creates a fresh temp DB,
+# runs Flyway migrations, generates JOOQ code, then drops the DB.
 #
 # Usage: ./generate-jooq.sh [--dry-run]
 
@@ -26,22 +26,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=false
 
+
 if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=true
   echo "DRY RUN — no gradle tasks will be executed"
 fi
-
-# Find all directories matching *db-jooq, up to 3 levels deep, sorted.
+# Find all JOOQ modules: discover directories containing a jooq-codegen.xml file
 mapfile -t JOOQ_DIRS < <(
   find "${SCRIPT_DIR}" \
-    -mindepth 2 -maxdepth 3 \
-    -type d \
-    -name '*db-jooq' \
-    | sort
+    -mindepth 3 -maxdepth 4 \
+    -name 'jooq-codegen.xml' \
+    -exec dirname {} \; \
+  | sort -u
 )
 
 if [[ ${#JOOQ_DIRS[@]} -eq 0 ]]; then
-  echo "No *db-jooq directories found under ${SCRIPT_DIR}" >&2
+  echo "No JOOQ modules found under ${SCRIPT_DIR}" >&2
   exit 1
 fi
 
@@ -55,8 +55,12 @@ FAILED=()
 
 for dir in "${JOOQ_DIRS[@]}"; do
   rel="${dir#"${SCRIPT_DIR}/"}"
+  # Convert dir path to Gradle project path, e.g.
+  # stroom-activity/stroom-activity-impl-db -> :stroom-activity:stroom-activity-impl-db
+  gradle_path=":$(echo "${rel}" | sed 's|/|:|g')"
+
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "  generateJooq  →  ${rel}"
+  echo "  generateJooq  →  ${gradle_path}"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   if [[ "${DRY_RUN}" == true ]]; then
@@ -64,11 +68,11 @@ for dir in "${JOOQ_DIRS[@]}"; do
     continue
   fi
 
-  if (cd "${dir}" && ../../gradlew generateJooq); then
+  if "${SCRIPT_DIR}/gradlew" "${gradle_path}:generateJooq"; then
     echo "  ✓ done"
   else
     echo "  ✗ FAILED" >&2
-    FAILED+=("${rel}")
+    FAILED+=("${gradle_path}")
   fi
   echo
 done

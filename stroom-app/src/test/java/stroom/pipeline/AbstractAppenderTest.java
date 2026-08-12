@@ -23,6 +23,9 @@ import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -40,6 +43,8 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
@@ -54,6 +59,7 @@ import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.mockito.Mockito;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -66,6 +72,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,6 +102,8 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private MetaService metaService;
     @Inject
     private Store streamStore;
+    @Inject
+    private FeedStore feedStore;
 
     private LoggingErrorReceiver loggingErrorReceiver;
 
@@ -143,6 +154,20 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
             builder.addProperty(
                     PipelineDataUtil.createProperty("dictionaryAppender", "dictionary", dictionaryRef));
         }
+
+        // Fixes to make stream appender and rolling stream appender work for the tests.
+        final Set<PipelineProperty> pipelineProperties = builder
+                .getProperties()
+                .getAddList()
+                .stream()
+                .filter(prop -> prop.getName().equals("feed"))
+                .collect(Collectors.toSet());
+        builder.getProperties().getAddList().removeAll(pipelineProperties);
+        final DocRef feed = feedStore.createDocument(UUID.randomUUID().toString().toUpperCase());
+        builder.addProperty(
+                PipelineDataUtil.createProperty("streamAppender", "feed", feed));
+        builder.addProperty(
+                PipelineDataUtil.createProperty("rollingStreamAppender", "feed", feed));
 
         pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);

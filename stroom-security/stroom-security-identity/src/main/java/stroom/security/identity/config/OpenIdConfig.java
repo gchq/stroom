@@ -30,28 +30,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_ACCESS_CODE_CACHE = "accessCodeCache";
-    public static final String PROP_NAME_REFRESH_TOKEN_CACHE = "refreshTokenCache";
 
     private final CacheConfig accessCodeCache;
-    private final CacheConfig refreshTokenCache;
 
     public OpenIdConfig() {
         accessCodeCache = CacheConfig.builder()
                 .maximumSize(1_000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-
-        refreshTokenCache = CacheConfig.builder()
-                .maximumSize(10_000L)
-                .expireAfterAccess(StroomDuration.ofDays(1))
-                .build();
     }
 
     @JsonCreator
-    public OpenIdConfig(@JsonProperty(PROP_NAME_ACCESS_CODE_CACHE) final CacheConfig accessCodeCache,
-                        @JsonProperty(PROP_NAME_REFRESH_TOKEN_CACHE) final CacheConfig refreshTokenCache) {
+    public OpenIdConfig(@JsonProperty(PROP_NAME_ACCESS_CODE_CACHE) final CacheConfig accessCodeCache) {
         this.accessCodeCache = accessCodeCache;
-        this.refreshTokenCache = refreshTokenCache;
     }
 
     @JsonProperty(PROP_NAME_ACCESS_CODE_CACHE)
@@ -59,15 +50,10 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return accessCodeCache;
     }
 
-    @JsonProperty(PROP_NAME_REFRESH_TOKEN_CACHE)
-    public CacheConfig getRefreshTokenCache() {
-        return refreshTokenCache;
-    }
-
     @Override
     public String toString() {
         return "OpenIdConfig{" +
-                "accessCodeCache=" + accessCodeCache +
-                '}';
+               "accessCodeCache=" + accessCodeCache +
+               '}';
     }
 }

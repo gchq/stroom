@@ -21,7 +21,7 @@ import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.query.api.Column;
@@ -65,15 +65,15 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     private final StroomEventLoggingService eventLoggingService;
     private final SecurityContext securityContext;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final SecurityContext securityContext,
-                              final DocRefInfoService docRefInfoService) {
+                              final DocFinder docFinder) {
         this.eventLoggingService = eventLoggingService;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -428,8 +428,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         }
 
         try {
-            return docRefInfoService.name(docRef)
-                    .orElse(docRef.getName());
+            return docFinder.getName(docRef).orElse(docRef.getName());
         } catch (final RuntimeException e) {
             // We might not have an explorer handler capable of getting info.
             LOGGER.debug(e.getMessage(), e);

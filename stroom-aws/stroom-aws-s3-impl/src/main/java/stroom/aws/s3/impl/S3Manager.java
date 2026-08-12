@@ -67,7 +67,7 @@ public class S3Manager {
 
     private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9 ]");
     private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.-]");
-    private static final Pattern S3_KEY_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
+    private static final Pattern S3_KEY_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-zA-Z!_.*'()/-]");
     private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
     private static final Pattern TRAILING_HYPHENS = Pattern.compile("-+$");
     private static final Pattern LEADING_SLASH = Pattern.compile("^/+");

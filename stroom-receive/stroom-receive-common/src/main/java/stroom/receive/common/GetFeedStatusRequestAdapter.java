@@ -19,12 +19,12 @@ package stroom.receive.common;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.util.cert.CertificateExtractor;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 
 import java.util.Collections;
+import java.util.Optional;
 
 public class GetFeedStatusRequestAdapter {
 
@@ -39,13 +39,17 @@ public class GetFeedStatusRequestAdapter {
         if (legacyRequest == null) {
             return null;
         } else {
-            final String senderDn = legacyRequest.getSenderDn();
-            final String subjectId = NullSafe.get(senderDn, certificateExtractor::extractCNFromDN)
+            // No senderDn, or one we can't extract a CN from, means there is no user to attribute
+            // the request to, so userDesc is left null, as it is for a request with no
+            // authenticated uploader.
+            final UserDesc userDesc = Optional.ofNullable(legacyRequest.getSenderDn())
+                    .flatMap(certificateExtractor::extractCNFromDN)
+                    .map(UserDesc::forSubjectId)
                     .orElse(null);
 
             return new GetFeedStatusRequestV2(
                     legacyRequest.getFeedName(),
-                    UserDesc.forSubjectId(subjectId),
+                    userDesc,
                     Collections.emptyMap());
         }
     }

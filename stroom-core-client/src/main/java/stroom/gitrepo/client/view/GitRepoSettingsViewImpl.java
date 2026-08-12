@@ -75,6 +75,8 @@ public class GitRepoSettingsViewImpl
     Button btnGitRepoPull;
     @UiField
     Button btnCheckForUpdates;
+    @UiField
+    Button setHttpClientConfig;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -266,6 +268,19 @@ public class GitRepoSettingsViewImpl
             getUiHandlers().onChange();
         }
         this.setState();
+    }
+
+    /**
+     * Handles 'Set Http Client Config' button clicks.
+     *
+     * @param event The button push event. Ignored. Can be null.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("setHttpClientConfig")
+    public void onSetHttpClientConfigClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onSetHttpClientConfiguration();
+        }
     }
 
     /**

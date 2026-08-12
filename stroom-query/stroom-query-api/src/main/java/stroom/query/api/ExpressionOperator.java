@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({"op", "children"})
 @JsonInclude(Include.NON_NULL)
 @Schema(name = "ExpressionOperator",
+        allOf = ExpressionItem.class,
         description = "A logical addOperator term in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {
 

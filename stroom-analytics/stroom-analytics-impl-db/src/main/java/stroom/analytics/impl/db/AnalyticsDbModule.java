@@ -16,7 +16,6 @@
 
 package stroom.analytics.impl.db;
 
-import stroom.analytics.impl.AnalyticsConfig.AnalyticsDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

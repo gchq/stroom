@@ -23,6 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportSerializer;
@@ -120,6 +121,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
     private StreamTargetStreamHandlers streamHandlers;
+    @Inject
+    private DocFinder docFinder;
 
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
@@ -212,14 +215,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                              final boolean compareOutput,
                              final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
-        final List<DocRef> pipelines = pipelineStore.findByName(name);
+        final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, name);
 
         assertThat(pipelines)
                 .hasSize(1);
 
         final DocRef pipelineRef = pipelines.getFirst();
 
-        final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+        final List<DocRef> feedRefs = docFinder.findByName(FeedDoc.TYPE, pipelineRef.getName());
 
         FeedDoc feed = null;
         if (!feedRefs.isEmpty()) {
@@ -296,7 +299,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(pipelineRef.getName()));
                 final ResultPage<Meta> metaResultPage = metaService.find(findMetaCriteria);
                 if (metaResultPage.isEmpty()) {
-                    final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+                    final List<DocRef> feedRefs = docFinder.findByName(FeedDoc.TYPE, pipelineRef.getName());
 
                     FeedDoc feed = null;
                     if (!feedRefs.isEmpty()) {
@@ -563,7 +566,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // feedCriteria.setFeedType(FeedType.REFERENCE);
 //        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
 //        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
-        final List<DocRef> pipelines = pipelineStore.findByName(feedName);
+        final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, feedName);
         assertThat(pipelines != null && !pipelines.isEmpty())
                 .as("No pipelines found")
                 .isTrue();

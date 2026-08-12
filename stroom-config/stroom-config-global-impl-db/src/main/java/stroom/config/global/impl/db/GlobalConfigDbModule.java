@@ -16,7 +16,6 @@
 
 package stroom.config.global.impl.db;
 
-import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

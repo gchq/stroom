@@ -18,7 +18,9 @@ package stroom.proxy.app.guice;
 
 import stroom.aws.s3.client.S3ClientModule;
 import stroom.collection.mock.MockCollectionModule;
-import stroom.docrefinfo.api.DocRefDecorator;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -26,6 +28,7 @@ import stroom.docstore.impl.DocumentResourceHelperImpl;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.DropwizardHttpClientFactory;
 import stroom.proxy.app.DataDirProvider;
@@ -72,6 +75,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
+import java.util.List;
+import java.util.Optional;
+
 public class ProxyCoreModule extends AbstractModule {
 
 
@@ -108,7 +114,7 @@ public class ProxyCoreModule extends AbstractModule {
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
-        bind(DocRefDecorator.class).to(NoDecorationDocRefDecorator.class);
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(DataDirProvider.class).to(DataDirProviderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
         bind(S3EventConsumer.class).to(ProxyS3EventConsumer.class);
@@ -133,5 +139,30 @@ public class ProxyCoreModule extends AbstractModule {
     @Provides
     EntityEventBus entityEventBus() {
         return EntityEventBus.NO_OP_EVENT_BUS;
+    }
+
+    @Provides
+    DocFinder docFinder() {
+        return new DocFinder() {
+            @Override
+            public List<DocRef> findByName(final String type, final String nameFilter, final boolean allowWildCards) {
+                return List.of();
+            }
+
+            @Override
+            public List<DocRef> findByNames(final String type,
+                                            final List<String> nameFilters,
+                                            final boolean allowWildCards) {
+                return List.of();
+            }
+
+            @Override
+            public Optional<String> getName(final DocRef docRef) {
+                if (docRef == null) {
+                    return Optional.empty();
+                }
+                return Optional.ofNullable(docRef.getName());
+            }
+        };
     }
 }

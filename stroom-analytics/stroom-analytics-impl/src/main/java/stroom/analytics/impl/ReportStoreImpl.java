@@ -22,20 +22,15 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -45,17 +40,17 @@ import jakarta.inject.Singleton;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 @Singleton
-class ReportStoreImpl implements ReportStore {
+class ReportStoreImpl
+        extends AbstractDocumentStore<ReportDoc>
+        implements ReportStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportStoreImpl.class);
 
-    private final Store<ReportDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
@@ -70,7 +65,7 @@ class ReportStoreImpl implements ReportStore {
                     final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                     final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
                 serialiser,
                 ReportDoc.TYPE,
                 ReportDoc::builder,
@@ -82,19 +77,15 @@ class ReportStoreImpl implements ReportStore {
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
     @Override
     public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
+        final DocRef docRef = getStore().createDocument(name);
 
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
-            final ReportDoc analyticRuleDoc = store.readDocument(docRef);
-            store.writeDocument(analyticRuleDoc);
+            final ReportDoc analyticRuleDoc = getStore().readDocument(docRef);
+            getStore().writeDocument(analyticRuleDoc);
         });
         return docRef;
     }
@@ -105,8 +96,8 @@ class ReportStoreImpl implements ReportStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final ReportDoc document = store.readDocument(docRef);
-        return store.createDocument(newName,
+        final ReportDoc document = getStore().readDocument(docRef);
+        return getStore().createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
                             .copy()
@@ -128,52 +119,14 @@ class ReportStoreImpl implements ReportStore {
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
     public void deleteDocument(final DocRef docRef) {
         deleteProcessorFilter(docRef);
         deleteExecutionSchedules(docRef);
-        store.deleteDocument(docRef);
+        super.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<ReportDoc> createMapper() {
+    protected DependencyRemapFunction<ReportDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final ReportDoc.Builder builder = doc.copy();
             try {
@@ -218,57 +171,6 @@ class ReportStoreImpl implements ReportStore {
         };
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public ReportDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public ReportDoc writeDocument(final ReportDoc document) {
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         if (docRef != null) {
@@ -286,25 +188,6 @@ class ReportStoreImpl implements ReportStore {
             return docRefs;
         }
         return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {

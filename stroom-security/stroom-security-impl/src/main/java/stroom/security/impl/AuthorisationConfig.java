@@ -16,20 +16,16 @@
 
 package stroom.security.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.security.impl.db.AuthorisationDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class AuthorisationConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
@@ -63,12 +59,21 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
                 .build();
-        // User is pretty much immutable apart from the displayName/fullName but any change to
-        // this, triggers an entity event to evict the item from the cache, so expireAfterAccess
-        // is ok.
+        // Backs the cacheBySubjectId cache in StroomUserIdentityFactory, which authentication consults
+        // to resolve a token/session subject to a stroom User, including its 'enabled' state.
+        //
+        // displayName/fullName changes fire an entity event that evicts the entry, but that event is
+        // best-effort and per-node - a node that misses it keeps serving a stale User. That matters for
+        // 'enabled': a disabled user would keep being authorised on such a node. expireAfterAccess alone
+        // is no bound at all here, because a user being actively used keeps refreshing its own entry.
+        //
+        // expireAfterWrite therefore puts a hard ceiling on how long a revoked/disabled user can survive
+        // on a node that missed the event. It is the ONLY such bound when stroom is an RP against an
+        // external IDP, where there is no internal-IdP token revocation to fall back on.
         userCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
+                .expireAfterWrite(StroomDuration.ofMinutes(30))
                 .build();
         userByUuidCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -132,7 +137,7 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
     }
 
     public CacheConfig getUserInfoByUuidCache() {
-        return userByUuidCache;
+        return userInfoByUuidCache;
     }
 
     public CacheConfig getUserDocumentPermissionsCache() {
@@ -154,27 +159,9 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                ", userAppPermissionsCache=" + userAppPermissionsCache +
                ", userCache=" + userCache +
                ", userByUuidCache=" + userByUuidCache +
+               ", userInfoByUuidCache=" + userInfoByUuidCache +
                ", userDocumentPermissionsCache=" + userDocumentPermissionsCache +
                ", dbConfig=" + dbConfig +
                '}';
-    }
-
-
-// --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class AuthorisationDbConfig extends AbstractDbConfig {
-
-        public AuthorisationDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public AuthorisationDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

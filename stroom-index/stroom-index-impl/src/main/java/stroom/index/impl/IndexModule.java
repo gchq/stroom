@@ -16,10 +16,7 @@
 
 package stroom.index.impl;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
@@ -52,7 +49,6 @@ public class IndexModule extends AbstractModule {
         bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
         bind(IndexFieldProviders.class).to(IndexFieldProvidersImpl.class);
         bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
-        bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
@@ -70,12 +66,8 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(IndexStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(IndexStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(IndexStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(LuceneIndexDoc.TYPE, IndexStore.class, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(IndexShardServiceImpl.class);
@@ -88,9 +80,6 @@ public class IndexModule extends AbstractModule {
                 .bind(IndexResourceImpl.class)
                 .bind(IndexVolumeGroupResourceImpl.class)
                 .bind(IndexVolumeResourceImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(LuceneIndexDoc.TYPE, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexVolumeServiceImpl.class);

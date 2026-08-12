@@ -17,6 +17,7 @@
 package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.io.StreamUtil;
@@ -43,10 +44,13 @@ import javax.xml.transform.stream.StreamSource;
  */
 class CustomURIResolver implements URIResolver {
 
+    private final DocFinder docFinder;
     private final XsltStore xsltStore;
 
     @Inject
-    CustomURIResolver(final XsltStore xsltStore) {
+    CustomURIResolver(final DocFinder docFinder,
+                      final XsltStore xsltStore) {
+        this.docFinder = docFinder;
         this.xsltStore = xsltStore;
     }
 
@@ -64,7 +68,7 @@ class CustomURIResolver implements URIResolver {
     public Source resolve(final String href, final String base) throws TransformerException {
         try {
             // Try and locate a translation by name
-            final List<DocRef> docRefs = xsltStore.findByName(href);
+            final List<DocRef> docRefs = docFinder.findByName(XsltDoc.TYPE, href, false);
 
             if (docRefs == null || docRefs.size() == 0) {
                 // Try loading by UUID or doc ref string, e.g, `uuid='test-uuid', name='test-name'`.

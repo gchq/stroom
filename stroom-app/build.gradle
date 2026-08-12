@@ -55,21 +55,15 @@ application {
 }
 
 dependencies {
-    implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-activity:stroom-activity-impl')
     implementation project(':stroom-activity:stroom-activity-impl-db')
-    implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-ai:stroom-ai-impl-db')
-    implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl-db')
-    implementation project(':stroom-analytics:stroom-analytics-impl-db-jooq')
-    implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
-    implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-annotation:stroom-annotation-pipeline')
     implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
@@ -81,101 +75,76 @@ dependencies {
     implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
-    implementation project(':stroom-cluster:stroom-cluster-lock-impl-db-jooq')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-cluster:stroom-cluster-task-impl')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-impl')
     implementation project(':stroom-config:stroom-config-global-impl-db')
-    implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-credentials:stroom-credentials-impl-db')
-    implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
-    implementation project(':stroom-dashboard:stroom-dashboard-impl-db-jooq')
-    implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
-    implementation project(':stroom-dashboard:stroom-storedquery-impl-db-jooq')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-retention-impl')
-    implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-impl')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
     implementation project(':stroom-data:stroom-data-store-impl-fs-db')
-    implementation project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
-    implementation project(':stroom-data:stroom-data-store-util')
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-datagen:stroom-datagen-impl')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
-    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
-    implementation project(':stroom-docstore:stroom-docstore-impl-memory')
     implementation project(':stroom-documentation:stroom-documentation-impl')
     implementation project(':stroom-dropwizard-common')
-//    implementation project(':stroom-elastic:stroom-elastic-impl')
-//    implementation project(':stroom-elastic:stroom-elastic-impl-http')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-impl')
     implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
-    implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
-    implementation project(':stroom-explorer:stroom-explorer-impl-db-jooq')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-feed:stroom-feed-impl')
     implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
-    implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db-jooq')
-    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-lucene553')
     implementation project(':stroom-index:stroom-index-lucene')
     implementation project(':stroom-index:stroom-index-impl-db')
-    implementation project(':stroom-index:stroom-index-impl-db-jooq')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db')
-    implementation project(':stroom-job:stroom-job-impl-db-jooq')
-    implementation project(':stroom-kafka:stroom-kafka-api')
     implementation project(':stroom-kafka:stroom-kafka-impl')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
-    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-impl')
     implementation project(':stroom-meta:stroom-meta-impl-db')
-    implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-meta:stroom-meta-statistics-impl')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-node:stroom-node-impl-db')
-    implementation project(':stroom-node:stroom-node-impl-db-jooq')
     implementation project(':stroom-pathways:stroom-pathways-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-processor:stroom-processor-impl')
     implementation project(':stroom-processor:stroom-processor-impl-db')
-    implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -195,17 +164,12 @@ dependencies {
     implementation project(':stroom-security:stroom-security-common-impl')
     implementation project(':stroom-security:stroom-security-identity')
     implementation project(':stroom-security:stroom-security-identity-db')
-    implementation project(':stroom-security:stroom-security-identity-db-jooq')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-impl-db')
-    implementation project(':stroom-security:stroom-security-impl-db-jooq')
     implementation project(':stroom-security:stroom-security-openid-api')
-    implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')
-    implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-suggestions:stroom-suggestions-impl')
-    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-task:stroom-task-mock')
     implementation project(':stroom-util')
@@ -224,16 +188,9 @@ dependencies {
     implementation libs.dropwizard.metrics.annotation
     implementation libs.dropwizard.metrics.core
     implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.dropwizard.servlets
-    implementation libs.dropwizard.validation
-    //implementation libs.dropwizard.websockets
     implementation libs.eventLogging
-    implementation libs.flyway.core
     implementation libs.flyway.mysql
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
@@ -241,7 +198,6 @@ dependencies {
     implementation libs.jcommander
     implementation libs.jersey.common
     implementation libs.jetty.server
-    implementation libs.jetty.servlet
     implementation libs.jetty.servlets
     implementation libs.jgit
     implementation libs.jooq
@@ -258,31 +214,15 @@ dependencies {
     testImplementation project(':stroom-activity:stroom-activity-api')
     testImplementation project(':stroom-activity:stroom-activity-mock')
     testImplementation project(':stroom-ai:stroom-ai-mock')
-    testImplementation project(':stroom-analytics:stroom-analytics-mock')
     testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
-    testImplementation project(':stroom-config:stroom-config-app')
-    testImplementation project(':stroom-config:stroom-config-global-impl')
-    testImplementation project(':stroom-core')
-    testImplementation project(':stroom-core-shared')
-    testImplementation project(':stroom-credentials:stroom-credentials-impl-db')
-    testImplementation project(':stroom-dashboard:stroom-dashboard-impl')
     testImplementation project(':stroom-data:stroom-data-store-api')
-    testImplementation project(':stroom-data:stroom-data-store-impl-fs')
     testImplementation project(':stroom-data:stroom-data-store-mock')
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-api')
-    testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
-    testImplementation project(':stroom-event-logging:stroom-event-logging-api')
-    testImplementation project(':stroom-event-logging:stroom-event-logging-impl')
     testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
-    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-explorer:stroom-explorer-api')
-    testImplementation project(':stroom-explorer:stroom-explorer-impl')
-    testImplementation project(':stroom-explorer:stroom-explorer-impl-db')
-    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl')
-    testImplementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
     testImplementation project(':stroom-gitrepo:stroom-gitrepo-mock')
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
@@ -290,27 +230,15 @@ dependencies {
     testImplementation project(':stroom-meta:stroom-meta-api')
     testImplementation project(':stroom-meta:stroom-meta-mock')
     testImplementation project(':stroom-node:stroom-node-mock')
-    testImplementation project(':stroom-pipeline')
     testImplementation project(':stroom-processor:stroom-processor-mock')
-    testImplementation project(':stroom-receive:stroom-receive-rules-impl')
-    testImplementation project(':stroom-security:stroom-security-identity')
-    testImplementation project(':stroom-security:stroom-security-api')
-    testImplementation project(':stroom-security:stroom-security-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
-    testImplementation project(':stroom-security:stroom-security-user-api')
     testImplementation project(':stroom-statistics:stroom-statistics-api')
-    testImplementation project(':stroom-statistics:stroom-statistics-impl')
-    testImplementation project(':stroom-statistics:stroom-statistics-impl-sql')
     testImplementation project(':stroom-statistics:stroom-statistics-mock')
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-test-common')
-    testImplementation project(':stroom-util')
-    testImplementation project(':stroom-util-shared')
 
-    testImplementation libs.commons.io
     testImplementation libs.classgraph
     testImplementation libs.data.faker
-    testImplementation libs.guice
     testImplementation libs.guice.extension
     testImplementation libs.guice.grapher
     testImplementation libs.hikari
@@ -318,11 +246,9 @@ dependencies {
     testImplementation libs.langchain4j
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
-    testImplementation libs.slf4j.api
     testImplementation libs.swagger.annotations
     testImplementation libs.vavr
 
-    testImplementation libs.dropwizard.client
     testImplementation libs.dropwizard.testing
 
     testImplementation libs.bundles.common.test.implementation

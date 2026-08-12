@@ -16,12 +16,8 @@
 
 package stroom.dashboard.impl.script;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.script.shared.ScriptDoc;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 
@@ -31,20 +27,11 @@ public class ScriptModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ScriptStore.class).to(ScriptStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(ScriptDoc.TYPE, ScriptStore.class, ScriptStoreImpl.class);
 
         ServletBinder.create(binder())
                 .bind(ScriptServlet.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(ScriptStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ScriptStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(ScriptStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(ScriptDoc.TYPE, ScriptStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ScriptResourceImpl.class);

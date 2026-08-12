@@ -16,16 +16,12 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -331,20 +327,5 @@ public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfi
                 ", dataSourceCache=" + dataSourceCache +
                 ", slowQueryWarningThreshold=" + slowQueryWarningThreshold +
                 '}';
-    }
-
-    @BootStrapConfig
-    public static class SQLStatisticsDbConfig extends AbstractDbConfig {
-
-        public SQLStatisticsDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public SQLStatisticsDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

@@ -13,6 +13,73 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.10] - 2026-08-05
+
+* Bug **#5553** : Fix DocRefInfo cache bug.
+
+* Feature **#5582** : Add proper audit trail to doc history and store snapshots of data changes to allow future restore.
+
+* Task **#5588** : Improve JOOQ code generation to work with Flyway to remove catch 22 issue.
+
+* Feature **#2109** : Add doc dependencies to DB to improve capability.
+
+* Feature **#1556** : Add safe delete feature now we can depend on a reliable dependency discovery service.
+
+* Feature **#4111** : Add confirmation details when deleting a folder.
+
+* Bug **#4073** : Stop explorer scrolling to the top on deleting an item.
+
+* Bug **#5697** : Fix the UI bootstrap never recognising a user authenticated by an edge proxy (e.g. AWS ALB + Cognito, NGINX + oauth2-proxy): `/api/auth/flow/v1/status` now accepts a verified request token, and the new `security.authentication.edgeAuthentication` config block suppresses stroom's own OIDC flow and supports edge-aware logout when the proxy is the relying party.
+
+* Feature **#5697** : Apply CSRF Origin/X-CSRF checks to state-changing requests whose credential was injected by an authenticating edge proxy (previously only session-cookie identities were checked), and reject cross-site browser requests carrying a request token unless they send `X-CSRF: 1`. In-browser clients that attach their own bearer token must now send `X-CSRF: 1` on state-changing requests when `edgeAuthentication.enabled` is set; non-browser automation and inter-node traffic are unaffected.
+
+* Feature **#5697** : Add `security.authentication.openId.authenticationRequestExtraParams` to append provider-specific parameters to the OIDC authentication request, e.g. Google's `access_type: offline` without which Google issues no refresh token and the session cannot outlive the first access token.
+
+* Bug **#5696** : Stop the Plan B merge processor deleting un-merged queued data at startup and stop merge queue consumers churning through the queue when merges are interrupted at shutdown. Data queued for merge now survives a restart and interrupted merges are rerun when the merge job next runs.
+
+* Bug **#5696** : Fix Plan B merges double counting for histograms and metrics on resume.
+
+* Bug **#5696** : Stop Plan B histogram and metric stores double counting when a merge is rerun, e.g. after an interrupted shutdown, a duplicate part delivery or a sender retry. Each part shard now carries an instance UUID and additive stores track per source merge progress, skipping fully merged sources and resuming interrupted merges exactly after their last commit.
+
+* Bug **#5696** : Backport the Plan B filter staging buffer reuse from 7.13 so that a pooled buffer is no longer allocated and abandoned for every value element loaded.
+
+* Bug **#5689** : Fix issue where snapshots were not found.
+
+* Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
+
+* Bug **#5689** : Stop the Plan B startup cleanup deleting snapshots published by a node that stores shards, and stop a failed snapshot creation being recorded as a success, which could leave a shard that receives no further writes unable to publish a snapshot again.
+
+* Bug **#5689** : Rework the Plan B snapshot serving strategy. Slightly stale snapshot data is now served, bounded by `minTimeToKeepSnapshotEnv`, while a refresh happens in the background. Reads with no servable snapshot block on a fetch when it may succeed, e.g. the first fetch, and fail fast when one has recently failed. A NOT_MODIFIED response now counts as confirmation that data is current rather than being treated as a fetch failure, and the first fetch no longer happens during shard creation.
+
+
+## [v7.13-beta.9] - 2026-07-30
+
+* Bug **#5669** : Fix `HttpClientConfigConverter` not mapping `verifyHostname`, which prevented TLS hostname verification being disabled on HTTP clients.
+
+* Bug **#5671** : Run directory-scanner file ingest as the processing user so that receipt checks requiring a user succeed.
+
+* Feature **#5656** : Add feature to view sessions and revoke them and associated user tokens.
+
+* Bug **#5674** : Fix dirty behaviour on pipeline structure changes.
+
+* Feature **#5675** : Add HTTP and TLS configuration to Git repositories.
+
+* Bug **#5680** : Fix account migration script.
+
+* Bug **#5679** : Fix slow processor task assignment on large clusters. Task queueing now takes account of processing profiles so that tasks no node is allowed to process are not queued, and are released if a profile stops allowing them. Task assignment no longer repeatedly fills the queue when there is nothing to add, and only one request fills the queue at a time while the others wait for it.
+
+* Bug **#5679** : Fix processor task creation not recording errors against the filter tracker, and not stopping when a task creation limit has been reached.
+
+* Bug **#5685** : Fix inability to unset **Max Processing Tasks** on a processor filter.
+
+* Bug **#5678** : Fix processor task retention only using the `stroom.processor.deleteAge` value that was current when the node started. The `Processor Task Retention` job now reads the property on each run, so a change to it takes effect without a node restart.
+
+
+## [v7.13-beta.8] - 2026-07-27
+
+* Feature **#5656** : Add self service account unlocking for the internal identity provider, controlled by the new properties `stroom.security.identity.reactivateInactiveAccountsOnLogin` and `stroom.security.identity.allowLockedAccountPasswordReset`, and rebuild the 'Forgot password' reset page so that an emailed reset link can be completed.
+
+
 ## [v7.13-beta.7] - 2026-07-16
 
 * Bug **#5663** : Fix OpenAPI spec for polymorphic types.
@@ -2369,7 +2436,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.10...HEAD
+[v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
+[v7.13-beta.9]: https://github.com/gchq/stroom/compare/v7.13-beta.8...v7.13-beta.9
+[v7.13-beta.8]: https://github.com/gchq/stroom/compare/v7.13-beta.7...v7.13-beta.8
 [v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7
 [v7.13-beta.6]: https://github.com/gchq/stroom/compare/v7.13-beta.5...v7.13-beta.6
 [v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5

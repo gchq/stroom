@@ -44,7 +44,13 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/session" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
+    String TERMINATE_PATH_PART = "/terminate";
+    String TERMINATE_SESSION_PATH_PART = "/terminateSession";
+    String TERMINATE_OTHER_PATH_PART = "/terminateOther";
     String NODE_NAME_PARAM = "nodeName";
+    String SUBJECT_ID_PARAM = "subjectId";
+    String SESSION_HANDLE_PARAM = "sessionHandle";
+    String EXCEPT_SESSION_ID_PARAM = "exceptSessionId";
 
     @POST
     @Path("logout")
@@ -59,4 +65,40 @@ public interface SessionResource extends RestResource, DirectRestService {
             summary = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
             operationId = "listSessions")
     SessionListResponse list(@QueryParam(NODE_NAME_PARAM) String nodeName);
+
+    @POST
+    @Path(TERMINATE_OTHER_PATH_PART)
+    @Operation(
+            summary = "Sign out of all of the current user's other sessions across the cluster",
+            operationId = "terminateOtherSessions")
+    Boolean terminateOtherSessions();
+
+    @POST
+    @Path(TERMINATE_PATH_PART)
+    @Operation(
+            summary = "Terminate a user's sessions on a node (cluster fan-out; requires Manage Users)",
+            operationId = "terminateUserSessions")
+    Integer terminate(@QueryParam(SUBJECT_ID_PARAM) String subjectId,
+                      @QueryParam(EXCEPT_SESSION_ID_PARAM) String exceptSessionId,
+                      @QueryParam(NODE_NAME_PARAM) String nodeName);
+
+    /**
+     * Terminate one specific session. Terminating your own session is always allowed; terminating
+     * anyone else's requires Manage Users.
+     *
+     * @param sessionHandle The opaque handle of the session to terminate, from
+     *                      {@link SessionDetails#getSessionHandle()}. Deliberately not a session id: that is the
+     *                      session cookie value, and disclosing one would let a Manage Users holder impersonate
+     *                      the session's owner.
+     * @param nodeName  The node holding the session, if known (session lists report it). When null the
+     *                  call is fanned out to every node until the session is found.
+     * @return True if the session was found and terminated.
+     */
+    @POST
+    @Path(TERMINATE_SESSION_PATH_PART)
+    @Operation(
+            summary = "Terminate a single session by id (own session, or requires Manage Users)",
+            operationId = "terminateSession")
+    Boolean terminateSession(@QueryParam(SESSION_HANDLE_PARAM) String sessionHandle,
+                             @QueryParam(NODE_NAME_PARAM) String nodeName);
 }

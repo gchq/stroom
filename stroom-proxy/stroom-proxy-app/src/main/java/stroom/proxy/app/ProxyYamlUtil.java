@@ -20,8 +20,9 @@ import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -31,9 +32,6 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
-import tools.jackson.databind.MapperFeature;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -102,7 +100,8 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
-        final YAMLMapper mapper = getConsistentOrderYAMLMapper();
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(outputStream, config);
     }
@@ -114,7 +113,8 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final YAMLMapper mapper = getConsistentOrderYAMLMapper();
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(path.toFile(), config);
     }
@@ -125,12 +125,8 @@ public class ProxyYamlUtil {
         writeConfig(config, path);
     }
 
-    private static YAMLMapper getConsistentOrderYAMLMapper() {
-        return YamlUtil.getVanillaMapper()
-                .rebuild()
-                .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-                .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
-                .disable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST)
-                .build();
+    private static ObjectMapper getConsistentOrderYAMLMapper() {
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        return YamlV2Util.createConsistentOrderYamlMapper(true);
     }
 }

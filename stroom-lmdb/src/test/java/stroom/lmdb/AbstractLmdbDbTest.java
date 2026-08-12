@@ -35,11 +35,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    // Sized for what the tests actually write rather than for headroom, as every open env reserves
+    // this much address space and these tests run alongside others in parallel gradle forks.
+    // Measured: the suite fails at 128KiB and passes at 256KiB, the binding test being
+    // TestBasicLmdbDb.testPutsWithConcurrentReadTxn, whose peak usage varies with thread interleaving
+    // because LMDB cannot reuse freed pages while a read txn is open. Hence the margin over the
+    // measured floor - sitting on the cliff edge would just trade one source of CI flakiness for
+    // another. Subclasses needing more (e.g. the manual perf tests) override getMaxSizeBytes().
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
+    // Measured: 5 is not enough. TestBasicLmdbDb opens 5 DBs in its setup and some of its tests open
+    // a sixth.
+    private static final int MAX_DB_COUNT = 6;
     protected LmdbEnv lmdbEnv = null;
     protected Path dbDir = null;
     protected final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
@@ -60,7 +71,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
         lmdbEnv = new LmdbEnvFactory(pathCreator, new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
-                .withMaxDbCount(10)
+                .withMaxDbCount(MAX_DB_COUNT)
                 .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();
@@ -72,18 +83,21 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
             lmdbEnv.close();
         }
         lmdbEnv = null;
-        if (Files.isDirectory(dbDir)) {
-            Files.list(dbDir)
-                    .filter(path -> path.endsWith("data.mdb"))
-                    .forEach(path -> {
-                        try {
-                            final long fileSizeBytes = Files.size(path);
-                            LOGGER.info("LMDB file size: {}",
-                                    ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
-                        } catch (final IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+        // Null check as setup() may have failed before assigning the dir
+        if (dbDir != null && Files.isDirectory(dbDir)) {
+            try (final Stream<Path> fileStream = Files.list(dbDir)) {
+                fileStream
+                        .filter(path -> path.endsWith("data.mdb"))
+                        .forEach(path -> {
+                            try {
+                                final long fileSizeBytes = Files.size(path);
+                                LOGGER.info("LMDB file size: {}",
+                                        ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
+                            } catch (final IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
             LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize().toString());
             FileUtil.deleteDir(dbDir);
         }
