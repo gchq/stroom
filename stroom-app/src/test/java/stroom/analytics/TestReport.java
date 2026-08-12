@@ -107,6 +107,13 @@ class TestReport extends AbstractAnalyticsTest {
      */
     private static final String REPORT_STREAM_TYPE = "Report";
 
+    /**
+     * Placeholder for the id of the source events stream in the expected report content. Meta ids are not reset
+     * between test classes that share a database, so the id the setup data gets depends on what ran before this
+     * class and must not be hard coded.
+     */
+    private static final String STREAM_ID = "${streamId}";
+
     private static final String QUERY = """
             from index_view
             where UserId = user5
@@ -116,11 +123,11 @@ class TestReport extends AbstractAnalyticsTest {
     void test() {
         basicTest(QUERY, null, 9, """
                 "StreamId","EventId","UserId"
-                "8","5","user5"
-                "8","9","user5"
-                "8","14","user5"
-                "8","20","user5"
-                "8","23","user5"
+                "${streamId}","5","user5"
+                "${streamId}","9","user5"
+                "${streamId}","14","user5"
+                "${streamId}","20","user5"
+                "${streamId}","23","user5"
                 """);
     }
 
@@ -146,11 +153,11 @@ class TestReport extends AbstractAnalyticsTest {
 
         basicTest(QUERY, queryTablePreferences, 9, """
                 "StreamId","UserId"
-                "8","user5"
-                "8","user5"
-                "8","user5"
-                "8","user5"
-                "8","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
                 """);
     }
 
@@ -281,7 +288,7 @@ class TestReport extends AbstractAnalyticsTest {
         final Meta newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
-            assertThat(result.trim()).isEqualTo(expectedContent.trim());
+            assertThat(result.trim()).isEqualTo(resolveStreamId(expectedContent).trim());
 
             try (final InputStreamProvider inputStreamProvider = source.get(0)) {
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
@@ -292,6 +299,16 @@ class TestReport extends AbstractAnalyticsTest {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * The report selects StreamId from the single events stream created by the setup, so replace the placeholder
+     * in the expected content with the id that stream actually got.
+     */
+    private String resolveStreamId(final String expectedContent) {
+        final ResultPage<Meta> events = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
+        assertThat(events.size()).isOne();
+        return expectedContent.replace(STREAM_ID, Long.toString(events.getValues().getFirst().getId()));
     }
 
     private DocRef writeReport(final ReportDoc sample) {
