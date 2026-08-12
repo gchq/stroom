@@ -134,7 +134,7 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
 
     @Override
     public int delete(final Collection<Long> metaIds) {
-        LOGGER.error(() -> LogUtil.message("delete() - Deleting {} metaIds {}",
+        LOGGER.debug(() -> LogUtil.message("delete() - Deleting {} metaIds {}",
                 metaIds.size(), LogUtil.getSample(metaIds, 10)));
         if (NullSafe.hasItems(metaIds)) {
             try {
