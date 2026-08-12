@@ -68,6 +68,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -154,6 +155,46 @@ class TestReport extends AbstractAnalyticsTest {
     }
 
     /**
+     * A report with no error feed, and no default error feed configured, cannot report its own failure through the
+     * error feed. The failure must instead be recorded against the execution history so that it is visible in the
+     * UI, and the schedule disabled so that it does not repeat silently on every scheduled execution.
+     */
+    @Test
+    void testMissingErrorFeedIsRecordedAndDisablesTheSchedule() {
+        final ReportDoc reportDoc = ReportDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(QUERY)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .reportSettings(ReportSettings.builder().fileType(DownloadSearchResultFileType.CSV).build())
+                .notifications(createNotificationConfig())
+                .errorFeed(null)
+                .build();
+        final DocRef docRef = writeReport(reportDoc);
+        final ExecutionSchedule executionSchedule = createExecutionSchedule(docRef);
+
+        reportExecutor.exec();
+
+        // No report should have been produced.
+        analyticsDataSetup.checkStreamCount(8);
+
+        // The failure must be visible in the execution history rather than only in the logs.
+        final ResultPage<ExecutionHistory> history = executionScheduleDao.fetchExecutionHistory(
+                new ExecutionHistoryRequest(
+                        PageRequest.createDefault(),
+                        Collections.emptyList(),
+                        executionSchedule));
+        assertThat(history.size()).isOne();
+        assertThat(history.getValues().getFirst().getStatus()).isEqualTo(ExecutionHistory.STATUS_ERROR);
+
+        // And the schedule must have been disabled so that it does not fail identically forever.
+        final Optional<ExecutionSchedule> reloaded =
+                executionScheduleDao.fetchScheduleById(executionSchedule.getId());
+        assertThat(reloaded).isPresent();
+        assertThat(reloaded.get().isEnabled()).isFalse();
+    }
+
+    /**
      * The base class only tidies up analytic rules and detections, so each test here must remove the report doc and
      * the report stream it created, else the doc count and stream count assertions fail for the next test.
      */
@@ -180,25 +221,7 @@ class TestReport extends AbstractAnalyticsTest {
                 .queryTablePreferences(queryTablePreferences)
                 .build();
         final DocRef docRef = writeReport(reportDoc);
-        final long now = System.currentTimeMillis();
-        final ExecutionSchedule executionSchedule = executionScheduleDao.createExecutionSchedule(ExecutionSchedule
-                .builder()
-                .name("Test")
-                .enabled(true)
-                .nodeName(nodeInfo.getThisNodeName())
-                .schedule(Schedule
-                        .builder()
-                        .type(ScheduleType.CRON)
-                        .expression("* * * * * ?")
-                        .build())
-                .contiguous(true)
-                .scheduleBounds(ScheduleBounds
-                        .builder()
-                        .startTimeMs(now)
-                        .endTimeMs(now)
-                        .build())
-                .owningDoc(docRef)
-                .build());
+        final ExecutionSchedule executionSchedule = createExecutionSchedule(docRef);
 
         // Now run the search process.
         reportExecutor.exec();
@@ -226,6 +249,28 @@ class TestReport extends AbstractAnalyticsTest {
         executionScheduleDao.deleteOldExecutionHistory(Instant.now().plusMillis(1));
         resultPage = executionScheduleDao.fetchExecutionHistory(request);
         assertThat(resultPage.size()).isZero();
+    }
+
+    private ExecutionSchedule createExecutionSchedule(final DocRef docRef) {
+        final long now = System.currentTimeMillis();
+        return executionScheduleDao.createExecutionSchedule(ExecutionSchedule
+                .builder()
+                .name("Test")
+                .enabled(true)
+                .nodeName(nodeInfo.getThisNodeName())
+                .schedule(Schedule
+                        .builder()
+                        .type(ScheduleType.CRON)
+                        .expression("* * * * * ?")
+                        .build())
+                .contiguous(true)
+                .scheduleBounds(ScheduleBounds
+                        .builder()
+                        .startTimeMs(now)
+                        .endTimeMs(now)
+                        .build())
+                .owningDoc(docRef)
+                .build());
     }
 
     private void testReportStream(final int expectedStreams,
@@ -259,7 +304,7 @@ class TestReport extends AbstractAnalyticsTest {
                 .reportSettings(sample.getReportSettings())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
                 .notifications(new ArrayList<>(sample.getNotifications()))
-                .errorFeed(analyticsDataSetup.getDetections())
+                .errorFeed(sample.getErrorFeed())
                 .queryTablePreferences(sample.getQueryTablePreferences())
                 .build();
         reportStore.writeDocument(reportDoc);
