@@ -766,6 +766,8 @@ appConfig:
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
     path: "planb"
+    sendPartAttempts: 3
+    sendPartRetryDelay: "PT10S"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null

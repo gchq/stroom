@@ -483,7 +483,9 @@ public class ShardManager {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error getting shard for map: {} {}", mapName, e.getMessage()), e);
+            // Debug only as we rethrow, so the caller reports the failure, e.g. to the pipeline error receiver.
+            // Logging it here as well just duplicates it into the stream processing error file. See gh-5705.
+            LOGGER.debug(() -> LogUtil.message("Error getting shard for map: {} {}", mapName, e.getMessage()), e);
             throw e;
         }
     }
