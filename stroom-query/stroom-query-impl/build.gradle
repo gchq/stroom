@@ -41,6 +41,7 @@ dependencies {
     implementation libs.jakarta.servlet.api
     implementation libs.restygwt
     implementation libs.slf4j.api
+    implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
     testImplementation libs.bundles.common.test.implementation
