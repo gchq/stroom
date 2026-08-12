@@ -21,6 +21,8 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.config.global.client.presenter.ConfigDefaultSetter;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -55,7 +57,7 @@ import java.util.function.Consumer;
 
 public class ScheduledProcessEditPresenter
         extends MyPresenterWidget<ScheduledProcessEditView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ScheduledProcessEditUiHandlers, HasDirtyHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -64,6 +66,7 @@ public class ScheduledProcessEditPresenter
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
     private final UiConfigCache uiConfigCache;
+    private final ConfigDefaultSetter configDefaultSetter;
     private ExecutionSchedule executionSchedule;
 
     @Inject
@@ -76,15 +79,19 @@ public class ScheduledProcessEditPresenter
                                          final RestFactory restFactory,
                                          final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                          final ClientSecurityContext clientSecurityContext,
-                                         final UiConfigCache uiConfigCache) {
+                                         final UiConfigCache uiConfigCache,
+                                         final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.uiConfigCache = uiConfigCache;
+        this.configDefaultSetter = configDefaultSetter;
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
 
         view.setUiHandlers(this);
+        // Only an administrator can change a global property, so don't offer it to anyone else.
+        view.setSetDefaultVisible(configDefaultSetter.isAllowed());
         view.getStartTime().setPopupProvider(dateTimePopupProvider);
         view.getEndTime().setPopupProvider(dateTimePopupProvider);
         this.errorFeedPresenter = errorFeedPresenter;
@@ -212,6 +219,27 @@ public class ScheduledProcessEditPresenter
 
     @Override
     public void onRefreshProcessingStatus() {
+    }
+
+    @Override
+    public void onSetDefaultNode() {
+        configDefaultSetter.setDefault(
+                this,
+                getConfigTarget(),
+                AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_NODE,
+                getView().getNode(),
+                "processing node",
+                this);
+    }
+
+    /**
+     * Reports and analytic rules keep their defaults separately.
+     */
+    private ConfigTarget getConfigTarget() {
+        final DocRef owningDoc = NullSafe.get(executionSchedule, ExecutionSchedule::getOwningDoc);
+        return owningDoc != null && ReportDoc.TYPE.equals(owningDoc.getType())
+                ? ConfigTarget.REPORT_UI_DEFAULT
+                : ConfigTarget.ANALYTIC_UI_DEFAULT;
     }
 
     @Override
