@@ -947,8 +947,8 @@ appConfig:
     dataFeedIdentitiesDir: "data_feed_identities"
     dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
-    - "AuthenticationType{displayValue='OAuth Token'}"
-    - "AuthenticationType{displayValue='Client certificate'}"
+    - "TOKEN"
+    - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:

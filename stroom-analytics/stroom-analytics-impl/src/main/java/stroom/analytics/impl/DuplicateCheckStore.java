@@ -115,10 +115,38 @@ class DuplicateCheckStore {
             anLmdbEnv = createEnv(duplicateCheckStoreConfig.getLmdbConfig(), lmdbEnvDir);
         }
         this.lmdbEnv = anLmdbEnv;
-        this.db = lmdbEnv.openDb(DUPLICATE_CHECK_DB_NAME, DbiFlags.MDB_CREATE);
-        this.infoDb = lmdbEnv.openDb(INFO_DB_NAME, DbiFlags.MDB_CREATE);
-        this.writer = new LmdbWriter(executorProvider, lmdbEnv);
-        writeSchemaVersion();
+        try {
+            this.db = lmdbEnv.openDb(DUPLICATE_CHECK_DB_NAME, DbiFlags.MDB_CREATE);
+            this.infoDb = lmdbEnv.openDb(INFO_DB_NAME, DbiFlags.MDB_CREATE);
+            this.writer = new LmdbWriter(executorProvider, lmdbEnv);
+        } catch (final RuntimeException e) {
+            // Construction failed before the writer existed (or before its transfer task was
+            // submitted), so nothing can be using the env; close it rather than leak it.
+            closeEnvQuietly();
+            throw e;
+        }
+        try {
+            writeSchemaVersion();
+        } catch (final RuntimeException e) {
+            // The writer's transfer task is running. Close it (which waits for its final
+            // commit and txn close) and then the env, so a construction failure doesn't
+            // leave an orphaned writer task running against an open env.
+            try {
+                close();
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e2::getMessage, e2);
+                e.addSuppressed(e2);
+            }
+            throw e;
+        }
+    }
+
+    private void closeEnvQuietly() {
+        try {
+            lmdbEnv.close();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     /**
@@ -374,15 +402,18 @@ class DuplicateCheckStore {
     }
 
     synchronized void close() {
-        writer.close();
-
         LOGGER.debug("close called");
         LOGGER.trace(() -> "close()", new RuntimeException("close"));
         try {
-            lmdbEnv.close();
+            // Waits (uninterruptibly) for the writer's transfer task to perform its final
+            // commit and close its write txn, so the env close below cannot race them.
+            writer.close();
         } catch (final RuntimeException e) {
+            // The writer failed but has finished with its txn, so the env is still closed
+            // below. The env must always be closed; callers delete the dir after closing.
             LOGGER.error(e::getMessage, e);
         }
+        closeEnvQuietly();
     }
 
     public synchronized DuplicateCheckRows fetchData(final FindDuplicateCheckCriteria criteria) {

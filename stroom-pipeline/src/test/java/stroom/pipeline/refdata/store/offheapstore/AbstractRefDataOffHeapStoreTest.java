@@ -21,6 +21,7 @@ import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
+import stroom.pipeline.refdata.ReferenceDataStagingLmdbConfig;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.NullValue;
@@ -42,9 +43,11 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.time.StroomDuration;
 
@@ -55,6 +58,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
@@ -114,7 +118,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
 //    protected Path dbDir = null;
 
     @BeforeEach
-    void setup() throws IOException {
+    void setup() {
 //        dbDir = Files.createTempDirectory("stroom");
 //        Files.createDirectories(dbDir);
 //        FileUtil.deleteContents(dbDir);
@@ -129,7 +133,13 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
 //                        .withLocalDir(dbDir.toAbsolutePath().toString())
                         .withLocalDir(getCurrentTestDir().toAbsolutePath().toString())
+                        // Without this each env gets the production default map size of 50GiB, and
+                        // these tests open several envs per test (legacy store + feed stores).
+                        .withMaxStoreSize(ByteSize.ofMebibytes(50))
                         .withReaderBlockedByWriter(false))
+                // The staging env default is 10GiB, and each load opens one.
+                .withStagingLmdbConfig(new ReferenceDataStagingLmdbConfig()
+                        .withMaxStoreSize(ByteSize.ofMebibytes(50)))
                 .withMaxPutsBeforeCommit(batchSize)
                 .withMaxPurgeDeletesBeforeCommit(batchSize);
 
@@ -148,6 +158,23 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
 
         injector.injectMembers(this);
         refDataStore = refDataStoreFactory.getOffHeapStore();
+    }
+
+    @AfterEach
+    void closeEnvs() {
+        // Close every LMDB env before JUnit deletes the @TempDir. Nothing else closes them: each
+        // test gets a fresh injector and store, so without this every test leaks its envs (with
+        // their reserved address space) for the life of the test JVM and the dir is deleted under
+        // open envs. By the time we get here no txns are open: single-threaded tests are fully
+        // synchronous, and the concurrency tests join ALL their tasks (normally or exceptionally)
+        // before returning or throwing, so a plain close is safe. Env close is idempotent, so
+        // stores the test has already closed (e.g. via purge) are fine.
+        if (refDataStore instanceof final DelegatingRefDataOffHeapStore delegatingStore) {
+            NullSafe.consume(delegatingStore.getLegacyRefDataStore(false), store ->
+                    store.getLmdbEnvironment().close());
+            delegatingStore.getFeedNameToStoreMap().values().forEach(store ->
+                    store.getLmdbEnvironment().close());
+        }
     }
 
     protected void assertDbCounts(final int refStreamDefCount,
@@ -575,7 +602,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
 //            refDataStore.logAllContents();
 
             final ProcessingState processingState = refDataStore.getLoadState(refStreamDefinition)
-                    .get();
+                    .orElseThrow();
 
             assertThat(processingState)
                     .isEqualTo(ProcessingState.COMPLETE);
@@ -623,7 +650,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
             final RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, key);
 
             // Trigger the lookup
-            final RefDataValue refDataValue = valueProxy.supplyValue().get();
+            final RefDataValue refDataValue = valueProxy.supplyValue().orElseThrow();
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
             assertThat((StringValue) refDataValue)
@@ -725,7 +752,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
             final AtomicInteger counter,
             final List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData,
             final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData,
-            final boolean isLoadExpectedToHappen) throws Exception {
+            final boolean isLoadExpectedToHappen) {
 
 
         final boolean didLoadHappen = refDataStore.doWithLoaderUnlessComplete(
@@ -770,7 +797,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
         assertThat(didLoadHappen)
                 .isEqualTo(isLoadExpectedToHappen);
 
-        final ProcessingState processingInfo = refDataStore.getLoadState(refStreamDefinition).get();
+        final ProcessingState processingInfo = refDataStore.getLoadState(refStreamDefinition).orElseThrow();
 
         assertThat(processingInfo)
                 .isEqualTo(ProcessingState.COMPLETE);
@@ -818,17 +845,17 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
                                      final StagingValueOutputStream stagingValueOutputStream) {
         stagingValueOutputStream.clear();
         try {
-            if (refDataValue instanceof StringValue) {
-                final StringValue stringValue = (StringValue) refDataValue;
-                stagingValueOutputStream.write(stringValue.getValue());
-                stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
-            } else if (refDataValue instanceof FastInfosetValue) {
-                stagingValueOutputStream.write(((FastInfosetValue) refDataValue).getByteBuffer());
-                stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
-            } else if (refDataValue instanceof NullValue) {
-                stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
-            } else {
-                throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
+            switch (refDataValue) {
+                case final StringValue stringValue -> {
+                    stagingValueOutputStream.write(stringValue.getValue());
+                    stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
+                }
+                case final FastInfosetValue fastInfosetValue -> {
+                    stagingValueOutputStream.write(fastInfosetValue.getByteBuffer());
+                    stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
+                }
+                case final NullValue nullValue -> stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
+                default -> throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
             }
         } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);

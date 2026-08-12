@@ -40,11 +40,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 public abstract class AbstractStoreDbTest extends StroomUnitTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStoreDbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    // Sized for what the tests actually write, not for headroom, as every open env reserves this
+    // much address space and these tests run alongside others in parallel Gradle forks. Without
+    // this the env gets ReferenceDataLmdbConfig's production default of 50GiB.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(10);
     protected RefDataLmdbEnv refDataLmdbEnv = null;
     protected LmdbEnv lmdbEnv = null;
     private Path dbDir = null;
@@ -69,8 +73,13 @@ public abstract class AbstractStoreDbTest extends StroomUnitTest {
                 new LmdbLibrary(pathCreator,
                         tempDirProvider,
                         LmdbLibraryConfig::new));
+        // getMaxSizeBytes() has to be passed via the config, else the env silently gets the
+        // production default map size.
+        final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(new ReferenceDataConfig().getLmdbConfig()
+                        .withMaxStoreSize(getMaxSizeBytes()));
         refDataLmdbEnv = new RefDataLmdbEnv(
-                lmdbEnvFactory, ReferenceDataConfig::new, null, null);
+                lmdbEnvFactory, () -> referenceDataConfig, null, null);
         lmdbEnv = refDataLmdbEnv.getEnvironment();
     }
 
@@ -81,18 +90,19 @@ public abstract class AbstractStoreDbTest extends StroomUnitTest {
         }
         lmdbEnv = null;
         if (Files.isDirectory(dbDir)) {
-            Files.list(dbDir)
-                    .filter(path -> path.endsWith("data.mdb"))
-                    .forEach(path -> {
-                        try {
-                            final long fileSizeBytes = Files.size(path);
-                            LOGGER.info("LMDB file size: {}",
-                                    ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
-                        } catch (final IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-            LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize().toString());
+            try (final Stream<Path> stream = Files.list(dbDir)) {
+                stream.filter(path -> path.endsWith("data.mdb"))
+                        .forEach(path -> {
+                            try {
+                                final long fileSizeBytes = Files.size(path);
+                                LOGGER.info("LMDB file size: {}",
+                                        ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
+                            } catch (final IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
+            LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize());
             FileUtil.deleteDir(dbDir);
         }
     }

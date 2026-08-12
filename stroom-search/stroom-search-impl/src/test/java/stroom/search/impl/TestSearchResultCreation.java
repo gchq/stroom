@@ -53,6 +53,7 @@ import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.MapDataStoreFactory;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResultStoreConfig;
@@ -63,11 +64,13 @@ import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.security.api.UserIdentity;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -86,6 +89,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,12 +108,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSearchResultCreation.class);
+
     // Make sure the search request is the same as the one we expected to make.
     private final Path resourcesDir = SearchDebugUtil.initialise();
 
     private DataStoreFactory dataStoreFactory;
     private ExecutorService executorService;
     private Provider<Executor> executorProvider;
+    private final List<CoprocessorsImpl> createdCoprocessors = new ArrayList<>();
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
@@ -123,7 +130,21 @@ class TestSearchResultCreation {
                 new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvDirFactory,
-                SearchResultStoreConfig::new,
+                // The production default map size is 10GiB per store env, and each test opens a
+                // store per coprocessor.
+                () -> new SearchResultStoreConfig(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        ResultStoreLmdbConfig.builder()
+                                .localDir("search_results")
+                                .maxStoreSize(ByteSize.ofMebibytes(100))
+                                .build(),
+                        null),
                 pathCreator,
                 executorProvider,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
@@ -135,7 +156,27 @@ class TestSearchResultCreation {
 
     @AfterEach
     void afterEach() {
-        executorService.shutdown();
+        // The LMDB envs all live inside the coprocessors' data stores; clear() closes each store
+        // (waiting for its transfer thread to finish with the write txn) and deletes its env.
+        // Nothing else does this: the ResultStores are never destroyed by these tests, so without
+        // it every test leaked its envs and the @TempDir was deleted under them.
+        // Per-item catch so one failed clear doesn't leave the other coprocessors' stores open
+        // (which would also make the executor close below hang on their transfer threads).
+        createdCoprocessors.forEach(coprocessors -> {
+            try {
+                coprocessors.clear();
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error clearing coprocessors: {}", e.getMessage(), e);
+            }
+        });
+        createdCoprocessors.clear();
+        // close() awaits the (now exited) transfer threads before JUnit deletes the @TempDir.
+        executorService.close();
+    }
+
+    private CoprocessorsImpl record(final CoprocessorsImpl coprocessors) {
+        createdCoprocessors.add(coprocessors);
+        return coprocessors;
     }
 
     @Test
@@ -153,13 +194,13 @@ class TestSearchResultCreation {
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -265,13 +306,13 @@ class TestSearchResultCreation {
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings()));
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -279,13 +320,13 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -345,13 +386,13 @@ class TestSearchResultCreation {
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings()));
 
         final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
@@ -359,13 +400,13 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -441,13 +482,13 @@ class TestSearchResultCreation {
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -455,13 +496,13 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -923,19 +964,5 @@ class TestSearchResultCreation {
                 .addMaxResults(20L, 100L, 1000L)
                 .showDetail(true)
                 .build();
-    }
-
-    private static final class TestUserIdentity implements UserIdentity {
-
-        private final String subjectId;
-
-        private TestUserIdentity(final String subjectId) {
-            this.subjectId = subjectId;
-        }
-
-        @Override
-        public String subjectId() {
-            return null;
-        }
     }
 }

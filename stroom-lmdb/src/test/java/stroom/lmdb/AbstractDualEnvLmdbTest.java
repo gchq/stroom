@@ -44,7 +44,11 @@ import java.util.stream.Stream;
 public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDualEnvLmdbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    // As AbstractLmdbDbTest, and it matters more here because this base class opens two envs per
+    // test. Not measured directly: the only subclass, TestLmdbPerformance, is entirely @Disabled, so
+    // nothing in CI exercises these values. It overrides getMaxSizeBytes() for its own manual runs.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
+    private static final int MAX_DB_COUNT = 6;
 
     protected LmdbEnv lmdbEnv1 = null;
     protected LmdbEnv lmdbEnv2 = null;
@@ -64,17 +68,26 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
 
     @AfterEach
     final void teardown() throws IOException {
-        teardown(dbDir1, lmdbEnv1);
-        lmdbEnv1 = null;
-        teardown(dbDir2, lmdbEnv2);
-        lmdbEnv2 = null;
+        // try/finally so a failure tearing down env1 cannot leave env2 open (and its dir
+        // undeleted) for the rest of the JVM.
+        try {
+            teardown(dbDir1, lmdbEnv1);
+        } finally {
+            lmdbEnv1 = null;
+            try {
+                teardown(dbDir2, lmdbEnv2);
+            } finally {
+                lmdbEnv2 = null;
+            }
+        }
     }
 
     final void teardown(final Path dbDir, final LmdbEnv lmdbEnv) throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
-        if (Files.isDirectory(dbDir)) {
+        // Null check as createEnvs() may have failed before assigning the dir
+        if (dbDir != null && Files.isDirectory(dbDir)) {
             try (final Stream<Path> fileStream = Files.list(dbDir)) {
                 fileStream
                         .filter(path -> path.endsWith("data.mdb"))
@@ -111,7 +124,7 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
                 new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
-                .withMaxDbCount(10)
+                .withMaxDbCount(MAX_DB_COUNT)
                 .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();

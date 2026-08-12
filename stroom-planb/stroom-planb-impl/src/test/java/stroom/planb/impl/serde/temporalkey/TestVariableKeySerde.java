@@ -40,6 +40,7 @@ import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,11 @@ public class TestVariableKeySerde {
 
     private void testDir(final Path dbPath) {
         final ByteBuffers byteBuffers = new ByteBuffers(new ByteBufferFactoryImpl());
-        final TemporalStateSettings settings = new TemporalStateSettings.Builder().build();
+        // A few keys are written per run, so the env doesn't need the default 10GiB map size,
+        // especially as this test opens the env 100 times.
+        final TemporalStateSettings settings = new TemporalStateSettings.Builder()
+                .maxStoreSize(ByteSize.ofMebibytes(10).getBytes())
+                .build();
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         try (final PlanBEnv env = new PlanBEnv(dbPath,
                 settings.getMaxStoreSize(),

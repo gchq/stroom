@@ -64,6 +64,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -698,13 +699,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 })
                 .collect(Collectors.toList());
 
-        futures.forEach(voidCompletableFuture -> {
-            try {
-                voidCompletableFuture.get();
-            } catch (final InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        awaitAllThenClose(futures, executorService);
         LOGGER.debug("Finished all");
     }
 
@@ -799,13 +794,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 })
                 .collect(Collectors.toList());
 
-        futures.forEach(voidCompletableFuture -> {
-            try {
-                voidCompletableFuture.get();
-            } catch (final InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        awaitAllThenClose(futures, executorService);
         LOGGER.debug("Finished all");
     }
 
@@ -882,13 +871,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 })
                 .collect(Collectors.toList());
 
-        futures.forEach(voidCompletableFuture -> {
-            try {
-                voidCompletableFuture.get();
-            } catch (final InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        awaitAllThenClose(futures, executorService);
         LOGGER.debug("Finished all");
     }
 
@@ -1272,13 +1255,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 })
                 .collect(Collectors.toList());
 
-        futures.forEach(cf -> {
-            try {
-                cf.get();
-            } catch (final InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        awaitAllThenClose(futures, executorService);
 
         final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
 
@@ -1315,14 +1292,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 })
                 .collect(Collectors.toList());
 
-        futures
-                .forEach(cf -> {
-                    try {
-                        cf.get();
-                    } catch (final InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        awaitAllThenClose(futures, executorService);
 
         final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
 
@@ -1355,6 +1325,37 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         doPurgePerfTest(50_000);
     }
 
+
+    /**
+     * Waits for ALL the futures to complete (normally or not) before throwing the first failure,
+     * then closes the executor. This guarantees no task can still be inside an LMDB txn when a
+     * failing test reaches the @AfterEach that closes the envs. An external interrupt (e.g. a
+     * build runner timeout) interrupts the workers and waits a bounded time for them to unwind
+     * their txns, rather than awaiting all queued work indefinitely with the interrupt swallowed.
+     */
+    private static void awaitAllThenClose(final List<CompletableFuture<Void>> futures,
+                                          final ExecutorService executorService) {
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
+            executorService.close();
+        } catch (final ExecutionException e) {
+            // allOf only completes once ALL futures have completed, so no task still holds a
+            // txn and the close below returns immediately.
+            executorService.close();
+            throw new RuntimeException(e);
+        } catch (final InterruptedException e) {
+            executorService.shutdownNow();
+            try {
+                if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOGGER.error("Timed out waiting for interrupted tasks to finish");
+                }
+            } catch (final InterruptedException e2) {
+                LOGGER.error("Interrupted again waiting for tasks to finish");
+            }
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Make entryCount very big for manual performance testing or profiling

@@ -87,21 +87,23 @@ public class TestPathwayProcessor {
                 }
             };
 
-            // Load pathways DB for doc
-            final PathwaysDb pathwaysDb = PathwaysDb
-                    .create(pathwaysDir, BYTE_BUFFERS, false);
+            // Load pathways DB for doc. Try-with-resources so its env is closed before JUnit
+            // deletes the @TempDir.
+            try (final PathwaysDb pathwaysDb = PathwaysDb
+                    .create(pathwaysDir, BYTE_BUFFERS, false)) {
 
-            // Insert traces
-            new TraceLoader().load(tracesStore);
+                // Insert traces
+                new TraceLoader().load(tracesStore);
 
-            // Build and test pathways
-            testPathways(pathwaysDb, traceDb);
+                // Build and test pathways
+                testPathways(pathwaysDb, traceDb);
 
-            // Insert one more trace
-            new TraceLoader().addOneMore(tracesStore);
+                // Insert one more trace
+                new TraceLoader().addOneMore(tracesStore);
 
-            // Build and test more pathways
-            testPathways(pathwaysDb, traceDb);
+                // Build and test more pathways
+                testPathways(pathwaysDb, traceDb);
+            }
         }
     }
 

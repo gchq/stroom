@@ -35,14 +35,17 @@ import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Values;
+import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.PageRequest;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -50,6 +53,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,10 +61,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDuplicateCheckFactoryImpl {
 
     private Path tempDir;
+    private ExecutorService executorService;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         this.tempDir = tempDir;
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // close() awaits the stores' writer threads, so they are finished with their envs before
+        // JUnit deletes the @TempDir the envs live in. The previous provider,
+        // Executors::newCachedThreadPool, created a new never-shut-down pool per store.
+        executorService.close();
     }
 
     @Test
@@ -146,12 +160,12 @@ class TestDuplicateCheckFactoryImpl {
                 .isEmpty();
 
         try (final DuplicateCheck ignored = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
+            assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).orElseThrow())
                     .containsExactly("test");
         }
 
         // Now removed from the pool
-        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).orElseThrow())
                 .containsExactly("test");
     }
 
@@ -163,16 +177,23 @@ class TestDuplicateCheckFactoryImpl {
                 new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final ByteBuffers byteBuffers = new ByteBuffers(byteBufferFactory);
+        // The production default map size is 10GiB per store env; these tests write a few hundred
+        // small rows.
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig(
+                ResultStoreLmdbConfig.builder()
+                        .localDir("lmdb/duplicate_check")
+                        .maxStoreSize(ByteSize.ofMebibytes(10))
+                        .build());
         final DuplicateCheckDirs duplicateCheckDirs = new DuplicateCheckDirs(
                 lmdbEnvDirFactory,
-                new DuplicateCheckStoreConfig());
+                duplicateCheckStoreConfig);
         return new DuplicateCheckFactoryImpl(
                 duplicateCheckDirs,
                 byteBufferFactory,
                 byteBuffers,
-                new DuplicateCheckStoreConfig(),
+                duplicateCheckStoreConfig,
                 new DuplicateCheckRowSerde(byteBufferFactory),
-                Executors::newCachedThreadPool);
+                () -> executorService);
     }
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
