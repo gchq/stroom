@@ -84,7 +84,7 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
-import stroom.query.shared.QueryTablePreferences;
+import stroom.query.shared.QueryTablePreferencesUtil;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -621,7 +621,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             for (final ResultRequest resultRequest : resultRequests) {
 
                 // Modify result request to apply additional UI table preferences.
-                ResultRequest modified = addTablePreferences(resultRequest, searchRequest.getQueryTablePreferences());
+                ResultRequest modified = QueryTablePreferencesUtil.applyTablePreferences(
+                        resultRequest, searchRequest.getQueryTablePreferences());
 
                 // The vis needs all the data, rather than just a page worth
                 OffsetRange range = modified.getRequestedRange();
@@ -644,58 +645,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         }
 
         return mappedRequest;
-    }
-
-    private ResultRequest addTablePreferences(final ResultRequest resultRequest,
-                                              final QueryTablePreferences queryTablePreferences) {
-        if (queryTablePreferences != null) {
-            final Map<String, Column> prefs = NullSafe.list(queryTablePreferences.getColumns())
-                    .stream()
-                    .collect(Collectors.toMap(Column::getId, c -> c));
-
-            if (!resultRequest.getMappings().isEmpty()) {
-                final TableSettings tableSettings = resultRequest.getMappings().getFirst();
-                final TableSettings.Builder builder = tableSettings.copy();
-
-                final List<Column> modifiedColumns = new ArrayList<>();
-                for (final Column column : tableSettings.getColumns()) {
-                    final Column.Builder columnBuilder = column.copy();
-                    final Column pref = prefs.get(column.getId());
-                    if (pref != null) {
-                        columnBuilder.filter(pref.getFilter());
-                        columnBuilder.columnFilter(pref.getColumnFilter());
-                        columnBuilder.columnValueSelection(pref.getColumnValueSelection());
-                        columnBuilder.width(pref.getWidth());
-                        columnBuilder.format(pref.getFormat());
-                        if (pref.getSort() != null) {
-                            columnBuilder.sort(pref.getSort());
-                        }
-                    }
-                    modifiedColumns.add(columnBuilder.build());
-                }
-
-                builder.columns(modifiedColumns);
-
-                // Combine row filters.
-                if (tableSettings.getAggregateFilter() == null) {
-                    builder.aggregateFilter(queryTablePreferences.getSelectionFilter());
-                } else if (queryTablePreferences.getSelectionFilter() != null) {
-                    builder.aggregateFilter(ExpressionOperator
-                            .builder()
-                            .addOperators(tableSettings.getAggregateFilter(),
-                                    queryTablePreferences.getSelectionFilter())
-                            .build());
-                }
-
-                builder.conditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
-                final List<TableSettings> mappings = new ArrayList<>(resultRequest.getMappings().size());
-                mappings.add(builder.build());
-                mappings.addAll(resultRequest.getMappings().subList(1, resultRequest.getMappings().size()));
-
-                return resultRequest.copy().mappings(mappings).build();
-            }
-        }
-        return resultRequest;
     }
 
     private DashboardSearchResponse processRequest(final QuerySearchRequest searchRequest) {

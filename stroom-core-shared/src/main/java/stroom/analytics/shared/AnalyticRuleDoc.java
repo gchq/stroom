@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -73,7 +74,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("errorFeed") final DocRef errorFeed,
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
+                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                           @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         super(TYPE, uuid,
                 name,
                 version,
@@ -93,7 +95,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                queryTablePreferences);
         this.includeRuleDocumentation = includeRuleDocumentation == null
                 ? INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE
                 : includeRuleDocumentation;
@@ -193,7 +196,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     errorFeed,
                     false,
                     false,
-                    duplicateNotificationConfig);
+                    duplicateNotificationConfig,
+                    queryTablePreferences);
         }
     }
 }

@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -68,6 +69,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
             @JsonProperty("rememberNotifications") final boolean rememberNotifications,
             @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
             @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+            @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
             @JsonProperty("reportSettings") final ReportSettings reportSettings) {
         super(TYPE,
                 uuid,
@@ -89,7 +91,8 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                queryTablePreferences);
 
         this.reportSettings = NullSafe.requireNonNullElseGet(
                 reportSettings,
@@ -188,6 +191,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     false,
                     false,
                     duplicateNotificationConfig,
+                    queryTablePreferences,
                     reportSettings);
         }
     }
