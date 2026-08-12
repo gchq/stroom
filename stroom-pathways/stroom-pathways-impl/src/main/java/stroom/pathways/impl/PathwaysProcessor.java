@@ -169,10 +169,8 @@ public class PathwaysProcessor {
      * For a single PathwaysDoc, finds all eligible traces across every shard of
      * the linked TracesDoc and runs pathways processing on each one.
      *
-     * <p>Handles both sharded ({@code shardCount > 0}) and unsharded TracesDoc
-     * configurations. In the sharded case a per-shard lock is used so that in a
-     * multi-node cluster, different nodes can process different shards concurrently
-     * without blocking each other.
+     * <p>Takes a per-shard lock so that in a multi-node cluster, different nodes can process
+     * different shards concurrently without blocking each other.
      */
     private void processCompletedTraces(final PathwaysDoc doc, final long cutoffMs) {
         if (shardManager.isSnapshotNode()) {
@@ -189,21 +187,12 @@ public class PathwaysProcessor {
 
         final PathwaysDb pathwaysDb = getPathwaysDb(doc.asDocRef());
         final DocRef infoFeed = doc.getInfoFeed();
-        final boolean isSharded = tracesDoc.getSharedPath() != null && tracesDoc.getShardCount() > 0;
-
-        if (isSharded) {
-            for (int i = 0; i < tracesDoc.getShardCount(); i++) {
-                final int shardIdx = i;
-                // Per-shard lock: nodes in a cluster can process different shards in parallel.
-                final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
-                clusterLockService.tryLock(lockName, () ->
-                        shardManager.get(doc.getTracesDocRef().getName(), shardIdx, db ->
-                                processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs)));
-            }
-        } else {
-            final String lockName = "pathways-write-" + doc.getUuid();
+        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
+            final int shardIdx = i;
+            // Per-shard lock: nodes in a cluster can process different shards in parallel.
+            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
             clusterLockService.tryLock(lockName, () ->
-                    shardManager.get(doc.getTracesDocRef().getName(), db ->
+                    shardManager.get(doc.getTracesDocRef().getName(), shardIdx, db ->
                             processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs)));
         }
     }

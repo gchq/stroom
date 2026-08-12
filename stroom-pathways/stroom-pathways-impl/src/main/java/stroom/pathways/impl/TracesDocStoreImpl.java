@@ -32,6 +32,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -290,11 +291,27 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         return store.listDocuments();
     }
 
+    /**
+     * Rejects a document that names no shared file store, before it reaches the docstore.
+     *
+     * <p>The underlying store deserialises and persists without going through
+     * {@link #writeDocument}, so this is the only point at which an imported trace store can be
+     * checked. Reported through {@code importState} rather than thrown, to match how the docstore
+     * surfaces import failures.
+     */
     @Override
     public DocRef importDocument(final DocRef docRef,
                                  final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
+        if (importExportDocument != null) {
+            try {
+                validateSettings(serialiser.read(importExportDocument));
+            } catch (final IOException | RuntimeException e) {
+                importState.addMessage(Severity.ERROR, e.getMessage());
+                return docRef;
+            }
+        }
         return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
