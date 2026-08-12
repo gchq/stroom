@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +41,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     private final StroomDuration minTimeToKeepSnapshotEnv;
     private final StroomDuration snapshotRetryFetchInterval;
     private final StroomDuration mergeStatusRetention;
+    private final int sendPartAttempts;
+    private final StroomDuration sendPartRetryDelay;
 
     public PlanBConfig() {
         this("planb");
@@ -56,7 +59,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 StroomDuration.ofMinutes(10),
                 StroomDuration.ofMinutes(20),
                 StroomDuration.ofMinutes(1),
-                StroomDuration.ofDays(30));
+                StroomDuration.ofDays(30),
+                3,
+                StroomDuration.ofSeconds(10));
     }
 
     @SuppressWarnings("unused")
@@ -67,7 +72,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("minTimeToKeepSnapshots") final StroomDuration minTimeToKeepSnapshots,
                        @JsonProperty("minTimeToKeepSnapshotEnv") final StroomDuration minTimeToKeepSnapshotEnv,
                        @JsonProperty("snapshotRetryFetchInterval") final StroomDuration snapshotRetryFetchInterval,
-                       @JsonProperty("mergeStatusRetention") final StroomDuration mergeStatusRetention) {
+                       @JsonProperty("mergeStatusRetention") final StroomDuration mergeStatusRetention,
+                       @JsonProperty("sendPartAttempts") final int sendPartAttempts,
+                       @JsonProperty("sendPartRetryDelay") final StroomDuration sendPartRetryDelay) {
         this.stateDocCache = stateDocCache;
         this.nodeList = nodeList;
         this.path = path;
@@ -75,6 +82,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         this.minTimeToKeepSnapshotEnv = minTimeToKeepSnapshotEnv;
         this.snapshotRetryFetchInterval = snapshotRetryFetchInterval;
         this.mergeStatusRetention = mergeStatusRetention;
+        this.sendPartAttempts = sendPartAttempts;
+        this.sendPartRetryDelay = sendPartRetryDelay;
     }
 
     @JsonProperty
@@ -127,6 +136,23 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         return mergeStatusRetention;
     }
 
+    @Min(1)
+    @JsonProperty
+    @JsonPropertyDescription("How many times to attempt sending a part of Plan B data to a node, including the " +
+                             "first attempt. Only transport level failures, e.g. a DNS lookup failure during a " +
+                             "network blip, are retried. A node that answers, even with an error, is not asked " +
+                             "again. Set to 1 for no retries.")
+    public int getSendPartAttempts() {
+        return sendPartAttempts;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("How long to wait between attempts to send a part of Plan B data to a node. " +
+                             "Note that the sending processing task is held for the duration of any retries.")
+    public StroomDuration getSendPartRetryDelay() {
+        return sendPartRetryDelay;
+    }
+
     @Override
     public String toString() {
         return "PlanBConfig{" +
@@ -137,6 +163,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                ", minTimeToKeepSnapshotEnv=" + minTimeToKeepSnapshotEnv +
                ", snapshotRetryFetchInterval=" + snapshotRetryFetchInterval +
                ", mergeStatusRetention=" + mergeStatusRetention +
+               ", sendPartAttempts=" + sendPartAttempts +
+               ", sendPartRetryDelay=" + sendPartRetryDelay +
                '}';
     }
 
@@ -155,7 +183,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                Objects.equals(minTimeToKeepSnapshots, that.minTimeToKeepSnapshots) &&
                Objects.equals(minTimeToKeepSnapshotEnv, that.minTimeToKeepSnapshotEnv) &&
                Objects.equals(snapshotRetryFetchInterval, that.snapshotRetryFetchInterval) &&
-               Objects.equals(mergeStatusRetention, that.mergeStatusRetention);
+               Objects.equals(mergeStatusRetention, that.mergeStatusRetention) &&
+               sendPartAttempts == that.sendPartAttempts &&
+               Objects.equals(sendPartRetryDelay, that.sendPartRetryDelay);
     }
 
     @Override
@@ -167,7 +197,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 minTimeToKeepSnapshots,
                 minTimeToKeepSnapshotEnv,
                 snapshotRetryFetchInterval,
-                mergeStatusRetention);
+                mergeStatusRetention,
+                sendPartAttempts,
+                sendPartRetryDelay);
     }
 
     public static Builder builder() {
@@ -187,6 +219,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         private StroomDuration minTimeToKeepSnapshotEnv;
         private StroomDuration snapshotRetryFetchInterval;
         private StroomDuration mergeStatusRetention;
+        private int sendPartAttempts;
+        private StroomDuration sendPartRetryDelay;
 
         public Builder() {
             // Set defaults
@@ -201,6 +235,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.minTimeToKeepSnapshotEnv = StroomDuration.ofMinutes(20);
             this.snapshotRetryFetchInterval = StroomDuration.ofMinutes(1);
             this.mergeStatusRetention = StroomDuration.ofDays(30);
+            this.sendPartAttempts = 3;
+            this.sendPartRetryDelay = StroomDuration.ofSeconds(10);
         }
 
         public Builder(final PlanBConfig config) {
@@ -211,6 +247,8 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.minTimeToKeepSnapshotEnv = config.minTimeToKeepSnapshotEnv;
             this.snapshotRetryFetchInterval = config.snapshotRetryFetchInterval;
             this.mergeStatusRetention = config.mergeStatusRetention;
+            this.sendPartAttempts = config.sendPartAttempts;
+            this.sendPartRetryDelay = config.sendPartRetryDelay;
         }
 
         public Builder stateDocCache(final CacheConfig stateDocCache) {
@@ -248,6 +286,16 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             return this;
         }
 
+        public Builder sendPartAttempts(final int sendPartAttempts) {
+            this.sendPartAttempts = sendPartAttempts;
+            return this;
+        }
+
+        public Builder sendPartRetryDelay(final StroomDuration sendPartRetryDelay) {
+            this.sendPartRetryDelay = sendPartRetryDelay;
+            return this;
+        }
+
         public PlanBConfig build() {
             return new PlanBConfig(
                     stateDocCache,
@@ -256,7 +304,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                     minTimeToKeepSnapshots,
                     minTimeToKeepSnapshotEnv,
                     snapshotRetryFetchInterval,
-                    mergeStatusRetention);
+                    mergeStatusRetention,
+                    sendPartAttempts,
+                    sendPartRetryDelay);
         }
     }
 }
