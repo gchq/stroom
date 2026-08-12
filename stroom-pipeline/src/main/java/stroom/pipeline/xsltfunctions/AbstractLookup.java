@@ -92,6 +92,16 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         return sequenceMakerFactory.create(context);
     }
 
+    /**
+     * Override to read any arguments beyond the common five (map, key, time,
+     * ignoreWarnings, trace). Called on every function call before {@code doLookup()}.
+     */
+    protected void parseAdditionalArguments(final String functionName,
+                                            final XPathContext context,
+                                            final Sequence[] arguments) throws XPathException {
+        // Default is no additional arguments.
+    }
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         LOGGER.trace("call({}, {}, {}", functionName, context, arguments);
@@ -127,6 +137,9 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             // Find out if we are going to trace the lookup.
             final boolean traceLookup = arguments.length > 4
                                         && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 4));
+
+            // Let subclasses read any arguments beyond the common five.
+            parseAdditionalArguments(functionName, context, arguments);
 
             // Make sure we can get the date ok.
             long ms = defaultMs;
@@ -525,6 +538,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     static class SequenceMaker {
 
+        static final String DEFAULT_DELIMITER = " ";
+
         private final XPathContext context;
         private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
         private Builder builder;
@@ -538,9 +553,18 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         void open() throws XPathException {
+            open(DEFAULT_DELIMITER);
+        }
+
+        /**
+         * @param delimiter The delimiter to place between each consumed value, e.g.
+         *                  between the values of the matched bit positions in a
+         *                  bitmap lookup. An empty delimiter concatenates the values.
+         */
+        void open(final String delimiter) throws XPathException {
             LOGGER.trace("open()");
             // Make sure we have made a consumer.
-            ensureConsumer();
+            ensureConsumer(delimiter);
             consumer.startDocument();
         }
 
@@ -557,7 +581,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             return consumer.consume(refDataValueProxy);
         }
 
-        private void ensureConsumer() {
+        private void ensureConsumer(final String delimiter) {
             LOGGER.trace("ensureConsumer()");
             if (consumer == null) {
                 LOGGER.trace("ensureConsumer() - Creating consumer");
@@ -569,9 +593,9 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 builder = new TinyBuilder(pipelineConfiguration);
 
                 // Wrap the builder so that when multiple values are consumed into the one
-                // document (e.g. by stroom:bitmap-lookup()) they are space delimited, rather
+                // document (e.g. by stroom:bitmap-lookup()) they are delimited, rather
                 // than being concatenated with nothing between them.
-                valueDelimitingReceiver = new ValueDelimitingReceiver(builder);
+                valueDelimitingReceiver = new ValueDelimitingReceiver(builder, delimiter);
 
                 // At this point we don't know if we are dealing with heap object values or off-heap bytebuffer values.
                 // We also don't know if the value is a string or a fastinfoset.
@@ -602,8 +626,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
 
     /**
-     * Delimits each logical value written to the wrapped {@link Receiver} with a single
-     * space, e.g. the values of each matched bit position in a bitmap lookup.
+     * Delimits each logical value written to the wrapped {@link Receiver}, e.g. the
+     * values of each matched bit position in a bitmap lookup.
      * <p>
      * {@link #markNewValue()} marks the boundary between one logical value and the next.
      * The delimiter is not written until the new value produces some output, so a value
@@ -613,13 +637,14 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
      */
     static class ValueDelimitingReceiver extends ProxyReceiver {
 
-        private static final String DELIMITER = " ";
+        private final String delimiter;
 
         private boolean hasContent = false;
         private boolean isDelimiterPending = false;
 
-        ValueDelimitingReceiver(final Receiver nextReceiver) {
+        ValueDelimitingReceiver(final Receiver nextReceiver, final String delimiter) {
             super(nextReceiver);
+            this.delimiter = delimiter;
         }
 
         /**
@@ -634,7 +659,10 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         private void writeDelimiterIfPending() throws XPathException {
             if (isDelimiterPending) {
                 isDelimiterPending = false;
-                nextReceiver.characters(DELIMITER, ExplicitLocation.UNKNOWN_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+                if (!delimiter.isEmpty()) {
+                    nextReceiver.characters(
+                            delimiter, ExplicitLocation.UNKNOWN_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+                }
             }
         }
 

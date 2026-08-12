@@ -47,6 +47,8 @@ class BitmapLookup extends AbstractLookup {
 
     public static final String FUNCTION_NAME = "bitmap-lookup";
 
+    private String delimiter = SequenceMaker.DEFAULT_DELIMITER;
+
     @Inject
     BitmapLookup(final ReferenceData referenceData,
                  final MetaHolder metaHolder,
@@ -55,13 +57,28 @@ class BitmapLookup extends AbstractLookup {
         super(referenceData, metaHolder, sequenceMakerFactory, taskContextFactory);
     }
 
+    @Override
+    protected void parseAdditionalArguments(final String functionName,
+                                            final XPathContext context,
+                                            final Sequence[] arguments) throws XPathException {
+        // The optional sixth argument sets the delimiter placed between the values of
+        // the matched bit positions. Defaults to a single space.
+        if (arguments.length > 5) {
+            delimiter = Objects.requireNonNullElse(
+                    getSafeString(functionName, context, arguments, 5),
+                    SequenceMaker.DEFAULT_DELIMITER);
+        } else {
+            delimiter = SequenceMaker.DEFAULT_DELIMITER;
+        }
+    }
+
     private SequenceMaker getOrCreateSequenceMaker(final AtomicReference<SequenceMaker> sequenceMakerRef,
                                                    final XPathContext xPathContext) throws XPathException {
         Objects.requireNonNull(sequenceMakerRef);
         Objects.requireNonNull(xPathContext);
         if (sequenceMakerRef.get() == null) {
             final SequenceMaker sequenceMaker = createSequenceMaker(xPathContext);
-            sequenceMaker.open();
+            sequenceMaker.open(delimiter);
             sequenceMakerRef.set(sequenceMaker);
         }
         return sequenceMakerRef.get();
@@ -150,9 +167,9 @@ class BitmapLookup extends AbstractLookup {
             if (result.getRefDataValueProxy().isPresent()) {
                 final SequenceMaker sequenceMaker = getOrCreateSequenceMaker(sequenceMakerRef, xPathContext);
 
-                // When multiple values are consumed the SequenceMaker delimits each one with
-                // a ' ', so the result is a space delimited list of the values for all matched
-                // bit positions.
+                // When multiple values are consumed the SequenceMaker delimits each one (with
+                // a ' ' unless the optional delimiter argument was supplied), so the result is
+                // a delimited list of the values for all matched bit positions.
 
                 final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy().get();
 

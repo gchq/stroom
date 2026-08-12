@@ -439,6 +439,57 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
                 .isEqualTo("Manage_Users");
     }
 
+    @Test
+    void doLookup_multipleValues_customDelimiter() throws Exception {
+        // The optional 6th argument sets the delimiter used between the values.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"),
+                ",");
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users,View_Data,Manage_Volumes");
+    }
+
+    @Test
+    void doLookup_multipleValues_emptyDelimiter() throws Exception {
+        // An explicit empty delimiter concatenates the values with nothing between
+        // them, i.e. the behaviour before space delimiting was fixed.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"),
+                "");
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_UsersView_DataManage_Volumes");
+    }
+
+    @Test
+    void doLookup_multipleValues_multiCharDelimiter() throws Exception {
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"),
+                " | ");
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users | View_Data | Manage_Volumes");
+    }
+
     /**
      * Run a lookup through a real {@link SequenceMaker} (i.e. a real Saxon
      * {@link net.sf.saxon.tree.tiny.TinyBuilder} fed by the real on-heap value consumers)
@@ -448,9 +499,12 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
      * @param bitPosToValue  Map of bit position (as a string key) to the reference data
      *                       value for that bit position. Bit positions absent from the
      *                       map behave as a failed lookup for that key.
+     * @param extraArgs      Any arguments to pass after the standard five, e.g. the
+     *                       optional delimiter.
      */
     private Sequence doLookupWithRealSequenceMaker(final String key,
-                                                   final Map<String, String> bitPosToValue) {
+                                                   final Map<String, String> bitPosToValue,
+                                                   final Object... extraArgs) {
         pipelineReferences = List.of(
                 new PipelineReference(
                         PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
@@ -483,7 +537,10 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
                         }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
-        return callFunctionWithSimpleArgs(MAP, key, Instant.now(), false, false);
+        final List<Object> args = new ArrayList<>(
+                List.of(MAP, key, Instant.now(), false, false));
+        args.addAll(List.of(extraArgs));
+        return callFunctionWithSimpleArgs(args.toArray());
     }
 
     /**
