@@ -441,10 +441,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HostAddressFunction(final Provider<HostAddress> functionCallProvider) {
             super(
-                    "host-address",
+                    HostAddress.FUNCTION_NAME,
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
@@ -455,10 +457,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HostNameFunction(final Provider<HostName> functionCallProvider) {
             super(
-                    "host-name",
+                    HostName.FUNCTION_NAME,
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
