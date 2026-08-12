@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public interface ScheduledProcessEditView extends View,
-        HasUiHandlers<ProcessingStatusUiHandlers>,
+        HasUiHandlers<ScheduledProcessEditUiHandlers>,
         Focus {
 
     String getName();
@@ -42,6 +42,8 @@ public interface ScheduledProcessEditView extends View,
     String getNode();
 
     void setNode(String node);
+
+    void setSetDefaultVisible(boolean visible);
 
     ScheduleBox getScheduleBox();
 

@@ -289,7 +289,32 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                                    executionSchedule.getName() +
                                    "' with effective time: " +
                                    DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
-            final String errorFeedName = getErrorFeedName(doc);
+            final String errorFeedName;
+            try {
+                errorFeedName = getErrorFeedName(doc);
+            } catch (final RuntimeException e) {
+                // We can't report this through the error writer because the error feed is the very thing that is
+                // missing, so record it against the execution history to make it visible in the UI. Without this
+                // the failure is only logged and repeats silently on every scheduled execution.
+                LOGGER.error(() -> LogUtil.message("Error executing {}: {}",
+                        processType, RuleUtil.getRuleIdentity(doc)), e);
+                addExecutionHistory(executionSchedule,
+                        executionTime,
+                        effectiveExecutionTime,
+                        ExecutionResult.error(LogUtil.exceptionMessage(e)));
+
+                // Every subsequent execution would fail in exactly the same way, so disable the schedule rather
+                // than filling the execution history with identical errors. This matches how other execution
+                // errors are handled.
+                LOGGER.info(() -> LogUtil.message("Disabling schedule '{}' for {}: {}",
+                        executionSchedule.getName(), processType, RuleUtil.getRuleIdentity(doc)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule
+                        .copy()
+                        .enabled(false)
+                        .build());
+                return false;
+            }
+
             final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
             return analyticErrorWriter.exec(
                     errorFeedName,

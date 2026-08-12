@@ -19,8 +19,12 @@ package stroom.analytics.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
+import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.config.global.client.presenter.ConfigDefaultSetter;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -32,6 +36,8 @@ import stroom.schedule.client.SchedulePopup;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -51,7 +57,7 @@ import java.util.function.Consumer;
 
 public class ScheduledProcessEditPresenter
         extends MyPresenterWidget<ScheduledProcessEditView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ScheduledProcessEditUiHandlers, HasDirtyHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -59,6 +65,8 @@ public class ScheduledProcessEditPresenter
     private final DocSelectionBoxPresenter errorFeedPresenter;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
+    private final UiConfigCache uiConfigCache;
+    private final ConfigDefaultSetter configDefaultSetter;
     private ExecutionSchedule executionSchedule;
 
     @Inject
@@ -70,14 +78,20 @@ public class ScheduledProcessEditPresenter
                                          final Provider<DateTimePopup> dateTimePopupProvider,
                                          final RestFactory restFactory,
                                          final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
-                                         final ClientSecurityContext clientSecurityContext) {
+                                         final ClientSecurityContext clientSecurityContext,
+                                         final UiConfigCache uiConfigCache,
+                                         final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
+        this.uiConfigCache = uiConfigCache;
+        this.configDefaultSetter = configDefaultSetter;
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
 
         view.setUiHandlers(this);
+        // Only an administrator can change a global property, so don't offer it to anyone else.
+        view.setSetDefaultVisible(configDefaultSetter.isAllowed());
         view.getStartTime().setPopupProvider(dateTimePopupProvider);
         view.getEndTime().setPopupProvider(dateTimePopupProvider);
         this.errorFeedPresenter = errorFeedPresenter;
@@ -160,7 +174,7 @@ public class ScheduledProcessEditPresenter
         this.executionSchedule = executionSchedule;
         getView().setName(executionSchedule.getName());
         getView().setEnabled(executionSchedule.isEnabled());
-        getView().setNode(executionSchedule.getNodeName());
+        setNode(executionSchedule);
         setScheduleBounds(executionSchedule.getScheduleBounds());
         getView().getScheduleBox().setValue(executionSchedule.getSchedule());
 
@@ -208,6 +222,27 @@ public class ScheduledProcessEditPresenter
     }
 
     @Override
+    public void onSetDefaultNode() {
+        configDefaultSetter.setDefault(
+                this,
+                getConfigTarget(),
+                AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_NODE,
+                getView().getNode(),
+                "processing node",
+                this);
+    }
+
+    /**
+     * Reports and analytic rules keep their defaults separately.
+     */
+    private ConfigTarget getConfigTarget() {
+        final DocRef owningDoc = NullSafe.get(executionSchedule, ExecutionSchedule::getOwningDoc);
+        return owningDoc != null && ReportDoc.TYPE.equals(owningDoc.getType())
+                ? ConfigTarget.REPORT_UI_DEFAULT
+                : ConfigTarget.ANALYTIC_UI_DEFAULT;
+    }
+
+    @Override
     public void onDirty() {
         DirtyEvent.fire(this, true);
     }
@@ -215,6 +250,30 @@ public class ScheduledProcessEditPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    /**
+     * A new schedule has no node yet. Seed it with the configured default rather than leaving the view to select
+     * whichever node happens to be first in the list, which is arbitrary and is why the default node property has
+     * had no effect on scheduled rules until now.
+     */
+    private void setNode(final ExecutionSchedule executionSchedule) {
+        if (executionSchedule.getNodeName() != null) {
+            getView().setNode(executionSchedule.getNodeName());
+        } else {
+            uiConfigCache.get(extendedUiConfig -> {
+                if (extendedUiConfig != null) {
+                    // Reports and analytic rules have their own defaults. A null default is ignored by the view,
+                    // which then falls back to its own behaviour.
+                    final DocRef owningDoc = executionSchedule.getOwningDoc();
+                    final AbstractAnalyticUiDefaultConfig config =
+                            owningDoc != null && ReportDoc.TYPE.equals(owningDoc.getType())
+                                    ? extendedUiConfig.getReportUiDefaultConfig()
+                                    : extendedUiConfig.getAnalyticUiDefaultConfig();
+                    getView().setNode(config.getDefaultNode());
+                }
+            }, this);
+        }
     }
 
     private void setScheduleBounds(final ScheduleBounds scheduleBounds) {

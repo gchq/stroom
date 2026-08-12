@@ -462,11 +462,6 @@ public class AskStroomAIService {
         return defaultConfigProvider.get();
     }
 
-    public Boolean setDefaultModel(final DocRef modelRef) {
-        globalConfigProvider.get().setDocRef(getDefaultConfig(), AskStroomAIConfig.PROP_NAME_MODEL_REF, modelRef);
-        return true;
-    }
-
     public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
         final TableSummaryConfig defaultTableSummaryConfig = tableSummaryConfigProvider.get();
         globalConfigProvider.get().setInt(defaultTableSummaryConfig,

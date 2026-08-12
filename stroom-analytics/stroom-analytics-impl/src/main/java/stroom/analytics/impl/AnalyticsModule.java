@@ -18,6 +18,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
 import stroom.analytics.shared.DuplicateCheckResource;
+import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
@@ -84,6 +85,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(DuplicateCheckResourceImpl.class)
                 .bind(ExecutionScheduleResourceImpl.class);
         bind(DuplicateCheckResource.class).to(DuplicateCheckResourceImpl.class);
+        bind(ExecutionScheduleResource.class).to(ExecutionScheduleResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
         bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);

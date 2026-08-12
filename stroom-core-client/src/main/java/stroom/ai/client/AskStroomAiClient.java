@@ -6,6 +6,9 @@ import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.ChatMemoryConfig;
 import stroom.ai.shared.TableSummaryConfig;
+import stroom.config.global.shared.ConfigTarget;
+import stroom.config.global.shared.GlobalConfigResource;
+import stroom.config.global.shared.SetConfigValueRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -21,6 +24,7 @@ import java.util.function.Consumer;
 public class AskStroomAiClient {
 
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
+    private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
 
     private final RestFactory restFactory;
     private AskStroomAIConfig config;
@@ -52,12 +56,19 @@ public class AskStroomAiClient {
         }
     }
 
+    /**
+     * Setting the default model is just setting a config property, so it goes through the one mechanism for that
+     * rather than an endpoint of its own. The server converts the doc ref to the form the property expects.
+     */
     void setDefaultModel(final DocRef modelRef,
                          final Consumer<Boolean> consumer,
                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
-                .create(RESOURCE)
-                .method(res -> res.setDefaultModel(modelRef))
+                .create(CONFIG_RESOURCE)
+                .method(res -> res.setConfigValue(SetConfigValueRequest.docRef(
+                        ConfigTarget.ASK_STROOM_AI,
+                        AskStroomAIConfig.PROP_NAME_MODEL_REF,
+                        modelRef)))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
