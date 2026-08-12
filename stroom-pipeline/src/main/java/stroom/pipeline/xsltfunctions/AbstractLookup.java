@@ -46,11 +46,18 @@ import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.ProxyReceiver;
+import net.sf.saxon.event.Receiver;
+import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.expr.parser.ExplicitLocation;
+import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.NodeName;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
+import net.sf.saxon.type.SchemaType;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -521,6 +528,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         private final XPathContext context;
         private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
         private Builder builder;
+        private ValueDelimitingReceiver valueDelimitingReceiver;
         private GenericRefDataValueProxyConsumer consumer;
 
         SequenceMaker(final XPathContext context,
@@ -542,6 +550,10 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+            // Delimit this value from any previously consumed value, e.g. for a bitmap lookup.
+            // The delimiter is only written if this consume() call actually produces output,
+            // so a failed lookup cannot result in doubled or trailing delimiters.
+            valueDelimitingReceiver.markNewValue();
             return consumer.consume(refDataValueProxy);
         }
 
@@ -556,12 +568,17 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
                 builder = new TinyBuilder(pipelineConfiguration);
 
+                // Wrap the builder so that when multiple values are consumed into the one
+                // document (e.g. by stroom:bitmap-lookup()) they are space delimited, rather
+                // than being concatenated with nothing between them.
+                valueDelimitingReceiver = new ValueDelimitingReceiver(builder);
+
                 // At this point we don't know if we are dealing with heap object values or off-heap bytebuffer values.
                 // We also don't know if the value is a string or a fastinfoset.
                 consumer = new GenericRefDataValueProxyConsumer(
-                        builder,
+                        valueDelimitingReceiver,
                         pipelineConfiguration,
-                        consumerFactoryFactory.create(builder, pipelineConfiguration));
+                        consumerFactoryFactory.create(valueDelimitingReceiver, pipelineConfiguration));
             }
         }
 
@@ -577,6 +594,67 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             builder.reset();
 
             return sequence;
+        }
+    }
+
+
+// --------------------------------------------------------------------------------
+
+
+    /**
+     * Delimits each logical value written to the wrapped {@link Receiver} with a single
+     * space, e.g. the values of each matched bit position in a bitmap lookup.
+     * <p>
+     * {@link #markNewValue()} marks the boundary between one logical value and the next.
+     * The delimiter is not written until the new value produces some output, so a value
+     * that produces no output (e.g. a failed lookup for one bit position) will not
+     * result in doubled or trailing delimiters.
+     * </p>
+     */
+    static class ValueDelimitingReceiver extends ProxyReceiver {
+
+        private static final String DELIMITER = " ";
+
+        private boolean hasContent = false;
+        private boolean isDelimiterPending = false;
+
+        ValueDelimitingReceiver(final Receiver nextReceiver) {
+            super(nextReceiver);
+        }
+
+        /**
+         * Mark the start of a new logical value. If a previously consumed value has
+         * written content to the receiver then a delimiter will be written before any
+         * content of the new value.
+         */
+        void markNewValue() {
+            isDelimiterPending = hasContent;
+        }
+
+        private void writeDelimiterIfPending() throws XPathException {
+            if (isDelimiterPending) {
+                isDelimiterPending = false;
+                nextReceiver.characters(DELIMITER, ExplicitLocation.UNKNOWN_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+            }
+        }
+
+        @Override
+        public void characters(final CharSequence chars,
+                               final Location locationId,
+                               final int properties) throws XPathException {
+            writeDelimiterIfPending();
+            hasContent = true;
+            super.characters(chars, locationId, properties);
+        }
+
+        @Override
+        public void startElement(final NodeName elemName,
+                                 final SchemaType typeCode,
+                                 final Location location,
+                                 final int properties) throws XPathException {
+            writeDelimiterIfPending();
+            hasContent = true;
+            super.startElement(elemName, typeCode, location, properties);
         }
     }
 }

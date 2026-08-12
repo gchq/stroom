@@ -150,11 +150,9 @@ class BitmapLookup extends AbstractLookup {
             if (result.getRefDataValueProxy().isPresent()) {
                 final SequenceMaker sequenceMaker = getOrCreateSequenceMaker(sequenceMakerRef, xPathContext);
 
-                // When multiple values are consumed they appear to be separated with a ' '.
-                // Not really sure why as it is not something we are doing explicitly.  May be something to
-                // do with how we call characters() on the TinyBuilder deeper down.
-                // receiver.characters(
-                // str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+                // When multiple values are consumed the SequenceMaker delimits each one with
+                // a ' ', so the result is a space delimited list of the values for all matched
+                // bit positions.
 
                 final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy().get();
 
