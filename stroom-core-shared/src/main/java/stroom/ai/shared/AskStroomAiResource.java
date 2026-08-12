@@ -16,7 +16,6 @@
 
 package stroom.ai.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -67,13 +66,6 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             summary = "Get the default config to use for asking questions",
             operationId = "getDefaultConfig")
     AskStroomAIConfig getDefaultConfig();
-
-    @POST
-    @Path("/setDefaultModel")
-    @Operation(
-            summary = "Set the default model to use for asking questions",
-            operationId = "setDefaultModel")
-    Boolean setDefaultModel(@Parameter(description = "modelRef", required = true) final DocRef modelRef);
 
     @POST
     @Path("/setDefaultTableSummaryConfig")

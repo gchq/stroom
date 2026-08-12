@@ -246,12 +246,6 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public Boolean setDefaultModel(final DocRef modelRef) {
-        return askStroomAIServiceProvider.get().setDefaultModel(modelRef);
-    }
-
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
     public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
         return askStroomAIServiceProvider.get().setDefaultTableSummaryConfig(config);
     }
