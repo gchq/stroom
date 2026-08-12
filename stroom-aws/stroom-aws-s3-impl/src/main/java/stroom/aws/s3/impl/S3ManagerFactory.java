@@ -20,7 +20,6 @@ import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientPool;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.TemplateCache;
-import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.TemplateUtil.ContextVariableResolver;
@@ -33,17 +32,17 @@ public class S3ManagerFactory {
 
     private final TemplateCache templateCache;
     private final S3ClientPool s3ClientPool;
-    private final S3ClientConfigCache s3ClientConfigCache;
+    //    private final S3ClientConfigCache s3ClientConfigCache;
     private final ContextVariableResolver contextVariableResolver;
 
     @Inject
     public S3ManagerFactory(final TemplateCache templateCache,
                             final S3ClientPool s3ClientPool,
-                            final S3ClientConfigCache s3ClientConfigCache,
+//                            final S3ClientConfigCache s3ClientConfigCache,
                             final ContextVariableResolver contextVariableResolver) {
         this.templateCache = templateCache;
         this.s3ClientPool = s3ClientPool;
-        this.s3ClientConfigCache = s3ClientConfigCache;
+//        this.s3ClientConfigCache = s3ClientConfigCache;
         this.contextVariableResolver = contextVariableResolver;
     }
 
@@ -53,11 +52,11 @@ public class S3ManagerFactory {
         return new S3Manager(s3ClientConfig, s3ClientHelper, templateCache, contextVariableResolver);
     }
 
-    public S3Manager createS3Manager(final DocRef s3ConfigRef) {
-        LOGGER.debug("createS3Manager() - s3ConfigRef: {}", s3ConfigRef);
-        final S3ClientConfig s3ClientConfig = s3ClientConfigCache.get(s3ConfigRef)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No S£ Client Config found with docRef " + s3ConfigRef));
-        return createS3Manager(s3ClientConfig);
-    }
+//    public S3Manager createS3Manager(final DocRef s3ConfigRef) {
+//        LOGGER.debug("createS3Manager() - s3ConfigRef: {}", s3ConfigRef);
+//        final S3ClientConfig s3ClientConfig = s3ClientConfigCache.get(s3ConfigRef)
+//                .orElseThrow(() -> new IllegalArgumentException(
+//                        "No S£ Client Config found with docRef " + s3ConfigRef));
+//        return createS3Manager(s3ClientConfig);
+//    }
 }
