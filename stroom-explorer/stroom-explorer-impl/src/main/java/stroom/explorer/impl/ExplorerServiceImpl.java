@@ -446,6 +446,11 @@ class ExplorerServiceImpl
 
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode treeModelNode = treeModel.getNode(favDocRef.getUuid());
+            if (treeModelNode == null) {
+                // The favourite refers to a node that isn't in the tree model so there is nothing to show.
+                LOGGER.debug("No tree model node for favourite: {}", favDocRef);
+                continue;
+            }
             final ExplorerNode childNode = treeModelNode.copy()
                     .rootNodeUuid(favRootNode)
                     .depth(1)
@@ -1011,7 +1016,7 @@ class ExplorerServiceImpl
                         PermissionInheritance.DESTINATION);
             } else {
                 // One node found
-                childNode = childNodes.get(0);
+                childNode = childNodes.getFirst();
             }
             parentNode.set(childNode);
         });

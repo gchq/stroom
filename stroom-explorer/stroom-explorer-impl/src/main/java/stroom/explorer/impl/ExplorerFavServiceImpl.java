@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -71,6 +72,15 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
         return explorerFavDao.getUserFavourites(getCurrentUser())
                 .stream()
                 .map(docRef -> {
+                    // Folders are not documents so have no row in `doc` to decorate from. The name held in
+                    // `explorer_node` is the only name they have and the dao has already supplied it.
+                    // Don't perform a permission check here, the tree decides what a user can see and it
+                    // shows folders the user has no view permission on so they can reach children they can
+                    // view.
+                    if (ExplorerConstants.FOLDER_TYPE.equals(docRef.getType())) {
+                        return docRef;
+                    }
+
                     try {
                         return docFinderProvider.get().decorateIfExists(docRef).orElseThrow();
                     } catch (final RuntimeException e) {
