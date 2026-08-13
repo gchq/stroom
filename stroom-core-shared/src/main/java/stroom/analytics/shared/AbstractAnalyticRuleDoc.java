@@ -21,6 +21,7 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -70,6 +71,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     private final boolean suppressDuplicateNotifications;
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
+    @JsonProperty
+    private final QueryTablePreferences queryTablePreferences;
 
     /**
      * A rule's level denotes its severity.
@@ -114,6 +117,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
                                    @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                                   @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
                                    @JsonProperty("level") final String level,
                                    @JsonProperty("status") final String status) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
@@ -143,6 +147,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                         suppressDuplicateNotifications,
                         false,
                         Collections.emptyList()));
+        this.queryTablePreferences = queryTablePreferences;
 
         this.level = level;
         this.status = status;
@@ -206,6 +211,14 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         return duplicateNotificationConfig;
     }
 
+    /**
+     * @return The presentation settings, e.g. hidden columns, that the user has applied to the results table in the
+     * query editor. StroomQL cannot express these so they are held against the document.
+     */
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -227,7 +240,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
                Objects.equals(notifications, that.notifications) &&
                Objects.equals(errorFeed, that.errorFeed) &&
-               Objects.equals(duplicateNotificationConfig, that.duplicateNotificationConfig);
+               Objects.equals(duplicateNotificationConfig, that.duplicateNotificationConfig) &&
+               Objects.equals(queryTablePreferences, that.queryTablePreferences);
     }
 
     @Override
@@ -246,6 +260,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
+                queryTablePreferences,
                 level,
                 status);
     }
@@ -266,6 +281,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", rememberNotifications=" + rememberNotifications +
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                ", duplicateNotificationConfig=" + duplicateNotificationConfig +
+               ", queryTablePreferences=" + queryTablePreferences +
                ", level=" + level +
                ", status=" + status +
                '}';
@@ -285,6 +301,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         List<NotificationConfig> notifications;
         DocRef errorFeed;
         DuplicateNotificationConfig duplicateNotificationConfig;
+        QueryTablePreferences queryTablePreferences;
 
         String level;
         String status;
@@ -306,6 +323,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.notifications = new ArrayList<>(doc.notifications);
             this.errorFeed = doc.errorFeed;
             this.duplicateNotificationConfig = doc.duplicateNotificationConfig;
+            this.queryTablePreferences = doc.queryTablePreferences;
             this.level = doc.level;
             this.status = doc.status;
         }
@@ -357,6 +375,11 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
         public B duplicateNotificationConfig(final DuplicateNotificationConfig duplicateNotificationConfig) {
             this.duplicateNotificationConfig = duplicateNotificationConfig;
+            return self();
+        }
+
+        public B queryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+            this.queryTablePreferences = queryTablePreferences;
             return self();
         }
 

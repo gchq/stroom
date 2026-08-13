@@ -20,8 +20,9 @@ import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticN
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ReportDoc;
+import stroom.config.global.client.presenter.ConfigDefaultSetter;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
@@ -31,6 +32,7 @@ import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -39,19 +41,23 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<AnalyticNotificationView, D>
-        implements HasChangeDataHandlers<AnalyticProcessType> {
+        implements AnalyticNotificationUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
     final DocSelectionBoxPresenter errorFeedPresenter;
     private final AbstractNotificationListPresenter<D> notificationList;
     private final UiConfigCache uiConfigCache;
+    private final ConfigDefaultSetter configDefaultSetter;
+    private ConfigTarget configTarget = ConfigTarget.ANALYTIC_UI_DEFAULT;
 
     AbstractNotificationPresenter(final EventBus eventBus,
                                   final AnalyticNotificationView view,
                                   final DocSelectionBoxPresenter errorFeedPresenter,
                                   final AbstractNotificationListPresenter<D> notificationList,
-                                  final UiConfigCache uiConfigCache) {
+                                  final UiConfigCache uiConfigCache,
+                                  final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
         this.uiConfigCache = uiConfigCache;
+        this.configDefaultSetter = configDefaultSetter;
         this.errorFeedPresenter = errorFeedPresenter;
         this.notificationList = notificationList;
         view.setUiHandlers(this);
@@ -60,6 +66,9 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
         errorFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         getView().setErrorFeedView(errorFeedPresenter.getView());
         getView().setTable(notificationList.getView());
+
+        // Only an administrator can change a global property, so don't offer it to anyone else.
+        getView().setSetDefaultVisible(configDefaultSetter.isAllowed());
     }
 
     @Override
@@ -78,9 +87,14 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     protected void onRead(final DocRef docRef, final D analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
+                final boolean isReport = ReportDoc.TYPE.equals(docRef.getType());
+                configTarget = isReport
+                        ? ConfigTarget.REPORT_UI_DEFAULT
+                        : ConfigTarget.ANALYTIC_UI_DEFAULT;
+
                 DocRef selectedDocRef = analyticRuleDoc.getErrorFeed();
                 if (selectedDocRef == null) {
-                    if (ReportDoc.TYPE.equals(docRef.getType())) {
+                    if (isReport) {
                         selectedDocRef = extendedUiConfig.getReportUiDefaultConfig().getDefaultErrorFeed();
                     } else {
                         selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
@@ -96,6 +110,17 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     }
 
     @Override
+    public void onSetDefaultErrorFeed() {
+        configDefaultSetter.setDefault(
+                this,
+                configTarget,
+                AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_ERROR_FEED,
+                errorFeedPresenter.getSelectedEntityReference(),
+                "error feed",
+                this);
+    }
+
+    @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         super.setTaskMonitorFactory(taskMonitorFactory);
         this.notificationList.setTaskMonitorFactory(taskMonitorFactory);
@@ -105,9 +130,11 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     // --------------------------------------------------------------------------------
 
 
-    public interface AnalyticNotificationView extends View, HasUiHandlers<ChangeUiHandlers> {
+    public interface AnalyticNotificationView extends View, HasUiHandlers<AnalyticNotificationUiHandlers> {
 
         void setErrorFeedView(View view);
+
+        void setSetDefaultVisible(boolean visible);
 
         void setIncludeRuleDocumentationVisible(boolean visible);
 

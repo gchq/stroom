@@ -46,6 +46,7 @@ public class AnalyticQueryEditPresenter
                 .copy()
                 .timeRange(queryEditPresenter.getTimeRange())
                 .query(queryEditPresenter.getQuery())
+                .queryTablePreferences(queryEditPresenter.write())
                 .build();
     }
 }
