@@ -16,15 +16,22 @@
 
 package stroom.docstore.impl.dao;
 
+import stroom.collection.api.CollectionService;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreDBPersistenceDbModule;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
+import stroom.docstore.mock.MockDocFinderModule;
+import stroom.dictionary.api.WordListProvider;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.filter.FilterFieldDefinition;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +45,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static stroom.docstore.impl.db.jooq.tables.DocDependency.DOC_DEPENDENCY;
 
 class TestDocDependencyDao {
@@ -51,7 +59,19 @@ class TestDocDependencyDao {
     void setUp() throws SQLException {
         Guice.createInjector(
                 new DocStoreDBPersistenceDbModule(),
-                new DbTestModule()
+                new DbTestModule(),
+                // The DAO now builds an ExpressionMapper, whose TermHandlerFactory needs these
+                // three. They are only consulted by conditions this DAO does not use
+                // (IN_DICTIONARY / IN_FOLDER / DocRef fields), so stubs are enough - but they must
+                // be bound or Guice cannot construct the graph.
+                new MockDocFinderModule(),
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(WordListProvider.class).toInstance(mock(WordListProvider.class));
+                        bind(CollectionService.class).toInstance(mock(CollectionService.class));
+                    }
+                }
         ).injectMembers(this);
 
         // Clear the doc_dependency table
@@ -407,7 +427,7 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(to1, to2, to3));
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, dep -> true);
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
         assertThat(page.getValues()).hasSize(3);
         assertThat(page.getPageResponse().getTotal()).isEqualTo(3);
@@ -424,7 +444,7 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(to));
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, dep -> true);
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
         assertThat(page.getValues()).hasSize(1);
         final Dependency dep = page.getValues().getFirst();
@@ -445,7 +465,7 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(to));
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, dep -> true);
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
         assertThat(page.getValues()).hasSize(1);
         final Dependency dep = page.getValues().getFirst();
@@ -471,5 +491,242 @@ class TestDocDependencyDao {
 
         // Target has 2 dependants
         assertThat(dao.getDependantsOf(target.getUuid())).hasSize(2);
+    }
+
+    // --- fetchDependencies (quick filter) ---
+    //
+    // The quick filter text arrives as DependencyCriteria.partialName and is parsed server side
+    // into jOOQ conditions. Before gh-5720 it was matched as a literal LIKE against the from/to
+    // names, so every qualified term (which is what the explorer context menu sends) matched
+    // nothing.
+
+    /**
+     * Regression test for gh-5720. Right clicking an explorer item and choosing "Dependants"
+     * opens this screen pre-filtered with "touuid:&lt;uuid&gt;".
+     */
+    @Test
+    void testFetchDependencies_filterByToUuid() {
+        final Fixture f = new Fixture();
+
+        assertThat(filter("touuid:" + f.index.getUuid()).getValues()
+                .stream()
+                .map(dep -> dep.getFrom().getName()))
+                .containsExactly("Dashboard One");
+    }
+
+    @Test
+    void testFetchDependencies_filterByFromUuid() {
+        final Fixture f = new Fixture();
+
+        assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_filterByType() {
+        new Fixture();
+
+        assertThat(filter("fromtype:View").getValues()).hasSize(1);
+        assertThat(filter("totype:Index").getValues()).hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_unqualifiedTermMatchesEitherName() {
+        new Fixture();
+
+        // Matches on the from name only.
+        assertThat(filter("Dashboard One").getValues()).hasSize(2);
+        // Matches on the to name only.
+        assertThat(filter("Dict").getValues()).hasSize(1);
+        // Matches nothing.
+        assertThat(filter("nosuchthing").getValues()).isEmpty();
+    }
+
+    @Test
+    void testFetchDependencies_filterByStatus() {
+        final Fixture f = new Fixture();
+
+        // Only the edge to the deleted dictionary is broken.
+        final ResultPage<Dependency> missing = filter("status:Missing");
+        assertThat(missing.getValues()).hasSize(1);
+        assertThat(missing.getValues().getFirst().getTo().getUuid()).isEqualTo(f.missingDict.getUuid());
+
+        assertThat(filter("status:OK").getValues()).hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_operators() {
+        new Fixture();
+
+        // Equals, rather than the default contains.
+        assertThat(filter("totype:=Index").getValues()).hasSize(2);
+        assertThat(filter("totype:=Ind").getValues()).isEmpty();
+        // Starts with / ends with - both discriminating, the View row has neither.
+        assertThat(filter("fromname:^Dashboard").getValues()).hasSize(2);
+        assertThat(filter("fromname:$One").getValues()).hasSize(2);
+        // Negation.
+        assertThat(filter("totype:!Index").getValues()).hasSize(1);
+    }
+
+    @Test
+    void testFetchDependencies_andOr() {
+        new Fixture();
+
+        assertThat(filter("fromtype:Dashboard and totype:Index").getValues()).hasSize(1);
+        assertThat(filter("fromtype:Dashboard or fromtype:View").getValues()).hasSize(3);
+    }
+
+    /**
+     * Pseudo-refs (Searchable / Annotation data sources) live outside the doc table by design, so
+     * a dependency on one is OK rather than missing.
+     */
+    @Test
+    void testFetchDependencies_pseudoRefIsNotMissing() {
+        final DocRef from = docRef("Dashboard", "Uses Annotations");
+        final DocRef pseudoRef = docRef("Searchable", "Annotations");
+        createDocRow(from);
+        // Deliberately no doc row for the pseudo-ref.
+        dao.setDependencies(from, Set.of(pseudoRef));
+
+        // Without the pseudo-ref set it looks broken...
+        final ResultPage<Dependency> unaware =
+                dao.fetchDependencies(new DependencyCriteria(), Set.of(), dep -> true);
+        assertThat(unaware.getValues().getFirst().isOk()).isFalse();
+
+        // ...and with it, it is fine, and is excluded from a "missing" filter.
+        final Set<String> pseudoRefUuids = Set.of(pseudoRef.getUuid());
+        final ResultPage<Dependency> aware =
+                dao.fetchDependencies(new DependencyCriteria(), pseudoRefUuids, dep -> true);
+        assertThat(aware.getValues().getFirst().isOk()).isTrue();
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setPartialName("status:Missing");
+        assertThat(dao.fetchDependencies(criteria, pseudoRefUuids, dep -> true).getValues()).isEmpty();
+    }
+
+    /**
+     * The quick filter queries on a debounce as the user types, so partially typed input and
+     * conditions outside the field's ConditionSet must match nothing rather than fail the request.
+     */
+    @Test
+    void testFetchDependencies_unparseableFilterReturnsEmpty() {
+        new Fixture();
+
+        // Unbalanced quote.
+        assertThat(filter("\"Dashboard").getValues()).isEmpty();
+        // WORD_BOUNDARY is not in ConditionSet.SQL_TEXT and TermHandler would throw on it.
+        assertThat(filter("fromname:?Dashboard").getValues()).isEmpty();
+    }
+
+    @Test
+    void testFetchDependencies_filterSortAndPageTogether() {
+        new Fixture();
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setPartialName("fromtype:Dashboard");
+        criteria.setSortList(List.of(new CriteriaFieldSort(DependencyCriteria.FIELD_TO_NAME, false, true)));
+        criteria.setPageRequest(new PageRequest(0, 1));
+
+        final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
+
+        // One row on the page, but the total reflects everything the filter matched.
+        assertThat(page.getValues()).hasSize(1);
+        assertThat(page.getPageResponse().getTotal()).isEqualTo(2);
+        assertThat(page.getValues().getFirst().getTo().getName()).isEqualTo("Dict One");
+    }
+
+    /**
+     * Sorting by status must use the same pseudo-ref aware expression the SELECT does, or a
+     * pseudo-ref row is ordered as missing while being displayed as OK. The secondary sort makes
+     * the ordering deterministic so the two cases are distinguishable.
+     */
+    @Test
+    void testFetchDependencies_sortByStatusHonoursPseudoRefs() {
+        final DocRef from = docRef("Dashboard", "Sorter");
+        final DocRef existing = docRef("Index", "Zeta Index");
+        final DocRef pseudoRef = docRef("Searchable", "Alpha Pseudo");
+        final DocRef missing = docRef("Dictionary", "Beta Missing");
+        createDocRow(from);
+        createDocRow(existing);
+        // No doc rows for pseudoRef or missing.
+        dao.setDependencies(from, Set.of(existing, pseudoRef, missing));
+
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setSortList(List.of(
+                new CriteriaFieldSort(DependencyCriteria.FIELD_STATUS, false, true),
+                new CriteriaFieldSort(DependencyCriteria.FIELD_TO_NAME, false, true)));
+
+        final ResultPage<Dependency> page =
+                dao.fetchDependencies(criteria, Set.of(pseudoRef.getUuid()), dep -> true);
+
+        // "Missing" sorts before "OK", and only the dictionary is genuinely missing. If the sort
+        // used a pseudo-ref blind expression, "Alpha Pseudo" would sort into the missing group and
+        // come first.
+        assertThat(page.getValues().stream().map(dep -> dep.getTo().getName()))
+                .containsExactly("Beta Missing", "Alpha Pseudo", "Zeta Index");
+        assertThat(page.getValues().stream().map(Dependency::isOk))
+                .containsExactly(false, true, true);
+    }
+
+    /**
+     * Every qualifier the help tooltip advertises must resolve. The tooltip is built from
+     * DependencyCriteria.FIELD_DEFINITIONS, so a qualifier that the server does not recognise
+     * would be documented but silently match nothing - which is exactly how gh-5720 presented.
+     */
+    @Test
+    void testFetchDependencies_everyAdvertisedQualifierResolves() {
+        final Fixture f = new Fixture();
+
+        assertThat(filter("fromtype:Dashboard").getValues()).hasSize(2);
+        assertThat(filter("fromname:Dashboard One").getValues()).hasSize(2);
+        assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
+        assertThat(filter("totype:Index").getValues()).hasSize(2);
+        assertThat(filter("toname:Index One").getValues()).hasSize(1);
+        assertThat(filter("touuid:" + f.index.getUuid()).getValues()).hasSize(1);
+        assertThat(filter("status:OK").getValues()).hasSize(2);
+
+        // And the qualifiers are exactly those derived from the tooltip's field definitions.
+        assertThat(DependencyCriteria.FIELD_DEFINITIONS
+                .stream()
+                .map(FilterFieldDefinition::getFilterQualifier))
+                .containsExactlyInAnyOrder(
+                        "fromtype", "fromname", "fromuuid",
+                        "totype", "toname", "touuid",
+                        "status");
+    }
+
+    // --- Quick filter helpers ---
+
+    private ResultPage<Dependency> filter(final String quickFilterText) {
+        final DependencyCriteria criteria = new DependencyCriteria();
+        criteria.setPartialName(quickFilterText);
+        return dao.fetchDependencies(criteria, Set.of(), dep -> true);
+    }
+
+
+    /**
+     * A small graph shared by the quick filter tests:
+     * <pre>
+     *   Dashboard "Dashboard One" -> Index "Index One"        (ok)
+     *   Dashboard "Dashboard One" -> Dictionary "Dict One"    (missing, no doc row)
+     *   View      "View Alpha"    -> Index "Index Two"        (ok)
+     * </pre>
+     */
+    private class Fixture {
+
+        private final DocRef dashboard1 = docRef("Dashboard", "Dashboard One");
+        private final DocRef view1 = docRef("View", "View Alpha");
+        private final DocRef index = docRef("Index", "Index One");
+        private final DocRef index2 = docRef("Index", "Index Two");
+        private final DocRef missingDict = docRef("Dictionary", "Dict One");
+
+        private Fixture() {
+            createDocRow(dashboard1);
+            createDocRow(view1);
+            createDocRow(index);
+            createDocRow(index2);
+            // No doc row for missingDict - it is the broken edge.
+            dao.setDependencies(dashboard1, Set.of(index, missingDict));
+            dao.setDependencies(view1, Set.of(index2));
+        }
     }
 }
