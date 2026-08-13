@@ -18,10 +18,13 @@ package stroom.config.global.impl;
 
 import stroom.annotation.impl.AnnotationState;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.config.global.shared.SetConfigValueRequest;
+import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.explorer.impl.ExplorerConfig;
@@ -33,7 +36,10 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -195,6 +201,82 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .hasSize(1);
         Assertions.assertThat(getRequestEvents("node3"))
                 .hasSize(0);
+    }
+
+    /**
+     * The value arrives as a {@link DocRef} so that the server, not the client, decides how it is stored. What
+     * matters here is that the request is routed to the right config object and property name.
+     */
+    @Test
+    void setConfigValue_docRef() {
+        initNodes();
+
+        final DocRef feed = DocRef.builder()
+                .type("Feed")
+                .uuid("87c3e7f2-27a5-4a63-9dcb-6b2a9e4e9d0f")
+                .name("MY_ERROR_FEED")
+                .build();
+
+        doPostTest(
+                GlobalConfigResource.SET_CONFIG_VALUE_SUB_PATH,
+                SetConfigValueRequest.docRef(ConfigTarget.ANALYTIC_UI_DEFAULT,
+                        AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_ERROR_FEED, feed),
+                Boolean.class,
+                true);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .setDocRef(
+                        Mockito.any(AnalyticUiDefaultConfig.class),
+                        eq(AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_ERROR_FEED),
+                        eq(feed));
+    }
+
+    /**
+     * Reports have their own set of defaults, so the report properties must not be written to the analytic config.
+     */
+    @Test
+    void setConfigValue_reportUsesReportConfig() {
+        initNodes();
+
+        final DocRef feed = DocRef.builder()
+                .type("Feed")
+                .uuid("1f0f4a2c-7f31-4d0e-9a8e-2b7cf0f5a111")
+                .name("MY_DESTINATION_FEED")
+                .build();
+
+        doPostTest(
+                GlobalConfigResource.SET_CONFIG_VALUE_SUB_PATH,
+                SetConfigValueRequest.docRef(ConfigTarget.REPORT_UI_DEFAULT,
+                        AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_DESTINATION_FEED, feed),
+                Boolean.class,
+                true);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .setDocRef(
+                        Mockito.any(ReportUiDefaultConfig.class),
+                        eq(AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_DESTINATION_FEED),
+                        eq(feed));
+    }
+
+    /**
+     * The node is a plain string rather than a doc ref, so it takes the other branch.
+     */
+    @Test
+    void setConfigValue_string() {
+        initNodes();
+
+        doPostTest(
+                GlobalConfigResource.SET_CONFIG_VALUE_SUB_PATH,
+                SetConfigValueRequest.string(ConfigTarget.ANALYTIC_UI_DEFAULT,
+                        AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_NODE, "node1"),
+                Boolean.class,
+                true);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .setString(
+                        Mockito.any(AnalyticUiDefaultConfig.class),
+                        eq(AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_NODE),
+                        eq("node1"));
     }
 
     @Test
@@ -443,6 +525,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 AuthenticationConfig::new,
                 StroomReceiptPolicyConfig::new,
                 ReceiveDataConfig::new,
-                AnnotationState::new);
+                AnnotationState::new,
+                AnalyticUiDefaultConfig::new,
+                ReportUiDefaultConfig::new);
     }
 }

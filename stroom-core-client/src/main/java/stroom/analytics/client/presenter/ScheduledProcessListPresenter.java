@@ -31,10 +31,12 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
@@ -44,9 +46,13 @@ import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -55,6 +61,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ScheduledProcessListPresenter
@@ -72,6 +80,7 @@ public class ScheduledProcessListPresenter
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
+    private final Set<String> knownNodeNames = new HashSet<>();
     private ExecutionScheduleRequest request;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
 
@@ -80,7 +89,8 @@ public class ScheduledProcessListPresenter
                                          final PagerView view,
                                          final RestFactory restFactory,
                                          final DateTimeFormatter dateTimeFormatter,
-                                         final ClientSecurityContext securityContext) {
+                                         final ClientSecurityContext securityContext,
+                                         final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -106,6 +116,16 @@ public class ScheduledProcessListPresenter
 
         addColumns();
         enableButtons();
+
+        // Used to mark schedules that name a node that no longer exists. A failure to load isn't reported because
+        // this only enriches the display; without it we simply mark nothing.
+        nodeClient.listAllNodes(
+                nodeNames -> {
+                    knownNodeNames.addAll(NullSafe.list(nodeNames));
+                    dataGrid.redraw();
+                },
+                throwable -> knownNodeNames.clear(),
+                view);
     }
 
     @Override
@@ -145,7 +165,7 @@ public class ScheduledProcessListPresenter
                 200);
 
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ExecutionSchedule::getNodeName)
+                DataGridUtil.htmlColumnBuilder(this::getNodeNameAsSafeHtml)
                         .withSorting(ExecutionScheduleFields.NODE_NAME, false)
                         .enabledWhen(ExecutionSchedule::isEnabled)
                         .build(),
@@ -194,6 +214,29 @@ public class ScheduledProcessListPresenter
                 ColumnSizeConstants.MEDIUM_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
+    }
+
+    /**
+     * A schedule only ever runs on the node it names, so one naming a node that no longer exists is never picked up
+     * by any node and produces nothing without reporting anything. Mark it so the reason is visible.
+     */
+    private SafeHtml getNodeNameAsSafeHtml(final ExecutionSchedule executionSchedule) {
+        final String nodeName = executionSchedule.getNodeName();
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        if (nodeName != null) {
+            builder.append(SafeHtmlUtils.fromString(nodeName));
+        }
+
+        // Only mark unknown nodes once we know what the nodes actually are, else every row looks broken while the
+        // node list is still loading or if it failed to load.
+        if (!knownNodeNames.isEmpty() && !knownNodeNames.contains(nodeName)) {
+            builder.append(SvgImageUtil.toSafeHtml(
+                    "Node '" + nodeName + "' no longer exists so this schedule will never run.",
+                    SvgImage.ALERT_SIMPLE,
+                    "svgIcon", "small"));
+        }
+
+        return builder.toSafeHtml();
     }
 
     private void updateEnabledState(final ExecutionSchedule row, final TickBoxState value) {

@@ -540,23 +540,53 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                                    "' with effective time: " +
                                    DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
 
-            scheduledExecutable.beforeProcess(doc,
-                    trigger,
-                    executionTime,
-                    effectiveExecutionTime,
-                    executionSchedule,
-                    currentTracker,
-                    taskContext,
-                    (t) -> {
-                        process(doc,
-                                trigger,
-                                executionTime,
-                                effectiveExecutionTime,
-                                executionSchedule,
-                                currentTracker,
-                                scheduledExecutable);
-                        return doc;
-                    });
+            try {
+                scheduledExecutable.beforeProcess(doc,
+                        trigger,
+                        executionTime,
+                        effectiveExecutionTime,
+                        executionSchedule,
+                        currentTracker,
+                        taskContext,
+                        (t) -> {
+                            process(doc,
+                                    trigger,
+                                    executionTime,
+                                    effectiveExecutionTime,
+                                    executionSchedule,
+                                    currentTracker,
+                                    scheduledExecutable);
+                            return doc;
+                        });
+            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                // Shutting down rather than a fault with the schedule, so leave it enabled to run again.
+                LOGGER.debug(e::getMessage, e);
+                throw e;
+            } catch (final RuntimeException e) {
+                // Setting up processing failed, e.g. because there is no error feed to write errors to, so we
+                // can't report this through the error writer. Record it against the execution history to make it
+                // visible in the UI. Without this the failure is only logged and repeats silently on every
+                // scheduled execution.
+                LOGGER.error(() -> LogUtil.message("Error executing {}: {}",
+                        scheduledExecutable.getProcessType(), scheduledExecutable.getIdentity(doc)), e);
+                addExecutionHistory(executionSchedule,
+                        executionTime,
+                        effectiveExecutionTime,
+                        ExecutionResult.error(LogUtil.exceptionMessage(e)));
+
+                // Every subsequent execution would fail in exactly the same way, so disable the schedule rather
+                // than filling the execution history with identical errors. This matches how other execution
+                // errors are handled.
+                LOGGER.info(() -> LogUtil.message("Disabling schedule '{}' for {}: {}",
+                        executionSchedule.getName(),
+                        scheduledExecutable.getProcessType(),
+                        scheduledExecutable.getIdentity(doc)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule
+                        .copy()
+                        .enabled(false)
+                        .build());
+                return false;
+            }
             return true;
         }
         return false;

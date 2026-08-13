@@ -17,10 +17,12 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
-import stroom.document.client.event.ChangeUiHandlers;
+import stroom.analytics.client.presenter.AnalyticNotificationUiHandlers;
+import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,13 +34,15 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticNotificationViewImpl
-        extends ViewWithUiHandlers<ChangeUiHandlers>
+        extends ViewWithUiHandlers<AnalyticNotificationUiHandlers>
         implements AnalyticNotificationView {
 
     private final Widget widget;
 
     @UiField
     SimplePanel errorFeed;
+    @UiField
+    Button setDefaultErrorFeed;
     @UiField
     SimplePanel table;
     @UiField
@@ -49,6 +53,7 @@ public class AnalyticNotificationViewImpl
     @Inject
     public AnalyticNotificationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setDefaultErrorFeed.setTitle("Set as the default error feed for all users");
     }
 
     @Override
@@ -59,6 +64,16 @@ public class AnalyticNotificationViewImpl
     @Override
     public void setErrorFeedView(final View view) {
         this.errorFeed.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setSetDefaultVisible(final boolean visible) {
+        this.setDefaultErrorFeed.setVisible(visible);
+    }
+
+    @UiHandler("setDefaultErrorFeed")
+    public void onSetDefaultErrorFeed(final ClickEvent event) {
+        getUiHandlers().onSetDefaultErrorFeed();
     }
 
     @Override

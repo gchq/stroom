@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:schedule="urn:import:stroom.schedule.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
@@ -14,7 +15,12 @@
             <tickbox:CustomCheckBox ui:field="enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
-            <l:SelectionBox ui:field="node" addStyleNames="w-100"/>
+            <g:FlowPanel styleName="button-group">
+                <l:SelectionBox ui:field="node"/>
+                <b:Button ui:field="setDefaultNode"
+                          text="Set Default"
+                          addStyleNames="allow-focus"/>
+            </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup ui:field="scheduleForm" identity="schedule" label="Schedule">
             <schedule:ScheduleBox ui:field="scheduleBox" addStyleNames="w-100"/>

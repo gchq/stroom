@@ -18,13 +18,15 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
 import stroom.analytics.shared.NotificationStreamDestination;
+import stroom.config.global.client.presenter.ConfigDefaultSetter;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,26 +37,52 @@ import com.gwtplatform.mvp.client.View;
 
 public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
-        implements ChangeUiHandlers, HasChangeHandlers {
+        implements AnalyticStreamDestinationUiHandlers, HasChangeHandlers {
 
     private final DocSelectionBoxPresenter feedPresenter;
+    private final ConfigDefaultSetter configDefaultSetter;
+    private ConfigTarget configTarget = ConfigTarget.ANALYTIC_UI_DEFAULT;
 
     @Inject
     public AnalyticStreamDestinationPresenter(final EventBus eventBus,
                                               final AnalyticStreamDestinationView view,
-                                              final DocSelectionBoxPresenter feedPresenter) {
+                                              final DocSelectionBoxPresenter feedPresenter,
+                                              final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.feedPresenter = feedPresenter;
+        this.configDefaultSetter = configDefaultSetter;
 
         feedPresenter.setIncludedTypes(FeedDoc.TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeedView(feedPresenter.getView());
+
+        // Only an administrator can change a global property, so don't offer it to anyone else.
+        view.setSetDefaultVisible(configDefaultSetter.isAllowed());
+    }
+
+    /**
+     * Reports and analytic rules keep their defaults separately, so the owning document decides which one this
+     * feed would be promoted to.
+     */
+    public void setConfigTarget(final ConfigTarget configTarget) {
+        this.configTarget = configTarget;
     }
 
     @Override
     protected void onBind() {
         registerHandler(feedPresenter.addDataSelectionHandler(e -> onChange()));
+    }
+
+    @Override
+    public void onSetDefaultDestinationFeed() {
+        configDefaultSetter.setDefault(
+                this,
+                configTarget,
+                AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_DESTINATION_FEED,
+                feedPresenter.getSelectedEntityReference(),
+                "destination feed",
+                this);
     }
 
     public void read(final NotificationStreamDestination streamDestination) {
@@ -84,9 +112,12 @@ public class AnalyticStreamDestinationPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface AnalyticStreamDestinationView extends View, HasUiHandlers<ChangeUiHandlers> {
+    public interface AnalyticStreamDestinationView extends View,
+            HasUiHandlers<AnalyticStreamDestinationUiHandlers> {
 
         void setDestinationFeedView(View view);
+
+        void setSetDefaultVisible(boolean visible);
 
         boolean isUseSourceFeedIfPossible();
 

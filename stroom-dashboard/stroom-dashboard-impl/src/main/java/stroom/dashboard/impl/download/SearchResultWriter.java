@@ -58,9 +58,8 @@ public class SearchResultWriter implements TableResultBuilder {
             for (final Column column : columns) {
                 if (column.isVisible()) {
                     target.writeHeading(fieldIndex, column, column.getName());
+                    fieldIndex++;
                 }
-
-                fieldIndex++;
             }
             target.endLine();
         } catch (final IOException e) {

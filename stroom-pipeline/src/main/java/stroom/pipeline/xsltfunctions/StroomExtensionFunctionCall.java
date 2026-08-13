@@ -141,6 +141,28 @@ abstract class StroomExtensionFunctionCall {
         return bool;
     }
 
+    /**
+     * Get the value of an optional trailing boolean argument that indicates whether warnings should
+     * be suppressed. If the argument has not been supplied, or it cannot be read, then warnings will
+     * not be suppressed.
+     */
+    boolean isIgnoreWarnings(final String functionName,
+                             final XPathContext context,
+                             final Sequence[] arguments,
+                             final int index) {
+        if (arguments.length <= index) {
+            return false;
+        }
+
+        try {
+            return NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, index));
+        } catch (final XPathException | RuntimeException e) {
+            LOGGER.debug("Unable to read the ignore warnings argument of function {}() at position {}",
+                    functionName, index, e);
+            return false;
+        }
+    }
+
     void outputWarning(final XPathContext context, final StringBuilder msgBuilder, final Throwable e) {
         logErrorOrWarning(context, Severity.WARNING, msgBuilder, e);
     }

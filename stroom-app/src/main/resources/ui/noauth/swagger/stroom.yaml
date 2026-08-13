@@ -1664,6 +1664,26 @@ paths:
       summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
+  /config/v1/setConfigValue:
+    post:
+      operationId: setConfigValue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetConfigValueRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Set a single config property for all users
+      tags:
+      - Global Config
   /content/v1/abortImport:
     post:
       operationId: abortImport
@@ -6679,6 +6699,12 @@ paths:
       - Queries
   /query/v1/csv/search:
     get:
+      description: "Returns the results as CSV. Sets the 'X-Stroom-Search-Incremental'\
+        \ header to say whether the search ran incrementally, and the 'X-Stroom-Search-Complete'\
+        \ header to say whether it finished. An incremental search returns whatever\
+        \ results it has when the timeout expires, so those may be partial; a non\
+        \ incremental search waits for the search to finish, which risks the request\
+        \ itself timing out."
       operationId: queryCsv
       parameters:
       - in: query
@@ -6696,13 +6722,20 @@ paths:
           type: integer
           format: int32
           default: 100
+      - in: query
+        name: incremental
+        schema:
+          type: boolean
+          default: true
+      - in: query
+        name: timeout
+        schema:
+          type: integer
+          format: int64
       responses:
         default:
-          content:
-            text/plain:
-              schema:
-                type: string
-          description: default response
+          description: "Returns the matching rows as CSV, which may be a subset of\
+            \ the matching data if the search had not finished"
       summary: Perform a csv query
       tags:
       - Queries
@@ -10240,6 +10273,8 @@ components:
             $ref: "#/components/schemas/Param"
         query:
           type: string
+        queryTablePreferences:
+          $ref: "#/components/schemas/QueryTablePreferences"
         rememberNotifications:
           type: boolean
         status:
@@ -18316,6 +18351,8 @@ components:
             $ref: "#/components/schemas/Param"
         query:
           type: string
+        queryTablePreferences:
+          $ref: "#/components/schemas/QueryTablePreferences"
         rememberNotifications:
           type: boolean
         reportSettings:
@@ -19514,6 +19551,20 @@ components:
         properties:
           sourceDocRef:
             $ref: "#/components/schemas/DocRef"
+    SetConfigValueRequest:
+      type: object
+      properties:
+        docRefValue:
+          $ref: "#/components/schemas/DocRef"
+        propertyName:
+          type: string
+        stringValue:
+          type: string
+        target:
+          type: string
+          enum:
+          - ANALYTIC_UI_DEFAULT
+          - REPORT_UI_DEFAULT
     SetDocumentUserCreatePermissions:
       type: object
       allOf:
