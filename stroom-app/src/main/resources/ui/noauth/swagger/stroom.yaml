@@ -17800,6 +17800,9 @@ components:
           - '''between'''
           - "'=', '!=', 'in'"
           - "'contains', '=', '!=', 'matches regex', 'in'"
+          - "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in',\
+            \ 'in dictionary'"
+          - "'=', '!='"
           - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
             \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
             \ regex (CS)', 'in', 'in dictionary'"

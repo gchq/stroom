@@ -18,11 +18,11 @@ package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
-import stroom.explorer.api.ExplorerDecorator;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ContentService;
