@@ -466,6 +466,78 @@ class TestQuickFilterPredicateFactory {
         doQualifyInputTest(input, expectedQualifiedInput, FIELD_PROVIDER);
     }
 
+    /**
+     * A ':' only introduces a qualifier when the text before it names a field. Previously any
+     * unescaped ':' anywhere in a token was read as a qualifier, which then failed to resolve and
+     * threw "Unknown field: ...", so these values could only be searched for if quoted.
+     */
+    @Test
+    void testUnresolvedQualifierIsPartOfTheValue() {
+        doQualifyInputTest("12:30",
+                "OR {simplestr1 contains 12:30, simplestr2 contains 12:30}",
+                FIELD_PROVIDER);
+        doQualifyInputTest("http://example.com",
+                "OR {simplestr1 contains http://example.com, simplestr2 contains http://example.com}",
+                FIELD_PROVIDER);
+        doQualifyInputTest("2000-01-01T00:00:00.000Z",
+                "OR {simplestr1 contains 2000-01-01T00:00:00.000Z, "
+                + "simplestr2 contains 2000-01-01T00:00:00.000Z}",
+                FIELD_PROVIDER);
+    }
+
+    /**
+     * A resolvable qualifier must still qualify, and must still win over the value interpretation.
+     */
+    @Test
+    void testResolvedQualifierStillQualifies() {
+        doQualifyInputTest("name:fubar", "AND {name contains fubar}", FIELD_PROVIDER);
+        // The field is resolved on the text before the FIRST colon, so the rest is the value.
+        doQualifyInputTest("name:12:30", "AND {name contains 12:30}", FIELD_PROVIDER);
+    }
+
+    /**
+     * A column value filter always applies to its own column, so nothing ever resolves and ':' is
+     * always an ordinary value character.
+     */
+    @Test
+    void testSingleFieldProvider_colonIsNotAQualifier() {
+        final FieldProvider fieldProvider = new SingleFieldProvider("test");
+
+        doQualifyInputTest("12:30", "AND {test contains 12:30}", fieldProvider);
+        doQualifyInputTest("http://example.com", "AND {test contains http://example.com}", fieldProvider);
+        doQualifyInputTest("key:value", "AND {test contains key:value}", fieldProvider);
+        // An unquoted timestamp - previously only worked if the user quoted it.
+        doQualifyInputTest("2000-01-01T00:00:00.000Z",
+                "AND {test contains 2000-01-01T00:00:00.000Z}",
+                fieldProvider);
+    }
+
+    /**
+     * The colon fix must not disturb operator parsing on the same surface.
+     */
+    @Test
+    void testSingleFieldProvider_operatorsStillApply() {
+        final FieldProvider fieldProvider = new SingleFieldProvider("test");
+
+        doQualifyInputTest("=12:30", "AND {test = 12:30}", fieldProvider);
+        doQualifyInputTest("^12:30", "AND {test starts with 12:30}", fieldProvider);
+        // A lone NOT operator is returned directly rather than wrapped in an outer AND.
+        doQualifyInputTest("!12:30", "NOT {test contains 12:30}", fieldProvider);
+    }
+
+    /**
+     * An unknown qualifier is no longer an error - it is searched for literally. This trades the
+     * "Unknown field" diagnostic for the ability to type colon-bearing values unquoted. Restoring
+     * that feedback as a non-fatal warning is tracked in the surface syntax spec; note the old
+     * exception was in practice invisible, being swallowed by each DAO and shown as an empty grid.
+     */
+    @Test
+    void testUnknownQualifierIsNotAnError() {
+        doQualifyInputTest("nosuchfield:x",
+                "OR {simplestr1 contains nosuchfield:x, simplestr2 contains nosuchfield:x}",
+                FIELD_PROVIDER);
+    }
+
     private void doQualifyInputTest(final String input,
                                     final String expectedQualifiedInput,
                                     final FieldProvider fieldProvider) {
