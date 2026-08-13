@@ -43,7 +43,8 @@ public class MockDocDependencyService implements DocDependencyService {
     }
 
     @Override
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria,
+                                                    final Set<String> pseudoRefUuids) {
         return null;
     }
 

@@ -27,6 +27,8 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
@@ -38,7 +40,10 @@ dependencies {
     implementation libs.zero.allocation.hashing
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-dictionary:stroom-dictionary-api')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
+    testImplementation project(':stroom-explorer:stroom-collection-api')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
