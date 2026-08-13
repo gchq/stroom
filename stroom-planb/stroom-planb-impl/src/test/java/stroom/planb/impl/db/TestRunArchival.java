@@ -125,15 +125,16 @@ class TestRunArchival {
     }
 
     // -----------------------------------------------------------------------
-    // The root lives in the holding area until the cut-off
+    // The stored root outlives the trace's spans, until the cut-off
     // -----------------------------------------------------------------------
 
     /**
-     * A root younger than the cut-off keeps its root span, root entry and stats, so late spans still find a
-     * real root to attach to. Its children are archived and removed regardless.
+     * Archival takes every span it stages, the root span included. The stored root entry stays behind, still
+     * flagged as a real root and with the same start time, so a late span attaches to a rooted trace and
+     * buckets by the same day rather than re-deriving an orphan.
      */
     @Test
-    void rootRetainedUntilTheCutOff(@TempDir final Path tempDir) throws IOException {
+    void spansAllArchivedButTheStoredRootRemains(@TempDir final Path tempDir) throws IOException {
         final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
         final Path archiveBaseDir = Files.createDirectory(tempDir.resolve("archive"));
         final PlanBDoc doc = buildDoc();
@@ -149,9 +150,127 @@ class TestRunArchival {
         }
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
-            assertThat(db.get(rootKey(TRACE_A))).as("root span retained").isNotNull();
-            assertThat(traceIds(db)).as("root entry retained").containsExactly(TRACE_A);
+            assertThat(db.get(rootKey(TRACE_A))).as("root span archived out too").isNull();
             assertThat(db.get(childKey(TRACE_A))).as("child archived out").isNull();
+
+            final List<TraceRoot> roots = roots(db);
+            assertThat(roots).as("stored root entry retained").hasSize(1);
+            assertThat(roots.getFirst().isOrphan())
+                    .as("still a real root — not downgraded now its root span has gone")
+                    .isFalse();
+            assertThat(roots.getFirst().getStartTime())
+                    .as("start time unchanged, so a late span buckets to the same day")
+                    .isEqualTo(NanoTimeUtil.fromInstant(AFTER_CUTOFF));
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // A pass only stages a trace that has spans it has not taken
+    // -----------------------------------------------------------------------
+
+    /**
+     * A second pass with nothing new stages nothing. Staging a trace that is only waiting out the cut-off
+     * would put its bucket back in play, and pushing a bucket copies the whole thing down and back up.
+     */
+    @Test
+    void secondPassStagesNothingWithoutNewSpans(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path firstArchive = Files.createDirectory(tempDir.resolve("archive1"));
+        final Path secondArchive = Files.createDirectory(tempDir.resolve("archive2"));
+        final PlanBDoc doc = buildDoc();
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+                db.insert(writer, new SpanKV(childKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+            });
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, firstArchive);
+        }
+        assertThat(listSubDirs(firstArchive)).as("first pass stages the trace").hasSize(1);
+
+        // The root is younger than the cut-off so it is still held, which is the case that used to re-stage.
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, secondArchive);
+        }
+        assertThat(listSubDirs(secondArchive))
+                .as("nothing arrived since, so no bucket is put back in play")
+                .isEmpty();
+    }
+
+    /** A span arriving after a pass puts its trace back in play, so late spans still reach the bucket. */
+    @Test
+    void lateSpanPutsTheTraceBackInPlay(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path firstArchive = Files.createDirectory(tempDir.resolve("archive1"));
+        final Path secondArchive = Files.createDirectory(tempDir.resolve("archive2"));
+        final PlanBDoc doc = buildDoc();
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+            });
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, firstArchive);
+        }
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer ->
+                    db.insert(writer, new SpanKV(childKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF))));
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, secondArchive);
+        }
+
+        final List<Path> secondDirs = listSubDirs(secondArchive);
+        assertThat(secondDirs.stream().map(p -> p.getFileName().toString()).toList())
+                .as("the late child is staged, into the root's start bucket")
+                .containsExactly("2024-03-20");
+        try (final TraceDb delta =
+                     TraceDb.create(secondDirs.getFirst(), BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(spanCount(delta.getTrace(HexStringUtil.decode(TRACE_A))))
+                    .as("just the late child — the root span went with the first pass")
+                    .isEqualTo(1);
+        }
+    }
+
+    /**
+     * A trace with nothing left to stage still retires once past the cut-off. Retirement must not follow
+     * the staging decision, or an idle trace would sit in the holding area forever.
+     */
+    @Test
+    void retiresPastTheCutOffEvenWithNothingToStage(@TempDir final Path tempDir) throws IOException {
+        final Path dbDir = Files.createDirectory(tempDir.resolve("db"));
+        final Path firstArchive = Files.createDirectory(tempDir.resolve("archive1"));
+        final Path secondArchive = Files.createDirectory(tempDir.resolve("archive2"));
+        final PlanBDoc doc = buildDoc();
+
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.write(writer -> {
+                db.insert(writer, new SpanKV(rootKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+                db.insert(writer, new SpanKV(childKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF)));
+            });
+        }
+        // Staged while younger than the cut-off, so the root is retained and nothing is left pending.
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(CUTOFF, ArchivalGranularity.DAY, firstArchive);
+        }
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(traceIds(db)).as("root still held after the first pass").containsExactly(TRACE_A);
+        }
+
+        // Now past the cut-off, with nothing new to stage.
+        final Instant laterCutOff = Instant.parse("2024-04-01T00:00:00.000Z");
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
+            db.runArchival(laterCutOff, ArchivalGranularity.DAY, secondArchive);
+        }
+
+        assertThat(listSubDirs(secondArchive)).as("nothing to stage").isEmpty();
+        try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+            assertThat(traceIds(db)).as("root retired anyway").isEmpty();
+            assertThat(db.get(rootKey(TRACE_A))).as("root span removed with it").isNull();
         }
     }
 
@@ -655,11 +774,15 @@ class TestRunArchival {
                 .build();
     }
 
+    /** Stored roots returned by a default (start-time-sorted) findTraces over the whole shard. */
+    private static List<TraceRoot> roots(final TraceDb db) {
+        return db.findTraces(new FindTraceCriteria(
+                new PageRequest(0, 1000), null, null, SimpleDuration.ZERO)).getValues();
+    }
+
     /** Trace ids returned by a default (start-time-sorted) findTraces over the whole shard. */
     private static List<String> traceIds(final TraceDb db) {
-        final TracesResultPage page = db.findTraces(new FindTraceCriteria(
-                new PageRequest(0, 1000), null, null, SimpleDuration.ZERO));
-        return page.getValues().stream().map(TraceRoot::getTraceId).sorted().toList();
+        return roots(db).stream().map(TraceRoot::getTraceId).sorted().toList();
     }
 
     private static int spanCount(final Trace trace) {

@@ -189,9 +189,12 @@ public class SharedFileStorePublisher {
         Files.createDirectories(localDir);
 
         try {
+            // Throw rather than return: the staged spans have already been deleted from the local shard, so
+            // reporting this bucket as pushed would lose them. Failing here makes mergeShard skip the
+            // publish and discard that shard, leaving the shared store's copy to be retried next cycle.
             if (!Files.exists(archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME))) {
-                LOGGER.warn("Staged archive {} has no data file, nothing to push", archiveShard.localDir());
-                return;
+                throw new IOException("Staged archive " + archiveShard.localDir()
+                                      + " has no data file, so its spans cannot be pushed");
             }
 
             final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
@@ -243,9 +246,10 @@ public class SharedFileStorePublisher {
     private static void publishBucketData(final Path localData,
                                           final Path archiveShardDir,
                                           final String version) throws IOException {
+        // As in pushArchive: the rows this would have carried are already gone locally, so a silent return
+        // would drop them. Fail so the merged shard is not published and the next cycle retries.
         if (!Files.exists(localData)) {
-            LOGGER.warn("No data file to publish for archive shard {}", archiveShardDir);
-            return;
+            throw new IOException("No data file to publish for archive shard " + archiveShardDir);
         }
         Files.createDirectories(archiveShardDir);
         deleteOrphanedTempData(archiveShardDir);

@@ -181,13 +181,21 @@ class TestPushArchive {
         assertThat(second).isNotEqualTo(first);
     }
 
+    /**
+     * A staged dir with no data.mdb is a failure, not a no-op: archival deletes the spans it stages, so
+     * reporting the bucket as pushed would lose them. Failing leaves the shared store's copy for the next
+     * cycle to retry, and still creates no bucket.
+     */
     @Test
-    void pushWithNoDataFile_doesNotCreateABucket() throws IOException {
-        // An empty staged dir has no data.mdb, so there is nothing to publish.
-        publisher.pushArchive(doc, SHARD_INDEX,
-                new StagedArchive(DAY_LABEL, Files.createDirectories(tempDir.resolve("empty"))));
+    void pushWithNoDataFile_failsAndCreatesNoBucket() throws IOException {
+        final StagedArchive empty =
+                new StagedArchive(DAY_LABEL, Files.createDirectories(tempDir.resolve("empty")));
 
-        assertThat(bucketDir()).doesNotExist();
+        assertThatThrownBy(() -> publisher.pushArchive(doc, SHARD_INDEX, empty))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("has no data file");
+
+        assertThat(bucketDir()).as("no empty bucket left behind").doesNotExist();
     }
 
     /**

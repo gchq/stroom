@@ -27,8 +27,8 @@ import java.util.Map;
  * What one archival pass will act on, decided once by {@code TraceDb.selectRoots} and then read by the
  * staging and purge phases so the two cannot disagree about which traces are in play.
  *
- * <p>{@code retiring} is always a subset of {@code labels}, which is what stops a trace being retired
- * without having been staged in the same pass.
+ * <p>The two maps are independent: a trace past the cut-off that was staged in an earlier pass retires in
+ * this one without being staged again.
  *
  * @param labels   traceIdHex -&gt; bucket label, for every trace being staged
  * @param retiring traceIdHex -&gt; the STORED root, for the traces being retired. The stored value is kept
@@ -38,7 +38,7 @@ import java.util.Map;
 record ArchivalSelection(Map<String, String> labels, Map<String, TraceRoot> retiring) {
 
     boolean isEmpty() {
-        return labels.isEmpty();
+        return labels.isEmpty() && retiring.isEmpty();
     }
 
     boolean isStaged(final String traceIdHex) {
