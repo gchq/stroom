@@ -120,14 +120,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * archive partition so that the UID / hash integers embedded in archived
      * span values can still be decoded.
      *
-     * <p>The {@code trace-roots*} DBIs are deliberately <em>not</em> in this list.
-     * Each archive receives only the roots (and the six secondary sort indexes
-     * for those roots) whose start time falls in that archive's bucket, written
-     * explicitly by {@link #runArchival}. Copying the trace-root DBIs wholesale
-     * would place a full snapshot of every root into every bucket, causing the
-     * same root to appear in multiple archives (duplicate results, inflated
-     * counts) and mis-aligning the archive contents with the start-time bucket
-     * label that {@link stroom.planb.impl.data.ArchiveShardLocator} selects on.
+     * <p>The {@code trace-roots*} DBIs are deliberately <em>not</em> in this list. A delta staged by
+     * {@link #runArchival} carries spans only, and the bucket derives its own roots and secondary
+     * sort-index entries from the spans it receives. Copying the trace-root DBIs wholesale would instead
+     * place a full snapshot of every root into every bucket, causing the same root to appear in multiple
+     * archives (duplicate results, inflated counts) and mis-aligning the archive contents with the
+     * start-time bucket label that {@link stroom.planb.impl.data.archive.ArchiveShardLocator} selects on.
      */
     private static final List<String> LOOKUP_DBI_NAMES = List.of(
             "lookup-keyToUid", "lookup-uidToKey", "lookup-info",
@@ -197,13 +195,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      *
      * <p>Lifecycle:
      * <ul>
-     *   <li><b>Written</b> by the merge processor when a root span (empty
-     *       {@code parentSpanId}) is inserted via {@link #insert}.</li>
-     *   <li><b>Cleared</b> from the live shard by retention and archiving
-     *       policies via {@link #runRetention}.</li>
-     *   <li><b>Copied</b> into archive shards by {@link #copyLookupsTo} so
-     *       that archives remain independently queryable (e.g. for fan-out
-     *       time-range queries).</li>
+     *   <li><b>Written</b> for a root span (empty {@code parentSpanId}) by {@link #insert}, and by
+     *       {@link #merge} for every root it takes from a batch — both stamped with the clock of the
+     *       node doing the work, not the sender's.</li>
+     *   <li><b>Cleared</b> by {@link #runRetention} once the entry predates the retention cut-off,
+     *       and by {@code retireRoots} when archival retires the trace.</li>
+     *   <li><b>Not</b> part of {@link #copyLookupsTo}: only the DBIs named in
+     *       {@link #LOOKUP_DBI_NAMES} are copied into a bucket.</li>
      * </ul>
      */
     private final Dbi<ByteBuffer> traceRootsMergeTimeDbi;
@@ -450,9 +448,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 stats.hasError(),
                 true));
         LOGGER.warn(() -> LogUtil.message(
-                "Trace {} in '{}' has reached its limit of {} spans; further spans for it are " +
-                "being dropped. A trace this large normally means an OpenTelemetry context leak " +
-                "rather than real work.",
+                "Trace {} in '{}' has reached its limit of {} spans; further spans for it will be dropped.",
                 HexStringUtil.encode(traceIdBytes), doc.getName(), maxSpansPerTrace));
     }
 
@@ -815,7 +811,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     }
 
                     // Merge trace roots.  For each entry successfully written (new traceId),
-                    // also populate the six sort indexes so the target shard remains
+                    // also populate its secondary sort indexes so the target shard remains
                     // fully queryable without a subsequent full scan.
                     LmdbIterable.iterate(readTxn, sourceDb.traceRootsDbi, (key, val) -> {
                         final byte[] traceIdBytes = new byte[key.remaining()];
