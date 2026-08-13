@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.UserRef;
 
@@ -34,6 +35,8 @@ import org.mockito.quality.Strictness;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,6 +65,17 @@ class TestExplorerFavServiceImpl {
             .name("My Dictionary")
             .build();
 
+    private static final DocRef GIT_REPO = DocRef.builder()
+            .randomUuid()
+            .type(GitRepoDoc.TYPE)
+            .name("My Git Repo")
+            .build();
+
+    /**
+     * True while the supplier passed to {@link SecurityContext#asProcessingUserResult} is running.
+     */
+    private final AtomicBoolean elevated = new AtomicBoolean();
+
     @Mock
     private ExplorerFavDao explorerFavDao;
     @Mock
@@ -76,6 +90,15 @@ class TestExplorerFavServiceImpl {
     @BeforeEach
     void setUp() {
         Mockito.when(securityContext.getUserRef()).thenReturn(USER_REF);
+        Mockito.when(securityContext.asProcessingUserResult(Mockito.<Supplier<?>>any()))
+                .thenAnswer(invocation -> {
+                    elevated.set(true);
+                    try {
+                        return invocation.<Supplier<?>>getArgument(0).get();
+                    } finally {
+                        elevated.set(false);
+                    }
+                });
         explorerFavService = new ExplorerFavServiceImpl(
                 explorerFavDao,
                 securityContext,
@@ -115,6 +138,39 @@ class TestExplorerFavServiceImpl {
 
         assertThat(explorerFavService.getUserFavourites())
                 .containsExactly(DICTIONARY);
+    }
+
+    /**
+     * A GitRepo is folder like in the tree, which shows it to users with no view permission on it so they
+     * can reach children they can view. Decorating as the processing user is what stops it being dropped.
+     */
+    @Test
+    void getUserFavourites_decorationRunsAsProcessingUser() {
+        final DocRef undecorated = new DocRef(GIT_REPO.getType(), GIT_REPO.getUuid());
+        Mockito.when(explorerFavDao.getUserFavourites(USER_REF)).thenReturn(List.of(undecorated));
+        Mockito.when(docFinder.decorateIfExists(undecorated)).thenAnswer(invocation -> {
+            assertThat(elevated).isTrue();
+            return Optional.of(GIT_REPO);
+        });
+
+        assertThat(explorerFavService.getUserFavourites())
+                .containsExactly(GIT_REPO);
+    }
+
+    /**
+     * The favourites belong to the current user, so the dao lookup must happen before we elevate, else
+     * every user would get the processing user's favourites.
+     */
+    @Test
+    void getUserFavourites_daoLookupIsNotElevated() {
+        Mockito.when(explorerFavDao.getUserFavourites(USER_REF)).thenAnswer(invocation -> {
+            assertThat(elevated).isFalse();
+            return List.of(FOLDER);
+        });
+
+        assertThat(explorerFavService.getUserFavourites())
+                .containsExactly(FOLDER);
+        Mockito.verify(explorerFavDao).getUserFavourites(USER_REF);
     }
 
     @Test
