@@ -16,9 +16,20 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
+
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Tests the jq() function where the arguments are not all constants, i.e. the path taken when the JSON comes from a
@@ -62,6 +73,14 @@ class TestExpressionParserJq extends AbstractExpressionParserTest {
                 2,
                 Val.of(JSON, ".arr[1]"),
                 ValAssertions.valString("2"));
+    }
+
+    @Test
+    void testDynamicDelimiter() {
+        compute("jq(${val1}, '.arr[]', ${val2})",
+                2,
+                Val.of(JSON, "-"),
+                ValAssertions.valString("1-2-3"));
     }
 
     @Test
@@ -122,6 +141,52 @@ class TestExpressionParserJq extends AbstractExpressionParserTest {
             gen.set(Val.of(JSON, ".arr[1]"), storedValues);
             assertThat(gen.eval(storedValues, null).toString()).isEqualTo("2");
             assertThat(field(gen, "lastCompiled")).isNotSameAs(firstCompiled);
+        });
+    }
+
+    /**
+     * A single generator is shared by all the threads adding rows to a data store, with the per row state held in
+     * StoredValues, so a compiled expression is applied concurrently. Compiling once per search rather than once
+     * per row means more sharing than before, so check that it holds up.
+     */
+    @Test
+    void testGeneratorCanBeSharedBetweenThreads() {
+        // An expression that binds a variable and calls a function, i.e. one that does more than read the scope.
+        final String expression = "jq(${val1}, '[.arr[] as $x | $x * 2 | tostring] | join(\"-\")')";
+
+        createExpression(expression, 1, exp -> {
+            final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+            exp.addValueReferences(valueReferenceIndex);
+            // One generator, shared by every thread, as it is in a data store.
+            final Generator generator = exp.createGenerator();
+
+            final int threadCount = 8;
+            final int iterations = 200;
+            final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            try {
+                final CountDownLatch startLatch = new CountDownLatch(1);
+                final List<Future<?>> futures = new ArrayList<>();
+                for (int i = 0; i < threadCount; i++) {
+                    futures.add(executorService.submit(() -> {
+                        startLatch.await();
+                        for (int j = 0; j < iterations; j++) {
+                            // Each row gets its own values, as it does in a data store.
+                            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+                            generator.set(Val.of(JSON), storedValues);
+                            assertThat(generator.eval(storedValues, null).toString()).isEqualTo("2-4-6");
+                        }
+                        return null;
+                    }));
+                }
+
+                startLatch.countDown();
+                for (final Future<?> future : futures) {
+                    // Any assertion failure or exception on a worker thread surfaces here.
+                    assertThatCode(future::get).doesNotThrowAnyException();
+                }
+            } finally {
+                executorService.shutdownNow();
+            }
         });
     }
 

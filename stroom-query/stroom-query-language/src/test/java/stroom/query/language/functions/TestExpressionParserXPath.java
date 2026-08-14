@@ -16,11 +16,21 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.xml.XMLReaderPool;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Tests the xpath() function where the arguments are not all constants, i.e. the path taken when the XML comes from
@@ -95,6 +105,14 @@ class TestExpressionParserXPath extends AbstractExpressionParserTest {
                 2,
                 Val.of(XML, "//item[2]"),
                 ValAssertions.valString("item2"));
+    }
+
+    @Test
+    void testDynamicDelimiter() {
+        compute("xpath(${val1}, '//item', '', ${val2})",
+                2,
+                Val.of(XML, "-"),
+                ValAssertions.valString("item1-item2"));
     }
 
     @Test
@@ -210,6 +228,52 @@ class TestExpressionParserXPath extends AbstractExpressionParserTest {
                 assertThat(val).isInstanceOf(ValErr.class);
                 assertThat(val.toString()).containsIgnoringCase("DOCTYPE is disallowed");
             }
+        });
+    }
+
+    /**
+     * A single generator is shared by all the threads adding rows to a data store, with the per row state held in
+     * StoredValues, so the compiled expression is evaluated and parsers are borrowed from the pool concurrently.
+     */
+    @Test
+    void testGeneratorCanBeSharedBetweenThreads() {
+        // Namespace unaware so that every parse also goes through a namespace stripping filter.
+        createExpression("xpath(${val1}, '//item', '', '-')", 1, exp -> {
+            final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+            exp.addValueReferences(valueReferenceIndex);
+            // One generator, shared by every thread, as it is in a data store.
+            final Generator generator = exp.createGenerator();
+
+            final int threadCount = 8;
+            final int iterations = 200;
+            final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            try {
+                final CountDownLatch startLatch = new CountDownLatch(1);
+                final List<Future<?>> futures = new ArrayList<>();
+                for (int i = 0; i < threadCount; i++) {
+                    futures.add(executorService.submit(() -> {
+                        startLatch.await();
+                        for (int j = 0; j < iterations; j++) {
+                            // Each row gets its own values, as it does in a data store.
+                            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+                            generator.set(Val.of(NAMESPACED_XML), storedValues);
+                            assertThat(generator.eval(storedValues, null).toString()).isEqualTo("item1-item2");
+                        }
+                        return null;
+                    }));
+                }
+
+                startLatch.countDown();
+                for (final Future<?> future : futures) {
+                    // Any assertion failure or exception on a worker thread surfaces here.
+                    assertThatCode(future::get).doesNotThrowAnyException();
+                }
+            } finally {
+                executorService.shutdownNow();
+            }
+
+            // The pool is bounded so concurrent use can't have made it grow without limit.
+            assertThat(XMLReaderPool.getDefault().size()).isLessThanOrEqualTo(threadCount);
         });
     }
 

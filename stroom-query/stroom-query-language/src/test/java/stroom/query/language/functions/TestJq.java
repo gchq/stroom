@@ -91,6 +91,13 @@ class TestJq extends AbstractFunctionTest<Jq> {
                         ValString.create(json),
                         ValString.create(".missing")),
                 TestCase.of(
+                        // A single null is null, but a null among several matches has to render as something.
+                        "Null among multiple matches",
+                        ValString.create("1,null,2"),
+                        ValString.create("{\"arr\":[1,null,2]}"),
+                        ValString.create(".arr[]"),
+                        ValString.create(",")),
+                TestCase.of(
                         "Invalid JSON",
                         // Error message from Jackson
                         ValString.create("was expecting double-quote to start field name"),
