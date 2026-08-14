@@ -17,6 +17,7 @@
 package stroom.pathways.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -33,6 +34,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        """
+        Analyses trace logs held in a Plan B store to learn the paths that traces take between services, \
+        e.g. A -> B -> C.
+        Each distinct path is remembered, so that a new or changed path can be reported as soon as it appears.
+        For each span on a path it also learns constraints on the span's duration, kind, flags and \
+        attributes, held as an exact value, a set, a range or a regular expression, and widens them as \
+        further traces are seen.
+        Whether new paths and constraints may be added, and whether those already learnt may be widened, \
+        is controlled per document, so Pathways can be left learning or fixed so that anything deviating \
+        from what it has learnt is reported instead of absorbed.
+        Findings are written to a nominated Feed for analytic rules to act on.
+        Pathways makes no judgement about the changes it reports.
+        """)
 @JsonPropertyOrder({
         "type",
         "uuid",

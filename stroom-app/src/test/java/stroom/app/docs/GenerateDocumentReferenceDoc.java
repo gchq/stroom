@@ -235,9 +235,12 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 \s
                 """;
 
+        // Strip so that a multi-line description, which carries a trailing newline from its text
+        // block, does not add a blank line on top of the one the template already provides.
         final String description = Objects.requireNonNullElse(
-                docInfo.description(),
-                "> TODO - Add description");
+                        docInfo.description(),
+                        "> TODO - Add description")
+                .strip();
 
         return LogUtil.message(
                 template,

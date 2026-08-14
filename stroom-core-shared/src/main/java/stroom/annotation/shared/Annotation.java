@@ -17,6 +17,7 @@
 package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -31,6 +32,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        """
+        An annotation records notes and workflow state against one or more events, typically while \
+        investigating them.
+        Annotations are created from a table of search results rather than from the explorer tree.
+        Each one has a subject, a status, an optional assignee and a history of the changes made to it, \
+        and can be given comments, labels and collections to organise it.
+        A retention period controls how long it is kept.
+        """)
 @JsonInclude(Include.NON_NULL)
 public class Annotation extends AbstractDoc {
 
