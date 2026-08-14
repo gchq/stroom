@@ -115,10 +115,19 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                 List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME,
                         stroom.credentials.shared.CredentialFields.CREDENTIAL_UUID,
                         stroom.credentials.shared.CredentialFields.CREDENTIAL_TYPE));
-        final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                .create(fieldProvider, request.getFilter());
-        optionalExpressionOperator.ifPresent(expressionOperator ->
-                conditions.add(expressionMapper.apply(expressionOperator)));
+        try {
+            final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                    .create(fieldProvider, request.getFilter());
+            optionalExpressionOperator.ifPresent(expressionOperator ->
+                    conditions.add(expressionMapper.apply(expressionOperator)));
+        } catch (final RuntimeException e) {
+            // The quick filter queries on a debounce as the user types, so partially typed input
+            // (e.g. an incomplete field qualifier) is an expected transient state rather than a
+            // fault. Match no rows instead of propagating the error to the user mid-keystroke,
+            // as AnnotationDaoImpl, IndexFieldDaoImpl and AiDaoImpl all do.
+            LOGGER.debug(e::getMessage, e);
+            conditions.add(DSL.falseCondition());
+        }
 
         if (!NullSafe.isEmptyCollection(request.getCredentialTypes())) {
             final List<Condition> types = request.getCredentialTypes().stream().map(credentialType ->

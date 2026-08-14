@@ -210,6 +210,41 @@ public enum ConditionSet {
             Condition.MATCHES_REGEX,
             Condition.IN),
 
+    /**
+     * Text fields backed by a jOOQ DAO, i.e. anything whose terms are turned into SQL by
+     * {@code ExpressionMapper} / {@code TermHandler}.
+     * <p>
+     * This is {@link #ALL_UI_TEXT} minus the conditions the SQL evaluator cannot honour
+     * faithfully:
+     * <ul>
+     *     <li>The case sensitive variants - {@code TermHandlerFactory} always builds handlers
+     *     with {@code fieldIsCaseSensitive = false}, and the columns use a case insensitive
+     *     collation, so declaring them would promise case sensitivity that is not delivered.</li>
+     *     <li>{@code WORD_BOUNDARY} - {@code TermHandler} has no case for it and would throw.</li>
+     *     <li>{@code CHARS_ANYWHERE} - SQL can reproduce the matching but not the ranking.</li>
+     * </ul>
+     * {@code BETWEEN}, {@code IS_NULL} and {@code IS_NOT_NULL} are omitted as meaningless on a
+     * text column rather than because SQL cannot express them.
+     */
+    SQL_TEXT(
+            Condition.CONTAINS,
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.STARTS_WITH,
+            Condition.ENDS_WITH,
+            Condition.MATCHES_REGEX,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
+    /**
+     * A SQL backed text field whose value is one of a small fixed set of literals (e.g. "OK" /
+     * "Missing"). Only exact matching is meaningful, so substring and ordering conditions are
+     * omitted rather than offered and left to surprise the user.
+     */
+    SQL_ENUM_TEXT(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS),
+
     // UI Defaults.
     ALL_UI_TEXT(
             Condition.CONTAINS,

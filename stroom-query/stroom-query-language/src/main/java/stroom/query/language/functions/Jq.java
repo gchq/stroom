@@ -38,7 +38,9 @@ import java.util.function.Supplier;
         commonReturnType = ValString.class,
         commonReturnDescription = "The string value of the matched JSON element(s).",
         signatures = @FunctionSignature(
-                description = "Extracts values from a JSON string using a JQ expression.",
+                description = "Extracts values from a JSON string using a JQ expression. Where the expression " +
+                              "matches more than one element the string values of all the matched elements are " +
+                              "concatenated.",
                 args = {
                         @FunctionArg(
                                 name = "json",
@@ -47,12 +49,21 @@ import java.util.function.Supplier;
                         @FunctionArg(
                                 name = "jq",
                                 description = "The JQ expression to use for extraction.",
-                                argType = ValString.class)}))
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "delimiter",
+                                description = "The delimiter to insert between the values of each matched element. " +
+                                              "Defaults to no delimiter.",
+                                argType = ValString.class,
+                                isOptional = true)}))
 class Jq extends AbstractManyChildFunction {
 
     static final String NAME = "jq";
-    private Generator gen;
-    private boolean simple;
+
+    private static final int JSON_ARG = 0;
+    private static final int JQ_ARG = 1;
+    private static final int DELIMITER_ARG = 2;
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Scope ROOT_SCOPE = Scope.newEmptyScope();
 
@@ -60,8 +71,11 @@ class Jq extends AbstractManyChildFunction {
         BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, ROOT_SCOPE);
     }
 
+    private Generator gen;
+    private boolean simple;
+
     public Jq(final String name) {
-        super(name, 2, 2);
+        super(name, 2, 3);
     }
 
     @Override
@@ -78,46 +92,122 @@ class Jq extends AbstractManyChildFunction {
         }
 
         if (simple) {
-            // Static computation.
-            final String json = params[0].toString();
-            final String jqPattern = params[1].toString();
-
-            if (jqPattern.isEmpty()) {
-                gen = new StaticValueFunction(ValErr.create(
-                        "An empty JQ expression has been defined for second argument of '" + name + "' function"))
-                        .createGenerator();
-            } else if (json == null) {
-                gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
-            } else {
-                try {
-                    final JsonQuery query = JsonQuery.compile(jqPattern, Versions.JQ_1_6);
-                    final JsonNode inNode = OBJECT_MAPPER.readTree(json);
-                    final List<JsonNode> out = new ArrayList<>();
-                    query.apply(ROOT_SCOPE, inNode, out::add);
-
-                    final Val result = nodesToVal(out);
-                    gen = new StaticValueFunction(result).createGenerator();
-                } catch (final Exception e) {
-                    gen = new StaticValueFunction(ValErr.create(e.getMessage())).createGenerator();
-                }
-            }
+            // Static computation. Any bad arguments are reported as an error value rather than a parse failure as
+            // all of the arguments, including the JSON, are known at this point.
+            gen = new StaticValueFunction(staticEval(params)).createGenerator();
 
         } else {
-            if (params[1] instanceof Val) {
-                // Test JQ is valid.
-                final String jqPattern = params[1].toString();
+            // Validate whatever we can up front so the user gets told about a bad expression at parse time. Note
+            // that the expression itself is compiled once per search by the generator, not here, as an expression
+            // supplied as a query parameter only becomes constant after the parameters have been statically mapped.
+            if (params[JQ_ARG] instanceof Val) {
+                final String jqPattern = params[JQ_ARG].toString();
                 if (jqPattern.isEmpty()) {
                     throw new ParseException(
                             "An empty JQ expression has been defined for second argument of '" + name
-                                    + "' function", 0);
+                            + "' function", 0);
                 }
                 try {
-                    JsonQuery.compile(jqPattern, Versions.JQ_1_6);
+                    compile(jqPattern);
                 } catch (final JsonQueryException e) {
-                    throw new ParseException("Error in JQ expression: " + e.getMessage(), 0);
+                    throw new ParseException("Error in JQ expression: " + getMessage(e), 0);
                 }
             }
         }
+    }
+
+    private Val staticEval(final Param[] params) {
+        final Val valJson = (Val) params[JSON_ARG];
+        if (!valJson.type().isValue()) {
+            return valJson;
+        }
+
+        final String jqPattern = params[JQ_ARG].toString();
+        if (jqPattern.isEmpty()) {
+            return ValErr.create("An empty JQ expression has been defined for second argument of '" + name
+                                 + "' function");
+        }
+
+        final Compiled compiled;
+        try {
+            compiled = compile(jqPattern);
+        } catch (final JsonQueryException e) {
+            return ValErr.create("Error in JQ expression: " + getMessage(e));
+        }
+
+        return evaluate(compiled, valJson.toString(), getArg(params, DELIMITER_ARG));
+    }
+
+    private static String getArg(final Param[] params, final int index) {
+        return params.length > index
+                ? params[index].toString()
+                : "";
+    }
+
+    /**
+     * Compiles the expression. This is only ever done once per expression value, not once per row.
+     */
+    private static Compiled compile(final String jqPattern) throws JsonQueryException {
+        return new Compiled(jqPattern, JsonQuery.compile(jqPattern, Versions.JQ_1_6));
+    }
+
+    /**
+     * Evaluates the expression and concatenates the string values of all the elements it matches.
+     */
+    private static Val evaluate(final Compiled compiled,
+                                final String json,
+                                final String delimiter) {
+        if (json == null) {
+            return ValNull.INSTANCE;
+        }
+
+        try {
+            final JsonNode inNode = OBJECT_MAPPER.readTree(json);
+            final List<JsonNode> out = new ArrayList<>();
+            compiled.query().apply(ROOT_SCOPE, inNode, out::add);
+            return nodesToVal(out, delimiter);
+
+        } catch (final Exception e) {
+            return ValErr.create(getMessage(e));
+        }
+    }
+
+    private static Val nodesToVal(final List<JsonNode> nodes, final String delimiter) {
+        if (nodes == null || nodes.isEmpty()) {
+            return ValNull.INSTANCE;
+        }
+        if (nodes.size() == 1) {
+            final JsonNode node = nodes.getFirst();
+            if (node.isNull()) {
+                return ValNull.INSTANCE;
+            }
+            return ValString.create(nodeToString(node));
+        }
+
+        // Concatenate the values of all the matched elements.
+        final StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (final JsonNode node : nodes) {
+            if (!first) {
+                sb.append(delimiter);
+            }
+            sb.append(nodeToString(node));
+            first = false;
+        }
+        return ValString.create(sb.toString());
+    }
+
+    private static String nodeToString(final JsonNode node) {
+        // Value nodes give us the raw value, anything else, i.e. an object or array, gives us its JSON.
+        return node.isValueNode()
+                ? node.asText()
+                : node.toString();
+    }
+
+    private static String getMessage(final Exception e) {
+        return e.getMessage() != null
+                ? e.getMessage()
+                : e.toString();
     }
 
     @Override
@@ -141,80 +231,123 @@ class Jq extends AbstractManyChildFunction {
         return super.hasAggregate();
     }
 
-    private static Val nodesToVal(final List<JsonNode> nodes) {
-        if (nodes == null || nodes.isEmpty()) {
-            return ValNull.INSTANCE;
-        }
-        if (nodes.size() == 1) {
-            final JsonNode node = nodes.getFirst();
-            if (node.isNull()) {
-                return ValNull.INSTANCE;
-            }
-            if (node.isValueNode()) {
-                return ValString.create(node.asText());
-            } else {
-                return ValString.create(node.toString());
-            }
-        }
-        // Multiple nodes - return as an array string
-        return ValString.create(nodes.toString());
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private JsonQuery staticQuery;
+        // The expression compiled once when the generator is created, i.e. once per column per search. Only
+        // available where the expression is constant, which is the normal case. This is final so that it is safely
+        // published to the other threads that share this generator, as a thread seeing null would re-compile the
+        // expression for every row.
+        private final Compiled constant;
+
+        // Resolved once if the delimiter is constant, which it normally is, else null and resolved per row.
+        private final String constantDelimiter;
+
+        // Where the expression comes from a field or parameter we remember the last compilation so that we only
+        // re-compile when the expression actually changes. Volatile as this generator is shared between threads,
+        // but a lost update is harmless as it just results in another compilation.
+        private volatile Compiled lastCompiled;
 
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
-            // If the JQ pattern is a constant, we can pre-compile it for this generator.
-            if (childGenerators[1] instanceof final StaticValueGen staticGen) {
-                final Val val = staticGen.eval(null, null);
-                if (val.type().isValue()) {
-                    final String jqPattern = val.toString();
-                    if (!jqPattern.isEmpty()) {
-                        try {
-                            staticQuery = JsonQuery.compile(jqPattern, Versions.JQ_1_6);
-                        } catch (final JsonQueryException e) {
-                            // Ignore and re-compile during eval if needed.
-                        }
-                    }
+
+            constantDelimiter = constantValue(childGenerators, DELIMITER_ARG);
+
+            // Note that this happens after any query parameters have been statically mapped, so an expression
+            // supplied as a parameter will have become a constant by this point.
+            Compiled compiled = null;
+            final String jqPattern = constantValue(childGenerators, JQ_ARG);
+            if (jqPattern != null && !jqPattern.isEmpty()) {
+                try {
+                    compiled = compile(jqPattern);
+                } catch (final JsonQueryException e) {
+                    // Ignore, the error is reported as a value during eval.
                 }
             }
+            constant = compiled;
+        }
+
+        /**
+         * @return The value of a constant argument, or null if the argument is present but not constant.
+         */
+        private static String constantValue(final Generator[] childGenerators, final int index) {
+            if (childGenerators.length <= index) {
+                return "";
+            }
+            if (childGenerators[index] instanceof final StaticValueGen staticGen) {
+                final Val val = staticGen.eval(null, null);
+                if (val.type().isValue()) {
+                    return val.toString();
+                }
+            }
+            return null;
         }
 
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-            final Val valJson = childGenerators[0].eval(storedValues, childDataSupplier);
+            final Val valJson = childGenerators[JSON_ARG].eval(storedValues, childDataSupplier);
             if (!valJson.type().isValue()) {
                 return valJson;
             }
-            final Val valJq = childGenerators[1].eval(storedValues, childDataSupplier);
+            final String delimiter = constantDelimiter != null
+                    ? constantDelimiter
+                    : evalArg(DELIMITER_ARG, storedValues, childDataSupplier);
+
+            if (constant != null) {
+                return evaluate(constant, valJson.toString(), delimiter);
+            }
+
+            final Val valJq = childGenerators[JQ_ARG].eval(storedValues, childDataSupplier);
             if (!valJq.type().isValue()) {
                 return ValErr.wrap(valJq);
             }
-
-            try {
-                final String json = valJson.toString();
-                final String jqPattern = valJq.toString();
-
-                if (json == null) {
-                    return ValNull.INSTANCE;
-                }
-
-                JsonQuery query = staticQuery;
-                if (query == null) {
-                    query = JsonQuery.compile(jqPattern, Versions.JQ_1_6);
-                }
-
-                final JsonNode inNode = OBJECT_MAPPER.readTree(json);
-                final List<JsonNode> out = new ArrayList<>();
-                query.apply(ROOT_SCOPE, inNode, out::add);
-
-                return nodesToVal(out);
-
-            } catch (final Exception e) {
-                return ValErr.create(e.getMessage());
+            final String jqPattern = valJq.toString();
+            if (jqPattern.isEmpty()) {
+                return ValErr.create("An empty JQ expression has been defined for second argument of '"
+                                     + NAME + "' function");
             }
+
+            // Only re-compile if the expression has changed since the last row.
+            Compiled compiled = lastCompiled;
+            if (compiled == null || !compiled.matches(jqPattern)) {
+                try {
+                    compiled = compile(jqPattern);
+                } catch (final JsonQueryException e) {
+                    return ValErr.create("Error in JQ expression: " + getMessage(e));
+                }
+                lastCompiled = compiled;
+            }
+
+            return evaluate(compiled, valJson.toString(), delimiter);
+        }
+
+        private String evalArg(final int index,
+                               final StoredValues storedValues,
+                               final Supplier<ChildData> childDataSupplier) {
+            if (childGenerators.length <= index) {
+                return "";
+            }
+            final Val val = childGenerators[index].eval(storedValues, childDataSupplier);
+            return val.type().isValue()
+                    ? val.toString()
+                    : "";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A compiled expression plus the expression it was compiled from so that we know when it can be reused.
+     */
+    private record Compiled(String jqPattern, JsonQuery query) {
+
+        private boolean matches(final String jqPattern) {
+            return this.jqPattern.equals(jqPattern);
         }
     }
 }

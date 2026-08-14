@@ -270,7 +270,6 @@ public class SimpleStringExpressionParser {
             Condition condition = null;
             boolean charsAnywhere = false;
             boolean not = false;
-            String fieldName = "";
             String fieldValue = "";
             List<String> fields = fieldProvider.getDefaultFields();
 
@@ -278,23 +277,22 @@ public class SimpleStringExpressionParser {
             if (TokenType.STRING.equals(token.getTokenType())) {
                 fieldValue = token.getUnescapedText();
 
-                // Get the field prefix.
+                // A ':' only introduces a field qualifier if the text preceding it actually names
+                // a field. Otherwise it is an ordinary value character, so values such as '12:30',
+                // '2000-01-01T00:00:00.000Z' and 'http://example.com' are literals and need no
+                // quoting or escaping. This keeps ':' consistent with every other special
+                // character handled below, all of which are only significant at the start of the
+                // value; ':' was previously the sole exception, being matched anywhere in it.
                 final String fieldPrefix = getFieldPrefix(fieldValue);
-                fieldValue = fieldValue.substring(fieldPrefix.length());
-
-                fieldName = fieldPrefix;
-                // Remove field prefix delimiter.
-                if (fieldName.endsWith(":")) {
-                    fieldName = fieldName.substring(0, fieldName.length() - 1);
-                }
-
-                // Resolve all fields.
-                if (!fieldName.isEmpty()) {
-                    final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
-                    if (!qualifiedField.isEmpty()) {
+                if (!fieldPrefix.isEmpty()) {
+                    // Drop the trailing field prefix delimiter.
+                    final String candidateField = fieldPrefix.substring(0, fieldPrefix.length() - 1);
+                    final Optional<String> qualifiedField = candidateField.isEmpty()
+                            ? Optional.empty()
+                            : fieldProvider.getQualifiedField(candidateField);
+                    if (qualifiedField.isPresent()) {
                         fields = Collections.singletonList(qualifiedField.get());
-                    } else {
-                        throw new RuntimeException("Unknown field: " + fieldName);
+                        fieldValue = fieldValue.substring(fieldPrefix.length());
                     }
                 }
 
