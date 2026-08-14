@@ -55,8 +55,7 @@ public class NavigationPlugin extends Plugin {
         super(eventBus);
         // track the currently selected doc.
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
-            if (e.getTabData() instanceof DocumentTabData) {
-                final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
+            if (e.getTabData() instanceof final DocumentTabData documentTabData) {
                 selectedDoc = documentTabData.getDocRef();
             } else {
                 selectedDoc = null;

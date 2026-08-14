@@ -274,9 +274,10 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         // track the currently selected doc.
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
-            selectedDoc = null;
             if (e.getTabData() instanceof final DocumentTabData documentTabData) {
                 selectedDoc = documentTabData.getDocRef();
+            } else {
+                selectedDoc = null;
             }
             locate.setEnabled(selectedDoc != null);
         }));

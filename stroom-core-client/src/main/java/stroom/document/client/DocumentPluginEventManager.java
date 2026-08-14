@@ -256,7 +256,10 @@ public class DocumentPluginEventManager extends Plugin {
                         final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
                         if (explorerNode != null) {
                             // Dont try to open the doc if we have a tab with the same docref already selected
+                            // getDocRef() is null for a non-document content tab (Welcome, the
+                            // Monitoring/Administration screens), so compare null-safely.
                             if (selectedTab instanceof final DocumentTabData documentTabData
+                                && documentTabData.getDocRef() != null
                                 && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
                                 return;
                             }

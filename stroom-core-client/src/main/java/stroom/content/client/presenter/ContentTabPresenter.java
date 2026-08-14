@@ -36,8 +36,18 @@ public abstract class ContentTabPresenter<V extends View>
         return true;
     }
 
+    /**
+     * A plain content tab is not a document, so it has no {@link DocRef}.
+     *
+     * <p>This used to manufacture one from the tab's type
+     * ({@code DocRef{type='Welcome', uuid='Welcome', name='Welcome'}}), which made every
+     * {@code instanceof DocumentTabData} test in the app succeed and every {@code getDocRef()}
+     * non-null — including for Welcome and for the Monitoring/Administration screens. That is why
+     * "Locate Current Item" and "Add Current Item to Favourites" render enabled with no document
+     * open: {@code selectedDoc != null} was always true. Real document tabs override this.</p>
+     */
     @Override
     public DocRef getDocRef() {
-        return DocRef.builder().uuid(getType()).name(getType()).type(getType()).build();
+        return null;
     }
 }
