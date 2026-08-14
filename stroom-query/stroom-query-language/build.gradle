@@ -32,6 +32,7 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jackson.jq
     implementation libs.kryo
+    implementation libs.saxon.he
     implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.vavr
