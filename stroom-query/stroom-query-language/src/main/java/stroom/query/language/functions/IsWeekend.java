@@ -27,11 +27,14 @@ import java.util.function.Supplier;
         name = IsWeekend.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = "Variable",
-        commonReturnType = ValDate.class,
+        commonReturnType = ValBoolean.class,
         commonReturnDescription = "Is the date a weekend day or not.",
         signatures = @FunctionSignature(
                 description = "Returns whether a date is part of the weekend or not.",
-                args = {}))
+                args = @FunctionArg(
+                        name = "time",
+                        description = "The time to test.",
+                        argType = Val.class)))
 class IsWeekend extends AbstractDateTimeFunction {
 
     static final String NAME = "isWeekend";

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #
 # Copyright 2016-2025 Crown Copyright
@@ -44,8 +44,13 @@ main() {
   echo "Config file: [${config_file}]"
   echo "JAVA_OPTS:   [${java_opts}]"
 
+  # TODO Change this to be like stroom's start.sh script if we introduce
+  # DropWizard commands in proxy, i.e. to remove the hard coded 'server' arg
+
+  # Called via exec so we replave this shell process with java to ensure
+  # a SIGTERM from a docker stop reaches java for a graceful shutdown
   #shellcheck disable=2086
-  java \
+  exec java \
     ${java_opts} \
     -jar stroom-proxy-app-all.jar \
     server \

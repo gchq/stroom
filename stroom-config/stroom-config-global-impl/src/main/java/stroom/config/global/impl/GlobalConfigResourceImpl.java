@@ -23,6 +23,7 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.config.global.shared.SetConfigValueRequest;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -35,12 +36,15 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
@@ -81,6 +85,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<AnnotationState> annotationStateProvider;
+    private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
+    private final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -93,8 +99,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<AuthenticationConfig> authenticationConfigProvider,
                              final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
                              final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                             final Provider<AnnotationState> annotationStateProvider) {
+                             final Provider<AnnotationState> annotationStateProvider,
+                             final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
+                             final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider) {
 
+        this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
+        this.reportUiDefaultConfigProvider = reportUiDefaultConfigProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
@@ -318,6 +328,45 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 stroomReceiptPolicyConfigProvider.get().getObfuscatedFields(),
                 receiveDataConfigProvider.get().getReceiptCheckMode(),
                 annotationStateProvider.get().getLastChangeTime());
+    }
+
+    /**
+     * Sets one of the UI defaults so that a user can promote the value they have just chosen without having to find
+     * the property in the global properties screen and work out how to format it. The value arrives in its natural
+     * form and is converted here.
+     * <p>
+     * Permission is enforced by {@link GlobalConfigService}, which requires MANAGE_PROPERTIES to update a property.
+     * </p>
+     */
+    @Override
+    public Boolean setConfigValue(final SetConfigValueRequest request) {
+        RestUtil.requireNonNull(request, "request not supplied");
+        RestUtil.requireNonNull(request.getTarget(), "target not supplied");
+        RestUtil.requireNonNull(request.getPropertyName(), "propertyName not supplied");
+
+        // The client can't name the property by its full path because a config object's base path isn't serialised,
+        // so it names the object and the leaf property and we resolve the rest. An unknown property name is
+        // rejected by the config service.
+        final AbstractConfig config = switch (request.getTarget()) {
+            case ANALYTIC_UI_DEFAULT -> analyticUiDefaultConfigProvider.get();
+            case REPORT_UI_DEFAULT -> reportUiDefaultConfigProvider.get();
+        };
+
+        try {
+            // Whichever value was supplied determines how it is stored, so the client never builds the string form.
+            if (request.getDocRefValue() != null) {
+                globalConfigServiceProvider.get()
+                        .setDocRef(config, request.getPropertyName(), request.getDocRefValue());
+            } else {
+                RestUtil.requireNonNull(request.getStringValue(), "no value supplied");
+                globalConfigServiceProvider.get()
+                        .setString(config, request.getPropertyName(), request.getStringValue());
+            }
+        } catch (final ConfigPropertyValidationException e) {
+            throw RestUtil.badRequest(e);
+        }
+
+        return true;
     }
 
     private Query buildRawQuery(final String userInput) {

@@ -41,9 +41,13 @@ import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.Column;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.resource.impl.ResourceModule;
 import stroom.test.BootstrapTestModule;
 import stroom.util.io.StreamUtil;
@@ -55,6 +59,7 @@ import stroom.util.shared.scheduler.ScheduleType;
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -64,6 +69,8 @@ import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,19 +103,124 @@ class TestReport extends AbstractAnalyticsTest {
     private Store streamStore;
     @Inject
     private ScheduledExecutorService<ReportDoc> scheduledExecutorService;
+    @Inject
+    private MetaService metaService;
+
+    /**
+     * The stream type that {@link ReportExecutor} writes report output as.
+     */
+    private static final String REPORT_STREAM_TYPE = "Report";
+
+    /**
+     * Placeholder for the id of the source events stream in the expected report content. Meta ids are not reset
+     * between test classes that share a database, so the id the setup data gets depends on what ran before this
+     * class and must not be hard coded.
+     */
+    private static final String STREAM_ID = "${streamId}";
+
+    private static final String QUERY = """
+            from index_view
+            where UserId = user5
+            select StreamId, EventId, UserId""";
 
     @Test
     void test() {
-        final String query = """
-                from index_view
-                where UserId = user5
-                select StreamId, EventId, UserId""";
-        basicTest(query, 9, 6);
+        basicTest(QUERY, null, 9, """
+                "StreamId","EventId","UserId"
+                "${streamId}","5","user5"
+                "${streamId}","9","user5"
+                "${streamId}","14","user5"
+                "${streamId}","20","user5"
+                "${streamId}","23","user5"
+                """);
+    }
+
+    /**
+     * A column that the user has hidden in the report editor must not be written to the report output.
+     * See https://github.com/gchq/stroom/issues/4621.
+     */
+    @Test
+    void testHiddenColumnIsNotWritten() {
+        // Hide the middle column, as a user would with the 'Hide' option on the column header. The id is the one
+        // that the query parser generates for that column. Hiding a middle rather than a trailing column also
+        // proves that the remaining values stay aligned with their headings, as row values are produced for every
+        // column, visible or not.
+        final QueryTablePreferences queryTablePreferences = QueryTablePreferences
+                .builder()
+                .columns(List.of(Column
+                        .builder()
+                        .id("eventid-1")
+                        .name("EventId")
+                        .visible(false)
+                        .build()))
+                .build();
+
+        basicTest(QUERY, queryTablePreferences, 9, """
+                "StreamId","UserId"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                "${streamId}","user5"
+                """);
+    }
+
+    /**
+     * A report with no error feed, and no default error feed configured, cannot report its own failure through the
+     * error feed. The failure must instead be recorded against the execution history so that it is visible in the
+     * UI, and the schedule disabled so that it does not repeat silently on every scheduled execution.
+     */
+    @Test
+    void testMissingErrorFeedIsRecordedAndDisablesTheSchedule() {
+        final ReportDoc reportDoc = ReportDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(QUERY)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .reportSettings(ReportSettings.builder().fileType(DownloadSearchResultFileType.CSV).build())
+                .notifications(createNotificationConfig())
+                .errorFeed(null)
+                .build();
+        final DocRef docRef = writeReport(reportDoc);
+        final ExecutionSchedule executionSchedule = createExecutionSchedule(docRef);
+
+        scheduledExecutorService.exec(reportExecutor);
+
+        // No report should have been produced.
+        analyticsDataSetup.checkStreamCount(8);
+
+        // The failure must be visible in the execution history rather than only in the logs.
+        final ResultPage<ExecutionHistory> history = executionScheduleDao.fetchExecutionHistory(
+                new ExecutionHistoryRequest(
+                        PageRequest.createDefault(),
+                        Collections.emptyList(),
+                        executionSchedule));
+        assertThat(history.size()).isOne();
+        assertThat(history.getValues().getFirst().getStatus()).isEqualTo(ExecutionHistory.STATUS_ERROR);
+
+        // And the schedule must have been disabled so that it does not fail identically forever.
+        final Optional<ExecutionSchedule> reloaded =
+                executionScheduleDao.fetchScheduleByUuid(executionSchedule.getUuid());
+        assertThat(reloaded).isPresent();
+        assertThat(reloaded.get().isEnabled()).isFalse();
+    }
+
+    /**
+     * The base class only tidies up analytic rules and detections, so each test here must remove the report doc and
+     * the report stream it created, else the doc count and stream count assertions fail for the next test.
+     */
+    @AfterEach
+    void tidyUpReports() {
+        reportStore.list().forEach(docRef -> reportStore.deleteDocument(docRef));
+        metaService.find(FindMetaCriteria.createWithType(REPORT_STREAM_TYPE))
+                .getValues()
+                .forEach(meta -> metaService.delete(meta.getId()));
     }
 
     private void basicTest(final String query,
+                           final QueryTablePreferences queryTablePreferences,
                            final int expectedStreams,
-                           final int expectedRecords) {
+                           final String expectedContent) {
         final ReportDoc reportDoc = ReportDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
@@ -117,27 +229,10 @@ class TestReport extends AbstractAnalyticsTest {
                 .reportSettings(ReportSettings.builder().fileType(DownloadSearchResultFileType.CSV).build())
                 .notifications(createNotificationConfig())
                 .errorFeed(analyticsDataSetup.getDetections())
+                .queryTablePreferences(queryTablePreferences)
                 .build();
         final DocRef docRef = writeReport(reportDoc);
-        final long now = System.currentTimeMillis();
-        final ExecutionSchedule executionSchedule = executionScheduleDao.createExecutionSchedule(ExecutionSchedule
-                .builder()
-                .name("Test")
-                .enabled(true)
-                .nodeName(nodeInfo.getThisNodeName())
-                .schedule(Schedule
-                        .builder()
-                        .type(ScheduleType.CRON)
-                        .expression("* * * * * ?")
-                        .build())
-                .contiguous(true)
-                .scheduleBounds(ScheduleBounds
-                        .builder()
-                        .startTimeMs(now)
-                        .endTimeMs(now)
-                        .build())
-                .owningDoc(docRef)
-                .build());
+        final ExecutionSchedule executionSchedule = createExecutionSchedule(docRef);
 
         assertThat(executionSchedule).isNotNull();
 
@@ -145,7 +240,7 @@ class TestReport extends AbstractAnalyticsTest {
         scheduledExecutorService.exec(reportExecutor);
 
         // As we have created alerts ensure we now have more streams.
-        testReportStream(expectedStreams, expectedRecords);
+        testReportStream(expectedStreams, expectedContent);
 
         // Get execution history.
         final ExecutionHistoryRequest request = new ExecutionHistoryRequest(
@@ -169,22 +264,37 @@ class TestReport extends AbstractAnalyticsTest {
         assertThat(resultPage.size()).isZero();
     }
 
+    private ExecutionSchedule createExecutionSchedule(final DocRef docRef) {
+        final long now = System.currentTimeMillis();
+        return executionScheduleDao.createExecutionSchedule(ExecutionSchedule
+                .builder()
+                .name("Test")
+                .enabled(true)
+                .nodeName(nodeInfo.getThisNodeName())
+                .schedule(Schedule
+                        .builder()
+                        .type(ScheduleType.CRON)
+                        .expression("* * * * * ?")
+                        .build())
+                .contiguous(true)
+                .scheduleBounds(ScheduleBounds
+                        .builder()
+                        .startTimeMs(now)
+                        .endTimeMs(now)
+                        .build())
+                .owningDoc(docRef)
+                .build());
+    }
+
     private void testReportStream(final int expectedStreams,
-                                  final int expectedRecords) {
+                                  final String expectedContent) {
         analyticsDataSetup.checkStreamCount(expectedStreams);
 
         // As we have created alerts ensure we now have more streams.
         final Meta newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
-            assertThat(result.trim()).isEqualTo("""
-                    "StreamId","EventId","UserId"
-                    "8","5","user5"
-                    "8","9","user5"
-                    "8","14","user5"
-                    "8","20","user5"
-                    "8","23","user5"
-                    """.trim());
+            assertThat(result.trim()).isEqualTo(resolveStreamId(expectedContent).trim());
 
             try (final InputStreamProvider inputStreamProvider = source.get(0)) {
                 try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
@@ -197,6 +307,16 @@ class TestReport extends AbstractAnalyticsTest {
         }
     }
 
+    /**
+     * The report selects StreamId from the single events stream created by the setup, so replace the placeholder
+     * in the expected content with the id that stream actually got.
+     */
+    private String resolveStreamId(final String expectedContent) {
+        final ResultPage<Meta> events = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS));
+        assertThat(events.size()).isOne();
+        return expectedContent.replace(STREAM_ID, Long.toString(events.getValues().getFirst().getId()));
+    }
+
     private DocRef writeReport(final ReportDoc sample) {
         final DocRef docRef = reportStore.createDocument("Test Report");
         ReportDoc reportDoc = reportStore.readDocument(docRef);
@@ -207,7 +327,8 @@ class TestReport extends AbstractAnalyticsTest {
                 .reportSettings(sample.getReportSettings())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
                 .notifications(new ArrayList<>(sample.getNotifications()))
-                .errorFeed(analyticsDataSetup.getDetections())
+                .errorFeed(sample.getErrorFeed())
+                .queryTablePreferences(sample.getQueryTablePreferences())
                 .build();
         reportStore.writeDocument(reportDoc);
 

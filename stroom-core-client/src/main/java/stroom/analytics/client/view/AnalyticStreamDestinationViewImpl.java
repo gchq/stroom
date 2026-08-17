@@ -17,9 +17,11 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
-import stroom.document.client.event.ChangeUiHandlers;
+import stroom.analytics.client.presenter.AnalyticStreamDestinationUiHandlers;
+import stroom.widget.button.client.Button;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,7 +33,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticStreamDestinationViewImpl
-        extends ViewWithUiHandlers<ChangeUiHandlers>
+        extends ViewWithUiHandlers<AnalyticStreamDestinationUiHandlers>
         implements AnalyticStreamDestinationView {
 
     private final Widget widget;
@@ -39,12 +41,15 @@ public class AnalyticStreamDestinationViewImpl
     @UiField
     SimplePanel destinationFeed;
     @UiField
+    Button setDefaultDestinationFeed;
+    @UiField
     CustomCheckBox useSourceFeedIfPossible;
 
 
     @Inject
     public AnalyticStreamDestinationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setDefaultDestinationFeed.setTitle("Set as the default destination feed for all users");
     }
 
     @Override
@@ -58,6 +63,11 @@ public class AnalyticStreamDestinationViewImpl
     }
 
     @Override
+    public void setSetDefaultVisible(final boolean visible) {
+        this.setDefaultDestinationFeed.setVisible(visible);
+    }
+
+    @Override
     public boolean isUseSourceFeedIfPossible() {
         return this.useSourceFeedIfPossible.getValue();
     }
@@ -65,6 +75,11 @@ public class AnalyticStreamDestinationViewImpl
     @Override
     public void setUseSourceFeedIfPossible(final boolean useSourceFeedIfPossible) {
         this.useSourceFeedIfPossible.setValue(useSourceFeedIfPossible);
+    }
+
+    @UiHandler("setDefaultDestinationFeed")
+    public void onSetDefaultDestinationFeed(final ClickEvent event) {
+        getUiHandlers().onSetDefaultDestinationFeed();
     }
 
     @UiHandler("useSourceFeedIfPossible")

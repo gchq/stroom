@@ -91,6 +91,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(DuplicateCheckResourceImpl.class)
                 .bind(ExecutionScheduleResourceImpl.class);
         bind(DuplicateCheckResource.class).to(DuplicateCheckResourceImpl.class);
+        bind(ExecutionScheduleResource.class).to(ExecutionScheduleResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
         bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);

@@ -20,8 +20,6 @@ import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.explorer.impl.ExplorerFavDao;
 import stroom.explorer.impl.db.ExplorerDbConnProvider;
-import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
-import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerFavouriteRecord;
 import stroom.util.shared.UserRef;
 
@@ -72,13 +70,14 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
     @Override
     public List<DocRef> getUserFavourites(final UserRef userRef) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .select()
+                .select(EXPLORER_NODE.TYPE, EXPLORER_NODE.UUID, EXPLORER_NODE.NAME)
                 .from(EXPLORER_FAVOURITE
                         .innerJoin(EXPLORER_NODE).on(EXPLORER_NODE.ID.eq(EXPLORER_FAVOURITE.EXPLORER_NODE_ID)))
                 .where(EXPLORER_FAVOURITE.USER_UUID.eq(userRef.getUuid()))
                 .fetch(r -> new DocRef(
                         r.get(EXPLORER_NODE.TYPE),
-                        r.get(EXPLORER_NODE.UUID)
+                        r.get(EXPLORER_NODE.UUID),
+                        r.get(EXPLORER_NODE.NAME)
                 )));
     }
 

@@ -80,7 +80,8 @@ public class DocDependencyServiceImpl implements DocDependencyService {
     }
 
     @Override
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria,
+                                                    final Set<String> pseudoRefUuids) {
         // Build a permission filter predicate.
         // Admin users see everything; non-admins only see dependency edges
         // where BOTH the from and to docs are visible to them.
@@ -91,7 +92,7 @@ public class DocDependencyServiceImpl implements DocDependencyService {
 
         // Fetch from the doc_dependency table. The predicate is applied
         // during streaming before pagination, so totals are correct.
-        return docDependencyDao.fetchDependencies(criteria, filter);
+        return docDependencyDao.fetchDependencies(criteria, pseudoRefUuids, filter);
     }
 
     @Override
