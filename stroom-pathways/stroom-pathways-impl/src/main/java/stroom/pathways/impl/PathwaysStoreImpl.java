@@ -19,6 +19,7 @@ package stroom.pathways.impl;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -30,8 +31,10 @@ public class PathwaysStoreImpl
 
     @Inject
     public PathwaysStoreImpl(final StoreFactory storeFactory,
+                             final SecurityContext securityContext,
                              final PathwaysSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 PathwaysDoc.TYPE,
                 PathwaysDoc::builder,
