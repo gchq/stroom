@@ -30,6 +30,7 @@ dependencies {
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
