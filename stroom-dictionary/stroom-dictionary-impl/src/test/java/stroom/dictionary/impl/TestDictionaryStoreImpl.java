@@ -20,6 +20,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.security.api.SecurityContext;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,8 @@ class TestDictionaryStoreImpl {
     private Store<DictionaryDoc> mockStore;
     @Mock
     private StoreFactory mockStoreFactory;
+    @Mock
+    private SecurityContext mockSecurityContext;
 
     @Test
     void getWords_unix() {
@@ -244,8 +247,14 @@ class TestDictionaryStoreImpl {
                 Mockito.any());
         Mockito.when(store).thenReturn(mockStore);
 
+        // The store reads documents, which AbstractDocumentStore authorises with VIEW.
+        Mockito.lenient()
+                .when(mockSecurityContext.hasDocumentPermission(Mockito.any(), Mockito.any()))
+                .thenReturn(true);
+
         return new DictionaryStoreImpl(
                 mockStoreFactory,
+                mockSecurityContext,
                 mockDictionarySerialiser,
                 null);
     }
