@@ -34,10 +34,8 @@ import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.serde.trace.HexStringUtil;
-import stroom.planb.shared.ArchivalGranularity;
-import stroom.planb.shared.ArchivalSettings;
-import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
+import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.TimeFilter;
@@ -340,18 +338,17 @@ abstract class AbstractTracesStore implements TracesStore {
         }
     }
 
-    // Widest window the histogram will serve: one archival-granularity bucket (so at most 1-2 archive
-    // buckets are ever touched). Defaults to DAY when there is no shared file store to archive to.
-    protected static long maxHistogramWindowMs(final PlanBDocument doc) {
-        final ArchivalGranularity granularity =
-                HasSharedFileStore.archivalSettings(doc.getSettings())
-                        .map(ArchivalSettings::getGranularity)
-                        .orElse(ArchivalGranularity.DAY);
-        return switch (granularity) {
-            case HOUR -> 60L * 60 * 1000;
-            case DAY -> 24L * 60 * 60 * 1000;
-            case WEEK -> 7L * 24 * 60 * 60 * 1000;
-        };
+    // Widest window a single request may cover, and the window used when a request supplies no time
+    // range at all. Bounded because every archive bucket the window overlaps is copied to local disk
+    // to be read, so the cost of one request grows with the width of its window.
+    protected static final long DEFAULT_MAX_WINDOW_MS = 24L * 60 * 60 * 1000;
+
+    // The doc's maxQueryTimeRange when one is set, else DEFAULT_MAX_WINDOW_MS.
+    protected static long maxWindowMs(final PlanBDocument doc) {
+        if (doc.getSettings() instanceof final TraceSettings ts && ts.getMaxQueryTimeRange() != null) {
+            return ts.getMaxQueryTimeRange().getApproxMillis();
+        }
+        return DEFAULT_MAX_WINDOW_MS;
     }
 
     @Nullable
@@ -363,9 +360,9 @@ abstract class AbstractTracesStore implements TracesStore {
     }
 
     // Resolves the histogram window + equal-bucket layout for a request, or an unavailable spec when the
-    // range is unbounded or wider than one archival-granularity bucket (so a wide/all-time range never scans).
+    // range is unbounded or wider than maxWindowMs (so a wide/all-time range never scans).
     protected HistogramSpec histogramSpec(final TraceHistogramRequest request, final PlanBDocument doc) {
-        final long maxWindowMs = maxHistogramWindowMs(doc);
+        final long maxWindowMs = maxWindowMs(doc);
         final TimeFilter timeFilter = resolveTimeFilter(request.getTimeRange());
         if (timeFilter == null || timeFilter.getTo() - timeFilter.getFrom() > maxWindowMs) {
             return new HistogramSpec(false, maxWindowMs, null, 0L, 0L, 0L, 0);

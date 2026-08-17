@@ -29,7 +29,7 @@ import java.util.Objects;
  * A time histogram of trace counts: {@code counts.get(i)} is the number of traces whose start time
  * falls in the {@code i}-th of {@code counts.size()} equal buckets spanning [{@code fromMs},
  * {@code toMs}). When {@code available} is {@code false} the requested window was unbounded or wider
- * than {@code maxWindowMs} (one archival-granularity bucket) and no scan was performed.
+ * than {@code maxWindowMs} and no scan was performed.
  */
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)

@@ -240,10 +240,10 @@ class SharedFileTracesStore extends AbstractTracesStore {
         final long toMs = timeFilter != null ? timeFilter.getTo() : System.currentTimeMillis();
         final long fromMs = timeFilter != null
                 ? timeFilter.getFrom()
-                : toMs - defaultWindowMs(doc);
+                : toMs - maxWindowMs(doc);
         if (timeFilter == null) {
             LOGGER.debug(() -> "No time range for '" + doc.getName() + "', defaulting to the last "
-                    + defaultWindowMs(doc) + "ms rather than scanning every archive bucket");
+                    + maxWindowMs(doc) + "ms rather than scanning every archive bucket");
         }
         for (int i = 0; i < doc.getShardCount(); i++) {
             final int shardIndex = i;
@@ -504,18 +504,6 @@ class SharedFileTracesStore extends AbstractTracesStore {
     }
 
     /**
-     * The window to use when a query supplies no time range: the configured {@code maxQueryTimeRange} if
-     * there is one, since a caller could not have asked for more than that anyway, else one
-     * archival-granularity bucket. Never unbounded — see the call site for why.
-     */
-    private static long defaultWindowMs(final PlanBDocument doc) {
-        if (doc.getSettings() instanceof final TraceSettings ts && ts.getMaxQueryTimeRange() != null) {
-            return toMillis(ts.getMaxQueryTimeRange());
-        }
-        return maxHistogramWindowMs(doc);
-    }
-
-    /**
      * Validates that the resolved time filter does not exceed the configured
      * {@code maxQueryTimeRange} on the document's settings.
      */
@@ -534,27 +522,12 @@ class SharedFileTracesStore extends AbstractTracesStore {
             return;
         }
         final long windowMs = timeFilter.getTo() - timeFilter.getFrom();
-        final long limitMs = toMillis(maxQueryTimeRange);
+        final long limitMs = maxQueryTimeRange.getApproxMillis();
         if (windowMs > limitMs) {
             throw new IllegalArgumentException(
                     "Query time range (" + windowMs / 1000 + "s) exceeds the configured " +
                     "maximum of " + maxQueryTimeRange + " for this data source. " +
                     "Please narrow the time range.");
         }
-    }
-
-    private static long toMillis(final SimpleDuration duration) {
-        final long time = duration.getTime();
-        return switch (duration.getTimeUnit()) {
-            case NANOSECONDS  -> time / 1_000_000;
-            case MILLISECONDS -> time;
-            case SECONDS      -> time * 1_000;
-            case MINUTES      -> time * 60 * 1_000;
-            case HOURS        -> time * 60 * 60 * 1_000;
-            case DAYS         -> time * 24 * 60 * 60 * 1_000;
-            case WEEKS        -> time * 7 * 24 * 60 * 60 * 1_000;
-            case MONTHS       -> time * 30L * 24 * 60 * 60 * 1_000;
-            case YEARS        -> time * 365L * 24 * 60 * 60 * 1_000;
-        };
     }
 }
