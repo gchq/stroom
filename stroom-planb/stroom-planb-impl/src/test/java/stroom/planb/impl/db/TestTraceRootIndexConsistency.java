@@ -414,6 +414,34 @@ class TestTraceRootIndexConsistency {
         }
     }
 
+    /**
+     * A re-delivered child span must not be folded into the stored root twice. The span DBI
+     * rejects the duplicate, so the stats accumulator ignores it; the incremental child-update
+     * path has to ignore it too or the root's totalSpans (and its TOTAL_SPANS index entry)
+     * drifts above the trace's real span count. Written straight to the store rather than via
+     * merge/mergeComplete, which would rebuild the root from stats and hide the drift.
+     */
+    @Test
+    void redeliveredChildSpan_notCountedTwice(@TempDir final Path dir) throws IOException {
+        final PlanBDoc doc = doc();
+        final Instant t = Instant.parse("2026-07-10T09:00:00.000Z");
+        final Path target = Files.createDirectory(dir.resolve("target"));
+
+        try (final TraceDb db = TraceDb.create(target, BB, BBF, doc, false)) {
+            db.write(w -> {
+                db.insert(w, new SpanKV(key(ROOT, ""), span("run", t)));
+                db.insert(w, new SpanKV(key(CHILD, ROOT), span("child", t)));
+            });
+            assertThat(storedRoot(db).getTotalSpans()).as("root + child").isEqualTo(2);
+
+            db.write(w -> db.insert(w, new SpanKV(key(CHILD, ROOT), span("child", t))));
+
+            assertThat(storedRoot(db).getTotalSpans())
+                    .as("re-delivered child not counted again").isEqualTo(2);
+            assertThat(liveSpanCount(db)).as("live spans").isEqualTo(2);
+        }
+    }
+
     /** services counts distinct names cumulatively across cycles (repeat name → no change). */
     @Test
     void servicesCumulative_distinctNamesAcrossCycles(@TempDir final Path dir) throws IOException {

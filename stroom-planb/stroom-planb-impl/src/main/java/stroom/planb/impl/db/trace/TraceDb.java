@@ -581,14 +581,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         kv.key().getTraceId(), e.getMessage(), e);
             }
 
-        } else {
-            // Child span: if the root has already been received, do an O(1) incremental
-            // update — read the existing TraceRoot, increment totalSpans, expand the
-            // startTime/endTime bounds, then overwrite.  This is far cheaper than calling
-            // getTrace() (O(spans-in-shard)) on every child span.
-            //
-            // depth and services are left unchanged here; they will be correctly computed
-            // when the root span is processed (root spans always call getTrace()).
+        } else if (isNew[0]) {
+            // Child span: fold it into the stored root incrementally, which is O(1) against
+            // re-deriving from every span in the shard. Guarded on isNew because a re-delivered
+            // span is already counted in the root — folding it again would inflate totalSpans
+            // and drag the TOTAL_SPANS index with it. depth and services are left to the
+            // root-span path, which recomputes them from the stats accumulator.
             try {
                 final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
 
