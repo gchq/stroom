@@ -13,6 +13,30 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.11] - 2026-08-17
+
+* Refactor : Change YAML config code back to using the legacy Jackson v2 as this is consistent with the current version of DropWizard.
+
+* Bug : Fix (de)serialisation of enum values in YAML files. Now correctly uses the enum name rather than toString value.
+
+* Bug : IMPORTANT! Rename DB migration scripts from `V07_14...` to `V07_13...` to correctly match the branch. This will break the DB migration when deploying the next release **IF** you have deployed **ANY** 7.13 version that is less than or equal to `v7.13-beta.10`. If you have deployed an earlier 7.13 version, you need to run the following script before running the next Stroom version to update the schema_history tables with the new names: https://raw.githubusercontent.com/gchq/stroom/refs/heads/7.13/scripts/v07_13_migration_script_rename.sql.
+
+* Bug **#5688** : Failed CSV search requests now return sensible error responses.
+
+* Bug **#5688** : Tell CSV search callers whether their results are complete, and add `incremental` and `timeout` query parameters so a slow query can return its full result set rather than silently returning nothing.
+
+* Bug **#5719** : Fix favourites not including folders.
+
+* Bug **#5723** : Fix QuickFilter passing partial text to credentials.
+
+* Bug **#5724** : Fix QuickFilter field qualifier so it only applies to known fields. This allows unquoted date/time text.
+
+* Bug **#5720** : Fix QuickFilter fields for dependencies.
+
+* Bug **#5645** : Change the dashboard/query `xpath()` function to concatenate the values of all matched items, evaluate expressions with XPath 3.1 (Saxon) rather than XPath 1.0, take namespace prefix mappings as a single `'prefix:uri prefix2:uri2'` argument and ignore namespaces altogether when no mappings are supplied. It also adds an optional delimiter argument.
+
+* Bug : Change the dashboard/query `jq()` function to concatenate the values of all matched elements rather than rendering them as a Java list, e.g. `[2, 3]`. It also adds an optional delimiter argument and stops the expression being re-compiled for every row.
+
 * Bug **#5726** : Fix Stroom & Proxy docker images so the SIGTERM from a Docker `stop` is passed through to Dropwizard for a graceful shutdown.
 
 * Bug **#5705** : Log a failure to get a Plan B shard at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
@@ -2463,7 +2487,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.11...HEAD
+[v7.13-beta.11]: https://github.com/gchq/stroom/compare/v7.13-beta.10...v7.13-beta.11
 [v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
 [v7.13-beta.9]: https://github.com/gchq/stroom/compare/v7.13-beta.8...v7.13-beta.9
 [v7.13-beta.8]: https://github.com/gchq/stroom/compare/v7.13-beta.7...v7.13-beta.8
