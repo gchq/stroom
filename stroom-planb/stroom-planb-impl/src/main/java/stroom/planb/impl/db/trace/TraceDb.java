@@ -178,11 +178,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      */
     private static final long DEPTH_EXACT_SPAN_THRESHOLD = 10_000L;
 
-    // Tree-order (DFS) random access for very large traces: snapshot a resume-cursor every
-    // CHECKPOINT_INTERVAL rows, but only for traces larger than CHECKPOINT_MIN_SPANS (smaller traces
-    // load whole). Keeps checkpoint storage to ~totalSpans / CHECKPOINT_INTERVAL entries per trace.
+    // Rows between snapshots in a CheckpointIndex — the cost of a random-access seek is one interval
+    // of walking plus the page.
     private static final int CHECKPOINT_INTERVAL = 1_000;
-    private static final long CHECKPOINT_MIN_SPANS = 10_000L;
+
+    // Above this a trace's depth is walked iteratively rather than by recursing through descend().
+    private static final long LARGE_TRACE_SPANS = 10_000L;
 
     // A fresh instance each call: a shared buffer would share its position/limit across concurrent use.
     private static ByteBuffer emptyValue() {
@@ -240,7 +241,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * {@link #recordNewSpan}.
      */
     private final Dbi<ByteBuffer> traceServiceNamesDbi;
-    private final Dbi<ByteBuffer> traceDfsCheckpointsDbi;
     private final TraceStatsSerde traceStatsSerde;
 
     /**
@@ -289,7 +289,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         traceRootsMergeTimeDbi = env.openDbi("trace-roots-merge-time", DbiFlags.MDB_CREATE);
         traceStatsDbi = env.openDbi("trace-stats", DbiFlags.MDB_CREATE);
         traceServiceNamesDbi = env.openDbi("trace-service-names", DbiFlags.MDB_CREATE);
-        traceDfsCheckpointsDbi = env.openDbi("trace-dfs-checkpoints", DbiFlags.MDB_CREATE);
 
         // One DBI per secondary sort index, keyed by the index definition — but only for a store that is
         // actually queried. They exist solely to serve sorted/filtered findTraces, so in a store that is
@@ -1271,7 +1270,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // unlatch the per-trace span cap and let a capped trace accept another full allowance — which is what
     // isOverSpanLimit's cumulative count exists to prevent. The retained row is reachable only by
     // runRetention's sweep, since every caller here is already iterating trace-roots and has just
-    // removed this trace's entry. The bulky parts (distinct service names, DFS checkpoints) always go.
+    // removed this trace's entry. The bulky part, the distinct service-name set, always goes.
     private void deleteStatsOf(final Txn<ByteBuffer> readTxn,
                                final LmdbWriter writer,
                                final byte[] traceIdBytes) {
@@ -1284,12 +1283,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuf).build();
             LmdbIterable.iterate(readTxn, traceServiceNamesDbi, keyRange,
                     (key, val) -> traceServiceNamesDbi.delete(writer.getWriteTxn(), key));
-        });
-        // Per-trace DFS checkpoints are derived data too — drop them when the trace is removed.
-        byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
-            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuf).build();
-            LmdbIterable.iterate(readTxn, traceDfsCheckpointsDbi, keyRange,
-                    (key, val) -> traceDfsCheckpointsDbi.delete(writer.getWriteTxn(), key));
         });
     }
 
@@ -2277,82 +2270,17 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    // Rebuilds the sparse DFS checkpoints for a trace (prefix-clear + re-snapshot) and returns the
-    // trace depth (longest simple path) from the same walk. A resume-cursor is stored every
-    // CHECKPOINT_INTERVAL rows; offset 0 is never stored (an empty cursor = start).
-    private int rebuildCheckpointsAndDepth(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
-        deleteCheckpointsOf(txn, traceIdBytes);
+    // Depth by iterative pre-order walk, for a trace deep enough that descend()'s recursion is a risk.
+    private int walkDepth(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
         final ChildCursor cursor = new SingleStoreChildCursor(this, txn, traceIdBytes);
         final List<byte[]> path = new ArrayList<>();
-        int emitted = 0;
         int maxDepth = 0;
         while (advancePreorder(cursor, path, SpanOpenTest.ALL).isPresent()) {
-            emitted++;
             if (path.size() > maxDepth) {
                 maxDepth = path.size();
             }
-            if (emitted % CHECKPOINT_INTERVAL == 0) {
-                storeCheckpoint(txn, traceIdBytes, emitted, path);
-            }
         }
         return maxDepth;
-    }
-
-    private void storeCheckpoint(final Txn<ByteBuffer> txn,
-                                 final byte[] traceIdBytes,
-                                 final int offset,
-                                 final List<byte[]> path) {
-        final byte[] key = checkpointKey(traceIdBytes, offset);
-        final byte[] val = encodePath(path);
-        byteBuffers.useBytes(key, keyBuf -> {
-            byteBuffers.useBytes(val, valBuf -> {
-                traceDfsCheckpointsDbi.put(txn, keyBuf, valBuf);
-            });
-        });
-    }
-
-    // Returns the stored cursor path at exactly 'offset', or null if none (incl. offset <= 0).
-    private List<byte[]> readCheckpoint(final Txn<ByteBuffer> txn,
-                                        final byte[] traceIdBytes,
-                                        final int offset) {
-        if (offset <= 0) {
-            return null;
-        }
-        return byteBuffers.useBytes(checkpointKey(traceIdBytes, offset), keyBuf -> {
-            final ByteBuffer value = traceDfsCheckpointsDbi.get(txn, keyBuf);
-            if (value == null) {
-                return null;
-            }
-            final byte[] bytes = new byte[value.remaining()];
-            value.duplicate().get(bytes);
-            return new ArrayList<>(decodePath(bytes));
-        });
-    }
-
-    private void deleteCheckpointsOf(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
-        final List<byte[]> keys = new ArrayList<>();
-        byteBuffers.useBytes(traceIdBytes, prefixBuf -> {
-            final LmdbKeyRange range = LmdbKeyRange.builder().prefix(prefixBuf).build();
-            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, traceDfsCheckpointsDbi, range)) {
-                stream.forEach(entry -> {
-                    final byte[] k = new byte[entry.getKey().remaining()];
-                    entry.getKey().duplicate().get(k);
-                    keys.add(k);
-                });
-            }
-        });
-        for (final byte[] k : keys) {
-            byteBuffers.useBytes(k, keyBuf -> {
-                traceDfsCheckpointsDbi.delete(txn, keyBuf);
-            });
-        }
-    }
-
-    private static byte[] checkpointKey(final byte[] traceIdBytes, final int offset) {
-        final byte[] key = new byte[TRACE_ID_BYTES + Integer.BYTES];
-        System.arraycopy(traceIdBytes, 0, key, 0, TRACE_ID_BYTES);
-        ByteBuffer.wrap(key).putInt(TRACE_ID_BYTES, offset); // big-endian offset suffix
-        return key;
     }
 
     public static byte[] encodePath(final List<byte[]> path) {
@@ -2503,14 +2431,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         if (depth == 0
                 || stats.spanCount() <= DEPTH_EXACT_SPAN_THRESHOLD
                 || stats.spanCount() >= 2L * Math.max(1L, stats.spanCountAtLastDepth())) {
-            if (stats.spanCount() > CHECKPOINT_MIN_SPANS) {
-                // Large trace: one pre-order walk both computes depth (longest simple path) and
-                // rebuilds the sparse DFS checkpoints for random-access paging — same gated cadence
-                // as the depth recompute, so no extra hot-path cost.
-                depth = rebuildCheckpointsAndDepth(txn, traceIdBytes);
+            if (stats.spanCount() > LARGE_TRACE_SPANS) {
+                depth = walkDepth(txn, traceIdBytes);
             } else {
-                // Small trace (loads whole; no checkpoints): bounded DFS for depth only. The
-                // path-visited guard in descend() skips back-edges so a cyclic trace terminates.
+                // The path-visited guard in descend() skips back-edges so a cyclic trace terminates.
                 final int[] maxLevel = {0};
                 descend(txn, traceIdBytes, HexStringUtil.decode(root.getSpanId()), 1, maxLevel,
                         new HashSet<>());
