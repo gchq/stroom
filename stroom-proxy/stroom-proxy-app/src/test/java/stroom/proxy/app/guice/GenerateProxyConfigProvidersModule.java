@@ -64,12 +64,12 @@ public class GenerateProxyConfigProvidersModule {
 
     private static final String CLASS_HEADER = """
             package stroom.proxy.app.guice;
-            
+
             import com.google.inject.AbstractModule;
             import com.google.inject.Provides;
-            
+
             import javax.annotation.processing.Generated;
-            
+
             /**
              * IMPORTANT - This whole file is generated using
              * {@link %s}

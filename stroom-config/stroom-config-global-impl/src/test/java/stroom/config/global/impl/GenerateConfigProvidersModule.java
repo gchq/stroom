@@ -61,12 +61,12 @@ public class GenerateConfigProvidersModule {
 
     private static final String CLASS_HEADER = """
             package stroom.config.global.impl;
-            
+
             import com.google.inject.AbstractModule;
             import com.google.inject.Provides;
-            
+
             import javax.annotation.processing.Generated;
-            
+
             /**
              * IMPORTANT - This whole file is generated using
              * {@link %s}
