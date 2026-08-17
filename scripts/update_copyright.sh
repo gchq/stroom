@@ -13,8 +13,18 @@ fi
 
 git ls-files '*.java' | while IFS= read -r file; do
 
-  if [[ "${file}" =~ /impl/db/jooq/ ]]; then
-    echo "$file - SKIPPING (jooq)"
+  if [[ "${file}" =~ /db/jooq/ ]]; then
+    echo "$file - SKIPPING (Jooq Generated)"
+    continue
+  fi
+
+  if [[ "${file}" =~ /edu/ycp/cs/dh/acegwt/client/ace/ ]]; then
+    echo "$file - SKIPPING (Ace Editor)"
+    continue
+  fi
+
+  if [[ "${file}" =~ /com/google/gwt/ ]]; then
+    echo "$file - SKIPPING (Ace Editor)"
     continue
   fi
 
@@ -58,12 +68,7 @@ git ls-files '*.java' | while IFS= read -r file; do
     # Check if the file needs an update
     if [ "$existing_line" != "$target_line" ]; then
       echo "$file - ${existing_year} => ${first_year}"
-      if [ "$DRY_RUN" = true ]; then
-        ::
-        #echo "  OLD: $existing_line"
-        #echo "  NEW: $target_line"
-        #echo ""
-      else
+      if [ "$DRY_RUN" = false ]; then
         #perl -pi -e "s/(\s\*\s+Copyright\s+)\d{4}(-\d{4})?(\s+Crown Copyright)/\$1${first_year}\$3/g" "$file"
         perl -pi -e "s/\s+\*\s+Copyright\s+\d{4}.*\s+Crown Copyright/${target_line}/g" "$file"
       fi
@@ -93,6 +98,7 @@ git ls-files '*.java' | while IFS= read -r file; do
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 EOF
         then
           cp "${tmp_file}" "${file}"
