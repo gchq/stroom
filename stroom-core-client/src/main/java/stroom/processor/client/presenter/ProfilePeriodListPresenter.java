@@ -244,13 +244,13 @@ public class ProfilePeriodListPresenter
         removeButton.setEnabled(!readOnly && selected != null);
 
         if (readOnly) {
-            addButton.setTitle("New feed dependency disabled as filter is read only");
-            editButton.setTitle("Edit feed dependency disabled as filter is read only");
-            removeButton.setTitle("Remove feed dependency disabled as filter is read only");
+            addButton.setTitle("New period disabled as profile is read only");
+            editButton.setTitle("Edit period disabled as profile is read only");
+            removeButton.setTitle("Remove period disabled as profile is read only");
         } else {
-            addButton.setTitle("New Reference");
-            editButton.setTitle("Edit Reference");
-            removeButton.setTitle("Remove Reference");
+            addButton.setTitle("New Period");
+            editButton.setTitle("Edit Period");
+            removeButton.setTitle("Remove Period");
         }
     }
 }
