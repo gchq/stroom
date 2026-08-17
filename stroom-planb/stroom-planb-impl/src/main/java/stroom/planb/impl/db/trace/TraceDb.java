@@ -933,32 +933,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return min[0] == Long.MAX_VALUE ? Optional.empty() : Optional.of(NanoTime.ofNanos(min[0]));
     }
 
-    // Overwrite only the spanCount of a trace's stats (keeping other fields), so recordNewSpan increments
-    // from an accurate base on the next archival merge.
-    private void seedStatsSpanCount(final Txn<ByteBuffer> txn, final byte[] traceIdBytes, final long count) {
-        final TraceStats s = readStats(txn, traceIdBytes);
-        writeStats(txn, traceIdBytes, new TraceStats(
-                count, s.serviceCount(), s.maxEnd(), s.lastActivityMs(), s.depth(), count, s.hasError(),
-                s.truncated()));
-    }
-
-    // Rewrite a (non-orphan) root's totalSpans and its secondary indexes. No-op if absent/orphan/unchanged.
-    private void setRootTotalSpans(final Txn<ByteBuffer> txn, final byte[] traceIdBytes, final int total) {
-        final TraceRootKey key = new TraceRootKey(traceIdBytes);
-        traceRootKeySerde.write(key, keyBuf -> {
-            final ByteBuffer existing = traceRootsDbi.get(txn, keyBuf);
-            if (existing != null) {
-                final TraceRoot root = traceRootValueSerde.read(existing.duplicate());
-                if (!root.isOrphan() && root.getTotalSpans() != total) {
-                    deleteSecondaryIndexes(txn, traceIdBytes, root);
-                    final TraceRoot updated = root.copy().totalSpans(total).build();
-                    traceRootValueSerde.write(updated, valBuf -> traceRootsDbi.put(txn, keyBuf, valBuf));
-                    writeSecondaryIndexes(txn, traceIdBytes, updated);
-                }
-            }
-        });
-    }
-
     @Override
     public SpanValue get(final SpanKey key) {
         return env.read(readTxn -> keySerde.toBufferForGet(readTxn, key, optionalKeyByteBuffer ->
@@ -1834,31 +1808,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * Distinct trace-IDs (hex) whose start time falls within {@code timeFilter}, from a key-only walk of
-     * the {@link TraceSecondaryIndex#START_TIME} index (the traceId is the key suffix, so no value is read
-     * and no {@link TraceRoot} is deserialised). Used to compute an exact distinct trace count across the
-     * live shard + archive buckets, where summing per-store totals would double-count split traces.
-     */
-    public Set<String> windowTraceIds(final TimeFilter timeFilter) {
-        requireSecondaryIndexes("list traceIds in a time window");
-        return env.read(readTxn -> {
-            final Set<String> ids = new HashSet<>();
-            final Dbi<ByteBuffer> startTimeDbi = secondaryIndexDbis.get(TraceSecondaryIndex.START_TIME);
-            try (final Stream<LmdbEntry> stream =
-                    LmdbStream.stream(readTxn, startTimeDbi, startTimeKeyRange(timeFilter))) {
-                stream.forEach(entry -> {
-                    final ByteBuffer keyBuf = entry.getKey().duplicate();
-                    final byte[] traceId = new byte[TRACE_ID_BYTES];
-                    keyBuf.position(keyBuf.limit() - TRACE_ID_BYTES);
-                    keyBuf.get(traceId);
-                    ids.add(HexStringUtil.encode(traceId));
-                });
-            }
-            return ids;
-        });
-    }
-
-    /**
      * Counts traces per equal time-bucket over {@code timeFilter}'s window. Without a filter this is a
      * key-only walk of the chronologically-ordered {@link TraceSecondaryIndex#START_TIME} index — the
      * start time is decoded straight from the key ({@code secs[8] ∥ nanos[4]}), so no {@link TraceRoot}
@@ -2258,17 +2207,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * Single-store convenience: {@code limit} spans in pre-order order from this store, in its own read
-     * txn. Resumes after {@code cursorPath} (null/empty = start at the root).
-     */
-    public SpanPage getSpanPage(final byte[] traceIdBytes,
-                                final List<byte[]> cursorPath,
-                                final int limit) {
-        return env.read(readTxn -> getSpanPage(
-                new SingleStoreChildCursor(this, readTxn, traceIdBytes), cursorPath, limit, SpanOpenTest.ALL));
-    }
-
-    /**
      * Sparse pre-order DFS checkpoints for a {@link ChildCursor}: {@code checkpoints.get(k)} is the DFS
      * path (list of 16-byte locators) at offset {@code (k + 1) * CHECKPOINT_INTERVAL}, and {@code total}
      * is the exact pre-order row count. The in-memory equivalent of the {@code trace-dfs-checkpoints}
@@ -2427,47 +2365,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         System.arraycopy(parentSpanIdBytes, 0, key, TRACE_ID_BYTES, SPAN_ID_BYTES);
         System.arraycopy(locatorSuffix, 0, key, TRACE_ID_BYTES + SPAN_ID_BYTES, LOCATOR_BYTES);
         return key;
-    }
-
-    /**
-     * Random-access tree-order page: rows {@code [offset, offset+limit)} in pre-order DFS. Resumes
-     * from the nearest checkpoint at or before {@code offset} and walks at most CHECKPOINT_INTERVAL
-     * rows to reach it, so a scrollbar drag anywhere is O(CHECKPOINT_INTERVAL + limit). Falls back to
-     * walking from the start when no checkpoints exist (small / not-yet-checkpointed traces). Own read
-     * txn.
-     */
-    public SpanPage getSpanPageAtOffset(final byte[] traceIdBytes,
-                                        final int offset,
-                                        final int limit) {
-        return env.read(readTxn -> {
-            final ChildCursor cursor = new SingleStoreChildCursor(this, readTxn, traceIdBytes);
-            final int checkpointOffset = (offset / CHECKPOINT_INTERVAL) * CHECKPOINT_INTERVAL;
-            final List<byte[]> checkpoint = readCheckpoint(readTxn, traceIdBytes, checkpointOffset);
-            final List<byte[]> path = new ArrayList<>();
-            final int skip;
-            if (checkpoint == null) {
-                skip = offset;                 // no checkpoint — walk from the start
-            } else {
-                path.addAll(checkpoint);
-                skip = offset - checkpointOffset;
-            }
-            for (int i = 0; i < skip; i++) {
-                if (advancePreorder(cursor, path, SpanOpenTest.ALL).isEmpty()) {
-                    return new SpanPage(new ArrayList<>(), new ArrayList<>(path), false);
-                }
-            }
-            final List<SpanRow> rows = new ArrayList<>(Math.max(0, limit));
-            for (int i = 0; i < limit; i++) {
-                final Optional<Span> next = advancePreorder(cursor, path, SpanOpenTest.ALL);
-                if (next.isEmpty()) {
-                    return new SpanPage(rows, new ArrayList<>(path), false);
-                }
-                // depth 0 = root, matching the non-virtualized waterfall's indentation (path
-                // includes the current node, so its size is the 1-based depth).
-                rows.add(new SpanRow(next.get(), path.size() - 1, cursorHasChildren(cursor, path)));
-            }
-            return new SpanPage(rows, new ArrayList<>(path), true);
-        });
     }
 
     /**
@@ -2914,15 +2811,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         public boolean hasSpans() {
             return !traceMap.isEmpty();
-        }
-
-        /**
-         * Returns {@code true} if at least one span with no parent (i.e. parentSpanId
-         * is {@code null}, stored under the empty-string key) is present. A trace
-         * may have child spans but no root if the root was lost (e.g. queue purge).
-         */
-        public boolean hasRoot() {
-            return traceMap.containsKey("");
         }
 
         public Trace build() {
