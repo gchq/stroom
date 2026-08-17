@@ -558,13 +558,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 final TraceRoot newRoot = optNewRoot.get();
 
                 // Delete stale secondary sort-index entries before overwriting.
-                traceRootKeySerde.write(traceRootKey, traceRootKeyBuf -> {
-                    final ByteBuffer existing = traceRootsDbi.get(writeTxn, traceRootKeyBuf);
-                    if (existing != null) {
-                        final TraceRoot oldRoot = traceRootValueSerde.read(existing.duplicate());
-                        deleteSecondaryIndexes(writeTxn, traceIdBytes, oldRoot);
-                    }
-                });
+                getTraceRoot(writeTxn, traceIdBytes).ifPresent(oldRoot ->
+                        deleteSecondaryIndexes(writeTxn, traceIdBytes, oldRoot));
 
                 traceRootKeySerde.write(traceRootKey, keyBuffer ->
                         traceRootValueSerde.write(newRoot, valueBuffer ->
@@ -598,17 +593,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             try {
                 final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
 
-                // Read existing root (returns null if root has not yet been seen).
-                final TraceRoot[] oldRootRef = {null};
-                traceRootKeySerde.write(traceRootKey, traceRootKeyBuf -> {
-                    final ByteBuffer existing = traceRootsDbi.get(writeTxn, traceRootKeyBuf);
-                    if (existing != null) {
-                        oldRootRef[0] = traceRootValueSerde.read(existing.duplicate());
-                    }
-                });
+                final Optional<TraceRoot> optOldRoot = getTraceRoot(writeTxn, traceIdBytes);
 
-                if (oldRootRef[0] != null) {
-                    final TraceRoot oldRoot = oldRootRef[0];
+                if (optOldRoot.isPresent()) {
+                    final TraceRoot oldRoot = optOldRoot.get();
 
                     // Expand the time bounds with this span's start/end.
                     final NanoTime spanStart = NanoTime.fromString(kv.val().getStartTimeUnixNano());
@@ -899,13 +887,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
 
                     // Drop stale sort-index entries for the existing stored root, then overwrite.
-                    traceRootKeySerde.write(traceRootKey, keyBuf -> {
-                        final ByteBuffer existing = traceRootsDbi.get(writeTxn, keyBuf);
-                        if (existing != null) {
-                            deleteSecondaryIndexes(writeTxn, traceIdBytes,
-                                    traceRootValueSerde.read(existing.duplicate()));
-                        }
-                    });
+                    getTraceRoot(writeTxn, traceIdBytes).ifPresent(oldRoot ->
+                            deleteSecondaryIndexes(writeTxn, traceIdBytes, oldRoot));
                     traceRootKeySerde.write(traceRootKey, keyBuf ->
                             traceRootValueSerde.write(rebuilt, valBuf ->
                                     traceRootsDbi.put(writeTxn, keyBuf, valBuf)));
@@ -944,18 +927,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             }
         });
         return min[0] == Long.MAX_VALUE ? Optional.empty() : Optional.of(NanoTime.ofNanos(min[0]));
-    }
-
-    // Key-only prefix count of the span DBI for a traceId (no value reads).
-    private long countSpansForTrace(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
-        final long[] count = {0L};
-        byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
-            final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
-            try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, dbi, keyRange)) {
-                count[0] = stream.count();
-            }
-        });
-        return count[0];
     }
 
     // Overwrite only the spanCount of a trace's stats (keeping other fields), so recordNewSpan increments
@@ -1744,25 +1715,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 (timeFilter == null || matchesTimeRange(root, criteria))
                 && (!hasFilter || filterPredicate.test(root));
 
-        // Use single-element arrays to capture totals from inside the lambda,
-        // since the lambda requires effectively-final variables.
-        final long[] totalRef = {0L};
-
-        env.read(readTxn -> {
+        final long total = env.read(readTxn -> {
             // ---- total ----
+            final long count;
             if (timeFilter == null && !hasFilter) {
                 // O(1): LMDB stat gives exact entry count without scanning all entries.
-                totalRef[0] = traceRootsDbi.stat(readTxn).entries;
+                count = traceRootsDbi.stat(readTxn).entries;
             } else if (!hasFilter) {
                 // Time range only: exact count via a key-only walk of the chronologically
                 // ordered START_TIME index (no TraceRoot deserialisation) — see countTracesInTimeRange.
-                totalRef[0] = countTracesInTimeRange(readTxn, timeFilter);
+                count = countTracesInTimeRange(readTxn, timeFilter);
             } else {
                 // Quick filter active: no key-only shortcut — deserialise and test each candidate.
                 // (Worst case a full-index scan when a filter is set with no time range.)
                 try (final Stream<LmdbEntry> countStream =
                              LmdbStream.stream(readTxn, indexDbi, LmdbKeyRange.all())) {
-                    totalRef[0] = countStream
+                    count = countStream
                             .map(entry -> safeLookupTraceRoot(readTxn, entry))
                             .filter(Objects::nonNull)
                             .filter(rowMatch)
@@ -1794,21 +1762,34 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                             .forEach(list::add);
                 }
             }
-            return null;
+            return count;
         });
 
         return new TracesResultPage(list,
                 PageResponse.builder()
                         .offset(offset)
                         .length(list.size())
-                        .total(totalRef[0])
+                        .total(total)
                         .exact(true)
                         .build());
     }
 
+    /**
+     * Extracts the trace-ID from the last {@value #TRACE_ID_BYTES} bytes of a sort-index
+     * entry's key and looks up the corresponding {@link TraceRoot} in {@link #traceRootsDbi}.
+     * An unreadable entry drops that row rather than failing the whole query.
+     *
+     * @return the {@link TraceRoot}, or {@code null} if no matching root is found or it could
+     * not be read
+     */
     private TraceRoot safeLookupTraceRoot(final Txn<ByteBuffer> readTxn, final LmdbEntry entry) {
         try {
-            return lookupTraceRoot(readTxn, entry);
+            final ByteBuffer keyBuf = entry.getKey().duplicate();
+            final byte[] keyBytes = new byte[keyBuf.remaining()];
+            keyBuf.get(keyBytes);
+            final byte[] traceIdBytes = Arrays.copyOfRange(
+                    keyBytes, keyBytes.length - TRACE_ID_BYTES, keyBytes.length);
+            return getTraceRoot(readTxn, traceIdBytes).orElse(null);
         } catch (final RuntimeException e) {
             LOGGER.debug("Error reading trace from sort index: {}", e.getMessage(), e);
             return null;
@@ -1948,29 +1929,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
         buf.flip();
         return buf;
-    }
-
-    /**
-     * Extracts the trace-ID from the last {@value #TRACE_ID_BYTES} bytes of a sort-index
-     * entry's key and looks up the corresponding {@link TraceRoot} in {@link #traceRootsDbi}.
-     *
-     * @return the {@link TraceRoot}, or {@code null} if no matching root is found
-     */
-    private TraceRoot lookupTraceRoot(final Txn<ByteBuffer> readTxn, final LmdbEntry entry) {
-        final ByteBuffer keyBuf = entry.getKey().duplicate();
-        final byte[] keyBytes = new byte[keyBuf.remaining()];
-        keyBuf.get(keyBytes);
-        final byte[] traceIdBytes = Arrays.copyOfRange(
-                keyBytes, keyBytes.length - TRACE_ID_BYTES, keyBytes.length);
-
-        final TraceRoot[] rootRef = {null};
-        traceRootKeySerde.write(new TraceRootKey(traceIdBytes), traceRootKeyBuf -> {
-            final ByteBuffer traceRootVal = traceRootsDbi.get(readTxn, traceRootKeyBuf);
-            if (traceRootVal != null) {
-                rootRef[0] = traceRootValueSerde.read(traceRootVal.duplicate());
-            }
-        });
-        return rootRef[0];
     }
 
     public Trace getTrace(final GetTraceRequest request) {
@@ -2592,18 +2550,15 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         if (offset <= 0) {
             return null;
         }
-        final List<byte[]> result = new ArrayList<>();
-        final boolean[] found = {false};
-        byteBuffers.useBytes(checkpointKey(traceIdBytes, offset), keyBuf -> {
+        return byteBuffers.useBytes(checkpointKey(traceIdBytes, offset), keyBuf -> {
             final ByteBuffer value = traceDfsCheckpointsDbi.get(txn, keyBuf);
-            if (value != null) {
-                found[0] = true;
-                final byte[] bytes = new byte[value.remaining()];
-                value.duplicate().get(bytes);
-                result.addAll(decodePath(bytes));
+            if (value == null) {
+                return null;
             }
+            final byte[] bytes = new byte[value.remaining()];
+            value.duplicate().get(bytes);
+            return new ArrayList<>(decodePath(bytes));
         });
-        return found[0] ? result : null;
     }
 
     private void deleteCheckpointsOf(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
@@ -2672,9 +2627,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         final byte[] nameKey = new byte[TRACE_ID_BYTES + nameBytes.length];
         System.arraycopy(traceIdBytes, 0, nameKey, 0, TRACE_ID_BYTES);
         System.arraycopy(nameBytes, 0, nameKey, TRACE_ID_BYTES, nameBytes.length);
-        final boolean[] newName = {false};
-        byteBuffers.useBytes(nameKey, nameKeyBuf -> {
-            newName[0] = traceServiceNamesDbi.put(
+        final boolean newName = byteBuffers.useBytes(nameKey, nameKeyBuf -> {
+            return traceServiceNamesDbi.put(
                     writeTxn, nameKeyBuf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
         });
 
@@ -2693,7 +2647,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     : prev.maxEnd();
             final TraceStats next = new TraceStats(
                     prev.spanCount() + 1,
-                    prev.serviceCount() + (newName[0] ? 1 : 0),
+                    prev.serviceCount() + (newName ? 1 : 0),
                     newMaxEnd,
                     Math.max(prev.lastActivityMs(), insertMs),
                     prev.depth(),
@@ -2745,7 +2699,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             // has no root span here. Its stored root stays authoritative: name, start time, root end and
             // depth are all fixed by data already handed over, and depth in particular cannot be re-derived
             // from the spans left behind. Only the stats-backed fields move as late spans arrive.
-            final Optional<TraceRoot> stored = storedRoot(txn, traceIdBytes);
+            final Optional<TraceRoot> stored = getTraceRoot(txn, traceIdBytes);
             if (stored.isPresent() && !stored.get().isOrphan()) {
                 return Optional.of(refreshFromStats(txn, traceIdBytes, stored.get()));
             }
@@ -2828,7 +2782,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 .build());
     }
 
-    private Optional<TraceRoot> storedRoot(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
+    private Optional<TraceRoot> getTraceRoot(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
         final TraceRoot[] out = {null};
         traceRootKeySerde.write(new TraceRootKey(traceIdBytes), keyBuf -> {
             final ByteBuffer existing = traceRootsDbi.get(txn, keyBuf);
@@ -2864,25 +2818,21 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // Cheap prefix existence check: does the span DBI hold >=1 span for this traceId? Gates orphan-root
     // synthesis/cleanup on a genuinely-live span, not the cumulative stats count (which counts aged-out spans).
     private boolean hasAnySpan(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
-        final boolean[] found = {false};
-        byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
+        return byteBuffers.useBytes(traceIdBytes, prefixBuffer -> {
             final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefixBuffer).build();
             try (final Stream<LmdbEntry> stream = LmdbStream.stream(txn, dbi, keyRange)) {
-                found[0] = stream.findFirst().isPresent();
+                return stream.findFirst().isPresent();
             }
         });
-        return found[0];
     }
 
     private TraceStats readStats(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
-        final TraceStats[] out = {TraceStats.EMPTY};
-        byteBuffers.useBytes(traceIdBytes, keyBuf -> {
+        return byteBuffers.useBytes(traceIdBytes, keyBuf -> {
             final ByteBuffer existing = traceStatsDbi.get(txn, keyBuf);
-            if (existing != null) {
-                out[0] = traceStatsSerde.read(existing.duplicate());
-            }
+            return existing != null
+                    ? traceStatsSerde.read(existing.duplicate())
+                    : TraceStats.EMPTY;
         });
-        return out[0];
     }
 
     private void writeStats(final Txn<ByteBuffer> writeTxn,
