@@ -13,6 +13,33 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5726** : Fix Stroom & Proxy docker images so the SIGTERM from a Docker `stop` is passed through to Dropwizard for a graceful shutdown.
+
+* Bug **#5705** : Log a failure to get a Plan B shard at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
+
+* Bug **#5705** : Stop a Plan B snapshot fetch treating a 304 Not Modified answer from the store node as a fetch failure, which made lookups fail once the snapshot of an unchanged store aged out.
+
+* Bug **#5707** : Fix `lastName` arg on create_account command being used for `firstName`.
+
+* Bug : Change stroom CLI commands to mask the value of arguments for key `password` in the logs.
+
+* Bug **#5706** : Log a failure to send Plan B data to a node at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
+
+* Feature **#5706** : Retry sending Plan B data to a node when the send fails at the transport level, e.g. a DNS lookup failure during a network blip, controlled by `stroom.planb.sendPartAttempts` (default 3) and `stroom.planb.sendPartRetryDelay` (default 10s).
+
+* Dependency : Uplift java in docker images to 25.0.3_9.
+
+* Bug **#4621** : Honour hidden columns when running Reports, and persist the hidden state of a column against Report and Analytic Rule documents so that it survives a save.
+
+* Bug **#5176** : Disable rule execution if no error feed is configured.
+
+* Bug **#5176** : Remove the need to set default feeds and nodes before being able to create rules and reports.
+
+* Bug **#5176** : Validate scheduled executors to ensure an execution node is specified.
+
+* Feature **#5712** : Add an optional `ignoreWarnings` boolean argument to the XSLT functions `stroom:host-name()` and `stroom:host-address()` to suppress the WARN that is logged when a DNS lookup fails.
+
+
 ## [v7.13-beta.10] - 2026-08-05
 
 * Bug **#5553** : Fix DocRefInfo cache bug.
