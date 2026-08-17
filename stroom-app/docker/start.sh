@@ -47,8 +47,11 @@ main() {
 
   # All args passed to this script are the command and its optional args,
   # e.g. 'server', 'migrate', 'reset_password -u joe -p pword'
+
+  # Called via exec so we replave this shell process with java to ensure
+  # a SIGTERM from a docker stop reaches java for a graceful shutdown
   #shellcheck disable=2086
-  java \
+  exec java \
     ${java_opts} \
     -jar stroom-app-all.jar \
     "$@" \
