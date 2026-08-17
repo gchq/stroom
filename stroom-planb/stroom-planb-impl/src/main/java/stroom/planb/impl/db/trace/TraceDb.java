@@ -63,7 +63,6 @@ import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.TraceSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.TimeFilter;
-import stroom.query.api.TimeRange;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -1591,6 +1590,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     spanComparator,
                     pathKeyFactory,
                     Map.of(criteria.getPathway().getPathKey(), criteria.getPathway().getRoot()));
+            // Derive the time filter once so every root is judged against the same window.
+            final TimeFilter timeFilter = timeFilter(criteria);
 
             // Pathway matching requires inspecting every span — no secondary-index shortcut.
             env.read(readTxn -> {
@@ -1610,7 +1611,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         if (criteria.getPageRequest().getOffset() <= pos &&
                             criteria.getPageRequest().getLength() > list.size() &&
                             tracePredicate.test(trace) &&
-                            matchesTimeRange(root, criteria) &&
+                            matchesTimeRange(root, timeFilter) &&
                             (filterPredicate == null || filterPredicate.test(root))) {
                             list.add(root);
                         }
@@ -1652,14 +1653,24 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         return new TracesResultPage(list, builder.build());
     }
 
+    private static TimeFilter timeFilter(final FindTraceCriteria criteria) {
+        return criteria.getTimeRange() == null
+                ? null
+                : DateExpressionParser.getTimeFilter(
+                        criteria.getTimeRange(), DateTimeSettings.builder().build());
+    }
+
     /**
-     * Returns {@code true} if the given trace root falls within the criteria's time range
-     * (filtering on trace start time). A {@code null} time range, or a trace root with no
+     * Returns {@code true} if the given trace root falls within {@code timeFilter}
+     * (filtering on trace start time). A {@code null} filter, or a trace root with no
      * start time, is always considered to match.
+     *
+     * <p>The filter is derived once per query by {@link #timeFilter(FindTraceCriteria)}: a
+     * relative range such as {@code now()-1h} resolves to a different window on each parse,
+     * so re-deriving it per row would judge the page against a later window than the total.
      */
-    private static boolean matchesTimeRange(final TraceRoot root, final FindTraceCriteria criteria) {
-        final TimeRange timeRange = criteria.getTimeRange();
-        if (timeRange == null) {
+    private static boolean matchesTimeRange(final TraceRoot root, final TimeFilter timeFilter) {
+        if (timeFilter == null) {
             return true;
         }
         final NanoTime startTime = root.getStartTime();
@@ -1668,9 +1679,6 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             return true;
         }
         final long startMs = startTime.toEpochMillis();
-        final TimeFilter timeFilter =
-                DateExpressionParser.getTimeFilter(
-                        timeRange, DateTimeSettings.builder().build());
         final boolean result = startMs >= timeFilter.getFrom() && startMs <= timeFilter.getTo();
         LOGGER.debug("matchesTimeRange: traceId={} startMs={} from={} to={} result={}",
                 root.getTraceId(), startMs, timeFilter.getFrom(), timeFilter.getTo(), result);
@@ -1705,14 +1713,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         // Derive the time filter once (if any) so it can drive both the page scan and the
         // exact count below.
-        final TimeFilter timeFilter = criteria.getTimeRange() == null
-                ? null
-                : DateExpressionParser.getTimeFilter(
-                        criteria.getTimeRange(), DateTimeSettings.builder().build());
+        final TimeFilter timeFilter = timeFilter(criteria);
         final boolean hasFilter = filterPredicate != null;
         // Per-row match combining the (optional) time range and the (optional) quick filter.
         final Predicate<TraceRoot> rowMatch = root ->
-                (timeFilter == null || matchesTimeRange(root, criteria))
+                matchesTimeRange(root, timeFilter)
                 && (!hasFilter || filterPredicate.test(root));
 
         final long total = env.read(readTxn -> {
