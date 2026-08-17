@@ -183,6 +183,10 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
         indexName.setEnabled(!readOnly);
         searchSlices.setEnabled(!readOnly);
         searchScrollSize.setEnabled(!readOnly);
+        timeField.setEnabled(!readOnly);
+        rerankTextFieldSuffix.setEnabled(!readOnly);
+        rerankScoreFieldSuffix.setEnabled(!readOnly);
+        rerankScoreMinimum.setEnabled(!readOnly);
     }
 
     @UiHandler("indexName")

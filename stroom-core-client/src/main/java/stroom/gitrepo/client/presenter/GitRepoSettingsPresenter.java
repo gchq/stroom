@@ -185,7 +185,7 @@ public class GitRepoSettingsPresenter
 
     @Override
     public void onSetHttpClientConfiguration() {
-        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, updated -> {
+        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, isReadOnly(), updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();
