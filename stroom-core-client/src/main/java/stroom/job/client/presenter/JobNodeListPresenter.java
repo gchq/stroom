@@ -347,8 +347,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
         // Action column
         jobNodeListHelper.addActionColumn(dataGrid);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public void read(final Job job) {

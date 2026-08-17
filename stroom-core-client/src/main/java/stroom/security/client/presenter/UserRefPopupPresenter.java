@@ -157,8 +157,6 @@ public class UserRefPopupPresenter
                         .withToolTip("The full name of the user. Groups do not have a full name.")
                         .build(),
                 350);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     @Override

@@ -20,7 +20,6 @@ import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -136,7 +135,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
                 600);
 
         addActionButtonColumn(20);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addColumn(final String name,

@@ -139,8 +139,6 @@ public class UserAccessListPresenter
                 .build();
         dataGrid.addAutoResizableColumn(
                 tokenExpiryColumn, "Access Expires", ColumnSizeConstants.DATE_AND_DURATION_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private void fetchData(final Range range,

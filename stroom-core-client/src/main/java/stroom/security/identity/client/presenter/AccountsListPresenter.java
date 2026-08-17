@@ -315,8 +315,6 @@ public class AccountsListPresenter
                 .withSorting(AccountFields.FIELD_NAME_COMMENTS)
                 .build();
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private Function<Account, CommandLink> buildOpenUserCommandLink() {

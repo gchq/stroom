@@ -397,8 +397,6 @@ public class ManageGlobalPropertyListPresenter
                         .build(),
                 GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
                 750);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public ButtonView addButton(final Preset preset) {

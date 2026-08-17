@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -120,7 +119,6 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
     private void addColumns() {
         addNameColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {

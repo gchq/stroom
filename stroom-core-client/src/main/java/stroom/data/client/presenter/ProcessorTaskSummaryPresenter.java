@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -151,8 +150,6 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                         return ModelStringUtil.formatCsv(row.getCount());
                     }
                 }, "Count", ColumnSizeConstants.SMALL_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public MultiSelectionModel<ProcessorTaskSummary> getSelectionModel() {

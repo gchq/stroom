@@ -30,7 +30,6 @@ import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -391,8 +390,6 @@ public class TaskManagerListPresenter
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
                 200);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private String getNodeName(final TaskProgress taskProgress) {

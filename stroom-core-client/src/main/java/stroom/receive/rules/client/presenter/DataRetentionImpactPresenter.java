@@ -412,8 +412,6 @@ public class DataRetentionImpactPresenter
                         .withToolTip("The number of streams that would be deleted by this rule.")
                         .build(),
                 150);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public ButtonView addButton(final Preset preset) {

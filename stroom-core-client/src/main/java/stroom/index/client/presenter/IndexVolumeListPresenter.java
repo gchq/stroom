@@ -16,7 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.index.shared.IndexVolume;
@@ -76,8 +75,6 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<PagerView> {
             }
         };
         dataGrid.addResizableColumn(streamStatusColumn, "Status", 90);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<IndexVolume> volumes) {

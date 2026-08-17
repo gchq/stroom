@@ -25,7 +25,6 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
@@ -525,10 +524,6 @@ public abstract class AbstractMetaListPresenter
                 column,
                 DataGridUtil.createRightAlignedHeader(name),
                 size);
-    }
-
-    void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     /**

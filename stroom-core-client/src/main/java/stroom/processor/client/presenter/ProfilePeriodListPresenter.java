@@ -16,7 +16,6 @@
 
 package stroom.processor.client.presenter;
 
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.processor.shared.ProfilePeriod;
@@ -123,7 +122,6 @@ public class ProfilePeriodListPresenter
         addEndTime();
         addMaxNodeThreads();
         addMaxClusterThreads();
-        addEndColumn();
     }
 
     void addDays() {
@@ -179,10 +177,6 @@ public class ProfilePeriodListPresenter
                         .build(),
                 "Max Cluster Threads",
                 150);
-    }
-
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setReadOnly(final boolean readOnly) {

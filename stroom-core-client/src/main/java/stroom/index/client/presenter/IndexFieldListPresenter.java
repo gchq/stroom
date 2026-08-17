@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -174,7 +173,6 @@ public class IndexFieldListPresenter
         addTermVectorColumn();
         addAnalyzerColumn();
         addCaseSensitiveColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
