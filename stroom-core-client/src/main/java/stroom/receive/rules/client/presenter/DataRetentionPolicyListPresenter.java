@@ -25,6 +25,7 @@ import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionRule;
+import stroom.query.api.ExpressionOperator;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -124,7 +125,9 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 
         // Expression
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionRule::getAgeString)
+                DataGridUtil.textColumnBuilder((DataRetentionRule row) ->
+                                NullSafe.getOrElse(row, DataRetentionRule::getExpression,
+                                        ExpressionOperator::toString, ""))
                         .enabledWhen(DataRetentionRule::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Expression")
