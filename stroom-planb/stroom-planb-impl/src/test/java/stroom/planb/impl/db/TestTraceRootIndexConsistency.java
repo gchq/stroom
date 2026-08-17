@@ -467,6 +467,35 @@ class TestTraceRootIndexConsistency {
         }
     }
 
+    /**
+     * A span name far longer than LMDB's 511-byte key limit must not fail the write. The name
+     * reaches two keys: the per-trace distinct-name set (interned) and, for a root span, the
+     * operation sort index (truncated). Before the fix either threw MDB_BAD_VALSIZE, which the
+     * insert path rethrows, so the batch failed identically on every retry.
+     */
+    @Test
+    void overlongSpanName_doesNotBlowTheKeyLimit(@TempDir final Path dir) throws IOException {
+        final PlanBDoc doc = doc();
+        final Instant t = Instant.parse("2026-07-10T09:00:00.000Z");
+        final Path target = Files.createDirectory(dir.resolve("target"));
+        // Multi-byte chars so truncation has a character boundary to respect, not just a byte one.
+        final String longName = "é".repeat(2_000);
+
+        try (final TraceDb db = TraceDb.create(target, BB, BBF, doc, false)) {
+            db.merge(buildBatch(dir, "n1", (d, w) -> {
+                d.insert(w, new SpanKV(key(ROOT, ""), span(longName, t)));
+                d.insert(w, new SpanKV(key(CHILD, ROOT), span(longName + "-child", t)));
+            }, doc));
+            db.mergeComplete();
+
+            final TraceRoot root = storedRoot(db);
+            assertThat(root.getName()).as("stored name is not truncated").isEqualTo(longName);
+            assertThat(root.getTotalSpans()).as("both spans stored").isEqualTo(2);
+            assertThat(root.getServices()).as("two distinct names").isEqualTo(2);
+            assertNoDuplicateRows(db);
+        }
+    }
+
     private int liveSpanCount(final TraceDb db) {
         return db.getTrace(HexStringUtil.decode(TRACE)).getParentSpanIdMap().values().stream()
                 .mapToInt(List::size).sum();

@@ -18,9 +18,11 @@ package stroom.planb.impl.db.trace;
 
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;
+import stroom.planb.impl.db.Db;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,6 +83,9 @@ public enum TraceSecondaryIndex {
 
     /** Number of bytes of the traceId suffix appended to every secondary-index key. */
     private static final int TRACE_ID_BYTES = 16;
+
+    /** What an operation name may occupy once the separator and traceId suffix are accounted for. */
+    private static final int MAX_OPERATION_NAME_BYTES = Db.MAX_KEY_LENGTH - 1 - TRACE_ID_BYTES;
 
     private static final Map<String, TraceSecondaryIndex> BY_FIELD = new HashMap<>();
 
@@ -160,17 +165,35 @@ public enum TraceSecondaryIndex {
      * Key: (nameUtf8 ∥ 0x00 ∥ traceId[16]).
      * The null-byte separator ensures the variable-length name does not bleed
      * into the fixed-length traceId suffix during comparison.
+     *
+     * <p>The name is truncated to whatever is left of {@link Db#MAX_KEY_LENGTH} after the
+     * separator and traceId. It cannot be hashed or interned like the span name in
+     * {@code TraceDb.recordNewSpan}, because this index exists to sort alphabetically. Names
+     * long enough to be cut share a 494-byte prefix, so they sort as neighbours either way.
      */
     private static byte[] operationKey(final String name, final byte[] traceId) {
-        final byte[] nameBytes = name != null
+        final byte[] nameBytes = truncateUtf8(name != null
                 ? name.getBytes(StandardCharsets.UTF_8)
-                : new byte[0];
+                : new byte[0]);
         final byte[] key = new byte[nameBytes.length + 1 + TRACE_ID_BYTES];
         final ByteBuffer buf = ByteBuffer.wrap(key);
         buf.put(nameBytes);
         buf.put((byte) 0x00); // separator
         buf.put(traceId);
         return key;
+    }
+
+    // Cuts back to a character boundary so the key never ends mid-sequence: a trailing partial
+    // sequence would order against bytes that are not a character.
+    private static byte[] truncateUtf8(final byte[] bytes) {
+        if (bytes.length <= MAX_OPERATION_NAME_BYTES) {
+            return bytes;
+        }
+        int end = MAX_OPERATION_NAME_BYTES;
+        while (end > 0 && (bytes[end] & 0xC0) == 0x80) {
+            end--;
+        }
+        return Arrays.copyOf(bytes, end);
     }
 
     /** Key: (value[4] ∥ traceId[16]) = 20 bytes. Shared by services, depth, totalSpans. */

@@ -51,6 +51,7 @@ import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.serde.KeySerde;
 import stroom.planb.impl.serde.Serde;
 import stroom.planb.impl.serde.trace.HexStringUtil;
+import stroom.planb.impl.serde.trace.LookupSerde;
 import stroom.planb.impl.serde.trace.LookupSerdeImpl;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanKeySerde;
@@ -177,6 +178,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     private final ByteBufferFactory byteBufferFactory;
     private final KeySerde<SpanKey> keySerde;
     private final Serde<SpanValue> valueSerde;
+
+    /** Interns span names so an unbounded name never lands raw in a length-capped LMDB key. */
+    private final LookupSerde lookupSerde;
     // Typed reference to the same object as valueSerde, held so that
     // runArchival / runRetention can call readInsertTime() without
     // going through the UID lookup table.
@@ -254,6 +258,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     final TraceSettings settings,
                     final KeySerde<SpanKey> keySerde,
                     final Serde<SpanValue> valueSerde,
+                    final LookupSerde lookupSerde,
                     final HashClashCommitRunnable hashClashCommitRunnable,
                     final boolean hasSecondaryIndexes) {
         super(env,
@@ -269,6 +274,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         this.maxSpansPerTrace = settings.getEffectiveMaxSpansPerTrace();
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        this.lookupSerde = lookupSerde;
         this.spanValueSerde = (SpanValueSerde) valueSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
         this.valueRecorder = valueSerde.getUsedLookupsRecorder(env);
@@ -353,6 +359,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     settings,
                     keySerde,
                     valueSerde,
+                    lookupSerde,
                     hashClashCommitRunnable,
                     hasSecondaryIndexes);
         } catch (final RuntimeException e) {
@@ -2623,17 +2630,22 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                final NanoTime insertTime,
                                final NanoTime endTime,
                                final boolean spanError) {
-        // Distinct service-name set → detect a genuinely new name.
+        // Distinct service-name set → detect a genuinely new name. The name is interned rather
+        // than embedded raw because an LMDB key is capped at Db.MAX_KEY_LENGTH and a span name is
+        // unbounded — an over-long one throws MDB_BAD_VALSIZE, which the callers rethrow, failing
+        // the batch identically on every retry. The span value interns the same name through the
+        // same lookup, so this reuses that entry rather than adding one.
         final byte[] nameBytes = name == null
                 ? new byte[0]
                 : name.getBytes(StandardCharsets.UTF_8);
-        final byte[] nameKey = new byte[TRACE_ID_BYTES + nameBytes.length];
-        System.arraycopy(traceIdBytes, 0, nameKey, 0, TRACE_ID_BYTES);
-        System.arraycopy(nameBytes, 0, nameKey, TRACE_ID_BYTES, nameBytes.length);
-        final boolean newName = byteBuffers.useBytes(nameKey, nameKeyBuf -> {
-            return traceServiceNamesDbi.put(
-                    writeTxn, nameKeyBuf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
-        });
+        final boolean newName = byteBuffers.use(
+                TRACE_ID_BYTES + lookupSerde.getStorageLength(nameBytes), nameKeyBuf -> {
+                    nameKeyBuf.put(traceIdBytes);
+                    lookupSerde.write(writeTxn, nameBytes, nameKeyBuf);
+                    nameKeyBuf.flip();
+                    return traceServiceNamesDbi.put(
+                            writeTxn, nameKeyBuf, emptyValue(), PutFlags.MDB_NOOVERWRITE);
+                });
 
         final long insertMs = insertTime == null
                 ? 0L
