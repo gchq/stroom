@@ -105,8 +105,11 @@ public class SharedFileStorePublisher {
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(shardIndex));
 
+        // Named from the canonical dir's own file name, not from shardIndex — recoverOrphaned matches on
+        // the same derivation, and formatting the index independently at each site is how the two came to
+        // disagree before.
         final Path sharedTempDir = sharedShardDir.resolveSibling(
-                PlanBConstants.TMP_DIR_PREFIX + shardIndex + "_"
+                PlanBConstants.TMP_DIR_PREFIX + sharedShardDir.getFileName() + "_"
                         + System.currentTimeMillis() + "_" + UUID.randomUUID());
         Files.createDirectories(sharedTempDir);
 
@@ -306,10 +309,13 @@ public class SharedFileStorePublisher {
      * Recovers from an interrupted {@link #push} by scanning the shard parent
      * directory for orphaned {@code .tmp_} and {@code .old_} directories.
      *
+     * <p>Both markers carry the canonical shard dir's own zero-padded name, e.g. {@code .old_0001_*} for
+     * shard 1, so the prefixes are built from that name rather than from {@code shardIndex}.
+     *
      * <ul>
-     *   <li>{@code .tmp_<idx>_*} -- partial push; canonical shard untouched. Delete.</li>
-     *   <li>{@code .old_<idx>_*} with canonical dir present -- push completed. Delete old.</li>
-     *   <li>{@code .old_<idx>_*} with canonical dir absent -- push failed mid-swap.
+     *   <li>{@code .tmp_0001_*} -- partial push; canonical shard untouched. Delete.</li>
+     *   <li>{@code .old_0001_*} with canonical dir present -- push completed. Delete old.</li>
+     *   <li>{@code .old_0001_*} with canonical dir absent -- push failed mid-swap.
      *       Restore the old dir as the canonical shard.</li>
      * </ul>
      *
@@ -319,10 +325,10 @@ public class SharedFileStorePublisher {
         if (!Files.exists(sharedShardsDocDir)) {
             return;
         }
-        final String tmpPrefix = PlanBConstants.TMP_DIR_PREFIX + shardIndex + "_";
-        final String oldPrefix = PlanBConstants.OLD_DIR_PREFIX + shardIndex + "_";
         final Path canonicalShardDir = sharedShardsDocDir.resolve(
                 PlanBConstants.formatShardIndex(shardIndex));
+        final String tmpPrefix = PlanBConstants.TMP_DIR_PREFIX + canonicalShardDir.getFileName() + "_";
+        final String oldPrefix = PlanBConstants.OLD_DIR_PREFIX + canonicalShardDir.getFileName() + "_";
 
         try (final Stream<Path> siblings = Files.list(sharedShardsDocDir)) {
             siblings.forEach(sibling -> {

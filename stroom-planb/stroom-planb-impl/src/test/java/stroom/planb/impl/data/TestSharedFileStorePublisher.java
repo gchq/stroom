@@ -212,7 +212,7 @@ class TestSharedFileStorePublisher {
     void recoverOrphaned_deletesTmpDir() throws IOException {
         final Path shardsDocDir = sharedShardsDocDir();
         Files.createDirectories(shardsDocDir);
-        final Path tmpDir = shardsDocDir.resolve(PlanBConstants.TMP_DIR_PREFIX + SHARD_INDEX + "_12345");
+        final Path tmpDir = marker(PlanBConstants.TMP_DIR_PREFIX, SHARD_INDEX);
         Files.createDirectories(tmpDir);
         Files.writeString(tmpDir.resolve("data.mdb"), "partial");
 
@@ -230,7 +230,7 @@ class TestSharedFileStorePublisher {
         final Path shardsDocDir = sharedShardsDocDir();
         Files.createDirectories(canonicalShardDir());   // canonical is present
 
-        final Path oldDir = shardsDocDir.resolve(PlanBConstants.OLD_DIR_PREFIX + SHARD_INDEX + "_12345");
+        final Path oldDir = marker(PlanBConstants.OLD_DIR_PREFIX, SHARD_INDEX);
         Files.createDirectories(oldDir);
         Files.writeString(oldDir.resolve("data.mdb"), "old-data");
 
@@ -251,7 +251,7 @@ class TestSharedFileStorePublisher {
         // canonical shard dir does NOT exist
         assertThat(canonicalShardDir()).doesNotExist();
 
-        final Path oldDir = shardsDocDir.resolve(PlanBConstants.OLD_DIR_PREFIX + SHARD_INDEX + "_12345");
+        final Path oldDir = marker(PlanBConstants.OLD_DIR_PREFIX, SHARD_INDEX);
         Files.createDirectories(oldDir);
         Files.writeString(oldDir.resolve("data.mdb"), "rescued-data");
 
@@ -299,7 +299,7 @@ class TestSharedFileStorePublisher {
         Files.createDirectories(shardsDocDir);
 
         // Temp dir for shard 1, not shard 0.
-        final Path otherShardTmp = shardsDocDir.resolve(PlanBConstants.TMP_DIR_PREFIX + "1_12345");
+        final Path otherShardTmp = marker(PlanBConstants.TMP_DIR_PREFIX, 1);
         Files.createDirectories(otherShardTmp);
 
         publisher.recoverOrphaned(shardsDocDir, SHARD_INDEX);
@@ -315,6 +315,14 @@ class TestSharedFileStorePublisher {
     /** Returns the canonical shared shard directory for shard 0 of the test doc. */
     private Path canonicalShardDir() {
         return sharedShardsDocDir().resolve(PlanBConstants.formatShardIndex(SHARD_INDEX));
+    }
+
+    // A push-marker dir named the way a push names one: the prefix, then the canonical shard dir's own
+    // zero-padded name, then a uid. Naming it from the raw index instead is what made recoverOrphaned blind
+    // to the dirs pushDir was creating.
+    private Path marker(final String prefix, final int shardIndex) {
+        final String canonicalName = PlanBConstants.formatShardIndex(shardIndex);
+        return sharedShardsDocDir().resolve(prefix + canonicalName + "_12345");
     }
 
     private Path sharedShardsDocDir() {
