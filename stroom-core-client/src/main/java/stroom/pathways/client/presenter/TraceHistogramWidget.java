@@ -19,6 +19,7 @@ package stroom.pathways.client.presenter;
 import stroom.pathways.shared.TraceHistogram;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.NumberUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -140,9 +141,15 @@ public class TraceHistogramWidget extends Composite {
     }
 
     private SafeHtml hint() {
+        // maxWindowMs is 0 when there is no histogram at all (no data source, or the request failed),
+        // so there is no limit to name.
+        final long maxWindowMs = data == null ? 0L : data.getMaxWindowMs();
+        final String text = maxWindowMs > 0
+                ? "Select a time range of " + ModelStringUtil.formatDurationString(maxWindowMs, true)
+                  + " or less to view the trace histogram"
+                : "Select a narrower time range to view the trace histogram";
         final HtmlBuilder hb = new HtmlBuilder();
-        hb.div(h -> h.append("Select a narrower time range to view the trace histogram"),
-                Attribute.className("histogram-hint"));
+        hb.div(h -> h.append(text), Attribute.className("histogram-hint"));
         return hb.toSafeHtml();
     }
 
