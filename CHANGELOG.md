@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.15] - 2026-08-17
+
+* Bug **#5726** : Fix Stroom & Proxy docker images so the SIGTERM from a Docker `stop` is passed through to Dropwizard for a graceful shutdown.
+
+
 ## [v7.12.14] - 2026-08-12
 
 * Bug **#5705** : Log a failure to get a Plan B shard at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
@@ -2258,7 +2263,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.15...HEAD
+[v7.12.15]: https://github.com/gchq/stroom/compare/v7.12.14...v7.12.15
 [v7.12.14]: https://github.com/gchq/stroom/compare/v7.12.13...v7.12.14
 [v7.12.13]: https://github.com/gchq/stroom/compare/v7.12.12...v7.12.13
 [v7.12.12]: https://github.com/gchq/stroom/compare/v7.12.11...v7.12.12
