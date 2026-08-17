@@ -62,6 +62,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -155,11 +156,15 @@ public abstract class AbstractMetaListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     final ColumnSortList columnSortList = dataGrid.getColumnSortList();
-                    // Add the meta id to the sort list otherwise we are never guaranteed rows returned in same order
+                    final List<CriteriaFieldSort> sortList = CriteriaUtil.createSortList(columnSortList);
+                    // Add the meta id to the sort list otherwise we are never guaranteed rows returned
+                    // in same order. It has to be appended to the list actually sent, AFTER the user's
+                    // own sorts, so that it only ever breaks ties: two rows with an equal Create Time
+                    // would otherwise be free to swap between pages.
                     if (!CriteriaUtil.hasSortColumn(columnSortList, MetaFields.FIELD_ID)) {
-                        criteria.addSort(MetaFields.FIELD_ID);
+                        sortList.add(new CriteriaFieldSort(MetaFields.FIELD_ID, false, false));
                     }
-                    CriteriaUtil.setSortList(criteria, columnSortList);
+                    criteria.setSortList(sortList);
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
