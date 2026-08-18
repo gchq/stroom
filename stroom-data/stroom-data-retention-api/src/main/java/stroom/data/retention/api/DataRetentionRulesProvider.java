@@ -18,7 +18,14 @@ package stroom.data.retention.api;
 
 import stroom.data.retention.shared.DataRetentionRules;
 
+import java.util.Optional;
+
 public interface DataRetentionRulesProvider {
 
+    /// @return The DataRetentionRules or if one doesn't exist, a new one
+    /// will be created.
     DataRetentionRules getOrCreate();
+
+    /// @return The {@link DataRetentionRules} or an empty optional if one doesn't exist
+    Optional<DataRetentionRules> get();
 }
