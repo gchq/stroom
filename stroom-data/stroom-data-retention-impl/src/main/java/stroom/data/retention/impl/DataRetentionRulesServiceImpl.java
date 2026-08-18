@@ -112,26 +112,15 @@ class DataRetentionRulesServiceImpl
 
     @Override
     public DataRetentionRules getOrCreate() {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user once we know they have the app permission.
-        return securityContext.secureResult(
-                AppPermission.MANAGE_POLICIES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() -> {
-                    final DocRef docRef = lazyDocRef.getValueWithLocks();
-                    Objects.requireNonNull(docRef);
-                    return readDocument(docRef);
-                }));
+        final DocRef docRef = lazyDocRef.getValueWithLocks();
+        Objects.requireNonNull(docRef);
+        return readDocument(docRef);
     }
 
     @Override
     public Optional<DataRetentionRules> get() {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user once we know they have the app permission.
-        return securityContext.secureResult(
-                AppPermission.MANAGE_POLICIES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() ->
-                        Optional.ofNullable(getSingletonDoc())
-                                .map(this::readDocument)));
+        return Optional.ofNullable(getSingletonDoc())
+                .map(this::readDocument);
     }
 
     private DocRef doGetOrCreate() {
