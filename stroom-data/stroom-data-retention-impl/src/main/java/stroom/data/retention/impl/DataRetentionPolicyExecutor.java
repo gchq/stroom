@@ -135,56 +135,63 @@ public class DataRetentionPolicyExecutor {
     }
 
     private synchronized void process(final Instant now) {
-        final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.getOrCreate();
-        LOGGER.info("process() - All retention time calculations based on now()={}", now);
-        final List<DataRetentionRule> activeRules = NullSafe.get(
-                dataRetentionRules,
-                DataRetentionRules::getRules,
-                this::getActiveRules);
+        final Optional<DataRetentionRules> optDataRetentionRules = dataRetentionRulesProvider.get();
 
-        if (NullSafe.hasItems(activeRules)) {
-
-            // Create a map of unique periods with the set of rules that apply to them.
-            final List<ProcessablePeriod> processablePeriods = getProcessPeriods(
+        if (optDataRetentionRules.isPresent()) {
+            final DataRetentionRules dataRetentionRules = optDataRetentionRules.get();
+            LOGGER.info("process() - All retention time calculations based on now()={}", now);
+            final List<DataRetentionRule> activeRules = NullSafe.get(
                     dataRetentionRules,
-                    activeRules,
-                    now);
+                    DataRetentionRules::getRules,
+                    this::getActiveRules);
 
-            // Rules must be in ascending order by rule number so they applied in the correct order
-            processablePeriods.stream()
-                    .sorted(Comparator.comparing(processablePeriod ->
-                            // Work backwards in time
-                            processablePeriod.timePeriod.getFrom(), Comparator.reverseOrder()))
-                    .takeWhile(ignored -> {
-                        if (Thread.currentThread().isInterrupted()) {
-                            LOGGER.error("process() - Thread interrupted");
-                            throw new TaskTerminatedException();
-                        } else {
-                            return true;
-                        }
-                    })
-                    .forEach(processablePeriod -> {
-                        final List<DataRetentionRuleAction> ruleActions =
-                                processablePeriod.dataRetentionRuleActions;
-                        final TimePeriod period = processablePeriod.timePeriod;
+            if (NullSafe.hasItems(activeRules)) {
 
-                        final List<DataRetentionRuleAction> sortedActions = ruleActions.stream()
-                                .sorted(DataRetentionRuleAction.comparingByRuleNo())
-                                .collect(Collectors.toList());
+                // Create a map of unique periods with the set of rules that apply to them.
+                final List<ProcessablePeriod> processablePeriods = getProcessPeriods(
+                        dataRetentionRules,
+                        activeRules,
+                        now);
 
-                        processPeriod(period, sortedActions, processablePeriod.ruleAge, now);
+                // Rules must be in ascending order by rule number so they applied in the correct order
+                processablePeriods.stream()
+                        .sorted(Comparator.comparing(processablePeriod ->
+                                // Work backwards in time
+                                processablePeriod.timePeriod.getFrom(), Comparator.reverseOrder()))
+                        .takeWhile(ignored -> {
+                            if (Thread.currentThread().isInterrupted()) {
+                                LOGGER.error("process() - Thread interrupted");
+                                throw new TaskTerminatedException();
+                            } else {
+                                return true;
+                            }
+                        })
+                        .forEach(processablePeriod -> {
+                            final List<DataRetentionRuleAction> ruleActions =
+                                    processablePeriod.dataRetentionRuleActions;
+                            final TimePeriod period = processablePeriod.timePeriod;
 
-                        // We have successfully processed this period so update the tracker
-                        // so the next run on this period can work from where we got to
-                        final DataRetentionTracker newTracker = new DataRetentionTracker(
-                                dataRetentionRules.getVersion(),
-                                processablePeriod.ruleAge,
-                                now);
-                        metaService.setTracker(newTracker);
-                    });
+                            final List<DataRetentionRuleAction> sortedActions = ruleActions.stream()
+                                    .sorted(DataRetentionRuleAction.comparingByRuleNo())
+                                    .collect(Collectors.toList());
+
+                            processPeriod(period, sortedActions, processablePeriod.ruleAge, now);
+
+                            // We have successfully processed this period so update the tracker
+                            // so the next run on this period can work from where we got to
+                            final DataRetentionTracker newTracker = new DataRetentionTracker(
+                                    dataRetentionRules.getVersion(),
+                                    processablePeriod.ruleAge,
+                                    now);
+                            metaService.setTracker(newTracker);
+                        });
+            } else {
+                LOGGER.info("process() - No active rules to process");
+            }
         } else {
-            LOGGER.info("process() - No active rules to process");
+            LOGGER.info("process() - No data retention rules found");
         }
+
     }
 
     private Map<String, DataRetentionTracker> getTrackers(final DataRetentionRules dataRetentionRules) {

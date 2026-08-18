@@ -36,6 +36,7 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A bit of a special store that only ever holds one doc with a hard coded name.
@@ -77,6 +78,14 @@ public class ContentTemplateStoreImpl
             Objects.requireNonNull(docRef);
             return readDocument(docRef);
         });
+    }
+
+    @Override
+    public Optional<ContentTemplates> get() {
+        // If we are just trying to apply content templates, we don't need to create them
+        // if they don't exist
+        return Optional.ofNullable(getSingletonDoc())
+                .map(this::readDocument);
     }
 
     private DocRef doGetOrCreate() {

@@ -21,6 +21,7 @@ import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -58,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -588,9 +590,21 @@ class TestDataRetentionPolicyExecutor {
     }
 
     private DataRetentionPolicyExecutor createExecutor(final List<DataRetentionRule> rules) {
+        final DataRetentionRules dataRetentionRules = buildRules(rules);
+        final DataRetentionRulesProvider dataRetentionRulesProvider = new DataRetentionRulesProvider() {
+            @Override
+            public DataRetentionRules getOrCreate() {
+                return dataRetentionRules;
+            }
+
+            @Override
+            public Optional<DataRetentionRules> get() {
+                return Optional.of(dataRetentionRules);
+            }
+        };
         return new DataRetentionPolicyExecutor(
                 clusterLockService,
-                () -> buildRules(rules),
+                dataRetentionRulesProvider,
                 metaService,
                 taskContextFactory);
     }
