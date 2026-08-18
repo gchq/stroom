@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.12] - 2026-08-18
+
+* Bug **#5730** : Fix doc create permission bug.
+
+* Bug **#5732** : Fix locate button enabled state.
+
+
 ## [v7.13-beta.11] - 2026-08-17
 
 * Refactor : Change YAML config code back to using the legacy Jackson v2 as this is consistent with the current version of DropWizard.
@@ -2487,7 +2494,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.12...HEAD
+[v7.13-beta.12]: https://github.com/gchq/stroom/compare/v7.13-beta.11...v7.13-beta.12
 [v7.13-beta.11]: https://github.com/gchq/stroom/compare/v7.13-beta.10...v7.13-beta.11
 [v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
 [v7.13-beta.9]: https://github.com/gchq/stroom/compare/v7.13-beta.8...v7.13-beta.9
