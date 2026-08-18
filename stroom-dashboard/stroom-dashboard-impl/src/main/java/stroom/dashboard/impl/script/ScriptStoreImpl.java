@@ -40,9 +40,10 @@ class ScriptStoreImpl
 
     @Inject
     ScriptStoreImpl(final StoreFactory storeFactory,
-                    final ScriptSerialiser serialiser,
-                    final SecurityContext securityContext) {
+                    final SecurityContext securityContext,
+                    final ScriptSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 ScriptDoc.TYPE,
                 ScriptDoc::builder,

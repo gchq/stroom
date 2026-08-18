@@ -301,8 +301,6 @@ public class UserListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean isExternalIdp() {

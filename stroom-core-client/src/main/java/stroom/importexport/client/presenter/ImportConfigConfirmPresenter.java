@@ -22,7 +22,6 @@ import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -310,7 +309,6 @@ public class ImportConfigConfirmPresenter extends
         addTypeColumn();
         addSourcePathColumn();
         addDestPathColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {

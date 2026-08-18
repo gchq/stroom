@@ -20,7 +20,6 @@ import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.receive.content.shared.ContentTemplate;
@@ -211,8 +210,6 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                         .build(),
                 "",
                 24);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addColumn(final String name,

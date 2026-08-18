@@ -293,8 +293,6 @@ public class DocumentUserPermissionsListPresenter
                             .build(),
                     400);
         }
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {

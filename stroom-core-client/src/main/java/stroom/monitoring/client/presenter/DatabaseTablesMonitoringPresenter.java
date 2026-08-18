@@ -19,7 +19,6 @@ package stroom.monitoring.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -103,8 +102,6 @@ public class DatabaseTablesMonitoringPresenter
                 return ModelStringUtil.formatIECByteSizeString(row.getIndexSize());
             }
         }, DBTableStatus.FIELD_INDEX_SIZE, 100);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
         criteria = new FindDBTableCriteria();
         refresh();

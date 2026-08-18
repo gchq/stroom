@@ -17,7 +17,6 @@
 package stroom.dictionary.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -70,7 +69,6 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
                     DataGridUtil.headingBuilder(columnName).build(),
                     500);
         }
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Function<DocRef, CommandLink> buildOpenDocCommandLink() {

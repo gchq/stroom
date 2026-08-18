@@ -121,7 +121,7 @@ public final class ManageGlobalPropertyEditPresenter
         this.dataTypeHelpButton = view.addDataTypeHelpIcon(SvgPresets.HELP);
 
         this.effectiveValueWarningsButton.setVisible(false);
-        this.effectiveValueWarningsButton.setVisible(false);
+        this.effectiveValueInfoButton.setVisible(false);
         this.dataTypeHelpButton.setVisible(true);
 
         view.setUiHandlers(this);

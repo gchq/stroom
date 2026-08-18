@@ -20,7 +20,6 @@ import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
@@ -253,8 +252,6 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("The date/time this volume was last written to.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Number getUsePercentage(final FsVolume volume) {

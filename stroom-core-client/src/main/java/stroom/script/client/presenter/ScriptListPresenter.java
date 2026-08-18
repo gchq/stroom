@@ -16,7 +16,6 @@
 
 package stroom.script.client.presenter;
 
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -61,7 +60,6 @@ public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
             }
         };
         dataGrid.addResizableColumn(nameColumn, "Name", 250);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<DocRef> scripts) {

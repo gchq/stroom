@@ -20,7 +20,6 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -96,7 +95,6 @@ public class ColumnSelectionPresenter
     private void addColumns() {
         addSelectedColumn();
         addNameColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
