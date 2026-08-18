@@ -121,6 +121,7 @@ public class StoreImpl implements Store, AttributeMapFactory {
         // Create in UNLOCKED state as the stream's data already exists
         final Meta meta = metaService.create(metaProperties, Status.UNLOCKED);
         final long metaId = meta.getId();
+        // Create the link between the meta and the S3 location
         dataVolumeService.createS3LocationDataVolume(
                 metaId, volume, Set.of(s3Location), true);
 
@@ -234,7 +235,7 @@ public class StoreImpl implements Store, AttributeMapFactory {
                 "getStreamStore() - fsVolumeType: {}, streamStore: {}",
                 fsVolumeType, LogUtil.typedValue(streamStore)));
         if (streamStore == null) {
-            throw new IllegalArgumentException("No StreamStore for " + fsVolumeType);
+            throw new IllegalArgumentException("No StreamStore for " + fsVolumeType.getDisplayValue());
         }
         return streamStore;
     }

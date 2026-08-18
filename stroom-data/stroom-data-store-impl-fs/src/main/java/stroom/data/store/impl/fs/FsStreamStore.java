@@ -42,7 +42,6 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.jspecify.annotations.NonNull;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,11 +63,8 @@ class FsStreamStore implements StreamStore {
     private final MetaService metaService;
     // Provider to avoid a circular ref in Guice bindings
     private final Provider<FsVolumeService> fsVolumeServiceProvider;
-    //    private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
     private final FsFileDeleter fsFileDeleter;
-//    private final S3Store s3Store;
-//    private final S3ZstdStore s3ZstdStore;
 
     @Inject
     FsStreamStore(final FsPathHelper fileSystemStreamPathHelper,
@@ -80,53 +76,22 @@ class FsStreamStore implements StreamStore {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.fsVolumeServiceProvider = fsVolumeServiceProvider;
-//        this.dataVolumeService = dataVolumeService;
         this.pathCreator = pathCreator;
-//        this.s3Store = s3Store;
-//        this.s3ZstdStore = s3ZstdStore;
         this.fsFileDeleter = fsFileDeleter;
     }
 
-//    @Override
-//    public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
-//        LOGGER.debug("openTarget() - volumeGroup: {}, metaProperties: {}", volumeGroup, metaProperties);
-//
-//        final FsVolume volume = volumeService.getVolume(volumeGroup);
-//        if (volume == null) {
-//            throw new DataException("""
-//                    Failed to get lock as no writable volumes. This may be because there are no active \
-//                    volumes configured or the active volumes (or the filesystem(s) they sit on) are full \
-//                    or near full.""");
-//        }
-//
-//        // First time call (no file yet exists)
-//        final Meta meta = metaService.create(metaProperties);
-//        final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
-//        final FsVolumeType volumeType = dataVolume.volume().getVolumeType();
-//        final Target target = switch (volumeType) {
-//            case STANDARD -> createFsTarget(dataVolume, meta);
-//            case S3_V1 -> s3Store.getTarget(dataVolume, meta);
-//            case S3_V2 -> s3ZstdStore.getTarget(dataVolume, meta);
-//            case null -> throw new UnsupportedOperationException(LogUtil.message(
-//                    "Null volume type for metaId: {}, volumeId {}",
-//                    dataVolume.metaId(), dataVolume.volume().getId()));
-//        };
-//        LOGGER.debug(() -> LogUtil.message("openTarget() - returning target: {}, volumeId: {}, meta: {}",
-//                target.getClass(), dataVolume.volume().getId(), meta));
-//        return target;
-//    }
 
-    private @NonNull Target createFsTarget(final DataVolume dataVolume, final Meta meta) {
-        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
-        final FsTarget fsTarget = FsTarget.create(
-                metaService,
-                fileSystemStreamPathHelper,
-                meta,
-                volumePath);
-        // Force Creation of the files
-        fsTarget.getOutputStream();
-        return fsTarget;
-    }
+//    private @NonNull Target createFsTarget(final DataVolume dataVolume, final Meta meta) {
+//        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
+//        final FsTarget fsTarget = FsTarget.create(
+//                metaService,
+//                fileSystemStreamPathHelper,
+//                meta,
+//                volumePath);
+//        // Force Creation of the files
+//        fsTarget.getOutputStream();
+//        return fsTarget;
+//    }
 
 //    @Override
 //    public void logicallyDeleteTarget(final Target target) {
