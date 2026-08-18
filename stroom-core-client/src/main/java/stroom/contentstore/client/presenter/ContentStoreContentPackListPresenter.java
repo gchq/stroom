@@ -21,7 +21,6 @@ import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -252,9 +251,6 @@ public class ContentStoreContentPackListPresenter
                         .withToolTip("Name of the Content Store")
                         .build(),
                 80);
-
-        // End the columns
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     /**

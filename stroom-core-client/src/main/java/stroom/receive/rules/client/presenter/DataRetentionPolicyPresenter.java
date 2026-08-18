@@ -230,7 +230,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                 .text("Delete Rule")
                                 .command(() ->
                                         deleteRule(rule)))
-                .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 0, itemBuilder ->
+                .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
                                 .text("Move Rule Up")
@@ -516,7 +516,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final DataRetentionRule rule = editRulePresenter.write();

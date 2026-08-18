@@ -174,8 +174,6 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("The base URL for the node.")
                         .build(),
                 300);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public void setAllNodes(final Set<Integer> allNodes) {

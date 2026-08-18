@@ -18,7 +18,6 @@ package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -176,8 +175,6 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                    }
 //                };
 //        dataGrid.addResizableColumn(inheritedCreatePermissionCol, "Inherited Create Permission", 400);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
 
 //        final ColumnSortEvent.Handler columnSortHandler = event -> {

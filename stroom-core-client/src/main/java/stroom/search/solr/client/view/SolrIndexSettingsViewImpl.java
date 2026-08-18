@@ -193,6 +193,8 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         useZk.setEnabled(!readOnly);
         zkHosts.setEnabled(!readOnly);
         zkPath.setEnabled(!readOnly);
+        collection.setEnabled(!readOnly);
+        timeField.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

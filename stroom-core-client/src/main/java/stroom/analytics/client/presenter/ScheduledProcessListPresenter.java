@@ -212,8 +212,6 @@ public class ScheduledProcessListPresenter
                         .withToolTip("The time bounds for the schedule.")
                         .build(),
                 ColumnSizeConstants.MEDIUM_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     /**

@@ -17,7 +17,8 @@
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
-# the build
+# the build. Keep both statements the same between this and stroom-proxy
+# so they can each use the same cached layer.
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.

@@ -303,8 +303,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         jobNodeListHelper.addNextExecutedColumn(dataGrid);
         // Action column
         jobNodeListHelper.addActionColumn(dataGrid);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private CommandLink openJobNodeAsCommandLink(final JobNodeAndInfo jobNodeAndInfo) {

@@ -20,7 +20,6 @@ import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -117,10 +116,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         // Node.
         addNodeColumn();
         addStatColumns();
-
-        final EndColumn<CacheInfo> endColumn = new EndColumn<>();
-        columns.add(endColumn);
-        dataGrid.addEndColumn(endColumn);
     }
 
     private void addClearColumn() {

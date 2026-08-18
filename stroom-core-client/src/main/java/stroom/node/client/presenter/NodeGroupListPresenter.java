@@ -20,7 +20,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -129,8 +128,6 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
                         .centerAligned()
                         .build(),
                 ColumnSizeConstants.ENABLED_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void internalRefresh() {

@@ -19,6 +19,7 @@ package stroom.pipeline.xmlschema;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -39,8 +40,10 @@ public class XmlSchemaStoreImpl
 
     @Inject
     public XmlSchemaStoreImpl(final StoreFactory storeFactory,
+                              final SecurityContext securityContext,
                               final XmlSchemaSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 XmlSchemaDoc.TYPE,
                 XmlSchemaDoc::builder,

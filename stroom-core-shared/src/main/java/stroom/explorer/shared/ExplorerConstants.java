@@ -82,8 +82,8 @@ public final class ExplorerConstants {
 
     public static boolean isFavouritesNode(final String type,
                                            final String uuid) {
-        return Objects.equals(SYSTEM_NODE.getType(), type)
-               && Objects.equals(SYSTEM_NODE.getUuid(), uuid);
+        return Objects.equals(FAVOURITES_NODE.getType(), type)
+               && Objects.equals(FAVOURITES_NODE.getUuid(), uuid);
     }
 
     /**

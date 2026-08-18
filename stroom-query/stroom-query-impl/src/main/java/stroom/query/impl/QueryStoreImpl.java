@@ -41,37 +41,23 @@ class QueryStoreImpl
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryStoreImpl.class);
 
-    private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
 
     @Inject
     QueryStoreImpl(final StoreFactory storeFactory,
-                   final QuerySerialiser serialiser,
                    final SecurityContext securityContext,
+                   final QuerySerialiser serialiser,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 QueryDoc.TYPE,
                 QueryDoc::builder,
                 QueryDoc::copy);
-        this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
-    }
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = getStore().createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final QueryDoc dashboardDoc = getStore().readDocument(docRef);
-            getStore().writeDocument(dashboardDoc);
-        });
-        return docRef;
     }
 
     @Override

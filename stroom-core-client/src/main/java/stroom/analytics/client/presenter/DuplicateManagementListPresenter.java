@@ -23,7 +23,6 @@ import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -124,8 +123,6 @@ public class DuplicateManagementListPresenter
                 dataGrid.addResizableColumn(column, columnName, 200);
                 columns.add(column);
             }
-
-            dataGrid.addEndColumn(new EndColumn<>());
         }
     }
 

@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
@@ -94,8 +93,6 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
             }
         };
         dataGrid.addResizableColumn(volumeColumn, "Name", 400);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public MultiSelectionModel<FsVolumeGroup> getSelectionModel() {

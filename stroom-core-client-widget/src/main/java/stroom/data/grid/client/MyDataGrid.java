@@ -997,9 +997,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         setColumnWidth(column, width, Unit.PX);
     }
 
-    public void addEndColumn(final EndColumn<R> column) {
-    }
-
     @Override
     public void removeColumn(final Column<R, ?> column) {
         final int index = super.getColumnIndex(column);

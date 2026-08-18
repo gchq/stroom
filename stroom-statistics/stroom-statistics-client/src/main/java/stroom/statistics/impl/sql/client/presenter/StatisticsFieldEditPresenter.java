@@ -70,7 +70,7 @@ public class StatisticsFieldEditPresenter
         name = name.trim();
 
         if (name.length() == 0) {
-            throw new RuntimeException("An index field must have a name");
+            throw new RuntimeException("A statistic field must have a name");
         }
         if (otherFieldNames.contains(name)) {
             throw new RuntimeException("Another field with this name already exists");

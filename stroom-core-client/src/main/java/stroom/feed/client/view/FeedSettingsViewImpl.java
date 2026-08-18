@@ -131,6 +131,10 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         feedStatus.setEnabled(!readOnly);
         reference.setEnabled(!readOnly);
         volumeGroup.setEnabled(!readOnly);
+        dataFormat.setEnabled(!readOnly);
+        contextFormat.setEnabled(!readOnly);
+        schema.setEnabled(!readOnly);
+        schemaVersion.setEnabled(!readOnly);
     }
 
 

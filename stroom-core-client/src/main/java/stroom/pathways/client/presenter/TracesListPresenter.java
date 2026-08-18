@@ -18,7 +18,6 @@ package stroom.pathways.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -99,7 +98,6 @@ public class TracesListPresenter
         addServicesColumn();
         addDepthColumn();
         addTotalSpansColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {

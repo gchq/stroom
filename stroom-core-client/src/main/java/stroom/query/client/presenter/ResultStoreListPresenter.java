@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -134,8 +133,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                 return Boolean.toString(resultStoreInfo.isComplete());
             }
         }, "Complete", ColumnSizeConstants.SMALL_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
         dataProvider =
                 new RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>>(getEventBus()) {

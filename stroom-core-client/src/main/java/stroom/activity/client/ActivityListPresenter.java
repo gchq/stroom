@@ -20,7 +20,6 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -98,7 +97,6 @@ public class ActivityListPresenter
                 return builder.toSafeHtml();
             }
         }, "Activity", 600);
-        dataGrid.addEndColumn(new EndColumn<Activity>());
 
         dataProvider = new RestDataProvider<Activity, ResultPage<Activity>>(eventBus) {
             @Override

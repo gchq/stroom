@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.WrapperView;
 import stroom.pipeline.shared.FetchMarkerResult;
@@ -75,7 +74,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
         addLine();
         addCol();
         addMessage();
-        dataGrid.addEndColumn(new EndColumn<>());
 
         messageCauseDelimiterPattern = RegExp.compile(RegExp.quote(StoredError.MESSAGE_CAUSE_DELIMITER));
     }

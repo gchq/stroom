@@ -20,7 +20,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.svg.client.Preset;
@@ -82,8 +81,6 @@ public class SelectionHandlerListPresenter
                     }
                 };
         dataGrid.addResizableColumn(expressionColumn, "Expression", 500);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<ComponentSelectionHandler> data) {

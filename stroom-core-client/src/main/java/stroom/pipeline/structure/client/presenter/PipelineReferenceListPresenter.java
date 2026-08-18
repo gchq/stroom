@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
@@ -148,8 +147,6 @@ public class PipelineReferenceListPresenter
         addFeedColumn();
         addStreamTypeColumn();
         addInheritedFromColumn();
-
-        addEndColumn();
     }
 
     private void addPipelineColumn() {
@@ -238,10 +235,6 @@ public class PipelineReferenceListPresenter
                 .build();
 
         dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);
-    }
-
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {

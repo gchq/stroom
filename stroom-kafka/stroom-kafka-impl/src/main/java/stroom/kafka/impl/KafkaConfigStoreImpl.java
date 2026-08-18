@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -34,9 +35,11 @@ class KafkaConfigStoreImpl
 
     @Inject
     KafkaConfigStoreImpl(final StoreFactory storeFactory,
+                         final SecurityContext securityContext,
                          final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 KafkaConfigDoc.TYPE,
                 KafkaConfigDoc::builder,

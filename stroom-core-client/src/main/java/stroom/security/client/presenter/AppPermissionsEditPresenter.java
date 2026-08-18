@@ -217,8 +217,6 @@ public class AppPermissionsEditPresenter
                         .withToolTip("Description of what the permission allows the user/group to do.")
                         .build(),
                 700);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean hasPermission(final AppPermission permission) {

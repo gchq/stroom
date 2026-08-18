@@ -22,7 +22,6 @@ import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -287,9 +286,6 @@ public class AnalyticDataShardListPresenter
                 return row.getPath();
             }
         }, "Path", 600);
-
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     protected void read(final DocRef docRef) {

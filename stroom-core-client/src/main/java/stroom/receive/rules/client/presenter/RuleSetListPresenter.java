@@ -122,8 +122,6 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
                                      "when checking incoming data.")
                         .build(),
                 ColumnSizeConstants.SMALL_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public void setData(final List<ReceiveDataRule> data) {

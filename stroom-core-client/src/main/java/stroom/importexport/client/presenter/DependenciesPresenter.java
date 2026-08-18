@@ -195,8 +195,6 @@ public class DependenciesPresenter
                         .build(),
                 DataGridUtil.createCenterAlignedHeader(DependencyCriteria.FIELD_STATUS),
                 60);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,

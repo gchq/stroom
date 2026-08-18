@@ -280,8 +280,6 @@ public class AppUserPermissionsListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private static SafeHtml buildPermissionsCellValue(final AppUserPermissions appUserPermissions) {

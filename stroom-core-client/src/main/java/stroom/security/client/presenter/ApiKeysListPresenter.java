@@ -386,8 +386,6 @@ public class ApiKeysListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private Set<UserScreen> getActionScreensToInclude() {

@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql.entity;
 
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 
 import jakarta.inject.Inject;
@@ -30,8 +31,10 @@ public class StatisticStoreStoreImpl
 
     @Inject
     public StatisticStoreStoreImpl(final StoreFactory storeFactory,
+                                   final SecurityContext securityContext,
                                    final StatisticStoreSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 StatisticStoreDoc.TYPE,
                 StatisticStoreDoc::builder,

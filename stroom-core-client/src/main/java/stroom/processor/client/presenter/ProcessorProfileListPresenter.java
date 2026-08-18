@@ -18,7 +18,6 @@ package stroom.processor.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -103,8 +102,6 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
                         .withToolTip("The name of the node group.")
                         .build(),
                 300);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void internalRefresh() {

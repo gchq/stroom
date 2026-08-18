@@ -218,7 +218,5 @@ public class UserDependenciesListPresenter
                         .withToolTip("The details of the dependency.")
                         .build(),
                 700);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 }

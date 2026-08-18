@@ -20,7 +20,7 @@ import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
-import stroom.document.client.DocumentTabData;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.SetDocumentAsFavouriteEvent;
 import stroom.explorer.client.event.DeleteTabSessionEvent;
 import stroom.explorer.client.event.LocateDocEvent;
@@ -30,7 +30,6 @@ import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.event.TabSessionChangeEvent;
-import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.explorer.shared.TabSession;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
@@ -51,16 +50,12 @@ public class NavigationPlugin extends Plugin {
     private List<TabSession> tabSessions;
 
     @Inject
-    public NavigationPlugin(final EventBus eventBus, final TabSessionManager tabSessionManager) {
+    public NavigationPlugin(final EventBus eventBus,
+                            final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus);
         // track the currently selected doc.
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
-            if (e.getTabData() instanceof DocumentTabData) {
-                final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
-                selectedDoc = documentTabData.getDocRef();
-            } else {
-                selectedDoc = null;
-            }
+            selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
         }));
 
         registerHandler(getEventBus().addHandler(TabSessionChangeEvent.getType(), e -> {

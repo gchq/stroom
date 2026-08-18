@@ -206,8 +206,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
                 ColumnSizeConstants.SMALL_COL);
-
-        addEndColumn();
     }
 
     private Expander buildExpander(final MetaRow row) {

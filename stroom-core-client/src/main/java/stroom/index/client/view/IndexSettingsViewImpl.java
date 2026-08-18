@@ -159,6 +159,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
         shardsPerPartition.setEnabled(!readOnly);
         retentionAge.setEnabled(!readOnly);
         volumeGroups.setEnabled(!readOnly);
+        timeField.setEnabled(!readOnly);
     }
 
     @UiHandler("maxDocsPerShard")
