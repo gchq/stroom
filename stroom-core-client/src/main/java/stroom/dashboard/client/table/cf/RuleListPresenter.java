@@ -18,7 +18,6 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.document.client.event.DirtyEvent;
@@ -90,8 +89,6 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                 200);
         // Hide.
         addHideColumn();
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addEnabledColumn() {

@@ -243,8 +243,6 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                         .rightAligned()
                         .build(),
                 ColumnSizeConstants.MEDIUM_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private String getDestinationAsString(final NotificationConfig row) {

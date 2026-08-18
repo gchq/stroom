@@ -20,6 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.CreateUserPresenter.CreateType;
 import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.client.presenter.CreateUserUiHandlers;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -40,6 +41,8 @@ public class CreateUserViewImpl
     private final Widget widget;
 
     @UiField
+    FormGroup createTypesFormGroup;
+    @UiField
     SelectionBox<CreateType> createTypes;
     @UiField
     SimplePanel panel;
@@ -56,7 +59,7 @@ public class CreateUserViewImpl
 
     @Override
     public void setCreateTypesVisible(final boolean visible) {
-        createTypes.setVisible(visible);
+        createTypesFormGroup.setVisible(visible);
     }
 
     @Override

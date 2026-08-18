@@ -32,7 +32,6 @@ import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -395,7 +394,6 @@ public class ExecutionScheduleManager
                 }
             }, ExecutionScheduleFields.BOUNDS, ColumnSizeConstants.MEDIUM_COL
         );
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void createRunAsColumn(final ClientSecurityContext securityContext) {

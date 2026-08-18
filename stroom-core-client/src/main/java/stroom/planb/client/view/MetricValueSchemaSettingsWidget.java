@@ -84,6 +84,11 @@ public class MetricValueSchemaSettingsWidget
 
     public void onReadOnly(final boolean readOnly) {
         maxValue.setEnabled(!readOnly);
+        storeLatestValue.setEnabled(!readOnly);
+        storeMin.setEnabled(!readOnly);
+        storeMax.setEnabled(!readOnly);
+        storeCount.setEnabled(!readOnly);
+        storeSum.setEnabled(!readOnly);
     }
 
     @UiHandler("maxValue")

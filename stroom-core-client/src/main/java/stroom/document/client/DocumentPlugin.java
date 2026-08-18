@@ -29,6 +29,7 @@ import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocPresenter;
@@ -252,12 +253,14 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         final RestErrorHandler errorHandler = caught ->
                 AlertEvent.fireError(
                         DocumentPlugin.this,
-                        "Unable to load document " + docRef, caught.getMessage(),
+                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef), caught.getMessage(),
                         null);
 
         final Consumer<D> loadConsumer = doc -> {
             if (doc == null) {
-                AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+                AlertEvent.fireError(DocumentPlugin.this,
+                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef),
+                        null);
             } else {
                 if (selectedCommonTab != null) {
                     if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
@@ -342,7 +345,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                             throwable -> {
                                 AlertEvent.fireError(
                                         this,
-                                        "Unable to save document " + finalDocument,
+                                        "Unable to save document "
+                                        + DocRefUtil.createTypedDocRefString(getDocRef(finalDocument)),
                                         throwable.getMessage(), null);
                                 onComplete.run();
                             },

@@ -371,8 +371,6 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
                         .centerAligned()
                         .build(),
                 ColumnSizeConstants.ENABLED_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private SafeHtml getPingBarSafeHtml(final NodeStatusResult row) {
