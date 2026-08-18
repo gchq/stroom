@@ -18,7 +18,6 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -104,7 +103,6 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         dataGrid.addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     @Override

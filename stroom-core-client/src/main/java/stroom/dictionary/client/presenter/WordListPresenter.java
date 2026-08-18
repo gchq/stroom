@@ -18,7 +18,6 @@ package stroom.dictionary.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.CommandLink;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -160,8 +159,6 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
                         .withToolTip("Additional Dictionaries that also contain the word.")
                         .build(),
                 400);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
         dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {

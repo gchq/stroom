@@ -195,8 +195,6 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("The description of the job")
                         .build(),
                 300);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public MultiSelectionModel<JobWrapper> getSelectionModel() {

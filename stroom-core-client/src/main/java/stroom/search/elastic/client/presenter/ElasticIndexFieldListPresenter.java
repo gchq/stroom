@@ -16,7 +16,6 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -73,7 +72,6 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
         addStringColumn("Field Type", 150, row -> row.getFldType().getDisplayValue());
         addStringColumn("Native Type", 150, ElasticIndexField::getNativeType);
         addBooleanColumn("Indexed", 100, ElasticIndexField::isIndexed);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addStringColumn(final String name,

@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -208,8 +207,6 @@ public class ProcessorTaskListPresenter
                         return dateTimeFormatter.format(row.getEndTimeMs());
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void showTooltip(final PopupPosition popupPosition,

@@ -20,7 +20,6 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
@@ -56,7 +55,6 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
         dataGrid.setTableName("Document References");
         addSelectedColumn();
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Document Name", Function.identity(), false);
-        dataGrid.addEndColumn(new EndColumn<>());
         dataGrid.hasContextMenu(false);
 
         dataProvider.addDataDisplay(dataGrid);

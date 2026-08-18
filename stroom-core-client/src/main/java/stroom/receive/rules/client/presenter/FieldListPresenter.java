@@ -17,7 +17,6 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -209,7 +208,6 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                         .build(),
                 150);
 
-        dataGrid.addEndColumn(new EndColumn<>());
         dataGrid.sort(nameColumn);
 
         return DataGridUtil.comparatorFactoryBuilder(dataGrid)

@@ -144,8 +144,6 @@ public class ScheduledProcessHistoryListPresenter
                         .withToolTip("Any output or error message output by the execution.")
                         .build(),
                 ColumnSizeConstants.BIG_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private void replay() {

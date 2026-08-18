@@ -120,8 +120,6 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
                         SessionDetails::getLastAccessedAgent)
                 .build();
         dataGrid.addAutoResizableColumn(agentColumn, "Agent", ColumnSizeConstants.BIG_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     /**
