@@ -79,18 +79,15 @@ public class ToolModule extends AbstractModule {
     }
 
     private DataRetentionRulesProvider createDataRetentionRulesProvider() {
-        final DataRetentionRules rules = DataRetentionRules.builder()
-                .build();
-
         return new DataRetentionRulesProvider() {
             @Override
             public DataRetentionRules getOrCreate() {
-                return rules;
+                return null;
             }
 
             @Override
             public Optional<DataRetentionRules> get() {
-                return Optional.of(rules);
+                return Optional.empty();
             }
         };
     }
