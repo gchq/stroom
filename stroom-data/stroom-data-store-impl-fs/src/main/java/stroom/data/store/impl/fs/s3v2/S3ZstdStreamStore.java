@@ -209,8 +209,6 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
         final long metaId = simpleMeta.getId();
 
         // TODO Need to read all the file locations from fsMetaS3LocationDao
-
-
         final S3LocationDataVolume s3LocationDataVolume = fsMetaS3LocationDao.getS3LocationDataVolume(
                 simpleMeta.getId());
         final Set<S3Location> s3Locations = NullSafe.set(NullSafe.get(

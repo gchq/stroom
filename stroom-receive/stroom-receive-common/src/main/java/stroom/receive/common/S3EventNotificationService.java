@@ -131,19 +131,23 @@ public class S3EventNotificationService {
         LOGGER.debug("notify() - s3Location: {}, metaData: {}", s3Location, metaData);
         commonSecurityContext.secure(AppPermission.STROOM_PROXY, () -> {
             commonSecurityContext.asProcessingUser(() -> {
-                final AttributeMap attributeMap = new AttributeMap();
-                addReceiptId(attributeMap);
-
-                addS3MetaAttributes(s3Location, attributeMap);
-                // Override the s3 metadata with any supplied meta.
-                if (NullSafe.hasEntries(metaData)) {
-                    attributeMap.putAll(metaData);
-                }
-
-                LOGGER.debug("notify() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
-                s3EventConsumer.accept(new S3CreateEvent(s3Location, attributeMap));
+                doNotify(s3Location, metaData);
             });
         });
+    }
+
+    private void doNotify(final S3Location s3Location, final Map<String, String> metaData) {
+        final AttributeMap attributeMap = new AttributeMap();
+        addReceiptId(attributeMap);
+
+        addS3MetaAttributes(s3Location, attributeMap);
+        // Override the s3 metadata with any supplied meta.
+        if (NullSafe.hasEntries(metaData)) {
+            attributeMap.putAll(metaData);
+        }
+
+        LOGGER.debug("notify() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
+        s3EventConsumer.accept(new S3CreateEvent(s3Location, attributeMap));
     }
 
     public void addS3MetaAttributes(final S3Location s3Location,
