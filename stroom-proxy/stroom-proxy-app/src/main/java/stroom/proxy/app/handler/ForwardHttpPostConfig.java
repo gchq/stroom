@@ -216,7 +216,7 @@ public final class ForwardHttpPostConfig
 
     @JsonProperty
     @JsonPropertyDescription("Set of HTTP headers that should be added to the request when proxy forwards data. " +
-                             "THis set is in addition to the base set of allowed headers.")
+                             "This set is in addition to the base set of allowed headers.")
     public Set<String> getForwardHeadersAdditionalAllowSet() {
         return forwardHeadersAdditionalAllowSet;
     }

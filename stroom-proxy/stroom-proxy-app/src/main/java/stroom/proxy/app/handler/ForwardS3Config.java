@@ -34,7 +34,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
@@ -52,6 +54,7 @@ public final class ForwardS3Config
     private final String name;
     private final S3ClientConfig clientConfig;
     private final ForwardS3QueueConfig forwardQueueConfig;
+    private final Set<String> additionalMetaKeysAllowSet;
 
     public ForwardS3Config() {
         enabled = DEFAULT_IS_ENABLED;
@@ -60,15 +63,19 @@ public final class ForwardS3Config
         name = null;
         clientConfig = null;
         forwardQueueConfig = new ForwardS3QueueConfig();
+        additionalMetaKeysAllowSet = Collections.emptySet();
     }
 
     @JsonCreator
-    public ForwardS3Config(@JsonProperty("enabled") final boolean enabled,
-                           @JsonProperty("instant") final boolean instant,
-                           @JsonProperty("notificationType") final NotificationType notificationType,
-                           @JsonProperty("name") final String name,
-                           @JsonProperty("client") final S3ClientConfig clientConfig,
-                           @JsonProperty("queue") final ForwardS3QueueConfig forwardQueueConfig) {
+    public ForwardS3Config(
+            @JsonProperty("enabled") final boolean enabled,
+            @JsonProperty("instant") final boolean instant,
+            @JsonProperty("notificationType") final NotificationType notificationType,
+            @JsonProperty("name") final String name,
+            @JsonProperty("client") final S3ClientConfig clientConfig,
+            @JsonProperty("queue") final ForwardS3QueueConfig forwardQueueConfig,
+            @JsonProperty("additionalMetaKeysAllowSet") final Set<String> additionalMetaKeysAllowSet) {
+
         if (instant) {
             throw new IllegalArgumentException("instant is not supported by the S3 forwarder");
         } else {
@@ -79,6 +86,7 @@ public final class ForwardS3Config
         this.name = name;
         this.clientConfig = clientConfig;
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardS3QueueConfig::new);
+        this.additionalMetaKeysAllowSet = NullSafe.unmodifialbeSet(additionalMetaKeysAllowSet);
     }
 
     /**
@@ -129,6 +137,13 @@ public final class ForwardS3Config
             "to notify it of the location of the file on S3.")
     public NotificationType getNotificationType() {
         return notificationType;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("Set of meta keys that should be added to the request when proxy forwards data. " +
+                             "This set is in addition to the base set of allowed headers.")
+    public Set<String> getAdditionalMetaKeysAllowSet() {
+        return additionalMetaKeysAllowSet;
     }
 
     @JsonIgnore

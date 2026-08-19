@@ -16,7 +16,7 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
-import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.client.S3MetaKeysMapper;
 import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
@@ -76,7 +76,7 @@ public final class S3ZstdTarget implements Target {
     private final S3ZstdStreamStore s3ZstdStreamStore;
     private final S3Manager s3Manager;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
     private final HeapBufferPool heapBufferPool;
     private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
@@ -112,14 +112,14 @@ public final class S3ZstdTarget implements Target {
                          final S3ZstdStreamStore s3ZstdStreamStore,
                          final S3Manager s3Manager,
                          final S3StreamTypeExtensions s3StreamTypeExtensions,
-                         final S3MetaFieldsMapper s3MetaFieldsMapper,
+                         final S3MetaKeysMapper s3MetaKeysMapper,
                          final HeapBufferPool heapBufferPool,
                          final Path tempDir,
                          final DataVolume dataVolume,
                          final Meta meta,
                          final S3ZstdTarget parentTarget,
                          final String childStreamType) {
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
         this.heapBufferPool = heapBufferPool;
         this.dataVolume = dataVolume;
         this.metaService = metaService;
@@ -152,7 +152,7 @@ public final class S3ZstdTarget implements Target {
                                final S3ZstdStreamStore s3ZstdStreamStore,
                                final S3Manager s3Manager,
                                final S3StreamTypeExtensions s3StreamTypeExtensions,
-                               final S3MetaFieldsMapper s3MetaFieldsMapper,
+                               final S3MetaKeysMapper s3MetaKeysMapper,
                                final HeapBufferPool heapBufferPool,
                                final Path tempDir,
                                final DataVolume dataVolume,
@@ -162,7 +162,7 @@ public final class S3ZstdTarget implements Target {
                 s3ZstdStreamStore,
                 s3Manager,
                 s3StreamTypeExtensions,
-                s3MetaFieldsMapper,
+                s3MetaKeysMapper,
                 heapBufferPool,
                 tempDir,
                 dataVolume,
@@ -390,7 +390,7 @@ public final class S3ZstdTarget implements Target {
         final Map<CIKey, String> s3MetaData = new HashMap<>(attributeMap.size());
         attributeMap.forEach((key, value) -> {
             CIKey ciKey = CIKey.of(key);
-            ciKey = s3MetaFieldsMapper.getS3Key(ciKey)
+            ciKey = s3MetaKeysMapper.getS3Key(ciKey)
                     .orElse(null);
             if (ciKey != null) {
                 // Prefix key with mf- to distinguish it from .meta that is put in the s3MetaData (with 'meta-').
@@ -540,7 +540,7 @@ public final class S3ZstdTarget implements Target {
                 s3ZstdStreamStore,
                 s3Manager,
                 s3StreamTypeExtensions,
-                s3MetaFieldsMapper,
+                s3MetaKeysMapper,
                 heapBufferPool,
                 tempDir,
                 dataVolume,

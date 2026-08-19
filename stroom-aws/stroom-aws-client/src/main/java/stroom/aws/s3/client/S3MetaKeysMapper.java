@@ -17,6 +17,7 @@
 package stroom.aws.s3.client;
 
 
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.logging.LambdaLogger;
@@ -33,19 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
-public class S3MetaFieldsMapper {
+public class S3MetaKeysMapper {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3MetaFieldsMapper.class);
-
-//    private static final Set<String> ADDITIONAL_FIELD_NAMES = Stream.of(
-//            CIKeys.USER___AGENT,
-//            CIKeys.CONTENT___TYPE,
-//            CIKeys.,
-//
-//
-//    )
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3MetaKeysMapper.class);
 
     /**
      * Key => cleaned key
@@ -57,19 +53,26 @@ public class S3MetaFieldsMapper {
     private final Map<CIKey, CIKey> reverseMap;
 
     @Inject
-    public S3MetaFieldsMapper() {
-
+    public S3MetaKeysMapper() {
         final List<String> fieldNames = MetaFields.getAllFields()
                 .stream()
                 .map(QueryField::getFldName)
                 .filter(NullSafe::isNonBlankString)
                 .toList();
-        forwardMap = new HashMap<>(fieldNames.size());
-        reverseMap = new HashMap<>(fieldNames.size());
-        fieldNames.forEach(fieldName -> {
-            final CIKey fieldCIKey = CIKey.internStaticKey(fieldName);
-            final String cleaned = S3Util.cleanS3MetaDataKey(fieldName);
-            final CIKey cleanedCIKey = Objects.equals(fieldName, cleaned)
+
+        final Set<String> allKeys = Stream.concat(
+                        fieldNames.stream(),
+                        StandardHeaderArguments.HTTP_POST_BASE_META_ALLOW_SET.stream()
+                                .map(CIKey::get))
+                .collect(Collectors.toSet());
+
+        forwardMap = new HashMap<>(allKeys.size());
+        reverseMap = new HashMap<>(allKeys.size());
+
+        allKeys.forEach(key -> {
+            final CIKey fieldCIKey = CIKey.internStaticKey(key);
+            final String cleaned = S3Util.cleanS3MetaDataKey(key);
+            final CIKey cleanedCIKey = Objects.equals(key, cleaned)
                     ? fieldCIKey
                     : CIKey.internStaticKey(cleaned);
 
@@ -77,7 +80,7 @@ public class S3MetaFieldsMapper {
             final CIKey existingS3Key = reverseMap.get(cleanedCIKey);
             if (existingS3Key != null) {
                 throw new RuntimeException(LogUtil.message("Duplicate cleaned key '{}' for keys '{}' and '{}'",
-                        cleaned, fieldName, existingS3Key.get()));
+                        cleaned, key, existingS3Key.get()));
             }
             forwardMap.put(fieldCIKey, cleanedCIKey);
             reverseMap.put(cleanedCIKey, fieldCIKey);

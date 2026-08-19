@@ -28,13 +28,13 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.util.stream.Stream;
 
-class TestS3MetaFieldsMapper {
+class TestS3MetaKeysMapper {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestS3MetaFieldsMapper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestS3MetaKeysMapper.class);
 
     @TestFactory
     Stream<DynamicTest> testGetS3Key() {
-        final S3MetaFieldsMapper s3MetaFieldsMapper = new S3MetaFieldsMapper();
+        final S3MetaKeysMapper s3MetaKeysMapper = new S3MetaKeysMapper();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -42,11 +42,11 @@ class TestS3MetaFieldsMapper {
                 })
                 .withTestFunction(testCase -> {
                     final String input = testCase.getInput();
-                    final String s3Key = s3MetaFieldsMapper.getS3Key(input)
+                    final String s3Key = s3MetaKeysMapper.getS3Key(input)
                             .orElse(null);
 
                     if (testCase.getExpectedOutput() != null) {
-                        final String original = s3MetaFieldsMapper.getOriginalKey(s3Key)
+                        final String original = s3MetaKeysMapper.getOriginalKey(s3Key)
                                 .orElse(null);
                         LOGGER.debug("input: {}, s3Key: {}, original: {}", input, s3Key, original);
                         return Tuple.of(s3Key, original);

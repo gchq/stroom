@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
-import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.client.S3MetaKeysMapper;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
@@ -79,7 +79,7 @@ final class S3ZstdSource implements Source {
     private final S3ZstdStreamStore s3ZstdStreamStore;
     private final Meta meta;
     private final DataVolume dataVolume;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
     /**
      * //     * The {@link FileKey} of the main stream type
      */
@@ -100,7 +100,7 @@ final class S3ZstdSource implements Source {
                         final Meta meta,
                         final DataVolume dataVolume,
                         final S3StreamTypeExtensions s3StreamTypeExtensions,
-                        final S3MetaFieldsMapper s3MetaFieldsMapper,
+                        final S3MetaKeysMapper s3MetaKeysMapper,
                         final ExecutorProvider executorProvider) {
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
         this.executorProvider = executorProvider;
@@ -115,7 +115,7 @@ final class S3ZstdSource implements Source {
 //        this.counts = countTypes();
         this.parentFileKey = FileKey.of(dataVolume, meta);
         this.parentS3Key = s3StreamTypeExtensions.getkey(parentFileKey);
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
     }
 
     @Override
@@ -186,7 +186,7 @@ final class S3ZstdSource implements Source {
                         final String value = entry.getValue();
                         if (key.startsWithLowerCase(MANIFEST_METADATA_KEY_PREFIX)) {
                             key = key.substring(MANIFEST_METADATA_KEY_PREFIX_LENGTH);
-                            final CIKey originalCiKey = s3MetaFieldsMapper.getOriginalKey(key)
+                            final CIKey originalCiKey = s3MetaKeysMapper.getOriginalKey(key)
                                     .orElse(null);
                             if (originalCiKey == null) {
                                 // TODO how do we handle un-reversable keys??

@@ -30,7 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardS3QueueConfig extends ForwardQueueConfig {
 
-    private static final boolean DEFAULT_QUEUE_AND_RETRY_ENABLED = false;
+    private static final boolean DEFAULT_QUEUE_AND_RETRY_ENABLED = true;
 
     public ForwardS3QueueConfig() {
         super(DEFAULT_QUEUE_AND_RETRY_ENABLED,

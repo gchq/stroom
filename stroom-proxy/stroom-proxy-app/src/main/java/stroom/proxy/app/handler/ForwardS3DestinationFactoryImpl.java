@@ -18,7 +18,7 @@ package stroom.proxy.app.handler;
 
 
 import stroom.aws.s3.client.S3ClientPool;
-import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.client.S3MetaKeysMapper;
 import stroom.cache.api.TemplateCache;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.DownstreamHostConfig;
@@ -47,7 +47,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
     private final FileStores fileStores;
     private final S3ClientPool s3ClientPool;
     private final TemplateCache templateCache;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
     private final CleanupDirQueue cleanupDirQueue;
     private final JerseyClientFactory jerseyClientFactory;
     private final RemoteS3EventClient remoteS3EventClient;
@@ -61,7 +61,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                                            final FileStores fileStores,
                                            final S3ClientPool s3ClientPool,
                                            final TemplateCache templateCache,
-                                           final S3MetaFieldsMapper s3MetaFieldsMapper,
+                                           final S3MetaKeysMapper s3MetaKeysMapper,
                                            final CleanupDirQueue cleanupDirQueue,
                                            final JerseyClientFactory jerseyClientFactory,
                                            final RemoteS3EventClient remoteS3EventClient) {
@@ -73,7 +73,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
         this.fileStores = fileStores;
         this.s3ClientPool = s3ClientPool;
         this.templateCache = templateCache;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
         this.cleanupDirQueue = cleanupDirQueue;
         this.jerseyClientFactory = jerseyClientFactory;
         this.remoteS3EventClient = remoteS3EventClient;
@@ -86,10 +86,9 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
         final ForwardS3DestinationImpl forwardS3Destination = new ForwardS3DestinationImpl(
                 name,
                 forwardS3Config,
-                downstreamHostConfigProvider.get(),
                 s3ClientPool,
                 templateCache,
-                s3MetaFieldsMapper,
+                s3MetaKeysMapper,
                 cleanupDirQueue,
                 remoteS3EventClient);
 

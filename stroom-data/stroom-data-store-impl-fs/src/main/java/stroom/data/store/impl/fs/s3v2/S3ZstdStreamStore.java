@@ -16,7 +16,7 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
-import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.client.S3MetaKeysMapper;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.aws.s3.shared.S3ClientConfig;
@@ -91,7 +91,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
     private final ZstdSeekTableCache zstdSeekTableCache;
     private final HeapBufferPool heapBufferPool;
     private final S3ManagerFactory s3ManagerFactory;
@@ -108,7 +108,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
             final TempDirProvider tempDirProvider,
             final MetaService metaService,
             final S3StreamTypeExtensions s3StreamTypeExtensions,
-            final S3MetaFieldsMapper s3MetaFieldsMapper,
+            final S3MetaKeysMapper s3MetaKeysMapper,
             final ZstdSeekTableCache zstdSeekTableCache,
             final HeapBufferPool heapBufferPool,
             final S3ManagerFactory s3ManagerFactory,
@@ -121,7 +121,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
         this.templateCache = templateCache;
         this.metaService = metaService;
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
         this.zstdSeekTableCache = zstdSeekTableCache;
         this.heapBufferPool = heapBufferPool;
         this.s3ManagerFactory = s3ManagerFactory;
@@ -150,7 +150,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
                 this,
                 s3Manager,
                 s3StreamTypeExtensions,
-                s3MetaFieldsMapper,
+                s3MetaKeysMapper,
                 heapBufferPool,
                 tempDir,
                 dataVolume,
@@ -190,7 +190,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
                 meta,
                 dataVolume,
                 s3StreamTypeExtensions,
-                s3MetaFieldsMapper,
+                s3MetaKeysMapper,
                 executorProvider);
     }
 

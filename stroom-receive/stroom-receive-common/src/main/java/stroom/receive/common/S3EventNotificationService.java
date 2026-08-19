@@ -20,7 +20,7 @@ package stroom.receive.common;
 import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientHelper.S3ObjectInfo;
 import stroom.aws.s3.client.S3ClientPool;
-import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.client.S3MetaKeysMapper;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ClientConfigService;
 import stroom.aws.s3.shared.S3Location;
@@ -89,7 +89,7 @@ public class S3EventNotificationService {
     private final S3EventConsumer s3EventConsumer;
     private final S3ClientPool s3ClientPool;
     private final S3ClientConfigService s3ClientConfigService;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
     private final CommonSecurityContext commonSecurityContext;
 
     //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
@@ -104,7 +104,7 @@ public class S3EventNotificationService {
             final S3EventConsumer s3EventConsumer,
             final S3ClientPool s3ClientPool,
             final S3ClientConfigService s3ClientConfigService,
-            final S3MetaFieldsMapper s3MetaFieldsMapper,
+            final S3MetaKeysMapper s3MetaKeysMapper,
             final SecurityContext commonSecurityContext) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
@@ -112,7 +112,7 @@ public class S3EventNotificationService {
         this.s3EventConsumer = s3EventConsumer;
         this.s3ClientPool = s3ClientPool;
         this.s3ClientConfigService = s3ClientConfigService;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
         this.commonSecurityContext = commonSecurityContext;
     }
 
@@ -171,7 +171,7 @@ public class S3EventNotificationService {
                     // Map any known keys back to their original form as some of our keys may not fit the
                     // key restrictions.
                     objectInfo.s3Metadata().forEach((k, v) -> {
-                        final CIKey originalKey = s3MetaFieldsMapper.getOriginalKey(k)
+                        final CIKey originalKey = s3MetaKeysMapper.getOriginalKey(k)
                                 .orElse(k);
                         attributeMap.put(originalKey.get(), v);
                     });

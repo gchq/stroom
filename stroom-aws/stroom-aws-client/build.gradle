@@ -23,6 +23,8 @@ dependencies {
     // Needed for S3MetaFieldsMapper
     implementation project(':stroom-docref')
     // Needed for S3MetaFieldsMapper
+    implementation project(':stroom-meta:stroom-meta-api')
+    // Needed for S3MetaFieldsMapper
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

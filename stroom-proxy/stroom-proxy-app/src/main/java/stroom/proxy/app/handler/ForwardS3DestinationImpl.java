@@ -19,7 +19,7 @@ package stroom.proxy.app.handler;
 
 import stroom.aws.s3.client.S3ClientHelper;
 import stroom.aws.s3.client.S3ClientPool;
-import stroom.aws.s3.client.S3MetaFieldsMapper;
+import stroom.aws.s3.client.S3MetaKeysMapper;
 import stroom.aws.s3.client.S3UploadProperties;
 import stroom.aws.s3.client.S3Util;
 import stroom.aws.s3.shared.S3EventResource.S3EventNotificationRequest;
@@ -28,7 +28,6 @@ import stroom.cache.api.TemplateCache;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.app.handler.ForwardS3Config.NotificationType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,10 +42,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ForwardS3DestinationImpl implements ForwardS3Destination {
@@ -63,25 +64,22 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
     private final String destinationName;
     private final ForwardS3Config forwardS3Config;
     private final TemplateCache templateCache;
-    private final DownstreamHostConfig downstreamHostConfig;
     private final S3ClientHelper s3ClientHelper;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
     private final CleanupDirQueue cleanupDirQueue;
     private final RemoteS3EventClient remoteS3EventClient;
 
     public ForwardS3DestinationImpl(final String destinationName,
                                     final ForwardS3Config forwardS3Config,
-                                    final DownstreamHostConfig downstreamHostConfig,
                                     final S3ClientPool s3ClientPool,
                                     final TemplateCache templateCache,
-                                    final S3MetaFieldsMapper s3MetaFieldsMapper,
+                                    final S3MetaKeysMapper s3MetaKeysMapper,
                                     final CleanupDirQueue cleanupDirQueue,
                                     final RemoteS3EventClient remoteS3EventClient) {
         this.destinationName = destinationName;
         this.forwardS3Config = forwardS3Config;
-        this.downstreamHostConfig = downstreamHostConfig;
         this.templateCache = templateCache;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
         this.cleanupDirQueue = cleanupDirQueue;
         this.s3ClientHelper = new S3ClientHelper(forwardS3Config.getClientConfig(), s3ClientPool);
         this.remoteS3EventClient = remoteS3EventClient;
@@ -111,7 +109,10 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
             NullSafe.consumeNonBlankString(feedKey.type(), val ->
                     s3Tags.put(S3ClientHelper.STREAM_TYPE_TAG_KEY, val));
 
-            final Map<CIKey, String> s3MetaData = buildS3MetaData(attributeMap);
+            final Map<CIKey, String> s3MetaData = buildS3MetaData(forwardS3Config, attributeMap);
+            // We are always uploading a zip so set the compression type, not that it is that useful
+            // given the file has an extension of .zip.
+            s3MetaData.put(CIKeys.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
             try {
                 try {
@@ -152,11 +153,34 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
         }
     }
 
-    private Map<CIKey, String> buildS3MetaData(final AttributeMap attributeMap) {
+    private static Set<CIKey> buildMetaKeyAllowSet(final ForwardS3Config config) {
+        final Set<CIKey> baseSet = StandardHeaderArguments.HTTP_POST_BASE_META_ALLOW_SET;
+
+        final Set<String> additionalSet = NullSafe.set(NullSafe.get(
+                config,
+                ForwardS3Config::getAdditionalMetaKeysAllowSet));
+
+        final Set<CIKey> combinedSet = new HashSet<>(baseSet.size() + additionalSet.size());
+        combinedSet.addAll(baseSet);
+        additionalSet.stream()
+                .filter(NullSafe::isNonBlankString)
+                .map(CIKey::of)
+                .forEach(combinedSet::add);
+
+        LOGGER.debug("buildHeaderAllowSet() - combinedSet: {}", combinedSet);
+        return combinedSet;
+    }
+
+    private Map<CIKey, String> buildS3MetaData(final ForwardS3Config forwardS3Config,
+                                               final AttributeMap attributeMap) {
+        final Set<CIKey> allowSet = buildMetaKeyAllowSet(forwardS3Config);
+
         final Map<CIKey, String> map = attributeMap.entrySet()
                 .stream()
+                .filter(entry ->
+                        allowSet.contains(CIKey.of(entry.getKey())))
                 .map(entry -> {
-                    final Optional<CIKey> optKey = s3MetaFieldsMapper.getS3Key(entry.getKey())
+                    final Optional<CIKey> optKey = s3MetaKeysMapper.getS3Key(entry.getKey())
                             .map(CIKey::of);
                     if (optKey.isPresent()) {
                         return Map.entry(optKey.get(), entry.getValue());
