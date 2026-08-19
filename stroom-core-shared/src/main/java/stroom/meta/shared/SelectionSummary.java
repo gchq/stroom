@@ -52,6 +52,8 @@ public class SelectionSummary {
     private final Set<String> distinctStatuses;
     @JsonProperty
     private final Range<Long> ageRange;
+    @JsonProperty
+    private final Long readOnlyCount;
 
     @JsonCreator
     public SelectionSummary(@JsonProperty("itemCount") final long itemCount,
@@ -63,7 +65,8 @@ public class SelectionSummary {
                             @JsonProperty("pipelineCount") final long pipelineCount,
                             @JsonProperty("statusCount") final long statusCount,
                             @JsonProperty("distinctStatuses") final Set<String> distinctStatuses,
-                            @JsonProperty("ageRange") final Range<Long> ageRange) {
+                            @JsonProperty("ageRange") final Range<Long> ageRange,
+                            @JsonProperty("readOnlyCount") final long readOnlyCount) {
         this.itemCount = itemCount;
         this.feedCount = feedCount;
         this.distinctFeeds = distinctFeeds;
@@ -74,6 +77,30 @@ public class SelectionSummary {
         this.statusCount = statusCount;
         this.distinctStatuses = distinctStatuses;
         this.ageRange = ageRange;
+        this.readOnlyCount = readOnlyCount;
+    }
+
+    public SelectionSummary(final long itemCount,
+                            final long feedCount,
+                            final Set<String> distinctFeeds,
+                            final long typeCount,
+                            final Set<String> distinctTypes,
+                            final long processorCount,
+                            final long pipelineCount,
+                            final long statusCount,
+                            final Set<String> distinctStatuses,
+                            final Range<Long> ageRange) {
+        this.itemCount = itemCount;
+        this.feedCount = feedCount;
+        this.distinctFeeds = distinctFeeds;
+        this.typeCount = typeCount;
+        this.distinctTypes = distinctTypes;
+        this.processorCount = processorCount;
+        this.pipelineCount = pipelineCount;
+        this.statusCount = statusCount;
+        this.distinctStatuses = distinctStatuses;
+        this.ageRange = ageRange;
+        this.readOnlyCount = null;
     }
 
     public long getItemCount() {
@@ -131,18 +158,39 @@ public class SelectionSummary {
         return ageRange;
     }
 
+    // Not used at the mo
+//    public long getReadOnlyCount() {
+//        return readOnlyCount;
+//    }
+
     @Override
     public String toString() {
         return "SelectionSummary{" +
-                "itemCount=" + itemCount +
-                ", feedCount=" + feedCount +
-                ", distinctFeeds=" + distinctFeeds +
-                ", typeCount=" + typeCount +
-                ", distinctTypes=" + distinctTypes +
-                ", processorCount=" + processorCount +
-                ", pipelineCount=" + pipelineCount +
-                ", statusCount=" + statusCount +
-                ", ageRange=" + ageRange +
-                '}';
+               "itemCount=" + itemCount +
+               ", feedCount=" + feedCount +
+               ", distinctFeeds=" + distinctFeeds +
+               ", typeCount=" + typeCount +
+               ", distinctTypes=" + distinctTypes +
+               ", processorCount=" + processorCount +
+               ", pipelineCount=" + pipelineCount +
+               ", statusCount=" + statusCount +
+               ", ageRange=" + ageRange +
+               ", readOnlyCount=" + readOnlyCount +
+               '}';
+    }
+
+    public SelectionSummary withReadOnlyCount(final long readOnlyCount) {
+        return new SelectionSummary(
+                itemCount,
+                feedCount,
+                distinctFeeds,
+                typeCount,
+                distinctTypes,
+                processorCount,
+                pipelineCount,
+                statusCount,
+                distinctStatuses,
+                ageRange,
+                readOnlyCount);
     }
 }
