@@ -185,7 +185,8 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
                     if (optKey.isPresent()) {
                         return Map.entry(optKey.get(), entry.getValue());
                     } else {
-                        LOGGER.warn("No S3 field mapping for key '{}', value: '{}'", entry.getKey(), entry.getValue());
+                        LOGGER.debug("No S3 field mapping for key '{}', value: '{}'",
+                                entry.getKey(), entry.getValue());
                         return null;
                     }
                 })
