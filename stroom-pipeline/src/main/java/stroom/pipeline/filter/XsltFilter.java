@@ -106,6 +106,30 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final Provider<PipelineHolder> pipelineHolder;
     private final PipelineDocFinder<XsltDoc> pipelineDocFinder;
 
+    /**
+     * EXPERIMENT ONLY — see the stroom-pipeline-benchmark module. Remove before shipping.
+     * <p>
+     * When set, supplies a Saxon {@code TreeModel} that is installed on every transformer's
+     * controller, which is the only way to change it: {@code Controller} hardcodes
+     * {@code TreeModel.TINY_TREE} in its constructor and does not read it from the configuration.
+     * A custom model can hand back a builder that keeps its source tree between documents instead
+     * of allocating one per document, which is what the benchmark measures at splitCount=1.
+     * <p>
+     * The supplier must return the <em>same</em> instance for the life of a stream, otherwise there
+     * is nothing to reuse. It is not safe to share one instance across concurrent pipelines.
+     */
+    public static volatile java.util.function.Supplier<net.sf.saxon.om.TreeModel> experimentalTreeModel;
+
+    /**
+     * EXPERIMENT ONLY — see the stroom-pipeline-benchmark module. Remove before shipping.
+     * <p>
+     * When set, is handed the Saxon {@code Configuration} once per stream, so an experiment can
+     * adjust things that live on it — in particular the self-tuning
+     * {@code getTreeStatistics().SOURCE_DOCUMENT_STATISTICS}, which starts at 4000 nodes and so
+     * hugely over-allocates the source tree for the first few thousand small documents.
+     */
+    public static volatile Consumer<net.sf.saxon.Configuration> experimentalConfigurationCustomiser;
+
     private ErrorListener errorListener;
 
     private DocRef xsltRef;
@@ -205,6 +229,14 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
                     // Cache the TemplatesImpl so we don't recreate it per document.
                     cachedTemplates = new TemplatesImpl(xsltExecutable);
+
+                    // EXPERIMENT ONLY - see the stroom-pipeline-benchmark module.
+                    final Consumer<net.sf.saxon.Configuration> customiser =
+                            experimentalConfigurationCustomiser;
+                    if (customiser != null) {
+                        customiser.accept(
+                                xsltExecutable.getUnderlyingCompiledStylesheet().getConfiguration());
+                    }
                 }
             }
 
@@ -268,6 +300,13 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 final TransformerImpl transformer = (TransformerImpl) cachedTemplates.newTransformer();
                 transformer.setErrorListener(errorListener);
                 configureMessageListener(transformer);
+
+                // EXPERIMENT ONLY - see the stroom-pipeline-benchmark module.
+                final java.util.function.Supplier<net.sf.saxon.om.TreeModel> treeModelSupplier =
+                        experimentalTreeModel;
+                if (treeModelSupplier != null) {
+                    transformer.getUnderlyingController().setModel(treeModelSupplier.get());
+                }
 
                 handler = transformer.newTransformerHandler();
                 handler.setResult(new SAXResult(getFilter()));

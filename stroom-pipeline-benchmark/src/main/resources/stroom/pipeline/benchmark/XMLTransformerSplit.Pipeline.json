@@ -1,0 +1,35 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "xmlParser",
+      "type" : "XMLParser"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "translationFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "fileAppender",
+      "type" : "FileAppender"
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "xmlParser",
+      "to" : "splitFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "translationFilter"
+    }, {
+      "from" : "translationFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "fileAppender"
+    } ]
+  }
+}

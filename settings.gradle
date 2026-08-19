@@ -223,6 +223,7 @@ include 'stroom-node:stroom-node-impl-db'
 
 // Pipeline
 include 'stroom-pipeline'
+include 'stroom-pipeline-benchmark'
 
 // Plan B
 include 'stroom-planb:stroom-planb-impl'

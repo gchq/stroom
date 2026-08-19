@@ -1,0 +1,100 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext.moduleName = 'stroom.pipeline.benchmark'
+
+dependencies {
+    implementation project(':stroom-activity:stroom-activity-mock')
+    implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-data:stroom-data-store-mock')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    implementation project(':stroom-event-logging:stroom-event-logging-impl')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-explorer-impl')
+    implementation project(':stroom-feed:stroom-feed-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-impl')
+    implementation project(':stroom-meta:stroom-meta-mock')
+    implementation project(':stroom-meta:stroom-meta-statistics-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-processor:stroom-processor-impl')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-mock')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-impl')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.dropwizard.metrics.core
+    implementation libs.guice
+    implementation libs.saxon.he
+
+    runtimeOnly libs.logback.classic
+    runtimeOnly libs.jaxb.impl
+
+    // jmh-core arrives transitively via the annotation processor, which also generates the
+    // BenchmarkList metadata that org.openjdk.jmh.Main needs at runtime.
+    testAnnotationProcessor libs.jmh.generator.annprocess
+    testImplementation libs.jmh.generator.annprocess
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}
+
+// The 1M record cases hold a large Saxon tree in memory when the split count is high, so the
+// default test heap is not enough.
+tasks.named('test') {
+    maxHeapSize = '8g'
+}
+
+/**
+ * Runs the JMH benchmarks in a forked JVM, which is what JMH needs to produce trustworthy numbers.
+ *
+ * Usage:
+ *   ./gradlew :stroom-pipeline-benchmark:jmh
+ *   ./gradlew :stroom-pipeline-benchmark:jmh -Pjmh.args="-f 3 -wi 2 -i 5 SplitCount"
+ */
+/**
+ * Runs the cold-start tree sizing experiment, which measures the first records of a stream rather
+ * than the converged state the JMH benchmarks see.
+ *
+ *   ./gradlew :stroom-pipeline-benchmark:coldStart
+ */
+tasks.register('coldStart', JavaExec) {
+    group = 'verification'
+    description = 'Measures Saxon source-tree allocation over the first records of a cold stream.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'stroom.pipeline.benchmark.ColdStartTreeSizingExperiment'
+}
+
+tasks.register('jmh', JavaExec) {
+    group = 'verification'
+    description = 'Runs the pipeline split-count JMH benchmarks.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+    // Forked benchmark JVMs inherit this, and they are the ones that need the headroom.
+    jvmArgs = ['-Xmx8g']
+    args = (project.findProperty('jmh.args') ?: '').toString().split('\\s+').findAll { it }
+}

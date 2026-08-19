@@ -1,0 +1,29 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "xmlParser",
+      "type" : "XMLParser"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "fileAppender",
+      "type" : "FileAppender"
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "xmlParser",
+      "to" : "splitFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "fileAppender"
+    } ]
+  }
+}

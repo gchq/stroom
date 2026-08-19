@@ -1,0 +1,20 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+    Kept at warn deliberately. The pipeline writers log at debug once per segment, which is once per
+    record at splitCount=1; at a million records that logging would dominate the timings the
+    benchmark exists to produce.
+    -->
+    <logger name="stroom" level="warn"/>
+
+    <root level="error">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
