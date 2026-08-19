@@ -48,9 +48,7 @@ public class ContentTemplateServiceImpl implements ContentTemplateService {
 
     @Override
     public ContentTemplates fetch() {
-        return securityContext.secureResult(
-                AppPermission.MANAGE_CONTENT_TEMPLATES_PERMISSION,
-                contentTemplateStore::getOrCreate);
+        return contentTemplateStore.getOrCreate();
     }
 
     @Override

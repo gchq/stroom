@@ -19,6 +19,7 @@ package stroom.data.store.util;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRulesProvider;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docstore.impl.dao.MockDocDependencyModule;
 import stroom.docstore.mock.MockDocFinderModule;
@@ -40,6 +41,8 @@ import stroom.util.string.TemplateUtil.ContextVariableResolver;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+
+import java.util.Optional;
 
 public class ToolModule extends AbstractModule {
 
@@ -74,7 +77,7 @@ public class ToolModule extends AbstractModule {
         bind(PathCreator.class).to(SimplePathCreator.class);
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
-        bind(DataRetentionRulesProvider.class).toInstance(() -> null);
+        bind(DataRetentionRulesProvider.class).toInstance(createDataRetentionRulesProvider());
         bind(ContextVariableResolver.class).toInstance(ContextVariableResolver.NO_OP);
         install(new DirProvidersModule());
     }
@@ -82,5 +85,19 @@ public class ToolModule extends AbstractModule {
     @Provides
     EntityEventBus entityEventBus() {
         return EntityEventBus.NO_OP_EVENT_BUS;
+    }
+
+    private DataRetentionRulesProvider createDataRetentionRulesProvider() {
+        return new DataRetentionRulesProvider() {
+            @Override
+            public DataRetentionRules getOrCreate() {
+                return null;
+            }
+
+            @Override
+            public Optional<DataRetentionRules> get() {
+                return Optional.empty();
+            }
+        };
     }
 }
